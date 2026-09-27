@@ -38,11 +38,11 @@
 }
 
 .dcats-concierge-sprite.is-suzuto {
-  background-image: url("./suzuto/spritesheet.webp?v=1.1.1062");
+  background-image: url("./suzuto/spritesheet.webp?v=1.1.1063");
 }
 
 .dcats-concierge-sprite.is-rinna {
-  background-image: url("./rinna/spritesheet.webp?v=1.1.1062");
+  background-image: url("./rinna/spritesheet.webp?v=1.1.1063");
 }
 
 .dcats-concierge-hit-target {
@@ -497,15 +497,31 @@
   outline-offset: 1px;
 }
 
-.dcats-concierge-enrollment {
+.dcats-concierge-enrollment,
+.dcats-concierge-review {
   display: grid;
   gap: 8px;
   border-top: 1px solid rgb(119 58 45 / 20%);
   padding-top: 12px;
 }
 
-.dcats-concierge-enrollment .dcats-concierge-bridge-status {
+.dcats-concierge-enrollment .dcats-concierge-bridge-status,
+.dcats-concierge-review .dcats-concierge-bridge-status {
   overflow-wrap: anywhere;
+}
+
+.dcats-concierge-review-confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #423e3e;
+  font-size: .86rem;
+  line-height: 1.45;
+}
+
+.dcats-concierge-review-confirm input {
+  flex: none;
+  margin-top: 3px;
 }
 
 .dcats-concierge-bridge-button.is-secondary {

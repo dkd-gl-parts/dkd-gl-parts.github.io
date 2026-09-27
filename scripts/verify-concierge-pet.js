@@ -49,6 +49,8 @@ requireFragment(app, "record.actor_id !== currentUser.id", "Pending device enrol
 requireFragment(app, 'sb.functions.invoke("enroll-hanbaioh-pilot-device"', "Pending device enrollment must call the reviewed Edge Function");
 requireFragment(app, "device_id: record.device_id", "Pending enrollment must send the device ID");
 assert(!app.slice(app.indexOf("async function submitConciergePendingDevice"), app.indexOf("window.DcatsHanbaiohEnrollmentApi")).includes("actor_id: record.actor_id"), "Browser must not assert the enrollment owner to Edge");
+requireFragment(app, "window.DcatsHanbaiohReviewApi = Object.freeze", "Audited device review must use the authenticated app runtime");
+requireFragment(app, 'sb.functions.invoke("review-hanbaioh-pilot-device"', "Audited device review must call the reviewed Edge Function");
 requireFragment(html, `assets/concierge-pet/concierge-pet.css?${"v=" + appVersion.slice(1)}`, "Concierge stylesheet is not versioned with APP_VERSION");
 requireFragment(html, `assets/concierge-pet/concierge-pet.js?${"v=" + appVersion.slice(1)}`, "Concierge runtime is not versioned with APP_VERSION");
 assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge runtime must load after the authenticated app runtime");
@@ -171,9 +173,11 @@ requireFragment(runtime, 'openPanel("question")', "A short character click must 
 requireFragment(runtime, 'else openPanel("settings")', "The header launcher must continue to open settings");
 requireFragment(runtime, 'if (!isSystemAdminSession() || floatingRequestPending) return;', "Floating display must fail closed outside a system-admin session");
 requireFragment(runtime, 'if (!isSystemAdminSession() || bridgeRequestPending) return;', "Windows integration must fail closed outside a system-admin session");
-requireFragment(runtime, 'if (!isSystemAdminSession() || enrollmentPending || enrollmentAttempted) return;', "Pending device enrollment must require an admin session and prevent resubmission");
+requireFragment(runtime, 'if (!isSystemAdminSession() || enrollmentPending || enrollmentAttempted || reviewPending || reviewAttempted) return;', "Pending device enrollment must require an admin session and prevent resubmission");
 requireFragment(runtime, 'file.name.endsWith(".enrollment.json")', "Pending device enrollment must accept only the public enrollment file");
 requireFragment(runtime, 'enrollButton.addEventListener("click", submitPendingDeviceEnrollment)', "Pending device enrollment requires an explicit click");
+requireFragment(runtime, 'reviewButton.addEventListener("click", submitDeviceApproval)', "Device approval requires an explicit click");
+requireFragment(runtime, '!reviewPreviewRecord || !reviewConfirmInput.checked', "Device approval requires the displayed file and confirmation");
 requireFragment(runtime, 'suzuto: { copyKey: "suzuto", className: "is-suzuto", travelRows: { right: "running-right", left: "running-left" } }', "Suzuto travel rows must match the approved atlas direction");
 requireFragment(runtime, 'rinna: { copyKey: "rinna", className: "is-rinna", travelRows: { right: "running-right", left: "running-left" } }', "Rinna travel rows must match the corrected atlas direction");
 requireFragment(runtime, "var TRAVEL_TURN_DELAY = 220;", "Directional travel must pause briefly after turning");
