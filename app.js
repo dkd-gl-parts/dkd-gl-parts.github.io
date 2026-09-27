@@ -7054,7 +7054,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1061";
+var APP_VERSION       = "v1.1.1062";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -7668,6 +7668,30 @@ async function issueConciergeBridgeCapability(request) {
 }
 window.DcatsBridgeApi = Object.freeze({
   issueCapability: issueConciergeBridgeCapability
+});
+async function submitConciergePendingDevice(record) {
+  if (!currentUser || !isSystemAdmin()) {
+    return { data: null, error: new Error("system_admin_required") };
+  }
+  var uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!record || typeof record !== "object" || Array.isArray(record) ||
+      Object.keys(record).sort().join(",") !== "actor_id,device_id,public_key_sha256,public_key_spki" ||
+      record.actor_id !== currentUser.id || !uuid.test(record.device_id) ||
+      typeof record.public_key_spki !== "string" || record.public_key_spki.length < 200 ||
+      record.public_key_spki.length > 1600 ||
+      typeof record.public_key_sha256 !== "string" || !/^[0-9a-f]{64}$/.test(record.public_key_sha256)) {
+    return { data: null, error: new Error("invalid_device_enrollment") };
+  }
+  return sb.functions.invoke("enroll-hanbaioh-pilot-device", {
+    body: {
+      device_id: record.device_id,
+      public_key_spki: record.public_key_spki,
+      public_key_sha256: record.public_key_sha256
+    }
+  });
+}
+window.DcatsHanbaiohEnrollmentApi = Object.freeze({
+  submitPending: submitConciergePendingDevice
 });
 var CONCIERGE_AI_SCREEN_IDS = Object.freeze({
   menu: true,

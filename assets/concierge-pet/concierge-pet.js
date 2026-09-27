@@ -98,7 +98,7 @@
       aiUsage: "今回の使用量：入力{input}／出力{output}トークン、推定API料金 US${cost}",
       bridgeLegend: "Windows業務連携（管理者テスト）",
       bridgeCheck: "Windows連携を確認",
-      bridgeHelp: "連携キューの確認、受信フォルダー内CSVの事前検査、固定の取込待ちフォルダー表示、販売王25の起動だけを行います。CSV取込やD-CATS本番データの変更は行いません。",
+      bridgeHelp: "Windows操作は、連携キューの確認、CSV事前検査、固定フォルダー表示、販売王25の起動に限定します。下の端末申請は承認待ちの公開鍵登録だけを行い、CSV取込や販売王ログインは行いません。",
       bridgeInboxHelp: "CSVをWindows受信フォルダーへ置き、ファイル名だけを入力してください。フォルダー：%LOCALAPPDATA%\\D-CATS\\HanbaiOhBridge\\inbox",
       bridgeDesktopHelp: "販売王への取込は自動実行しません。販売王で「D-CATS連携テスト（実データ禁止）」を確認してから手動で行ってください。",
       bridgeOpenTestFolder: "取込待ちフォルダーを開く",
@@ -134,7 +134,18 @@
       bridgeUnavailable: "Windows連携を起動できません。拡張機能と連携アプリを確認してください。",
       bridgeTimeout: "Windows連携から応答がありませんでした。もう一度確認してください。",
       bridgeForbidden: "システム管理者として再ログインしてから確認してください。",
-      bridgeFailed: "Windows連携を確認できませんでした。時間をおいてもう一度お試しください。"
+      bridgeFailed: "Windows連携を確認できませんでした。時間をおいてもう一度お試しください。",
+      enrollLegend: "販売王パイロット端末の申請（管理者）",
+      enrollHelp: "このPCで作成した公開鍵の .enrollment.json ファイルだけを選択します。秘密鍵やパスワードは送らないでください。申請後も承認・販売王ログインはできません。",
+      enrollFile: "端末申請ファイル",
+      enrollSubmit: "承認待ちで申請",
+      enrollIdle: "端末はまだ申請していません。",
+      enrollWorking: "公開鍵を申請しています。",
+      enrollInvalidFile: "この管理者の端末申請ファイルを選択してください。秘密鍵ファイルは選べません。",
+      enrollForbidden: "管理者セッションを確認できません。再ログインしてから申請してください。",
+      enrollUnavailable: "端末申請は現在無効です。管理者へ連絡してください。",
+      enrollAccepted: "承認待ちで申請しました。端末ID：{device}／指紋：{fingerprint}。管理者が別経路で指紋を照合するまで利用できません。",
+      enrollUncertain: "申請結果を確認できません。再送信せず、端末IDと指紋を管理者に伝えて登録状態を確認してください。"
     },
     en: {
       rootLabel: "D-CATS Concierge",
@@ -197,7 +208,7 @@
       aiUsage: "This request: {input} input / {output} output tokens; estimated API cost US${cost}",
       bridgeLegend: "Windows integration (admin pilot)",
       bridgeCheck: "Check Windows integration",
-      bridgeHelp: "Checks the queue, validates CSV files in the Windows inbox, opens the fixed import folder, and launches Sales King 25. It does not import CSV files or change D-CATS production data.",
+      bridgeHelp: "Windows actions are limited to queue checks, CSV preflight, opening the fixed folder, and launching Sales King 25. The device request below only registers a public key for review. It does not import CSV files or sign in to Sales King.",
       bridgeInboxHelp: "Place the CSV in the Windows inbox and enter only its file name. Folder: %LOCALAPPDATA%\\D-CATS\\HanbaiOhBridge\\inbox",
       bridgeDesktopHelp: "Import is never automatic. In Sales King, confirm “D-CATS Integration Test (No Production Data)” before importing manually.",
       bridgeOpenTestFolder: "Open import-ready folder",
@@ -233,7 +244,18 @@
       bridgeUnavailable: "Windows integration could not start. Check the extension and integration app.",
       bridgeTimeout: "Windows integration did not respond. Please try again.",
       bridgeForbidden: "Sign in again as a system administrator and retry.",
-      bridgeFailed: "Windows integration could not be checked. Please try again later."
+      bridgeFailed: "Windows integration could not be checked. Please try again later.",
+      enrollLegend: "Sales King pilot device request (admin)",
+      enrollHelp: "Select only the public-key .enrollment.json file created on this PC. Do not submit a private key or password. Approval and Sales King sign-in remain unavailable.",
+      enrollFile: "Device enrollment file",
+      enrollSubmit: "Request pending review",
+      enrollIdle: "No device request has been submitted.",
+      enrollWorking: "Submitting the public key.",
+      enrollInvalidFile: "Select this administrator's device enrollment file. Never select a private-key file.",
+      enrollForbidden: "The administrator session could not be verified. Sign in again before requesting enrollment.",
+      enrollUnavailable: "Device enrollment is currently disabled. Contact an administrator.",
+      enrollAccepted: "Request pending review. Device ID: {device} / fingerprint: {fingerprint}. The device cannot be used until an administrator checks the fingerprint separately.",
+      enrollUncertain: "The request result could not be verified. Do not resubmit. Ask an administrator to check the device ID and fingerprint."
     },
     zh: {
       rootLabel: "D-CATS礼宾助手",
@@ -296,7 +318,7 @@
       aiUsage: "本次用量：输入{input}／输出{output} tokens，预估API费用 US${cost}",
       bridgeLegend: "Windows业务联动（管理员测试）",
       bridgeCheck: "检查Windows联动",
-      bridgeHelp: "仅检查联动队列、预检Windows收件文件夹中的CSV、打开固定导入文件夹并启动销售王25。不会自动导入CSV或更改D-CATS生产数据。",
+      bridgeHelp: "Windows操作仅限检查队列、预检CSV、打开固定文件夹和启动销售王25。下方设备申请只登记待审核的公钥，不会导入CSV或登录销售王。",
       bridgeInboxHelp: "请将CSV放入Windows收件文件夹，并只输入文件名。文件夹：%LOCALAPPDATA%\\D-CATS\\HanbaiOhBridge\\inbox",
       bridgeDesktopHelp: "不会自动导入。请在销售王中确认“D-CATS联动测试（禁止使用实际数据）”后再手动导入。",
       bridgeOpenTestFolder: "打开待导入文件夹",
@@ -332,7 +354,18 @@
       bridgeUnavailable: "无法启动Windows联动。请检查扩展程序和联动应用。",
       bridgeTimeout: "Windows联动没有响应，请重试。",
       bridgeForbidden: "请以系统管理员身份重新登录后再试。",
-      bridgeFailed: "无法检查Windows联动，请稍后重试。"
+      bridgeFailed: "无法检查Windows联动，请稍后重试。",
+      enrollLegend: "销售王试点设备申请（管理员）",
+      enrollHelp: "仅选择在此电脑创建的公钥 .enrollment.json 文件。不要提交私钥或密码。申请后仍不能批准设备或登录销售王。",
+      enrollFile: "设备申请文件",
+      enrollSubmit: "提交待审核申请",
+      enrollIdle: "尚未提交设备申请。",
+      enrollWorking: "正在提交公钥。",
+      enrollInvalidFile: "请选择此管理员的设备申请文件，切勿选择私钥文件。",
+      enrollForbidden: "无法确认管理员会话，请重新登录后再申请。",
+      enrollUnavailable: "设备申请功能当前未启用，请联系管理员。",
+      enrollAccepted: "申请已进入待审核状态。设备ID：{device}／指纹：{fingerprint}。管理员通过其他渠道核对指纹前无法使用。",
+      enrollUncertain: "无法确认申请结果。请勿重复提交，请管理员核对设备ID、指纹和注册状态。"
     }
   };
   var STATE_MESSAGE_KEYS = {
@@ -374,6 +407,9 @@
   var bridgeFolderButton;
   var bridgeLaunchButton;
   var bridgeStatus;
+  var enrollFileInput;
+  var enrollButton;
+  var enrollStatus;
   var conciergeHelp;
   var characterButtons = [];
   var modeButtons = [];
@@ -404,6 +440,10 @@
   var bridgeRequestPending = false;
   var bridgeRequestToken = 0;
   var bridgeStatusState = { key: "bridgeIdle", values: null };
+  var enrollmentStatusState = { key: "enrollIdle", values: null };
+  var enrollmentPending = false;
+  var enrollmentAttempted = false;
+  var enrollmentToken = 0;
   var externalStateUntil = 0;
   var lastInteractionAt = 0;
   var stopGestureIndex = 0;
@@ -696,6 +736,28 @@
     bridgeStatus.id = "dcats-concierge-bridge-status";
     bridgeStatus.setAttribute("role", "status");
     bridgeStatus.setAttribute("aria-live", "polite");
+    var enrollmentCard = createElement("section", "dcats-concierge-enrollment");
+    var enrollmentTitle = createCopyElement("h4", "dcats-concierge-bridge-title", "enrollLegend");
+    var enrollmentHelp = createCopyElement("p", "dcats-concierge-bridge-help", "enrollHelp");
+    var enrollmentLabel = createCopyElement("label", "dcats-concierge-bridge-label", "enrollFile");
+    enrollmentLabel.setAttribute("for", "dcats-concierge-enrollment-file");
+    enrollFileInput = createElement("input", "dcats-concierge-bridge-input");
+    enrollFileInput.id = "dcats-concierge-enrollment-file";
+    enrollFileInput.type = "file";
+    enrollFileInput.accept = ".json,application/json";
+    enrollButton = createCopyElement("button", "dcats-concierge-bridge-button is-secondary", "enrollSubmit");
+    enrollButton.type = "button";
+    enrollStatus = createElement("p", "dcats-concierge-bridge-status");
+    enrollStatus.id = "dcats-concierge-enrollment-status";
+    enrollStatus.setAttribute("role", "status");
+    enrollStatus.setAttribute("aria-live", "polite");
+    enrollButton.setAttribute("aria-describedby", "dcats-concierge-enrollment-status");
+    enrollmentCard.appendChild(enrollmentTitle);
+    enrollmentCard.appendChild(enrollmentHelp);
+    enrollmentCard.appendChild(enrollmentLabel);
+    enrollmentCard.appendChild(enrollFileInput);
+    enrollmentCard.appendChild(enrollButton);
+    enrollmentCard.appendChild(enrollStatus);
     bridgeCard.appendChild(bridgeTitle);
     bridgeCard.appendChild(bridgeButton);
     bridgeCard.appendChild(bridgeHelp);
@@ -705,6 +767,7 @@
     bridgeCard.appendChild(bridgeDesktopActions);
     bridgeCard.appendChild(bridgeCost);
     bridgeCard.appendChild(bridgeStatus);
+    bridgeCard.appendChild(enrollmentCard);
 
     panelBody.appendChild(characterField);
     panelBody.appendChild(modeField);
@@ -763,6 +826,7 @@
     bridgeLaunchButton.addEventListener("click", function () {
       runWindowsBridgeRequest("launch_hanbaioh25", null, "bridgeLaunchWorking");
     });
+    enrollButton.addEventListener("click", submitPendingDeviceEnrollment);
     document.addEventListener("keydown", onPresentationKeyDown);
     document.addEventListener("pointerdown", onPresentationPointerDown, { passive: true });
     document.addEventListener("pointermove", onPointerMove, { passive: true });
@@ -958,6 +1022,22 @@
     bridgeStatus.classList.toggle("is-success", ["bridgeSuccess", "bridgeSalesPrepared", "bridgeTestSalesStaged", "bridgeTestSalesExisting", "bridgeCustomerPrepared", "bridgePreparedExisting", "bridgeFolderOpened", "bridgeHanbaiohLaunched"].indexOf(bridgeStatusState.key) >= 0);
     bridgeStatus.classList.toggle("is-warning", ["bridgeHanbaiohAlreadyRunning", "bridgeHanbaiohStateUnverified"].indexOf(bridgeStatusState.key) >= 0);
     bridgeStatus.classList.toggle("is-error", ["bridgeInvalidFileName", "bridgeFileMissing", "bridgeValidationFailed", "bridgeUnavailable", "bridgeTimeout", "bridgeForbidden", "bridgeFailed"].indexOf(bridgeStatusState.key) >= 0);
+    updateEnrollmentStatus();
+  }
+
+  function updateEnrollmentStatus() {
+    if (!enrollStatus || !enrollButton || !enrollFileInput) return;
+    enrollStatus.textContent = copy(enrollmentStatusState.key, enrollmentStatusState.values || {});
+    enrollStatus.classList.toggle("is-success", enrollmentStatusState.key === "enrollAccepted");
+    enrollStatus.classList.toggle("is-warning", enrollmentStatusState.key === "enrollUncertain");
+    enrollStatus.classList.toggle("is-error", ["enrollInvalidFile", "enrollForbidden", "enrollUnavailable"].indexOf(enrollmentStatusState.key) >= 0);
+    enrollButton.disabled = enrollmentPending || enrollmentAttempted;
+    enrollFileInput.disabled = enrollmentPending || enrollmentAttempted;
+  }
+
+  function setEnrollmentStatus(key, values) {
+    enrollmentStatusState = { key: key, values: values || null };
+    updateEnrollmentStatus();
   }
 
   function setBridgeStatus(key, values) {
@@ -975,6 +1055,11 @@
     bridgeRequestToken += 1;
     bridgeRequestPending = false;
     bridgeStatusState = { key: "bridgeIdle", values: null };
+    enrollmentToken += 1;
+    enrollmentPending = false;
+    enrollmentAttempted = false;
+    enrollmentStatusState = { key: "enrollIdle", values: null };
+    if (enrollFileInput) enrollFileInput.value = "";
     if (bridgeSalesFileInput) bridgeSalesFileInput.value = "sales.csv";
     if (bridgeCustomerFileInput) bridgeCustomerFileInput.value = "customers.csv";
     if (bridgeCard.parentElement) bridgeCard.parentElement.removeChild(bridgeCard);
@@ -1029,6 +1114,67 @@
     }
     if (/ENOENT|no such file|cannot find|見つかりません/i.test(message)) return { key: "bridgeFileMissing" };
     return { key: "bridgeFailed" };
+  }
+
+  async function submitPendingDeviceEnrollment() {
+    if (!isSystemAdminSession() || enrollmentPending || enrollmentAttempted) return;
+    var file = enrollFileInput && enrollFileInput.files && enrollFileInput.files[0];
+    if (!file || !file.name.endsWith(".enrollment.json") || file.size < 1 || file.size > 4096) {
+      setEnrollmentStatus("enrollInvalidFile");
+      return;
+    }
+    var record;
+    try {
+      record = JSON.parse(await file.text());
+    } catch (error) {
+      setEnrollmentStatus("enrollInvalidFile");
+      return;
+    }
+    if (!record || typeof record !== "object" || Array.isArray(record) ||
+        Object.keys(record).sort().join(",") !== "actor_id,device_id,public_key_sha256,public_key_spki" ||
+        record.actor_id !== currentSettingsOwner() ||
+        typeof record.device_id !== "string" ||
+        typeof record.public_key_sha256 !== "string" ||
+        !/^[0-9a-f]{64}$/.test(record.public_key_sha256) ||
+        typeof record.public_key_spki !== "string" ||
+        !record.public_key_spki.startsWith("-----BEGIN PUBLIC KEY-----\n")) {
+      setEnrollmentStatus("enrollInvalidFile");
+      return;
+    }
+    var api = window.DcatsHanbaiohEnrollmentApi;
+    if (!api || typeof api.submitPending !== "function") {
+      setEnrollmentStatus("enrollUnavailable");
+      return;
+    }
+    var token = ++enrollmentToken;
+    enrollmentPending = true;
+    enrollmentAttempted = true;
+    setEnrollmentStatus("enrollWorking");
+    try {
+      var result = await api.submitPending(record);
+      if (token !== enrollmentToken || !isSystemAdminSession()) return;
+      if (result && result.error) {
+        var status = Number(result.error.context && result.error.context.status || result.error.status || 0);
+        setEnrollmentStatus(status === 401 || status === 403 ? "enrollForbidden" : status === 503 ? "enrollUnavailable" : "enrollUncertain");
+        return;
+      }
+      if (!result || !result.data || result.data.ok !== true ||
+          result.data.status !== "pending" || result.data.device_id !== record.device_id) {
+        setEnrollmentStatus("enrollUncertain");
+        return;
+      }
+      setEnrollmentStatus("enrollAccepted", {
+        device: record.device_id,
+        fingerprint: record.public_key_sha256
+      });
+    } catch (error) {
+      if (token === enrollmentToken && isSystemAdminSession()) setEnrollmentStatus("enrollUncertain");
+    } finally {
+      if (token === enrollmentToken) {
+        enrollmentPending = false;
+        updateEnrollmentStatus();
+      }
+    }
   }
 
   async function runWindowsBridgeRequest(command, args, workingKey) {
