@@ -145,7 +145,20 @@
       enrollForbidden: "管理者セッションを確認できません。再ログインしてから申請してください。",
       enrollUnavailable: "端末申請は現在無効です。管理者へ連絡してください。",
       enrollAccepted: "承認待ちで申請しました。端末ID：{device}／指紋：{fingerprint}。管理者が別経路で指紋を照合するまで利用できません。",
-      enrollUncertain: "申請結果を確認できません。再送信せず、端末IDと指紋を管理者に伝えて登録状態を確認してください。"
+      enrollUncertain: "申請結果を確認できません。再送信せず、端末IDと指紋を管理者に伝えて登録状態を確認してください。",
+      reviewLegend: "販売王パイロット端末の承認（管理者）",
+      reviewHelp: "上の公開鍵ファイルを選ぶと端末IDと指紋を表示します。このPCの鍵と本番申請を別経路で照合してから承認してください。承認しても販売王ログインは有効になりません。",
+      reviewConfirm: "端末ID・本人・指紋を別経路で照合しました",
+      reviewSubmit: "この端末を承認",
+      reviewIdle: "上の公開鍵ファイルを選択してください。",
+      reviewReady: "照合対象：端末ID {device}／指紋 {fingerprint}",
+      reviewInvalidFile: "この管理者の公開鍵ファイルを選択してください。",
+      reviewWorking: "監査付きで端末を承認しています。",
+      reviewForbidden: "管理者セッションを確認できません。承認結果を管理者に確認してください。",
+      reviewUnavailable: "端末承認は現在無効です。管理者へ連絡してください。",
+      reviewConflict: "申請状態または指紋が一致しません。再送信せず、管理者に確認してください。",
+      reviewApproved: "端末 {device} を承認しました。販売王ログインは引き続き無効です。",
+      reviewUncertain: "承認結果を確認できません。再送信せず、端末状態と審査記録を管理者に確認してください。"
     },
     en: {
       rootLabel: "D-CATS Concierge",
@@ -255,7 +268,20 @@
       enrollForbidden: "The administrator session could not be verified. Sign in again before requesting enrollment.",
       enrollUnavailable: "Device enrollment is currently disabled. Contact an administrator.",
       enrollAccepted: "Request pending review. Device ID: {device} / fingerprint: {fingerprint}. The device cannot be used until an administrator checks the fingerprint separately.",
-      enrollUncertain: "The request result could not be verified. Do not resubmit. Ask an administrator to check the device ID and fingerprint."
+      enrollUncertain: "The request result could not be verified. Do not resubmit. Ask an administrator to check the device ID and fingerprint.",
+      reviewLegend: "Sales King pilot device approval (admin)",
+      reviewHelp: "Select the public-key file above to display the device ID and fingerprint. Compare them with the PC key and production request through a separate channel before approval. Approval does not enable Sales King sign-in.",
+      reviewConfirm: "I compared the device ID, owner and fingerprint through a separate channel",
+      reviewSubmit: "Approve this device",
+      reviewIdle: "Select the public-key file above.",
+      reviewReady: "Review device {device} / fingerprint {fingerprint}",
+      reviewInvalidFile: "Select this administrator's public-key file.",
+      reviewWorking: "Approving the device with an audit event.",
+      reviewForbidden: "The administrator session could not be verified. Ask an administrator to check the result.",
+      reviewUnavailable: "Device approval is currently disabled. Contact an administrator.",
+      reviewConflict: "The request state or fingerprint did not match. Do not resubmit; ask an administrator to check.",
+      reviewApproved: "Device {device} was approved. Sales King sign-in remains disabled.",
+      reviewUncertain: "The approval result could not be verified. Do not resubmit; ask an administrator to check the device and audit event."
     },
     zh: {
       rootLabel: "D-CATS礼宾助手",
@@ -365,7 +391,20 @@
       enrollForbidden: "无法确认管理员会话，请重新登录后再申请。",
       enrollUnavailable: "设备申请功能当前未启用，请联系管理员。",
       enrollAccepted: "申请已进入待审核状态。设备ID：{device}／指纹：{fingerprint}。管理员通过其他渠道核对指纹前无法使用。",
-      enrollUncertain: "无法确认申请结果。请勿重复提交，请管理员核对设备ID、指纹和注册状态。"
+      enrollUncertain: "无法确认申请结果。请勿重复提交，请管理员核对设备ID、指纹和注册状态。",
+      reviewLegend: "销售王试点设备批准（管理员）",
+      reviewHelp: "选择上方公钥文件以显示设备ID和指纹。请先通过其他渠道核对电脑密钥和正式申请。批准后仍不能登录销售王。",
+      reviewConfirm: "已通过其他渠道核对设备ID、所属用户和指纹",
+      reviewSubmit: "批准此设备",
+      reviewIdle: "请先选择上方公钥文件。",
+      reviewReady: "核对设备 {device}／指纹 {fingerprint}",
+      reviewInvalidFile: "请选择此管理员的公钥文件。",
+      reviewWorking: "正在生成审核记录并批准设备。",
+      reviewForbidden: "无法确认管理员会话，请管理员核对处理结果。",
+      reviewUnavailable: "设备批准功能当前未启用，请联系管理员。",
+      reviewConflict: "申请状态或指纹不一致。请勿重复提交，请管理员核对。",
+      reviewApproved: "设备 {device} 已批准，销售王登录仍未启用。",
+      reviewUncertain: "无法确认批准结果。请勿重复提交，请管理员核对设备状态和审核记录。"
     }
   };
   var STATE_MESSAGE_KEYS = {
@@ -410,6 +449,9 @@
   var enrollFileInput;
   var enrollButton;
   var enrollStatus;
+  var reviewConfirmInput;
+  var reviewButton;
+  var reviewStatus;
   var conciergeHelp;
   var characterButtons = [];
   var modeButtons = [];
@@ -444,6 +486,12 @@
   var enrollmentPending = false;
   var enrollmentAttempted = false;
   var enrollmentToken = 0;
+  var reviewStatusState = { key: "reviewIdle", values: null };
+  var reviewPreviewRecord = null;
+  var reviewPreviewToken = 0;
+  var reviewPending = false;
+  var reviewAttempted = false;
+  var reviewToken = 0;
   var externalStateUntil = 0;
   var lastInteractionAt = 0;
   var stopGestureIndex = 0;
@@ -758,6 +806,27 @@
     enrollmentCard.appendChild(enrollFileInput);
     enrollmentCard.appendChild(enrollButton);
     enrollmentCard.appendChild(enrollStatus);
+    var reviewCard = createElement("section", "dcats-concierge-review");
+    var reviewTitle = createCopyElement("h4", "dcats-concierge-bridge-title", "reviewLegend");
+    var reviewHelp = createCopyElement("p", "dcats-concierge-bridge-help", "reviewHelp");
+    var reviewConfirmLabel = createElement("label", "dcats-concierge-review-confirm");
+    reviewConfirmInput = createElement("input");
+    reviewConfirmInput.type = "checkbox";
+    reviewConfirmInput.id = "dcats-concierge-review-confirm";
+    reviewConfirmLabel.appendChild(reviewConfirmInput);
+    reviewConfirmLabel.appendChild(createCopyElement("span", "", "reviewConfirm"));
+    reviewButton = createCopyElement("button", "dcats-concierge-bridge-button is-secondary", "reviewSubmit");
+    reviewButton.type = "button";
+    reviewStatus = createElement("p", "dcats-concierge-bridge-status");
+    reviewStatus.id = "dcats-concierge-review-status";
+    reviewStatus.setAttribute("role", "status");
+    reviewStatus.setAttribute("aria-live", "polite");
+    reviewButton.setAttribute("aria-describedby", "dcats-concierge-review-status");
+    reviewCard.appendChild(reviewTitle);
+    reviewCard.appendChild(reviewHelp);
+    reviewCard.appendChild(reviewConfirmLabel);
+    reviewCard.appendChild(reviewButton);
+    reviewCard.appendChild(reviewStatus);
     bridgeCard.appendChild(bridgeTitle);
     bridgeCard.appendChild(bridgeButton);
     bridgeCard.appendChild(bridgeHelp);
@@ -768,6 +837,7 @@
     bridgeCard.appendChild(bridgeCost);
     bridgeCard.appendChild(bridgeStatus);
     bridgeCard.appendChild(enrollmentCard);
+    bridgeCard.appendChild(reviewCard);
 
     panelBody.appendChild(characterField);
     panelBody.appendChild(modeField);
@@ -827,6 +897,9 @@
       runWindowsBridgeRequest("launch_hanbaioh25", null, "bridgeLaunchWorking");
     });
     enrollButton.addEventListener("click", submitPendingDeviceEnrollment);
+    enrollFileInput.addEventListener("change", previewPendingDeviceReview);
+    reviewConfirmInput.addEventListener("change", updateReviewStatus);
+    reviewButton.addEventListener("click", submitDeviceApproval);
     document.addEventListener("keydown", onPresentationKeyDown);
     document.addEventListener("pointerdown", onPresentationPointerDown, { passive: true });
     document.addEventListener("pointermove", onPointerMove, { passive: true });
@@ -1031,13 +1104,29 @@
     enrollStatus.classList.toggle("is-success", enrollmentStatusState.key === "enrollAccepted");
     enrollStatus.classList.toggle("is-warning", enrollmentStatusState.key === "enrollUncertain");
     enrollStatus.classList.toggle("is-error", ["enrollInvalidFile", "enrollForbidden", "enrollUnavailable"].indexOf(enrollmentStatusState.key) >= 0);
-    enrollButton.disabled = enrollmentPending || enrollmentAttempted;
-    enrollFileInput.disabled = enrollmentPending || enrollmentAttempted;
+    enrollButton.disabled = enrollmentPending || enrollmentAttempted || reviewPending || reviewAttempted;
+    enrollFileInput.disabled = enrollmentPending || enrollmentAttempted || reviewPending || reviewAttempted;
+    updateReviewStatus();
   }
 
   function setEnrollmentStatus(key, values) {
     enrollmentStatusState = { key: key, values: values || null };
     updateEnrollmentStatus();
+  }
+
+  function updateReviewStatus() {
+    if (!reviewStatus || !reviewButton || !reviewConfirmInput) return;
+    reviewStatus.textContent = copy(reviewStatusState.key, reviewStatusState.values || {});
+    reviewStatus.classList.toggle("is-success", reviewStatusState.key === "reviewApproved");
+    reviewStatus.classList.toggle("is-warning", reviewStatusState.key === "reviewUncertain");
+    reviewStatus.classList.toggle("is-error", ["reviewInvalidFile", "reviewForbidden", "reviewUnavailable", "reviewConflict"].indexOf(reviewStatusState.key) >= 0);
+    reviewConfirmInput.disabled = enrollmentPending || reviewPending || reviewAttempted || !reviewPreviewRecord;
+    reviewButton.disabled = enrollmentPending || reviewPending || reviewAttempted || !reviewPreviewRecord || !reviewConfirmInput.checked;
+  }
+
+  function setReviewStatus(key, values) {
+    reviewStatusState = { key: key, values: values || null };
+    updateReviewStatus();
   }
 
   function setBridgeStatus(key, values) {
@@ -1059,6 +1148,13 @@
     enrollmentPending = false;
     enrollmentAttempted = false;
     enrollmentStatusState = { key: "enrollIdle", values: null };
+    reviewPreviewToken += 1;
+    reviewToken += 1;
+    reviewPreviewRecord = null;
+    reviewPending = false;
+    reviewAttempted = false;
+    reviewStatusState = { key: "reviewIdle", values: null };
+    if (reviewConfirmInput) reviewConfirmInput.checked = false;
     if (enrollFileInput) enrollFileInput.value = "";
     if (bridgeSalesFileInput) bridgeSalesFileInput.value = "sales.csv";
     if (bridgeCustomerFileInput) bridgeCustomerFileInput.value = "customers.csv";
@@ -1116,38 +1212,64 @@
     return { key: "bridgeFailed" };
   }
 
-  async function submitPendingDeviceEnrollment() {
-    if (!isSystemAdminSession() || enrollmentPending || enrollmentAttempted) return;
-    var file = enrollFileInput && enrollFileInput.files && enrollFileInput.files[0];
-    if (!file || !file.name.endsWith(".enrollment.json") || file.size < 1 || file.size > 4096) {
-      setEnrollmentStatus("enrollInvalidFile");
-      return;
-    }
+  async function readOwnEnrollmentFile(file) {
+    if (!file || !file.name.endsWith(".enrollment.json") || file.size < 1 || file.size > 4096) return null;
     var record;
     try {
       record = JSON.parse(await file.text());
     } catch (error) {
-      setEnrollmentStatus("enrollInvalidFile");
-      return;
+      return null;
     }
     if (!record || typeof record !== "object" || Array.isArray(record) ||
         Object.keys(record).sort().join(",") !== "actor_id,device_id,public_key_sha256,public_key_spki" ||
         record.actor_id !== currentSettingsOwner() ||
-        typeof record.device_id !== "string" ||
+        typeof record.device_id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(record.device_id) ||
         typeof record.public_key_sha256 !== "string" ||
         !/^[0-9a-f]{64}$/.test(record.public_key_sha256) ||
         typeof record.public_key_spki !== "string" ||
+        record.public_key_spki.length < 200 || record.public_key_spki.length > 1600 ||
         !record.public_key_spki.startsWith("-----BEGIN PUBLIC KEY-----\n")) {
+      return null;
+    }
+    return record;
+  }
+
+  async function previewPendingDeviceReview() {
+    var token = ++reviewPreviewToken;
+    reviewPreviewRecord = null;
+    if (reviewConfirmInput) reviewConfirmInput.checked = false;
+    setReviewStatus("reviewIdle");
+    if (!isSystemAdminSession()) return;
+    var file = enrollFileInput && enrollFileInput.files && enrollFileInput.files[0];
+    var record = await readOwnEnrollmentFile(file);
+    if (token !== reviewPreviewToken || !isSystemAdminSession()) return;
+    if (!record) {
+      if (file) setReviewStatus("reviewInvalidFile");
+      return;
+    }
+    reviewPreviewRecord = record;
+    setReviewStatus("reviewReady", { device: record.device_id, fingerprint: record.public_key_sha256 });
+  }
+
+  async function submitPendingDeviceEnrollment() {
+    if (!isSystemAdminSession() || enrollmentPending || enrollmentAttempted || reviewPending || reviewAttempted) return;
+    var file = enrollFileInput && enrollFileInput.files && enrollFileInput.files[0];
+    var token = ++enrollmentToken;
+    enrollmentPending = true;
+    updateEnrollmentStatus();
+    var record = await readOwnEnrollmentFile(file);
+    if (token !== enrollmentToken || !isSystemAdminSession()) return;
+    if (!record || file !== enrollFileInput.files[0]) {
+      enrollmentPending = false;
       setEnrollmentStatus("enrollInvalidFile");
       return;
     }
     var api = window.DcatsHanbaiohEnrollmentApi;
     if (!api || typeof api.submitPending !== "function") {
+      enrollmentPending = false;
       setEnrollmentStatus("enrollUnavailable");
       return;
     }
-    var token = ++enrollmentToken;
-    enrollmentPending = true;
     enrollmentAttempted = true;
     setEnrollmentStatus("enrollWorking");
     try {
@@ -1172,6 +1294,45 @@
     } finally {
       if (token === enrollmentToken) {
         enrollmentPending = false;
+        updateEnrollmentStatus();
+      }
+    }
+  }
+
+  async function submitDeviceApproval() {
+    if (!isSystemAdminSession() || enrollmentPending || reviewPending || reviewAttempted ||
+        !reviewPreviewRecord || !reviewConfirmInput || !reviewConfirmInput.checked) return;
+    var record = reviewPreviewRecord;
+    var api = window.DcatsHanbaiohReviewApi;
+    if (!api || typeof api.approvePending !== "function") {
+      setReviewStatus("reviewUnavailable");
+      return;
+    }
+    var token = ++reviewToken;
+    reviewPending = true;
+    reviewAttempted = true;
+    setReviewStatus("reviewWorking");
+    updateEnrollmentStatus();
+    try {
+      var result = await api.approvePending(record);
+      if (token !== reviewToken || !isSystemAdminSession()) return;
+      if (result && result.error) {
+        var status = Number(result.error.context && result.error.context.status || result.error.status || 0);
+        setReviewStatus(status === 401 || status === 403 ? "reviewForbidden" :
+          status === 409 ? "reviewConflict" : status === 503 ? "reviewUnavailable" : "reviewUncertain");
+        return;
+      }
+      if (!result || !result.data || result.data.ok !== true ||
+          result.data.status !== "approved" || result.data.device_id !== record.device_id) {
+        setReviewStatus("reviewUncertain");
+        return;
+      }
+      setReviewStatus("reviewApproved", { device: record.device_id });
+    } catch (error) {
+      if (token === reviewToken && isSystemAdminSession()) setReviewStatus("reviewUncertain");
+    } finally {
+      if (token === reviewToken) {
+        reviewPending = false;
         updateEnrollmentStatus();
       }
     }

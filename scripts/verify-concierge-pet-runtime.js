@@ -519,6 +519,41 @@ const bridgeSalesFileInput = bridgeInputs.find((element) => element.id === "dcat
 const bridgeCustomerFileInput = bridgeInputs.find((element) => element.id === "dcats-concierge-bridge-customer-file");
 const bridgeStatus = byClass("dcats-concierge-bridge-status")[0];
 assert(bridgeCard && bridgeButton && bridgeSalesButton && bridgeTestSalesButton && bridgeCustomerButton && bridgeFolderButton && bridgeLaunchButton && bridgeSalesFileInput && bridgeCustomerFileInput && bridgeStatus, "System administrator did not receive the Windows integration controls");
+const reviewFileInput = bridgeInputs.find((element) => element.id === "dcats-concierge-enrollment-file");
+const reviewConfirm = byClass("dcats-concierge-review-confirm")[0].children[0];
+const reviewButton = bridgeButtons.find((element) => element.textContent === "この端末を承認");
+const reviewStatus = byClass("dcats-concierge-bridge-status").find((element) => element.id === "dcats-concierge-review-status");
+assert(reviewFileInput && reviewConfirm && reviewButton && reviewStatus && reviewButton.disabled,
+  "Device approval must start disabled in the admin panel");
+const reviewRequests = [];
+windowObject.DcatsHanbaiohReviewApi = { approvePending: async (record) => {
+  reviewRequests.push(record);
+  return { data: { ok: true, status: "approved", device_id: record.device_id }, error: null };
+} };
+const reviewRecord = {
+  actor_id: windowObject.currentUser.id,
+  device_id: "00000000-0000-4000-8000-000000000002",
+  public_key_spki: "-----BEGIN PUBLIC KEY-----\n" + "A".repeat(460) + "\n-----END PUBLIC KEY-----\n",
+  public_key_sha256: "a".repeat(64)
+};
+reviewFileInput.files = [{
+  name: "device.enrollment.json", size: JSON.stringify(reviewRecord).length,
+  text: async () => JSON.stringify(reviewRecord)
+}];
+dispatch(reviewFileInput.listeners, "change", { target: reviewFileInput });
+await new Promise((resolve) => setImmediate(resolve));
+assert(reviewStatus.textContent.includes(reviewRecord.device_id) &&
+  reviewStatus.textContent.includes(reviewRecord.public_key_sha256) && reviewButton.disabled,
+  "Device ID and fingerprint must be visible before confirmation");
+reviewConfirm.checked = true;
+dispatch(reviewConfirm.listeners, "change", { target: reviewConfirm });
+assert(!reviewButton.disabled, "Checked fingerprint confirmation should enable review");
+dispatch(reviewButton.listeners, "click", { target: reviewButton });
+dispatch(reviewButton.listeners, "click", { target: reviewButton });
+await new Promise((resolve) => setImmediate(resolve));
+assert(reviewRequests.length === 1 && reviewButton.disabled &&
+  reviewStatus.textContent.includes("承認しました") && reviewStatus.classList.contains("is-success"),
+  "Approval must submit once and show only a verified success");
 dispatch(bridgeButton.listeners, "click", { target: bridgeButton });
 dispatch(bridgeButton.listeners, "click", { target: bridgeButton });
 await new Promise((resolve) => setImmediate(resolve));
