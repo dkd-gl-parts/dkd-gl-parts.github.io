@@ -38,11 +38,11 @@
 }
 
 .dcats-concierge-sprite.is-suzuto {
-  background-image: url("./suzuto/spritesheet.webp?v=1.1.1063");
+  background-image: url("./suzuto/spritesheet.webp?v=1.1.1064");
 }
 
 .dcats-concierge-sprite.is-rinna {
-  background-image: url("./rinna/spritesheet.webp?v=1.1.1063");
+  background-image: url("./rinna/spritesheet.webp?v=1.1.1064");
 }
 
 .dcats-concierge-hit-target {
@@ -498,7 +498,8 @@
 }
 
 .dcats-concierge-enrollment,
-.dcats-concierge-review {
+.dcats-concierge-review,
+.dcats-concierge-backup-enrollment {
   display: grid;
   gap: 8px;
   border-top: 1px solid rgb(119 58 45 / 20%);
