@@ -554,6 +554,57 @@ await new Promise((resolve) => setImmediate(resolve));
 assert(reviewRequests.length === 1 && reviewButton.disabled &&
   reviewStatus.textContent.includes("承認しました") && reviewStatus.classList.contains("is-success"),
   "Approval must submit once and show only a verified success");
+
+const backupIssue = bridgeButtons.find((element) => element.textContent === "登録券を発行する");
+const backupCopy = bridgeButtons.find((element) => element.textContent === "登録券をコピー");
+const backupTicket = byClass("dcats-concierge-bridge-input").find((element) => element.id === "dcats-concierge-backup-ticket");
+const backupStatus = byClass("dcats-concierge-bridge-status").find((element) => element.id === "dcats-concierge-backup-status");
+assert(backupIssue && backupCopy && backupTicket && backupStatus && backupTicket.readOnly,
+  "Administrator backup enrollment controls missing");
+assert(!backupIssue.disabled && backupCopy.disabled,
+  "A parsed administrator device must enable ticket issuance without exposing a ticket");
+const syntheticTicket = "v2." + "A".repeat(100) + "." + "B".repeat(86);
+const backupRequests = [];
+windowObject.navigator = { clipboard: { writeText: async (text) => {
+  assert(text === syntheticTicket, "Unexpected clipboard data");
+} } };
+windowObject.DcatsHanbaiohBackupEnrollmentApi = { issue: async (record) => {
+  backupRequests.push(record);
+  return { data: { ok: true, device_id: record.device_id, capability: syntheticTicket,
+    expires_at: new Date(Date.now() + 59000).toISOString() }, error: null };
+} };
+dispatch(launcher.listeners, "click", { target: launcher });
+dispatch(backupIssue.listeners, "click", { target: backupIssue });
+dispatch(backupIssue.listeners, "click", { target: backupIssue });
+await new Promise((resolve) => setImmediate(resolve));
+assert(backupRequests.length === 1 && backupTicket.value === syntheticTicket && backupIssue.disabled,
+  "Ticket issuance must not duplicate or hide a successful result");
+assert(!Array.from(storage.values()).some((value) => value.includes(syntheticTicket)),
+  "Ticket must not be persisted");
+dispatch(backupCopy.listeners, "click", { target: backupCopy });
+await new Promise((resolve) => setImmediate(resolve));
+assert(backupStatus.textContent.includes("コピーしました"), "Copy result missing");
+const backupTimer = Array.from(pendingTimers.entries()).find(([, value]) => value.delay > 58000 && value.delay <= 60000);
+assert(backupTimer, "Ticket expiry must be scheduled");
+pendingTimers.delete(backupTimer[0]);
+backupTimer[1].callback();
+assert(backupTicket.value === "" && backupCopy.disabled && backupStatus.textContent.includes("期限が切れました"),
+  "Expiry must clear the ticket from the DOM");
+let completeLateBackup;
+windowObject.DcatsHanbaiohBackupEnrollmentApi.issue = () => new Promise((resolve) => { completeLateBackup = resolve; });
+dispatch(backupIssue.listeners, "click", { target: backupIssue });
+dispatch(panelClose.listeners, "click", { target: panelClose });
+completeLateBackup({ data: { ok: true, device_id: reviewRecord.device_id, capability: syntheticTicket,
+  expires_at: new Date(Date.now() + 59000).toISOString() }, error: null });
+await new Promise((resolve) => setImmediate(resolve));
+assert(backupTicket.value === "" && backupCopy.disabled, "Closing must reject a late ticket response");
+for (const status of [401, 403, 409, 503]) {
+  windowObject.DcatsHanbaiohBackupEnrollmentApi.issue = async () => ({ data: null, error: { status } });
+  dispatch(backupIssue.listeners, "click", { target: backupIssue });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert(backupTicket.value === "" && backupCopy.disabled && backupStatus.classList.contains("is-error"),
+    "Rejected issuance must not expose a ticket");
+}
 dispatch(bridgeButton.listeners, "click", { target: bridgeButton });
 dispatch(bridgeButton.listeners, "click", { target: bridgeButton });
 await new Promise((resolve) => setImmediate(resolve));

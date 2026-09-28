@@ -42,6 +42,7 @@ jobs:
           node scripts/verify-concierge-pet.js
           node scripts/verify-hanbaioh-pending-enrollment.js
           node scripts/verify-hanbaioh-device-review.js
+          node scripts/verify-hanbaioh-backup-enrollment.js
           node scripts/verify-concierge-ai.js
           node scripts/verify-concierge-pet-runtime.js
           node scripts/verify-concierge-desktop.js

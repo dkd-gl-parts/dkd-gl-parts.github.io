@@ -7054,7 +7054,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1063";
+var APP_VERSION       = "v1.1.1064";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -7718,6 +7718,23 @@ async function approveConciergePendingDevice(record) {
 }
 window.DcatsHanbaiohReviewApi = Object.freeze({
   approvePending: approveConciergePendingDevice
+});
+async function issueConciergeBackupEnrollment(record) {
+  if (!currentUser || !isSystemAdmin()) {
+    return { data: null, error: new Error("system_admin_required") };
+  }
+  var uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!record || typeof record !== "object" || Array.isArray(record) ||
+      Object.keys(record).sort().join(",") !== "actor_id,device_id,public_key_sha256,public_key_spki" ||
+      record.actor_id !== currentUser.id || !uuid.test(record.device_id)) {
+    return { data: null, error: new Error("invalid_backup_enrollment") };
+  }
+  return sb.functions.invoke("issue-hanbaioh-backup-enrollment", {
+    body: { device_id: record.device_id }
+  });
+}
+window.DcatsHanbaiohBackupEnrollmentApi = Object.freeze({
+  issue: issueConciergeBackupEnrollment
 });
 var CONCIERGE_AI_SCREEN_IDS = Object.freeze({
   menu: true,

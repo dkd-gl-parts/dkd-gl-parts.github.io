@@ -158,7 +158,20 @@
       reviewUnavailable: "端末承認は現在無効です。管理者へ連絡してください。",
       reviewConflict: "申請状態または指紋が一致しません。再送信せず、管理者に確認してください。",
       reviewApproved: "端末 {device} を承認しました。販売王ログインは引き続き無効です。",
-      reviewUncertain: "承認結果を確認できません。再送信せず、端末状態と審査記録を管理者に確認してください。"
+      reviewUncertain: "承認結果を確認できません。再送信せず、端末状態と審査記録を管理者に確認してください。",
+      backupLegend: "バックアップ用パスワードの登録（管理者）",
+      backupHelp: "承認済み端末の公開鍵ファイルを選び、PCの登録ツールを先に開いてください。登録券を発行・コピーし、60秒以内に登録ツールへ貼り付けてパスワードを入力します。パスワードはこの画面に入力しません。",
+      backupIssue: "登録券を発行する",
+      backupCopy: "登録券をコピー",
+      backupTicket: "60秒間有効な登録券",
+      backupIdle: "登録券はまだ発行していません。承認済み端末の公開鍵ファイルとPCの登録ツールを準備してください。",
+      backupWorking: "承認済み端末を確認しています。",
+      backupReady: "登録券を発行しました。PCの登録ツールへ貼り付けてください。",
+      backupCopied: "登録券をコピーしました。PCの登録ツールへ貼り付けてください。",
+      backupExpired: "登録券の有効期限が切れました。PCの登録ツールを開いてから再発行してください。",
+      backupUnavailable: "パスワード登録は現在利用できません。管理者に確認してください。",
+      backupForbidden: "管理者として再ログインし、承認済み端末のファイルを選んでください。",
+      backupCopyFailed: "コピーできませんでした。登録券を選択してコピーしてください。"
     },
     en: {
       rootLabel: "D-CATS Concierge",
@@ -281,7 +294,20 @@
       reviewUnavailable: "Device approval is currently disabled. Contact an administrator.",
       reviewConflict: "The request state or fingerprint did not match. Do not resubmit; ask an administrator to check.",
       reviewApproved: "Device {device} was approved. Sales King sign-in remains disabled.",
-      reviewUncertain: "The approval result could not be verified. Do not resubmit; ask an administrator to check the device and audit event."
+      reviewUncertain: "The approval result could not be verified. Do not resubmit; ask an administrator to check the device and audit event.",
+      backupLegend: "Backup password enrollment (administrator)",
+      backupHelp: "Select the approved device public-key file and open the local enrollment tool first. Issue and copy a ticket, then paste it into that tool and enter the password within 60 seconds. Do not enter the password here.",
+      backupIssue: "Issue enrollment ticket",
+      backupCopy: "Copy enrollment ticket",
+      backupTicket: "Enrollment ticket valid for 60 seconds",
+      backupIdle: "No ticket issued yet. Prepare the approved device public-key file and the local enrollment tool.",
+      backupWorking: "Checking the approved device.",
+      backupReady: "Ticket issued. Paste it into the local enrollment tool.",
+      backupCopied: "Ticket copied. Paste it into the local enrollment tool.",
+      backupExpired: "The ticket expired. Open the local tool before issuing another ticket.",
+      backupUnavailable: "Password enrollment is unavailable. Contact an administrator.",
+      backupForbidden: "Sign in as an administrator and select the approved device file.",
+      backupCopyFailed: "Copy failed. Select the ticket and copy it manually."
     },
     zh: {
       rootLabel: "D-CATS礼宾助手",
@@ -404,7 +430,20 @@
       reviewUnavailable: "设备批准功能当前未启用，请联系管理员。",
       reviewConflict: "申请状态或指纹不一致。请勿重复提交，请管理员核对。",
       reviewApproved: "设备 {device} 已批准，销售王登录仍未启用。",
-      reviewUncertain: "无法确认批准结果。请勿重复提交，请管理员核对设备状态和审核记录。"
+      reviewUncertain: "无法确认批准结果。请勿重复提交，请管理员核对设备状态和审核记录。",
+      backupLegend: "备份密码登记（管理员）",
+      backupHelp: "选择已批准设备的公钥文件，先打开此电脑的登记工具。签发并复制登记券，在60秒内粘贴到该工具并输入密码。请勿在本页面输入密码。",
+      backupIssue: "签发登记券",
+      backupCopy: "复制登记券",
+      backupTicket: "有效期60秒的登记券",
+      backupIdle: "尚未签发登记券。请准备已批准设备的公钥文件和此电脑的登记工具。",
+      backupWorking: "正在核对已批准的设备。",
+      backupReady: "登记券已签发。请粘贴到此电脑的登记工具。",
+      backupCopied: "登记券已复制。请粘贴到此电脑的登记工具。",
+      backupExpired: "登记券已过期。请先打开登记工具再重新签发。",
+      backupUnavailable: "暂时无法登记密码。请联系管理员。",
+      backupForbidden: "请以管理员身份重新登录并选择已批准设备的文件。",
+      backupCopyFailed: "复制失败。请选中登记券后手动复制。"
     }
   };
   var STATE_MESSAGE_KEYS = {
@@ -452,6 +491,10 @@
   var reviewConfirmInput;
   var reviewButton;
   var reviewStatus;
+  var backupIssueButton;
+  var backupCopyButton;
+  var backupTicketInput;
+  var backupStatus;
   var conciergeHelp;
   var characterButtons = [];
   var modeButtons = [];
@@ -492,6 +535,13 @@
   var reviewPending = false;
   var reviewAttempted = false;
   var reviewToken = 0;
+  var backupToken = 0;
+  var backupPending = false;
+  var backupTicket = "";
+  var backupTicketActor = "";
+  var backupExpiresAt = 0;
+  var backupExpiryTimer = null;
+  var backupStatusKey = "backupIdle";
   var externalStateUntil = 0;
   var lastInteractionAt = 0;
   var stopGestureIndex = 0;
@@ -559,6 +609,7 @@
   function syncSettingsOwner() {
     var owner = currentSettingsOwner();
     if (owner === settingsOwner) return;
+    clearBackupEnrollment();
     settingsOwner = owner;
     settings = readSettings(owner);
     if (root) applySettings();
@@ -827,6 +878,31 @@
     reviewCard.appendChild(reviewConfirmLabel);
     reviewCard.appendChild(reviewButton);
     reviewCard.appendChild(reviewStatus);
+    var backupCard = createElement("section", "dcats-concierge-backup-enrollment");
+    backupCard.appendChild(createCopyElement("h4", "dcats-concierge-bridge-title", "backupLegend"));
+    backupCard.appendChild(createCopyElement("p", "dcats-concierge-bridge-help", "backupHelp"));
+    backupIssueButton = createCopyElement("button", "dcats-concierge-bridge-button is-secondary", "backupIssue");
+    backupIssueButton.type = "button";
+    var backupTicketLabel = createCopyElement("label", "dcats-concierge-bridge-label", "backupTicket");
+    backupTicketLabel.htmlFor = "dcats-concierge-backup-ticket";
+    backupTicketInput = createElement("textarea", "dcats-concierge-bridge-input");
+    backupTicketInput.id = "dcats-concierge-backup-ticket";
+    backupTicketInput.readOnly = true;
+    backupTicketInput.rows = 3;
+    backupTicketInput.autocomplete = "off";
+    backupTicketInput.spellcheck = false;
+    backupCopyButton = createCopyElement("button", "dcats-concierge-bridge-button is-secondary", "backupCopy");
+    backupCopyButton.type = "button";
+    backupStatus = createElement("p", "dcats-concierge-bridge-status");
+    backupStatus.id = "dcats-concierge-backup-status";
+    backupStatus.setAttribute("role", "status");
+    backupStatus.setAttribute("aria-live", "polite");
+    backupIssueButton.setAttribute("aria-describedby", backupStatus.id);
+    backupCard.appendChild(backupIssueButton);
+    backupCard.appendChild(backupTicketLabel);
+    backupCard.appendChild(backupTicketInput);
+    backupCard.appendChild(backupCopyButton);
+    backupCard.appendChild(backupStatus);
     bridgeCard.appendChild(bridgeTitle);
     bridgeCard.appendChild(bridgeButton);
     bridgeCard.appendChild(bridgeHelp);
@@ -838,6 +914,7 @@
     bridgeCard.appendChild(bridgeStatus);
     bridgeCard.appendChild(enrollmentCard);
     bridgeCard.appendChild(reviewCard);
+    bridgeCard.appendChild(backupCard);
 
     panelBody.appendChild(characterField);
     panelBody.appendChild(modeField);
@@ -900,6 +977,8 @@
     enrollFileInput.addEventListener("change", previewPendingDeviceReview);
     reviewConfirmInput.addEventListener("change", updateReviewStatus);
     reviewButton.addEventListener("click", submitDeviceApproval);
+    backupIssueButton.addEventListener("click", issueBackupEnrollment);
+    backupCopyButton.addEventListener("click", copyBackupEnrollment);
     document.addEventListener("keydown", onPresentationKeyDown);
     document.addEventListener("pointerdown", onPresentationPointerDown, { passive: true });
     document.addEventListener("pointermove", onPointerMove, { passive: true });
@@ -1122,6 +1201,7 @@
     reviewStatus.classList.toggle("is-error", ["reviewInvalidFile", "reviewForbidden", "reviewUnavailable", "reviewConflict"].indexOf(reviewStatusState.key) >= 0);
     reviewConfirmInput.disabled = enrollmentPending || reviewPending || reviewAttempted || !reviewPreviewRecord;
     reviewButton.disabled = enrollmentPending || reviewPending || reviewAttempted || !reviewPreviewRecord || !reviewConfirmInput.checked;
+    updateBackupEnrollment();
   }
 
   function setReviewStatus(key, values) {
@@ -1154,6 +1234,7 @@
     reviewPending = false;
     reviewAttempted = false;
     reviewStatusState = { key: "reviewIdle", values: null };
+    clearBackupEnrollment();
     if (reviewConfirmInput) reviewConfirmInput.checked = false;
     if (enrollFileInput) enrollFileInput.value = "";
     if (bridgeSalesFileInput) bridgeSalesFileInput.value = "sales.csv";
@@ -1235,6 +1316,7 @@
   }
 
   async function previewPendingDeviceReview() {
+    clearBackupEnrollment();
     var token = ++reviewPreviewToken;
     reviewPreviewRecord = null;
     if (reviewConfirmInput) reviewConfirmInput.checked = false;
@@ -1336,6 +1418,97 @@
         updateEnrollmentStatus();
       }
     }
+  }
+
+  function updateBackupEnrollment() {
+    if (!backupIssueButton || !backupTicketInput || !backupCopyButton || !backupStatus) return;
+    backupTicketInput.value = backupTicket;
+    backupTicketInput.hidden = !backupTicket;
+    backupIssueButton.disabled = backupPending || !!backupTicket || enrollmentPending || reviewPending ||
+      !reviewPreviewRecord || reviewPreviewRecord.actor_id !== currentSettingsOwner();
+    backupCopyButton.disabled = !backupTicket || Date.now() >= backupExpiresAt;
+    backupStatus.textContent = copy(backupStatusKey);
+    backupStatus.classList.toggle("is-success", ["backupReady", "backupCopied"].indexOf(backupStatusKey) >= 0);
+    backupStatus.classList.toggle("is-error", ["backupUnavailable", "backupForbidden", "backupCopyFailed"].indexOf(backupStatusKey) >= 0);
+  }
+
+  // Never persist tickets. Closing, changing actor/file, or expiry clears both
+  // the DOM and memory, and invalidates any outstanding asynchronous request.
+  function clearBackupEnrollment(statusKey) {
+    backupToken += 1;
+    backupPending = false;
+    backupTicket = "";
+    backupTicketActor = "";
+    backupExpiresAt = 0;
+    if (backupExpiryTimer) clearTimeout(backupExpiryTimer);
+    backupExpiryTimer = null;
+    backupStatusKey = statusKey || "backupIdle";
+    updateBackupEnrollment();
+  }
+
+  async function issueBackupEnrollment() {
+    if (!isSystemAdminSession() || backupPending || backupTicket || enrollmentPending || reviewPending || !reviewPreviewRecord) return;
+    var record = reviewPreviewRecord;
+    var actor = currentSettingsOwner();
+    if (record.actor_id !== actor) return;
+    var api = window.DcatsHanbaiohBackupEnrollmentApi;
+    if (!api || typeof api.issue !== "function") {
+      backupStatusKey = "backupUnavailable";
+      updateBackupEnrollment();
+      return;
+    }
+    var token = ++backupToken;
+    backupPending = true;
+    backupStatusKey = "backupWorking";
+    updateBackupEnrollment();
+    try {
+      var result = await api.issue(record);
+      if (token !== backupToken || !isSystemAdminSession() || currentSettingsOwner() !== actor) return;
+      if (result && result.error) {
+        var status = Number(result.error.context && result.error.context.status || result.error.status || 0);
+        backupStatusKey = status === 401 || status === 403 ? "backupForbidden" : "backupUnavailable";
+        return;
+      }
+      var data = result && result.data;
+      var expiresAt = data && Date.parse(data.expires_at);
+      if (!data || data.ok !== true || data.device_id !== record.device_id ||
+          typeof data.capability !== "string" || data.capability.length > 4096 ||
+          !/^v2\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{86}$/.test(data.capability) ||
+          !Number.isFinite(expiresAt) || expiresAt <= Date.now() || expiresAt > Date.now() + 61000) {
+        backupStatusKey = "backupUnavailable";
+        return;
+      }
+      backupTicket = data.capability;
+      backupTicketActor = actor;
+      backupExpiresAt = expiresAt;
+      backupStatusKey = "backupReady";
+      backupExpiryTimer = setTimeout(function () {
+        clearBackupEnrollment("backupExpired");
+      }, Math.max(1, expiresAt - Date.now()));
+    } catch (error) {
+      if (token === backupToken) backupStatusKey = "backupUnavailable";
+    } finally {
+      if (token === backupToken) {
+        backupPending = false;
+        updateBackupEnrollment();
+      }
+    }
+  }
+
+  async function copyBackupEnrollment() {
+    if (!isSystemAdminSession() || !backupTicket || currentSettingsOwner() !== backupTicketActor || Date.now() >= backupExpiresAt) {
+      clearBackupEnrollment("backupExpired");
+      return;
+    }
+    var token = backupToken;
+    try {
+      if (!window.navigator.clipboard || typeof window.navigator.clipboard.writeText !== "function") throw new Error("copy_unavailable");
+      await window.navigator.clipboard.writeText(backupTicket);
+      if (token === backupToken) backupStatusKey = "backupCopied";
+    } catch (error) {
+      if (token === backupToken) backupStatusKey = "backupCopyFailed";
+    }
+    updateBackupEnrollment();
   }
 
   async function runWindowsBridgeRequest(command, args, workingKey) {
@@ -1685,6 +1858,7 @@
 
   function closePanel(restoreFocus) {
     if (!panelOpen) return;
+    clearBackupEnrollment();
     var focusTarget = panelReturnFocus;
     panelReturnFocus = null;
     panelOpen = false;
