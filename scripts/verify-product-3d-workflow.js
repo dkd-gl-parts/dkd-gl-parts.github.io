@@ -22,8 +22,8 @@ function requireText(source, fragment, label) {
   "product-3d-guide-canvas",
   "product-3d-video-supplement",
   "product-3d-viewer-overlay",
-  "data-product-media=\"model\"",
-  "product-3d.js?v=1.1.1068"
+  "data-product-media-pane=\"model\"",
+  "product-3d.js?v=1.1.1069"
 ].forEach((fragment) => requireText(html, fragment, "3D UI contract"));
 
 [
@@ -95,7 +95,7 @@ if (client.includes('return kind === "aftermarket_new" ? kind : "rebuilt"')) thr
 [
   "customer-product-3d-list",
   "production-product-3d-list",
-  "data-product-media='model'",
+  "data-product-media-pane='model'",
   "data-dkd-id='",
   "function canManageProduct3D()",
   "function canPublishProduct3D()",
@@ -108,6 +108,10 @@ if (client.includes('return kind === "aftermarket_new" ? kind : "rebuilt"')) thr
   "syncProductMediaActionAccess(\"sales\")",
   "syncProductMediaActionAccess(\"production\")"
 ].forEach((fragment) => requireText(app, fragment, "3D application integration"));
+
+if (/data-product-media=["']model["']/.test(html + app)) {
+  throw new Error("Product 3D model tabs must stay absent until development and display settings are complete");
+}
 
 [
   "OrbitControls",

@@ -111,15 +111,14 @@ const productionDetailSource = sourceBetween(app, "async function renderProducti
   'productionKv(t("production_core_part_number")',
   'productionKv(t("production_pallet")',
   't("production_media_label")',
-  't("product_3d_photos")',
-  't("product_3d_model")'
+  't("product_3d_photos")'
 ].forEach((fragment) => requireFragment(productionDetailSource, fragment, "localized production detail"));
 
 const productionImagesSource = sourceBetween(app, "function renderProductionImages", "function salesImageKinds");
 requireFragment(productionImagesSource, 'tf("image_count", { n: images.length })', "localized production image count");
 requireFragment(html, 'data-i18n="production_detail_title"', "localized production detail title");
 
-requireFragment(html, 'content="v1.1.1068"', "release version");
-requireFragment(app, 'var APP_VERSION       = "v1.1.1068"', "runtime version");
+requireFragment(html, 'content="v1.1.1069"', "release version");
+requireFragment(app, 'var APP_VERSION       = "v1.1.1069"', "runtime version");
 
 console.log("Component language switching verified.");
