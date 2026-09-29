@@ -4269,7 +4269,7 @@ body.app-install-dialog-open { overflow: hidden; }
 .customer-catalog-availability-metric strong { display: inline-block; margin-top: 3px; overflow-wrap: anywhere; color: #17231f; font-size: 20px; line-height: 1.25; letter-spacing: 0; }
 .customer-catalog-availability-metric.stock strong { font-size: 28px; font-variant-numeric: tabular-nums; }
 .customer-catalog-availability-metric small { margin-left: 4px; color: #68756f; font-size: 10px; font-weight: 700; }
-.customer-catalog-availability-metric .customer-catalog-stock-breakdown { display: block; margin: 5px 0 0; line-height: 1.4; white-space: normal; }
+.customer-catalog-availability-metric .customer-catalog-stock-breakdown { display: block; margin: 5px 0 0; line-height: 1.4; white-space: normal; word-break: keep-all; }
 .customer-catalog-detail-section { margin-top: 28px; }
 .customer-catalog-detail-section h3 { margin-bottom: 10px; color: #34433d; font-size: 14px; letter-spacing: 0; }
 .customer-catalog-detail-section .vehicle-table { min-width: 720px; }

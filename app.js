@@ -243,7 +243,7 @@ var TRANSLATIONS = {
     customer_catalog_price_none: "価格はお問い合わせください",
     customer_catalog_stock_price_title: "在庫・販売価格",
     customer_catalog_stock_qty: "受注可能数",
-    customer_catalog_stock_unit: "個",
+    customer_catalog_stock_unit: "台",
     customer_catalog_stock_breakdown: "自品番 {exact} / 互換 {compatible}",
     customer_catalog_vehicle_list: "車両情報一覧",
     customer_order_title: "注文手続き",
@@ -4807,7 +4807,7 @@ var TRANSLATIONS = {
     customer_catalog_price_none: "价格请联系我们",
     customer_catalog_stock_price_title: "库存与销售价格",
     customer_catalog_stock_qty: "可订购数量",
-    customer_catalog_stock_unit: "件",
+    customer_catalog_stock_unit: "台",
     customer_catalog_stock_breakdown: "本品号 {exact} / 兼容品 {compatible}",
     customer_catalog_vehicle_list: "车辆信息一览",
     customer_order_title: "订单办理",
@@ -7054,7 +7054,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1066";
+var APP_VERSION       = "v1.1.1068";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -11154,12 +11154,12 @@ async function fetchCustomerOrderStockAvailabilityMap(products, kinds) {
 function customerCatalogAvailabilityKindHtml(product, kind, availability, price, showPrice, variantRows) {
   var stockQty = availability ? availability.total_available_qty : null;
   var stockText = stockQty == null ? "-" : String(stockQty);
-  var stockBreakdown = availability
+  var stockBreakdown = availability && Number(availability.exact_available_qty) === 0 && Number(availability.compatible_available_qty) > 0
     ? tf("customer_catalog_stock_breakdown", {
         exact: availability.exact_available_qty,
         compatible: availability.compatible_available_qty
       })
-    : t("customer_order_stock_unavailable");
+    : (availability ? "" : t("customer_order_stock_unavailable"));
   var priceText = price == null ? t("customer_catalog_price_none") : customerOrderCurrency(price);
   var orderKey = customerOrderCartKey(productDkdId(product), kind);
   var orderAdded = customerOrderCart.some(function(item) { return item.key === orderKey; });
@@ -11177,7 +11177,7 @@ function customerCatalogAvailabilityKindHtml(product, kind, availability, price,
   return "<div class='customer-catalog-availability-kind " + esc(productKindClass(kind)) + "'>" +
     "<div class='customer-catalog-availability-kind-title'>" + esc(customerProductKindLabel(kind)) + "</div>" +
     "<div class='customer-catalog-availability-metrics" + (showPrice ? "" : " stock-only") + "'>" +
-      "<div class='customer-catalog-availability-metric stock'><span>" + esc(t("customer_catalog_stock_qty")) + "</span><strong>" + esc(stockText) + "</strong><small>" + esc(t("customer_catalog_stock_unit")) + "</small><small class='customer-catalog-stock-breakdown'>" + esc(stockBreakdown) + "</small></div>" +
+      "<div class='customer-catalog-availability-metric stock'><span>" + esc(t("customer_catalog_stock_qty")) + "</span><strong>" + esc(stockText) + "</strong><small>" + esc(t("customer_catalog_stock_unit")) + "</small>" + (stockBreakdown ? "<small class='customer-catalog-stock-breakdown'>" + esc(stockBreakdown) + "</small>" : "") + "</div>" +
       (showPrice ? "<div class='customer-catalog-availability-metric price'><span>" + esc(t("customer_portal_price_display")) + "</span><strong>" + esc(priceText) + "</strong></div>" : "") +
     "</div>" +
     renderCoreReturnPolicyHtml(kind, variantRows, { compact: true, showTitle: false }) +
@@ -11204,7 +11204,7 @@ function renderCustomerCatalogDetailBase(product) {
   var imageHtml = settings.show_product_images
     ? "<div class='customer-product-media'><div class='product-media-switch customer-product-media-switch' role='tablist' aria-label='商品メディア'>" +
         "<button class='product-media-switch-btn active' type='button' role='tab' aria-selected='true' data-product-media='photos' data-product-media-context='customer'>写真</button>" +
-        "<button class='product-media-switch-btn' type='button' role='tab' aria-selected='false' data-product-media='model' data-product-media-context='customer'>3Dモデル</button></div>" +
+        "</div>" +
         "<div class='customer-catalog-images' id='customer-catalog-images' data-product-media-pane='photos' data-product-media-context='customer'><div class='customer-catalog-image-main'>" + esc(t("img_loading")) + "</div></div>" +
         "<div class='product-3d-detail-pane' id='customer-product-3d-pane' data-product-media-pane='model' data-product-media-context='customer' hidden><div class='product-3d-model-list' id='customer-product-3d-list'></div></div></div>"
     : "";
@@ -22900,7 +22900,7 @@ async function renderProductionDetail(row) {
   html += renderProductionCorePolicies(detail.productVariants);
   html += "</section>";
   html += "<section class='production-section production-image-panel'><div class='production-section-heading'><h3 class='production-image-title'>" + esc(t("production_images_section")) + "</h3></div>";
-  html += "<div class='product-media-switch' role='tablist' aria-label='" + esc(t("production_media_label")) + "'><button class='product-media-switch-btn active' type='button' role='tab' aria-selected='true' data-product-media='photos' data-product-media-context='production'>" + esc(t("product_3d_photos")) + "</button><button class='product-media-switch-btn' type='button' role='tab' aria-selected='false' data-product-media='model' data-product-media-context='production'>" + esc(t("product_3d_model")) + "</button></div>";
+  html += "<div class='product-media-switch' role='tablist' aria-label='" + esc(t("production_media_label")) + "'><button class='product-media-switch-btn active' type='button' role='tab' aria-selected='true' data-product-media='photos' data-product-media-context='production'>" + esc(t("product_3d_photos")) + "</button></div>";
   html += "<div data-product-media-pane='photos' data-product-media-context='production'><div class='production-image-groups' id='production-image-groups'>" + productionImageKinds().map(productionImageGroupShellHtml).join("") + "</div></div>";
   html += "<div class='product-3d-detail-pane' data-product-media-pane='model' data-product-media-context='production' hidden><div class='product-3d-model-list' id='production-product-3d-list'></div></div>";
   html += "</section>";
@@ -37715,8 +37715,8 @@ function coreReturnPolicyForKind(kind, rows) {
 }
 
 function coreReturnChargeText(policy) {
-  if (!policy || !policy.required) return "¥0";
-  return policy.hasProductCharge ? "¥" + formatYen(policy.charge) : t("core_charge_unset");
+  if (!policy || !policy.required || !policy.hasProductCharge || !(policy.charge > 0)) return "";
+  return "¥" + formatYen(policy.charge);
 }
 
 function renderCoreReturnPolicyHtml(kind, rows, options) {

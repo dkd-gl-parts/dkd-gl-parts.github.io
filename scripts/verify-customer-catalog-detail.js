@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const vm = require("vm");
 
 const source = fs.readFileSync(path.resolve(__dirname, "..", "app.js"), "utf8");
 const html = fs.readFileSync(path.resolve(__dirname, "..", "index.html"), "utf8");
@@ -134,7 +135,35 @@ const availabilityHtmlSource = functionSource("customerCatalogAvailabilityKindHt
 if (!availabilityHtmlSource.includes("customerProductKindLabel(kind)") ||
     !availabilityHtmlSource.includes("availability.total_available_qty") ||
     !availabilityHtmlSource.includes('tf("customer_catalog_stock_breakdown"')) {
-  throw new Error("customer catalog must show the customer-facing kind and exact/compatible available-stock breakdown");
+  throw new Error("customer catalog must show the customer-facing kind and support the compatible-stock breakdown");
+}
+
+if (!source.includes('customer_catalog_stock_unit: "台"')) {
+  throw new Error("Japanese catalog stock quantities must use 台");
+}
+const stockSandbox = {
+  t: (key) => key === "customer_catalog_stock_unit" ? "台" : key,
+  tf: (key, values) => `自品番 ${values.exact} / 互換 ${values.compatible}`,
+  esc: (value) => String(value),
+  productDkdId: () => 1,
+  customerOrderCartKey: () => "1:rebuilt",
+  customerOrderCart: [],
+  canOpenCustomerOrdering: () => true,
+  customerOrderCurrency: (value) => "¥" + value,
+  productKindClass: (kind) => kind,
+  customerProductKindLabel: (kind) => kind,
+  renderCoreReturnPolicyHtml: () => ""
+};
+vm.runInNewContext(`${availabilityHtmlSource}; result = customerCatalogAvailabilityKindHtml;`, stockSandbox);
+for (const [exact, compatible, showBreakdown] of [[3, 0, false], [3, 2, false], [0, 0, false], [0, 2, true]]) {
+  const markup = stockSandbox.result({}, "rebuilt", { exact_available_qty: exact, compatible_available_qty: compatible, total_available_qty: exact + compatible }, 15500, true, []);
+  if (markup.includes("customer-catalog-stock-breakdown") !== showBreakdown || !markup.includes("<small>台</small>")) {
+    throw new Error(`Catalog stock display is incorrect for exact=${exact}, compatible=${compatible}`);
+  }
+}
+const unavailableMarkup = stockSandbox.result({}, "rebuilt", null, null, true, []);
+if (!unavailableMarkup.includes("customer_order_stock_unavailable") || !unavailableMarkup.includes(" disabled")) {
+  throw new Error("Failed stock lookup must preserve the unavailable message and disable ordering");
 }
 
 const customerKindLabelSource = functionSource("customerProductKindLabel", "function productKindClass");
