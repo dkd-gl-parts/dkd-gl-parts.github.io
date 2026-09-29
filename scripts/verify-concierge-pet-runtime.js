@@ -1030,6 +1030,52 @@ notifyObservers();
 assert(!root.hidden, "Concierge did not return after restoring the system-admin role");
 
 activeScreen.id = "screen-login";
+// Dedicated login never uses the ordinary capability endpoint, never displays
+// credentials/vendor observations, and cannot retry an uncertain submission.
+documentObject.documentElement.lang = "ja";
+api.openSettings();
+const loginButton = byClass("dcats-concierge-bridge-button").find(element => element.id === "dcats-concierge-login-submit");
+const loginStatus = byClass("dcats-concierge-bridge-status").find(element => element.id === "dcats-concierge-login-status");
+assert(loginButton && loginStatus && loginButton.disabled, "Login requires a device file");
+activeScreen.id = "screen-menu";
+notifyObservers();
+api.openSettings();
+const loginRecord = { ...reviewRecord, actor_id: windowObject.currentUser.id };
+reviewFileInput.files = [{ name:"device.enrollment.json",size:JSON.stringify(loginRecord).length,text:async()=>JSON.stringify(loginRecord) }];
+dispatch(reviewFileInput.listeners,"change",{target:reviewFileInput});
+await new Promise(resolve=>setImmediate(resolve));
+const loginRequests=[];
+const sealed = { version:1,iv:"AQID",ciphertext:"AQID",wrappedKey:"AQID" };
+windowObject.DcatsHanbaiohLoginApi = { issue:async(record,id)=>{
+  loginRequests.push({record,id});
+  return {data:{ok:true,request_id:id,device_id:record.device_id,expires_at:Math.floor(Date.now()/1000)+60,
+    capability:"v2.synthetic.signature",envelope:sealed},error:null};
+}};
+bridgeResponseFactory = request=>({id:request.id,command:request.command,ok:true,
+  data:{status:"ui_login_verified",code:"HANBAIOH_CONTROLLED_UI_LOGIN_VERIFIED"}});
+const ordinaryBefore=capabilityRequests.length;
+dispatch(loginButton.listeners,"click",{target:loginButton});
+dispatch(loginButton.listeners,"click",{target:loginButton});
+await new Promise(resolve=>setImmediate(resolve));
+assert(loginRequests.length===1 && capabilityRequests.length===ordinaryBefore && loginButton.disabled,
+  "Login must issue once through its dedicated API");
+assert(loginStatus.textContent.includes("送信前後") && loginStatus.classList.contains("is-success"),"Controlled verification missing");
+assert(!JSON.stringify(Array.from(storage.values())).includes("v2.synthetic"),"Login ticket persisted");
+dispatch(documentObject.listeners,"keydown",{key:"Escape"});
+api.openSettings();
+assert(loginButton.disabled,"Closing/reopening must not permit another login attempt");
+windowObject.currentUser={id:"login-new-owner"};notifyObservers();api.openSettings();
+const secondRecord={...loginRecord,actor_id:windowObject.currentUser.id};
+reviewFileInput.files=[{name:"device.enrollment.json",size:JSON.stringify(secondRecord).length,text:async()=>JSON.stringify(secondRecord)}];
+dispatch(reviewFileInput.listeners,"change",{target:reviewFileInput});
+await new Promise(resolve=>setImmediate(resolve));
+bridgeResponseFactory=request=>({id:request.id,command:request.command,ok:true,
+  data:{status:"pilot_identity_matched",code:"HANBAIOH_DISPLAY_NAME_MATCHED",guidance:{message:"DO-NOT-ECHO"}}});
+dispatch(loginButton.listeners,"click",{target:loginButton});
+await new Promise(resolve=>setImmediate(resolve));
+assert(loginButton.disabled && !loginStatus.classList.contains("is-success") && loginStatus.textContent.includes("再送信せず") &&
+  !loginStatus.textContent.includes("DO-NOT-ECHO"),"Display-name-only or raw guidance became success");
+activeScreen.id = "screen-login";
 notifyObservers();
 assert(root.hidden, "Concierge must be hidden on the login screen");
 
