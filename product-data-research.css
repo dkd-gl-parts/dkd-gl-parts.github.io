@@ -1,0 +1,22 @@
+.product-data-research { border: 1px solid #d4dfeb; border-radius: 12px; padding: 20px; width: min(880px, calc(100vw - 32px)); max-height: 90vh; overflow: auto; color: #13233a; box-sizing: border-box; }
+.product-data-research::backdrop { background: rgb(0 0 0 / 40%); }
+.product-data-research header, .pdr-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.product-data-research h2 { margin: 0; font-size: 20px; }
+.product-data-research h3 { font-size: 16px; margin: 16px 0 10px; }
+.product-data-research p { line-height: 1.6; overflow-wrap: anywhere; }
+.pdr-notice, #pdr-gate { background: #fff4db; border: 1px solid #edcf8e; border-radius: 6px; padding: 10px; }
+.pdr-actions { justify-content: flex-start; margin: 10px 0; }
+.pdr-actions a { color: #1256ae; padding: 8px; }
+.product-data-research input:not([type=checkbox]), .product-data-research select, .product-data-research textarea { width: 100%; box-sizing: border-box; border: 1px solid #c1cddd; border-radius: 5px; padding: 8px; font: inherit; min-width: 0; }
+.pdr-actions input { flex: 1; min-width: 180px !important; }
+.product-data-research button { cursor: pointer; padding: 8px 12px; white-space: normal; }
+.product-data-research button:disabled { cursor: not-allowed; opacity: .55; }
+.product-data-research section + section { border-top: 1px solid #d4dfeb; margin-top: 20px; padding-top: 8px; }
+.pdr-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.pdr-fields label { display: grid; gap: 6px; }
+.pdr-confirm { display: flex; gap: 8px; align-items: flex-start; margin: 16px 0; line-height: 1.6; }
+.pdr-result { display: grid; gap: 6px; padding: 12px; margin: 8px 0; border: 1px solid #d4dfeb; border-radius: 6px; overflow-wrap: anywhere; }
+.pdr-result button { justify-self: start; }
+#pdr-results { max-height: 320px; overflow: auto; }
+#pdr-save-status { color: #9b2300; }
+@media (max-width: 600px) { .product-data-research { padding: 14px; } .pdr-fields { grid-template-columns: 1fr; } .pdr-actions { align-items: stretch; } .pdr-actions button { max-width: 100%; } }

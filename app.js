@@ -7054,7 +7054,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1064";
+var APP_VERSION       = "v1.1.1065";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -30136,20 +30136,32 @@ function renderManufacturingCostCandidateRow(product, checkedDefault, currentIds
 
 function renderManufacturingCostImportCandidateGroups(groups, checkedDefault, currentIds) {
   groups = groups || [];
-  var matchedGroups = groups.filter(function(group) { return (group.matchCount || 0) > 0; });
-  var missingGroups = groups.filter(function(group) { return (group.matchCount || 0) === 0; });
+  var resolvedGroups = groups.filter(function(group) {
+    return (group.candidates || []).some(function(product) { return !!currentIds[String(productDkdId(product))]; });
+  });
+  var pendingGroups = groups.filter(function(group) { return resolvedGroups.indexOf(group) < 0; });
+  var matchedGroups = pendingGroups.filter(function(group) { return (group.matchCount || 0) > 0; });
+  var missingGroups = pendingGroups.filter(function(group) { return (group.matchCount || 0) === 0; });
   var html = "<div class='manufacturing-cost-import-result-summary'>" + esc(tf("manufacturing_cost_import_result_summary", {
     parts: groups.length,
-    matched: matchedGroups.length,
-    candidates: manufacturingCostCandidateRows.length,
+    matched: groups.length - missingGroups.length,
+    candidates: pendingManufacturingCostCandidateProducts().length,
     missing: missingGroups.length
   })) + "</div>";
+  if (resolvedGroups.length) {
+    html += "<details class='manufacturing-cost-import-result-summary'><summary>紐づけ済み " + resolvedGroups.length + " 品番（未決定候補から除外）</summary>";
+    resolvedGroups.forEach(function(group) {
+      var ids = (group.candidates || []).filter(function(p) { return currentIds[String(productDkdId(p))]; }).map(function(p) { return "DKD " + productDkdId(p); });
+      html += "<div>" + esc(group.token) + " → " + esc(ids.join(" / ")) + "</div>";
+    });
+    html += "<p>決定済み商品は下の原価計算対象に保持しています。取り消す場合は対象リストの削除画面を使用してください。</p></details>";
+  }
   if (missingGroups.length) {
     html += "<section class='manufacturing-cost-import-unregistered'>";
-    html += "<div><strong>" + esc(tf("manufacturing_cost_import_unregistered_title", { n: missingGroups.length })) + "</strong><span>" + esc(t("manufacturing_cost_import_unregistered_note")) + "</span></div>";
+    html += "<div><strong>完全一致なし・要調査 " + missingGroups.length + " 品番</strong><span>カテゴリ・表示条件・別品番を確認してください。必要情報が揃わない品番はマスタ登録・在庫登録できません。</span></div>";
     html += "<div class='manufacturing-cost-import-unregistered-list'>";
     missingGroups.forEach(function(group) {
-      html += "<span>" + esc(group.token) + "</span>";
+      html += "<button type='button' class='btn-secondary' data-cost-research-token='" + esc(group.token) + "'>" + esc(group.token) + "：不足データを探す</button>";
     });
     html += "</div></section>";
   }
@@ -30168,6 +30180,53 @@ function renderManufacturingCostImportCandidateGroups(groups, checkedDefault, cu
   return html;
 }
 
+function pendingManufacturingCostCandidateProducts() {
+  var currentIds = manufacturingCostCurrentProductIdMap();
+  if (manufacturingCostCandidateMode !== "import") {
+    return (manufacturingCostCandidateRows || []).filter(function(p) { return !currentIds[String(productDkdId(p))]; });
+  }
+  var ids = {};
+  (manufacturingCostCandidateGroups || []).forEach(function(group) {
+    if ((group.candidates || []).some(function(p) { return currentIds[String(productDkdId(p))]; })) return;
+    (group.candidates || []).forEach(function(p) { ids[String(productDkdId(p))] = true; });
+  });
+  return (manufacturingCostCandidateRows || []).filter(function(p) { return ids[String(productDkdId(p))]; });
+}
+
+async function openManufacturingCostProductResearch(token) {
+  var context = manufacturingCostImportSearchContext;
+  if (!context || !canViewManufacturingCostMgmt() || !window.DcatsProductResearch) return;
+  await window.DcatsProductResearch.open({
+    token: token,
+    category: (document.getElementById("manufacturing-cost-category") || {}).value || "",
+    onResolved: async function(product) {
+      if (context !== manufacturingCostImportSearchContext) throw new Error("取込条件が変わりました。元のファイルを再照合してください。");
+      if (!filterVisibleProducts([product]).length) throw new Error("この商品は現在の表示対象外です。表示条件を確認して再照合してください。");
+      var category = (document.getElementById("manufacturing-cost-category") || {}).value || "";
+      if (category && (product.category_code || product.category) !== category) throw new Error("カテゴリが異なります。条件を変更して再照合してください。");
+      var group = manufacturingCostCandidateGroups.find(function(g) { return normalizePartQuery(g.token) === normalizePartQuery(token); });
+      if (!group) throw new Error("取込品番が見つかりません。再照合してください。");
+      if (!(group.candidates || []).some(function(p) { return String(productDkdId(p)) === String(productDkdId(product)); })) {
+        group.candidates = (group.candidates || []).concat([product]);
+        group.matchCount = group.candidates.length;
+      }
+      if (!manufacturingCostCandidateRows.some(function(p) { return String(productDkdId(p)) === String(productDkdId(product)); })) manufacturingCostCandidateRows.push(product);
+      await loadManufacturingCostCandidateStatuses(manufacturingCostCandidateRows);
+      if (context !== manufacturingCostImportSearchContext) throw new Error("取込条件が変わりました。再照合してください。");
+      renderManufacturingCostCandidates(manufacturingCostCandidateRows, "import");
+      setManufacturingCostListStatus("再照合しました。候補を選択して原価計算が成功すると、未決定一覧から消えます。", false);
+    }
+  });
+}
+
+function manufacturingCostImportPartNumbersForRow(row) {
+  var saved = ((manufacturingCostListItemSnapshotMap || {})[String(row.productId)] || {}).import_part_numbers || [];
+  var current = manufacturingCostCandidateMode === "import" ? manufacturingCostCandidateGroups.filter(function(group) {
+    return (group.candidates || []).some(function(candidate) { return String(productDkdId(candidate)) === String(row.productId); });
+  }).map(function(group) { return group.token; }) : [];
+  return manufacturingCostTokens(saved.concat(current).join(" "));
+}
+
 function renderManufacturingCostCandidates(products, mode, groups) {
   manufacturingCostCandidateRows = products || [];
   manufacturingCostCandidateMode = mode || "";
@@ -30181,9 +30240,10 @@ function renderManufacturingCostCandidates(products, mode, groups) {
   }
   var checkedDefault = mode === "category" || manufacturingCostCandidateRows.length === 1;
   var currentIds = manufacturingCostCurrentProductIdMap();
+  var pendingProducts = pendingManufacturingCostCandidateProducts();
   var html = "<div class='manufacturing-cost-candidate-panel'>";
   html += "<div class='manufacturing-cost-section-head'>";
-  html += "<div><div class='manufacturing-cost-section-title'><span class='manufacturing-cost-section-badge candidate'>" + esc(t("manufacturing_cost_candidate_badge")) + "</span><strong>" + esc(t("manufacturing_cost_candidate_title")) + "</strong><span>" + esc(tf("manufacturing_cost_candidate_count", { n: manufacturingCostCandidateRows.length })) + "</span></div>";
+  html += "<div><div class='manufacturing-cost-section-title'><span class='manufacturing-cost-section-badge candidate'>" + esc(t("manufacturing_cost_candidate_badge")) + "</span><strong>" + esc(t("manufacturing_cost_candidate_title")) + "</strong><span>" + esc(tf("manufacturing_cost_candidate_count", { n: pendingProducts.length })) + "</span></div>";
   html += "<div class='manufacturing-cost-section-note'>" + esc(t(manufacturingCostCandidateMode === "import" ? "manufacturing_cost_import_exact_note" : "manufacturing_cost_candidate_note")) + "</div></div>";
   html += "<div class='manufacturing-cost-candidate-actions'>";
   html += "<button class='btn-secondary' type='button' data-cost-select-all='1'>" + esc(t("manufacturing_cost_select_all")) + "</button>";
@@ -30194,7 +30254,7 @@ function renderManufacturingCostCandidates(products, mode, groups) {
     html += renderManufacturingCostImportCandidateGroups(manufacturingCostCandidateGroups, checkedDefault, currentIds);
   } else {
     html += "<div class='manufacturing-cost-candidate-list'>";
-    manufacturingCostCandidateRows.forEach(function(product) {
+    pendingProducts.forEach(function(product) {
       html += renderManufacturingCostCandidateRow(product, checkedDefault, currentIds);
     });
     html += "</div>";
@@ -30801,15 +30861,18 @@ async function calculateSelectedManufacturingCost() {
   if (list) list.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
   if (countEl) countEl.textContent = t("loading");
   if (summaryEl) summaryEl.innerHTML = "";
+  var previousRows = manufacturingCostRows;
+  var previousComponents = manufacturingCostComponentMap;
   try {
     await buildAndRenderManufacturingCostProducts(mergeManufacturingCostProducts(products), manufacturingCostSettings());
     renderManufacturingCostCandidates(manufacturingCostCandidateRows, manufacturingCostCandidateMode);
   } catch (e) {
     console.warn("manufacturing cost calculation failed", e);
-    manufacturingCostRows = [];
-    manufacturingCostComponentMap = {};
-    if (countEl) countEl.textContent = "";
-    if (list) list.innerHTML = "<div class='empty'>" + esc(t("msg_part_err") + ": " + ((e && e.message) || String(e))) + "</div>";
+    manufacturingCostRows = previousRows;
+    manufacturingCostComponentMap = previousComponents;
+    renderManufacturingCostRows();
+    renderManufacturingCostCandidates(manufacturingCostCandidateRows, manufacturingCostCandidateMode);
+    setManufacturingCostListStatus(t("msg_part_err") + ": " + ((e && e.message) || String(e)), true);
   }
 }
 
@@ -30909,6 +30972,7 @@ async function saveManufacturingCostList() {
       list_id: listId,
       dkd_shohin_id: row.productId,
       sort_order: idx + 1,
+      import_part_numbers: manufacturingCostImportPartNumbersForRow(row),
       part_number_snapshot: p.manufacturer_part_number || null,
       genuine_part_number_snapshot: p.genuine_part_number || null,
       manufacturer_snapshot: p.manufacturer || null,
@@ -54855,6 +54919,10 @@ document.getElementById("manufacturing-cost-query").addEventListener("input", cl
 document.getElementById("manufacturing-cost-query").addEventListener("keydown", function(e){ if(e.key==="Enter") searchManufacturingCostCandidates(); });
 document.addEventListener("dcats:manufacturing-cost-import-search", function(e) {
   setManufacturingCostImportSearchContext(e && e.detail);
+});
+document.getElementById("manufacturing-cost-candidates").addEventListener("click", function(e) {
+  var button = e.target.closest("[data-cost-research-token]");
+  if (button) openManufacturingCostProductResearch(button.dataset.costResearchToken);
 });
 document.getElementById("btn-manufacturing-cost-category-core-open").addEventListener("click", openManufacturingCostCategoryCoreSettings);
 document.getElementById("btn-manufacturing-cost-category-core-close").addEventListener("click", closeManufacturingCostCategoryCoreSettings);
