@@ -34,7 +34,7 @@
     byId("cpr-detail-heading").hidden = true;
     byId("cpr-preview-table").dataset.cprView = "included";
     byId("cpr-detail-column").textContent = "税抜価格";
-    byId("cpr-preview-rows").innerHTML = "<tr><td colspan='5' class='cpr-empty'>条件を指定してプレビューを更新してください。</td></tr>";
+    byId("cpr-preview-rows").innerHTML = "<tr><td colspan='7' class='cpr-empty'>条件を指定してプレビューを更新してください。</td></tr>";
     setStatus(message || "条件を指定してプレビューを更新してください。", false);
   }
 
@@ -87,8 +87,10 @@
         "<td class='cpr-g-part-number'>" + safe(row.gltek_part_number || "—") + "</td>" +
         "<td>" + safe(row.genuine_part_number || "—") + "</td>" +
         "<td>" + safe(row.manufacturer_part_number || "—") + "</td>" +
+        "<td class='cpr-vehicle-name'>" + safe(row.representative_vehicle_name) + "</td>" +
+        "<td class='cpr-vehicle-model'>" + safe(row.representative_vehicle_model) + "</td>" +
         "<td>" + detail + "</td></tr>";
-    }).join("") : "<tr><td colspan='5' class='cpr-empty'>" +
+    }).join("") : "<tr><td colspan='7' class='cpr-empty'>" +
       (view === "excluded" ? "除外された品番はありません。" : view === "candidate" ? "候補品番はありません。" : "掲載できる価格がありません。") + "</td></tr>";
     setStatus(view === "excluded" ? "PDFに掲載しない品番と理由を表示しています。" :
       view === "candidate" ? "候補の品番と掲載判定を表示しています。" :
@@ -174,11 +176,13 @@
           "<span class='secondary'>" + safe(kindLabel(row.product_kind)) + "</span></td><td class='g-part-number'>" +
           safe(row.gltek_part_number || "—") + "</td><td>" + safe(row.genuine_part_number || "—") +
           (row.genuine_part_number_2 ? "<span class='secondary'>" + safe(row.genuine_part_number_2) + "</span>" : "") +
-          "</td><td>" + safe(row.manufacturer_part_number || "—") + "</td><td class='price'>" +
+          "</td><td>" + safe(row.manufacturer_part_number || "—") + "</td>" +
+          "<td class='vehicle-name'>" + safe(row.representative_vehicle_name) + "</td>" +
+          "<td class='vehicle-model'>" + safe(row.representative_vehicle_model) + "</td><td class='price'>" +
           safe(yen(row.sales_price_jpy)) + "</td></tr>";
       }).join("");
       return "<section class='category-section'><h2 class='category-heading'>" + safe(group.label) + "</h2>" +
-        "<table class='price-list'><thead><tr><th>カテゴリ・区分</th><th>G品番</th><th>純正品番</th><th>メーカー品番</th><th>販売価格</th></tr></thead><tbody>" +
+        "<table class='price-list'><thead><tr><th>カテゴリ・区分</th><th>G品番</th><th>純正品番</th><th>メーカー品番</th><th>代表車名</th><th>型式</th><th>販売価格</th></tr></thead><tbody>" +
         body + "</tbody></table></section>";
     }).join("");
     return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>" +
