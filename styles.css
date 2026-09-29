@@ -4234,6 +4234,12 @@ body.app-install-dialog-open { overflow: hidden; }
 .customer-catalog-detail-empty { display: grid; place-items: center; align-content: center; min-height: 420px; color: #78847f; text-align: center; }
 .customer-catalog-detail-empty strong { color: #42514b; font-size: 16px; }
 .customer-catalog-detail-empty span { margin-top: 7px; font-size: 12px; }
+.customer-catalog-unavailable { gap: 16px; min-height: 360px; border: 1px solid #dce5e0; border-radius: 12px; padding: 32px 20px; background: #f8faf9; outline: none; }
+.customer-catalog-unavailable .customer-catalog-unavailable-icon { display: grid; place-items: center; width: 48px; height: 48px; margin: 0; border: 1px solid #b8d4c6; border-radius: 50%; background: #eaf3ee; color: #287356; font-family: Georgia, serif; font-size: 28px; font-style: italic; font-weight: 700; }
+.customer-catalog-unavailable h2 { margin: 0; color: #253b30; font-size: 20px; line-height: 1.5; }
+.customer-catalog-unavailable p { max-width: 440px; margin: 0; color: #65736c; font-size: 13px; line-height: 1.8; }
+.customer-catalog-unavailable .btn-primary { margin-top: 6px; background: #256347; }
+.customer-catalog-unavailable .btn-primary:hover { background: #194d36; }
 .customer-catalog-detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding-bottom: 18px; border-bottom: 2px solid #d8e1dd; }
 .customer-catalog-detail-kicker { color: #287356; font-size: 11px; font-weight: 800; }
 .customer-catalog-detail-head h2 { margin-top: 5px; overflow-wrap: anywhere; color: #15211c; font-size: 24px; line-height: 1.3; letter-spacing: 0; }
