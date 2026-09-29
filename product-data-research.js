@@ -13,6 +13,10 @@
     if (!text(product.category_code)) missing.push("カテゴリ");
     if (!text(product.manufacturer) || text(product.manufacturer).length > 80 || /^(不明|未確認|unknown|n\/?a|[-?？])$/i.test(text(product.manufacturer))) missing.push("確認済みメーカー");
     if (!partPattern.test(text(product.genuine_part_number)) && !partPattern.test(text(product.manufacturer_part_number))) missing.push("確認済みの純正品番またはメーカー品番");
+    if (evidence.registration_origin === "manufacturing_cost") {
+      if (!partPattern.test(text(product.genuine_part_number))) missing.push("確認済みの純正品番（製造原価では必須）");
+      if (!partPattern.test(text(product.manufacturer_part_number))) missing.push("確認済みのメーカー品番（製造原価では必須）");
+    }
     if (text(product.genuine_part_number) && !partPattern.test(text(product.genuine_part_number))) missing.push("純正品番の形式");
     if (text(product.manufacturer_part_number) && !partPattern.test(text(product.manufacturer_part_number))) missing.push("メーカー品番の形式");
     if (norm(product.genuine_part_number) && norm(product.genuine_part_number) === norm(product.manufacturer_part_number)) missing.push("純正品番とメーカー品番の区別");
@@ -22,6 +26,20 @@
     if (evidence.identity_confirmed !== true) missing.push("取込品番と同一商品であることの確認");
     if ([matchKey(product.genuine_part_number), matchKey(product.manufacturer_part_number)].indexOf(matchKey(evidence.input_part_number)) < 0) missing.push("取込品番に対応する確認済み品番（品番訂正は取込側で実施）");
     return missing;
+  }
+  function catalogCategoryCode(row) {
+    var aliases = { "starter": "starter", "スタータ": "starter", "スターター": "starter", "セルモータ": "starter", "セルモーター": "starter", "startermotor": "starter",
+      "alternator": "alternator", "オルタネータ": "alternator", "オルタネーター": "alternator", "generator": "generator", "ジェネレータ": "generator",
+      "ac_compressor": "ac_compressor", "accompressor": "ac_compressor", "コンプレッサ": "ac_compressor", "コンプレッサー": "ac_compressor", "acコンプレッサ": "ac_compressor",
+      "injector": "injector", "インジェクター": "injector", "インジェクタ": "injector", "distributor": "distributor", "ディストリビュータ": "distributor" };
+    function key(value) { var s = text(value); return (s.normalize ? s.normalize("NFKC") : s).toLowerCase().replace(/\s+/g, ""); }
+    return aliases[key(row.part_role)] || aliases[key(row.part_name)] || "";
+  }
+  function catalogDescription(row) {
+    var category = catalogCategoryCode(row);
+    return "<dl class='pdr-part-fields'><dt>純正品番</dt><dd>" + escape(row.genuine_part_number || "純正品番なし") +
+      "</dd><dt>メーカー品番</dt><dd>" + escape(row.manufacturer_part_number || "メーカー品番なし") +
+      "</dd><dt>カテゴリ</dt><dd>" + escape(category ? root.tCat(category) : row.part_name || "カテゴリ要確認") + "</dd></dl>";
   }
   function dialog() {
     var host = byId("product-data-research");
@@ -37,14 +55,18 @@
       "<p>Partsfanにはコピーした品番を入力してください。外部サイトの結果は自動登録しません。</p><p id='pdr-search-status' role='status' aria-live='polite'></p><div id='pdr-results'></div></section>" +
       "<section aria-label='確認済み情報による正式登録'><h3>確認した情報で商品マスタへ正式登録</h3><p>既存商品が見つかった場合は新規登録せず、既存商品を再照合します。登録だけでは在庫は増えません。</p>" +
       "<div class='pdr-fields'><label>カテゴリ（必須）<select id='pdr-category'></select></label><label>メーカー（必須）<input id='pdr-manufacturer' maxlength='80' placeholder='不明の場合は登録不可'></label>" +
-      "<label>純正品番<input id='pdr-genuine' maxlength='80' placeholder='確認した品番のみ'></label><label>メーカー品番<input id='pdr-mfr-part' maxlength='80' placeholder='確認した品番のみ'></label>" +
+      "<label><span id='pdr-genuine-label'>純正品番</span><input id='pdr-genuine' maxlength='80' placeholder='確認した品番のみ'></label><label><span id='pdr-mfr-label'>メーカー品番</span><input id='pdr-mfr-part' maxlength='80' placeholder='確認した品番のみ'></label>" +
       "<label>出典の種類（必須）<select id='pdr-source-type'><option value=''>選択してください</option><option value='catalog'>社内カタログ</option><option value='partsfan'>Partsfan</option><option value='web'>ネット検索で確認した資料</option><option value='document'>原票・現物ラベルなど</option></select></label>" +
       "<label>出典URL／資料名・ページ（必須）<textarea id='pdr-source-reference' maxlength='1000' rows='2'></textarea></label></div>" +
-      "<label class='pdr-confirm'><input id='pdr-confirmed' type='checkbox'>取込品番と同一の商品で、メーカー・品番・カテゴリを出典で確認しました（互換候補だけではチェックしない）</label>" +
+      "<p id='pdr-adoption' role='status' aria-live='polite'></p><label class='pdr-confirm'><input id='pdr-confirmed' type='checkbox'>取込品番と同一の商品で、メーカー・品番・カテゴリを出典で確認しました（互換候補だけではチェックしない）</label>" +
       "<p id='pdr-gate' role='status' aria-live='polite'></p><p id='pdr-save-status' role='status' aria-live='polite'></p><div class='pdr-actions'><button type='button' id='pdr-save' class='btn-primary' disabled>正式登録して再照合</button><button type='button' data-pdr-close>要調査のまま閉じる</button></div></section>";
     document.body.appendChild(host);
     function changed(event) {
       if (event.target.id !== "pdr-confirmed" && event.target.id !== "pdr-query") byId("pdr-confirmed").checked = false;
+      if (state.current && state.current.catalogRecordId && ["pdr-genuine", "pdr-mfr-part", "pdr-manufacturer", "pdr-source-type", "pdr-source-reference"].indexOf(event.target.id) >= 0) {
+        state.current.catalogRecordId = null;
+        byId("pdr-adoption").textContent = "選択後に情報を変更しました。出典と同一性を再確認してください。";
+      }
       rememberAndCheck();
     }
     host.addEventListener("input", changed);
@@ -80,13 +102,15 @@
         input_part_number: state.current.token,
         source_type: byId("pdr-source-type").value,
         source_reference: text(byId("pdr-source-reference").value),
+        registration_origin: state.current.origin,
+        catalog_record_id: state.current.catalogRecordId || null,
         identity_confirmed: byId("pdr-confirmed").checked
       }
     };
   }
   function rememberAndCheck() {
     if (!state.current) return;
-    state.drafts.set(state.current.token, productInput());
+    state.drafts.set(state.current.draftKey, productInput());
     var missing = missingFields(productInput());
     var blocked = !state.current.searchOK || state.current.searching || state.current.products.length > 0 || !root.canEdit();
     byId("pdr-gate").textContent = missing.length ? "要調査・登録／在庫登録不可：" + missing.join("、") :
@@ -122,7 +146,7 @@
     try {
       var results = await Promise.all([
         root.fetchCoreProductMasterMatches(query, "", 20, { exactOnly: true }),
-        root.sb.from("catalog_vehicle_applications").select("id,source_name,source_code,source_record_key,catalog_manufacturer,genuine_part_number,manufacturer_part_number,part_name,vehicle_model,engine")
+        root.sb.from("catalog_vehicle_applications").select("id,source_name,source_code,source_record_key,catalog_manufacturer,genuine_part_number,manufacturer_part_number,part_name,part_role,vehicle_model,engine")
           .or("normalized_genuine_part_number.eq." + norm(query) + ",normalized_manufacturer_part_number.eq." + norm(query)).order("id").limit(20)
       ]);
       if (seq !== state.seq || current !== state.current) return;
@@ -135,9 +159,9 @@
       current.products.forEach(function(p, i) {
         html += "<div class='pdr-result'><strong>" + escape(p.genuine_part_number || p.manufacturer_part_number) + "</strong><span>" + escape([p.manufacturer_part_number,p.manufacturer,root.tCat(p.category_code || p.category),"DKD " + p.dkd_shohin_id].filter(Boolean).join(" / ")) + "</span><button type='button' data-pdr-existing='" + i + "'>この既存商品を再照合</button></div>";
       });
-      html += "<h3>カタログ候補 " + current.catalog.length + " 件</h3>";
+      html += "<h3>カタログ候補 " + current.catalog.length + " 行（車種別データを含む）</h3>";
       current.catalog.forEach(function(p, i) {
-        html += "<div class='pdr-result'><strong>" + escape([p.genuine_part_number,p.manufacturer_part_number].filter(Boolean).join(" / ")) + "</strong><span>" + escape([p.catalog_manufacturer,p.part_name,p.vehicle_model,p.engine,p.source_name || p.source_code].filter(Boolean).join(" / ")) + "</span><button type='button' data-pdr-catalog='" + i + "'>確認用入力欄へ（未登録）</button></div>";
+        html += "<div class='pdr-result'>" + catalogDescription(p) + "<span>" + escape([p.catalog_manufacturer,p.vehicle_model,p.engine,p.source_name || p.source_code,"ID " + p.id].filter(Boolean).join(" / ")) + "</span><button type='button' data-pdr-catalog='" + i + "'>このレコードを登録欄に反映（未登録）</button></div>";
       });
       byId("pdr-results").innerHTML = html;
       byId("pdr-search-status").textContent = "検索完了（各先頭20件）。既存商品があれば新規登録せず再照合してください。0件でも未登録とは断定せず、別品番・出典を確認してください。";
@@ -154,9 +178,12 @@
     byId("pdr-genuine").value = row.genuine_part_number || "";
     byId("pdr-mfr-part").value = row.manufacturer_part_number || "";
     byId("pdr-manufacturer").value = row.catalog_manufacturer || "";
+    byId("pdr-category").value = catalogCategoryCode(row);
     byId("pdr-source-type").value = "catalog";
     byId("pdr-source-reference").value = ["catalog_vehicle_applications:" + row.id, row.source_name || row.source_code, row.source_record_key].filter(Boolean).join(" / ");
     byId("pdr-confirmed").checked = false;
+    state.current.catalogRecordId = String(row.id);
+    byId("pdr-adoption").textContent = "選択レコードの保存値を反映しました。純正品番：" + (row.genuine_part_number || "純正品番なし") + "／メーカー品番：" + (row.manufacturer_part_number || "メーカー品番なし") + "／ID " + row.id;
     rememberAndCheck();
   }
   async function resolve(product) {
@@ -183,7 +210,8 @@
     rememberAndCheck();
     byId("pdr-save-status").textContent = "必須情報と重複を確認して正式登録しています（在庫未登録）…";
     try {
-      var result = await root.sb.rpc("register_researched_product", { p_product: payload });
+      var rpcName = current.origin === "manufacturing_cost" ? "register_manufacturing_cost_product" : "register_researched_product";
+      var result = await root.sb.rpc(rpcName, { p_product: payload });
       if (result.error) throw result.error;
       current.registeredId = result.data;
       if (!current.registeredId) throw new Error("登録した商品IDを確認できません。");
@@ -200,8 +228,10 @@
     if (!options || !partPattern.test(text(options.token)) || typeof options.onResolved !== "function") return;
     if (state.saving) return;
     var host = dialog();
-    var draft = state.drafts.get(text(options.token)) || {};
-    state.current = { token: text(options.token), onResolved: options.onResolved, products: [], catalog: [], searchOK: false, searching: false, registeredId: null };
+    var origin = options.origin === "manufacturing_cost" ? "manufacturing_cost" : "research";
+    var draftKey = origin + "|" + text(options.token);
+    var draft = state.drafts.get(draftKey) || {};
+    state.current = { token: text(options.token), origin: origin, draftKey: draftKey, catalogRecordId: null, onResolved: options.onResolved, products: [], catalog: [], searchOK: false, searching: false, registeredId: null };
     var categories = byId("manufacturing-cost-category");
     byId("pdr-category").innerHTML = categories ? categories.innerHTML : "<option value=''>カテゴリを選択</option>";
     var emptyCategory = byId("pdr-category").querySelector("option[value='']");
@@ -217,9 +247,12 @@
     byId("pdr-source-reference").value = (draft.research_registration_evidence || {}).source_reference || "";
     byId("pdr-confirmed").checked = false;
     byId("pdr-save-status").textContent = "";
+    byId("pdr-adoption").textContent = "";
+    byId("pdr-genuine-label").textContent = origin === "manufacturing_cost" ? "純正品番（必須）" : "純正品番";
+    byId("pdr-mfr-label").textContent = origin === "manufacturing_cost" ? "メーカー品番（必須）" : "メーカー品番";
     if (!host.open) host.showModal();
     rememberAndCheck();
     await search();
   }
-  root.DcatsProductResearch = { open: open, missingFields: missingFields, matchKey: matchKey };
+  root.DcatsProductResearch = { open: open, missingFields: missingFields, matchKey: matchKey, catalogCategoryCode: catalogCategoryCode, catalogDescription: catalogDescription };
 })(window);
