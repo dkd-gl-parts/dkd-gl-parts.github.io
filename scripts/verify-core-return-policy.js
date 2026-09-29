@@ -21,7 +21,7 @@ const policySandbox = {
   t(key) { return key; },
   esc(value) { return String(value); }
 };
-vm.runInNewContext(`${policySource}; result = { requiredDefault: coreReturnRequiredDefault, policy: coreReturnPolicyForKind, render: renderCoreReturnPolicyHtml };`, policySandbox);
+vm.runInNewContext(`${policySource}; result = { requiredDefault: coreReturnRequiredDefault, policy: coreReturnPolicyForKind, render: renderCoreReturnPolicyHtml, chargeText: coreReturnChargeText };`, policySandbox);
 
 if (!policySandbox.result.requiredDefault("rebuilt")) throw new Error("rebuilt must require core return by default");
 if (policySandbox.result.requiredDefault("aftermarket_new")) throw new Error("aftermarket new must not require core return by default");
@@ -34,6 +34,20 @@ if (!productionPolicyHtml.includes("core_return_required_label") || productionPo
 const standardPolicyHtml = policySandbox.result.render("rebuilt", [], { compact: true, vertical: true, showTitle: false });
 if (!standardPolicyHtml.includes("core_charge_short")) {
   throw new Error("core charge must remain visible outside manufacturing detail");
+}
+
+for (const kind of ["rebuilt", "aftermarket_new"]) {
+  for (const charge of [null, undefined, "", 0, "0"]) {
+    const rows = [{ product_kind: kind, core_return_required: true, core_charge_jpy: charge }];
+    if (policySandbox.result.chargeText(policySandbox.result.policy(kind, rows)) !== "") {
+      throw new Error("Unset and zero core charges must leave the displayed value blank");
+    }
+  }
+}
+const pricedPolicy = policySandbox.result.policy("rebuilt", [{ product_kind: "rebuilt", core_return_required: true, core_charge_jpy: 4800 }]);
+if (policySandbox.result.chargeText(pricedPolicy) !== "¥4,800" ||
+    policySandbox.result.chargeText(policySandbox.result.policy("aftermarket_new", [])) !== "") {
+  throw new Error("Positive core charges must display yen; no-return products must leave the charge blank");
 }
 
 const costSource = sourceBetween("function manufacturingCostCoreCostForProduct", "function manufacturingCostCoreCostForCategory");
