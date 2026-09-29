@@ -18,6 +18,8 @@ const files = [
   "container-stock-import.js",
   "product-data-research.js",
   "product-data-research.css",
+  "partsfan-research.js",
+  "partsfan-research.css",
   "index.html",
   "label-print-window.js",
   "legacy-i18n.js",
