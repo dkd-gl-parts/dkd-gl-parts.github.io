@@ -7063,7 +7063,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1075";
+var APP_VERSION       = "v1.1.1076";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -22274,7 +22274,25 @@ async function fetchCatalogVehicleApplications(product) {
     console.warn("catalog vehicle applications lookup failed", r.error);
     return [];
   }
-  return r.data || [];
+  var rows = r.data || [];
+  var partsfanIds = rows.filter(function(row) { return row.source_code === "partsfan"; }).map(function(row) { return row.id; });
+  if (partsfanIds.length && window.PartsfanResearch) {
+    var byId = {};
+    try {
+      for (var i = 0; i < partsfanIds.length; i += 300) {
+        var detailResult = await sb.from("catalog_vehicle_applications").select("id,raw_payload").eq("source_code", "partsfan").in("id", partsfanIds.slice(i, i + 300));
+        if (detailResult.error) {
+          console.warn("partsfan vehicle details lookup failed");
+          break;
+        }
+        (detailResult.data || []).forEach(function(detail) { byId[String(detail.id)] = window.PartsfanResearch.details(detail.raw_payload); });
+      }
+    } catch (_) {
+      console.warn("partsfan vehicle details lookup failed");
+    }
+    rows.forEach(function(row) { if (byId[String(row.id)]) row.partsfan_details = byId[String(row.id)]; });
+  }
+  return rows;
 }
 
 function vehicleMakerLabel(value) {
@@ -22757,7 +22775,10 @@ function renderVehicleApplicationsTable(rows) {
     rows = detailRows;
   }
   if (!rows || !rows.length) return "<div class='component-empty'>" + esc(t("vehicle_info_no_data")) + "</div>";
-  var html = "<table class='vehicle-table'><tr><th>" + esc(t("f_vehicle_mfr")) + "</th><th>" + esc(t("f_vehicle_usage")) + "</th><th>" + esc(t("f_machine_model")) + "</th><th>" + esc(t("f_engine")) + "</th><th>" + esc(t("f_period")) + "</th><th>" + esc(t("f_part_number")) + "</th><th>" + esc(t("component_name")) + "</th></tr>";
+  var showPartsfan = !!(window.PartsfanResearch && rows.some(function(row) { return row.source_code === "partsfan"; }));
+  var html = "<table class='vehicle-table'><tr><th>" + esc(t("f_vehicle_mfr")) + "</th><th>" + esc(t("f_vehicle_usage")) + "</th><th>" + esc(t("f_machine_model")) + "</th><th>" + esc(t("f_engine")) + "</th><th>" + esc(t("f_period")) + "</th><th>" + esc(t("f_part_number")) + "</th><th>" + esc(t("component_name")) + "</th>";
+  if (showPartsfan) ["grade", "transmission", "chassis", "source"].forEach(function(key) { html += "<th>" + esc(window.PartsfanResearch.label(key)) + "</th>"; });
+  html += "</tr>";
   rows.forEach(function(row) {
     html += "<tr>";
     html += "<td>" + esc(vehicleMakerLabel(row.vehicle_manufacturer || "-")) + "</td>";
@@ -22767,9 +22788,14 @@ function renderVehicleApplicationsTable(rows) {
     html += "<td>" + esc(row.production_period_text || [row.effective_start, row.effective_end].filter(Boolean).join(" - ") || "-") + "</td>";
     html += "<td><div class='component-pn'>" + esc(row.genuine_part_number || "-") + "</div><div class='component-sub'>" + esc(row.manufacturer_part_number || "") + "</div></td>";
     html += "<td>" + esc(vehicleApplicationPartNameLabel(row.part_name || "-")) + "</td>";
+    if (showPartsfan) {
+      var detail = row.partsfan_details || {};
+      html += "<td>" + esc(detail.grade || "-") + "</td><td>" + esc(detail.transmission || "-") + "</td><td>" + esc(detail.chassis_range || "-") + "</td><td>" + (row.source_code === "partsfan" ? window.PartsfanResearch.sourceHtml(row) : esc(row.source_name || row.source_code || "-")) + "</td>";
+    }
     html += "</tr>";
   });
   html += "</table>";
+  if (showPartsfan) html = "<div class='partsfan-vehicle-table-wrap'>" + html + "</div>";
   return html;
 }
 
@@ -22783,7 +22809,8 @@ function openVehicleApplicationsDialog(rows, product) {
     product && product.genuine_part_number,
     product && product.manufacturer_part_number
   ].filter(Boolean).join(" / ") + " " + t("vehicle_info_note_suffix");
-  body.innerHTML = renderVehicleApplicationsTable(rows || []);
+  body.innerHTML = renderVehicleApplicationsTable(rows || []) + (window.PartsfanResearch ? window.PartsfanResearch.buttonHtml() : "");
+  if (window.PartsfanResearch) window.PartsfanResearch.bind(body, product);
   overlay.classList.add("show");
 }
 
@@ -22803,7 +22830,10 @@ async function loadCatalogVehicleSummary(root, product) {
     currentVehicleApplicationRows = rows;
     updateSalesDetailTabCount("vehicles", detailCount || rows.length);
     var tabContent = document.getElementById("detail-vehicle-tab-content");
-    if (tabContent) tabContent.innerHTML = renderVehicleApplicationsTable(rows);
+    if (tabContent) {
+      tabContent.innerHTML = renderVehicleApplicationsTable(rows) + (window.PartsfanResearch ? window.PartsfanResearch.buttonHtml() : "");
+      if (window.PartsfanResearch) window.PartsfanResearch.bind(tabContent, product);
+    }
   }
   if (valueEl) valueEl.textContent = representativeVehicleMaker(rows);
   if (buttons.length) {
