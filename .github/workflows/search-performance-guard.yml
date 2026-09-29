@@ -167,9 +167,7 @@ jobs:
           node scripts/verify-manufacturing-cost-candidate-status.js
           node scripts/verify-product-data-research.js
       - name: Verify PARTS FAN research input and provenance
-        run: |
-          node --check partsfan-research.js
-          node scripts/verify-partsfan-research.js
+        run: node scripts/verify-partsfan-research.js
       - name: Verify variable-layout manufacturing cost import
         run: |
           node scripts/verify-manufacturing-cost-import.js

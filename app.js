@@ -7063,7 +7063,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1075";
+var APP_VERSION       = "v1.1.1076";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -22278,13 +22278,17 @@ async function fetchCatalogVehicleApplications(product) {
   var partsfanIds = rows.filter(function(row) { return row.source_code === "partsfan"; }).map(function(row) { return row.id; });
   if (partsfanIds.length && window.PartsfanResearch) {
     var byId = {};
-    for (var i = 0; i < partsfanIds.length; i += 300) {
-      var detailResult = await sb.from("catalog_vehicle_applications").select("id,raw_payload").eq("source_code", "partsfan").in("id", partsfanIds.slice(i, i + 300));
-      if (detailResult.error) {
-        console.warn("partsfan vehicle details lookup failed");
-        break;
+    try {
+      for (var i = 0; i < partsfanIds.length; i += 300) {
+        var detailResult = await sb.from("catalog_vehicle_applications").select("id,raw_payload").eq("source_code", "partsfan").in("id", partsfanIds.slice(i, i + 300));
+        if (detailResult.error) {
+          console.warn("partsfan vehicle details lookup failed");
+          break;
+        }
+        (detailResult.data || []).forEach(function(detail) { byId[String(detail.id)] = window.PartsfanResearch.details(detail.raw_payload); });
       }
-      (detailResult.data || []).forEach(function(detail) { byId[String(detail.id)] = window.PartsfanResearch.details(detail.raw_payload); });
+    } catch (_) {
+      console.warn("partsfan vehicle details lookup failed");
     }
     rows.forEach(function(row) { if (byId[String(row.id)]) row.partsfan_details = byId[String(row.id)]; });
   }
@@ -22791,6 +22795,7 @@ function renderVehicleApplicationsTable(rows) {
     html += "</tr>";
   });
   html += "</table>";
+  if (showPartsfan) html = "<div class='partsfan-vehicle-table-wrap'>" + html + "</div>";
   return html;
 }
 

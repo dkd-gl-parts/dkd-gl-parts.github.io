@@ -9,4 +9,5 @@
 .partsfan-research-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 12px 0; }
 .partsfan-research-actions a { font-size: 13px; }
 .partsfan-research-actions a[aria-disabled="true"] { color: #64748b; cursor: default; }
+.partsfan-vehicle-table-wrap { max-width: 100%; overflow-x: auto; }
 @media (max-width: 480px) { .partsfan-research-overlay { padding: 12px; } .partsfan-research-dialog { padding: 18px; max-height: calc(100dvh - 24px); } .partsfan-research-dialog h2 { font-size: 17px; } .partsfan-research-actions > button { max-width: 100%; white-space: normal; } }
