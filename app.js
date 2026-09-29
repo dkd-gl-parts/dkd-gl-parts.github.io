@@ -239,6 +239,7 @@ var TRANSLATIONS = {
     customer_catalog_count: "{n} 件",
     customer_catalog_limit_note: "上位 {n} 件を表示",
     customer_catalog_load_error: "商品を読み込めませんでした",
+    customer_catalog_product_unavailable: "この商品は現在の表示条件では詳細を表示できません",
     customer_catalog_price_note: "この得意先に設定された販売価格です",
     customer_catalog_price_none: "価格はお問い合わせください",
     customer_catalog_stock_price_title: "在庫・販売価格",
@@ -2549,6 +2550,7 @@ var TRANSLATIONS = {
     customer_catalog_count: "{n} items",
     customer_catalog_limit_note: "Showing the first {n} items",
     customer_catalog_load_error: "Products could not be loaded",
+    customer_catalog_product_unavailable: "This product's details are not available under the current display settings",
     customer_catalog_price_note: "Sales price configured for this customer",
     customer_catalog_price_none: "Please contact us for pricing",
     customer_catalog_stock_price_title: "Stock and Sales Price",
@@ -4803,6 +4805,7 @@ var TRANSLATIONS = {
     customer_catalog_count: "{n} 件",
     customer_catalog_limit_note: "显示前 {n} 件",
     customer_catalog_load_error: "无法读取商品",
+    customer_catalog_product_unavailable: "按当前显示设置，无法查看此商品的详情",
     customer_catalog_price_note: "这是为该客户设置的销售价格",
     customer_catalog_price_none: "价格请联系我们",
     customer_catalog_stock_price_title: "库存与销售价格",
@@ -7054,7 +7057,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1070";
+var APP_VERSION       = "v1.1.1072";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -7343,6 +7346,7 @@ var customerCatalogSelectedProduct = null;
 var customerCatalogImageInfo = { counts: {}, thumbnails: {} };
 var customerCatalogRequestSeq = 0;
 var customerCatalogDetailSeq = 0;
+var customerCatalogOpenSeq = 0;
 var customerOrderFeatureStatus = { loaded: false, customer_ordering: false, internal_management: false, reason: "" };
 var CUSTOMER_ORDER_CART_STORAGE_KEY = "dcats_customer_order_cart_v1";
 var customerOrderCart = [];
@@ -10923,6 +10927,12 @@ async function fetchCustomerCatalogPriceMap(products) {
   return map;
 }
 
+async function filterCustomerCatalogProductsByPrice(products) {
+  if (!customerCatalogRequiresRegisteredPrice() || !products.length) return products;
+  var priceMap = await fetchCustomerCatalogPriceMap(products);
+  return products.filter(function(product) { return priceMap[productDkdId(product)] != null; });
+}
+
 async function fetchCustomerCatalogPriceInfo(product, productKind) {
   var target = productKind
     ? Object.assign({}, product, { default_product_kind: normalizeProductKind(productKind) })
@@ -11035,9 +11045,8 @@ async function runCustomerCatalogSearch(options) {
   if (!stockPriorityResult.error) products = sortProductsByAvailableStock(products, stockPriorityResult.map);
   if (customerCatalogRequiresRegisteredPrice() && products.length) {
     products = products.slice(0, CUSTOMER_CATALOG_RESULT_LIMIT);
-    var priceMap = await fetchCustomerCatalogPriceMap(products);
+    products = await filterCustomerCatalogProductsByPrice(products);
     if (seq !== customerCatalogRequestSeq) return;
-    products = products.filter(function(product) { return priceMap[productDkdId(product)] != null; });
   }
   customerCatalogProducts = products.slice(0, CUSTOMER_CATALOG_RESULT_LIMIT);
   customerCatalogImageInfo = { counts: {}, thumbnails: {} };
@@ -11221,6 +11230,7 @@ function renderCustomerCatalogDetailBase(product) {
       "<div><div class='customer-catalog-detail-kicker'>" + esc(productCategoryLabel(product)) + "</div><h2>" + esc(product.genuine_part_number || product.manufacturer_part_number || "-") + "</h2></div>" +
       "<div class='customer-catalog-detail-gltek'><span>GLTEK</span><strong>" + esc(product.gltek_part_number || "-") + "</strong></div>" +
     "</div>" +
+    "<div id='customer-catalog-open-feedback' class='customer-catalog-search-feedback' role='status' hidden></div>" +
     availabilityHtml +
     "<div class='customer-catalog-detail-main'>" + imageHtml + "<div><dl class='customer-catalog-facts'>" + facts + "</dl></div></div>" +
     vehicleHtml + compatibleHtml;
@@ -11402,14 +11412,59 @@ async function openCustomerCatalogProduct(product, options) {
   await Promise.allSettled(loads);
 }
 
+function showCustomerCatalogOpenFeedback(key) {
+  var feedback = document.getElementById("customer-catalog-open-feedback") || document.getElementById("customer-catalog-search-feedback");
+  if (!feedback) return;
+  feedback.hidden = !key;
+  feedback.textContent = key ? t(key) : "";
+  if (key && key !== "loading") feedback.scrollIntoView({ block: "center" });
+}
+
 async function openCustomerCatalogProductById(dkdId) {
   var id = parseInt(dkdId, 10);
   if (isNaN(id)) return;
-  var product = customerCatalogProducts.find(function(row) { return parseInt(productDkdId(row), 10) === id; }) || null;
-  if (!product) {
-    var result = await sb.from("core_products").select(CORE_PRODUCT_FAST_SELECT).eq("dkd_shohin_id", id).maybeSingle();
-    if (result.error || !result.data) return;
-    product = normalizeCoreProductFastRows([result.data])[0];
+  var context = customerCatalogContext();
+  var profile = userProfile;
+  var seq = ++customerCatalogOpenSeq;
+  var searchSeq = customerCatalogRequestSeq;
+  var detailSeq = customerCatalogDetailSeq;
+  function isCurrentRequest() {
+    return seq === customerCatalogOpenSeq && searchSeq === customerCatalogRequestSeq &&
+      detailSeq === customerCatalogDetailSeq && context === customerCatalogContext() &&
+      profile === userProfile && !!profile && !!context.sales_customer_id && !!context.customer &&
+      isScreenActive("customer-catalog") &&
+      (isCustomerViewer() ? canViewProductSearch() : canPreviewCustomerPortal());
+  }
+  if (!isCurrentRequest()) return;
+  showCustomerCatalogOpenFeedback("loading");
+  var product;
+  try {
+    product = customerCatalogProducts.find(function(row) { return parseInt(productDkdId(row), 10) === id; }) || null;
+    if (!product) {
+      var result = await sb.from("core_products").select(CORE_PRODUCT_FAST_SELECT).eq("dkd_shohin_id", id).maybeSingle();
+      if (!isCurrentRequest()) return;
+      if (result.error) throw result.error;
+      product = normalizeCoreProductFastRows(result.data ? [result.data] : [])[0];
+    }
+    if (!product) {
+      showCustomerCatalogOpenFeedback("customer_catalog_product_unavailable");
+      return;
+    }
+    await hydrateSalesDaikoVisibility([product]);
+    if (!isCurrentRequest()) return;
+    var products = filterSalesVisibleProducts([product]);
+    products = await filterCustomerCatalogProductsByPrice(products);
+    if (!isCurrentRequest()) return;
+    if (!products.length) {
+      showCustomerCatalogOpenFeedback("customer_catalog_product_unavailable");
+      return;
+    }
+  } catch (error) {
+    if (isCurrentRequest()) {
+      console.warn("customer catalog product check failed", error);
+      showCustomerCatalogOpenFeedback("customer_catalog_load_error");
+    }
+    return;
   }
   await openCustomerCatalogProduct(product);
 }
@@ -11438,6 +11493,7 @@ async function enterCustomerCatalog(options) {
 }
 
 function returnToCustomerPortal() {
+  customerCatalogOpenSeq += 1;
   customerPortalSearchActive = false;
   showScreen("customer-portal");
   renderCustomerPortal();
@@ -11445,6 +11501,7 @@ function returnToCustomerPortal() {
 
 function exitCustomerMode() {
   if (!canPreviewCustomerPortal()) return;
+  customerCatalogOpenSeq += 1;
   customerPortalSearchActive = false;
   customerPortalPreviewContext = null;
   detailSelectedSalesCustomerId = "";
