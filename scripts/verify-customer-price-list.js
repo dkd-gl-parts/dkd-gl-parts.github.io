@@ -55,7 +55,7 @@ expect(/\.price-list \.g-part-number\s*\{[^}]*font-size:\s*9px;[^}]*white-space:
 expect(/\.cpr-table \.cpr-g-part-number\s*\{[^}]*font-size:\s*11px;[^}]*white-space:\s*nowrap;/.test(screenCss), "only the preview G part number must be smaller and stay on one line");
 expect(screenCss.includes('.cpr-table td:nth-child(2)::before { content: "G品番"; }') && screenCss.includes('.cpr-table td:nth-child(3)::before { content: "純正品番"; }'), "narrow preview must label G and genuine parts separately");
 expect(screenCss.includes('.cpr-summary button[aria-pressed="true"]') && screenCss.includes('.cpr-table[data-cpr-view="excluded"]'), "detail switches and narrow exclusion labels must be styled");
-expect(html.includes('<th>G品番</th><th>純正品番</th><th>メーカー品番</th>') && html.includes('colspan="5" class="cpr-empty"'), "preview must have separate G and genuine columns");
+expect(html.includes('<th>G品番</th><th>純正品番</th><th>メーカー品番</th>') && html.includes('colspan="7" class="cpr-empty"'), "preview must have separate G and genuine columns");
 expect(html.includes('id="cpr-detail-heading"') && html.includes('id="cpr-preview-table"'), "price report detail heading and table must exist");
 expect(html.includes('id="screen-report-hub"') && html.includes('id="screen-customer-price-report"'), "report screens must exist");
 expect(html.includes('src="customer-price-report.js?') && html.includes('href="customer-price-report.css?'), "report assets must load");
@@ -100,9 +100,9 @@ expect(!elements["cpr-preview-rows"].innerHTML.includes("12,000円"), "excluded 
 listeners["cpr-summary"].click({ target: { closest: () => ({ dataset: { cprView: "candidate" } }) } });
 expect(elements["cpr-detail-heading"].textContent === "候補品番 3件" && elements["cpr-preview-rows"].innerHTML.includes("IN-1") && elements["cpr-preview-rows"].innerHTML.includes("OUT-2"), "candidate detail must include priced and excluded rows");
 runtime.renderCustomerPricePreview({ rows: [], summary: {} });
-expect(elements["cpr-preview-rows"].innerHTML.includes("colspan='5'"), "empty preview must span all five columns");
+expect(elements["cpr-preview-rows"].innerHTML.includes("colspan='7'"), "empty preview must span all seven columns");
 runtime.clearCustomerPricePreview();
-expect(elements["cpr-preview-rows"].innerHTML.includes("colspan='5'"), "cleared preview must span all five columns");
+expect(elements["cpr-preview-rows"].innerHTML.includes("colspan='7'"), "cleared preview must span all seven columns");
 expect(elements["cpr-summary"].hidden && elements["cpr-detail-heading"].hidden && runtime.customerPriceState.view === "included", "filter changes must clear old detail");
 const printed = runtime.renderCustomerPriceReport({
   issue_id: "INTERNAL-ISSUE-ID",
@@ -120,7 +120,7 @@ expect(printed.indexOf("ALT-1") < printed.indexOf("ALT-2") && printed.indexOf("A
 expect((printed.match(/<tr><td>/g) || []).length === 3, "all report rows must print without a number cell");
 expect(!printed.includes("<th>No.</th>") && !/<tr><td>\d+<\/td>/.test(printed), "customer-facing report must not show a No. column or row number");
 expect(printed.includes("<tr><td>オルタネータ"), "the first printed cell must contain the category, not a number");
-expect((printed.match(/<th>/g) || []).length === 10, "each category must use a five-column table");
+expect((printed.match(/<th>/g) || []).length === 14, "each category must use a seven-column table");
 expect(printed.includes("<td class='g-part-number'>G0102-10001</td>"), "G part numbers must use the single-line code cell");
 expect(!printed.includes("INTERNAL-ISSUE-ID") && !printed.includes("発行番号："), "internal issue number must not print");
 expect(!printed.includes("円表示です。") && !printed.includes("本書に掲載のない"), "removed explanatory phrases must not print");
@@ -134,6 +134,40 @@ const singleCategory = runtime.renderCustomerPriceReport({
   rows: [{ category_code: "starter", category_label: "スタータ", genuine_part_number: "ONLY-1", product_kind: "rebuilt", sales_price_jpy: 5000 }]
 });
 expect((singleCategory.match(/<section class='category-section'>/g) || []).length === 1 && singleCategory.includes("ONLY-1"), "a single category must print once without a blank category page");
+
+
+// Selected vehicles are server values. Old snapshots and missing fields stay empty.
+const vehicleReport = runtime.renderCustomerPriceReport({
+  customer: { name: "架空得意先" },
+  rows: [
+    { category_code: "starter", genuine_part_number: "VEHICLE-1", sales_price_jpy: 12000,
+      representative_vehicle_name: "タント", representative_vehicle_model: "L375S" },
+    { category_code: "starter", genuine_part_number: "EMPTY-1", sales_price_jpy: 13000 },
+    { category_code: "starter", genuine_part_number: "ESCAPE-1", sales_price_jpy: 14000,
+      representative_vehicle_name: "<img src=x onerror=alert(1)>", representative_vehicle_model: "<script>x</script>" }
+  ]
+});
+expect(vehicleReport.includes("<th>代表車名</th><th>型式</th>"), "PDF must label the representative pair");
+expect(vehicleReport.includes("<td class='vehicle-name'>タント</td><td class='vehicle-model'>L375S</td>"),
+  "PDF must show exactly the saved pair");
+expect(vehicleReport.includes("<td class='vehicle-name'></td><td class='vehicle-model'></td>"),
+  "old snapshots and missing data must have blank cells without dashes");
+expect(vehicleReport.includes("&lt;img") && vehicleReport.includes("&lt;script&gt;") && !vehicleReport.includes("<img"),
+  "vehicle fields must be escaped");
+runtime.renderCustomerPricePreview({
+  summary: { candidate_count: 2, included_count: 2 },
+  rows: [
+    { category_code: "starter", sales_price_jpy: 12000, representative_vehicle_name: "タント", representative_vehicle_model: "L375S" },
+    { category_code: "starter", sales_price_jpy: 13000 }
+  ]
+});
+expect(elements["cpr-preview-rows"].innerHTML.includes("<td class='cpr-vehicle-name'>タント</td><td class='cpr-vehicle-model'>L375S</td>"),
+  "preview must show the same server pair");
+expect(elements["cpr-preview-rows"].innerHTML.includes("<td class='cpr-vehicle-name'></td><td class='cpr-vehicle-model'></td>"),
+  "preview must preserve blank vehicle fields");
+expect(screenCss.includes('.cpr-table td:nth-child(5)::before { content: "代表車名"; }')
+  && screenCss.includes('.cpr-table td:nth-child(6)::before { content: "型式"; }'),
+  "mobile cards must label the representative pair");
 
 const defaults = app.match(/var DEFAULT_CUSTOMER_VISIBLE_CATEGORY_CODES = \[[^\]]+\];/);
 const categoryVisible = app.match(/function customerCategoryIsVisible\(categoryCode, visibilityRows\) \{[\s\S]*?\n\}/);

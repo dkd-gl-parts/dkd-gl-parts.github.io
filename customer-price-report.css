@@ -64,7 +64,7 @@
 .cpr-detail-heading { margin: 12px 0 8px; color: var(--dcats-ink); font-size: 14px; }
 .cpr-exclusion-reason { color: #795622; font-weight: 800; }
 .cpr-table-wrap { max-height: 560px; overflow: auto; }
-.cpr-table { width: 100%; border-collapse: collapse; min-width: 680px; }
+.cpr-table { width: 100%; border-collapse: collapse; min-width: 760px; }
 .cpr-table th { position: sticky; top: 0; z-index: 1; padding: 10px 9px; border-bottom: 2px solid #dbe4ed; background: #f7f9fc; color: #3d5067; text-align: left; font-size: 12px; }
 .cpr-table td { padding: 10px 9px; border-bottom: 1px solid #edf1f5; vertical-align: top; }
 .cpr-table .cpr-g-part-number { font-size: 11px; white-space: nowrap; }
@@ -102,9 +102,11 @@
   .cpr-table td:nth-child(2)::before { content: "G品番"; }
   .cpr-table td:nth-child(3)::before { content: "純正品番"; }
   .cpr-table td:nth-child(4)::before { content: "メーカー品番"; }
-  .cpr-table td:nth-child(5)::before { content: "税抜価格"; }
-  .cpr-table[data-cpr-view="candidate"] td:nth-child(5)::before { content: "価格／判定"; }
-  .cpr-table[data-cpr-view="excluded"] td:nth-child(5)::before { content: "除外理由"; }
+  .cpr-table td:nth-child(5)::before { content: "代表車名"; }
+  .cpr-table td:nth-child(6)::before { content: "型式"; }
+  .cpr-table td:nth-child(7)::before { content: "税抜価格"; }
+  .cpr-table[data-cpr-view="candidate"] td:nth-child(7)::before { content: "価格／判定"; }
+  .cpr-table[data-cpr-view="excluded"] td:nth-child(7)::before { content: "除外理由"; }
   .cpr-table td:last-child { text-align: left; }
   .cpr-table .cpr-empty { grid-column: 1 / -1; }
   .cpr-table .cpr-empty::before { display: none; }
