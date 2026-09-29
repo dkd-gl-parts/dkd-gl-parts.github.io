@@ -4257,7 +4257,7 @@ body.app-install-dialog-open { overflow: hidden; }
 .customer-catalog-availability h3 { margin-bottom: 9px; color: #34433d; font-size: 13px; letter-spacing: 0; }
 .customer-catalog-availability-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .customer-catalog-availability-grid > .customer-catalog-loading { grid-column: 1 / -1; border: 1px solid #d9e1de; border-radius: 6px; background: #f8faf9; }
-.customer-catalog-availability-kind { min-width: 0; overflow: hidden; border: 1px solid #cddbd5; border-left: 4px solid #3a8b69; border-radius: 6px; background: #fbfdfc; }
+.customer-catalog-availability-kind { display: grid; grid-template-rows: subgrid; grid-row: span 4; row-gap: 0; min-width: 0; overflow: hidden; border: 1px solid #cddbd5; border-left: 4px solid #3a8b69; border-radius: 6px; background: #fbfdfc; }
 .customer-catalog-availability-kind.aftermarket_new { border-color: #c9d8e7; border-left-color: #417ca8; background: #fbfdff; }
 .customer-catalog-availability-kind-title { padding: 8px 11px; border-bottom: 1px solid #dbe5e1; color: #236344; font-size: 12px; font-weight: 800; }
 .customer-catalog-availability-kind.aftermarket_new .customer-catalog-availability-kind-title { border-bottom-color: #dce5ee; color: #315f84; }
