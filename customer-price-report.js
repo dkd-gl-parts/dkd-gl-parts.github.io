@@ -189,12 +189,12 @@
       "<title>販売価格表 " + safe(customer.name) + "</title>" +
       "<link rel='stylesheet' href='" + safe(stylesheetUrl) + "'></head><body>" +
       "<div class='print-toolbar'><span class='print-help'>PDF保存時は印刷設定の「ヘッダーとフッター」をオフにしてください。</span><button type='button' id='cpr-print'>印刷・PDF保存</button><button type='button' id='cpr-close'>閉じる</button></div>" +
-      "<main class='document'><header class='document-head'><div><h1>販売価格表</h1><small>Daiko Catalog &amp; Search System</small></div>" +
-      "<div class='document-meta'>発行日時：" + safe(dateLabel(issue.issued_at)) +
-      "<br>発行者：" + safe(issue.issued_by_name || "—") + "</div></header>" +
-      "<div class='customer'>" + safe(customer.name || "—") + " 御中</div>" +
+      "<main class='document'><div class='document-intro'><header class='document-head'><div><p class='document-eyebrow'>PRICE LIST</p><h1>販売価格表</h1></div>" +
+      "<dl class='document-meta'><div><dt>発行日時</dt><dd>" + safe(dateLabel(issue.issued_at)) +
+      "</dd></div><div><dt>発行者</dt><dd>" + safe(issue.issued_by_name || "—") + "</dd></div></dl></header>" +
+      "<div class='customer'><span class='customer-label'>得意先</span><strong>" + safe(customer.name || "—") + "</strong></div>" +
       "<div class='report-notes'><div class='report-note'><strong>価格・送料</strong><p>本書の価格は発行日時点の税抜価格です。" + safe(shipping) + "</p></div>" +
-      "<div class='report-note'><strong>ご注文前の確認</strong><p>価格・在庫状況は変動する場合があります。ご注文前に最新の価格と在庫状況をご確認ください。</p></div></div>" +
+      "<div class='report-note'><strong>ご注文前の確認</strong><p>価格・在庫状況は変動する場合があります。ご注文前に最新の価格と在庫状況をご確認ください。</p></div></div></div>" +
       categorySections +
       "</main></body></html>";
   }
