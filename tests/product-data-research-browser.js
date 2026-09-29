@@ -7,6 +7,7 @@ const out = path.resolve(process.argv[3] || path.join(root,'.qa/product-research
 fs.mkdirSync(out,{recursive:true});
 (async () => {
   const browser = await chromium.launch({headless:true,channel:'msedge'});
+  try {
   const page = await browser.newPage();
   const errors=[]; page.on('pageerror',error=>errors.push(error.message));
   await page.setContent('<!doctype html><html lang="ja"><head><meta charset="utf-8"></head><body><select id="manufacturing-cost-category"><option value="">すべて</option><option value="starter">スタータ</option><option value="alternator">オルタネータ</option></select><main>製造原価・検証用の架空データ</main></body></html>');
@@ -23,14 +24,15 @@ fs.mkdirSync(out,{recursive:true});
         return query;
       },
       rpc:async(name,args)=>{
-        if(name!=='register_researched_product') throw new Error('unexpected stock or financial mutation');
+        if(name!=='register_manufacturing_cost_product') throw new Error('unexpected stock or financial mutation');
+        qa.lastRpc={name,args};
         qa.writes++;
         qa.registered={...args.p_product,dkd_shohin_id:42};
         qa.existing=[qa.registered];
         return qa.failMutation?{error:{message:'登録応答不明'}}:{data:42};
       }
     };
-    window.qaOpen=token=>DcatsProductResearch.open({token,category:'',onResolved:async p=>{qa.resolved.push(p.dkd_shohin_id);}});
+    window.qaOpen=token=>DcatsProductResearch.open({token,origin:'manufacturing_cost',category:'',onResolved:async p=>{qa.resolved.push(p.dkd_shohin_id);}});
   });
   await page.addScriptTag({path:path.join(root,'product-data-research.js')});
   await page.setViewportSize({width:1366,height:900});
@@ -47,6 +49,28 @@ fs.mkdirSync(out,{recursive:true});
   await page.setViewportSize({width:390,height:844});
   await page.screenshot({path:path.join(out,'mobile-incomplete-catalog.png')});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true,'mobile document must not overflow');
+  await page.evaluate(()=>qa.catalog=[
+    {id:11,source_name:'選択レコードA',source_record_key:'p.11',genuine_part_number:'FIRST-OEM-001',manufacturer_part_number:'FIRST-MFR-001',catalog_manufacturer:'DENSO',part_role:'alternator'},
+    {id:12,source_name:'選択レコードB',source_record_key:'p.12',genuine_part_number:'31100-TEST-001',manufacturer_part_number:'228000-TEST2',catalog_manufacturer:'DENSO',part_name:'ｽﾀｰﾀ'},
+    {id:13,source_name:'純正未収録レコード',source_record_key:'p.13',genuine_part_number:'',manufacturer_part_number:'228000-TEST3',catalog_manufacturer:'DENSO',part_role:'starter'}
+  ]);
+  await page.locator('[data-pdr-search]').click();
+  assert.match(await page.locator('#pdr-results').textContent(),/純正品番FIRST-OEM-001.*メーカー品番FIRST-MFR-001/s);
+  assert.match(await page.locator('#pdr-results').textContent(),/純正品番なし/);
+  await page.locator('[data-pdr-catalog="0"]').click();
+  assert.equal(await page.locator('#pdr-genuine').inputValue(),'FIRST-OEM-001');
+  assert.equal(await page.locator('#pdr-category').inputValue(),'alternator');
+  await page.locator('[data-pdr-catalog="1"]').click();
+  assert.equal(await page.locator('#pdr-genuine').inputValue(),'31100-TEST-001');
+  assert.equal(await page.locator('#pdr-mfr-part').inputValue(),'228000-TEST2');
+  assert.equal(await page.locator('#pdr-category').inputValue(),'starter');
+  assert.match(await page.locator('#pdr-source-reference').inputValue(),/catalog_vehicle_applications:12/);
+  await page.locator('[data-pdr-catalog="2"]').click();
+  assert.equal(await page.locator('#pdr-genuine').inputValue(),'','empty selected record must clear the prior OEM number');
+  await page.locator('#pdr-confirmed').check();
+  assert(await page.locator('#pdr-save').isDisabled());
+  assert.match(await page.locator('#pdr-gate').textContent(),/純正品番.*製造原価では必須/);
+  await page.screenshot({path:path.join(out,'mobile-catalog-part-numbers.png')});
   const fill=async()=>{
     await page.locator('#pdr-category').selectOption('starter');
     await page.locator('#pdr-manufacturer').fill('DENSO');
@@ -103,7 +127,20 @@ fs.mkdirSync(out,{recursive:true});
   await page.locator('#pdr-registered').click();
   await page.waitForSelector('#product-data-research:not([open])',{state:'attached'});
   assert.equal(await page.evaluate(()=>qa.writes),before,'rematch must not re-register');
+  await page.evaluate(()=>{qa.existing=[];qa.registered=null;});
+  await page.evaluate(()=>qaOpen('31100-TEST-001'));
+  await page.locator('[data-pdr-catalog="1"]').click();
+  await page.locator('#pdr-confirmed').check();
+  assert(await page.locator('#pdr-save').isEnabled());
+  await page.setViewportSize({width:1366,height:900});
+  await page.screenshot({path:path.join(out,'desktop-selected-catalog.png')});
+  await page.locator('#pdr-save').click();
+  await page.waitForSelector('#product-data-research:not([open])',{state:'attached'});
+  const native=await page.evaluate(()=>qa.lastRpc);
+  assert.equal(native.args.p_product.genuine_part_number,'31100-TEST-001');
+  assert.equal(native.args.p_product.manufacturer_part_number,'228000-TEST2');
+  assert.equal(native.args.p_product.research_registration_evidence.catalog_record_id,'12');
   assert.deepEqual(errors,[]);
-  await browser.close();
   console.log('Desktop 1366x900 / mobile 390x844: loading, incomplete catalog, confirmed success, duplicate, permission, network-error and recovery flows passed.');
+  } finally { await browser.close(); }
 })().catch(error=>{console.error(error);process.exit(1);});

@@ -17,6 +17,10 @@
 .pdr-confirm { display: flex; gap: 8px; align-items: flex-start; margin: 16px 0; line-height: 1.6; }
 .pdr-result { display: grid; gap: 6px; padding: 12px; margin: 8px 0; border: 1px solid #d4dfeb; border-radius: 6px; overflow-wrap: anywhere; }
 .pdr-result button { justify-self: start; }
+.pdr-part-fields { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 5px 10px; margin: 0; }
+.pdr-part-fields dt { color: #53677e; font-size: 13px; }
+.pdr-part-fields dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+#pdr-adoption:not(:empty) { background: #edf5ff; border: 1px solid #c3dafa; border-radius: 6px; padding: 10px; }
 #pdr-results { max-height: 320px; overflow: auto; }
 #pdr-save-status { color: #9b2300; }
 @media (max-width: 600px) { .product-data-research { padding: 14px; } .pdr-fields { grid-template-columns: 1fr; } .pdr-actions { align-items: stretch; } .pdr-actions button { max-width: 100%; } }

@@ -3504,7 +3504,20 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "カテゴリを選択": "Select category",
     "カテゴリを選択してください": "Select a category",
     "元の取込品番：": "Original imported number: ",
-    "\" 自動車 部品": "\" automotive parts"
+    "\" 自動車 部品": "\" automotive parts",
+    "acコンプレッサ": "AC compressor",
+    "確認済みの純正品番（製造原価では必須）": "Verified OEM number (required for manufacturing cost)",
+    "確認済みのメーカー品番（製造原価では必須）": "Verified manufacturer number (required for manufacturing cost)",
+    "純正品番なし": "No OEM number recorded",
+    "メーカー品番なし": "No manufacturer number recorded",
+    "カテゴリ要確認": "Category needs confirmation",
+    "選択後に情報を変更しました。出典と同一性を再確認してください。": "Data changed after selection. Recheck the source and product identity.",
+    "行（車種別データを含む）": "rows (including vehicle applications)",
+    "このレコードを登録欄に反映（未登録）": "Use this record in the form (not registered)",
+    "選択レコードの保存値を反映しました。純正品番：": "Selected record values applied. OEM number:",
+    "／メーカー品番：": " / Manufacturer number:",
+    "純正品番（必須）": "OEM number (required)",
+    "メーカー品番（必須）": "Manufacturer number (required)"
   },
   "zh": {
     "帳票出力 / レポート": "报表 / 报表中心",
@@ -7009,6 +7022,19 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "カテゴリを選択": "选择类别",
     "カテゴリを選択してください": "请选择类别",
     "元の取込品番：": "原始导入品号：",
-    "\" 自動車 部品": "\" 汽车零件"
+    "\" 自動車 部品": "\" 汽车零件",
+    "acコンプレッサ": "空调压缩机",
+    "確認済みの純正品番（製造原価では必須）": "已确认的原厂品号（制造成本登记必填）",
+    "確認済みのメーカー品番（製造原価では必須）": "已确认的制造商品号（制造成本登记必填）",
+    "純正品番なし": "未收录原厂品号",
+    "メーカー品番なし": "未收录制造商品号",
+    "カテゴリ要確認": "类别需确认",
+    "選択後に情報を変更しました。出典と同一性を再確認してください。": "选择后资料已变更。请重新确认来源与商品同一性。",
+    "行（車種別データを含む）": "行（含车型适用资料）",
+    "このレコードを登録欄に反映（未登録）": "将此记录填入登记栏（尚未登记）",
+    "選択レコードの保存値を反映しました。純正品番：": "已填入所选记录的保存值。原厂品号：",
+    "／メーカー品番：": "／制造商品号：",
+    "純正品番（必須）": "原厂品号（必填）",
+    "メーカー品番（必須）": "制造商品号（必填）"
   }
 };

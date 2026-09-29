@@ -7054,7 +7054,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1066";
+var APP_VERSION       = "v1.1.1067";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -30198,6 +30198,7 @@ async function openManufacturingCostProductResearch(token) {
   if (!context || !canViewManufacturingCostMgmt() || !window.DcatsProductResearch) return;
   await window.DcatsProductResearch.open({
     token: token,
+    origin: "manufacturing_cost",
     category: (document.getElementById("manufacturing-cost-category") || {}).value || "",
     onResolved: async function(product) {
       if (context !== manufacturingCostImportSearchContext) throw new Error("取込条件が変わりました。元のファイルを再照合してください。");
