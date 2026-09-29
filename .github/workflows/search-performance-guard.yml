@@ -163,7 +163,9 @@ jobs:
       - name: Verify postal lookup fallback
         run: node scripts/verify-postal-lookup-fallback.js
       - name: Verify manufacturing cost candidate status
-        run: node scripts/verify-manufacturing-cost-candidate-status.js
+        run: |
+          node scripts/verify-manufacturing-cost-candidate-status.js
+          node scripts/verify-product-data-research.js
       - name: Verify variable-layout manufacturing cost import
         run: |
           node scripts/verify-manufacturing-cost-import.js

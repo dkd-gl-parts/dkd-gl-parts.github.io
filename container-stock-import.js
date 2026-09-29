@@ -365,7 +365,7 @@
       });
       html += "</div>";
     }
-    if (canManageProducts) html += "<button type='button' class='btn-secondary' data-container-add-product>該当商品がなければ新規登録</button>";
+    if (canManageProducts) html += "<button type='button' class='btn-secondary' data-container-add-product>不足データを探す・正式登録</button><p>情報不足の品番は要調査です。仮マスタ・在庫登録はできません。</p>";
     else html += "<p class='container-stock-resolver-hint'>商品マスタへの登録・変更には商品管理権限が必要です。</p>";
     return html + "</section>";
   }
@@ -772,6 +772,25 @@
     });
     if (!row) return;
     var editingKey = state.editingKey;
+    if (mode === "add") {
+      if (!root.DcatsProductResearch) { setStatus("調査機能を読み込めません。画面を更新してください。", true); return; }
+      var token = row.match_part_number || row.part_number;
+      invalidatePreview();
+      setStatus("要調査：必要情報を確認して正式登録後、再照合してください。在庫は未登録です。", true);
+      await root.DcatsProductResearch.open({
+        token: token,
+        category: row.category_code,
+        onResolved: async function(fresh) {
+          if (fresh.category_code !== row.category_code) throw new Error("カテゴリが異なります。取込設定を確認してください。");
+          state.preferredTargets[editingKey] = String(fresh.dkd_shohin_id);
+          await previewReceipt();
+          if (!state.preview) throw new Error("再照合できませんでした。取込内容を確認してください。");
+          var resolved = (state.preview.rows || []).find(function(item) { return sourceKey(item) === editingKey; });
+          if (!resolved || !(resolved.candidates || []).some(function(candidate) { return String(candidate.dkd_shohin_id) === String(fresh.dkd_shohin_id); })) throw new Error("登録した商品と取込品番が一致しません。要調査のまま入庫できません。");
+        }
+      });
+      return;
+    }
     if (mode === "edit") {
       if (!product || !product.dkd_shohin_id) return;
       var fresh = await sb.from("core_products")
