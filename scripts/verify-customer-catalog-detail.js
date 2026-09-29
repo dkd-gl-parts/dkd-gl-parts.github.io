@@ -101,10 +101,6 @@ if (!masterSearchSource.includes('if (options.includeDksProductCode !== false) d
 }
 
 const compatibleSource = functionSource("loadCustomerCatalogCompatible", "async function openCustomerCatalogProduct");
-if (!compatibleSource.includes("await hydrateSalesDaikoVisibility(rows)") ||
-    !compatibleSource.includes("rows = filterSalesVisibleProducts(rows)")) {
-  throw new Error("customer catalog compatible products must exclude Daiko products");
-}
 if (!compatibleSource.includes("await fetchCustomerCatalogCompatibleStockMap(rows)") ||
     !compatibleSource.includes("customer-catalog-compatible-stock-item") ||
     !compatibleSource.includes('customerProductKindLabel("rebuilt")') ||
@@ -181,8 +177,10 @@ if (!openSource.includes("bindCustomerCatalogVehicleDisclosure(product, seq)") |
 
 if (!searchSource.includes("await filterCustomerCatalogProductsByPrice(products)") ||
     compatibleSource.includes("filterCustomerCatalogProductsByPrice") ||
-    compatibleSource.includes("fetchCustomerCatalogPriceMap")) {
-  throw new Error("Search and detail opens must share the price rule without removing compatible list entries");
+    compatibleSource.includes("fetchCustomerCatalogPriceMap") ||
+    compatibleSource.includes("filterSalesVisibleProducts") ||
+    compatibleSource.includes("hydrateSalesDaikoVisibility")) {
+  throw new Error("Compatible list entries must be shown without search display filters; detail opens must use the search price rule");
 }
 
 const byIdSource = functionSource("openCustomerCatalogProductById", "async function enterCustomerCatalog");
@@ -190,18 +188,27 @@ const priceRuleSource = functionSource("customerCatalogRequiresRegisteredPrice",
 const priceMapSource = functionSource("fetchCustomerCatalogPriceMap", "async function filterCustomerCatalogProductsByPrice");
 const priceFilterSource = functionSource("filterCustomerCatalogProductsByPrice", "async function fetchCustomerCatalogPriceInfo");
 const feedbackSource = functionSource("showCustomerCatalogOpenFeedback", "async function openCustomerCatalogProductById");
+const unavailableSource = functionSource("showCustomerCatalogUnavailable", "function showCustomerCatalogOpenFeedback");
 
 function openFixture(settings, options = {}) {
-  const previous = { dkd_shohin_id: 1 };
-  const target = { dkd_shohin_id: 2, default_product_kind: "rebuilt", ...options.product };
+  const previous = { dkd_shohin_id: 1, genuine_part_number: "28100-75190" };
+  const target = { dkd_shohin_id: 2, genuine_part_number: "28100-75191", default_product_kind: "rebuilt", ...options.product };
   let activeContext = { sales_customer_id: 161, customer: { id: 161 }, settings };
   const feedback = { hidden: true, textContent: "", scrollIntoView() {} };
+  const input = { value: previous.genuine_part_number, focus() { this.focused = true; }, scrollIntoView() {} };
+  const detail = { innerHTML: "previous product information" };
+  const message = { focus() { this.focused = true; }, scrollIntoView() {} };
+  const searchAgain = { addEventListener(event, handler) { this[event] = handler; } };
+  const elements = { "customer-catalog-q": input, "customer-catalog-detail": detail, "customer-catalog-unavailable": message,
+    "btn-customer-catalog-search-again": searchAgain, "customer-catalog-open-feedback": feedback };
   const opened = [];
   const warnings = [];
   const state = {
     userProfile: {}, customerCatalogOpenSeq: 0, customerCatalogRequestSeq: 0, customerCatalogDetailSeq: 0,
     CORE_PRODUCT_FAST_SELECT: "dkd_shohin_id,default_product_kind",
-    customerCatalogSelectedProduct: previous, customerCatalogProducts: options.cached ? [target] : [],
+    customerCatalogSelectedProduct: previous, customerCatalogProducts: options.cached ? [previous, target] : [previous],
+    customerCatalogImageInfo: { counts: { 1: 1 }, thumbnails: { "dkd:1": "previous-image" } },
+    renderCustomerCatalogList: () => { state.renderedProducts = state.customerCatalogProducts.map(product => product.dkd_shohin_id); },
     customerCatalogContext: () => activeContext,
     defaultCustomerDisplaySettings: () => ({ priced_products_only: false, show_parts_without_price: true }),
     customerViewerSetting: (key, fallback) => activeContext.settings[key] ?? fallback,
@@ -224,7 +231,7 @@ function openFixture(settings, options = {}) {
         return options.priceLookup ? options.priceLookup(args) : { data: [{ sales_price_jpy: options.price ?? null }], error: null };
       }
     },
-    document: { getElementById: () => feedback }, t: key => key,
+    document: { getElementById: id => elements[id] || null }, t: key => key, esc: value => String(value),
     console: { warn: (message, error) => warnings.push(error.message) },
     openCustomerCatalogProduct: async product => {
       opened.push(product.dkd_shohin_id);
@@ -232,8 +239,8 @@ function openFixture(settings, options = {}) {
       state.customerCatalogDetailSeq += 1;
     }
   };
-  vm.runInNewContext(`${priceRuleSource}\n${priceMapSource}\n${priceFilterSource}\n${feedbackSource}\n${byIdSource}`, state);
-  return { state, opened, previous, feedback, target, warnings, changeContext: () => { activeContext = { ...activeContext }; } };
+  vm.runInNewContext(`${priceRuleSource}\n${priceMapSource}\n${priceFilterSource}\n${unavailableSource}\n${feedbackSource}\n${byIdSource}`, state);
+  return { state, opened, previous, feedback, detail, input, message, searchAgain, target, warnings, changeContext: () => { activeContext = { ...activeContext }; } };
 }
 
 async function checkCatalogOpenRules() {
@@ -257,11 +264,25 @@ async function checkCatalogOpenRules() {
     const fixture = openFixture(test.settings, test);
     await fixture.state.openCustomerCatalogProductById(2);
     assert.equal(fixture.opened.length, test.allowed ? 1 : 0, test.name);
-    if (!test.allowed) assert.equal(fixture.state.customerCatalogSelectedProduct, fixture.previous, test.name);
-    if (test.name === "missing-price") assert.equal(fixture.feedback.textContent, "customer_catalog_product_unavailable", fixture.warnings.join(", "));
+    const unavailable = !test.allowed && !["unauthorized", "inactive-screen", "product-load-error", "price-exception"].includes(test.name);
+    if (unavailable) {
+      assert.equal(fixture.state.customerCatalogSelectedProduct, null, test.name);
+      assert.equal(fixture.state.customerCatalogProducts.length, 0, test.name);
+      assert.equal(Object.keys(fixture.state.customerCatalogImageInfo.counts).length, 0, test.name);
+      assert.equal(Object.keys(fixture.state.customerCatalogImageInfo.thumbnails).length, 0, test.name);
+      assert.equal(fixture.state.customerCatalogDetailSeq, 1, `cancel previous detail loads: ${test.name}`);
+      assert.equal(fixture.state.renderedProducts.length, 0, test.name);
+      assert.ok(fixture.detail.innerHTML.includes("customer_catalog_product_unavailable_title"), test.name);
+      assert.ok(!fixture.detail.innerHTML.includes("previous product information"), test.name);
+      assert.equal(fixture.message.focused, true, test.name);
+      assert.equal(fixture.feedback.hidden, true, test.name);
+      fixture.searchAgain.click();
+      assert.equal(fixture.input.value, "", test.name);
+      assert.equal(fixture.input.focused, true, test.name);
+    } else if (!test.allowed) assert.equal(fixture.state.customerCatalogSelectedProduct, fixture.previous, test.name);
     if (test.name === "price-exception") assert.equal(fixture.feedback.textContent, "customer_catalog_load_error");
   }
-  for (const change of ["customer", "search", "detail", "newer-click", "logout"]) {
+  for (const priceValue of [9500, null]) for (const change of ["customer", "search", "detail", "newer-click", "logout"]) {
     let releasePrice, priceStarted;
     const started = new Promise(resolve => { priceStarted = resolve; });
     const price = new Promise(resolve => { releasePrice = resolve; });
@@ -273,9 +294,11 @@ async function checkCatalogOpenRules() {
     if (change === "detail") fixture.state.customerCatalogDetailSeq += 1;
     if (change === "newer-click") fixture.state.customerCatalogOpenSeq += 1;
     if (change === "logout") fixture.state.userProfile = null;
-    releasePrice({ data: [{ sales_price_jpy: 9500 }], error: null });
+    releasePrice({ data: [{ sales_price_jpy: priceValue }], error: null });
     await opening;
     assert.equal(fixture.opened.length, 0, `stale ${change}`);
+    assert.equal(fixture.state.customerCatalogSelectedProduct, fixture.previous, `stale ${change} must not clear current selection`);
+    assert.equal(fixture.detail.innerHTML, "previous product information", `stale ${change} must not replace the current detail`);
   }
 }
 
