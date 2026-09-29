@@ -16,6 +16,8 @@ const files = [
   "customer-price-report-print.css",
   "customer-price-report.js",
   "container-stock-import.js",
+  "product-data-research.js",
+  "product-data-research.css",
   "index.html",
   "label-print-window.js",
   "legacy-i18n.js",

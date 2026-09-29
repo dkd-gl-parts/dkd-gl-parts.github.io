@@ -11,6 +11,7 @@ const outputPath = path.join(root, "legacy-i18n.js");
 const runtimeScriptPaths = [
   "app.js",
   "container-stock-import.js",
+  "product-data-research.js",
   "sales-order-revision.js",
   "install-app.js",
   "label-print-window.js",
@@ -965,6 +966,11 @@ const curatedTranslations = {
     "本書、対象製品、製造シリアル、車両・取付情報をご提示ください。": "请出示本文件、相关产品、制造序列号以及车辆和安装信息。"
   }
 };
+
+require("./product-research-translations.js").forEach(function(entry) {
+  curatedTranslations.en[entry[0]] = entry[1];
+  curatedTranslations.zh[entry[0]] = entry[2];
+});
 
 function extractTranslations(appSource) {
   const start = appSource.indexOf("var TRANSLATIONS = ");
