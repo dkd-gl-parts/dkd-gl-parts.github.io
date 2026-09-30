@@ -3537,7 +3537,8 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "表示条件が変わりました。3Dタブを開き直してください。": "The display context changed. Reopen the 3D tab.",
     "GLB登録の結果を確認できません。再送信せず、登録状態を確認してください:": "The GLB upload result could not be confirmed. Do not resubmit; check the registered model:",
     "GLBは登録されました。対象商品を選び直してプレビューを確認してください。": "The GLB was registered. Select that product again to check the preview.",
-    "GLBは登録されましたが、プレビューを更新できませんでした:": "The GLB was registered, but the preview could not be refreshed:"
+    "GLBは登録されましたが、プレビューを更新できませんでした:": "The GLB was registered, but the preview could not be refreshed:",
+    "GLBは削除されましたが、画面を更新できませんでした。商品を選び直して確認してください:": "The GLB was deleted, but the screen could not be refreshed. Select the product again to confirm:"
   },
   "zh": {
     "帳票出力 / レポート": "报表 / 报表中心",
@@ -7075,6 +7076,7 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "表示条件が変わりました。3Dタブを開き直してください。": "显示条件已变化。请重新打开3D标签页。",
     "GLB登録の結果を確認できません。再送信せず、登録状態を確認してください:": "无法确认GLB上传结果。请勿重新提交，先检查登记状态：",
     "GLBは登録されました。対象商品を選び直してプレビューを確認してください。": "GLB已登记。请重新选择该商品并检查预览。",
-    "GLBは登録されましたが、プレビューを更新できませんでした:": "GLB已登记，但无法刷新预览："
+    "GLBは登録されましたが、プレビューを更新できませんでした:": "GLB已登记，但无法刷新预览：",
+    "GLBは削除されましたが、画面を更新できませんでした。商品を選び直して確認してください:": "GLB已删除，但无法刷新页面。请重新选择该商品并确认："
   }
 };

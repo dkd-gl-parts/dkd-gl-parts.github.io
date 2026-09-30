@@ -97,6 +97,38 @@ test("lost delete response refreshes the registered model without retrying", asy
   assert.match(qa.alerts[0], /状態を確認できません。再実行せず/);
 });
 
+test("confirmed delete remains successful when the subsequent screen refresh fails", async () => {
+  const qa = harness(async () => ({ data: { ok: true } }));
+  qa.context.window = { confirm: () => true };
+  qa.context.renderMediaPane = async () => { throw new Error("view offline"); };
+  const remove = vm.runInNewContext(`${deleteSource}\ndeleteUploadedGlb`, qa.context);
+  await remove("sales", "11111111-1111-4111-8111-111111111111");
+  assert.equal(qa.calls.invoke, 1);
+  assert.match(qa.alerts[0], /GLBは削除されましたが、画面を更新できませんでした/);
+  assert.doesNotMatch(qa.alerts[0], /削除の状態を確認できません/);
+});
+
+test("confirmed delete with a refreshed screen needs no failure message", async () => {
+  const qa = harness(async () => ({ data: { ok: true } }));
+  qa.context.window = { confirm: () => true };
+  const remove = vm.runInNewContext(`${deleteSource}\ndeleteUploadedGlb`, qa.context);
+  await remove("sales", "11111111-1111-4111-8111-111111111111");
+  assert.equal(qa.calls.invoke, 1);
+  assert.equal(qa.calls.refresh, 1);
+  assert.deepEqual(qa.alerts, []);
+});
+
+test("an explicit delete error with failed refresh never claims success", async () => {
+  const qa = harness(async () => ({ error: new Error("cleanup pending") }));
+  qa.context.window = { confirm: () => true };
+  qa.context.renderMediaPane = async () => { throw new Error("view offline"); };
+  const remove = vm.runInNewContext(`${deleteSource}\ndeleteUploadedGlb`, qa.context);
+  await remove("sales", "11111111-1111-4111-8111-111111111111");
+  assert.equal(qa.calls.invoke, 1);
+  assert.match(qa.alerts[0], /削除の状態を確認できません。再実行せず/);
+  assert.doesNotMatch(qa.alerts[0], /GLBは削除されました/);
+});
+
 test("permission lost in the file chooser cannot submit a GLB", async () => {
   const qa = harness(async () => ({ data: { ok: true } }));
   qa.state.manage = false;

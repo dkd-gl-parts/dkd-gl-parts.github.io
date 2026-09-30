@@ -1121,12 +1121,14 @@
     if (!target.product || !target.kind || !window.confirm("登録済みの外部GLBを削除しますか？")) return;
     var dkdId = productId(target.product);
     var epoch = modelCacheEpoch;
+    var deletionConfirmed = false;
     glbMutationBusy = true;
     try {
       var result = await sb.functions.invoke("product-3d-glb", {
         body: { action: "delete", product_id: dkdId, product_kind: target.kind, model_id: modelId }
       });
       if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+      deletionConfirmed = !!(result && !result.error && result.data && result.data.ok === true);
       clearModelCaches(dkdId);
       await renderMediaPane(context || "sales");
       if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
@@ -1140,6 +1142,10 @@
       }
     } catch (error) {
       if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+      if (deletionConfirmed) {
+        alert("GLBは削除されましたが、画面を更新できませんでした。商品を選び直して確認してください: " + friendlyError(error));
+        return;
+      }
       clearModelCaches(dkdId);
       try {
         var selectedAfterDelete = selectedTarget(context || "sales");
