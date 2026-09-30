@@ -71,7 +71,7 @@ function requireText(source, fragment, label) {
   "確認待ち",
   "data-publish-model",
   "createSignedUrl(model.published_model_path, 600)",
-  "import(\"./product-3d-viewer.js?v=1.1.777\")",
+  "import(\"./product-3d-viewer.js?v=1.1.1078\")",
   "if (!canManage3D()) { deny3D(\"open_product_3d_capture\"); return; }",
   "if (!canManage3D()) { deny3D(\"submit_product_3d_model\"); return; }",
   "if (!canPublish3D()) { deny3D(\"publish_product_3d_model\"); return; }",
