@@ -18,15 +18,28 @@ assert(!viewerSource.includes('await import('), 'Viewer test must replace only i
 function harness({ onRead, onSign, onCreate } = {}) {
   const state = { productId: 42, kind: 'rebuilt' };
   const calls = { reads: 0, signs: 0, opens: 0, closes: 0, disposes: 0, alerts: [] };
+  const document = { body: {}, activeElement: null };
+  const control = () => ({ isConnected: true, hidden: false, disabled: false,
+    focus() { document.activeElement = this; } });
+  const trigger = control();
+  trigger.focus();
+  const classes = new Set();
   const overlay = {
     classList: {
-      add: () => { calls.opens++; },
-      remove: () => { calls.closes++; },
+      add: name => { classes.add(name); calls.opens++; },
+      remove: name => { classes.delete(name); calls.closes++; },
+      contains: name => classes.has(name),
     },
     setAttribute() {},
   };
   const elements = {
     'product-3d-viewer-overlay': overlay,
+    'product-3d-viewer-close': control(),
+    'product-3d-viewer-zoom-in': control(),
+    'product-3d-viewer-zoom-out': control(),
+    'product-3d-viewer-reset': control(),
+    'product-3d-viewer-autorotate': control(),
+    'product-3d-viewer-fullscreen': control(),
     'product-3d-viewer-title': { textContent: '' },
     'product-3d-viewer-loading': { hidden: true, textContent: '' },
     'product-3d-viewer-stage': {},
@@ -36,8 +49,11 @@ function harness({ onRead, onSign, onCreate } = {}) {
   const context = {
     BUCKET: 'product-3d',
     viewerRequestId: 0,
+    viewerReturnFocus: null,
+    viewerFocusTarget: null,
     sessionModelsEnabled: true,
     viewer: null,
+    document,
     elements,
     selectedTarget: () => ({ product: { dkd_shohin_id: state.productId }, kind: state.kind }),
     productId: product => product.dkd_shohin_id,
@@ -58,8 +74,8 @@ function harness({ onRead, onSign, onCreate } = {}) {
     friendlyError: error => String(error),
     alert: message => calls.alerts.push(message),
   };
-  const api = vm.runInNewContext(`${viewerSource}\n({openViewerById, closeViewer})`, context);
-  return { api, state, calls, elements, context };
+  const api = vm.runInNewContext(`${viewerSource}\n({openViewerById, keepViewerFocus, closeViewer})`, context);
+  return { api, state, calls, elements, context, document, trigger };
 }
 
 test('stale card product ID never reads or opens another product', async () => {
@@ -107,6 +123,43 @@ test('unchanged product opens its uploaded GLB normally', async () => {
   assert.equal(qa.calls.opens, 2);
   assert.equal(qa.calls.closes, 0);
   assert.equal(qa.elements['product-3d-viewer-loading'].hidden, true);
+  assert.equal(qa.document.activeElement, qa.elements['product-3d-viewer-close']);
+  qa.api.closeViewer();
+  assert.equal(qa.document.activeElement, qa.trigger);
+});
+
+test('Tab and Shift+Tab stay inside the open Viewer dialog', async () => {
+  const qa = harness();
+  await qa.api.openViewerById('uploaded:18', 'sales', 42);
+  const first = qa.elements['product-3d-viewer-close'];
+  const last = qa.elements['product-3d-viewer-fullscreen'];
+  let prevented = false;
+  qa.api.keepViewerFocus({ key: 'Tab', shiftKey: true, preventDefault() { prevented = true; } });
+  assert.equal(prevented, true);
+  assert.equal(qa.document.activeElement, last);
+  prevented = false;
+  qa.api.keepViewerFocus({ key: 'Tab', shiftKey: false, preventDefault() { prevented = true; } });
+  assert.equal(prevented, true);
+  assert.equal(qa.document.activeElement, first);
+  qa.trigger.focus();
+  prevented = false;
+  qa.api.keepViewerFocus({ key: 'Tab', shiftKey: false, preventDefault() { prevented = true; } });
+  assert.equal(prevented, true);
+  assert.equal(qa.document.activeElement, first);
+});
+
+test('closing after product or account change does not restore stale focus', async () => {
+  const qa = harness();
+  await qa.api.openViewerById('uploaded:18', 'sales', 42);
+  qa.state.productId = 43;
+  qa.api.closeViewer();
+  assert.equal(qa.document.activeElement, qa.elements['product-3d-viewer-close']);
+  qa.state.productId = 42;
+  qa.trigger.focus();
+  await qa.api.openViewerById('uploaded:18', 'sales', 42);
+  qa.context.sessionModelsEnabled = false;
+  qa.api.closeViewer();
+  assert.equal(qa.document.activeElement, qa.elements['product-3d-viewer-close']);
 });
 
 test('reopening after a load error restores the loading message before success', async () => {

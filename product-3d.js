@@ -26,6 +26,8 @@
   var elements = {};
   var viewer = null;
   var viewerRequestId = 0;
+  var viewerReturnFocus = null;
+  var viewerFocusTarget = null;
   var modelCache = Object.create(null);
   var internalModelCache = Object.create(null);
   var modelBadgeCache = Object.create(null);
@@ -1141,8 +1143,16 @@
     var signed = await sb.storage.from(BUCKET).createSignedUrl(model.published_model_path, 600);
     if (!targetStillSelected()) return;
     if (signed.error) { alert("3Dモデルを開けませんでした: " + friendlyError(signed.error)); return; }
-    elements["product-3d-viewer-overlay"].classList.add("show");
-    elements["product-3d-viewer-overlay"].setAttribute("aria-hidden", "false");
+    var viewerOverlay = elements["product-3d-viewer-overlay"];
+    if (!viewerOverlay.classList.contains("show")) {
+      var previousFocus = document.activeElement;
+      viewerReturnFocus = previousFocus && previousFocus !== document.body &&
+        typeof previousFocus.focus === "function" ? previousFocus : null;
+      viewerFocusTarget = { context: activeContext, productId: targetId, kind: targetKind };
+    }
+    viewerOverlay.classList.add("show");
+    viewerOverlay.setAttribute("aria-hidden", "false");
+    elements["product-3d-viewer-close"].focus();
     elements["product-3d-viewer-title"].textContent = productTitle(target.product) + " / " + kindLabel(model.product_kind);
     elements["product-3d-viewer-loading"].textContent = "3Dモデルを読み込んでいます...";
     elements["product-3d-viewer-loading"].hidden = false;
@@ -1174,12 +1184,41 @@
       elements["product-3d-viewer-loading"].textContent = "3Dモデルの読込に失敗しました: " + friendlyError(error);
     }
   }
+  function keepViewerFocus(event) {
+    if (event.key !== "Tab" || !elements["product-3d-viewer-overlay"].classList.contains("show")) return;
+    var controls = ["product-3d-viewer-close", "product-3d-viewer-zoom-in", "product-3d-viewer-zoom-out",
+      "product-3d-viewer-reset", "product-3d-viewer-autorotate", "product-3d-viewer-fullscreen"]
+      .map(function (id) { return elements[id]; })
+      .filter(function (node) { return node && node.isConnected && !node.hidden && !node.disabled; });
+    if (!controls.length) return;
+    var first = controls[0];
+    var last = controls[controls.length - 1];
+    if (!controls.includes(document.activeElement) || (event.shiftKey && document.activeElement === first)) {
+      event.preventDefault();
+      (event.shiftKey && controls.includes(document.activeElement) ? last : first).focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
   function closeViewer() {
     viewerRequestId += 1;
     if (viewer) { viewer.dispose(); viewer = null; }
-    elements["product-3d-viewer-overlay"].classList.remove("show");
-    elements["product-3d-viewer-overlay"].setAttribute("aria-hidden", "true");
+    var viewerOverlay = elements["product-3d-viewer-overlay"];
+    var wasOpen = viewerOverlay.classList.contains("show");
+    viewerOverlay.classList.remove("show");
+    viewerOverlay.setAttribute("aria-hidden", "true");
     elements["product-3d-viewer-loading"].hidden = true;
+    var returnFocus = viewerReturnFocus;
+    var focusTarget = viewerFocusTarget;
+    viewerReturnFocus = null;
+    viewerFocusTarget = null;
+    if (wasOpen && sessionModelsEnabled && focusTarget && returnFocus && returnFocus.isConnected &&
+        !returnFocus.disabled && !returnFocus.hidden) {
+      var current = selectedTarget(focusTarget.context);
+      if (productId(current.product) === focusTarget.productId &&
+          (focusTarget.context === "customer" || current.kind === focusTarget.kind)) returnFocus.focus();
+    }
   }
   function closeCapture() {
     stopCamera();
@@ -1232,7 +1271,10 @@
       var publish = event.target.closest("[data-publish-model]"); if (publish) publishModel(publish.dataset.publishModel, publish.dataset.publishContext);
     });
     window.addEventListener("resize", function () { if (state.stream) drawGuide(state.guide); });
-    document.addEventListener("keydown", function (event) { if (event.key === "Escape") { closeCapture(); closeViewer(); } });
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") { closeCapture(); closeViewer(); }
+      else keepViewerFocus(event);
+    });
   }
 
   function resetSessionModels() {
