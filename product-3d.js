@@ -983,6 +983,12 @@
     var target = glbUploadTarget;
     glbUploadTarget = null;
     if (!file || !target) return;
+    var selected = selectedTarget(target.context);
+    if (productId(selected.product) !== target.productId || selected.kind !== target.kind) {
+      alert("商品が切り替わりました。GLBの登録は開始していません。対象を選び直してください。");
+      input.value = "";
+      return;
+    }
     if (!/\.glb$/i.test(file.name) || file.size < 20 || file.size > 30 * 1024 * 1024 ||
         ["", "model/gltf-binary", "application/octet-stream"].indexOf(file.type) < 0) {
       alert("30 MB以下のGLBファイル（.glb）を選択してください。");
@@ -995,22 +1001,44 @@
     form.append("replaced_id", target.replacedId);
     form.append("file", file);
     input.disabled = true;
+    var result;
     try {
-      var result = await sb.functions.invoke("product-3d-glb", { body: form });
+      result = await sb.functions.invoke("product-3d-glb", { body: form });
       if (result.error || !result.data || !result.data.ok) {
         throw new Error(await edgeErrorMessage(result.error || (result.data && result.data.error)));
       }
+    } catch (error) {
+      // A lost response does not prove the server failed. Refresh read-only
+      // state, and never automatically submit the same file a second time.
       clearModelCaches(target.productId);
+      try {
+        selected = selectedTarget(target.context);
+        if (productId(selected.product) === target.productId && selected.kind === target.kind) {
+          await renderMediaPane(target.context);
+          await refreshMediaAvailability(target.context);
+          scheduleBadgeRefresh();
+        }
+      } catch (refreshError) { console.warn("GLB status refresh failed", refreshError); }
+      alert("GLB登録の結果を確認できません。再送信せず、登録状態を確認してください: " + friendlyError(error));
+      return;
+    } finally {
+      input.disabled = false;
+      input.value = "";
+    }
+    clearModelCaches(target.productId);
+    selected = selectedTarget(target.context);
+    if (productId(selected.product) !== target.productId || selected.kind !== target.kind) {
+      alert("GLBは登録されました。対象商品を選び直してプレビューを確認してください。");
+      return;
+    }
+    try {
       await renderMediaPane(target.context);
       await refreshMediaAvailability(target.context);
       scheduleBadgeRefresh();
       if (result.data.cleanup_pending) alert("新しいGLBは登録されました。旧ファイルの片付けは保留されています。");
       await openViewerById("uploaded:" + result.data.model_id, target.context, target.productId);
     } catch (error) {
-      alert("GLB登録に失敗しました。商品画像や商品情報は変更されていません: " + friendlyError(error));
-    } finally {
-      input.disabled = false;
-      input.value = "";
+      alert("GLBは登録されましたが、プレビューを更新できませんでした: " + friendlyError(error));
     }
   }
   async function deleteUploadedGlb(context, modelId) {
@@ -1031,6 +1059,15 @@
           await edgeErrorMessage(result.error || (result.data && result.data.error)));
       }
     } catch (error) {
+      clearModelCaches(dkdId);
+      try {
+        var selectedAfterDelete = selectedTarget(context || "sales");
+        if (productId(selectedAfterDelete.product) === dkdId && selectedAfterDelete.kind === target.kind) {
+          await renderMediaPane(context || "sales");
+          await refreshMediaAvailability(context || "sales");
+          scheduleBadgeRefresh();
+        }
+      } catch (refreshError) { console.warn("GLB delete status refresh failed", refreshError); }
       alert("GLB削除の状態を確認できません。再実行せず管理者に確認してください: " + friendlyError(error));
     }
   }
