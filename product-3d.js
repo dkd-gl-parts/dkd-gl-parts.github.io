@@ -1117,15 +1117,25 @@
     }
   }
   async function openViewerById(modelId, context, dkdId) {
+    var activeContext = context || "sales";
+    var target = selectedTarget(activeContext);
+    var targetId = productId(target.product);
+    if (!sessionModelsEnabled || !targetId || (dkdId != null && Number(dkdId) !== targetId)) return;
+    var targetKind = target.kind;
     var requestId = ++viewerRequestId;
-    var target = selectedTarget(context || "sales");
-    var internal = context !== "customer" && canReview3D();
-    var models = internal ? await fetchInternalModels(dkdId || productId(target.product)) : await fetchPublishedModels(dkdId || productId(target.product));
-    if (requestId !== viewerRequestId) return;
+    function targetStillSelected() {
+      var current = selectedTarget(activeContext);
+      return requestId === viewerRequestId && sessionModelsEnabled &&
+        productId(current.product) === targetId &&
+        (activeContext === "customer" || current.kind === targetKind);
+    }
+    var internal = activeContext !== "customer" && canReview3D();
+    var models = internal ? await fetchInternalModels(targetId) : await fetchPublishedModels(targetId);
+    if (!targetStillSelected()) return;
     var model = models.find(function (row) { return String(row.id) === String(modelId); });
-    if (!model) return;
+    if (!model || (activeContext !== "customer" && model.product_kind !== targetKind)) return;
     var signed = await sb.storage.from(BUCKET).createSignedUrl(model.published_model_path, 600);
-    if (requestId !== viewerRequestId) return;
+    if (!targetStillSelected()) return;
     if (signed.error) { alert("3Dモデルを開けませんでした: " + friendlyError(signed.error)); return; }
     elements["product-3d-viewer-overlay"].classList.add("show");
     elements["product-3d-viewer-overlay"].setAttribute("aria-hidden", "false");
@@ -1134,17 +1144,28 @@
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
       var module = await import("./product-3d-viewer.js?v=1.1.1078");
+      if (!targetStillSelected()) {
+        if (requestId === viewerRequestId) closeViewer();
+        return;
+      }
       var createdViewer = await module.createProduct3DViewer({
         host: elements["product-3d-viewer-stage"],
         url: signed.data.signedUrl,
         fullscreenElement: elements["product-3d-viewer-shell"] || elements["product-3d-viewer-stage"],
         autoRotate: false
       });
-      if (requestId !== viewerRequestId) { createdViewer.dispose(); return; }
+      if (!targetStillSelected()) {
+        createdViewer.dispose();
+        if (requestId === viewerRequestId) closeViewer();
+        return;
+      }
       viewer = createdViewer;
       elements["product-3d-viewer-loading"].hidden = true;
     } catch (error) {
-      if (requestId !== viewerRequestId) return;
+      if (!targetStillSelected()) {
+        if (requestId === viewerRequestId) closeViewer();
+        return;
+      }
       elements["product-3d-viewer-loading"].textContent = "3Dモデルの読込に失敗しました: " + friendlyError(error);
     }
   }

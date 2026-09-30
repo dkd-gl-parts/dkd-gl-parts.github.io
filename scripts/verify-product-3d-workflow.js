@@ -90,7 +90,11 @@ function requireText(source, fragment, label) {
   "product-3d-glb",
   "3Dモデルを作成できる商品区分は「リビルト」と「新品」です。",
   "if (viewer) { viewer.dispose(); viewer = null; }",
-  "if (requestId !== viewerRequestId) { createdViewer.dispose(); return; }"
+  "function targetStillSelected()",
+  "productId(current.product) === targetId",
+  '(activeContext === "customer" || current.kind === targetKind)',
+  "createdViewer.dispose();",
+  "if (requestId === viewerRequestId) closeViewer();"
 ].forEach((fragment) => requireText(client, fragment, "3D capture contract"));
 
 if (client.includes("analysisDigest")) throw new Error("Capture dedupe must hash source bytes, not analysis metadata");
