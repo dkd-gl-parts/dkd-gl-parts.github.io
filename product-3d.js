@@ -840,7 +840,9 @@
     if (!pane || !switcher || !dkdId) return;
     var internal = context !== "customer" && canReview3D();
     var models = internal ? await fetchInternalModels(dkdId) : await fetchPublishedModels(dkdId);
-    if (request !== mediaAvailabilityRequest[context] || productId(selectedTarget(context).product) !== dkdId || !pane.isConnected) return;
+    var current = selectedTarget(context);
+    if (request !== mediaAvailabilityRequest[context] || productId(current.product) !== dkdId ||
+        (context !== "customer" && current.kind !== target.kind) || !pane.isConnected) return;
     var available = context === "customer"
       ? models.length > 0
       : models.some(function (model) { return model.product_kind === target.kind; }) || (canManage3D() && !!target.kind);
@@ -921,7 +923,9 @@
     var manageable = context !== "customer" && !!target.kind && canManage3D();
     var publishable = context !== "customer" && canPublish3D();
     var models = internal ? await fetchInternalModels(dkdId) : await fetchPublishedModels(dkdId);
-    if (epoch !== modelCacheEpoch || !sessionModelsEnabled || productId(selectedTarget(context).product) !== dkdId || !host.isConnected) return;
+    var current = selectedTarget(context);
+    if (epoch !== modelCacheEpoch || !sessionModelsEnabled || productId(current.product) !== dkdId ||
+        (context !== "customer" && current.kind !== target.kind) || !host.isConnected) return;
     var visible = context === "customer" ? models : models.filter(function (model) { return model.product_kind === target.kind; });
     if (!visible.length) {
       var createAction = manageable ? "<button type='button' data-create-3d='" + context + "'>3Dモデルを作成</button>" : "";

@@ -97,6 +97,11 @@ function requireText(source, fragment, label) {
   "if (requestId === viewerRequestId) closeViewer();"
 ].forEach((fragment) => requireText(client, fragment, "3D capture contract"));
 
+const kindRaceGuard = '(context !== "customer" && current.kind !== target.kind)';
+if (client.split(kindRaceGuard).length !== 3) {
+  throw new Error("Both model-tab availability and model-card rendering must reject stale admin product kinds");
+}
+
 if (client.includes("analysisDigest")) throw new Error("Capture dedupe must hash source bytes, not analysis metadata");
 if (client.includes("URL.createObjectURL(blob)")) throw new Error("Existing-image analysis must not depend on CSP-blocked blob image URLs");
 if (client.includes('signProductImageUrl(imageRow.storage_path, { width:')) throw new Error("Existing capture SHA must cover the original stored image bytes");
