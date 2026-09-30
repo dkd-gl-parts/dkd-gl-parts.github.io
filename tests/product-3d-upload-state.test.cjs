@@ -26,6 +26,8 @@ function harness(invoke, selectedProductId = 123) {
     File, FormData, console,
     elements: { "product-3d-glb-file": input },
     glbUploadTarget: { context: "sales", productId: 123, kind: "rebuilt", replacedId: "" },
+    modelCacheEpoch: 0,
+    sessionModelsEnabled: true,
     selectedTarget: () => ({ product: { dkd_shohin_id: state.selectedProductId }, kind: "rebuilt" }),
     productId: product => Number(product?.dkd_shohin_id || 0),
     sb: { functions: { invoke: async (...args) => { calls.invoke++; return invoke(...args); } } },

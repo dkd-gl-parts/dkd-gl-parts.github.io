@@ -29,6 +29,9 @@
   var modelCache = Object.create(null);
   var internalModelCache = Object.create(null);
   var modelBadgeCache = Object.create(null);
+  var modelCacheEpoch = 0;
+  var sessionModelsEnabled = true;
+  var modelAuthUserId = null;
   var badgeRefreshTimer = null;
   var glbUploadTarget = null;
   var mediaAvailabilityRequest = { sales: 0, production: 0, customer: 0 };
@@ -777,17 +780,20 @@
   }
 
   async function fetchPublishedModels(dkdId) {
-    if (!dkdId) return [];
+    if (!dkdId || !sessionModelsEnabled) return [];
     var key = String(dkdId);
     if (modelCache[key]) return modelCache[key];
+    var epoch = modelCacheEpoch;
     var result = await sb.from("product_3d_viewer_models")
       .select("id,dkd_shohin_id,product_kind,revision,status,published_model_path,thumbnail_path,model_bytes,triangle_count,published_at,model_source,model_format")
       .eq("dkd_shohin_id", dkdId).order("revision", { ascending: false });
+    if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return [];
     if (result.error) {
       // During a phased release the old generated-model viewer remains usable.
       result = await sb.from("product_3d_models")
         .select("id,dkd_shohin_id,product_kind,revision,status,published_model_path,thumbnail_path,model_bytes,triangle_count,published_at")
         .eq("dkd_shohin_id", dkdId).eq("status", "published").order("revision", { ascending: false });
+      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return [];
       modelCache[key] = (result.data || []).map(function (row) {
         return Object.assign({ model_source: "generated", model_format: "glb" }, row);
       });
@@ -804,16 +810,19 @@
     };
   }
   async function fetchInternalModels(dkdId) {
-    if (!dkdId) return [];
+    if (!dkdId || !sessionModelsEnabled) return [];
     var key = String(dkdId);
     if (internalModelCache[key]) return internalModelCache[key];
+    var epoch = modelCacheEpoch;
     var result = await sb.from("product_3d_models")
       .select("id,dkd_shohin_id,product_kind,revision,status,published_model_path,thumbnail_path,model_bytes,triangle_count,published_at,additional_capture_instructions,failure_message,updated_at")
       .eq("dkd_shohin_id", dkdId).order("revision", { ascending: false });
+    if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return [];
     if (result.error) console.warn("internal generated 3D lookup failed", result.error);
     var uploads = await sb.from("product_3d_uploaded_models")
       .select("id,dkd_shohin_id,product_kind,status,storage_path,model_bytes,created_at,updated_at")
       .eq("dkd_shohin_id", dkdId).eq("status", "ready");
+    if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return [];
     if (uploads.error) console.warn("internal uploaded 3D lookup failed", uploads.error);
     internalModelCache[key] = (result.data || []).map(function (row) {
       return Object.assign({ model_source: "generated", model_format: "glb" }, row);
@@ -821,6 +830,7 @@
     return internalModelCache[key];
   }
   async function refreshMediaAvailability(context) {
+    if (!sessionModelsEnabled) return;
     if (!Object.prototype.hasOwnProperty.call(mediaAvailabilityRequest, context)) return;
     var request = ++mediaAvailabilityRequest[context];
     var target = selectedTarget(context);
@@ -863,6 +873,8 @@
     return Array.from(document.querySelectorAll("#list [data-dkd-id], #production-list [data-dkd-id], [data-customer-catalog-dkd]"));
   }
   async function refreshListBadges() {
+    if (!sessionModelsEnabled) return;
+    var epoch = modelCacheEpoch;
     var nodes = visibleProductNodes();
     var ids = Array.from(new Set(nodes.map(function (node) {
       return Number(node.dataset.dkdId || node.dataset.customerCatalogDkd);
@@ -873,6 +885,7 @@
       var result = await sb.from("product_3d_viewer_models").select("dkd_shohin_id").in("dkd_shohin_id", batch);
       if (result.error) result = await sb.from("product_3d_models")
         .select("dkd_shohin_id").eq("status", "published").in("dkd_shohin_id", batch);
+      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
       if (!result.error) {
         batch.forEach(function (id) { modelBadgeCache[String(id)] = false; });
         (result.data || []).forEach(function (row) { modelBadgeCache[String(row.dkd_shohin_id)] = true; });
@@ -896,7 +909,10 @@
     badgeRefreshTimer = window.setTimeout(refreshListBadges, 120);
   }
   async function renderMediaPane(context) {
+    if (!sessionModelsEnabled) return;
     var target = selectedTarget(context);
+    var dkdId = productId(target.product);
+    var epoch = modelCacheEpoch;
     var hostId = { sales: "sales-product-3d-list", production: "production-product-3d-list", customer: "customer-product-3d-list" }[context];
     var host = el(hostId);
     if (!host || !target.product) return;
@@ -904,7 +920,8 @@
     var internal = context !== "customer" && canReview3D();
     var manageable = context !== "customer" && !!target.kind && canManage3D();
     var publishable = context !== "customer" && canPublish3D();
-    var models = internal ? await fetchInternalModels(productId(target.product)) : await fetchPublishedModels(productId(target.product));
+    var models = internal ? await fetchInternalModels(dkdId) : await fetchPublishedModels(dkdId);
+    if (epoch !== modelCacheEpoch || !sessionModelsEnabled || productId(selectedTarget(context).product) !== dkdId || !host.isConnected) return;
     var visible = context === "customer" ? models : models.filter(function (model) { return model.product_kind === target.kind; });
     if (!visible.length) {
       var createAction = manageable ? "<button type='button' data-create-3d='" + context + "'>3Dモデルを作成</button>" : "";
@@ -952,7 +969,9 @@
   async function publishModel(modelId, context) {
     if (!canPublish3D()) { deny3D("publish_product_3d_model"); return; }
     if (!window.confirm("確認中の3Dモデルを得意先にも公開します。公開してよろしいですか？")) return;
+    var epoch = modelCacheEpoch;
     var result = await sb.rpc("publish_product_3d_model", { target_model_id: Number(modelId) });
+    if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
     if (result.error) { alert("3Dモデルを公開できませんでした: " + friendlyError(result.error)); return; }
     var dkdId = String(result.data.dkd_shohin_id);
     delete modelCache[dkdId]; delete internalModelCache[dkdId]; delete modelBadgeCache[dkdId];
@@ -963,6 +982,7 @@
     delete modelCache[key]; delete internalModelCache[key]; delete modelBadgeCache[key];
   }
   function selectGlbForUpload(context, replacedId) {
+    if (!sessionModelsEnabled) return;
     if (!canManage3D()) { deny3D("upload_product_3d_glb"); return; }
     var target = selectedTarget(context || "sales");
     if (!target.product || !productId(target.product) || !target.kind) {
@@ -982,7 +1002,8 @@
     var file = input.files && input.files[0];
     var target = glbUploadTarget;
     glbUploadTarget = null;
-    if (!file || !target) return;
+    if (!file || !target || !sessionModelsEnabled) return;
+    var epoch = modelCacheEpoch;
     var selected = selectedTarget(target.context);
     if (productId(selected.product) !== target.productId || selected.kind !== target.kind) {
       alert("商品が切り替わりました。GLBの登録は開始していません。対象を選び直してください。");
@@ -1004,10 +1025,12 @@
     var result;
     try {
       result = await sb.functions.invoke("product-3d-glb", { body: form });
+      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
       if (result.error || !result.data || !result.data.ok) {
         throw new Error(await edgeErrorMessage(result.error || (result.data && result.data.error)));
       }
     } catch (error) {
+      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
       // A lost response does not prove the server failed. Refresh read-only
       // state, and never automatically submit the same file a second time.
       clearModelCaches(target.productId);
@@ -1015,16 +1038,22 @@
         selected = selectedTarget(target.context);
         if (productId(selected.product) === target.productId && selected.kind === target.kind) {
           await renderMediaPane(target.context);
+          if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
           await refreshMediaAvailability(target.context);
+          if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
           scheduleBadgeRefresh();
         }
       } catch (refreshError) { console.warn("GLB status refresh failed", refreshError); }
+      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
       alert("GLB登録の結果を確認できません。再送信せず、登録状態を確認してください: " + friendlyError(error));
       return;
     } finally {
-      input.disabled = false;
-      input.value = "";
+      if (epoch === modelCacheEpoch) {
+        input.disabled = false;
+        input.value = "";
+      }
     }
+    if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
     clearModelCaches(target.productId);
     selected = selectedTarget(target.context);
     if (productId(selected.product) !== target.productId || selected.kind !== target.kind) {
@@ -1033,41 +1062,54 @@
     }
     try {
       await renderMediaPane(target.context);
+      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
       await refreshMediaAvailability(target.context);
+      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
       scheduleBadgeRefresh();
       if (result.data.cleanup_pending) alert("新しいGLBは登録されました。旧ファイルの片付けは保留されています。");
       await openViewerById("uploaded:" + result.data.model_id, target.context, target.productId);
     } catch (error) {
+      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
       alert("GLBは登録されましたが、プレビューを更新できませんでした: " + friendlyError(error));
     }
   }
   async function deleteUploadedGlb(context, modelId) {
+    if (!sessionModelsEnabled) return;
     if (!canManage3D()) { deny3D("delete_product_3d_glb"); return; }
     var target = selectedTarget(context || "sales");
     if (!target.product || !target.kind || !window.confirm("登録済みの外部GLBを削除しますか？")) return;
     var dkdId = productId(target.product);
+    var epoch = modelCacheEpoch;
     try {
       var result = await sb.functions.invoke("product-3d-glb", {
         body: { action: "delete", product_id: dkdId, product_kind: target.kind, model_id: modelId }
       });
+      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
       clearModelCaches(dkdId);
       await renderMediaPane(context || "sales");
+      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
       await refreshMediaAvailability(context || "sales");
+      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
       scheduleBadgeRefresh();
       if (result.error || !result.data || !result.data.ok) {
-        alert("GLB削除を完了できませんでした。再実行せず管理者に確認してください: " +
-          await edgeErrorMessage(result.error || (result.data && result.data.error)));
+        var message = await edgeErrorMessage(result.error || (result.data && result.data.error));
+        if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+        alert("GLB削除を完了できませんでした。再実行せず管理者に確認してください: " + message);
       }
     } catch (error) {
+      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
       clearModelCaches(dkdId);
       try {
         var selectedAfterDelete = selectedTarget(context || "sales");
         if (productId(selectedAfterDelete.product) === dkdId && selectedAfterDelete.kind === target.kind) {
           await renderMediaPane(context || "sales");
+          if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
           await refreshMediaAvailability(context || "sales");
+          if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
           scheduleBadgeRefresh();
         }
       } catch (refreshError) { console.warn("GLB delete status refresh failed", refreshError); }
+      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
       alert("GLB削除の状態を確認できません。再実行せず管理者に確認してください: " + friendlyError(error));
     }
   }
@@ -1164,10 +1206,61 @@
     document.addEventListener("keydown", function (event) { if (event.key === "Escape") { closeCapture(); closeViewer(); } });
   }
 
+  function resetSessionModels() {
+    modelCacheEpoch += 1;
+    modelCache = Object.create(null);
+    internalModelCache = Object.create(null);
+    modelBadgeCache = Object.create(null);
+    Object.keys(mediaAvailabilityRequest).forEach(function (context) { mediaAvailabilityRequest[context] += 1; });
+    if (badgeRefreshTimer) window.clearTimeout(badgeRefreshTimer);
+    badgeRefreshTimer = null;
+    glbUploadTarget = null;
+    if (elements["product-3d-glb-file"]) {
+      elements["product-3d-glb-file"].disabled = false;
+      elements["product-3d-glb-file"].value = "";
+    }
+    closeCapture(); closeViewer();
+    state = freshState();
+    document.querySelectorAll(".product-3d-has-badge").forEach(function (badge) { badge.remove(); });
+    document.querySelectorAll("[data-product-media-pane='model']").forEach(function (pane) {
+      pane.hidden = true;
+      var switcher = pane.parentElement && pane.parentElement.querySelector(".product-media-switch");
+      var modelTab = switcher && switcher.querySelector("[data-product-media='model']");
+      var photoTab = switcher && switcher.querySelector("[data-product-media='photos']");
+      var photoPane = pane.parentElement && pane.parentElement.querySelector("[data-product-media-pane='photos']");
+      if (modelTab) { modelTab.hidden = true; modelTab.classList.remove("active"); modelTab.setAttribute("aria-selected", "false"); }
+      if (photoTab) { photoTab.classList.add("active"); photoTab.setAttribute("aria-selected", "true"); }
+      if (photoPane) photoPane.hidden = false;
+      var mediaShell = switcher && switcher.closest("[data-product-3d-media-shell]");
+      if (mediaShell && mediaShell.dataset.noPhotos === "true") mediaShell.hidden = true;
+    });
+    ["sales-product-3d-list", "production-product-3d-list", "customer-product-3d-list"].forEach(function (id) {
+      var host = el(id); if (host) host.textContent = "";
+    });
+  }
+
+  function bindSessionBoundary() {
+    if (!sb.auth || typeof sb.auth.onAuthStateChange !== "function") return;
+    sb.auth.onAuthStateChange(function (event, session) {
+      if (["INITIAL_SESSION", "SIGNED_IN", "SIGNED_OUT", "USER_UPDATED"].indexOf(event) < 0) return;
+      var userId = event === "SIGNED_OUT" ? null : (session && session.user && session.user.id || null);
+      if (event === "SIGNED_IN" && userId === modelAuthUserId) return;
+      modelAuthUserId = userId;
+      sessionModelsEnabled = !!userId;
+      resetSessionModels();
+      // Supabase calls auth listeners synchronously; defer all database reads.
+      if (sessionModelsEnabled) window.setTimeout(function () {
+        if (modelAuthUserId !== userId || !sessionModelsEnabled) return;
+        ["sales", "production", "customer"].forEach(refreshMediaAvailability);
+        scheduleBadgeRefresh();
+      }, 0);
+    });
+  }
+
   function init() {
     cacheElements();
     if (!elements["product-3d-capture-overlay"] || typeof sb === "undefined") return;
-    bind(); renderAll();
+    bind(); bindSessionBoundary(); renderAll();
     ["sales", "production", "customer"].forEach(refreshMediaAvailability);
     ["list", "production-list", "customer-catalog-list"].forEach(function (id) {
       var host = el(id); if (host) new MutationObserver(scheduleBadgeRefresh).observe(host, { childList: true, subtree: true });
