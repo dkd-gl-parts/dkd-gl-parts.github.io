@@ -91,15 +91,17 @@ export async function createProduct3DViewer(options) {
     // multiple of the longest edge clips deep objects and portrait viewports.
     const verticalHalfFov = THREE.MathUtils.degToRad(camera.fov * 0.5);
     const horizontalHalfFov = Math.atan(Math.tan(verticalHalfFov) * camera.aspect);
-    const distance = Math.max(boundingRadius * 1.12 / Math.sin(Math.min(verticalHalfFov, horizontalHalfFov)), 0.5);
+    // glTF uses arbitrary model scale. An absolute camera-distance floor makes
+    // physically small parts appear tiny even when their own bounds are valid.
+    const distance = boundingRadius * 1.12 / Math.sin(Math.min(verticalHalfFov, horizontalHalfFov));
     homeView = true;
-    camera.near = Math.max(distance / 1000, 0.001);
-    camera.far = Math.max(distance * 100, 100);
+    camera.near = Math.max(distance / 1000, 0.000001);
+    camera.far = Math.max(distance * 100, camera.near * 1000);
     camera.position.copy(homeDirection).multiplyScalar(distance);
     camera.updateProjectionMatrix();
     controls.target.set(0, 0, 0);
-    controls.minDistance = Math.max(radius * 0.35, 0.01);
-    controls.maxDistance = Math.max(radius * 12, distance * 2, 10);
+    controls.minDistance = Math.max(radius * 0.35, distance / 1000);
+    controls.maxDistance = Math.max(radius * 12, distance * 2);
     controls.update();
   }
   resetView();
