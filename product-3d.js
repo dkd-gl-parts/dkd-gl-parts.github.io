@@ -1140,6 +1140,7 @@
     elements["product-3d-viewer-overlay"].classList.add("show");
     elements["product-3d-viewer-overlay"].setAttribute("aria-hidden", "false");
     elements["product-3d-viewer-title"].textContent = productTitle(target.product) + " / " + kindLabel(model.product_kind);
+    elements["product-3d-viewer-loading"].textContent = "3Dモデルを読み込んでいます...";
     elements["product-3d-viewer-loading"].hidden = false;
     try {
       if (viewer) { viewer.dispose(); viewer = null; }

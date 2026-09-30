@@ -50,7 +50,7 @@ function harness({ onRead, onSign, onCreate } = {}) {
     } }) } },
     getViewerModule: async () => ({ createProduct3DViewer: async () => {
       calls.opens++;
-      if (onCreate) onCreate(state);
+      if (onCreate) await onCreate(state);
       return { dispose: () => { calls.disposes++; } };
     } }),
     productTitle: () => 'fixture',
@@ -106,6 +106,27 @@ test('unchanged product opens its uploaded GLB normally', async () => {
   assert.equal(qa.calls.signs, 1);
   assert.equal(qa.calls.opens, 2);
   assert.equal(qa.calls.closes, 0);
+  assert.equal(qa.elements['product-3d-viewer-loading'].hidden, true);
+});
+
+test('reopening after a load error restores the loading message before success', async () => {
+  let fail = true;
+  let finishSecond;
+  const qa = harness({ onCreate: () => {
+    if (fail) throw new Error('fixture offline');
+    return new Promise(resolve => { finishSecond = resolve; });
+  } });
+  await qa.api.openViewerById('uploaded:18', 'sales', 42);
+  assert.match(qa.elements['product-3d-viewer-loading'].textContent, /読込に失敗/);
+  assert.equal(qa.elements['product-3d-viewer-loading'].hidden, false);
+  fail = false;
+  const pending = qa.api.openViewerById('uploaded:18', 'sales', 42);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(typeof finishSecond, 'function');
+  assert.equal(qa.elements['product-3d-viewer-loading'].textContent, '3Dモデルを読み込んでいます...');
+  assert.equal(qa.elements['product-3d-viewer-loading'].hidden, false);
+  finishSecond();
+  await pending;
   assert.equal(qa.elements['product-3d-viewer-loading'].hidden, true);
 });
 
