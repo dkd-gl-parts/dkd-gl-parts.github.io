@@ -841,13 +841,8 @@
     var dkdId = productId(target.product);
     var pane = document.querySelector("[data-product-media-pane='model'][data-product-media-context='" + context + "']");
     var switcher = pane && pane.parentElement && pane.parentElement.querySelector(".product-media-switch");
-    if (!pane || !switcher || !dkdId) return;
-    var internal = context !== "customer" && canReview3D();
-    var models = internal ? await fetchInternalModels(dkdId) : await fetchPublishedModels(dkdId);
-    var current = selectedTarget(context);
-    if (request !== mediaAvailabilityRequest[context] || productId(current.product) !== dkdId ||
-        (context !== "customer" && current.kind !== target.kind) || !pane.isConnected || !sessionModelsEnabled) return;
-    if (internal !== (context !== "customer" && canReview3D())) {
+    if (!pane || !switcher) return;
+    function hideStaleMedia() {
       var staleTab = switcher.querySelector("[data-product-media='model']");
       if (staleTab) { staleTab.hidden = true; staleTab.classList.remove("active"); staleTab.setAttribute("aria-selected", "false"); }
       pane.hidden = true;
@@ -857,6 +852,15 @@
       if (photosPane) photosPane.hidden = false;
       var staleHost = el({ sales: "sales-product-3d-list", production: "production-product-3d-list", customer: "customer-product-3d-list" }[context]);
       if (staleHost) staleHost.textContent = "";
+    }
+    if (!dkdId) { hideStaleMedia(); return; }
+    var internal = context !== "customer" && canReview3D();
+    var models = internal ? await fetchInternalModels(dkdId) : await fetchPublishedModels(dkdId);
+    var current = selectedTarget(context);
+    if (request !== mediaAvailabilityRequest[context] || productId(current.product) !== dkdId ||
+        (context !== "customer" && current.kind !== target.kind) || !pane.isConnected || !sessionModelsEnabled) return;
+    if (internal !== (context !== "customer" && canReview3D())) {
+      hideStaleMedia();
       return;
     }
     var available = context === "customer"
@@ -935,7 +939,8 @@
     var epoch = modelCacheEpoch;
     var hostId = { sales: "sales-product-3d-list", production: "production-product-3d-list", customer: "customer-product-3d-list" }[context];
     var host = el(hostId);
-    if (!host || !target.product) return;
+    if (!host) return;
+    if (!target.product) { host.textContent = ""; return; }
     host.innerHTML = "<div class='product-3d-loading-card'>3Dモデルを確認しています…</div>";
     var internal = context !== "customer" && canReview3D();
     var manageable = context !== "customer" && !!target.kind && canManage3D();

@@ -34,7 +34,7 @@ function availabilityHarness(context) {
     sessionModelsEnabled: true,
     mediaAvailabilityRequest: { sales: 0, customer: 0 },
     selectedTarget: () => ({ product: { dkd_shohin_id: 42 }, kind: state.kind }),
-    productId: product => product.dkd_shohin_id,
+    productId: product => product?.dkd_shohin_id || 0,
     canReview3D: () => true,
     canManage3D: () => true,
     fetchInternalModels: () => pending,
@@ -80,7 +80,7 @@ test('a permission downgrade hides an existing internal model tab and cards', as
   const scope = {
     sessionModelsEnabled: true, mediaAvailabilityRequest: { sales: 0 },
     selectedTarget: () => ({ product: { dkd_shohin_id: 42 }, kind: 'rebuilt' }),
-    productId: product => product.dkd_shohin_id,
+    productId: product => product?.dkd_shohin_id || 0,
     canReview3D: () => review, canManage3D: () => true,
     fetchInternalModels: () => new Promise(resolve => { finish = resolve; }),
     document: { querySelector: () => pane }, el: () => host,
@@ -93,6 +93,16 @@ test('a permission downgrade hides an existing internal model tab and cards', as
   assert.equal(modelTab.hidden, true);
   assert.equal(pane.hidden, true);
   assert.equal(photosPane.hidden, false);
+  assert.equal(host.textContent, '');
+  review = true;
+  scope.selectedTarget = () => ({ product: null, kind: 'rebuilt' });
+  host.textContent = 'previous-product-card';
+  modelTab.hidden = false;
+  pane.hidden = false;
+  photosPane.hidden = true;
+  await refresh('sales');
+  assert.equal(modelTab.hidden, true);
+  assert.equal(pane.hidden, true);
   assert.equal(host.textContent, '');
 });
 
@@ -138,7 +148,7 @@ test('an older response for the same product cannot overwrite a newer card', asy
   const scope = {
     sessionModelsEnabled: true, modelCacheEpoch: 0, mediaPaneRequest: { sales: 0 },
     selectedTarget: () => ({ product: { dkd_shohin_id: 42 }, kind: 'rebuilt' }),
-    productId: product => product.dkd_shohin_id, el: () => host,
+    productId: product => product?.dkd_shohin_id || 0, el: () => host,
     canReview3D: () => true, canManage3D: () => true, canPublish3D: () => false,
     fetchInternalModels: () => ++calls === 1
       ? new Promise(resolve => { finishOld = resolve; })
@@ -161,7 +171,7 @@ test('a delayed internal response is not displayed after review permission is lo
   const scope = {
     sessionModelsEnabled: true, modelCacheEpoch: 0, mediaPaneRequest: { sales: 0 },
     selectedTarget: () => ({ product: { dkd_shohin_id: 42 }, kind: 'rebuilt' }),
-    productId: product => product.dkd_shohin_id, el: () => host,
+    productId: product => product?.dkd_shohin_id || 0, el: () => host,
     canReview3D: () => review, canManage3D: () => true, canPublish3D: () => false,
     fetchInternalModels: () => new Promise(resolve => { finish = resolve; }),
     modelStatusLabel: status => status, kindLabel: kind => kind, esc: value => String(value ?? ''),
@@ -173,4 +183,7 @@ test('a delayed internal response is not displayed after review permission is lo
   await pending;
   assert.doesNotMatch(host.innerHTML, /internal-only/);
   assert.match(host.textContent, /表示条件が変わりました/);
+  scope.selectedTarget = () => ({ product: null, kind: 'rebuilt' });
+  await render('sales');
+  assert.equal(host.textContent, '');
 });
