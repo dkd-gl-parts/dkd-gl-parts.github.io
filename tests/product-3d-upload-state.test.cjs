@@ -75,6 +75,27 @@ test("successful upload remains successful when preview update fails", async () 
   assert.doesNotMatch(qa.alerts[0], /登録に失敗しました/);
 });
 
+test("replacement cleanup warning survives a failed preview refresh", async () => {
+  const qa = harness(async () => ({ data: { ok: true, model_id: "new-model", cleanup_pending: true } }));
+  qa.context.renderMediaPane = async () => { throw new Error("view offline"); };
+  await qa.upload();
+  assert.equal(qa.calls.invoke, 1);
+  assert.match(qa.alerts[0], /旧ファイルの片付けは保留されています/);
+  assert.match(qa.alerts[1], /GLBは登録されましたが、プレビューを更新できませんでした/);
+  assert.equal(qa.calls.viewer, 0);
+});
+
+test("replacement cleanup warning survives product selection change", async () => {
+  const qa = harness(async () => {
+    qa.state.selectedProductId = 124;
+    return { data: { ok: true, model_id: "new-model", cleanup_pending: true } };
+  });
+  await qa.upload();
+  assert.match(qa.alerts[0], /旧ファイルの片付けは保留されています/);
+  assert.match(qa.alerts[1], /対象商品を選び直してプレビュー/);
+  assert.equal(qa.calls.viewer, 0);
+});
+
 test("selection changed during upload does not preview the wrong product", async () => {
   const qa = harness(async () => {
     qa.state.selectedProductId = 124;

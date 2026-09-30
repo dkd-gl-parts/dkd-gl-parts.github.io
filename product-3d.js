@@ -1089,6 +1089,9 @@
       }
       if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
       clearModelCaches(target.productId);
+      // The new model is committed, but the old Storage object may still need
+      // attention. Report that independently of the optional preview refresh.
+      if (result.data.cleanup_pending) alert("新しいGLBは登録されました。旧ファイルの片付けは保留されています。");
       selected = selectedTarget(target.context);
       if (productId(selected.product) !== target.productId || selected.kind !== target.kind) {
         alert("GLBは登録されました。対象商品を選び直してプレビューを確認してください。");
@@ -1100,7 +1103,6 @@
         await refreshMediaAvailability(target.context);
         if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
         scheduleBadgeRefresh();
-        if (result.data.cleanup_pending) alert("新しいGLBは登録されました。旧ファイルの片付けは保留されています。");
         await openViewerById("uploaded:" + result.data.model_id, target.context, target.productId);
       } catch (error) {
         if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
