@@ -69,3 +69,64 @@ test('product editor and common viewer controls are wired in the page', () => {
     assert.match(html, new RegExp('id="' + id + '"'));
   }
 });
+
+async function renderAdminModels(rows) {
+  const source = fs.readFileSync(path.join(__dirname, '..', 'product-3d.js'), 'utf8');
+  const start = source.indexOf('  async function renderMediaPane(context) {');
+  const end = source.indexOf('  function modelStatusLabel(status) {', start);
+  assert(start >= 0 && end > start, '3D media pane must remain testable');
+  const host = { innerHTML: '', isConnected: true };
+  const context = {
+    sessionModelsEnabled: true,
+    modelCacheEpoch: 0,
+    selectedTarget: () => ({ product: { dkd_shohin_id: 42 }, kind: 'rebuilt' }),
+    productId: product => product.dkd_shohin_id,
+    el: id => id === 'sales-product-3d-list' ? host : null,
+    canReview3D: () => true,
+    canManage3D: () => true,
+    canPublish3D: () => false,
+    fetchInternalModels: async () => rows,
+    fetchPublishedModels: async () => { throw new Error('not a customer pane'); },
+    modelStatusLabel: status => status,
+    kindLabel: () => 'リビルト',
+    esc: value => String(value ?? ''),
+  };
+  const render = vm.runInNewContext(`${source.slice(start, end)}\nrenderMediaPane`, context);
+  await render('sales');
+  return host.innerHTML;
+}
+
+test('failed generation still offers GLB upload without a ready alternative', async () => {
+  const html = await renderAdminModels([
+    { id: 17, product_kind: 'rebuilt', model_source: 'generated', status: 'failed' }
+  ]);
+  assert.match(html, /3Dモデルを生成できませんでした。GLBファイルをアップロードしてください。/);
+  assert.match(html, /data-upload-3d='sales'/);
+});
+
+test('ready uploaded GLB clears obsolete generation fallback and can open in the common viewer', async () => {
+  const html = await renderAdminModels([
+    { id: 17, product_kind: 'rebuilt', model_source: 'generated', status: 'failed' },
+    { id: 'uploaded:18', product_kind: 'rebuilt', model_source: 'uploaded', status: 'published', published_model_path: 'uploaded/18.glb' }
+  ]);
+  assert.doesNotMatch(html, /GLBファイルをアップロードしてください/);
+  assert.match(html, /data-open-model='uploaded:18'/);
+});
+
+test('a ready model for another product kind does not hide this kind’s upload fallback', async () => {
+  const html = await renderAdminModels([
+    { id: 17, product_kind: 'rebuilt', model_source: 'generated', status: 'failed' },
+    { id: 'uploaded:19', product_kind: 'aftermarket_new', model_source: 'uploaded', status: 'published', published_model_path: 'uploaded/19.glb' }
+  ]);
+  assert.match(html, /GLBファイルをアップロードしてください/);
+  assert.doesNotMatch(html, /data-open-model='uploaded:19'/);
+});
+
+test('a usable generated model also clears an older generation failure prompt', async () => {
+  const html = await renderAdminModels([
+    { id: 17, product_kind: 'rebuilt', model_source: 'generated', status: 'failed' },
+    { id: 18, product_kind: 'rebuilt', model_source: 'generated', status: 'published', published_model_path: 'published/18.glb' }
+  ]);
+  assert.doesNotMatch(html, /GLBファイルをアップロードしてください/);
+  assert.match(html, /data-open-model='18'/);
+});

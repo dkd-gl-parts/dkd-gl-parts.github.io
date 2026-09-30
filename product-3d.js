@@ -955,7 +955,10 @@
       return;
     }
     var failedGeneration = visible.some(function (model) { return model.model_source !== "uploaded" && model.status === "failed"; });
-    var fallback = failedGeneration && manageable
+    var usableAlternative = visible.some(function (model) {
+      return !!model.published_model_path && ["published", "review"].indexOf(model.status) >= 0;
+    });
+    var fallback = failedGeneration && !usableAlternative && manageable
       ? "<div class='product-3d-empty-card'>3Dモデルを生成できませんでした。GLBファイルをアップロードしてください。</div>"
       : "";
     var uploadAction = manageable
