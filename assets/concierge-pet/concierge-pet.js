@@ -98,11 +98,26 @@
       aiUsage: "今回の使用量：入力{input}／出力{output}トークン、推定API料金 US${cost}",
       bridgeLegend: "Windows業務連携（管理者テスト）",
       bridgeCheck: "Windows連携を確認",
-      bridgeHelp: "Windows操作は、連携キューの確認、CSV事前検査、固定フォルダー表示、販売王25の起動に限定します。下の端末申請は承認待ちの公開鍵登録だけを行い、CSV取込や販売王ログインは行いません。",
+      bridgeHelp: "連携キューの確認、CSV事前検査、固定フォルダー表示、販売王25の起動を利用できます。承認済み端末の単回ログインは下の管理者テスト欄から行います。端末申請だけではログインやCSV取込は有効になりません。",
       bridgeInboxHelp: "CSVをWindows受信フォルダーへ置き、ファイル名だけを入力してください。フォルダー：%LOCALAPPDATA%\\D-CATS\\HanbaiOhBridge\\inbox",
       bridgeDesktopHelp: "販売王への取込は自動実行しません。販売王で「D-CATS連携テスト（実データ禁止）」を確認してから手動で行ってください。",
       bridgeOpenTestFolder: "取込待ちフォルダーを開く",
       bridgeLaunchHanbaioh: "販売王25を起動",
+      loginLegend: "販売王ログイン（管理者テスト）",
+      loginHelp: "上の端末申請ファイルを選択し、承認済み端末とテスト会社への連携を確認します。既に開いている販売王では停止します。送信は1回だけで、自動再試行しません。",
+      loginSubmit: "テスト会社へ1回ログイン",
+      loginIdle: "ログイン設定と端末承認の確認後に利用できます。",
+      loginNeedDevice: "この管理者の端末申請ファイルを選択してください。再申請・再承認は不要です。",
+      loginWorking: "販売王の状態を確認し、承認済みのログインを1回だけ送信しています。",
+      loginVerified: "テスト会社へのログインと、送信前後の利用者・会社の一致を確認しました。取込は実行していません。",
+      loginUnavailable: "ログイン連携の設定が未完了、または端末・利用者の割当が無効です。管理者へ連絡してください。",
+      loginForbidden: "管理者セッションを確認できません。D-CATSへ再ログインしてください。",
+      loginUnknown: "ログイン結果を確認できません。再送信せず、販売王の画面と利用者・会社を確認してください。",
+      loginAlreadyRunning: "販売王は既に開いています。別ログインせず、現在の利用者と会社を確認してください。",
+      loginNotInstalled: "このPCの販売王25を確認できません。導入済みのPCで管理者に確認してください。",
+      loginTargetMismatch: "販売王の会社・接続先・画面を確認できないため停止しました。管理者が設定を確認してください。",
+      loginRefused1006: "販売王がログインを拒否しました（1006）。利用枠や接続設定を管理者に確認してください。再試行や利用者情報の初期化は行いません。",
+      loginRefused: "販売王がログインを受け付けませんでした。画面のエラーを管理者に確認してください。再試行は行いません。",
       bridgeSalesFile: "売上CSVファイル名",
       bridgeCustomerFile: "得意先CSVファイル名",
       bridgePrepareSales: "売上CSVを検査して待機",
@@ -234,11 +249,26 @@
       aiUsage: "This request: {input} input / {output} output tokens; estimated API cost US${cost}",
       bridgeLegend: "Windows integration (admin pilot)",
       bridgeCheck: "Check Windows integration",
-      bridgeHelp: "Windows actions are limited to queue checks, CSV preflight, opening the fixed folder, and launching Sales King 25. The device request below only registers a public key for review. It does not import CSV files or sign in to Sales King.",
+      bridgeHelp: "Check the queue, validate CSV files, open the fixed folder or launch Sales King 25. Approved devices can use the administrator test sign-in below. Device enrollment alone does not enable sign-in or CSV import.",
       bridgeInboxHelp: "Place the CSV in the Windows inbox and enter only its file name. Folder: %LOCALAPPDATA%\\D-CATS\\HanbaiOhBridge\\inbox",
       bridgeDesktopHelp: "Import is never automatic. In Sales King, confirm “D-CATS Integration Test (No Production Data)” before importing manually.",
       bridgeOpenTestFolder: "Open import-ready folder",
       bridgeLaunchHanbaioh: "Launch Sales King 25",
+      loginLegend: "Sales King sign-in (administrator test)",
+      loginHelp: "Select your device enrollment file above. Use an approved device and the test company. Stop if Sales King is open. Submit once; no automatic retry.",
+      loginSubmit: "Sign in to test company once",
+      loginIdle: "Available after login configuration and device approval are verified.",
+      loginNeedDevice: "Select this administrator's device enrollment file. Re-enrollment or re-approval is not needed.",
+      loginWorking: "Checking Sales King and submitting the approved sign-in once.",
+      loginVerified: "Verified test-company sign-in and matching user/company before and after submission. No import performed.",
+      loginUnavailable: "Sign-in configuration is incomplete, or the device/user assignment is disabled. Contact an administrator.",
+      loginForbidden: "Administrator session could not be verified. Sign in to D-CATS again.",
+      loginUnknown: "Sign-in outcome is unknown. Do not resend. Check the Sales King user and company on screen.",
+      loginAlreadyRunning: "Sales King is already open. Do not start another sign-in. Check its current user and company.",
+      loginNotInstalled: "Cannot verify Sales King 25 on this PC. Ask an administrator on a PC where it is installed.",
+      loginTargetMismatch: "Stopped because the company, connection or screen could not be verified. Ask an administrator to check settings.",
+      loginRefused1006: "Sales King refused sign-in (1006). Ask an administrator to check license slots and connection settings. No retry or user reset.",
+      loginRefused: "Sales King refused sign-in. Ask an administrator to check the on-screen error. No retry.",
       bridgeSalesFile: "Sales CSV file name",
       bridgeCustomerFile: "Customer CSV file name",
       bridgePrepareSales: "Validate and stage sales CSV",
@@ -370,11 +400,26 @@
       aiUsage: "本次用量：输入{input}／输出{output} tokens，预估API费用 US${cost}",
       bridgeLegend: "Windows业务联动（管理员测试）",
       bridgeCheck: "检查Windows联动",
-      bridgeHelp: "Windows操作仅限检查队列、预检CSV、打开固定文件夹和启动销售王25。下方设备申请只登记待审核的公钥，不会导入CSV或登录销售王。",
+      bridgeHelp: "可检查队列、预检CSV、打开固定文件夹和启动销售王25。已批准设备可使用下方管理员测试登录。设备申请本身不会启用登录或CSV导入。",
       bridgeInboxHelp: "请将CSV放入Windows收件文件夹，并只输入文件名。文件夹：%LOCALAPPDATA%\\D-CATS\\HanbaiOhBridge\\inbox",
       bridgeDesktopHelp: "不会自动导入。请在销售王中确认“D-CATS联动测试（禁止使用实际数据）”后再手动导入。",
       bridgeOpenTestFolder: "打开待导入文件夹",
       bridgeLaunchHanbaioh: "启动销售王25",
+      loginLegend: "销售王登录（管理员测试）",
+      loginHelp: "请在上方选择本人的设备申请文件，使用已批准设备及测试公司。销售王已打开时停止。仅提交一次，不自动重试。",
+      loginSubmit: "登录测试公司一次",
+      loginIdle: "登录配置与设备批准确认后可用。",
+      loginNeedDevice: "请选择本管理员的设备申请文件，无需重新申请或批准。",
+      loginWorking: "正在确认销售王状态并仅提交一次已批准的登录。",
+      loginVerified: "已确认测试公司登录，以及提交前后的用户和公司一致。未执行导入。",
+      loginUnavailable: "登录配置未完成，或设备、用户分配已禁用。请联系管理员。",
+      loginForbidden: "无法确认管理员会话，请重新登录D-CATS。",
+      loginUnknown: "无法确认登录结果。请勿重新提交，确认销售王画面中的用户及公司。",
+      loginAlreadyRunning: "销售王已打开。请勿再次登录，确认当前用户及公司。",
+      loginNotInstalled: "无法确认本机的销售王25，请在已安装的电脑上联系管理员。",
+      loginTargetMismatch: "因无法确认公司、连接或画面而停止，请管理员确认设置。",
+      loginRefused1006: "销售王拒绝登录（1006），请管理员确认许可名额及连接设置。不会重试或初始化用户信息。",
+      loginRefused: "销售王未接受登录，请管理员确认画面错误。不会重试。",
       bridgeSalesFile: "销售CSV文件名",
       bridgeCustomerFile: "客户CSV文件名",
       bridgePrepareSales: "检查销售CSV并等待",
@@ -484,6 +529,13 @@
   var bridgeCustomerButton;
   var bridgeFolderButton;
   var bridgeLaunchButton;
+  var loginButton;
+  var loginStatus;
+  var loginStatusKey = "loginIdle";
+  var loginAttempted = false;
+  var loginPending = false;
+  var loginToken = 0;
+  var loginOwner = null;
   var bridgeStatus;
   var enrollFileInput;
   var enrollButton;
@@ -915,6 +967,21 @@
     bridgeCard.appendChild(enrollmentCard);
     bridgeCard.appendChild(reviewCard);
     bridgeCard.appendChild(backupCard);
+    var loginCard = createElement("section", "dcats-concierge-login-pilot");
+    loginCard.appendChild(createCopyElement("h4", "dcats-concierge-bridge-title", "loginLegend"));
+    loginCard.appendChild(createCopyElement("p", "dcats-concierge-bridge-help", "loginHelp"));
+    loginButton = createCopyElement("button", "dcats-concierge-bridge-button is-secondary", "loginSubmit");
+    loginButton.type = "button";
+    loginButton.id = "dcats-concierge-login-submit";
+    loginStatus = createElement("p", "dcats-concierge-bridge-status");
+    loginStatus.id = "dcats-concierge-login-status";
+    loginStatus.setAttribute("role", "status");
+    loginStatus.setAttribute("aria-live", "polite");
+    loginButton.setAttribute("aria-describedby", loginStatus.id);
+    loginButton.addEventListener("click", runPilotLogin);
+    loginCard.appendChild(loginButton);
+    loginCard.appendChild(loginStatus);
+    bridgeCard.appendChild(loginCard);
 
     panelBody.appendChild(characterField);
     panelBody.appendChild(modeField);
@@ -1202,6 +1269,7 @@
     reviewConfirmInput.disabled = enrollmentPending || reviewPending || reviewAttempted || !reviewPreviewRecord;
     reviewButton.disabled = enrollmentPending || reviewPending || reviewAttempted || !reviewPreviewRecord || !reviewConfirmInput.checked;
     updateBackupEnrollment();
+    updatePilotLogin();
   }
 
   function setReviewStatus(key, values) {
@@ -1216,12 +1284,21 @@
 
   function syncBridgeControls(systemAdmin) {
     if (!bridgeCard || !panelBody || !conciergeHelp) return;
+    var owner = currentSettingsOwner();
+    if (loginOwner !== owner) {
+      loginOwner = owner;
+      loginAttempted = false;
+      loginStatusKey = "loginIdle";
+    }
     if (systemAdmin) {
       if (!bridgeCard.parentElement) panelBody.insertBefore(bridgeCard, conciergeHelp);
       updateBridgeStatus();
       return;
     }
     bridgeRequestToken += 1;
+    loginToken += 1;
+    if (loginPending) loginStatusKey = "loginUnknown";
+    loginPending = false;
     bridgeRequestPending = false;
     bridgeStatusState = { key: "bridgeIdle", values: null };
     enrollmentToken += 1;
@@ -1250,7 +1327,7 @@
     return Array.prototype.map.call(values, function (value) { return value.toString(16).padStart(8, "0"); }).join("-");
   }
 
-  function bridgeResponse(request) {
+  function bridgeResponse(request, timeoutMs) {
     return new Promise(function (resolve, reject) {
       var settled = false;
       var timeout = window.setTimeout(function () {
@@ -1260,7 +1337,7 @@
         var error = new Error("bridge_timeout");
         error.code = "BRIDGE_TIMEOUT";
         reject(error);
-      }, 10000);
+      }, timeoutMs || 10000);
       function onMessage(event) {
         if (event.source !== window || event.origin !== window.location.origin) return;
         var message = event.data;
@@ -1587,6 +1664,75 @@
       if (token === bridgeRequestToken) {
         bridgeRequestPending = false;
         updateBridgeStatus();
+      }
+    }
+  }
+
+  function updatePilotLogin() {
+    if (!loginButton || !loginStatus) return;
+    loginButton.disabled = loginAttempted || loginPending || bridgeRequestPending || !reviewPreviewRecord;
+    loginStatus.textContent = copy(loginStatusKey);
+    loginStatus.classList.toggle("is-success", loginStatusKey === "loginVerified");
+    loginStatus.classList.toggle("is-warning", ["loginUnknown", "loginAlreadyRunning", "loginTargetMismatch"].indexOf(loginStatusKey) >= 0);
+    loginStatus.classList.toggle("is-error", ["loginUnavailable", "loginForbidden", "loginRefused", "loginRefused1006"].indexOf(loginStatusKey) >= 0);
+  }
+
+  async function runPilotLogin() {
+    if (!isSystemAdminSession() || loginAttempted || loginPending || bridgeRequestPending) return;
+    if (!reviewPreviewRecord) { loginStatusKey = "loginNeedDevice"; updatePilotLogin(); return; }
+    var api = window.DcatsHanbaiohLoginApi;
+    if (!api || typeof api.issue !== "function") { loginStatusKey = "loginUnavailable"; updatePilotLogin(); return; }
+    var record = reviewPreviewRecord;
+    var token = ++loginToken;
+    loginAttempted = true;
+    loginPending = true;
+    bridgeRequestPending = true;
+    loginStatusKey = "loginWorking";
+    updateBridgeStatus();
+    updatePilotLogin();
+    var request;
+    try {
+      var id = bridgeRequestId();
+      var issued = await api.issue(record, id);
+      if (token !== loginToken || !isSystemAdminSession() || record.actor_id !== currentSettingsOwner()) return;
+      if (issued && issued.error) {
+        loginStatusKey = [401,403].indexOf(Number(issued.error.status || issued.error.context && issued.error.context.status)) >= 0 ? "loginForbidden" : "loginUnavailable";
+        return;
+      }
+      var value = issued && issued.data;
+      if (!value || value.ok !== true || value.request_id !== id || value.device_id !== record.device_id ||
+          typeof value.capability !== "string" || !value.capability.startsWith("v2.") ||
+          !Number.isInteger(value.expires_at) || value.expires_at * 1000 <= Date.now() ||
+          value.expires_at * 1000 > Date.now() + 90000 || !value.envelope) throw new Error("invalid_login_response");
+      request = { id: id, command: "login_hanbaioh25", deviceId: value.device_id, capability: value.capability, envelope: value.envelope };
+      var response = await bridgeResponse(request, 45000);
+      if (token !== loginToken || !isSystemAdminSession()) return;
+      if (!response || response.ok !== true || response.command !== "login_hanbaioh25") throw new Error("login_unverified");
+      var data = response.data;
+      if (data && data.status === "ui_login_verified" && data.code === "HANBAIOH_CONTROLLED_UI_LOGIN_VERIFIED") {
+        loginStatusKey = "loginVerified";
+      } else {
+        var stops = {
+          HANBAIOH_LOGIN_PILOT_DISABLED: "loginUnavailable", HANBAIOH_DEVICE_UNVERIFIED: "loginUnavailable",
+          HANBAIOH_LOGIN_AUTHORIZATION_UNVERIFIED: "loginUnavailable",
+          HANBAIOH_LOCAL_SESSION_PRESENT: "loginAlreadyRunning",
+          HANBAIOH_NOT_INSTALLED: "loginNotInstalled", HANBAIOH_INSTALLATION_UNVERIFIED: "loginNotInstalled",
+          HANBAIOH_LOGIN_TARGET_MISMATCH: "loginTargetMismatch", HANBAIOH_LOGIN_FORM_UNVERIFIED: "loginTargetMismatch",
+          HANBAIOH_VENDOR_REFUSED_1006: "loginRefused1006", HANBAIOH_VENDOR_REFUSED: "loginRefused"
+        };
+        loginStatusKey = data && data.status === "stopped" && stops[data.code] || "loginUnknown";
+      }
+      showBubble(copy(loginStatusKey), 4200);
+      playExternalState(loginStatusKey === "loginVerified" ? "success" : "review", 2200);
+    } catch (error) {
+      if (token === loginToken && isSystemAdminSession()) loginStatusKey = "loginUnknown";
+    } finally {
+      if (request) { request.capability = ""; request.envelope = null; }
+      if (token === loginToken) {
+        loginPending = false;
+        bridgeRequestPending = false;
+        updateBridgeStatus();
+        updatePilotLogin();
       }
     }
   }

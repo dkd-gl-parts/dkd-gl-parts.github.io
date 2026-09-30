@@ -7063,7 +7063,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1076";
+var APP_VERSION       = "v1.1.1077";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -7746,6 +7746,21 @@ async function issueConciergeBackupEnrollment(record) {
 window.DcatsHanbaiohBackupEnrollmentApi = Object.freeze({
   issue: issueConciergeBackupEnrollment
 });
+async function issueConciergePilotLogin(record, requestId) {
+  if (!currentUser || !isSystemAdmin()) {
+    return { data: null, error: new Error("system_admin_required") };
+  }
+  var uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  if (!record || typeof record !== "object" || Array.isArray(record) ||
+      Object.keys(record).sort().join(",") !== "actor_id,device_id,public_key_sha256,public_key_spki" ||
+      record.actor_id !== currentUser.id || !uuid.test(record.device_id) || !uuid.test(requestId)) {
+    return { data: null, error: new Error("invalid_login_request") };
+  }
+  return sb.functions.invoke("issue-hanbaioh-pilot-login", {
+    body: { device_id: record.device_id, request_id: requestId }
+  });
+}
+window.DcatsHanbaiohLoginApi = Object.freeze({ issue: issueConciergePilotLogin });
 var CONCIERGE_AI_SCREEN_IDS = Object.freeze({
   menu: true,
   search: true,
