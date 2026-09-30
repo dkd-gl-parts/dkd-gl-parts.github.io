@@ -150,6 +150,35 @@ test("an explicit delete error with failed refresh never claims success", async 
   assert.doesNotMatch(qa.alerts[0], /GLBは削除されました/);
 });
 
+test("retired model with unconfirmed file removal is reported without retry", async () => {
+  const error = new Error("non-2xx response");
+  error.context = { json: async () => ({ model_retired: true, cleanup_pending: true,
+    storage_removal_confirmed: false, error: "cleanup unconfirmed" }) };
+  const qa = harness(async () => ({ error, data: null }));
+  qa.context.window = { confirm: () => true };
+  const remove = vm.runInNewContext(`${deleteSource}\ndeleteUploadedGlb`, qa.context);
+  await remove("sales", "11111111-1111-4111-8111-111111111111");
+  assert.equal(qa.calls.invoke, 1);
+  assert.match(qa.alerts[0], /表示から外れましたが、ファイル削除の結果は確認できません/);
+  assert.match(qa.alerts[0], /再実行せず/);
+  assert.doesNotMatch(qa.alerts[0], /ファイルは削除されました/);
+});
+
+test("retired model with confirmed file removal keeps metadata warning after failed refresh", async () => {
+  const error = new Error("non-2xx response");
+  error.context = { json: async () => ({ model_retired: true, cleanup_pending: true,
+    storage_removal_confirmed: true, error: "metadata cleanup pending" }) };
+  const qa = harness(async () => ({ error, data: null }));
+  qa.context.window = { confirm: () => true };
+  qa.context.renderMediaPane = async () => { throw new Error("view offline"); };
+  const remove = vm.runInNewContext(`${deleteSource}\ndeleteUploadedGlb`, qa.context);
+  await remove("sales", "11111111-1111-4111-8111-111111111111");
+  assert.equal(qa.calls.invoke, 1);
+  assert.match(qa.alerts[0], /ファイルは削除されましたが、管理記録の片付けは保留中/);
+  assert.match(qa.alerts[0], /画面も更新できませんでした/);
+  assert.doesNotMatch(qa.alerts[0], /削除の状態を確認できません/);
+});
+
 test("permission lost in the file chooser cannot submit a GLB", async () => {
   const qa = harness(async () => ({ data: { ok: true } }));
   qa.state.manage = false;

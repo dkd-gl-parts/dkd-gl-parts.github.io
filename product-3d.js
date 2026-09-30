@@ -1124,6 +1124,7 @@
     var dkdId = productId(target.product);
     var epoch = modelCacheEpoch;
     var deletionConfirmed = false;
+    var partialCleanupMessage = "";
     glbMutationBusy = true;
     try {
       var result = await sb.functions.invoke("product-3d-glb", {
@@ -1131,14 +1132,27 @@
       });
       if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
       deletionConfirmed = !!(result && !result.error && result.data && result.data.ok === true);
+      var errorBody = null;
+      if (result.error && result.error.context && typeof result.error.context.json === "function") {
+        try { errorBody = await result.error.context.json(); }
+        catch (_) { /* A transport or malformed response leaves the outcome uncertain. */ }
+      }
+      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+      if (errorBody && errorBody.model_retired === true && errorBody.cleanup_pending === true) {
+        partialCleanupMessage = errorBody.storage_removal_confirmed === true
+          ? "GLBは表示から外れ、ファイルは削除されましたが、管理記録の片付けは保留中です。再実行せず管理者に確認してください。"
+          : "GLBは表示から外れましたが、ファイル削除の結果は確認できません。再実行せず管理者に確認してください。";
+      }
       clearModelCaches(dkdId);
       await renderMediaPane(context || "sales");
       if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
       await refreshMediaAvailability(context || "sales");
       if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
       scheduleBadgeRefresh();
+      if (partialCleanupMessage) { alert(partialCleanupMessage); return; }
       if (result.error || !result.data || !result.data.ok) {
-        var message = await edgeErrorMessage(result.error || (result.data && result.data.error));
+        var message = errorBody && typeof errorBody.error === "string"
+          ? errorBody.error : await edgeErrorMessage(result.error || (result.data && result.data.error));
         if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
         alert("GLB削除を完了できませんでした。再実行せず管理者に確認してください: " + message);
       }
@@ -1146,6 +1160,10 @@
       if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
       if (deletionConfirmed) {
         alert("GLBは削除されましたが、画面を更新できませんでした。商品を選び直して確認してください: " + friendlyError(error));
+        return;
+      }
+      if (partialCleanupMessage) {
+        alert(partialCleanupMessage + " 画面も更新できませんでした。商品を選び直して確認してください。");
         return;
       }
       clearModelCaches(dkdId);

@@ -3538,7 +3538,10 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "GLB登録の結果を確認できません。再送信せず、登録状態を確認してください:": "The GLB upload result could not be confirmed. Do not resubmit; check the registered model:",
     "GLBは登録されました。対象商品を選び直してプレビューを確認してください。": "The GLB was registered. Select that product again to check the preview.",
     "GLBは登録されましたが、プレビューを更新できませんでした:": "The GLB was registered, but the preview could not be refreshed:",
-    "GLBは削除されましたが、画面を更新できませんでした。商品を選び直して確認してください:": "The GLB was deleted, but the screen could not be refreshed. Select the product again to confirm:"
+    "GLBは削除されましたが、画面を更新できませんでした。商品を選び直して確認してください:": "The GLB was deleted, but the screen could not be refreshed. Select the product again to confirm:",
+    "GLBは表示から外れ、ファイルは削除されましたが、管理記録の片付けは保留中です。再実行せず管理者に確認してください。": "The GLB is no longer displayed and its file was deleted, but metadata cleanup is pending. Do not retry; contact an administrator.",
+    "GLBは表示から外れましたが、ファイル削除の結果は確認できません。再実行せず管理者に確認してください。": "The GLB is no longer displayed, but file deletion could not be confirmed. Do not retry; contact an administrator.",
+    "画面も更新できませんでした。商品を選び直して確認してください。": "The screen could not be refreshed either. Select the product again to confirm."
   },
   "zh": {
     "帳票出力 / レポート": "报表 / 报表中心",
@@ -7077,6 +7080,9 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "GLB登録の結果を確認できません。再送信せず、登録状態を確認してください:": "无法确认GLB上传结果。请勿重新提交，先检查登记状态：",
     "GLBは登録されました。対象商品を選び直してプレビューを確認してください。": "GLB已登记。请重新选择该商品并检查预览。",
     "GLBは登録されましたが、プレビューを更新できませんでした:": "GLB已登记，但无法刷新预览：",
-    "GLBは削除されましたが、画面を更新できませんでした。商品を選び直して確認してください:": "GLB已删除，但无法刷新页面。请重新选择该商品并确认："
+    "GLBは削除されましたが、画面を更新できませんでした。商品を選び直して確認してください:": "GLB已删除，但无法刷新页面。请重新选择该商品并确认：",
+    "GLBは表示から外れ、ファイルは削除されましたが、管理記録の片付けは保留中です。再実行せず管理者に確認してください。": "GLB已从展示中移除，文件也已删除，但管理记录清理尚未完成。请勿重试，请联系管理员。",
+    "GLBは表示から外れましたが、ファイル削除の結果は確認できません。再実行せず管理者に確認してください。": "GLB已从展示中移除，但无法确认文件删除结果。请勿重试，请联系管理员。",
+    "画面も更新できませんでした。商品を選び直して確認してください。": "页面也无法刷新。请重新选择商品并确认。"
   }
 };
