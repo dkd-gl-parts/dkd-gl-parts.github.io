@@ -36,7 +36,9 @@
   var modelAuthUserId = null;
   var badgeRefreshTimer = null;
   var glbUploadTarget = null;
+  var glbMutationBusy = false;
   var mediaAvailabilityRequest = { sales: 0, production: 0, customer: 0 };
+  var mediaPaneRequest = { sales: 0, production: 0, customer: 0 };
 
   function freshState() {
     return {
@@ -844,7 +846,19 @@
     var models = internal ? await fetchInternalModels(dkdId) : await fetchPublishedModels(dkdId);
     var current = selectedTarget(context);
     if (request !== mediaAvailabilityRequest[context] || productId(current.product) !== dkdId ||
-        (context !== "customer" && current.kind !== target.kind) || !pane.isConnected) return;
+        (context !== "customer" && current.kind !== target.kind) || !pane.isConnected || !sessionModelsEnabled) return;
+    if (internal !== (context !== "customer" && canReview3D())) {
+      var staleTab = switcher.querySelector("[data-product-media='model']");
+      if (staleTab) { staleTab.hidden = true; staleTab.classList.remove("active"); staleTab.setAttribute("aria-selected", "false"); }
+      pane.hidden = true;
+      var photosTab = switcher.querySelector("[data-product-media='photos']");
+      var photosPane = pane.parentElement.querySelector("[data-product-media-pane='photos']");
+      if (photosTab) { photosTab.classList.add("active"); photosTab.setAttribute("aria-selected", "true"); }
+      if (photosPane) photosPane.hidden = false;
+      var staleHost = el({ sales: "sales-product-3d-list", production: "production-product-3d-list", customer: "customer-product-3d-list" }[context]);
+      if (staleHost) staleHost.textContent = "";
+      return;
+    }
     var available = context === "customer"
       ? models.length > 0
       : models.some(function (model) { return model.product_kind === target.kind; }) || (canManage3D() && !!target.kind);
@@ -914,6 +928,8 @@
   }
   async function renderMediaPane(context) {
     if (!sessionModelsEnabled) return;
+    if (!Object.prototype.hasOwnProperty.call(mediaPaneRequest, context)) return;
+    var request = ++mediaPaneRequest[context];
     var target = selectedTarget(context);
     var dkdId = productId(target.product);
     var epoch = modelCacheEpoch;
@@ -926,8 +942,15 @@
     var publishable = context !== "customer" && canPublish3D();
     var models = internal ? await fetchInternalModels(dkdId) : await fetchPublishedModels(dkdId);
     var current = selectedTarget(context);
-    if (epoch !== modelCacheEpoch || !sessionModelsEnabled || productId(current.product) !== dkdId ||
+    if (request !== mediaPaneRequest[context] || epoch !== modelCacheEpoch || !sessionModelsEnabled ||
+        productId(current.product) !== dkdId ||
         (context !== "customer" && current.kind !== target.kind) || !host.isConnected) return;
+    if (internal !== (context !== "customer" && canReview3D()) ||
+        manageable !== (context !== "customer" && !!current.kind && canManage3D()) ||
+        publishable !== (context !== "customer" && canPublish3D())) {
+      host.textContent = "表示条件が変わりました。3Dタブを開き直してください。";
+      return;
+    }
     var visible = context === "customer" ? models : models.filter(function (model) { return model.product_kind === target.kind; });
     if (!visible.length) {
       var createAction = manageable ? "<button type='button' data-create-3d='" + context + "'>3Dモデルを作成</button>" : "";
@@ -991,7 +1014,7 @@
     delete modelCache[key]; delete internalModelCache[key]; delete modelBadgeCache[key];
   }
   function selectGlbForUpload(context, replacedId) {
-    if (!sessionModelsEnabled) return;
+    if (!sessionModelsEnabled || glbMutationBusy) return;
     if (!canManage3D()) { deny3D("upload_product_3d_glb"); return; }
     var target = selectedTarget(context || "sales");
     if (!target.product || !productId(target.product) || !target.kind) {
@@ -1011,11 +1034,11 @@
     var file = input.files && input.files[0];
     var target = glbUploadTarget;
     glbUploadTarget = null;
-    if (!file || !target || !sessionModelsEnabled) return;
+    if (!file || !target || !sessionModelsEnabled || glbMutationBusy) return;
     var epoch = modelCacheEpoch;
     var selected = selectedTarget(target.context);
-    if (productId(selected.product) !== target.productId || selected.kind !== target.kind) {
-      alert("商品が切り替わりました。GLBの登録は開始していません。対象を選び直してください。");
+    if (productId(selected.product) !== target.productId || selected.kind !== target.kind || !canManage3D()) {
+      alert("商品・区分・権限が変わりました。GLBを選び直してください。");
       input.value = "";
       return;
     }
@@ -1030,65 +1053,70 @@
     form.append("product_kind", target.kind);
     form.append("replaced_id", target.replacedId);
     form.append("file", file);
+    glbMutationBusy = true;
     input.disabled = true;
     var result;
     try {
-      result = await sb.functions.invoke("product-3d-glb", { body: form });
-      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
-      if (result.error || !result.data || !result.data.ok) {
-        throw new Error(await edgeErrorMessage(result.error || (result.data && result.data.error)));
-      }
-    } catch (error) {
-      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
-      // A lost response does not prove the server failed. Refresh read-only
-      // state, and never automatically submit the same file a second time.
-      clearModelCaches(target.productId);
       try {
-        selected = selectedTarget(target.context);
-        if (productId(selected.product) === target.productId && selected.kind === target.kind) {
-          await renderMediaPane(target.context);
-          if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
-          await refreshMediaAvailability(target.context);
-          if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
-          scheduleBadgeRefresh();
+        result = await sb.functions.invoke("product-3d-glb", { body: form });
+        if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+        if (result.error || !result.data || !result.data.ok) {
+          throw new Error(await edgeErrorMessage(result.error || (result.data && result.data.error)));
         }
-      } catch (refreshError) { console.warn("GLB status refresh failed", refreshError); }
+      } catch (error) {
+        if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+        // A lost response does not prove the server failed. Refresh read-only
+        // state, and never automatically submit the same file a second time.
+        clearModelCaches(target.productId);
+        try {
+          selected = selectedTarget(target.context);
+          if (productId(selected.product) === target.productId && selected.kind === target.kind) {
+            await renderMediaPane(target.context);
+            if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+            await refreshMediaAvailability(target.context);
+            if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+            scheduleBadgeRefresh();
+          }
+        } catch (refreshError) { console.warn("GLB status refresh failed", refreshError); }
+        if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+        alert("GLB登録の結果を確認できません。再送信せず、登録状態を確認してください: " + friendlyError(error));
+        return;
+      }
       if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
-      alert("GLB登録の結果を確認できません。再送信せず、登録状態を確認してください: " + friendlyError(error));
-      return;
+      clearModelCaches(target.productId);
+      selected = selectedTarget(target.context);
+      if (productId(selected.product) !== target.productId || selected.kind !== target.kind) {
+        alert("GLBは登録されました。対象商品を選び直してプレビューを確認してください。");
+        return;
+      }
+      try {
+        await renderMediaPane(target.context);
+        if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+        await refreshMediaAvailability(target.context);
+        if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+        scheduleBadgeRefresh();
+        if (result.data.cleanup_pending) alert("新しいGLBは登録されました。旧ファイルの片付けは保留されています。");
+        await openViewerById("uploaded:" + result.data.model_id, target.context, target.productId);
+      } catch (error) {
+        if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+        alert("GLBは登録されましたが、プレビューを更新できませんでした: " + friendlyError(error));
+      }
     } finally {
       if (epoch === modelCacheEpoch) {
         input.disabled = false;
         input.value = "";
       }
-    }
-    if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
-    clearModelCaches(target.productId);
-    selected = selectedTarget(target.context);
-    if (productId(selected.product) !== target.productId || selected.kind !== target.kind) {
-      alert("GLBは登録されました。対象商品を選び直してプレビューを確認してください。");
-      return;
-    }
-    try {
-      await renderMediaPane(target.context);
-      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
-      await refreshMediaAvailability(target.context);
-      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
-      scheduleBadgeRefresh();
-      if (result.data.cleanup_pending) alert("新しいGLBは登録されました。旧ファイルの片付けは保留されています。");
-      await openViewerById("uploaded:" + result.data.model_id, target.context, target.productId);
-    } catch (error) {
-      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
-      alert("GLBは登録されましたが、プレビューを更新できませんでした: " + friendlyError(error));
+      glbMutationBusy = false;
     }
   }
   async function deleteUploadedGlb(context, modelId) {
-    if (!sessionModelsEnabled) return;
+    if (!sessionModelsEnabled || glbMutationBusy) return;
     if (!canManage3D()) { deny3D("delete_product_3d_glb"); return; }
     var target = selectedTarget(context || "sales");
     if (!target.product || !target.kind || !window.confirm("登録済みの外部GLBを削除しますか？")) return;
     var dkdId = productId(target.product);
     var epoch = modelCacheEpoch;
+    glbMutationBusy = true;
     try {
       var result = await sb.functions.invoke("product-3d-glb", {
         body: { action: "delete", product_id: dkdId, product_kind: target.kind, model_id: modelId }
@@ -1120,6 +1148,8 @@
       } catch (refreshError) { console.warn("GLB delete status refresh failed", refreshError); }
       if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
       alert("GLB削除の状態を確認できません。再実行せず管理者に確認してください: " + friendlyError(error));
+    } finally {
+      glbMutationBusy = false;
     }
   }
   async function openViewerById(modelId, context, dkdId) {
@@ -1129,13 +1159,14 @@
     if (!sessionModelsEnabled || !targetId || (dkdId != null && Number(dkdId) !== targetId)) return;
     var targetKind = target.kind;
     var requestId = ++viewerRequestId;
+    var internal = activeContext !== "customer" && canReview3D();
     function targetStillSelected() {
       var current = selectedTarget(activeContext);
       return requestId === viewerRequestId && sessionModelsEnabled &&
         productId(current.product) === targetId &&
-        (activeContext === "customer" || current.kind === targetKind);
+        (activeContext === "customer" || current.kind === targetKind) &&
+        internal === (activeContext !== "customer" && canReview3D());
     }
-    var internal = activeContext !== "customer" && canReview3D();
     var models = internal ? await fetchInternalModels(targetId) : await fetchPublishedModels(targetId);
     if (!targetStillSelected()) return;
     var model = models.find(function (row) { return String(row.id) === String(modelId); });
@@ -1283,6 +1314,7 @@
     internalModelCache = Object.create(null);
     modelBadgeCache = Object.create(null);
     Object.keys(mediaAvailabilityRequest).forEach(function (context) { mediaAvailabilityRequest[context] += 1; });
+    Object.keys(mediaPaneRequest).forEach(function (context) { mediaPaneRequest[context] += 1; });
     if (badgeRefreshTimer) window.clearTimeout(badgeRefreshTimer);
     badgeRefreshTimer = null;
     glbUploadTarget = null;

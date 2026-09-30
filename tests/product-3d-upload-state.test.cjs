@@ -21,15 +21,17 @@ function harness(invoke, selectedProductId = 123) {
     disabled: false,
     value: "selected",
   };
-  const state = { selectedProductId };
+  const state = { selectedProductId, manage: true };
   const context = {
     File, FormData, console,
     elements: { "product-3d-glb-file": input },
     glbUploadTarget: { context: "sales", productId: 123, kind: "rebuilt", replacedId: "" },
+    glbMutationBusy: false,
     modelCacheEpoch: 0,
     sessionModelsEnabled: true,
     selectedTarget: () => ({ product: { dkd_shohin_id: state.selectedProductId }, kind: "rebuilt" }),
     productId: product => Number(product?.dkd_shohin_id || 0),
+    canManage3D: () => state.manage,
     sb: { functions: { invoke: async (...args) => { calls.invoke++; return invoke(...args); } } },
     alert: message => alerts.push(message),
     edgeErrorMessage: async error => String(error?.message || error || "unknown"),
@@ -48,7 +50,7 @@ test("product switched while file chooser is open never uploads to stale product
   const qa = harness(async () => ({ data: { ok: true } }), 124);
   await qa.upload();
   assert.equal(qa.calls.invoke, 0);
-  assert.match(qa.alerts[0], /登録は開始していません/);
+  assert.match(qa.alerts[0], /GLBを選び直してください/);
   assert.equal(qa.input.value, "");
 });
 
@@ -93,4 +95,27 @@ test("lost delete response refreshes the registered model without retrying", asy
   assert.equal(qa.calls.invoke, 1);
   assert.equal(qa.calls.refresh, 1);
   assert.match(qa.alerts[0], /状態を確認できません。再実行せず/);
+});
+
+test("permission lost in the file chooser cannot submit a GLB", async () => {
+  const qa = harness(async () => ({ data: { ok: true } }));
+  qa.state.manage = false;
+  await qa.upload();
+  assert.equal(qa.calls.invoke, 0);
+  assert.match(qa.alerts[0], /権限が変わりました/);
+});
+
+test("delete cannot run while a GLB upload is in flight", async () => {
+  let finish;
+  const qa = harness(() => new Promise(resolve => { finish = resolve; }));
+  qa.context.window = { confirm: () => true };
+  const remove = vm.runInNewContext(`${deleteSource}\ndeleteUploadedGlb`, qa.context);
+  const pending = qa.upload();
+  assert.equal(qa.calls.invoke, 1);
+  assert.equal(qa.context.glbMutationBusy, true);
+  await remove("sales", "11111111-1111-4111-8111-111111111111");
+  assert.equal(qa.calls.invoke, 1);
+  finish({ data: { ok: true, model_id: "new-model" } });
+  await pending;
+  assert.equal(qa.context.glbMutationBusy, false);
 });

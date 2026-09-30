@@ -79,6 +79,7 @@ async function renderAdminModels(rows) {
   const context = {
     sessionModelsEnabled: true,
     modelCacheEpoch: 0,
+    mediaPaneRequest: { sales: 0 },
     selectedTarget: () => ({ product: { dkd_shohin_id: 42 }, kind: 'rebuilt' }),
     productId: product => product.dkd_shohin_id,
     el: id => id === 'sales-product-3d-list' ? host : null,

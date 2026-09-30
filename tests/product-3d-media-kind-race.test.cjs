@@ -66,19 +66,50 @@ test('customer model availability remains independent of the admin kind', async 
   assert.equal(qa.calls.tabs, 1);
 });
 
+test('a permission downgrade hides an existing internal model tab and cards', async () => {
+  let finish;
+  let review = true;
+  const modelTab = { hidden: false, classList: { remove() {} }, setAttribute() {} };
+  const photosTab = { classList: { add() {} }, setAttribute() {} };
+  const photosPane = { hidden: true };
+  const switcher = { querySelector: selector => selector.includes("='model'") ? modelTab : photosTab };
+  const pane = { isConnected: true, hidden: false, parentElement: {
+    querySelector: selector => selector === '.product-media-switch' ? switcher : photosPane,
+  } };
+  const host = { textContent: 'internal-only' };
+  const scope = {
+    sessionModelsEnabled: true, mediaAvailabilityRequest: { sales: 0 },
+    selectedTarget: () => ({ product: { dkd_shohin_id: 42 }, kind: 'rebuilt' }),
+    productId: product => product.dkd_shohin_id,
+    canReview3D: () => review, canManage3D: () => true,
+    fetchInternalModels: () => new Promise(resolve => { finish = resolve; }),
+    document: { querySelector: () => pane }, el: () => host,
+  };
+  const refresh = vm.runInNewContext(`${availabilitySource}\nrefreshMediaAvailability`, scope);
+  const pending = refresh('sales');
+  review = false;
+  finish([{ id: 'internal-only', product_kind: 'rebuilt' }]);
+  await pending;
+  assert.equal(modelTab.hidden, true);
+  assert.equal(pane.hidden, true);
+  assert.equal(photosPane.hidden, false);
+  assert.equal(host.textContent, '');
+});
+
 test('a delayed old-kind card cannot replace the current kind card', async () => {
   let finishOld;
   const oldRows = new Promise(resolve => { finishOld = resolve; });
-  const state = { kind: 'rebuilt', first: true };
+  const state = { kind: 'rebuilt', first: true, review: true, manage: true };
   const host = { innerHTML: '', isConnected: true };
   const scope = {
     sessionModelsEnabled: true,
     modelCacheEpoch: 0,
+    mediaPaneRequest: { sales: 0 },
     selectedTarget: () => ({ product: { dkd_shohin_id: 42 }, kind: state.kind }),
     productId: product => product.dkd_shohin_id,
     el: () => host,
-    canReview3D: () => true,
-    canManage3D: () => true,
+    canReview3D: () => state.review,
+    canManage3D: () => state.manage,
     canPublish3D: () => false,
     fetchInternalModels: () => state.first ? oldRows : Promise.resolve([
       { id: 'new-kind', product_kind: 'aftermarket_new', model_source: 'uploaded', status: 'published', published_model_path: 'uploaded/new.glb' },
@@ -98,4 +129,48 @@ test('a delayed old-kind card cannot replace the current kind card', async () =>
   await stale;
   assert.match(host.innerHTML, /new-kind/);
   assert.doesNotMatch(host.innerHTML, /old-kind/);
+});
+
+test('an older response for the same product cannot overwrite a newer card', async () => {
+  let finishOld;
+  const host = { innerHTML: '', isConnected: true };
+  let calls = 0;
+  const scope = {
+    sessionModelsEnabled: true, modelCacheEpoch: 0, mediaPaneRequest: { sales: 0 },
+    selectedTarget: () => ({ product: { dkd_shohin_id: 42 }, kind: 'rebuilt' }),
+    productId: product => product.dkd_shohin_id, el: () => host,
+    canReview3D: () => true, canManage3D: () => true, canPublish3D: () => false,
+    fetchInternalModels: () => ++calls === 1
+      ? new Promise(resolve => { finishOld = resolve; })
+      : Promise.resolve([{ id: 'new-card', product_kind: 'rebuilt', model_source: 'uploaded', status: 'published', published_model_path: 'new.glb' }]),
+    modelStatusLabel: status => status, kindLabel: kind => kind, esc: value => String(value ?? ''),
+  };
+  const render = vm.runInNewContext(`${renderSource}\nrenderMediaPane`, scope);
+  const old = render('sales');
+  await render('sales');
+  finishOld([{ id: 'old-card', product_kind: 'rebuilt', model_source: 'uploaded', status: 'published', published_model_path: 'old.glb' }]);
+  await old;
+  assert.match(host.innerHTML, /new-card/);
+  assert.doesNotMatch(host.innerHTML, /old-card/);
+});
+
+test('a delayed internal response is not displayed after review permission is lost', async () => {
+  let finish;
+  let review = true;
+  const host = { innerHTML: '', textContent: '', isConnected: true };
+  const scope = {
+    sessionModelsEnabled: true, modelCacheEpoch: 0, mediaPaneRequest: { sales: 0 },
+    selectedTarget: () => ({ product: { dkd_shohin_id: 42 }, kind: 'rebuilt' }),
+    productId: product => product.dkd_shohin_id, el: () => host,
+    canReview3D: () => review, canManage3D: () => true, canPublish3D: () => false,
+    fetchInternalModels: () => new Promise(resolve => { finish = resolve; }),
+    modelStatusLabel: status => status, kindLabel: kind => kind, esc: value => String(value ?? ''),
+  };
+  const render = vm.runInNewContext(`${renderSource}\nrenderMediaPane`, scope);
+  const pending = render('sales');
+  review = false;
+  finish([{ id: 'internal-only', product_kind: 'rebuilt', model_source: 'generated', status: 'review', published_model_path: 'internal.glb' }]);
+  await pending;
+  assert.doesNotMatch(host.innerHTML, /internal-only/);
+  assert.match(host.textContent, /表示条件が変わりました/);
 });

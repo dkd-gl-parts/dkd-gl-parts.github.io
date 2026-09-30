@@ -3533,6 +3533,8 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "GLB削除を完了できませんでした。再実行せず管理者に確認してください:": "GLB deletion could not be completed. Do not retry; contact an administrator:",
     "GLB削除の状態を確認できません。再実行せず管理者に確認してください:": "GLB deletion status could not be confirmed. Do not retry; contact an administrator:",
     "商品が切り替わりました。GLBの登録は開始していません。対象を選び直してください。": "The selected product changed. The GLB upload was not started. Select the target again.",
+    "商品・区分・権限が変わりました。GLBを選び直してください。": "The product, category, or permission changed. Select the GLB again.",
+    "表示条件が変わりました。3Dタブを開き直してください。": "The display context changed. Reopen the 3D tab.",
     "GLB登録の結果を確認できません。再送信せず、登録状態を確認してください:": "The GLB upload result could not be confirmed. Do not resubmit; check the registered model:",
     "GLBは登録されました。対象商品を選び直してプレビューを確認してください。": "The GLB was registered. Select that product again to check the preview.",
     "GLBは登録されましたが、プレビューを更新できませんでした:": "The GLB was registered, but the preview could not be refreshed:"
@@ -7069,6 +7071,8 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "GLB削除を完了できませんでした。再実行せず管理者に確認してください:": "无法完成GLB删除。请勿重试，并联系管理员：",
     "GLB削除の状態を確認できません。再実行せず管理者に確認してください:": "无法确认GLB删除状态。请勿重试，并联系管理员：",
     "商品が切り替わりました。GLBの登録は開始していません。対象を選び直してください。": "所选商品已改变。GLB上传尚未开始。请重新选择目标商品。",
+    "商品・区分・権限が変わりました。GLBを選び直してください。": "商品、类别或权限已改变。请重新选择GLB文件。",
+    "表示条件が変わりました。3Dタブを開き直してください。": "显示条件已变化。请重新打开3D标签页。",
     "GLB登録の結果を確認できません。再送信せず、登録状態を確認してください:": "无法确认GLB上传结果。请勿重新提交，先检查登记状态：",
     "GLBは登録されました。対象商品を選び直してプレビューを確認してください。": "GLB已登记。请重新选择该商品并检查预览。",
     "GLBは登録されましたが、プレビューを更新できませんでした:": "GLB已登记，但无法刷新预览："

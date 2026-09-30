@@ -16,7 +16,7 @@ const viewerSource = source.slice(start, end).replace(
 assert(!viewerSource.includes('await import('), 'Viewer test must replace only its dynamic import');
 
 function harness({ onRead, onSign, onCreate } = {}) {
-  const state = { productId: 42, kind: 'rebuilt' };
+  const state = { productId: 42, kind: 'rebuilt', review: true };
   const calls = { reads: 0, signs: 0, opens: 0, closes: 0, disposes: 0, alerts: [] };
   const document = { body: {}, activeElement: null };
   const control = () => ({ isConnected: true, hidden: false, disabled: false,
@@ -57,7 +57,7 @@ function harness({ onRead, onSign, onCreate } = {}) {
     elements,
     selectedTarget: () => ({ product: { dkd_shohin_id: state.productId }, kind: state.kind }),
     productId: product => product.dkd_shohin_id,
-    canReview3D: () => true,
+    canReview3D: () => state.review,
     fetchInternalModels: async () => { calls.reads++; return onRead ? onRead(model) : [model]; },
     fetchPublishedModels: async () => { calls.reads++; return onRead ? onRead(model) : [model]; },
     sb: { storage: { from: () => ({ createSignedUrl: async () => {
@@ -101,6 +101,16 @@ test('product switch during model lookup cannot sign or open the stale model', a
 test('kind switch during signed URL request cannot open the old kind', async () => {
   const qa = harness({ onSign: state => {
     state.kind = 'aftermarket_new';
+    return { data: { signedUrl: 'https://example.test/model.glb' }, error: null };
+  } });
+  await qa.api.openViewerById('uploaded:18', 'sales', 42);
+  assert.equal(qa.calls.signs, 1);
+  assert.equal(qa.calls.opens, 0);
+});
+
+test('review permission lost during signed URL request cannot open an internal model', async () => {
+  const qa = harness({ onSign: state => {
+    state.review = false;
     return { data: { signedUrl: 'https://example.test/model.glb' }, error: null };
   } });
   await qa.api.openViewerById('uploaded:18', 'sales', 42);
