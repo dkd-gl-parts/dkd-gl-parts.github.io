@@ -81,17 +81,25 @@ export async function createProduct3DViewer(options) {
   const bounds = new THREE.Box3().setFromObject(root);
   const size = bounds.getSize(new THREE.Vector3());
   const radius = Math.max(size.x, size.y, size.z) * 0.5;
+  const boundingRadius = size.length() * 0.5;
   const homeDirection = new THREE.Vector3(1.35, 0.85, 1.35).normalize();
+  let homeView = true;
+  controls.addEventListener('start', () => { homeView = false; });
 
   function resetView() {
-    const distance = Math.max(radius * 3.2, 0.5);
+    // Fit the bounding sphere within the narrower field of view. A fixed
+    // multiple of the longest edge clips deep objects and portrait viewports.
+    const verticalHalfFov = THREE.MathUtils.degToRad(camera.fov * 0.5);
+    const horizontalHalfFov = Math.atan(Math.tan(verticalHalfFov) * camera.aspect);
+    const distance = Math.max(boundingRadius * 1.12 / Math.sin(Math.min(verticalHalfFov, horizontalHalfFov)), 0.5);
+    homeView = true;
     camera.near = Math.max(distance / 1000, 0.001);
     camera.far = Math.max(distance * 100, 100);
     camera.position.copy(homeDirection).multiplyScalar(distance);
     camera.updateProjectionMatrix();
     controls.target.set(0, 0, 0);
     controls.minDistance = Math.max(radius * 0.35, 0.01);
-    controls.maxDistance = Math.max(radius * 12, 10);
+    controls.maxDistance = Math.max(radius * 12, distance * 2, 10);
     controls.update();
   }
   resetView();
@@ -102,6 +110,8 @@ export async function createProduct3DViewer(options) {
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
+    // Preserve a user-adjusted view; refit only while still in the home view.
+    if (homeView) resetView();
   }
   const resizeObserver = new ResizeObserver(resize);
   resizeObserver.observe(host);
@@ -133,6 +143,14 @@ export async function createProduct3DViewer(options) {
 
   return {
     reset: resetView,
+    zoomIn() {
+      homeView = false;
+      controls.dollyIn(1.25);
+    },
+    zoomOut() {
+      homeView = false;
+      controls.dollyOut(1.25);
+    },
     setAutoRotate(value) {
       controls.autoRotate = !!value;
     },

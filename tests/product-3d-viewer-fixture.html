@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ja">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Product 3D Viewer local fixture</title>
+<style>
+  body { font-family: sans-serif; margin: 0; }
+  #stage { width: min(100vw, 700px); height: min(70vh, 500px); }
+</style>
+<div id="stage"></div>
+<div id="result">loading</div>
+<script type="module">
+  import { createProduct3DViewer } from '../product-3d-viewer.js';
+  const doc = {
+    asset: { version: '2.0' },
+    scenes: [{ nodes: [0] }], nodes: [{ mesh: 0 }],
+    meshes: [{ primitives: [{ attributes: { POSITION: 0 } }] }],
+    buffers: [{ byteLength: 36 }],
+    bufferViews: [{ buffer: 0, byteOffset: 0, byteLength: 36 }],
+    accessors: [{ bufferView: 0, componentType: 5126, count: 3, type: 'VEC3' }]
+  };
+  const json = new TextEncoder().encode(JSON.stringify(doc));
+  const padded = Math.ceil(json.length / 4) * 4;
+  const bytes = new Uint8Array(20 + padded + 8 + 36);
+  const view = new DataView(bytes.buffer);
+  view.setUint32(0, 0x46546c67, true);
+  view.setUint32(4, 2, true);
+  view.setUint32(8, bytes.length, true);
+  view.setUint32(12, padded, true);
+  view.setUint32(16, 0x4e4f534a, true);
+  bytes.fill(0x20, 20);
+  bytes.set(json, 20);
+  view.setUint32(20 + padded, 36, true);
+  view.setUint32(24 + padded, 0x004e4942, true);
+  new Float32Array(bytes.buffer, 28 + padded, 9).set([0,0,0, 1,0,0, 0,1,0]);
+  const url = URL.createObjectURL(new Blob([bytes], { type: 'model/gltf-binary' }));
+  try {
+    const viewer = await createProduct3DViewer({ host: document.getElementById('stage'), url });
+    viewer.zoomIn();
+    viewer.zoomOut();
+    viewer.reset();
+    document.getElementById('result').textContent = 'PASS: GLB rendered; zoom and reset available';
+    window.fixtureViewer = viewer;
+  } catch (error) {
+    document.getElementById('result').textContent = 'FAIL: ' + error.message;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+</script>
+</html>

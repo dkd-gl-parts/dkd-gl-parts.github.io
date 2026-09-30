@@ -30,6 +30,8 @@
   var internalModelCache = Object.create(null);
   var modelBadgeCache = Object.create(null);
   var badgeRefreshTimer = null;
+  var glbUploadTarget = null;
+  var mediaAvailabilityRequest = { sales: 0, production: 0, customer: 0 };
 
   function freshState() {
     return {
@@ -108,7 +110,9 @@
       "product-3d-quality-score", "product-3d-quality-list", "product-3d-submit-status", "product-3d-submit",
       "product-3d-viewer-overlay", "product-3d-viewer-close", "product-3d-viewer-title",
       "product-3d-viewer-stage", "product-3d-viewer-loading", "product-3d-viewer-reset",
-      "product-3d-viewer-autorotate", "product-3d-viewer-fullscreen"
+      "product-3d-viewer-zoom-in", "product-3d-viewer-zoom-out",
+      "product-3d-viewer-autorotate", "product-3d-viewer-fullscreen",
+      "product-3d-glb-file"
     ].forEach(function (id) { elements[id] = el(id); });
   }
 
@@ -762,17 +766,42 @@
     elements["product-3d-live-feedback"].textContent = messages.join(" / ");
   }
   function friendlyError(error) { return String(error && (error.message || error.error_description) || error || "不明なエラー"); }
+  async function edgeErrorMessage(error) {
+    try {
+      if (error && error.context && typeof error.context.json === "function") {
+        var body = await error.context.json();
+        if (body && typeof body.error === "string") return body.error;
+      }
+    } catch (_) { /* Keep the original transport error. */ }
+    return friendlyError(error);
+  }
 
   async function fetchPublishedModels(dkdId) {
     if (!dkdId) return [];
     var key = String(dkdId);
     if (modelCache[key]) return modelCache[key];
-    var result = await sb.from("product_3d_models")
-      .select("id,dkd_shohin_id,product_kind,revision,status,published_model_path,thumbnail_path,model_bytes,triangle_count,published_at")
-      .eq("dkd_shohin_id", dkdId).eq("status", "published").order("revision", { ascending: false });
-    if (result.error) { console.warn("published 3D lookup failed", result.error); return []; }
-    modelCache[key] = result.data || [];
+    var result = await sb.from("product_3d_viewer_models")
+      .select("id,dkd_shohin_id,product_kind,revision,status,published_model_path,thumbnail_path,model_bytes,triangle_count,published_at,model_source,model_format")
+      .eq("dkd_shohin_id", dkdId).order("revision", { ascending: false });
+    if (result.error) {
+      // During a phased release the old generated-model viewer remains usable.
+      result = await sb.from("product_3d_models")
+        .select("id,dkd_shohin_id,product_kind,revision,status,published_model_path,thumbnail_path,model_bytes,triangle_count,published_at")
+        .eq("dkd_shohin_id", dkdId).eq("status", "published").order("revision", { ascending: false });
+      modelCache[key] = (result.data || []).map(function (row) {
+        return Object.assign({ model_source: "generated", model_format: "glb" }, row);
+      });
+    } else modelCache[key] = result.data || [];
     return modelCache[key];
+  }
+  function normalizeUploadedModel(row) {
+    return {
+      id: "uploaded:" + row.id, dkd_shohin_id: row.dkd_shohin_id,
+      product_kind: row.product_kind, revision: 1, status: "published",
+      published_model_path: row.storage_path, model_bytes: row.model_bytes,
+      published_at: row.created_at, updated_at: row.updated_at,
+      model_source: "uploaded", model_format: "glb"
+    };
   }
   async function fetchInternalModels(dkdId) {
     if (!dkdId) return [];
@@ -781,9 +810,54 @@
     var result = await sb.from("product_3d_models")
       .select("id,dkd_shohin_id,product_kind,revision,status,published_model_path,thumbnail_path,model_bytes,triangle_count,published_at,additional_capture_instructions,failure_message,updated_at")
       .eq("dkd_shohin_id", dkdId).order("revision", { ascending: false });
-    if (result.error) { console.warn("internal 3D lookup failed", result.error); return []; }
-    internalModelCache[key] = result.data || [];
+    if (result.error) console.warn("internal generated 3D lookup failed", result.error);
+    var uploads = await sb.from("product_3d_uploaded_models")
+      .select("id,dkd_shohin_id,product_kind,status,storage_path,model_bytes,created_at,updated_at")
+      .eq("dkd_shohin_id", dkdId).eq("status", "ready");
+    if (uploads.error) console.warn("internal uploaded 3D lookup failed", uploads.error);
+    internalModelCache[key] = (result.data || []).map(function (row) {
+      return Object.assign({ model_source: "generated", model_format: "glb" }, row);
+    }).concat((uploads.data || []).map(normalizeUploadedModel));
     return internalModelCache[key];
+  }
+  async function refreshMediaAvailability(context) {
+    if (!Object.prototype.hasOwnProperty.call(mediaAvailabilityRequest, context)) return;
+    var request = ++mediaAvailabilityRequest[context];
+    var target = selectedTarget(context);
+    var dkdId = productId(target.product);
+    var pane = document.querySelector("[data-product-media-pane='model'][data-product-media-context='" + context + "']");
+    var switcher = pane && pane.parentElement && pane.parentElement.querySelector(".product-media-switch");
+    if (!pane || !switcher || !dkdId) return;
+    var internal = context !== "customer" && canReview3D();
+    var models = internal ? await fetchInternalModels(dkdId) : await fetchPublishedModels(dkdId);
+    if (request !== mediaAvailabilityRequest[context] || productId(selectedTarget(context).product) !== dkdId || !pane.isConnected) return;
+    var available = context === "customer"
+      ? models.length > 0
+      : models.some(function (model) { return model.product_kind === target.kind; }) || (canManage3D() && !!target.kind);
+    var tab = switcher.querySelector("[data-product-media='model']");
+    if (available && !tab) {
+      tab = document.createElement("button");
+      tab.type = "button";
+      tab.className = "product-media-switch-btn";
+      tab.setAttribute("role", "tab");
+      tab.setAttribute("aria-selected", "false");
+      tab.dataset.productMedia = "model";
+      tab.dataset.productMediaContext = context;
+      tab.textContent = "3Dで見る";
+      switcher.appendChild(tab);
+    }
+    if (tab) tab.hidden = !available;
+    var mediaShell = switcher.closest("[data-product-3d-media-shell]");
+    if (mediaShell && mediaShell.dataset.noPhotos === "true") mediaShell.hidden = !available;
+    if (!available && !pane.hidden) {
+      pane.hidden = true;
+      if (tab) { tab.classList.remove("active"); tab.setAttribute("aria-selected", "false"); }
+      var photos = switcher.querySelector("[data-product-media='photos']");
+      var photoPane = pane.parentElement.querySelector("[data-product-media-pane='photos']");
+      if (photos) { photos.classList.add("active"); photos.setAttribute("aria-selected", "true"); }
+      if (photoPane) photoPane.hidden = false;
+    }
+    if (available && !pane.hidden) await renderMediaPane(context);
   }
   function visibleProductNodes() {
     return Array.from(document.querySelectorAll("#list [data-dkd-id], #production-list [data-dkd-id], [data-customer-catalog-dkd]"));
@@ -796,7 +870,9 @@
     var missing = ids.filter(function (id) { return !Object.prototype.hasOwnProperty.call(modelBadgeCache, String(id)); });
     if (missing.length) {
       var batch = missing.slice(0, 300);
-      var result = await sb.from("product_3d_models").select("dkd_shohin_id").eq("status", "published").in("dkd_shohin_id", batch);
+      var result = await sb.from("product_3d_viewer_models").select("dkd_shohin_id").in("dkd_shohin_id", batch);
+      if (result.error) result = await sb.from("product_3d_models")
+        .select("dkd_shohin_id").eq("status", "published").in("dkd_shohin_id", batch);
       if (!result.error) {
         batch.forEach(function (id) { modelBadgeCache[String(id)] = false; });
         (result.data || []).forEach(function (row) { modelBadgeCache[String(row.dkd_shohin_id)] = true; });
@@ -832,18 +908,24 @@
     var visible = context === "customer" ? models : models.filter(function (model) { return model.product_kind === target.kind; });
     if (!visible.length) {
       var createAction = manageable ? "<button type='button' data-create-3d='" + context + "'>3Dモデルを作成</button>" : "";
-      host.innerHTML = "<div class='product-3d-empty-card'><span class='product-3d-cube'>3D</span><strong>公開済み3Dモデルはありません</strong>" + createAction + "</div>";
+      var uploadAction = manageable ? "<button type='button' data-upload-3d='" + context + "'>GLBをアップロード</button>" : "";
+      host.innerHTML = "<div class='product-3d-empty-card'><span class='product-3d-cube'>3D</span><strong>公開済み3Dモデルはありません</strong>" + createAction + uploadAction + "</div>";
       return;
     }
     function modelCardHtml(model) {
       var size = model.model_bytes ? (model.model_bytes / 1048576).toFixed(1) + " MB" : "";
       var status = modelStatusLabel(model.status);
       var canOpen = model.published_model_path && (model.status === "published" || model.status === "review" || model.status === "archived");
-      var action = canOpen ? "<button type='button' class='product-3d-card-action' data-open-model='" + model.id + "' data-model-context='" + context + "' data-model-product='" + productId(target.product) + "'>確認</button>" : "";
-      if (publishable && model.status === "review") action += "<button type='button' class='product-3d-card-action publish' data-publish-model='" + model.id + "' data-publish-context='" + context + "'>公開</button>";
-      if (manageable && ["draft", "needs_capture", "failed"].indexOf(model.status) >= 0) action += "<button type='button' class='product-3d-card-action' data-create-3d='" + context + "'>撮影を再開</button>";
+      var action = canOpen ? "<button type='button' class='product-3d-card-action' data-open-model='" + model.id + "' data-model-context='" + context + "' data-model-product='" + productId(target.product) + "'>3Dで見る</button>" : "";
+      if (publishable && model.model_source !== "uploaded" && model.status === "review") action += "<button type='button' class='product-3d-card-action publish' data-publish-model='" + model.id + "' data-publish-context='" + context + "'>公開</button>";
+      if (manageable && model.model_source === "uploaded") {
+        action += "<button type='button' class='product-3d-card-action' data-replace-uploaded='" + model.id.slice(9) + "' data-upload-context='" + context + "'>差し替え</button>";
+        action += "<button type='button' class='product-3d-card-action' data-delete-uploaded='" + model.id.slice(9) + "' data-upload-context='" + context + "'>削除</button>";
+      }
+      if (manageable && model.model_source !== "uploaded" && ["draft", "needs_capture", "failed"].indexOf(model.status) >= 0) action += "<button type='button' class='product-3d-card-action' data-create-3d='" + context + "'>撮影を再開</button>";
       var note = model.failure_message || (model.additional_capture_instructions && model.additional_capture_instructions.length ? "追加撮影: " + model.additional_capture_instructions.join(" / ") : "");
-      return "<div class='product-3d-model-card'><span class='product-3d-cube'>3D</span><span><strong>" + esc(kindLabel(model.product_kind)) + " 3Dモデル <i data-model-status='" + esc(model.status) + "'>" + esc(status) + "</i></strong><small>rev." + model.revision + " " + size + (note ? " / " + esc(note) : "") + "</small></span><span class='product-3d-card-actions'>" + action + "</span></div>";
+      var source = model.model_source === "uploaded" ? "外部GLB" : "D-CATS生成";
+      return "<div class='product-3d-model-card'><span class='product-3d-cube'>3D</span><span><strong>" + esc(kindLabel(model.product_kind)) + " 3Dモデル <i data-model-status='" + esc(model.status) + "'>" + esc(status) + "</i></strong><small>" + source + " / " + size + (note ? " / " + esc(note) : "") + "</small></span><span class='product-3d-card-actions'>" + action + "</span></div>";
     }
     if (context === "customer") {
       host.innerHTML = ["rebuilt", "aftermarket_new"].map(function (kind) {
@@ -855,7 +937,14 @@
       }).join("");
       return;
     }
-    host.innerHTML = visible.map(modelCardHtml).join("");
+    var failedGeneration = visible.some(function (model) { return model.model_source !== "uploaded" && model.status === "failed"; });
+    var fallback = failedGeneration && manageable
+      ? "<div class='product-3d-empty-card'>3Dモデルを生成できませんでした。GLBファイルをアップロードしてください。</div>"
+      : "";
+    var uploadAction = manageable
+      ? "<button type='button' class='product-3d-card-action' data-upload-3d='" + context + "'>GLBをアップロード</button>"
+      : "";
+    host.innerHTML = fallback + visible.map(modelCardHtml).join("") + uploadAction;
   }
   function modelStatusLabel(status) {
     return ({ draft: "撮影途中", waiting: "待機", processing: "処理中", needs_capture: "要追加撮影", failed: "失敗", review: "確認待ち", published: "公開済み", archived: "旧版" })[status] || status;
@@ -868,6 +957,82 @@
     var dkdId = String(result.data.dkd_shohin_id);
     delete modelCache[dkdId]; delete internalModelCache[dkdId]; delete modelBadgeCache[dkdId];
     await renderMediaPane(context || "sales"); scheduleBadgeRefresh();
+  }
+  function clearModelCaches(dkdId) {
+    var key = String(dkdId);
+    delete modelCache[key]; delete internalModelCache[key]; delete modelBadgeCache[key];
+  }
+  function selectGlbForUpload(context, replacedId) {
+    if (!canManage3D()) { deny3D("upload_product_3d_glb"); return; }
+    var target = selectedTarget(context || "sales");
+    if (!target.product || !productId(target.product) || !target.kind) {
+      alert("3Dモデルを登録する商品と区分を選択してください。");
+      return;
+    }
+    glbUploadTarget = {
+      context: context || "sales", productId: productId(target.product),
+      kind: target.kind, replacedId: replacedId || ""
+    };
+    closeImageActionOverlays();
+    elements["product-3d-glb-file"].value = "";
+    elements["product-3d-glb-file"].click();
+  }
+  async function uploadSelectedGlb() {
+    var input = elements["product-3d-glb-file"];
+    var file = input.files && input.files[0];
+    var target = glbUploadTarget;
+    glbUploadTarget = null;
+    if (!file || !target) return;
+    if (!/\.glb$/i.test(file.name) || file.size < 20 || file.size > 30 * 1024 * 1024 ||
+        ["", "model/gltf-binary", "application/octet-stream"].indexOf(file.type) < 0) {
+      alert("30 MB以下のGLBファイル（.glb）を選択してください。");
+      return;
+    }
+    var form = new FormData();
+    form.append("action", "upload");
+    form.append("product_id", String(target.productId));
+    form.append("product_kind", target.kind);
+    form.append("replaced_id", target.replacedId);
+    form.append("file", file);
+    input.disabled = true;
+    try {
+      var result = await sb.functions.invoke("product-3d-glb", { body: form });
+      if (result.error || !result.data || !result.data.ok) {
+        throw new Error(await edgeErrorMessage(result.error || (result.data && result.data.error)));
+      }
+      clearModelCaches(target.productId);
+      await renderMediaPane(target.context);
+      await refreshMediaAvailability(target.context);
+      scheduleBadgeRefresh();
+      if (result.data.cleanup_pending) alert("新しいGLBは登録されました。旧ファイルの片付けは保留されています。");
+      await openViewerById("uploaded:" + result.data.model_id, target.context, target.productId);
+    } catch (error) {
+      alert("GLB登録に失敗しました。商品画像や商品情報は変更されていません: " + friendlyError(error));
+    } finally {
+      input.disabled = false;
+      input.value = "";
+    }
+  }
+  async function deleteUploadedGlb(context, modelId) {
+    if (!canManage3D()) { deny3D("delete_product_3d_glb"); return; }
+    var target = selectedTarget(context || "sales");
+    if (!target.product || !target.kind || !window.confirm("登録済みの外部GLBを削除しますか？")) return;
+    var dkdId = productId(target.product);
+    try {
+      var result = await sb.functions.invoke("product-3d-glb", {
+        body: { action: "delete", product_id: dkdId, product_kind: target.kind, model_id: modelId }
+      });
+      clearModelCaches(dkdId);
+      await renderMediaPane(context || "sales");
+      await refreshMediaAvailability(context || "sales");
+      scheduleBadgeRefresh();
+      if (result.error || !result.data || !result.data.ok) {
+        alert("GLB削除を完了できませんでした。再実行せず管理者に確認してください: " +
+          await edgeErrorMessage(result.error || (result.data && result.data.error)));
+      }
+    } catch (error) {
+      alert("GLB削除の状態を確認できません。再実行せず管理者に確認してください: " + friendlyError(error));
+    }
   }
   async function openViewerById(modelId, context, dkdId) {
     var requestId = ++viewerRequestId;
@@ -886,7 +1051,7 @@
     elements["product-3d-viewer-loading"].hidden = false;
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await import("./product-3d-viewer.js?v=1.1.776");
+      var module = await import("./product-3d-viewer.js?v=1.1.777");
       var createdViewer = await module.createProduct3DViewer({
         host: elements["product-3d-viewer-stage"],
         url: signed.data.signedUrl,
@@ -918,6 +1083,9 @@
   function bind() {
     el("btn-image-action-create-3d").addEventListener("click", function () { openCapture("sales"); });
     el("production-image-action-create-3d").addEventListener("click", function () { openCapture("production"); });
+    el("btn-image-action-upload-glb").addEventListener("click", function () { selectGlbForUpload("sales"); });
+    el("production-image-action-upload-glb").addEventListener("click", function () { selectGlbForUpload("production"); });
+    elements["product-3d-glb-file"].addEventListener("change", uploadSelectedGlb);
     elements["product-3d-capture-close"].addEventListener("click", closeCapture);
     elements["product-3d-start-camera"].addEventListener("click", startCamera);
     elements["product-3d-snapshot"].addEventListener("click", function () { captureSnapshot("camera_still"); });
@@ -929,6 +1097,8 @@
       state.currentDirection = button.dataset.direction; renderDial(); drawGuide(state.guide);
     });
     elements["product-3d-viewer-close"].addEventListener("click", closeViewer);
+    elements["product-3d-viewer-zoom-in"].addEventListener("click", function () { if (viewer) viewer.zoomIn(); });
+    elements["product-3d-viewer-zoom-out"].addEventListener("click", function () { if (viewer) viewer.zoomOut(); });
     elements["product-3d-viewer-reset"].addEventListener("click", function () { if (viewer) viewer.reset(); });
     elements["product-3d-viewer-autorotate"].addEventListener("click", function () {
       if (!viewer) return; var active = this.getAttribute("aria-pressed") !== "true"; viewer.setAutoRotate(active); this.setAttribute("aria-pressed", active ? "true" : "false");
@@ -945,6 +1115,11 @@
         if (mode === "model") renderMediaPane(context);
       }
       var create = event.target.closest("[data-create-3d]"); if (create) openCapture(create.dataset.create3d);
+      var upload = event.target.closest("[data-upload-3d]"); if (upload) selectGlbForUpload(upload.dataset.upload3d);
+      var replace = event.target.closest("[data-replace-uploaded]");
+      if (replace) selectGlbForUpload(replace.dataset.uploadContext, replace.dataset.replaceUploaded);
+      var remove = event.target.closest("[data-delete-uploaded]");
+      if (remove) deleteUploadedGlb(remove.dataset.uploadContext, remove.dataset.deleteUploaded);
       var open = event.target.closest("[data-open-model]"); if (open) openViewerById(open.dataset.openModel, open.dataset.modelContext, Number(open.dataset.modelProduct));
       var publish = event.target.closest("[data-publish-model]"); if (publish) publishModel(publish.dataset.publishModel, publish.dataset.publishContext);
     });
@@ -956,11 +1131,12 @@
     cacheElements();
     if (!elements["product-3d-capture-overlay"] || typeof sb === "undefined") return;
     bind(); renderAll();
+    ["sales", "production", "customer"].forEach(refreshMediaAvailability);
     ["list", "production-list", "customer-catalog-list"].forEach(function (id) {
       var host = el(id); if (host) new MutationObserver(scheduleBadgeRefresh).observe(host, { childList: true, subtree: true });
     });
     scheduleBadgeRefresh();
   }
-  window.DcatsProduct3D = { openCapture: openCapture, renderMediaPane: renderMediaPane, fetchPublishedModels: fetchPublishedModels, refreshListBadges: refreshListBadges };
+  window.DcatsProduct3D = { openCapture: openCapture, renderMediaPane: renderMediaPane, fetchPublishedModels: fetchPublishedModels, refreshListBadges: refreshListBadges, refreshMediaAvailability: refreshMediaAvailability };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
 })();

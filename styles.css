@@ -9060,6 +9060,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .product-3d-card-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
 .product-3d-card-action { padding: 7px 10px; border: 1px solid #b9c9dd; border-radius: 8px; background: #fff; color: #2563eb; font-weight: 800; cursor: pointer; }
 .product-3d-card-action.publish { border-color: #0f766e; background: #0f766e; color: #fff; }
+.product-3d-action-heading { color: #52647c; font-size: 12px; font-weight: 800; letter-spacing: .08em; }
 .product-3d-empty-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #68768b; text-align: center; }
 .product-3d-empty-card button { border: 0; background: transparent; color: #2563eb; font-weight: 800; cursor: pointer; }
 .customer-product-media { min-width: 0; }
@@ -9076,11 +9077,13 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 @media (max-width: 820px) {
   .product-3d-capture-overlay, .product-3d-viewer-overlay { padding: 0; align-items: stretch; }
   .product-3d-capture-shell, .product-3d-viewer-shell { max-height: 100dvh; border: 0; border-radius: 0; }
+  .product-3d-viewer-shell { display: flex; flex-direction: column; height: 100dvh; }
   .product-3d-capture-body { grid-template-columns: 1fr; padding: 10px; }
   .product-3d-camera-stage { min-height: min(50vh, 430px); }
   .product-3d-capture-dial { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .product-3d-review-column { padding-bottom: 24px; }
-  .product-3d-viewer-stage { height: calc(100dvh - 132px); }
+  .product-3d-viewer-stage { flex: 1 1 auto; min-height: 0; height: auto; }
+  .product-3d-viewer-toolbar { flex: 0 0 auto; }
   .product-3d-viewer-toolbar span { flex-basis: 100%; }
 }
 
