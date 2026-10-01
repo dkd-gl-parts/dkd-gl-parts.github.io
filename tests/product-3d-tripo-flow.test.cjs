@@ -76,6 +76,10 @@ test("the Tripo dialog distinguishes products sharing a genuine part number", ()
   assert.equal(label, "104210-1870 / ALDK30220 / 27060-30220 / 商品ID 2639 / 新品");
 });
 
+test("saved images with equal sort order remain in a stable selection order", () => {
+  assert.match(source, /\.order\("sort_order", \{ ascending: true \}\)\.order\("id", \{ ascending: true \}\)/);
+});
+
 test("keyboard focus stays in the Tripo dialog unless the Viewer is above it", () => {
   const qa = harness();
   const controls = Array.from({ length: 3 }, () => ({

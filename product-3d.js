@@ -1098,7 +1098,7 @@
       var rows = await sb.from("core_product_images")
         .select("id,storage_path,sort_order").eq("dkd_shohin_id", tripoTarget.productId)
         .eq("product_kind", tripoTarget.kind).not("storage_path", "is", null)
-        .order("sort_order", { ascending: true }).limit(80);
+        .order("sort_order", { ascending: true }).order("id", { ascending: true }).limit(80);
       if (rows.error) throw rows.error;
       if (!sameTripoTarget(requestId)) return;
       var images = (rows.data || []).filter(function (row) { return row.storage_path; });
