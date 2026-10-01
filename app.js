@@ -1155,6 +1155,9 @@ var TRANSLATIONS = {
     sales_copy_production_images_empty: "コピーできる製造画像はありません",
     sales_copy_production_images_failed: "製造画像のコピーに失敗しました",
     image_kind_target: "登録・編集する区分",
+    image_upload_review_title: "写真の登録",
+    image_upload_review_confirm: "写真を登録",
+    image_publish_customer: "得意先へ公開OK",
     image_edit_title: "画像編集",
     product_3d_photos: "写真",
     product_3d_model: "3Dモデル",
@@ -1173,12 +1176,12 @@ var TRANSLATIONS = {
     product_3d_auto_rotate: "自動回転",
     product_3d_fullscreen: "全画面",
     product_3d_controls_hint: "ドラッグ: 回転 / ホイール・ピンチ: 拡大 / 右ドラッグ・2本指: 移動",
-    image_edit_help: "画像ごとに区分を変更できます。保存すると、選択中の画面で該当区分に表示されます。",
+    image_edit_help: "画像ごとに商品区分と得意先への公開を設定できます。",
     image_edit_filter_kind: "表示区分",
     image_edit_filter_all: "すべて",
     image_edit_bulk_kind: "一括変更",
     image_edit_bulk_apply: "表示中を変更",
-    image_edit_saved: "画像区分を保存しました",
+    image_edit_saved: "画像設定を保存しました",
     image_has: "画像あり",
     image_none_short: "画像なし",
     core_camera_count: "カメラ計数",
@@ -3468,6 +3471,9 @@ var TRANSLATIONS = {
     sales_copy_production_images_empty: "No production images to copy",
     sales_copy_production_images_failed: "Failed to copy production images",
     image_kind_target: "Target Kind",
+    image_upload_review_title: "Add Photos",
+    image_upload_review_confirm: "Save Photos",
+    image_publish_customer: "Approved for customer viewing",
     image_edit_title: "Edit Images",
     product_3d_photos: "Photos",
     product_3d_model: "3D Model",
@@ -3486,12 +3492,12 @@ var TRANSLATIONS = {
     product_3d_auto_rotate: "Auto rotate",
     product_3d_fullscreen: "Fullscreen",
     product_3d_controls_hint: "Drag: rotate / wheel or pinch: zoom / right drag or two fingers: pan",
-    image_edit_help: "Change product kind for each image. After saving, it appears under that kind in this screen.",
+    image_edit_help: "Set each image's product kind and customer visibility.",
     image_edit_filter_kind: "Filter Kind",
     image_edit_filter_all: "All",
     image_edit_bulk_kind: "Bulk Change",
     image_edit_bulk_apply: "Change Visible",
-    image_edit_saved: "Image kinds saved",
+    image_edit_saved: "Image settings saved",
     image_has: "Has image",
     image_none_short: "No image",
     core_camera_count: "Camera Count",
@@ -5789,6 +5795,9 @@ var TRANSLATIONS = {
     sales_copy_production_images_empty: "没有可复制的生产图片",
     sales_copy_production_images_failed: "生产图片复制失败",
     image_kind_target: "登记・编辑区分",
+    image_upload_review_title: "登记照片",
+    image_upload_review_confirm: "保存照片",
+    image_publish_customer: "允许客户查看",
     image_edit_title: "图片编辑",
     product_3d_photos: "照片",
     product_3d_model: "3D模型",
@@ -5807,12 +5816,12 @@ var TRANSLATIONS = {
     product_3d_auto_rotate: "自动旋转",
     product_3d_fullscreen: "全屏",
     product_3d_controls_hint: "拖动：旋转 / 滚轮或捏合：缩放 / 右键拖动或双指：平移",
-    image_edit_help: "可以按图片更改区分。保存后会显示在当前画面的对应区分。",
+    image_edit_help: "可为每张图片设置商品区分和客户可见状态。",
     image_edit_filter_kind: "显示区分",
     image_edit_filter_all: "全部",
     image_edit_bulk_kind: "批量更改",
     image_edit_bulk_apply: "更改当前显示",
-    image_edit_saved: "图片区分已保存",
+    image_edit_saved: "图片设置已保存",
     image_has: "有图片",
     image_none_short: "无图片",
     core_camera_count: "相机计数",
@@ -7013,6 +7022,8 @@ var allProducts       = [];
 var categoryOptions   = [];
 var imageCountMap     = {};
 var imageThumbnailMap = {};
+var customerImageCountMap = {};
+var customerImageThumbnailMap = {};
 var productionImageCountMap = {};
 var productionImageCountCache = {};
 var slPartsMap        = {};  // part_id → SL品番リスト
@@ -7052,6 +7063,8 @@ var currentImages     = [];
 var productionImages  = { rebuilt: [], aftermarket_new: [] };
 var imageEditRows = [];
 var imageEditFilterKind = "";
+var pendingImageUpload = null;
+var imageUploadBusy = false;
 var currentProductionImageKind = "rebuilt";
 var currentProductionImageDkdId = null;
 var currentProductionComponentSummaryKind = "rebuilt";
@@ -11072,7 +11085,7 @@ async function runCustomerCatalogSearch(options) {
   customerCatalogProducts = products.slice(0, CUSTOMER_CATALOG_RESULT_LIMIT);
   customerCatalogImageInfo = { counts: {}, thumbnails: {} };
   if (customerViewerSetting("show_product_images", true) && customerCatalogProducts.length) {
-    customerCatalogImageInfo = await fetchProductImageCountMapForContext(customerCatalogProducts, "sales");
+    customerCatalogImageInfo = await fetchProductImageCountMapForContext(customerCatalogProducts, "customer");
     if (seq !== customerCatalogRequestSeq) return;
   }
   renderCustomerCatalogList();
@@ -11258,30 +11271,58 @@ function renderCustomerCatalogDetailBase(product) {
 async function loadCustomerCatalogImages(product, seq) {
   var wrap = document.getElementById("customer-catalog-images");
   if (!wrap) return;
-  var result = await fetchAllCoreProductImagesForContext(parseInt(productDkdId(product), 10), "sales");
+  var result = await fetchAllCoreProductImagesForContext(parseInt(productDkdId(product), 10), "customer");
   if (seq !== customerCatalogDetailSeq || !wrap.isConnected) return;
-  var images = result.error ? [] : (result.data || []);
+  var images = result.error ? [] : uniqueCoreProductImageRows(result.data || []);
   if (!images.length) {
     wrap.innerHTML = "<div class='customer-catalog-image-main'>" + esc(t("img_none")) + "</div>";
     return;
   }
+  var groups = { rebuilt: [], aftermarket_new: [] };
+  images.forEach(function(image) {
+    var kind = normalizeProductKind(image.product_kind);
+    if (groups[kind]) groups[kind].push(image);
+  });
+  var availableKinds = salesImageKinds().filter(function(kind) { return groups[kind].length > 0; });
+  if (!availableKinds.length) {
+    wrap.innerHTML = "<div class='customer-catalog-image-main'>" + esc(t("img_none")) + "</div>";
+    return;
+  }
+  var selectedImages = [];
   function renderSelected(index) {
     var main = wrap.querySelector(".customer-catalog-image-main");
     if (!main) return;
-    main.innerHTML = thumbImgHtml(images[index], { width: 720, height: 540, resize: "contain", loading: "eager", fetchPriority: "high" });
+    main.innerHTML = thumbImgHtml(selectedImages[index], { width: 720, height: 540, resize: "contain", loading: "eager", fetchPriority: "high" });
     var img = main.querySelector("img");
-    if (img) img.addEventListener("click", function() { openFullscreen(index, images); });
+    if (img) img.addEventListener("click", function() { openFullscreen(index, selectedImages); });
     wrap.querySelectorAll("[data-customer-image-index]").forEach(function(button) {
       button.classList.toggle("active", parseInt(button.dataset.customerImageIndex, 10) === index);
     });
   }
-  wrap.innerHTML = "<div class='customer-catalog-image-main'></div><div class='customer-catalog-image-thumbs'>" + images.slice(0, 8).map(function(image, index) {
-    return "<button class='customer-catalog-image-thumb' type='button' data-customer-image-index='" + index + "'>" + thumbImgHtml(image, { width: 128, height: 128, resize: "contain" }) + "</button>";
-  }).join("") + "</div>";
-  wrap.querySelectorAll("[data-customer-image-index]").forEach(function(button) {
-    button.addEventListener("click", function() { renderSelected(parseInt(button.dataset.customerImageIndex, 10)); });
+  function selectKind(kind) {
+    selectedImages = groups[kind] || [];
+    wrap.querySelectorAll("[data-customer-image-kind]").forEach(function(button) {
+      button.setAttribute("aria-selected", button.dataset.customerImageKind === kind ? "true" : "false");
+    });
+    var thumbs = wrap.querySelector(".customer-catalog-image-thumbs");
+    thumbs.innerHTML = selectedImages.slice(0, 8).map(function(image, index) {
+      return "<button class='customer-catalog-image-thumb' type='button' data-customer-image-index='" + index + "' aria-label='" + esc(salesImageKindLabel(kind) + " " + (index + 1)) + "'>" + thumbImgHtml(image, { width: 128, height: 128, resize: "contain" }) + "</button>";
+    }).join("");
+    thumbs.querySelectorAll("[data-customer-image-index]").forEach(function(button) {
+      button.addEventListener("click", function() { renderSelected(parseInt(button.dataset.customerImageIndex, 10)); });
+    });
+    renderSelected(0);
+  }
+  wrap.innerHTML = "<div class='customer-catalog-image-kinds' role='tablist' aria-label='" + esc(t("img_section")) + "'>" +
+    availableKinds.map(function(kind) {
+      return "<button type='button' role='tab' data-customer-image-kind='" + esc(kind) + "' aria-selected='false'>" +
+        esc(salesImageKindLabel(kind)) + " <span>" + esc(String(groups[kind].length)) + "</span></button>";
+    }).join("") + "</div>" +
+    "<div class='customer-catalog-image-main'></div><div class='customer-catalog-image-thumbs'></div>";
+  wrap.querySelectorAll("[data-customer-image-kind]").forEach(function(button) {
+    button.addEventListener("click", function() { selectKind(button.dataset.customerImageKind); });
   });
-  renderSelected(0);
+  selectKind(availableKinds[0]);
 }
 
 async function loadCustomerCatalogAvailability(product, seq) {
@@ -37198,6 +37239,8 @@ async function initSearch() {
 
   imageCountMap = {};
   imageThumbnailMap = {};
+  customerImageCountMap = {};
+  customerImageThumbnailMap = {};
   productionImageCountMap = {};
   slPartsMap = {};
   slPresenceMap = {};
@@ -38402,10 +38445,14 @@ function setProductionImageCache(p, imageCount) {
 function getProductImageCount(p) {
   var count = 0;
   productImageCacheKeys(p).forEach(function(key) {
+    if (isCustomerViewer() || isCustomerPortalSearchMode()) {
+      count = Math.max(count, parseInt(customerImageCountMap[key] || 0, 10) || 0);
+      return;
+    }
     if (Object.prototype.hasOwnProperty.call(imageCountMap, key)) {
       count = Math.max(count, parseInt(imageCountMap[key] || 0, 10) || 0);
     }
-    if (!isCustomerPortalSearchMode() && Object.prototype.hasOwnProperty.call(imageCountCache, key)) {
+    if (Object.prototype.hasOwnProperty.call(imageCountCache, key)) {
       count = Math.max(count, parseInt(imageCountCache[key] || 0, 10) || 0);
     }
   });
@@ -38428,7 +38475,9 @@ function getProductionImageCount(p) {
 function getProductImageThumbnail(p) {
   var thumb = "";
   productImageCacheKeys(p).some(function(key) {
-    thumb = imageThumbnailMap[key] || (!isCustomerPortalSearchMode() ? imageThumbnailCache[key] : "") || "";
+    thumb = (isCustomerViewer() || isCustomerPortalSearchMode())
+      ? (customerImageThumbnailMap[key] || "")
+      : (imageThumbnailMap[key] || imageThumbnailCache[key] || "");
     return !!thumb;
   });
   return thumb;
@@ -38442,13 +38491,13 @@ async function fetchProductImageCountMapForContext(products, context) {
   for (var i = 0; i < ids.length; i += 200) {
     var chunk = ids.slice(i, i + 200);
     var query = sb.from("core_product_images")
-      .select("dkd_shohin_id,image_url,storage_path,product_kind,image_origin,show_in_sales,show_in_production,sort_order,created_at,id")
+      .select("dkd_shohin_id,image_url,storage_path,product_kind,image_origin,show_in_sales,show_in_production,show_in_customer,sort_order,created_at,id")
       .in("dkd_shohin_id", chunk)
       .order("sort_order")
       .order("created_at")
       .order("id");
     var r = await query;
-    if (r.error && isImageVisibilitySchemaError(r.error)) {
+    if (r.error && context !== "customer" && isImageVisibilitySchemaError(r.error)) {
       r = await sb.from("core_product_images")
         .select("dkd_shohin_id,image_url,storage_path,product_kind,sort_order,created_at,id")
         .in("dkd_shohin_id", chunk)
@@ -38485,6 +38534,11 @@ function applyProductImageCountMapForContext(products, imageInfo, context) {
     var count = key ? (parseInt(counts[key] || 0, 10) || 0) : 0;
     if (context === "production") {
       setProductionImageCache(p, count);
+    } else if (context === "customer") {
+      productImageCacheKeys(p).forEach(function(cacheKey) {
+        customerImageCountMap[cacheKey] = count;
+        customerImageThumbnailMap[cacheKey] = key ? (thumbs[key] || "") : "";
+      });
     } else {
       setProductImageCache(p, count, key ? (thumbs[key] || "") : "");
     }
@@ -38521,7 +38575,7 @@ function applyProductSearchCardFlags(rows, products) {
       p.has_sl_part = hasSl || !!p.has_sl_part;
       if (hasKikan) p.has_kikan_compatible = true;
       if (hasCatalogSpec) p.has_catalog_spec = true;
-      if (!isCustomerPortalSearchMode()) setProductImageCache(p, imageCount, thumbUrl);
+      if (!isCustomerViewer() && !isCustomerPortalSearchMode()) setProductImageCache(p, imageCount, thumbUrl);
       productSlCacheKeys(p).forEach(function(key) {
         slPresenceMap[key] = hasSl;
         slPresenceCache[key] = hasSl;
@@ -38696,7 +38750,7 @@ async function fetchSlLabelAndImageMaps(mapping) {
     for (var k = 0; k < dkdIds.length; k += 200) {
       var imageChunk = dkdIds.slice(k, k + 200);
       var imgs = await sb.from("core_product_images")
-        .select("dkd_shohin_id, image_url, product_kind, image_origin, show_in_sales, show_in_production")
+        .select("dkd_shohin_id, image_url, product_kind, image_origin, show_in_sales, show_in_production, show_in_customer")
         .in("dkd_shohin_id", imageChunk)
         .order("sort_order")
         .order("created_at")
@@ -38708,7 +38762,7 @@ async function fetchSlLabelAndImageMaps(mapping) {
       (imgs.data || []).forEach(function(img) {
         var kind = normalizeProductKind(img.product_kind || "rebuilt");
         if (img.product_kind && imageProductKindOptions().indexOf(kind) < 0) return;
-        if (!imageContextMatches(img, "sales")) return;
+        if (!imageContextMatches(img, (isCustomerViewer() || isCustomerPortalSearchMode()) ? "customer" : "sales")) return;
         var key = "dkd:" + String(img.dkd_shohin_id || "");
         if (!key) return;
         result.imageCounts[key] = (result.imageCounts[key] || 0) + 1;
@@ -39264,6 +39318,8 @@ async function runProductSearch(options) {
     productSearchPageKey = "";
     imageCountMap = {};
     imageThumbnailMap = {};
+    customerImageCountMap = {};
+    customerImageThumbnailMap = {};
     productionImageCountMap = {};
     slPartsMap = {};
     slPresenceMap = {};
@@ -39359,6 +39415,8 @@ async function runProductSearch(options) {
   if (!appendCategoryPage) {
     imageCountMap = {};
     imageThumbnailMap = {};
+    customerImageCountMap = {};
+    customerImageThumbnailMap = {};
     productionImageCountMap = {};
     slPartsMap = {};
     slPresenceMap = {};
@@ -39464,9 +39522,10 @@ async function runDeferredProductSearchEnrichment(seq, auxSeq, products, options
   }
   if (!await waitForProductSearchDetailLoads(seq, auxSeq)) return;
 
-  var salesImageInfo = await fetchProductImageCountMapForContext(lookupProducts, "sales");
+  var imageContext = (isCustomerViewer() || isCustomerPortalSearchMode()) ? "customer" : "sales";
+  var salesImageInfo = await fetchProductImageCountMapForContext(lookupProducts, imageContext);
   if (isProductSearchEnrichmentStale(seq, auxSeq)) return;
-  applyProductImageCountMapForContext(lookupProducts, salesImageInfo, "sales");
+  applyProductImageCountMapForContext(lookupProducts, salesImageInfo, imageContext);
   preloadProductSearchThumbnails(lookupProducts);
   render();
 
@@ -50905,11 +50964,14 @@ async function loadKikan(dkdShohinId, seq, productSnapshot) {
 
 function isImageVisibilitySchemaError(error) {
   var msg = String((error && (error.message || error.details || error.hint || error.code)) || "");
-  return /image_origin|show_in_sales|show_in_production|product_kind|schema cache|PGRST204|column/i.test(msg);
+  return /image_origin|show_in_sales|show_in_production|show_in_customer|product_kind|schema cache|PGRST204|column/i.test(msg);
 }
 
 function imageContextMatches(row, context) {
   if (!row) return false;
+  if (context === "customer") {
+    return row.show_in_customer === true && imageProductKindOptions().indexOf(normalizeProductKind(row.product_kind)) >= 0;
+  }
   var origin = String(row.image_origin || "").toLowerCase();
   if (context === "production") {
     if (row.show_in_production === true) return true;
@@ -50990,8 +51052,11 @@ async function fetchCoreProductImagesForContext(dkdId, kind, context) {
     query = query.or("image_origin.eq.production,show_in_production.eq.true");
   } else if (context === "sales") {
     query = query.or("show_in_sales.eq.true,image_origin.eq.sales,image_origin.is.null");
+  } else if (context === "customer") {
+    query = query.eq("show_in_customer", true);
   }
   var result = await query;
+  if (context === "customer") return result;
   if (result.error && isImageVisibilitySchemaError(result.error)) {
     result = await allKindQuery();
     if (!result.error) result.data = chooseImageRowsForContext(result.data || [], kind, context);
@@ -51020,9 +51085,11 @@ async function fetchAllCoreProductImagesForContext(dkdId, context) {
     query = query.or("image_origin.eq.production,show_in_production.eq.true");
   } else if (context === "sales") {
     query = query.or("show_in_sales.eq.true,image_origin.eq.sales,image_origin.is.null");
+  } else if (context === "customer") {
+    query = query.eq("show_in_customer", true);
   }
   var result = await query;
-  if (result.error && isImageVisibilitySchemaError(result.error)) {
+  if (result.error && context !== "customer" && isImageVisibilitySchemaError(result.error)) {
     result = await sb.from("core_product_images")
       .select("*")
       .eq("dkd_shohin_id", dkdId)
@@ -51065,6 +51132,7 @@ async function refreshProductionImageCacheForProduct(product) {
 
 async function insertCoreProductImageRow(payload) {
   var result = await sb.from("core_product_images").insert(payload);
+  if (result.error && /show_in_customer/i.test(String(result.error.message || ""))) return result;
   if (result.error && isImageVisibilitySchemaError(result.error)) {
     var fallback = Object.assign({}, payload);
     delete fallback.image_origin;
@@ -51133,7 +51201,8 @@ async function copySalesImagesToProduction() {
         storage_path: src.storage_path || null,
         image_origin: "production",
         show_in_sales: false,
-        show_in_production: true
+        show_in_production: true,
+        show_in_customer: false
       };
       var r = await insertCoreProductImageRow(payload);
       if (r.error) throw r.error;
@@ -51195,7 +51264,8 @@ async function copyProductionImagesToSales() {
         storage_path: src.storage_path || null,
         image_origin: "sales",
         show_in_sales: true,
-        show_in_production: false
+        show_in_production: false,
+        show_in_customer: false
       };
       var r = await insertCoreProductImageRow(payload);
       if (r.error) throw r.error;
@@ -51360,7 +51430,8 @@ async function loadImages(slPartIds, seq) {
     renderImages();
     return;
   }
-  var r = await fetchAllCoreProductImagesForContext(dkdId, "sales");
+  var imageContext = (isCustomerViewer() || isCustomerPortalSearchMode()) ? "customer" : "sales";
+  var r = await fetchAllCoreProductImagesForContext(dkdId, imageContext);
   if (r.error) {
     console.warn("product image lookup failed", r.error);
     if (!isCurrentDetailLoad(seq)) return;
@@ -51476,6 +51547,65 @@ function triggerSalesImageUpload() {
   input.click();
 }
 
+function openImageUploadReview(files, kind, product, context) {
+  pendingImageUpload = { files: files, kind: kind, product: product, context: context };
+  var list = document.getElementById("image-upload-review-list");
+  list.innerHTML = files.map(function(file, index) {
+    return "<div class='image-upload-review-item'>" +
+      "<div class='image-upload-review-preview'><img id='image-upload-review-preview-" + index + "' src='" + PRODUCT_IMAGE_BLANK_SRC + "' alt=''></div>" +
+      "<div class='image-upload-review-detail'><div class='image-upload-review-name'>" + esc(file.name) + "</div>" +
+      "<label class='image-upload-review-customer'><input id='image-upload-review-customer-" + index + "' type='checkbox'>" +
+      "<span>" + esc(t("image_publish_customer")) + "</span></label></div></div>";
+  }).join("");
+  var overlay = document.getElementById("image-upload-review-overlay");
+  overlay.classList.add("show");
+  overlay.setAttribute("aria-hidden", "false");
+  files.forEach(function(file, index) {
+    if (!file.type || file.type.indexOf("image/") !== 0) return;
+    var reader = new FileReader();
+    reader.onload = function() {
+      var preview = document.getElementById("image-upload-review-preview-" + index);
+      if (pendingImageUpload && pendingImageUpload.files === files && preview && typeof reader.result === "string") {
+        preview.src = reader.result;
+      }
+    };
+    try { reader.readAsDataURL(file); } catch (_) { /* A preview failure does not block upload. */ }
+  });
+  var firstCheck = document.getElementById("image-upload-review-customer-0");
+  if (firstCheck) firstCheck.focus();
+}
+
+function closeImageUploadReview() {
+  if (imageUploadBusy) return;
+  pendingImageUpload = null;
+  document.getElementById("image-upload-review-list").innerHTML = "";
+  var overlay = document.getElementById("image-upload-review-overlay");
+  overlay.classList.remove("show");
+  overlay.setAttribute("aria-hidden", "true");
+}
+
+async function confirmImageUploadReview() {
+  if (!pendingImageUpload || imageUploadBusy) return;
+  var pending = pendingImageUpload;
+  var publishFlags = pending.files.map(function(_, index) {
+    var checkbox = document.getElementById("image-upload-review-customer-" + index);
+    return !!(checkbox && checkbox.checked);
+  });
+  var button = document.getElementById("image-upload-review-submit");
+  imageUploadBusy = true;
+  button.disabled = true;
+  try {
+    await saveImageUploads(pending.files, pending.context, pending.kind, pending.product, publishFlags);
+  } catch (error) {
+    console.warn("image upload failed", error);
+    alert(t("err_upload") + ": " + (error && error.message ? error.message : String(error)));
+  } finally {
+    imageUploadBusy = false;
+    button.disabled = false;
+    closeImageUploadReview();
+  }
+}
+
 function openImageDeleteDialog() {
   if (!canManageAllImages() && !canManageUsedCoreImages()) { showPermissionDenied("delete_image", "core_product_images"); return; }
   currentImageDeleteContext = "sales";
@@ -51541,13 +51671,13 @@ async function openImageEditDialog(context) {
   if (error) error.textContent = "";
   if (list) list.innerHTML = "<div class='panel-right-empty'>" + esc(t("loading")) + "</div>";
   document.getElementById("image-edit-overlay").classList.add("show");
-  var imageQueryContext = context === "production" ? "all" : context;
+  var imageQueryContext = context === "production" || canViewProductionFeatures() ? "all" : "sales";
   var r = await fetchAllCoreProductImagesForContext(dkdId, imageQueryContext);
   if (r.error) {
     if (list) list.innerHTML = "<div class='panel-right-empty'>" + esc(r.error.message || t("msg_kikan_err")) + "</div>";
     return;
   }
-  imageEditRows = uniqueCoreProductImageRows(r.data || []).filter(function(img) {
+  imageEditRows = (r.data || []).filter(function(img) {
     return imageProductKindOptions().indexOf(normalizeProductKind((img && img.product_kind) || "rebuilt")) >= 0;
   });
   renderImageEditDialog();
@@ -51621,6 +51751,7 @@ function renderImageEditDialog() {
       "<div class='image-edit-controls'>" +
       "<label>" + esc(t("product_kind_section")) + "</label>" +
       imageKindSelectHtml("image-edit-kind-" + i, kind) +
+      "<label class='image-edit-customer'><input type='checkbox' id='image-edit-customer-" + i + "'" + (img.show_in_customer === true ? " checked" : "") + "><span>" + esc(t("image_publish_customer")) + "</span></label>" +
       "</div>" +
       "</div>";
   }).join("");
@@ -51662,8 +51793,12 @@ async function saveImageEditDialog() {
     var select = document.getElementById("image-edit-kind-" + i);
     var nextKind = normalizeProductKind((select && select.value) || img.product_kind || "rebuilt");
     var currentKind = normalizeProductKind(img.product_kind || "rebuilt");
-    if (nextKind === currentKind) continue;
+    var publishInput = document.getElementById("image-edit-customer-" + i);
+    if (!select || !publishInput) continue;
+    var publishToCustomer = !!publishInput.checked;
+    if (nextKind === currentKind && publishToCustomer === (img.show_in_customer === true)) continue;
     var payload = { product_kind: nextKind };
+    payload.show_in_customer = publishToCustomer;
     var imageOrigin = String(img.image_origin || "").toLowerCase();
     var salesRegistration = imageOrigin === "sales" || img.show_in_sales === true || !!img.product_variant_id || !!img.sl_part_id;
     if (salesRegistration) payload.product_variant_id = productVariantIdForKind(nextKind);
@@ -51671,6 +51806,20 @@ async function saveImageEditDialog() {
     if (r.error) {
       if (error) error.textContent = r.error.message || t("msg_save_err");
       return;
+    }
+    if (publishToCustomer !== (img.show_in_customer === true)) {
+      logUserActivity("image_visibility_change", {
+        screen: context === "production" ? "production-search" : "search",
+        action: publishToCustomer ? "publish_customer_image" : "unpublish_customer_image",
+        target_type: "core_product_images",
+        target_id: img.id,
+        metadata: {
+          dkd_shohin_id: img.dkd_shohin_id,
+          product_kind: nextKind,
+          show_in_customer_before: img.show_in_customer === true,
+          show_in_customer_after: publishToCustomer
+        }
+      });
     }
     changed++;
   }
@@ -51747,16 +51896,28 @@ async function deleteSelectedImagesFromDialog() {
 async function uploadImages(event) {
   var uploadContext = event && event.target && event.target.dataset ? (event.target.dataset.uploadContext || "sales") : "sales";
   var uploadKind = event && event.target && event.target.dataset ? (event.target.dataset.uploadKind || "") : "";
+  var files = Array.from(event.target.files || []);
   if (event && event.target && event.target.dataset) event.target.dataset.uploadContext = "";
   if (event && event.target && event.target.dataset) event.target.dataset.uploadKind = "";
+  event.target.value = "";
   var isProductionUpload = uploadContext === "production";
-  var files = Array.from(event.target.files);
   var targetProduct = isProductionUpload ? currentProductionRow : currentProduct;
   if (!files.length || !targetProduct) return;
 
-  var dkdId = parseInt(productDkdId(targetProduct), 10);
   var kind = normalizeProductKind(uploadKind || (isProductionUpload ? currentProductionImageKind : selectedProductKind()) || "rebuilt");
   if (!canManageImageKind(kind, uploadContext)) { showPermissionDenied("upload_image", "core_product_images"); return; }
+  var dkdId = parseInt(productDkdId(targetProduct), 10);
+  if (isNaN(dkdId) || !productKindStockKindAllowed(kind)) {
+    alert(t("product_kind_current"));
+    return;
+  }
+  openImageUploadReview(files, kind, targetProduct, uploadContext);
+}
+
+async function saveImageUploads(files, uploadContext, kind, targetProduct, publishFlags) {
+  var isProductionUpload = uploadContext === "production";
+  if (!canManageImageKind(kind, uploadContext)) { showPermissionDenied("upload_image", "core_product_images"); return; }
+  var dkdId = parseInt(productDkdId(targetProduct), 10);
   if (isNaN(dkdId) || !productKindStockKindAllowed(kind)) {
     alert(t("product_kind_current"));
     return;
@@ -51768,6 +51929,7 @@ async function uploadImages(event) {
   if (label) label.classList.add("busy");
 
   var uploaded = 0;
+  var published = 0;
   for (var i=0;i<files.length;i++) {
     var file=files[i], nameParts=file.name.split("."), ext=nameParts.length>1?nameParts.pop():"jpg";
     var path = "dkd_"+dkdId+"/"+(isProductionUpload ? "production" : kind)+"/"+Date.now()+"_"+Math.random().toString(36).slice(2)+"."+ext;
@@ -51791,12 +51953,13 @@ async function uploadImages(event) {
       imagePayload.show_in_sales = true;
       imagePayload.show_in_production = false;
     }
+    imagePayload.show_in_customer = publishFlags[i] === true;
     var dbR  = await insertCoreProductImageRow(imagePayload);
     if (dbR.error) { alert(t("err_db")+": "+dbR.error.message); continue; }
     uploaded++;
+    if (imagePayload.show_in_customer) published++;
   }
 
-  event.target.value = "";
   if (label) label.classList.remove("busy");
   if (uploaded) {
     logUserActivity("image_upload", {
@@ -51807,6 +51970,7 @@ async function uploadImages(event) {
       target_desc: productActivityDesc(targetProduct),
       metadata: {
         count: uploaded,
+        customer_published_count: published,
         product_kind: kind,
         context: uploadContext,
         dkd_shohin_id: dkdId
@@ -51884,6 +52048,7 @@ async function deleteImageRecord(target) {
       storage_path: target.storage_path || null,
       show_in_sales: target.show_in_sales == null ? null : target.show_in_sales,
       show_in_production: target.show_in_production == null ? null : target.show_in_production,
+      show_in_customer: target.show_in_customer == null ? null : target.show_in_customer,
       core_list_entry_id: target._core_list_entry_id || currentImageDeleteCoreListRowId || null,
       context: currentImageDeleteContext
     }
@@ -55837,6 +56002,9 @@ document.getElementById("btn-open-image-actions").addEventListener("click", open
 document.getElementById("btn-image-actions-cancel").addEventListener("click", closeImageActionsDialog);
 document.getElementById("image-actions-overlay").addEventListener("click", function(e){ if(e.target===this) closeImageActionsDialog(); });
 document.getElementById("btn-image-action-upload").addEventListener("click", triggerSalesImageUpload);
+document.getElementById("image-upload-review-cancel").addEventListener("click", closeImageUploadReview);
+document.getElementById("image-upload-review-submit").addEventListener("click", confirmImageUploadReview);
+document.getElementById("image-upload-review-overlay").addEventListener("click", function(e){ if(e.target===this) closeImageUploadReview(); });
 document.getElementById("btn-image-action-edit").addEventListener("click", function(){
   closeImageActionsDialog();
   openImageEditDialog("sales");
