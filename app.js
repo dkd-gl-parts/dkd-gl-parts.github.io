@@ -1610,6 +1610,9 @@ var TRANSLATIONS = {
     part_form_edit_title: "商品修正",
     required_part_number: "純正品番またはメーカー品番を入力してください",
     duplicate_part_number: "純正品番とメーカー品番に同じ品番は登録できません",
+    core_product_existing_pair: "同じ品番の組み合わせは登録済みです（D-CATS商品コード {id}）。既存商品の内容を確認してください。",
+    core_product_existing_pair_unknown: "同じ品番の組み合わせは登録済みです。品番を検索して既存商品を確認してください。",
+    core_product_open_existing: "登録済み商品を開く",
     required_shohin_cd: "商品コードを入力してください",
     btn_add_core_list: "在庫コアを追加",
     core_list_edit_title: "コア修正",
@@ -3926,6 +3929,9 @@ var TRANSLATIONS = {
     part_form_edit_title: "Edit Part",
     required_part_number: "Enter a genuine part number or manufacturer part number.",
     duplicate_part_number: "Genuine and manufacturer part numbers must be different.",
+    core_product_existing_pair: "This part-number combination is already registered (D-CATS product code {id}). Review the existing product.",
+    core_product_existing_pair_unknown: "This part-number combination is already registered. Search for the existing product.",
+    core_product_open_existing: "Open existing product",
     required_shohin_cd: "Enter the product code.",
     btn_add_core_list: "Add inventory CORE",
     core_list_edit_title: "Edit CORE",
@@ -5169,6 +5175,9 @@ var TRANSLATIONS = {
     part_form_edit_title: "修改商品",
     required_part_number: "请输入纯正品号或制造商品号。",
     duplicate_part_number: "纯正品号与制造商品号不能相同。",
+    core_product_existing_pair: "此商品编号组合已登记（D-CATS商品代码 {id}）。请确认现有商品。",
+    core_product_existing_pair_unknown: "此商品编号组合已登记。请搜索并确认现有商品。",
+    core_product_open_existing: "打开现有商品",
     required_shohin_cd: "请输入商品代码。",
     core_list_edit_title: "修改CORE",
     production_ranking_edit_title: "修改生产计划",
@@ -7076,7 +7085,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1078";
+var APP_VERSION       = "v1.1.1080";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -36069,6 +36078,9 @@ async function ensureGltekPartNumberIssuedForDkdId(dkdId, options) {
 }
 
 function coreProductPolicyFormKinds(product, variants, preferredKind) {
+  if (partFormMode === "add" && coreProductFormContext === "sales" && !product) {
+    return ["rebuilt", "aftermarket_new"];
+  }
   var kinds = [];
   (variants || []).forEach(function(row) {
     var kind = normalizeProductKind(row && row.product_kind);
@@ -36414,7 +36426,7 @@ async function openCoreProductForm(mode, product, context) {
     stampPairRows = coreProductFormContext === "production" ? (formData[1] || []) : [];
   }
   initializeCoreProductStampPairForm(stampPairRows);
-  populateCoreProductPolicyForm(formProduct, currentSelectedProductKind);
+  populateCoreProductPolicyForm(formProduct, mode === "add" && coreProductFormContext === "sales" ? "rebuilt" : currentSelectedProductKind);
   clearUnifiedSpecForm();
   if (mode === "edit") {
     await loadProductSpecsForCurrent();
@@ -36426,8 +36438,7 @@ async function openCoreProductForm(mode, product, context) {
 }
 
 async function openCoreProductAddFromSearch() {
-  await openCoreProductForm("add", currentProduct || null, "sales");
-  document.getElementById("pf-shohin-cd").value = "";
+  await openCoreProductForm("add", null, "sales");
 }
 
 async function openCoreProductAddFromProduction() {
@@ -36443,6 +36454,57 @@ async function openCoreProductAddFromManagement() {
 async function openCoreProductEditFromSearch() {
   if (!currentProduct) return;
   await openCoreProductForm("edit", currentProduct, "sales");
+}
+
+function isCoreProductRegularPairConflict(error) {
+  return !!(error && error.code === "23505" && String(error.message || "").includes("core_products_unique_regular_pair"));
+}
+
+async function findCoreProductRegularPair(payload) {
+  if (!payload.genuine_part_number || !payload.manufacturer_part_number || payload.category_code === "ac_compressor") return null;
+  var normalizedGenuine = normalizedPartKey(payload.genuine_part_number);
+  var normalizedManufacturerPart = normalizedPartKey(payload.manufacturer_part_number);
+  if (!normalizedGenuine || !normalizedManufacturerPart) return null;
+  try {
+    var result = await sb.from("core_products")
+      .select("dkd_shohin_id,manufacturer")
+      .eq("category_code", payload.category_code)
+      .eq("normalized_genuine_part_number", normalizedGenuine)
+      .eq("normalized_manufacturer_part_number", normalizedManufacturerPart);
+    if (result.error) {
+      console.warn("duplicate product lookup failed", result.error);
+      return null;
+    }
+    return (result.data || []).find(function(row) {
+      return String(row.manufacturer || "").toUpperCase() === String(payload.manufacturer || "").toUpperCase();
+    }) || null;
+  } catch (error) {
+    console.warn("duplicate product lookup failed", error);
+    return null;
+  }
+}
+
+function showCoreProductRegularPairConflict(errEl, existing, formContext) {
+  errEl.textContent = existing
+    ? tf("core_product_existing_pair", { id: existing.dkd_shohin_id })
+    : t("core_product_existing_pair_unknown");
+  if (!existing) return;
+  var button = document.createElement("button");
+  button.type = "button";
+  button.className = "btn-sm-edit";
+  button.textContent = t("core_product_open_existing");
+  button.addEventListener("click", async function() {
+    document.getElementById("part-form-overlay").classList.remove("show");
+    if (formContext === "production") {
+      await openProductionProductByDkdId(existing.dkd_shohin_id);
+    } else if (formContext === "management") {
+      document.getElementById("parts-mgmt-search").value = String(existing.dkd_shohin_id);
+      await loadPartsMgmt();
+    } else {
+      await openProductByDkdId(existing.dkd_shohin_id);
+    }
+  });
+  errEl.appendChild(button);
 }
 
 async function saveCoreProductForm() {
@@ -36505,6 +36567,13 @@ async function saveCoreProductForm() {
   var gltekResult = null;
   var gltekAutoIssueOutcome = null;
   if (addingProduct) {
+    if (!isGltekAdd) {
+      var existingProduct = await findCoreProductRegularPair(payload);
+      if (existingProduct) {
+        showCoreProductRegularPairConflict(errEl, existingProduct, formContext);
+        return;
+      }
+    }
     if (isGltekAdd) {
       r = await sb.rpc("create_gltek_core_product", {
         product_category_code: payload.category_code,
@@ -36543,7 +36612,7 @@ async function saveCoreProductForm() {
       document.getElementById("pf-shohin-cd").value = dkd || "";
       document.getElementById("part-form-id").value = dkd || "";
       partFormMode = "edit";
-      currentProduct = Object.assign({}, currentProduct || {}, payload, { dkd_shohin_id: dkd, id: dkd });
+      currentProduct = Object.assign({}, payload, { dkd_shohin_id: dkd, id: dkd });
       if (isGltekAdd) {
         logUserActivity("insert", {
           action: "create_gltek_core_product",
@@ -36562,7 +36631,14 @@ async function saveCoreProductForm() {
     r = await sb.from("core_products").update(payload).eq("dkd_shohin_id", dkd);
     if (!r.error) await writeLog("update", "core_products", dkd, genuine || mfrPart || String(dkd), before, payload);
   }
-  if (r.error) { errEl.textContent = t("msg_part_err") + ": " + r.error.message; return; }
+  if (r.error) {
+    if (isCoreProductRegularPairConflict(r.error)) {
+      showCoreProductRegularPairConflict(errEl, await findCoreProductRegularPair(payload), formContext);
+    } else {
+      errEl.textContent = t("msg_part_err") + ": " + r.error.message;
+    }
+    return;
+  }
   if (!dkd) { errEl.textContent = "商品コードを自動採番できませんでした"; return; }
   if (formContext === "production") {
     var stampPairsOk = await saveCoreProductStampPairsForDkd(dkd, stampPairFormValue.pairs, errEl);
@@ -55090,7 +55166,7 @@ document.getElementById("pf-stamp-pair-add").addEventListener("click", function(
   if (input) input.focus();
 });
 document.getElementById("pf-core-policy-kind").addEventListener("change", function() {
-  populateCoreProductPolicyForm(currentProduct, this.value);
+  populateCoreProductPolicyForm(partFormMode === "add" ? null : currentProduct, this.value);
 });
 document.querySelectorAll("input[name='pf-core-return-required']").forEach(function(input) {
   input.addEventListener("change", function() {
