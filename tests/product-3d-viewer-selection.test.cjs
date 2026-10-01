@@ -17,8 +17,9 @@ assert(!viewerSource.includes('await import('), 'Viewer test must replace only i
 
 function harness({ onRead, onSign, onCreate } = {}) {
   const state = { productId: 42, kind: 'rebuilt', review: true };
-  const calls = { reads: 0, signs: 0, opens: 0, closes: 0, disposes: 0, alerts: [] };
-  const document = { body: {}, activeElement: null };
+  const calls = { reads: 0, signs: 0, opens: 0, closes: 0, disposes: 0, fullscreenExits: 0, alerts: [] };
+  const document = { body: {}, activeElement: null, fullscreenElement: null,
+    exitFullscreen() { calls.fullscreenExits++; this.fullscreenElement = null; return Promise.resolve(); } };
   const control = () => ({ isConnected: true, hidden: false, disabled: false,
     focus() { document.activeElement = this; } });
   const trigger = control();
@@ -136,6 +137,22 @@ test('unchanged product opens its uploaded GLB normally', async () => {
   assert.equal(qa.document.activeElement, qa.elements['product-3d-viewer-close']);
   qa.api.closeViewer();
   assert.equal(qa.document.activeElement, qa.trigger);
+});
+
+test('closing Viewer exits only its own fullscreen shell', async () => {
+  const qa = harness();
+  await qa.api.openViewerById('uploaded:18', 'sales', 42);
+  qa.document.fullscreenElement = qa.elements['product-3d-viewer-shell'];
+  qa.api.closeViewer();
+  assert.equal(qa.calls.fullscreenExits, 1);
+  assert.equal(qa.document.fullscreenElement, null);
+
+  await qa.api.openViewerById('uploaded:18', 'sales', 42);
+  const unrelated = {};
+  qa.document.fullscreenElement = unrelated;
+  qa.api.closeViewer();
+  assert.equal(qa.calls.fullscreenExits, 1);
+  assert.equal(qa.document.fullscreenElement, unrelated);
 });
 
 test('Tab and Shift+Tab stay inside the open Viewer dialog', async () => {

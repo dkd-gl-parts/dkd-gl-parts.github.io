@@ -9100,6 +9100,8 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .customer-product-media-switch { margin-bottom: 8px; }
 .product-3d-viewer-shell { position: relative; width: min(1100px, 100%); overflow: hidden; background: #0b111b; }
 .product-3d-viewer-stage { height: min(72vh, 720px); touch-action: none; }
+.product-3d-viewer-shell:fullscreen { display: flex; flex-direction: column; width: 100vw; height: 100vh; height: 100dvh; max-height: none; border: 0; border-radius: 0; }
+.product-3d-viewer-shell:fullscreen .product-3d-viewer-stage { flex: 1 1 auto; min-height: 0; height: auto; }
 .product-3d-viewer-stage canvas { display: block; width: 100%; height: 100%; }
 .product-3d-viewer-loading { position: absolute; inset: 74px 0 54px; display: grid; place-items: center; color: #dce6f2; background: rgba(8, 15, 25, .76); }
 .product-3d-viewer-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px; background: #101a29; color: #a9b7ca; font-size: 11px; }

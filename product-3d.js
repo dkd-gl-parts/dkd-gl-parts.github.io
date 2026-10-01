@@ -1266,6 +1266,10 @@
   function closeViewer() {
     viewerRequestId += 1;
     if (viewer) { viewer.dispose(); viewer = null; }
+    var fullscreenTarget = elements["product-3d-viewer-shell"] || elements["product-3d-viewer-stage"];
+    if (document.fullscreenElement === fullscreenTarget && typeof document.exitFullscreen === "function") {
+      document.exitFullscreen().catch(function () {});
+    }
     var viewerOverlay = elements["product-3d-viewer-overlay"];
     var wasOpen = viewerOverlay.classList.contains("show");
     viewerOverlay.classList.remove("show");
