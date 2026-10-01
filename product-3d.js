@@ -41,6 +41,7 @@
   var tripoJob = null;
   var tripoBusy = false;
   var tripoRequestId = 0;
+  var tripoReturnFocus = null;
   var mediaAvailabilityRequest = { sales: 0, production: 0, customer: 0 };
   var mediaPaneRequest = { sales: 0, production: 0, customer: 0 };
 
@@ -1073,12 +1074,14 @@
     if (!target.product || !productId(target.product) || !target.kind) {
       alert("対象商品と区分を選択してください。"); return;
     }
+    tripoReturnFocus = document.activeElement;
     closeImageActionOverlays();
     var requestId = ++tripoRequestId;
     tripoTarget = { context: context || "sales", productId: productId(target.product), kind: target.kind };
     tripoJob = null;
     elements["product-3d-tripo-overlay"].classList.add("show");
     elements["product-3d-tripo-overlay"].setAttribute("aria-hidden", "false");
+    elements["product-3d-tripo-close"].focus();
     elements["product-3d-tripo-context"].textContent = productTitle(target.product) + " / " + kindLabel(target.kind);
     elements["product-3d-tripo-images"].textContent = "保存済み画像を読み込んでいます…";
     elements["product-3d-tripo-views"].textContent = "";
@@ -1120,10 +1123,38 @@
     }
   }
   function closeTripo() {
+    var previous = tripoTarget;
+    var wasOpen = elements["product-3d-tripo-overlay"].classList.contains("show");
     tripoRequestId += 1;
     tripoTarget = null; tripoJob = null;
     elements["product-3d-tripo-overlay"].classList.remove("show");
     elements["product-3d-tripo-overlay"].setAttribute("aria-hidden", "true");
+    var returnFocus = tripoReturnFocus;
+    tripoReturnFocus = null;
+    if (!wasOpen || !sessionModelsEnabled || !previous) return;
+    var current = selectedTarget(previous.context);
+    if (productId(current.product) !== previous.productId || current.kind !== previous.kind) return;
+    if (!returnFocus || !returnFocus.isConnected || !returnFocus.getClientRects().length) {
+      returnFocus = document.getElementById(previous.context === "production"
+        ? "production-open-image-actions" : "btn-open-image-actions");
+    }
+    if (returnFocus && returnFocus.isConnected && !returnFocus.disabled &&
+        returnFocus.getClientRects().length) returnFocus.focus();
+  }
+  function keepTripoFocus(event) {
+    if (event.key !== "Tab" || !elements["product-3d-tripo-overlay"].classList.contains("show") ||
+        elements["product-3d-viewer-overlay"].classList.contains("show")) return;
+    var controls = Array.from(elements["product-3d-tripo-overlay"].querySelectorAll("button, select"))
+      .filter(function (node) { return node.isConnected && !node.hidden && !node.disabled && node.getClientRects().length; });
+    if (!controls.length) return;
+    var first = controls[0];
+    var last = controls[controls.length - 1];
+    if (!controls.includes(document.activeElement) || (event.shiftKey && document.activeElement === first)) {
+      event.preventDefault();
+      (event.shiftKey && controls.includes(document.activeElement) ? last : first).focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault(); first.focus();
+    }
   }
   async function startTripo() {
     if (tripoBusy || !tripoTarget || !canManage3D()) return;
@@ -1136,7 +1167,7 @@
       var quote = await tripoInvoke(Object.assign(tripoPayload("quote"), { images: images }));
       if (!sameTripoTarget(requestId)) return;
       if (!quote.can_start) { tripoStatus("Tripo APIの残高が不足しています。"); return; }
-      if (!window.confirm("この画像で3Dモデルを1回作成します。見積り " + quote.estimated_credits +
+      if (!window.confirm("選択した保存済み画像を外部サービスTripoへ送信し、3Dモデルを1回作成します。見積り " + quote.estimated_credits +
           " クレジット、現在残高 " + quote.balance + " クレジット。実際の料金はTripo APIで確定します。開始しますか？")) return;
       var requestKey = crypto.randomUUID();
       tripoJob = { request_key: requestKey, status: "reserved" };
@@ -1170,7 +1201,10 @@
       if (!sameTripoTarget(requestId)) return;
       var viewerRequest = ++viewerRequestId;
       var overlay = elements["product-3d-viewer-overlay"];
+      viewerReturnFocus = elements["product-3d-tripo-preview"];
+      viewerFocusTarget = { context: tripoTarget.context, productId: tripoTarget.productId, kind: tripoTarget.kind };
       overlay.classList.add("show"); overlay.setAttribute("aria-hidden", "false");
+      elements["product-3d-viewer-close"].focus();
       elements["product-3d-viewer-title"].textContent = "Tripo生成結果 / 非公開プレビュー";
       elements["product-3d-viewer-loading"].textContent = "3Dモデルを読み込んでいます...";
       elements["product-3d-viewer-loading"].hidden = false;
@@ -1545,8 +1579,11 @@
     });
     window.addEventListener("resize", function () { if (state.stream) drawGuide(state.guide); });
     document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape") { closeCapture(); closeViewer(); closeTripo(); }
-      else keepViewerFocus(event);
+      if (event.key === "Escape") {
+        if (elements["product-3d-viewer-overlay"].classList.contains("show")) closeViewer();
+        else if (elements["product-3d-tripo-overlay"].classList.contains("show")) closeTripo();
+        else closeCapture();
+      } else { keepViewerFocus(event); keepTripoFocus(event); }
     });
   }
 

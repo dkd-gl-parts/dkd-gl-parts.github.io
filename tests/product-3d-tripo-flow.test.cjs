@@ -11,6 +11,7 @@ assert.ok(start >= 0 && end > start, "Tripo UI flow must remain testable");
 
 function harness({ balance = 100, confirmed = true, failStart = false } = {}) {
   const events = [];
+  const prompts = [];
   const controls = ["start", "poll", "preview", "publish", "reject"]
     .reduce((all, key) => { all[`product-3d-tripo-${key}`] = { hidden: false }; return all; }, {});
   const selections = [
@@ -21,7 +22,7 @@ function harness({ balance = 100, confirmed = true, failStart = false } = {}) {
   ];
   const context = {
     tripoTarget: { context: "sales", productId: 101, kind: "rebuilt" },
-    tripoJob: null, tripoBusy: false, tripoRequestId: 1,
+    tripoJob: null, tripoBusy: false, tripoRequestId: 1, tripoReturnFocus: null,
     sessionModelsEnabled: true, crypto: { randomUUID: () => "00000000-0000-4000-8000-000000000001" },
     elements: {
       ...controls,
@@ -34,7 +35,7 @@ function harness({ balance = 100, confirmed = true, failStart = false } = {}) {
     canPublish3D: () => true,
     friendlyError: (error) => String(error.message || error),
     edgeErrorMessage: async () => "uncertain",
-    window: { confirm: () => confirmed },
+    window: { confirm: (message) => { prompts.push(message); return confirmed; } },
     sb: { functions: { async invoke(_name, request) {
       events.push(request.body.action);
       if (request.body.action === "quote") return { data: {
@@ -50,9 +51,65 @@ function harness({ balance = 100, confirmed = true, failStart = false } = {}) {
     } } },
     Set, Array, Number, String, Error,
   };
-  const api = vm.runInNewContext(`${source.slice(start, end)}\n({ selectedTripoImages, startTripo, renderTripoJob })`, context);
-  return { api, context, events, selections };
+  const api = vm.runInNewContext(`${source.slice(start, end)}\n({ selectedTripoImages, startTripo, renderTripoJob, keepTripoFocus, closeTripo })`, context);
+  return { api, context, events, prompts, selections };
 }
+
+test("saved-image transfer is disclosed before any paid submission", async () => {
+  const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  assert.match(html, /選択した保存済み画像は、3D作成のため外部サービスTripoへ送信されます。/);
+  const qa = harness({ confirmed: false });
+  await qa.api.startTripo();
+  assert.deepEqual(qa.events, ["quote"]);
+  assert.equal(qa.prompts.length, 1);
+  assert.match(qa.prompts[0], /保存済み画像を外部サービスTripoへ送信/);
+  assert.match(qa.prompts[0], /見積り 30 クレジット/);
+});
+
+test("keyboard focus stays in the Tripo dialog unless the Viewer is above it", () => {
+  const qa = harness();
+  const controls = Array.from({ length: 3 }, () => ({
+    isConnected: true, hidden: false, disabled: false, getClientRects: () => [{}],
+    focus() { qa.context.document.activeElement = this; },
+  }));
+  let viewerOpen = false;
+  qa.context.document = { activeElement: controls[2] };
+  qa.context.elements["product-3d-tripo-overlay"] = {
+    classList: { contains: () => true }, querySelectorAll: () => controls,
+  };
+  qa.context.elements["product-3d-viewer-overlay"] = {
+    classList: { contains: () => viewerOpen },
+  };
+  const event = { key: "Tab", shiftKey: false, prevented: false,
+    preventDefault() { this.prevented = true; } };
+  qa.api.keepTripoFocus(event);
+  assert.equal(qa.context.document.activeElement, controls[0]);
+  assert.equal(event.prevented, true);
+  event.shiftKey = true;
+  qa.api.keepTripoFocus(event);
+  assert.equal(qa.context.document.activeElement, controls[2]);
+  viewerOpen = true;
+  qa.api.keepTripoFocus(event);
+  assert.equal(qa.context.document.activeElement, controls[2]);
+});
+
+test("closing restores focus only while the same product and account remain active", () => {
+  for (const stale of [false, true]) {
+    const qa = harness();
+    let focused = false;
+    const trigger = { isConnected: true, disabled: false, getClientRects: () => [{}],
+      focus() { focused = true; } };
+    qa.context.tripoReturnFocus = trigger;
+    qa.context.selectedTarget = () => ({ product: { id: stale ? 102 : 101 }, kind: "rebuilt" });
+    qa.context.document = { getElementById: () => null };
+    qa.context.elements["product-3d-tripo-overlay"] = {
+      classList: { contains: () => true, remove() {} }, setAttribute() {},
+    };
+    qa.api.closeTripo();
+    assert.equal(focused, !stale);
+    assert.equal(qa.context.tripoTarget, null);
+  }
+});
 
 test("invalid or repeated image choices never call a paid endpoint", async () => {
   const qa = harness();
