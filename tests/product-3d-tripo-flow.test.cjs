@@ -31,6 +31,8 @@ function harness({ balance = 100, confirmed = true, failStart = false } = {}) {
     },
     selectedTarget: () => ({ product: { id: 101 }, kind: "rebuilt" }),
     productId: (product) => product.id,
+    productTitle: (product) => product.manufacturer_part_number || product.genuine_part_number,
+    kindLabel: (kind) => kind === "aftermarket_new" ? "新品" : "リビルト",
     canManage3D: () => true,
     canPublish3D: () => true,
     friendlyError: (error) => String(error.message || error),
@@ -51,7 +53,7 @@ function harness({ balance = 100, confirmed = true, failStart = false } = {}) {
     } } },
     Set, Array, Number, String, Error,
   };
-  const api = vm.runInNewContext(`${source.slice(start, end)}\n({ selectedTripoImages, startTripo, renderTripoJob, keepTripoFocus, closeTripo })`, context);
+  const api = vm.runInNewContext(`${source.slice(start, end)}\n({ selectedTripoImages, startTripo, renderTripoJob, keepTripoFocus, closeTripo, tripoContextLabel })`, context);
   return { api, context, events, prompts, selections };
 }
 
@@ -64,6 +66,14 @@ test("saved-image transfer is disclosed before any paid submission", async () =>
   assert.equal(qa.prompts.length, 1);
   assert.match(qa.prompts[0], /保存済み画像を外部サービスTripoへ送信/);
   assert.match(qa.prompts[0], /見積り 30 クレジット/);
+});
+
+test("the Tripo dialog distinguishes products sharing a genuine part number", () => {
+  const qa = harness();
+  const label = qa.api.tripoContextLabel({ manufacturer_part_number: "104210-1870",
+    daiko_part_number: "ALDK30220", genuine_part_number: "27060-30220" },
+    { productId: 2639, kind: "aftermarket_new" });
+  assert.equal(label, "104210-1870 / ALDK30220 / 27060-30220 / 商品ID 2639 / 新品");
 });
 
 test("keyboard focus stays in the Tripo dialog unless the Viewer is above it", () => {

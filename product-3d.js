@@ -1068,6 +1068,14 @@
     }
     return selected;
   }
+  function tripoContextLabel(product, target) {
+    var primary = productTitle(product);
+    var daiko = String(product.daiko_part_number || "");
+    var genuine = String(product.genuine_part_number || "");
+    return [primary, daiko && daiko !== primary ? daiko : null,
+      genuine && genuine !== primary && genuine !== daiko ? genuine : null,
+      "商品ID " + target.productId, kindLabel(target.kind)].filter(Boolean).join(" / ");
+  }
   async function openTripo(context) {
     if (!canManage3D()) { deny3D("product_3d_tripo"); return; }
     var target = selectedTarget(context || "sales");
@@ -1082,7 +1090,7 @@
     elements["product-3d-tripo-overlay"].classList.add("show");
     elements["product-3d-tripo-overlay"].setAttribute("aria-hidden", "false");
     elements["product-3d-tripo-close"].focus();
-    elements["product-3d-tripo-context"].textContent = productTitle(target.product) + " / " + kindLabel(target.kind);
+    elements["product-3d-tripo-context"].textContent = tripoContextLabel(target.product, tripoTarget);
     elements["product-3d-tripo-images"].textContent = "保存済み画像を読み込んでいます…";
     elements["product-3d-tripo-views"].textContent = "";
     tripoStatus("確認中…");
