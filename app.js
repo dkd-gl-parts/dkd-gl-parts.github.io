@@ -36078,6 +36078,9 @@ async function ensureGltekPartNumberIssuedForDkdId(dkdId, options) {
 }
 
 function coreProductPolicyFormKinds(product, variants, preferredKind) {
+  if (partFormMode === "add" && coreProductFormContext === "sales" && !product) {
+    return ["rebuilt", "aftermarket_new"];
+  }
   var kinds = [];
   (variants || []).forEach(function(row) {
     var kind = normalizeProductKind(row && row.product_kind);
@@ -36423,7 +36426,7 @@ async function openCoreProductForm(mode, product, context) {
     stampPairRows = coreProductFormContext === "production" ? (formData[1] || []) : [];
   }
   initializeCoreProductStampPairForm(stampPairRows);
-  populateCoreProductPolicyForm(formProduct, currentSelectedProductKind);
+  populateCoreProductPolicyForm(formProduct, mode === "add" && coreProductFormContext === "sales" ? "rebuilt" : currentSelectedProductKind);
   clearUnifiedSpecForm();
   if (mode === "edit") {
     await loadProductSpecsForCurrent();
@@ -36435,8 +36438,7 @@ async function openCoreProductForm(mode, product, context) {
 }
 
 async function openCoreProductAddFromSearch() {
-  await openCoreProductForm("add", currentProduct || null, "sales");
-  document.getElementById("pf-shohin-cd").value = "";
+  await openCoreProductForm("add", null, "sales");
 }
 
 async function openCoreProductAddFromProduction() {
@@ -36610,7 +36612,7 @@ async function saveCoreProductForm() {
       document.getElementById("pf-shohin-cd").value = dkd || "";
       document.getElementById("part-form-id").value = dkd || "";
       partFormMode = "edit";
-      currentProduct = Object.assign({}, currentProduct || {}, payload, { dkd_shohin_id: dkd, id: dkd });
+      currentProduct = Object.assign({}, payload, { dkd_shohin_id: dkd, id: dkd });
       if (isGltekAdd) {
         logUserActivity("insert", {
           action: "create_gltek_core_product",
@@ -55157,7 +55159,7 @@ document.getElementById("pf-stamp-pair-add").addEventListener("click", function(
   if (input) input.focus();
 });
 document.getElementById("pf-core-policy-kind").addEventListener("change", function() {
-  populateCoreProductPolicyForm(currentProduct, this.value);
+  populateCoreProductPolicyForm(partFormMode === "add" ? null : currentProduct, this.value);
 });
 document.querySelectorAll("input[name='pf-core-return-required']").forEach(function(input) {
   input.addEventListener("change", function() {
