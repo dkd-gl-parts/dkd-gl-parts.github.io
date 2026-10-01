@@ -1048,17 +1048,20 @@ const loginRequests=[];
 const sealed = { version:1,iv:"AQID",ciphertext:"AQID",wrappedKey:"AQID" };
 windowObject.DcatsHanbaiohLoginApi = { issue:async(record,id)=>{
   loginRequests.push({record,id});
-  return {data:{ok:true,request_id:id,device_id:record.device_id,expires_at:Math.floor(Date.now()/1000)+60,
+  return {data:{ok:true,request_id:id,device_id:record.device_id,expires_at:new Date(Date.now()+60000).toISOString(),
     capability:"v2.synthetic.signature",envelope:sealed},error:null};
 }};
 bridgeResponseFactory = request=>({id:request.id,command:request.command,ok:true,
   data:{status:"ui_login_verified",code:"HANBAIOH_CONTROLLED_UI_LOGIN_VERIFIED"}});
 const ordinaryBefore=capabilityRequests.length;
+const bridgeBefore=bridgeRequests.length;
 dispatch(loginButton.listeners,"click",{target:loginButton});
 dispatch(loginButton.listeners,"click",{target:loginButton});
 await new Promise(resolve=>setImmediate(resolve));
 assert(loginRequests.length===1 && capabilityRequests.length===ordinaryBefore && loginButton.disabled,
   "Login must issue once through its dedicated API");
+assert(bridgeRequests.length===bridgeBefore+1 && bridgeRequests.at(-1).command==="login_hanbaioh25",
+  "ISO expiry from the issuer must reach the native bridge exactly once");
 assert(loginStatus.textContent.includes("送信前後") && loginStatus.classList.contains("is-success"),"Controlled verification missing");
 assert(!JSON.stringify(Array.from(storage.values())).includes("v2.synthetic"),"Login ticket persisted");
 dispatch(documentObject.listeners,"keydown",{key:"Escape"});
@@ -1075,6 +1078,18 @@ dispatch(loginButton.listeners,"click",{target:loginButton});
 await new Promise(resolve=>setImmediate(resolve));
 assert(loginButton.disabled && !loginStatus.classList.contains("is-success") && loginStatus.textContent.includes("再送信せず") &&
   !loginStatus.textContent.includes("DO-NOT-ECHO"),"Display-name-only or raw guidance became success");
+windowObject.currentUser={id:"login-expired-owner"};notifyObservers();api.openSettings();
+const expiredRecord={...loginRecord,actor_id:windowObject.currentUser.id};
+reviewFileInput.files=[{name:"device.enrollment.json",size:JSON.stringify(expiredRecord).length,text:async()=>JSON.stringify(expiredRecord)}];
+dispatch(reviewFileInput.listeners,"change",{target:reviewFileInput});
+await new Promise(resolve=>setImmediate(resolve));
+windowObject.DcatsHanbaiohLoginApi.issue=async(record,id)=>({data:{ok:true,request_id:id,device_id:record.device_id,
+  expires_at:new Date(Date.now()-60000).toISOString(),capability:"v2.expired.signature",envelope:sealed},error:null});
+const bridgeBeforeExpired=bridgeRequests.length;
+dispatch(loginButton.listeners,"click",{target:loginButton});
+await new Promise(resolve=>setImmediate(resolve));
+assert(bridgeRequests.length===bridgeBeforeExpired && loginStatus.textContent.includes("再送信せず"),
+  "Expired ISO ticket must stop before the native bridge");
 activeScreen.id = "screen-login";
 notifyObservers();
 assert(root.hidden, "Concierge must be hidden on the login screen");

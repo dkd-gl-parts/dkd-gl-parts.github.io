@@ -65,11 +65,11 @@ if (!source.includes('selectedImageActionKind("production")') ||
 
 const editLoaderSource = sourceBetween("async function openImageEditDialog", "function closeImageEditDialog");
 [
-  'context === "production" ? "all" : context',
-  "uniqueCoreProductImageRows(r.data || [])",
+  'context === "production" || canViewProductionFeatures() ? "all" : "sales"',
+  "imageEditRows = (r.data || []).filter",
   "imageProductKindOptions().indexOf"
 ].forEach((fragment) => {
-  if (!editLoaderSource.includes(fragment)) throw new Error(`production image editing must match displayed thumbnails: ${fragment}`);
+  if (!editLoaderSource.includes(fragment)) throw new Error(`production image editing must retain each registration row: ${fragment}`);
 });
 
 const editSaveSource = sourceBetween("async function saveImageEditDialog", "async function deleteImageFromDialog");

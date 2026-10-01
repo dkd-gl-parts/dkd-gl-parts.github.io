@@ -10,7 +10,7 @@ const close = source.indexOf('  function closeViewer() {', start);
 const end = source.indexOf('  function closeCapture() {', close);
 assert(start >= 0 && close > start && end > close, 'Viewer flow must remain testable');
 const viewerSource = source.slice(start, end).replace(
-  'await import("./product-3d-viewer.js?v=1.1.1078")',
+  'await import("./product-3d-viewer.js?v=1.1.1080")',
   'await getViewerModule()'
 );
 assert(!viewerSource.includes('await import('), 'Viewer test must replace only its dynamic import');
