@@ -6,6 +6,24 @@ const source = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
 
+const productFormHeader = html.slice(
+  html.indexOf('<div class="product-form-header">'),
+  html.indexOf('<div class="product-form-layout">')
+);
+if (!productFormHeader.includes('id="part-form-error" role="alert"')) {
+  throw new Error("Product form error must be announced directly below the dialog title");
+}
+if ((html.match(/id="part-form-error"/g) || []).length !== 1) {
+  throw new Error("Product form must have exactly one error region");
+}
+for (const fragment of [
+  ".product-form-header {\n  position: sticky;\n  top: 0;",
+  ".product-form-error:not(:empty) {",
+  "overflow-wrap: anywhere;"
+]) {
+  if (!css.includes(fragment)) throw new Error(`Product form error visibility is incomplete: ${fragment}`);
+}
+
 function sourceBetween(startText, endText) {
   const start = source.indexOf(startText);
   const end = source.indexOf(endText, start + startText.length);
