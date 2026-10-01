@@ -1700,10 +1700,13 @@
         return;
       }
       var value = issued && issued.data;
+      var expiresAt = value && typeof value.expires_at === "string" &&
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value.expires_at)
+        ? Date.parse(value.expires_at) : NaN;
       if (!value || value.ok !== true || value.request_id !== id || value.device_id !== record.device_id ||
           typeof value.capability !== "string" || !value.capability.startsWith("v2.") ||
-          !Number.isInteger(value.expires_at) || value.expires_at * 1000 <= Date.now() ||
-          value.expires_at * 1000 > Date.now() + 90000 || !value.envelope) throw new Error("invalid_login_response");
+          !Number.isFinite(expiresAt) || new Date(expiresAt).toISOString() !== value.expires_at ||
+          expiresAt <= Date.now() || expiresAt > Date.now() + 90000 || !value.envelope) throw new Error("invalid_login_response");
       request = { id: id, command: "login_hanbaioh25", deviceId: value.device_id, capability: value.capability, envelope: value.envelope };
       var response = await bridgeResponse(request, 45000);
       if (token !== loginToken || !isSystemAdminSession()) return;
