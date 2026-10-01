@@ -186,7 +186,7 @@
   }
 
   function productTitle(product) {
-    return String(product.manufacturer_part_number || product.genuine_part_number || product.daiko_part_number || ("商品 " + productId(product)));
+    return String(product.manufacturer_part_number || product.genuine_part_number || ("商品 " + productId(product)));
   }
   function closeImageActionOverlays() {
     ["image-actions-overlay", "production-image-actions-overlay"].forEach(function (id) {
@@ -1070,10 +1070,8 @@
   }
   function tripoContextLabel(product, target) {
     var primary = productTitle(product);
-    var daiko = String(product.daiko_part_number || "");
     var genuine = String(product.genuine_part_number || "");
-    return [primary, daiko && daiko !== primary ? daiko : null,
-      genuine && genuine !== primary && genuine !== daiko ? genuine : null,
+    return [primary, genuine && genuine !== primary ? genuine : null,
       "商品ID " + target.productId, kindLabel(target.kind)].filter(Boolean).join(" / ");
   }
   async function openTripo(context) {

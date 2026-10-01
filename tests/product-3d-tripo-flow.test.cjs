@@ -53,7 +53,7 @@ function harness({ balance = 100, confirmed = true, failStart = false } = {}) {
     } } },
     Set, Array, Number, String, Error,
   };
-  const api = vm.runInNewContext(`${source.slice(start, end)}\n({ selectedTripoImages, startTripo, renderTripoJob, keepTripoFocus, closeTripo, tripoContextLabel })`, context);
+  const api = vm.runInNewContext(`${source.slice(start, end)}\n({ selectedTripoImages, startTripo, renderTripoJob, keepTripoFocus, closeTripo, tripoContextLabel, tripoPayload })`, context);
   return { api, context, events, prompts, selections };
 }
 
@@ -68,12 +68,28 @@ test("saved-image transfer is disclosed before any paid submission", async () =>
   assert.match(qa.prompts[0], /見積り 30 クレジット/);
 });
 
-test("the Tripo dialog distinguishes products sharing a genuine part number", () => {
+test("the Tripo dialog uses product identity without the third-party DAIKO number", () => {
   const qa = harness();
   const label = qa.api.tripoContextLabel({ manufacturer_part_number: "104210-1870",
     daiko_part_number: "ALDK30220", genuine_part_number: "27060-30220" },
     { productId: 2639, kind: "aftermarket_new" });
-  assert.equal(label, "104210-1870 / ALDK30220 / 27060-30220 / 商品ID 2639 / 新品");
+  assert.equal(label, "104210-1870 / 27060-30220 / 商品ID 2639 / 新品");
+  qa.context.tripoTarget = { context: "sales", productId: 2639, kind: "aftermarket_new" };
+  assert.deepEqual(JSON.parse(JSON.stringify(qa.api.tripoPayload("quote"))), {
+    action: "quote", product_id: 2639, product_kind: "aftermarket_new", request_key: null,
+  });
+});
+
+test("capture and Viewer titles fall back to product ID, never the DAIKO number", () => {
+  const titleStart = source.indexOf("  function productTitle(");
+  const titleEnd = source.indexOf("  function closeImageActionOverlays(", titleStart);
+  assert.ok(titleStart >= 0 && titleEnd > titleStart);
+  const title = vm.runInNewContext(`${source.slice(titleStart, titleEnd)}\nproductTitle`, {
+    productId: (product) => product.id, String,
+  });
+  assert.equal(title({ id: 2639, manufacturer_part_number: "104210-1870",
+    daiko_part_number: "ALDK30220" }), "104210-1870");
+  assert.equal(title({ id: 2639, daiko_part_number: "ALDK30220" }), "商品 2639");
 });
 
 test("saved images with equal sort order remain in a stable selection order", () => {
