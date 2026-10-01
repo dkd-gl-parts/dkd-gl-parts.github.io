@@ -1074,6 +1074,12 @@
     return [primary, genuine && genuine !== primary ? genuine : null,
       "商品ID " + target.productId, kindLabel(target.kind)].filter(Boolean).join(" / ");
   }
+  function tripoImageLabel(row, index) {
+    var created = typeof row.created_at === "string" ? new Date(row.created_at) : null;
+    var date = created && Number.isFinite(created.getTime())
+      ? created.toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" }) : "";
+    return "画像 " + (index + 1) + (date ? "（" + date + "）" : "");
+  }
   async function openTripo(context) {
     if (!canManage3D()) { deny3D("product_3d_tripo"); return; }
     var target = selectedTarget(context || "sales");
@@ -1094,17 +1100,18 @@
     tripoStatus("確認中…");
     try {
       var rows = await sb.from("core_product_images")
-        .select("id,storage_path,sort_order").eq("dkd_shohin_id", tripoTarget.productId)
+        .select("id,storage_path,sort_order,created_at").eq("dkd_shohin_id", tripoTarget.productId)
         .eq("product_kind", tripoTarget.kind).not("storage_path", "is", null)
-        .order("sort_order", { ascending: true }).order("id", { ascending: true }).limit(80);
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: false }).order("id", { ascending: false }).limit(80);
       if (rows.error) throw rows.error;
       if (!sameTripoTarget(requestId)) return;
       var images = (rows.data || []).filter(function (row) { return row.storage_path; });
       elements["product-3d-tripo-images"].innerHTML = images.length ? images.map(function (row, index) {
-        return "<figure><img data-tripo-image='" + esc(row.id) + "' alt='候補画像 " + (index + 1) + "' loading='lazy'><figcaption>画像 " + (index + 1) + "</figcaption></figure>";
+        return "<figure><img data-tripo-image='" + esc(row.id) + "' alt='候補画像 " + (index + 1) + "' loading='lazy'><figcaption>" + esc(tripoImageLabel(row, index)) + "</figcaption></figure>";
       }).join("") : "この区分に保存済み画像がありません。先に商品画像を登録してください。";
       var options = "<option value=''>選択しない</option>" + images.map(function (row, index) {
-        return "<option value='" + esc(row.id) + "'>画像 " + (index + 1) + "</option>";
+        return "<option value='" + esc(row.id) + "'>" + esc(tripoImageLabel(row, index)) + "</option>";
       }).join("");
       elements["product-3d-tripo-views"].innerHTML = [
         ["front", "正面"], ["left", "左側"], ["back", "背面"], ["right", "右側"]
