@@ -153,7 +153,8 @@ if (componentCountSource.includes("productComponentCount(")) {
 const salesImageSource = sourceBetween("function salesImageKinds", "function fillImageKindSelect");
 [
   'return ["rebuilt", "aftermarket_new"]',
-  'fetchAllCoreProductImagesForContext(dkdId, "sales")',
+  'var imageContext = (isCustomerViewer() || isCustomerPortalSearchMode()) ? "customer" : "sales"',
+  'fetchAllCoreProductImagesForContext(dkdId, imageContext)',
   "salesImageGroupHtml(kind, salesImagesForKind(kind), false)",
   "data-sales-image-kind"
 ].forEach((fragment) => {

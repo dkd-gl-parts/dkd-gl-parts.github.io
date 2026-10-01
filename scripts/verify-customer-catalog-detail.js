@@ -24,8 +24,10 @@ function functionSource(name, nextName) {
 }
 
 const imageSource = functionSource("loadCustomerCatalogImages", "async function loadCustomerCatalogAvailability");
-if (!imageSource.includes('fetchAllCoreProductImagesForContext(parseInt(productDkdId(product), 10), "sales")')) {
-  throw new Error("customer catalog detail must use the same complete sales image set as its result card");
+if (!imageSource.includes('fetchAllCoreProductImagesForContext(parseInt(productDkdId(product), 10), "customer")') ||
+    !imageSource.includes("var groups = { rebuilt: [], aftermarket_new: [] }") ||
+    !imageSource.includes("salesImageKindLabel(kind)")) {
+  throw new Error("customer catalog detail must show only approved images under their original product kind");
 }
 
 const availabilitySource = functionSource("loadCustomerCatalogAvailability", "async function loadCustomerCatalogVehicles");
