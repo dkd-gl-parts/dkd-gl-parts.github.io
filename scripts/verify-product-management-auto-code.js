@@ -21,6 +21,66 @@ if (!managementOpen.includes('openCoreProductForm("add", null, "management")')) 
   throw new Error("product management add must use the auto-numbered core product form");
 }
 
+const salesOpen = sourceBetween("async function openCoreProductAddFromSearch", "async function openCoreProductAddFromProduction");
+if (!salesOpen.includes('openCoreProductForm("add", null, "sales")') || salesOpen.includes("currentProduct")) {
+  throw new Error("sales search product add must open a blank form, not copy the selected product");
+}
+const productionOpen = sourceBetween("async function openCoreProductAddFromProduction", "async function openCoreProductAddFromManagement");
+if (!productionOpen.includes('openCoreProductForm("add", currentProductionRow || null, "production")')) {
+  throw new Error("production product add must retain its explicit base-product behavior");
+}
+
+const fieldsSource = sourceBetween("function setCoreProductFormFields", "async function openCoreProductForm");
+const fields = new Map();
+const fieldSandbox = {
+  partFormMode: "add",
+  document: { getElementById(id) {
+    if (!fields.has(id)) fields.set(id, { value: "old value" });
+    return fields.get(id);
+  } },
+  isDksManagedManufacturer: () => false,
+  productDkdId: product => product.dkd_shohin_id,
+  formValueFromCategoryCode: code => code || "Alternator",
+  initializeCoreProductStampPairForm() {},
+  setGltekProductAddPanel() {}
+};
+require("vm").runInNewContext(fieldsSource, fieldSandbox);
+fieldSandbox.setCoreProductFormFields(null);
+for (const id of [
+  "part-form-id", "pf-gltek-base-product-id", "pf-shohin-cd", "pf-genuine-pn", "pf-genuine-pn2",
+  "pf-mfr-pn", "pf-mfr", "pf-vehicle-mfr", "pf-body-type", "pf-compatible", "pf-model",
+  "pf-shipping-weight", "pf-gltek-base-code", "pf-gltek-category-code"
+]) {
+  if (fields.get(id).value !== "") throw new Error(`Blank product add retained ${id}`);
+}
+if (fields.get("pf-category").value !== "Alternator" || fields.get("pf-part-manufacturer-type").value !== "external") {
+  throw new Error("Blank product add retained category or manufacturer mode from the selected record");
+}
+const formOpen = sourceBetween("async function openCoreProductForm", "async function openCoreProductAddFromSearch");
+if (!formOpen.includes('mode === "add" && coreProductFormContext === "sales" ? "rebuilt" : currentSelectedProductKind')) {
+  throw new Error("Sales product add must not inherit the selected record's product kind");
+}
+const policyKinds = sourceBetween("function coreProductPolicyFormKinds", "function setCoreProductPolicyReturnState");
+if (!policyKinds.includes('return ["rebuilt", "aftermarket_new"]')) {
+  throw new Error("Blank sales product add must allow either product kind");
+}
+const policySandbox = {
+  partFormMode: "add",
+  coreProductFormContext: "sales",
+  normalizeProductKind: value => value || "rebuilt",
+  productKindSortValue: kind => kind === "rebuilt" ? 0 : 1
+};
+require("vm").runInNewContext(policyKinds, policySandbox);
+const salesKinds = policySandbox.coreProductPolicyFormKinds(null, [], "rebuilt");
+if (JSON.stringify(Array.from(salesKinds)) !== JSON.stringify(["rebuilt", "aftermarket_new"])) {
+  throw new Error("Blank sales product add did not offer both product kinds");
+}
+policySandbox.coreProductFormContext = "production";
+const productionKinds = policySandbox.coreProductPolicyFormKinds(null, [], "rebuilt");
+if (JSON.stringify(Array.from(productionKinds)) !== JSON.stringify(["rebuilt"])) {
+  throw new Error("Production product add policy kinds changed unexpectedly");
+}
+
 if (!source.includes('document.getElementById("btn-add-part").addEventListener("click", openCoreProductAddFromManagement)')) {
   throw new Error("product management add button still uses the legacy parts form");
 }
@@ -28,6 +88,9 @@ if (!source.includes('document.getElementById("btn-add-part").addEventListener("
 const coreSave = sourceBetween("async function saveCoreProductForm", "async function deletePart");
 if (!coreSave.includes('sb.from("core_products").insert(payload).select("dkd_shohin_id").single()')) {
   throw new Error("new products must return the database-generated product code");
+}
+if (!coreSave.includes('currentProduct = Object.assign({}, payload, { dkd_shohin_id: dkd, id: dkd })')) {
+  throw new Error("New product state must not inherit fields from the previously selected product");
 }
 if (!coreSave.includes('formContext === "management"') || !coreSave.includes("await loadPartsMgmt()")) {
   throw new Error("product management must remain visible after an auto-numbered save");
