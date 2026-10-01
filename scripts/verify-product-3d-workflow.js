@@ -27,7 +27,7 @@ function requireText(source, fragment, label) {
   "production-image-action-upload-glb",
   "product-3d-viewer-zoom-in",
   "product-3d-viewer-zoom-out",
-  "product-3d.js?v=1.1.1080"
+  "product-3d.js?v=1.1.1081"
 ].forEach((fragment) => requireText(html, fragment, "3D UI contract"));
 
 [
@@ -71,7 +71,7 @@ function requireText(source, fragment, label) {
   "確認待ち",
   "data-publish-model",
   "createSignedUrl(model.published_model_path, 600)",
-  "import(\"./product-3d-viewer.js?v=1.1.1080\")",
+  "import(\"./product-3d-viewer.js?v=1.1.1081\")",
   "if (!canManage3D()) { deny3D(\"open_product_3d_capture\"); return; }",
   "if (!canManage3D()) { deny3D(\"submit_product_3d_model\"); return; }",
   "if (!canPublish3D()) { deny3D(\"publish_product_3d_model\"); return; }",
