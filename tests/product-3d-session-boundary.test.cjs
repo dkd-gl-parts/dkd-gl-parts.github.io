@@ -42,6 +42,7 @@ function harness(query, invoke = async () => ({ data: { ok: true }, error: null 
     freshState: () => ({}),
     closeCapture: () => { events.closed++; },
     closeViewer: () => { events.closed++; },
+    closeTripo: () => {},
     canManage3D: () => true,
     selectedTarget: () => ({ product: { id: 123 }, kind: "rebuilt" }),
     productId: product => product && product.id,

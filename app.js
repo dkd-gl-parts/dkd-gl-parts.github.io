@@ -51491,14 +51491,16 @@ function syncProductMediaActionAccess(context) {
         camera: "production-image-action-camera-ai",
         copy: "production-image-action-copy-sales",
         model: "production-image-action-create-3d",
-        uploadModel: "production-image-action-upload-glb"
+        uploadModel: "production-image-action-upload-glb",
+        tripoModel: "production-image-action-tripo"
       }
     : {
         upload: "btn-image-action-upload",
         edit: "btn-image-action-edit",
         remove: "btn-image-action-delete",
         model: "btn-image-action-create-3d",
-        uploadModel: "btn-image-action-upload-glb"
+        uploadModel: "btn-image-action-upload-glb",
+        tripoModel: "btn-image-action-tripo"
       };
   if (ids.upload) setCspStyle(document.getElementById(ids.upload), "display", imageAllowed ? "" : "none");
   if (ids.edit) setCspStyle(document.getElementById(ids.edit), "display", canManageImages ? "" : "none");
@@ -51507,6 +51509,7 @@ function syncProductMediaActionAccess(context) {
   if (ids.copy) setCspStyle(document.getElementById(ids.copy), "display", canManageImages ? "" : "none");
   if (ids.model) setCspStyle(document.getElementById(ids.model), "display", canManage3D ? "" : "none");
   if (ids.uploadModel) setCspStyle(document.getElementById(ids.uploadModel), "display", canManage3D ? "" : "none");
+  if (ids.tripoModel) setCspStyle(document.getElementById(ids.tripoModel), "display", canManage3D ? "" : "none");
 }
 
 function openImageActionsDialog() {

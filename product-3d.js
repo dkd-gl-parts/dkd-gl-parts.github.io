@@ -37,6 +37,10 @@
   var badgeRefreshTimer = null;
   var glbUploadTarget = null;
   var glbMutationBusy = false;
+  var tripoTarget = null;
+  var tripoJob = null;
+  var tripoBusy = false;
+  var tripoRequestId = 0;
   var mediaAvailabilityRequest = { sales: 0, production: 0, customer: 0 };
   var mediaPaneRequest = { sales: 0, production: 0, customer: 0 };
 
@@ -119,7 +123,10 @@
       "product-3d-viewer-stage", "product-3d-viewer-loading", "product-3d-viewer-reset",
       "product-3d-viewer-zoom-in", "product-3d-viewer-zoom-out",
       "product-3d-viewer-autorotate", "product-3d-viewer-fullscreen",
-      "product-3d-glb-file"
+      "product-3d-glb-file", "product-3d-tripo-overlay", "product-3d-tripo-close",
+      "product-3d-tripo-context", "product-3d-tripo-images", "product-3d-tripo-views",
+      "product-3d-tripo-status", "product-3d-tripo-start", "product-3d-tripo-poll",
+      "product-3d-tripo-preview", "product-3d-tripo-publish", "product-3d-tripo-reject"
     ].forEach(function (id) { elements[id] = el(id); });
   }
 
@@ -960,7 +967,8 @@
     if (!visible.length) {
       var createAction = manageable ? "<button type='button' data-create-3d='" + context + "'>3Dモデルを作成</button>" : "";
       var uploadAction = manageable ? "<button type='button' data-upload-3d='" + context + "'>GLBをアップロード</button>" : "";
-      host.innerHTML = "<div class='product-3d-empty-card'><span class='product-3d-cube'>3D</span><strong>公開済み3Dモデルはありません</strong>" + createAction + uploadAction + "</div>";
+      var tripoAction = manageable ? "<button type='button' data-tripo-3d='" + context + "'>保存済み画像から3D作成</button>" : "";
+      host.innerHTML = "<div class='product-3d-empty-card'><span class='product-3d-cube'>3D</span><strong>公開済み3Dモデルはありません</strong>" + createAction + uploadAction + tripoAction + "</div>";
       return;
     }
     function modelCardHtml(model) {
@@ -998,7 +1006,10 @@
     var uploadAction = manageable
       ? "<button type='button' class='product-3d-card-action' data-upload-3d='" + context + "'>GLBをアップロード</button>"
       : "";
-    host.innerHTML = fallback + visible.map(modelCardHtml).join("") + uploadAction;
+    var tripoAction = manageable
+      ? "<button type='button' class='product-3d-card-action' data-tripo-3d='" + context + "'>保存済み画像から3D作成</button>"
+      : "";
+    host.innerHTML = fallback + visible.map(modelCardHtml).join("") + uploadAction + tripoAction;
   }
   function modelStatusLabel(status) {
     return ({ draft: "撮影途中", waiting: "待機", processing: "処理中", needs_capture: "要追加撮影", failed: "失敗", review: "確認待ち", published: "公開済み", archived: "旧版" })[status] || status;
@@ -1017,6 +1028,197 @@
   function clearModelCaches(dkdId) {
     var key = String(dkdId);
     delete modelCache[key]; delete internalModelCache[key]; delete modelBadgeCache[key];
+  }
+  function sameTripoTarget(requestId) {
+    if (!tripoTarget || !sessionModelsEnabled || requestId !== tripoRequestId) return false;
+    var current = selectedTarget(tripoTarget.context);
+    return productId(current.product) === tripoTarget.productId && current.kind === tripoTarget.kind && canManage3D();
+  }
+  function tripoStatus(text) { elements["product-3d-tripo-status"].textContent = text; }
+  function renderTripoJob() {
+    var status = tripoJob && tripoJob.status || "none";
+    var names = { none: "未作成", reserved: "開始確認中", submitted: "生成を依頼済み", processing: "生成中",
+      review: "非公開の確認待ち", publishing: "商品への登録確認中", published: "商品への登録済み",
+      failed: "生成失敗", cancelled: "生成中止", held: "結果確認が必要（再実行しないでください）", rejected: "不採用" };
+    tripoStatus("Tripo作成状態: " + (names[status] || status) +
+      (tripoJob && tripoJob.credits_consumed != null ? " / 使用 " + tripoJob.credits_consumed + " クレジット" : ""));
+    elements["product-3d-tripo-start"].hidden = !["none", "failed", "cancelled", "rejected", "published"].includes(status);
+    elements["product-3d-tripo-poll"].hidden = !["submitted", "processing"].includes(status);
+    elements["product-3d-tripo-preview"].hidden = status !== "review";
+    elements["product-3d-tripo-publish"].hidden = status !== "review" || !canPublish3D();
+    elements["product-3d-tripo-reject"].hidden = status !== "review";
+  }
+  async function tripoInvoke(payload) {
+    var result = await sb.functions.invoke("product-3d-tripo", { body: payload });
+    if (result.error) throw new Error(await edgeErrorMessage(result.error));
+    return result.data || {};
+  }
+  function tripoPayload(action) {
+    return { action: action, product_id: tripoTarget.productId, product_kind: tripoTarget.kind,
+      request_key: tripoJob && tripoJob.request_key };
+  }
+  function selectedTripoImages() {
+    var selected = Array.from(elements["product-3d-tripo-views"].querySelectorAll("select"))
+      .filter(function (node) { return node.value !== ""; })
+      .map(function (node) { return { view: node.dataset.tripoView, id: Number(node.value) }; });
+    if (!selected.length || new Set(selected.map(function (item) { return item.id; })).size !== selected.length ||
+        (selected.length > 1 && !selected.some(function (item) { return item.view === "front"; }))) {
+      throw new Error("1～4枚を重複なく選択してください。複数枚では正面が必須です。");
+    }
+    return selected;
+  }
+  async function openTripo(context) {
+    if (!canManage3D()) { deny3D("product_3d_tripo"); return; }
+    var target = selectedTarget(context || "sales");
+    if (!target.product || !productId(target.product) || !target.kind) {
+      alert("対象商品と区分を選択してください。"); return;
+    }
+    closeImageActionOverlays();
+    var requestId = ++tripoRequestId;
+    tripoTarget = { context: context || "sales", productId: productId(target.product), kind: target.kind };
+    tripoJob = null;
+    elements["product-3d-tripo-overlay"].classList.add("show");
+    elements["product-3d-tripo-overlay"].setAttribute("aria-hidden", "false");
+    elements["product-3d-tripo-context"].textContent = productTitle(target.product) + " / " + kindLabel(target.kind);
+    elements["product-3d-tripo-images"].textContent = "保存済み画像を読み込んでいます…";
+    elements["product-3d-tripo-views"].textContent = "";
+    tripoStatus("確認中…");
+    try {
+      var rows = await sb.from("core_product_images")
+        .select("id,storage_path,sort_order").eq("dkd_shohin_id", tripoTarget.productId)
+        .eq("product_kind", tripoTarget.kind).not("storage_path", "is", null)
+        .order("sort_order", { ascending: true }).limit(80);
+      if (rows.error) throw rows.error;
+      if (!sameTripoTarget(requestId)) return;
+      var images = (rows.data || []).filter(function (row) { return row.storage_path; });
+      elements["product-3d-tripo-images"].innerHTML = images.length ? images.map(function (row, index) {
+        return "<figure><img data-tripo-image='" + esc(row.id) + "' alt='候補画像 " + (index + 1) + "' loading='lazy'><figcaption>画像 " + (index + 1) + "</figcaption></figure>";
+      }).join("") : "この区分に保存済み画像がありません。先に商品画像を登録してください。";
+      var options = "<option value=''>選択しない</option>" + images.map(function (row, index) {
+        return "<option value='" + esc(row.id) + "'>画像 " + (index + 1) + "</option>";
+      }).join("");
+      elements["product-3d-tripo-views"].innerHTML = [
+        ["front", "正面"], ["left", "左側"], ["back", "背面"], ["right", "右側"]
+      ].map(function (entry) {
+        return "<label>" + entry[1] + "<select data-tripo-view='" + entry[0] + "'>" + options + "</select></label>";
+      }).join("");
+      images.forEach(async function (row) {
+        try {
+          var signed = await signProductImageUrl(row.storage_path);
+          if (!sameTripoTarget(requestId)) return;
+          var node = elements["product-3d-tripo-images"].querySelector("[data-tripo-image='" + row.id + "']");
+          if (node) node.src = signed;
+        } catch (_) { /* A missing preview does not authorize generating from an unavailable image. */ }
+      });
+      var latest = await tripoInvoke({ action: "latest", product_id: tripoTarget.productId, product_kind: tripoTarget.kind });
+      if (!sameTripoTarget(requestId)) return;
+      tripoJob = latest.status === "none" ? null : latest;
+      renderTripoJob();
+      if (!images.length) elements["product-3d-tripo-start"].hidden = true;
+    } catch (error) {
+      if (sameTripoTarget(requestId)) tripoStatus("画像または作成履歴を確認できませんでした: " + friendlyError(error));
+    }
+  }
+  function closeTripo() {
+    tripoRequestId += 1;
+    tripoTarget = null; tripoJob = null;
+    elements["product-3d-tripo-overlay"].classList.remove("show");
+    elements["product-3d-tripo-overlay"].setAttribute("aria-hidden", "true");
+  }
+  async function startTripo() {
+    if (tripoBusy || !tripoTarget || !canManage3D()) return;
+    var requestId = tripoRequestId;
+    var images;
+    try { images = selectedTripoImages(); }
+    catch (error) { tripoStatus(friendlyError(error)); return; }
+    tripoBusy = true;
+    try {
+      var quote = await tripoInvoke(Object.assign(tripoPayload("quote"), { images: images }));
+      if (!sameTripoTarget(requestId)) return;
+      if (!quote.can_start) { tripoStatus("Tripo APIの残高が不足しています。"); return; }
+      if (!window.confirm("この画像で3Dモデルを1回作成します。見積り " + quote.estimated_credits +
+          " クレジット、現在残高 " + quote.balance + " クレジット。実際の料金はTripo APIで確定します。開始しますか？")) return;
+      var requestKey = crypto.randomUUID();
+      tripoJob = { request_key: requestKey, status: "reserved" };
+      renderTripoJob();
+      var created = await tripoInvoke(Object.assign(tripoPayload("start"), {
+        images: images, confirm_paid_generation: true,
+        accepted_estimate_credits: quote.estimated_credits
+      }));
+      if (!sameTripoTarget(requestId)) return;
+      tripoJob = created; renderTripoJob();
+    } catch (error) {
+      if (sameTripoTarget(requestId)) tripoStatus("開始結果を確認できません。再実行せず管理者に確認してください: " + friendlyError(error));
+    } finally { tripoBusy = false; }
+  }
+  async function pollTripo() {
+    if (tripoBusy || !tripoTarget || !tripoJob || !tripoJob.request_key) return;
+    var requestId = tripoRequestId;
+    tripoBusy = true;
+    try {
+      var result = await tripoInvoke(tripoPayload("poll"));
+      if (sameTripoTarget(requestId)) { tripoJob = result; renderTripoJob(); }
+    } catch (error) {
+      if (sameTripoTarget(requestId)) tripoStatus("生成結果の確認を保留しました。再作成せず管理者に確認してください: " + friendlyError(error));
+    } finally { tripoBusy = false; }
+  }
+  async function previewTripo() {
+    if (tripoBusy || !tripoTarget || !tripoJob || tripoJob.status !== "review") return;
+    var requestId = tripoRequestId;
+    try {
+      var result = await tripoInvoke(tripoPayload("preview"));
+      if (!sameTripoTarget(requestId)) return;
+      var viewerRequest = ++viewerRequestId;
+      var overlay = elements["product-3d-viewer-overlay"];
+      overlay.classList.add("show"); overlay.setAttribute("aria-hidden", "false");
+      elements["product-3d-viewer-title"].textContent = "Tripo生成結果 / 非公開プレビュー";
+      elements["product-3d-viewer-loading"].textContent = "3Dモデルを読み込んでいます...";
+      elements["product-3d-viewer-loading"].hidden = false;
+      if (viewer) { viewer.dispose(); viewer = null; }
+      var module = await import("./product-3d-viewer.js?v=1.1.1078");
+      if (!sameTripoTarget(requestId) || viewerRequest !== viewerRequestId) return;
+      var created = await module.createProduct3DViewer({
+        host: elements["product-3d-viewer-stage"], url: result.preview_url,
+        fullscreenElement: elements["product-3d-viewer-shell"] || elements["product-3d-viewer-stage"],
+        autoRotate: false
+      });
+      if (!sameTripoTarget(requestId) || viewerRequest !== viewerRequestId) { created.dispose(); return; }
+      viewer = created; elements["product-3d-viewer-loading"].hidden = true;
+    } catch (error) { if (sameTripoTarget(requestId)) tripoStatus("プレビューできませんでした: " + friendlyError(error)); }
+  }
+  async function publishTripo() {
+    if (tripoBusy || !tripoTarget || !tripoJob || tripoJob.status !== "review" || !canPublish3D()) return;
+    var requestId = tripoRequestId;
+    tripoBusy = true;
+    try {
+      var active = await sb.from("product_3d_uploaded_models").select("id")
+        .eq("dkd_shohin_id", tripoTarget.productId).eq("product_kind", tripoTarget.kind)
+        .eq("status", "ready").maybeSingle();
+      if (active.error) throw active.error;
+      if (!sameTripoTarget(requestId)) return;
+      if (!window.confirm("確認済みのTripoモデルを商品へ登録します。現在の外部GLBがあれば差し替えます。よろしいですか？")) return;
+      var result = await tripoInvoke(Object.assign(tripoPayload("publish"), {
+        confirm_publish: true, replaced_id: active.data && active.data.id || null
+      }));
+      if (!sameTripoTarget(requestId)) return;
+      tripoJob = result; renderTripoJob();
+      clearModelCaches(tripoTarget.productId);
+      await renderMediaPane(tripoTarget.context);
+      scheduleBadgeRefresh();
+    } catch (error) {
+      if (sameTripoTarget(requestId)) tripoStatus("登録結果が未確認です。再実行せず管理者に確認してください: " + friendlyError(error));
+    } finally { tripoBusy = false; }
+  }
+  async function rejectTripo() {
+    if (tripoBusy || !tripoTarget || !tripoJob || tripoJob.status !== "review" ||
+        !window.confirm("この生成結果を不採用にしますか？非公開モデルは監査用に保持します。")) return;
+    var requestId = tripoRequestId;
+    tripoBusy = true;
+    try {
+      var result = await tripoInvoke(tripoPayload("reject"));
+      if (sameTripoTarget(requestId)) { tripoJob = result; renderTripoJob(); }
+    } catch (error) { if (sameTripoTarget(requestId)) tripoStatus("不採用を確定できませんでした: " + friendlyError(error)); }
+    finally { tripoBusy = false; }
   }
   function selectGlbForUpload(context, replacedId) {
     if (!sessionModelsEnabled || glbMutationBusy) return;
@@ -1294,6 +1496,14 @@
     el("production-image-action-create-3d").addEventListener("click", function () { openCapture("production"); });
     el("btn-image-action-upload-glb").addEventListener("click", function () { selectGlbForUpload("sales"); });
     el("production-image-action-upload-glb").addEventListener("click", function () { selectGlbForUpload("production"); });
+    el("btn-image-action-tripo").addEventListener("click", function () { openTripo("sales"); });
+    el("production-image-action-tripo").addEventListener("click", function () { openTripo("production"); });
+    elements["product-3d-tripo-close"].addEventListener("click", closeTripo);
+    elements["product-3d-tripo-start"].addEventListener("click", startTripo);
+    elements["product-3d-tripo-poll"].addEventListener("click", pollTripo);
+    elements["product-3d-tripo-preview"].addEventListener("click", previewTripo);
+    elements["product-3d-tripo-publish"].addEventListener("click", publishTripo);
+    elements["product-3d-tripo-reject"].addEventListener("click", rejectTripo);
     elements["product-3d-glb-file"].addEventListener("change", uploadSelectedGlb);
     elements["product-3d-capture-close"].addEventListener("click", closeCapture);
     elements["product-3d-start-camera"].addEventListener("click", startCamera);
@@ -1324,6 +1534,7 @@
         if (mode === "model") renderMediaPane(context);
       }
       var create = event.target.closest("[data-create-3d]"); if (create) openCapture(create.dataset.create3d);
+      var tripo = event.target.closest("[data-tripo-3d]"); if (tripo) openTripo(tripo.dataset.tripo3d);
       var upload = event.target.closest("[data-upload-3d]"); if (upload) selectGlbForUpload(upload.dataset.upload3d);
       var replace = event.target.closest("[data-replace-uploaded]");
       if (replace) selectGlbForUpload(replace.dataset.uploadContext, replace.dataset.replaceUploaded);
@@ -1334,7 +1545,7 @@
     });
     window.addEventListener("resize", function () { if (state.stream) drawGuide(state.guide); });
     document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape") { closeCapture(); closeViewer(); }
+      if (event.key === "Escape") { closeCapture(); closeViewer(); closeTripo(); }
       else keepViewerFocus(event);
     });
   }
@@ -1353,7 +1564,7 @@
       elements["product-3d-glb-file"].disabled = false;
       elements["product-3d-glb-file"].value = "";
     }
-    closeCapture(); closeViewer();
+    closeCapture(); closeViewer(); closeTripo();
     state = freshState();
     document.querySelectorAll(".product-3d-has-badge").forEach(function (badge) { badge.remove(); });
     document.querySelectorAll("[data-product-media-pane='model']").forEach(function (pane) {

@@ -5114,6 +5114,9 @@
       <button class="image-action-btn model" id="btn-image-action-upload-glb" type="button">
         <span class="product-3d-cube" aria-hidden="true">3D</span><span>GLBファイルをアップロード</span>
       </button>
+      <button class="image-action-btn model" id="btn-image-action-tripo" type="button">
+        <span class="product-3d-cube" aria-hidden="true">3D</span><span>保存済み画像から3D作成（Tripo API）</span>
+      </button>
       <button class="image-action-btn danger" id="btn-image-action-delete" type="button">
         &#x1F5D1; <span data-i18n="btn_delete_images">写真を削除</span>
       </button>
@@ -5158,6 +5161,9 @@
       </button>
       <button class="image-action-btn model" id="production-image-action-upload-glb" type="button">
         <span class="product-3d-cube" aria-hidden="true">3D</span><span>GLBファイルをアップロード</span>
+      </button>
+      <button class="image-action-btn model" id="production-image-action-tripo" type="button">
+        <span class="product-3d-cube" aria-hidden="true">3D</span><span>保存済み画像から3D作成（Tripo API）</span>
       </button>
       <button class="image-action-btn" id="production-image-action-copy-sales" type="button">
         &#x1F504; <span data-i18n="production_copy_sales_images">販売画像をコピー</span>
@@ -5236,6 +5242,30 @@
   </div>
 </div>
 <input id="product-3d-glb-file" type="file" accept=".glb,model/gltf-binary,application/octet-stream" hidden>
+
+<div class="form-overlay product-3d-tripo-overlay" id="product-3d-tripo-overlay" aria-hidden="true">
+  <div class="product-3d-tripo-shell" role="dialog" aria-modal="true" aria-labelledby="product-3d-tripo-title">
+    <header class="product-3d-capture-head">
+      <div><span class="product-3d-eyebrow">OPTIONAL 3D API</span><h2 id="product-3d-tripo-title">保存済み画像から3D作成</h2>
+        <div class="product-3d-capture-context" id="product-3d-tripo-context"></div></div>
+      <button class="product-3d-close" id="product-3d-tripo-close" type="button" aria-label="閉じる">&times;</button>
+    </header>
+    <div class="product-3d-tripo-body">
+      <p>この商品に保存済みの画像を1～4枚選び、正面・左側・背面・右側を指定します。複数枚では正面が必須です。画像をアップロードし直す必要はありません。</p>
+      <div class="product-3d-tripo-images" id="product-3d-tripo-images"></div>
+      <div class="product-3d-tripo-views" id="product-3d-tripo-views"></div>
+      <p class="product-3d-tripo-note">Tripo APIは別契約・従量クレジットです。作成物はまず非公開で確認し、承認するまで商品画面には公開しません。寸法・部品名は自動確定しません。</p>
+      <div id="product-3d-tripo-status" role="status" aria-live="polite"></div>
+      <div class="product-3d-tripo-actions">
+        <button class="btn-primary" id="product-3d-tripo-start" type="button">見積り確認・作成開始</button>
+        <button class="btn-sm-edit" id="product-3d-tripo-poll" type="button" hidden>進捗を確認</button>
+        <button class="btn-sm-edit" id="product-3d-tripo-preview" type="button" hidden>非公開プレビュー</button>
+        <button class="btn-primary" id="product-3d-tripo-publish" type="button" hidden>確認して商品へ登録</button>
+        <button class="btn-cancel" id="product-3d-tripo-reject" type="button" hidden>この生成結果を不採用</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="form-overlay" id="image-edit-overlay">
   <div class="form-card">
