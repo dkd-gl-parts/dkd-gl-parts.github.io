@@ -147,11 +147,13 @@ export async function createProduct3DViewer(options) {
     reset: resetView,
     zoomIn() {
       homeView = false;
-      controls.dollyIn(1.25);
+      // This pinned OrbitControls multiplies camera distance by dollyIn's
+      // scale, so a value below one moves the camera closer.
+      controls.dollyIn(0.8);
     },
     zoomOut() {
       homeView = false;
-      controls.dollyOut(1.25);
+      controls.dollyOut(0.8);
     },
     setAutoRotate(value) {
       controls.autoRotate = !!value;
