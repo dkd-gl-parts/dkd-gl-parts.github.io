@@ -160,8 +160,8 @@ export async function createProduct3DViewer(options) {
     },
     async fullscreen() {
       const target = options.fullscreenElement || host;
-      if (document.fullscreenElement) await document.exitFullscreen();
-      else if (target.requestFullscreen) await target.requestFullscreen();
+      if (document.fullscreenElement === target) await document.exitFullscreen();
+      else if (!document.fullscreenElement && target.requestFullscreen) await target.requestFullscreen();
     },
     dispose() {
       if (disposed) return;
