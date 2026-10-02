@@ -1233,6 +1233,7 @@ var TRANSLATIONS = {
     vehicle_info_no_data: "車両情報はまだありません。",
     vehicle_info_load_error: "車両情報を読み込めませんでした。商品を開き直してください。",
     vehicle_info_no_detail: "車メーカーは {maker} と確認できますが、この品番に紐づく車種・型式・エンジンの詳細行はパーツカタログ側に見つかりません。",
+    vehicle_info_partsfan_details: "詳細",
     f_moq: "MOQ",
     f_price_usd: "価格(USD)",
     f_price_jpy: "販売価格(円)",
@@ -3554,6 +3555,7 @@ var TRANSLATIONS = {
     vehicle_info_no_data: "No vehicle info yet.",
     vehicle_info_load_error: "Vehicle info could not be loaded. Reopen the product.",
     vehicle_info_no_detail: "Vehicle maker is confirmed as {maker}, but no detailed vehicle/model/engine rows linked to this part were found in the parts catalog.",
+    vehicle_info_partsfan_details: "Details",
     f_moq: "MOQ",
     f_price_usd: "Price (USD)",
     f_price_jpy: "Price (\u00a5)",
@@ -5886,6 +5888,7 @@ var TRANSLATIONS = {
     vehicle_info_no_data: "尚无车辆信息。",
     vehicle_info_load_error: "无法读取车辆信息。请重新打开商品。",
     vehicle_info_no_detail: "已确认汽车制造商为 {maker}，但在零件目录中没有找到与此品番关联的车型、型号、发动机详细行。",
+    vehicle_info_partsfan_details: "详情",
     f_moq: "最小订量",
     f_price_usd: "价格(USD)",
     f_price_jpy: "日本售价（日元）",
@@ -7092,7 +7095,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1081";
+var APP_VERSION       = "v1.1.1082";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -22849,7 +22852,6 @@ function renderVehicleApplicationsTable(rows) {
   if (!rows || !rows.length) return "<div class='component-empty'>" + esc(t("vehicle_info_no_data")) + "</div>";
   var showPartsfan = !!(window.PartsfanResearch && rows.some(function(row) { return row.source_code === "partsfan"; }));
   var html = "<table class='vehicle-table'><tr><th>" + esc(t("f_vehicle_mfr")) + "</th><th>" + esc(t("f_vehicle_usage")) + "</th><th>" + esc(t("f_machine_model")) + "</th><th>" + esc(t("f_engine")) + "</th><th>" + esc(t("f_period")) + "</th><th>" + esc(t("f_part_number")) + "</th><th>" + esc(t("component_name")) + "</th>";
-  if (showPartsfan) ["grade", "transmission", "chassis", "source"].forEach(function(key) { html += "<th>" + esc(window.PartsfanResearch.label(key)) + "</th>"; });
   html += "</tr>";
   rows.forEach(function(row) {
     html += "<tr>";
@@ -22859,11 +22861,16 @@ function renderVehicleApplicationsTable(rows) {
     html += "<td>" + esc(row.engine || "-") + "</td>";
     html += "<td>" + esc(row.production_period_text || [row.effective_start, row.effective_end].filter(Boolean).join(" - ") || "-") + "</td>";
     html += "<td><div class='component-pn'>" + esc(row.genuine_part_number || "-") + "</div><div class='component-sub'>" + esc(row.manufacturer_part_number || "") + "</div></td>";
-    html += "<td>" + esc(vehicleApplicationPartNameLabel(row.part_name || "-")) + "</td>";
-    if (showPartsfan) {
+    html += "<td>" + esc(vehicleApplicationPartNameLabel(row.part_name || "-"));
+    if (showPartsfan && row.source_code === "partsfan") {
       var detail = row.partsfan_details || {};
-      html += "<td>" + esc(detail.grade || "-") + "</td><td>" + esc(detail.transmission || "-") + "</td><td>" + esc(detail.chassis_range || "-") + "</td><td>" + (row.source_code === "partsfan" ? window.PartsfanResearch.sourceHtml(row) : esc(row.source_name || row.source_code || "-")) + "</td>";
+      html += "<details class='partsfan-vehicle-details'><summary>" + esc(t("vehicle_info_partsfan_details")) + "</summary><div class='partsfan-vehicle-detail-list'>";
+      [["grade", detail.grade], ["transmission", detail.transmission], ["chassis", detail.chassis_range]].forEach(function(item) {
+        html += "<div><span>" + esc(window.PartsfanResearch.label(item[0])) + "</span><span>" + esc(item[1] || "-") + "</span></div>";
+      });
+      html += "<div><span>" + esc(window.PartsfanResearch.label("source")) + "</span><span>" + window.PartsfanResearch.sourceHtml(row) + "</span></div></div></details>";
     }
+    html += "</td>";
     html += "</tr>";
   });
   html += "</table>";
