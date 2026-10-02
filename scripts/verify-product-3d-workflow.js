@@ -27,7 +27,7 @@ function requireText(source, fragment, label) {
   "production-image-action-upload-glb",
   "product-3d-viewer-zoom-in",
   "product-3d-viewer-zoom-out",
-  "product-3d.js?v=1.1.1080"
+  "product-3d.js?v=1.1.1081"
 ].forEach((fragment) => requireText(html, fragment, "3D UI contract"));
 
 [

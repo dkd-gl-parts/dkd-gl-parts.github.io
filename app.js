@@ -1231,6 +1231,7 @@ var TRANSLATIONS = {
     vehicle_other_count: "他{n}件",
     vehicle_info_note_suffix: "の車両情報",
     vehicle_info_no_data: "車両情報はまだありません。",
+    vehicle_info_load_error: "車両情報を読み込めませんでした。商品を開き直してください。",
     vehicle_info_no_detail: "車メーカーは {maker} と確認できますが、この品番に紐づく車種・型式・エンジンの詳細行はパーツカタログ側に見つかりません。",
     f_moq: "MOQ",
     f_price_usd: "価格(USD)",
@@ -3551,6 +3552,7 @@ var TRANSLATIONS = {
     vehicle_other_count: "+{n} more",
     vehicle_info_note_suffix: "vehicle info",
     vehicle_info_no_data: "No vehicle info yet.",
+    vehicle_info_load_error: "Vehicle info could not be loaded. Reopen the product.",
     vehicle_info_no_detail: "Vehicle maker is confirmed as {maker}, but no detailed vehicle/model/engine rows linked to this part were found in the parts catalog.",
     f_moq: "MOQ",
     f_price_usd: "Price (USD)",
@@ -5882,6 +5884,7 @@ var TRANSLATIONS = {
     vehicle_other_count: "另{n}件",
     vehicle_info_note_suffix: "的车辆信息",
     vehicle_info_no_data: "尚无车辆信息。",
+    vehicle_info_load_error: "无法读取车辆信息。请重新打开商品。",
     vehicle_info_no_detail: "已确认汽车制造商为 {maker}，但在零件目录中没有找到与此品番关联的车型、型号、发动机详细行。",
     f_moq: "最小订量",
     f_price_usd: "价格(USD)",
@@ -7089,7 +7092,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1080";
+var APP_VERSION       = "v1.1.1081";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -22888,33 +22891,47 @@ function closeVehicleApplicationsDialog() {
   if (overlay) overlay.classList.remove("show");
 }
 
-async function loadCatalogVehicleSummary(root, product) {
+async function loadCatalogVehicleSummary(root, product, detailSeq) {
   if (!customerCanShowVehicleInfo()) return;
   if (!root || !product) return;
   var valueEl = root.querySelector(".catalog-vehicle-maker-value");
   var buttons = Array.prototype.slice.call(root.querySelectorAll(".catalog-vehicle-button"));
-  var rows = await fetchCatalogVehicleApplications(product);
-  var detailCount = rows.filter(hasVehicleApplicationDetail).length;
-  if (product === currentProduct) {
-    currentVehicleApplicationRows = rows;
-    updateSalesDetailTabCount("vehicles", detailCount || rows.length);
-    var tabContent = document.getElementById("detail-vehicle-tab-content");
-    if (tabContent) {
-      tabContent.innerHTML = renderVehicleApplicationsTable(rows) + (window.PartsfanResearch ? window.PartsfanResearch.buttonHtml() : "");
-      if (window.PartsfanResearch) window.PartsfanResearch.bind(tabContent, product);
+  try {
+    var rows = await fetchCatalogVehicleApplications(product);
+    var detailCount = rows.filter(hasVehicleApplicationDetail).length;
+    var activeSalesDetail = detailSeq == null
+      ? product === currentProduct
+      : detailSeq === detailSecondaryRequestSeq && currentProduct &&
+        productDkdId(product) && productDkdId(product) === productDkdId(currentProduct);
+    if (activeSalesDetail) {
+      currentVehicleApplicationRows = rows;
+      updateSalesDetailTabCount("vehicles", detailCount || rows.length);
+      var tabContent = document.getElementById("detail-vehicle-tab-content");
+      if (tabContent) {
+        tabContent.innerHTML = renderVehicleApplicationsTable(rows) + (window.PartsfanResearch ? window.PartsfanResearch.buttonHtml() : "");
+        if (window.PartsfanResearch) window.PartsfanResearch.bind(tabContent, product);
+      }
     }
-  }
-  if (valueEl) valueEl.textContent = representativeVehicleMaker(rows);
-  if (buttons.length) {
-    var compactProductionButton = !!(root.closest && root.closest("#screen-production-search"));
-    buttons.forEach(function(button) {
-      var fullLabel = detailCount ? (t("vehicle_info_button") + " (" + detailCount + ")") : (rows.length ? t("vehicle_info_button") + " (" + t("vehicle_info_maker_only") + ")" : t("vehicle_info_button"));
-      button.textContent = compactProductionButton ? t("vehicle_info_button") : fullLabel;
-      button.title = fullLabel;
-      button.setAttribute("aria-label", fullLabel);
-      button.disabled = false;
-      button.onclick = function() { openVehicleApplicationsDialog(rows, product); };
-    });
+    if (valueEl) valueEl.textContent = representativeVehicleMaker(rows);
+    if (buttons.length) {
+      var compactProductionButton = !!(root.closest && root.closest("#screen-production-search"));
+      buttons.forEach(function(button) {
+        var fullLabel = detailCount ? (t("vehicle_info_button") + " (" + detailCount + ")") : (rows.length ? t("vehicle_info_button") + " (" + t("vehicle_info_maker_only") + ")" : t("vehicle_info_button"));
+        button.textContent = compactProductionButton ? t("vehicle_info_button") : fullLabel;
+        button.title = fullLabel;
+        button.setAttribute("aria-label", fullLabel);
+        button.disabled = false;
+        button.onclick = function() { openVehicleApplicationsDialog(rows, product); };
+      });
+    }
+  } catch (error) {
+    console.warn("catalog vehicle applications loading failed", error);
+    if (valueEl) valueEl.textContent = "-";
+    if (detailSeq != null && detailSeq === detailSecondaryRequestSeq &&
+        currentProduct && productDkdId(product) && productDkdId(product) === productDkdId(currentProduct)) {
+      var errorTab = document.getElementById("detail-vehicle-tab-content");
+      if (errorTab) errorTab.innerHTML = "<div class='sales-detail-empty'>" + esc(t("vehicle_info_load_error")) + "</div>";
+    }
   }
 }
 
@@ -40516,7 +40533,7 @@ function renderPanelStatic() {
   bindProductKindPanelActions();
   currentVehicleApplicationRows = [];
   var detailLoads = [
-    loadCatalogVehicleSummary(document.getElementById("panel-body"), p),
+    loadCatalogVehicleSummary(document.getElementById("panel-body"), p, detailSeq),
     loadGltekPartNumberValue(document.getElementById("panel-body"), p),
     loadProductSpecsForCurrent(),
     loadProductVariantsForCurrent(detailSeq),

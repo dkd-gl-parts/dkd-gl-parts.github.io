@@ -57,6 +57,52 @@ vm.runInNewContext(isolate("function hasVehicleApplicationDetail", "function ope
   assert(renderContext.renderVehicleApplicationsTable(fetched).includes("グレード"));
   assert(!renderContext.renderVehicleApplicationsTable([rows[1]]).includes("グレード"));
   assert(renderContext.renderVehicleApplicationsTable([]).length > 0);
+  let resolveVehicles;
+  const pendingVehicles = new Promise(resolve => { resolveVehicles = resolve; });
+  const product = {dkd_shohin_id: 18720, genuine_part_number: "31100-PEJ-004"};
+  const vehicleTab = {innerHTML: "読み込み中...", querySelectorAll: () => []};
+  const makerValue = {textContent: ""};
+  const vehicleContext = {
+    window: {PartsfanResearch: {buttonHtml: () => "", bind: () => {}}},
+    console: {warn() {}},
+    currentProduct: product,
+    detailSecondaryRequestSeq: 7,
+    currentVehicleApplicationRows: [],
+    customerCanShowVehicleInfo: () => true,
+    fetchCatalogVehicleApplications: () => pendingVehicles,
+    hasVehicleApplicationDetail: row => !!row.model,
+    productDkdId: value => value && value.dkd_shohin_id,
+    updateSalesDetailTabCount: () => {},
+    renderVehicleApplicationsTable: values => "fitments: " + values.length,
+    representativeVehicleMaker: () => "HONDA",
+    t: key => key,
+    esc: value => String(value),
+    document: {getElementById: id => id === "detail-vehicle-tab-content" ? vehicleTab : null}
+  };
+  vm.runInNewContext(isolate("async function loadCatalogVehicleSummary", "function renderGltekPartNumberRow"), vehicleContext);
+  const panelRoot = {querySelector: () => makerValue, querySelectorAll: () => []};
+  const loading = vehicleContext.loadCatalogVehicleSummary(panelRoot, product, 7);
+  vehicleContext.currentProduct = {...product, shipping_size: "M"};
+  resolveVehicles([{id: 347601, source_code: "partsfan", model: "GF-EK2"}]);
+  await loading;
+  assert.equal(vehicleTab.innerHTML, "fitments: 1", "shipping profile replacement must not strand the vehicle tab on loading");
+  assert.equal(vehicleContext.currentVehicleApplicationRows.length, 1);
+  vehicleTab.innerHTML = "newer product state";
+  vehicleContext.fetchCatalogVehicleApplications = async () => [{id: 347601, model: "GF-EK2"}];
+  await vehicleContext.loadCatalogVehicleSummary(panelRoot, product, 6);
+  assert.equal(vehicleTab.innerHTML, "newer product state", "an older detail request must not replace the current tab");
+  vehicleContext.currentProduct = product;
+  await vehicleContext.loadCatalogVehicleSummary(panelRoot, product, 6);
+  assert.equal(vehicleTab.innerHTML, "newer product state", "an older request for the same product must remain stale");
+  vehicleContext.currentProduct = {...product, shipping_size: "M"};
+  vehicleContext.fetchCatalogVehicleApplications = async () => { throw new Error("network unavailable"); };
+  await vehicleContext.loadCatalogVehicleSummary(panelRoot, product, 7);
+  assert(vehicleTab.innerHTML.includes("vehicle_info_load_error"), "a failed request must replace the loading state");
+  vehicleTab.innerHTML = "読み込み中...";
+  vehicleContext.fetchCatalogVehicleApplications = async () => [{id: 347601, model: "GF-EK2"}];
+  vehicleContext.renderVehicleApplicationsTable = () => { throw new Error("invalid display data"); };
+  await vehicleContext.loadCatalogVehicleSummary(panelRoot, product, 7);
+  assert(vehicleTab.innerHTML.includes("vehicle_info_load_error"), "a rendering failure must replace the loading state");
   for (const file of ["index.html", "scripts/build-static-site.js"]) {
     const value = fs.readFileSync(path.join(root, file), "utf8");
     for (const asset of ["partsfan-research.js", "partsfan-research.css"]) assert(value.includes(asset));
