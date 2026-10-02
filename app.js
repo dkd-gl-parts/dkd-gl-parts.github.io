@@ -1220,7 +1220,8 @@ var TRANSLATIONS = {
     f_engine: "エンジン",
     f_vehicle_usage: "車種/用途",
     f_machine_model: "機種/型式",
-    f_period: "期間",
+    f_period: "年式（生産期間）",
+    vehicle_info_year_unverified: "年式未確認",
     f_chassis_number: "車体番号",
     vehicle_info_chassis_review: "要確認",
     vehicle_info_chassis_vehicle_list: "車種一覧",
@@ -3545,7 +3546,8 @@ var TRANSLATIONS = {
     f_engine: "Engine",
     f_vehicle_usage: "Vehicle / Usage",
     f_machine_model: "Model / Type",
-    f_period: "Period",
+    f_period: "Model year (production period)",
+    vehicle_info_year_unverified: "Year unverified",
     f_chassis_number: "Chassis number",
     vehicle_info_chassis_review: "Review needed",
     vehicle_info_chassis_vehicle_list: "Vehicle list",
@@ -5881,7 +5883,8 @@ var TRANSLATIONS = {
     f_engine: "发动机",
     f_vehicle_usage: "车型/用途",
     f_machine_model: "机型/型号",
-    f_period: "期间",
+    f_period: "年款（生产期间）",
+    vehicle_info_year_unverified: "年款未确认",
     f_chassis_number: "车架号码",
     vehicle_info_chassis_review: "待确认",
     vehicle_info_chassis_vehicle_list: "车型列表",
@@ -7103,7 +7106,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1088";
+var APP_VERSION       = "v1.1.1089";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -22916,8 +22919,9 @@ function vehicleApplicationPeriod(row) {
   if (row.source_code === "partsfan" && isPartsfanChassisPeriod(period)) period = "";
   if (period) return period;
   var start = row.effective_start || "", end = row.effective_end || "";
-  if (row.source_code === "partsfan" && (isPartsfanChassisPeriod(start) || isPartsfanChassisPeriod(end))) return "-";
-  return [start, end].filter(Boolean).join(" - ") || "-";
+  if (row.source_code === "partsfan" && (isPartsfanChassisPeriod(start) || isPartsfanChassisPeriod(end))) return t("vehicle_info_year_unverified");
+  return [start, end].filter(Boolean).join(" - ") ||
+    (row.source_code === "partsfan" ? t("vehicle_info_year_unverified") : "-");
 }
 
 function vehicleApplicationChassis(row) {
