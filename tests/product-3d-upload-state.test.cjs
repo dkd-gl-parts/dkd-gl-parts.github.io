@@ -15,7 +15,7 @@ const deleteSource = source.slice(end, deleteEnd);
 
 function harness(invoke, selectedProductId = 123) {
   const alerts = [];
-  const calls = { invoke: 0, refresh: 0, viewer: 0 };
+  const calls = { invoke: 0, refresh: 0, viewer: 0, viewerArgs: [] };
   const input = {
     files: [new File([new Uint8Array(20)], "fixture.glb", { type: "model/gltf-binary" })],
     disabled: false,
@@ -40,7 +40,7 @@ function harness(invoke, selectedProductId = 123) {
     renderMediaPane: async () => { calls.refresh++; },
     refreshMediaAvailability: async () => {},
     scheduleBadgeRefresh: () => {},
-    openViewerById: async () => { calls.viewer++; },
+    openViewerById: async (...args) => { calls.viewer++; calls.viewerArgs.push(Array.from(args)); },
   };
   const upload = vm.runInNewContext(`${uploadSource}\nuploadSelectedGlb`, context);
   return { upload, state, input, alerts, calls, context };
@@ -63,6 +63,60 @@ test("lost response refreshes read-only state and never claims upload failed", a
   assert.match(qa.alerts[0], /結果を確認できません。再送信せず/);
   assert.doesNotMatch(qa.alerts[0], /登録に失敗しました/);
   assert.equal(qa.input.disabled, false);
+});
+
+test("explicit Edge validation rejection does not claim an uncertain upload", async () => {
+  const qa = harness(async () => ({
+    error: {
+      context: {
+        status: 400,
+        json: async () => ({ error: "Invalid GLB structure" }),
+      },
+    },
+  }));
+  await qa.upload();
+  assert.equal(qa.calls.invoke, 1);
+  assert.equal(qa.calls.viewer, 0);
+  assert.equal(qa.calls.refresh, 0);
+  assert.match(qa.alerts[0], /GLBは登録されませんでした/);
+  assert.match(qa.alerts[0], /Invalid GLB structure/);
+  assert.doesNotMatch(qa.alerts[0], /結果を確認できません/);
+  assert.equal(qa.input.disabled, false);
+});
+
+test("explicit Edge size rejection tells the operator to choose a smaller GLB", async () => {
+  const qa = harness(async () => ({
+    error: {
+      context: {
+        status: 413,
+        json: async () => ({ error: "Request body exceeds the size limit" }),
+      },
+    },
+  }));
+  await qa.upload();
+  assert.equal(qa.calls.invoke, 1);
+  assert.equal(qa.calls.viewer, 0);
+  assert.equal(qa.calls.refresh, 0);
+  assert.match(qa.alerts[0], /GLBは登録されませんでした/);
+  assert.match(qa.alerts[0], /サイズ/);
+});
+
+test("successful upload passes the returned product model to the common Viewer", async () => {
+  const qa = harness(async (name, options) => {
+    assert.equal(name, "product-3d-glb");
+    assert.equal(options.body.get("action"), "upload");
+    assert.equal(options.body.get("product_id"), "123");
+    assert.equal(options.body.get("product_kind"), "rebuilt");
+    assert.equal(options.body.get("file").name, "fixture.glb");
+    return { data: { ok: true, model_id: "new-model" } };
+  });
+  await qa.upload();
+  assert.equal(qa.calls.invoke, 1);
+  assert.equal(qa.calls.refresh, 1);
+  assert.deepEqual(qa.calls.viewerArgs, [["uploaded:new-model", "sales", 123]]);
+  assert.deepEqual(qa.alerts, []);
+  assert.equal(qa.input.disabled, false);
+  assert.equal(qa.input.value, "");
 });
 
 test("successful upload remains successful when preview update fails", async () => {
