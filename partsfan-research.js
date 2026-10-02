@@ -3,21 +3,41 @@
   var makers = ["トヨタ", "レクサス", "三菱", "ホンダ", "ニッサン", "インフィニティ", "スバル", "マツダ", "スズキ", "ダイハツ", "BMW", "メルセデス", "アウディ", "フォルクスワーゲン", "ポルシェ", "ジャガー"];
   var makerCodes = ["toyota", "lexus", "mitsubishi", "honda", "nissan", "infiniti", "subaru", "mazda", "suzuki", "daihatsu", "bmw", "mercedes", "audi", "vw", "porsche", "jaguar"];
   var words = {
-    ja: {button:"適合車両を調べる・更新", title:"PARTS FANで適合車両を調べる・更新", part:"純正品番", maker:"自動車メーカー", choose:"選択してください", download:"調査用CSVをダウンロード", external:"PARTS FANで確認する ↗", close:"閉じる", note:"メーカーを指定してPCの調査ツールで収集します。収集結果ファイルを選び、各行と出典を確認して登録してください。未完了・ブロックされた結果は登録できません。", invalid:"純正品番と自動車メーカーを指定してください。", saved:"CSVをダウンロードしました。PCの調査ツールへ読み込んでください。", grade:"グレード", transmission:"ミッション", chassis:"車体番号", source:"出典", reviewFile:"収集結果（applications.review.json）", reviewed:"表示された適合車両と出典を確認しました", import:"確認した結果を適合車両へ登録", imported:"登録完了", badFile:"完了した同じ品番・メーカーの収集結果を選んでください。", adminOnly:"登録はシステム管理者のみ可能です。", vehicleType:"車種/用途", model:"機種/型式", engine:"エンジン", added:"件追加", updated:"件更新"},
-    en: {button:"Research / update fitment", title:"Research and update fitment on PARTS FAN", part:"Genuine part number", maker:"Vehicle manufacturer", choose:"Select a manufacturer", download:"Download research CSV", external:"View on PARTS FAN ↗", close:"Close", note:"Run the PC collector for the selected manufacturer, then review each result and its source before importing. Incomplete or blocked runs cannot be imported.", invalid:"Enter a genuine part number and select a vehicle manufacturer.", saved:"CSV downloaded. Load it into the PC research tool.", grade:"Grade", transmission:"Transmission", chassis:"Chassis range", source:"Source / collected at", reviewFile:"Collector result (applications.review.json)", reviewed:"I checked the listed vehicles and sources", import:"Import reviewed fitments", imported:"Import completed", badFile:"Select a completed result for this part and manufacturer.", adminOnly:"Only system administrators can import fitments.", vehicleType:"Vehicle", model:"Model", engine:"Engine", added:"added", updated:"updated"},
-    zh: {button:"查询／更新适配车辆", title:"通过PARTS FAN查询及更新适配车辆", part:"原厂零件号", maker:"汽车制造商", choose:"请选择", download:"下载查询CSV", external:"在PARTS FAN确认 ↗", close:"关闭", note:"在电脑工具中采集所选厂商的数据，核对车辆及来源后导入。未完成或受阻的结果不可导入。", invalid:"请输入原厂零件号并选择汽车制造商。", saved:"CSV已下载，请在电脑查询工具中打开。", grade:"配置", transmission:"变速箱", chassis:"车架号码范围", source:"来源／采集时间", reviewFile:"采集结果（applications.review.json）", reviewed:"已核对车辆及来源", import:"导入已核对的适配车辆", imported:"导入完成", badFile:"请选择该零件和厂商的已完成采集结果。", adminOnly:"仅系统管理员可导入。", vehicleType:"车型", model:"型号", engine:"发动机", added:"新增", updated:"更新"}
+    ja: {button:"適合車両を更新", title:"PARTS FANの適合車両を更新", part:"純正品番", maker:"自動車メーカー", choose:"選択してください", start:"データを取得", retry:"もう一度取得", resume:"続きから取得", humanResume:"確認後に再開", humanChecked:"専用Chromeで状態を確認し、閉じました", openProfile:"専用Chromeを開く", close:"閉じる", note:"メーカーを指定してデータを取得します。結果と出典を確認した後に登録できます。", invalid:"純正品番と自動車メーカーを指定してください。", running:"データ取得中です。画面を閉じてもPC側の処理は続きます。", ready:"取得が完了しました。内容を確認してください。", unavailable:"PCのPARTS FAN連携が起動していません。連携を起動してから押し直してください。", disconnected:"PCとの接続が切れました。連携状態を確認して押し直してください。", blocked:"PARTS FANがアクセスを制限しました。自動再試行は行いません。専用Chromeで状態を確認し、閉じてから再開してください。", challenge:"Cloudflareの検証が自動通過しませんでした。専用Chromeで状態を確認し、閉じてから再開してください。", captcha:"CAPTCHAまたはアクセス上限が表示されました。ご本人が専用Chromeで対応し、閉じてから再開してください。", budget:"1回の取得上限に達しました。続きから取得できます。", manual:"この品番のサイト構造を自動確認できませんでした。出典を手動で確認してください。", notFound:"この品番の適合情報は見つかりませんでした。", failed:"データ取得に失敗しました。PC連携と専用Chromeの状態を確認して押し直してください。", profileOpened:"専用Chromeを開きました。確認後に閉じてください。", grade:"グレード", transmission:"ミッション", chassis:"車体番号", source:"出典", reviewed:"表示された適合車両と出典を確認しました", import:"確認した結果を適合車両へ登録", imported:"登録完了", badResult:"取得結果を確認できませんでした。再取得してください。", adminOnly:"登録はシステム管理者のみ可能です。", vehicleType:"車種/用途", model:"機種/型式", engine:"エンジン", added:"件追加", updated:"件更新"},
+    en: {button:"Update fitment", title:"Update PARTS FAN fitment", part:"Genuine part number", maker:"Vehicle manufacturer", choose:"Select a manufacturer", start:"Get data", retry:"Try again", resume:"Continue collection", humanResume:"Resume after checking", humanChecked:"I checked and closed the dedicated Chrome", openProfile:"Open dedicated Chrome", close:"Close", note:"Collect fitments for the selected manufacturer, then review the vehicles and sources before importing.", invalid:"Enter a genuine part number and select a vehicle manufacturer.", running:"Collection is running on this PC. It continues if you close this dialog.", ready:"Collection completed. Review the results.", unavailable:"The local PARTS FAN bridge is not running. Start it and retry.", disconnected:"Connection to the PC was lost. Check the bridge and retry.", blocked:"PARTS FAN limited access. Check the dedicated Chrome, close it, then resume. No automatic retry occurs.", challenge:"Cloudflare verification did not pass automatically. Check the dedicated Chrome, close it, then resume.", captcha:"CAPTCHA or a daily limit appeared. Complete any required action yourself in the dedicated Chrome, close it, then resume.", budget:"The per-run page limit was reached. You can continue.", manual:"This part's site structure could not be verified automatically. Review the source manually.", notFound:"No fitment was found for this part.", failed:"Collection failed. Check the local bridge and dedicated Chrome, then retry.", profileOpened:"Dedicated Chrome opened. Close it after checking.", grade:"Grade", transmission:"Transmission", chassis:"Chassis range", source:"Source / collected at", reviewed:"I checked the listed vehicles and sources", import:"Import reviewed fitments", imported:"Import completed", badResult:"The collection result could not be verified. Collect again.", adminOnly:"Only system administrators can import fitments.", vehicleType:"Vehicle", model:"Model", engine:"Engine", added:"added", updated:"updated"},
+    zh: {button:"更新适配车辆", title:"更新PARTS FAN适配车辆", part:"原厂零件号", maker:"汽车制造商", choose:"请选择", start:"获取数据", retry:"重新获取", resume:"继续获取", humanResume:"确认后继续", humanChecked:"已检查并关闭专用Chrome", openProfile:"打开专用Chrome", close:"关闭", note:"指定制造商获取数据，核对车辆和来源后再导入。", invalid:"请输入原厂零件号并选择汽车制造商。", running:"本机正在获取数据。关闭此窗口后处理仍会继续。", ready:"获取完成，请核对内容。", unavailable:"本机PARTS FAN连接未启动。启动后重试。", disconnected:"与本机连接中断。检查后重试。", blocked:"PARTS FAN限制了访问。请检查专用Chrome，关闭后继续；不会自动重试。", challenge:"Cloudflare验证未自动通过。请检查专用Chrome，关闭后继续。", captcha:"出现CAPTCHA或访问上限。请自行在专用Chrome处理，关闭后继续。", budget:"达到单次访问上限，可以继续。", manual:"无法自动确认该零件的网站结构，请手动核对来源。", notFound:"未找到该零件的适配信息。", failed:"获取失败。检查本机连接及专用Chrome后重试。", profileOpened:"已打开专用Chrome，检查后请关闭。", grade:"配置", transmission:"变速箱", chassis:"车架号码范围", source:"来源／采集时间", reviewed:"已核对车辆及来源", import:"导入已核对的适配车辆", imported:"导入完成", badResult:"无法验证获取结果，请重新获取。", adminOnly:"仅系统管理员可导入。", vehicleType:"车型", model:"型号", engine:"发动机", added:"新增", updated:"更新"}
   };
-  var active = null, previousFocus = null;
+  var active = null, previousFocus = null, pollTimer = null;
+  var bridgeBase = "http://127.0.0.1:37644";
   function label(key) { return (words[root.currentLang] || words.ja)[key] || key; }
   function clean(value) { return typeof value === "string" ? value.trim() : ""; }
   function esc(value) { return String(value == null ? "" : value).replace(/[&<>"']/g, function(c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
-  function permitted() { return typeof root.canManageProductSpecs === "function" && root.canManageProductSpecs(); }
+  function permitted() { return typeof root.canManageProductSpecs === "function" && root.canManageProductSpecs() && typeof root.canImportPartsfanFitments === "function" && root.canImportPartsfanFitments(); }
   function validPart(part) { return /^[A-Za-z0-9][A-Za-z0-9 .\/-]{1,63}$/.test(part); }
-  function inputCsv(part, maker) {
-    part = clean(part); maker = clean(maker);
-    if (!validPart(part) || makers.indexOf(maker) < 0) throw new Error("invalid_research_input");
-    function cell(value) { return '"' + value.replace(/"/g, '""') + '"'; }
-    return "\ufeff品番,メーカー\r\n" + cell(part) + "," + cell(maker) + "\r\n";
+  async function bridgeRequest(path, method, body) {
+    var controller = new AbortController();
+    var timeout = setTimeout(function() { controller.abort(); }, 5000);
+    try {
+      var response = await fetch(bridgeBase + path, {
+        method: method || "GET", mode: "cors", credentials: "omit", cache: "no-store",
+        referrerPolicy: "no-referrer", targetAddressSpace: "loopback", signal: controller.signal,
+        headers: {"Content-Type": "application/json", "X-Dcats-Partsfan-Request": "1"},
+        body: body ? JSON.stringify(body) : undefined
+      });
+      var value = await response.json();
+      if (!response.ok) throw new Error(value && value.error || "bridge_http_error");
+      return value;
+    } finally { clearTimeout(timeout); }
+  }
+  function stopLabel(job) {
+    var reason = job && job.reason || "";
+    if (reason === "cloudflare_verification_pending") return label("challenge");
+    if (/^captcha|^http_block_(403|429|5\d\d)$|human_check_required/.test(reason)) return label("captcha");
+    if (job && job.state === "paused_budget") return label("budget");
+    if (job && job.state === "manual_review") return label("manual") + " (" + reason + ")";
+    if (job && job.state === "not_found") return label("notFound");
+    if (job && (job.state === "blocked" || job.state === "requires_login")) return label("blocked");
+    return label("failed") + (reason ? " (" + reason + ")" : "");
   }
   function normalized(value) { return clean(value).toUpperCase().replace(/[^A-Z0-9]/g, ""); }
   function reviewRows(documentValue, part, maker) {
@@ -81,6 +101,8 @@
     });
   }
   function close() {
+    if (pollTimer) clearTimeout(pollTimer);
+    pollTimer = null;
     if (active) active.remove();
     active = null;
     if (previousFocus && previousFocus.isConnected) previousFocus.focus();
@@ -93,51 +115,107 @@
     var host = document.createElement("div");
     host.className = "form-overlay show partsfan-research-overlay";
     host.innerHTML = "<section class='partsfan-research-dialog' role='dialog' aria-modal='true' aria-labelledby='partsfan-research-title'><header><h2 id='partsfan-research-title'>" + esc(label("title")) + "</h2><button type='button' data-pfr-close aria-label='" + esc(label("close")) + "'>×</button></header>" +
-      "<p>" + esc(label("note")) + "</p><label for='pfr-part'>" + esc(label("part")) + "</label><input id='pfr-part' maxlength='64' autocomplete='off'><label for='pfr-maker'>" + esc(label("maker")) + "</label><select id='pfr-maker'><option value=''>" + esc(label("choose")) + "</option>" + makers.map(function(maker) { return "<option value='" + esc(maker) + "'>" + esc(maker) + "</option>"; }).join("") + "</select><p id='pfr-status' role='status' aria-live='polite'></p><div class='partsfan-research-actions'><button type='button' class='btn-primary' id='pfr-download'>" + esc(label("download")) + "</button><a id='pfr-external' target='_blank' rel='noopener noreferrer' aria-disabled='true'>" + esc(label("external")) + "</a></div>" +
+      "<p>" + esc(label("note")) + "</p><label for='pfr-part'>" + esc(label("part")) + "</label><input id='pfr-part' maxlength='64' autocomplete='off' readonly><label for='pfr-maker'>" + esc(label("maker")) + "</label><select id='pfr-maker'><option value=''>" + esc(label("choose")) + "</option>" + makers.map(function(maker) { return "<option value='" + esc(maker) + "'>" + esc(maker) + "</option>"; }).join("") + "</select>" +
+      "<p id='pfr-status' role='status' aria-live='polite'></p><div class='partsfan-research-actions'><button type='button' class='btn-primary' id='pfr-start'>" + esc(label("start")) + "</button><button type='button' id='pfr-open-profile' hidden>" + esc(label("openProfile")) + "</button></div>" +
+      "<label class='partsfan-review-confirm' id='pfr-human-wrap' hidden><input type='checkbox' id='pfr-human-confirm'>" + esc(label("humanChecked")) + "</label>" +
       (typeof root.canImportPartsfanFitments === "function" && root.canImportPartsfanFitments()
-        ? "<div class='partsfan-review'><label for='pfr-review-file'>" + esc(label("reviewFile")) + "</label><input type='file' id='pfr-review-file' accept='.json,application/json'><div id='pfr-preview'></div><label class='partsfan-review-confirm'><input type='checkbox' id='pfr-confirm'>" + esc(label("reviewed")) + "</label><button type='button' class='btn-primary' id='pfr-import' disabled>" + esc(label("import")) + "</button></div>"
+        ? "<div class='partsfan-review' id='pfr-review' hidden><div id='pfr-preview'></div><label class='partsfan-review-confirm'><input type='checkbox' id='pfr-confirm'>" + esc(label("reviewed")) + "</label><button type='button' class='btn-primary' id='pfr-import' disabled>" + esc(label("import")) + "</button></div>"
         : "<p>" + esc(label("adminOnly")) + "</p>") + "</section>";
     active = host;
     document.body.appendChild(host);
-    var part = host.querySelector("#pfr-part"), maker = host.querySelector("#pfr-maker"), status = host.querySelector("#pfr-status"), external = host.querySelector("#pfr-external");
+    var part = host.querySelector("#pfr-part"), maker = host.querySelector("#pfr-maker"), status = host.querySelector("#pfr-status");
+    var startButton = host.querySelector("#pfr-start"), profileButton = host.querySelector("#pfr-open-profile");
+    var humanWrap = host.querySelector("#pfr-human-wrap"), humanConfirm = host.querySelector("#pfr-human-confirm");
     var initial = clean(product && product.genuine_part_number);
     part.value = validPart(initial) ? initial : "";
     // Vehicle manufacturer is always an explicit choice; never infer it from a parts brand.
-    var reviewFile = host.querySelector("#pfr-review-file"), preview = host.querySelector("#pfr-preview"), confirm = host.querySelector("#pfr-confirm"), importButton = host.querySelector("#pfr-import");
-    var readyRows = null, busy = false;
+    var review = host.querySelector("#pfr-review"), preview = host.querySelector("#pfr-preview");
+    var confirm = host.querySelector("#pfr-confirm"), importButton = host.querySelector("#pfr-import");
+    var readyRows = null, busy = false, jobId = null, generation = 0;
     function resetReview() {
       readyRows = null;
-      if (reviewFile) reviewFile.value = "";
       if (preview) preview.innerHTML = "";
+      if (review) review.hidden = true;
       if (confirm) confirm.checked = false;
       if (importButton) importButton.disabled = true;
     }
     function changed() {
+      generation++;
+      if (pollTimer) clearTimeout(pollTimer);
+      pollTimer = null;
+      jobId = null;
       status.textContent = "";
       resetReview();
-      if (validPart(clean(part.value)) && makers.indexOf(maker.value) >= 0 && permitted()) {
-        external.href = "https://partsfan.com/partinfo/all/" + encodeURIComponent(clean(part.value));
-        external.removeAttribute("aria-disabled");
-      } else {
-        external.removeAttribute("href");
-        external.setAttribute("aria-disabled", "true");
-      }
+      startButton.hidden = false; startButton.disabled = false; startButton.textContent = label("start");
+      profileButton.hidden = true; humanWrap.hidden = true; humanConfirm.checked = false;
     }
     part.addEventListener("input", changed); maker.addEventListener("change", changed); changed();
-    if (reviewFile) reviewFile.addEventListener("change", async function() {
-      var file = reviewFile.files && reviewFile.files[0];
-      readyRows = null;
-      preview.innerHTML = "";
-      confirm.checked = false;
-      importButton.disabled = true;
-      if (!file || file.size > 1000000) { status.textContent = label("badFile"); return; }
+    function renderJob(job, ticket) {
+      if (active !== host || ticket !== generation) return;
+      if (!job || job.jobId !== jobId || job.part !== clean(part.value) || job.maker !== makerCodes[makers.indexOf(maker.value)]) {
+        status.textContent = label("badResult"); startButton.disabled = false; startButton.textContent = label("retry"); return;
+      }
+      resetReview();
+      if (job.state === "running") {
+        status.textContent = label("running");
+        humanWrap.hidden = true; profileButton.hidden = true; humanConfirm.checked = false;
+        startButton.hidden = false; startButton.disabled = true;
+        pollTimer = setTimeout(async function() {
+          try { renderJob(await bridgeRequest("/jobs/" + jobId), ticket); }
+          catch (_) {
+            if (active === host && ticket === generation) {
+              status.textContent = label("disconnected"); startButton.disabled = false; startButton.textContent = label("retry");
+            }
+          }
+        }, 1500);
+        return;
+      }
+      if (job.state === "completed") {
+        try {
+          readyRows = reviewRows(job.review, part.value, maker.value);
+          preview.innerHTML = "<p>" + readyRows.length + " 件</p>" + previewHtml(readyRows);
+          if (review) review.hidden = false;
+          status.textContent = label("ready");
+          startButton.hidden = true; profileButton.hidden = true; humanWrap.hidden = true;
+        } catch (_) { status.textContent = label("badResult"); startButton.disabled = false; startButton.textContent = label("retry"); }
+        return;
+      }
+      status.textContent = stopLabel(job);
+      var human = job.state === "blocked" || job.state === "requires_login";
+      humanWrap.hidden = !human; humanConfirm.checked = false;
+      profileButton.hidden = !(human || job.state === "manual_review");
+      startButton.hidden = false;
+      startButton.disabled = human;
+      startButton.textContent = human ? label("humanResume") : job.state === "paused_budget" ? label("resume") : label("retry");
+    }
+    async function collect() {
+      if (busy || !permitted() || !validPart(initial) || normalized(part.value) !== normalized(initial) || makers.indexOf(maker.value) < 0) {
+        status.textContent = label("invalid"); return;
+      }
+      var checked = !humanWrap.hidden && humanConfirm.checked;
+      if (!humanWrap.hidden && !checked) return;
+      busy = true; startButton.disabled = true; resetReview();
+      var ticket = ++generation;
+      status.textContent = label("running");
       try {
-        if (!validPart(initial) || normalized(part.value) !== normalized(initial)) throw new Error("part_mismatch");
-        readyRows = reviewRows(JSON.parse(await file.text()), part.value, maker.value);
-        preview.innerHTML = "<p>" + readyRows.length + " 件</p>" + previewHtml(readyRows);
-        status.textContent = "";
-      } catch (_) { resetReview(); status.textContent = label("badFile"); }
-    });
+        var job = await bridgeRequest("/jobs", "POST", {part: clean(part.value), maker: makerCodes[makers.indexOf(maker.value)], after_human_check: checked});
+        if (active !== host || ticket !== generation) return;
+        jobId = job.jobId;
+        renderJob(job, ticket);
+      } catch (error) {
+        if (active !== host || ticket !== generation) return;
+        status.textContent = error && error.message === "another_collection_running" ? label("running") : label("unavailable");
+        startButton.disabled = false; startButton.textContent = label("retry");
+      } finally { busy = false; }
+    }
+    startButton.onclick = collect;
+    humanConfirm.onchange = function() { startButton.disabled = !humanConfirm.checked; };
+    profileButton.onclick = async function() {
+      profileButton.disabled = true;
+      try { await bridgeRequest("/profile", "POST"); status.textContent = label("profileOpened"); }
+      catch (_) { status.textContent = label("failed"); }
+      finally { profileButton.disabled = false; }
+    };
     if (confirm) confirm.addEventListener("change", function() { importButton.disabled = busy || !confirm.checked || !readyRows; });
     if (importButton) importButton.onclick = async function() {
       if (busy || !readyRows || !confirm.checked || !permitted() || !root.canImportPartsfanFitments()) return;
@@ -146,21 +224,8 @@
         var summary = await root.importPartsfanApplications(clean(part.value), makerCodes[makers.indexOf(maker.value)], readyRows);
         status.textContent = label("imported") + "：" + summary.inserted + " " + label("added") + "、" + summary.updated + " " + label("updated");
         resetReview();
-      } catch (error) { status.textContent = error && error.message ? error.message : label("badFile"); }
+      } catch (error) { status.textContent = error && error.message ? error.message : label("badResult"); importButton.disabled = false; }
       finally { busy = false; }
-    };
-    external.addEventListener("click", function(event) { if (!permitted() || external.getAttribute("aria-disabled") === "true") event.preventDefault(); });
-    host.querySelector("#pfr-download").onclick = function() {
-      if (!permitted()) { close(); return; }
-      try {
-        var value = inputCsv(part.value, maker.value);
-        var url = URL.createObjectURL(new Blob([value], {type:"text/csv;charset=utf-8"}));
-        var link = document.createElement("a");
-        link.href = url; link.download = "partsfan-" + clean(part.value).replace(/[^A-Za-z0-9-]/g, "_") + ".csv";
-        document.body.appendChild(link); link.click(); link.remove();
-        setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
-        status.textContent = label("saved");
-      } catch (_) { status.textContent = label("invalid"); }
     };
     host.querySelector("[data-pfr-close]").onclick = close;
     host.addEventListener("click", function(event) { if (event.target === host) close(); });
@@ -175,5 +240,5 @@
     part.focus();
     return true;
   }
-  root.PartsfanResearch = {label:label, inputCsv:inputCsv, reviewRows:reviewRows, details:details, sourceHtml:sourceHtml, buttonHtml:buttonHtml, bind:bind, open:open, close:close};
+  root.PartsfanResearch = {label:label, reviewRows:reviewRows, details:details, sourceHtml:sourceHtml, buttonHtml:buttonHtml, bind:bind, open:open, close:close, stopLabel:stopLabel};
 })(typeof window !== "undefined" ? window : globalThis);

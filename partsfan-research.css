@@ -3,6 +3,7 @@
 .partsfan-research-dialog header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .partsfan-research-dialog h2 { font-size: 20px; margin: 0; }
 .partsfan-research-dialog header button { border: 0; background: transparent; font-size: 25px; cursor: pointer; }
+.partsfan-research-dialog [hidden] { display: none !important; }
 .partsfan-research-dialog p { line-height: 1.7; font-size: 13px; }
 .partsfan-research-dialog label { display: block; font-weight: 600; margin: 14px 0 6px; }
 .partsfan-research-dialog input, .partsfan-research-dialog select { display: block; width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--border, #d1d5db); border-radius: 6px; font: inherit; background: var(--bg, #fff); color: inherit; }
