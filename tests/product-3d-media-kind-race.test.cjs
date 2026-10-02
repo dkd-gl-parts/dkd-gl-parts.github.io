@@ -66,13 +66,39 @@ test('customer model availability remains independent of the admin kind', async 
   assert.equal(qa.calls.tabs, 1);
 });
 
+test('clearing a customer product hides the 3D shell when photos are disabled', async () => {
+  const modelTab = { hidden: false, classList: { remove() {} }, setAttribute() {} };
+  const shell = { hidden: false, dataset: { noPhotos: 'true' } };
+  const switcher = {
+    querySelector: selector => selector.includes("='model'") ? modelTab : null,
+    closest: () => shell,
+  };
+  const pane = {
+    hidden: false,
+    parentElement: { querySelector: selector => selector === '.product-media-switch' ? switcher : null },
+  };
+  const host = { textContent: 'previous-product-card' };
+  const scope = {
+    sessionModelsEnabled: true, mediaAvailabilityRequest: { customer: 0 },
+    selectedTarget: () => ({ product: null, kind: '' }),
+    productId: product => product?.dkd_shohin_id || 0,
+    document: { querySelector: () => pane }, el: () => host,
+  };
+  const refresh = vm.runInNewContext(`${availabilitySource}\nrefreshMediaAvailability`, scope);
+  await refresh('customer');
+  assert.equal(shell.hidden, true);
+  assert.equal(modelTab.hidden, true);
+  assert.equal(pane.hidden, true);
+  assert.equal(host.textContent, '');
+});
+
 test('a permission downgrade hides an existing internal model tab and cards', async () => {
   let finish;
   let review = true;
   const modelTab = { hidden: false, classList: { remove() {} }, setAttribute() {} };
   const photosTab = { classList: { add() {} }, setAttribute() {} };
   const photosPane = { hidden: true };
-  const switcher = { querySelector: selector => selector.includes("='model'") ? modelTab : photosTab };
+  const switcher = { querySelector: selector => selector.includes("='model'") ? modelTab : photosTab, closest: () => null };
   const pane = { isConnected: true, hidden: false, parentElement: {
     querySelector: selector => selector === '.product-media-switch' ? switcher : photosPane,
   } };
