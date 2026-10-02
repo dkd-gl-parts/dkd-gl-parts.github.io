@@ -20,6 +20,21 @@ assert.equal(clean.grade, "G");
 assert(!Object.hasOwn(clean, "password"));
 for (const source_url of ["javascript:alert(1)", "https://partsfan.com.evil.test/x", "https://partsfan.com/login/", "https://partsfan.com/nissan/jp/pnodetail/x/?token=SECRET"]) assert.equal(api.details({source_url}).source_url, "");
 assert.equal(api.details({collected_at: "invalid", grade: "x".repeat(301)}).grade, "");
+const reviewRow = {
+  source_code: "partsfan", source_table: "genuine_applications", part_role: "partsfan_genuine_application",
+  is_catalog_evidence: true, catalog_manufacturer: "NISSAN", genuine_part_number: "23300-AX000",
+  normalized_genuine_part_number: "23300AX000", source_record_key: "a".repeat(64),
+  vehicle_manufacturer: "ニッサン", vehicle_type: "キューブ", model: "BZ11", engine: "CR14DE",
+  raw_payload: {source_url: "https://partsfan.com/nissan/jp/pnodetail/ONE/23300AX000", collected_at: "2026-10-02T00:00:00Z", chassis_range: null}
+};
+const review = {format: "dcats.partsfan.review.v1", items: [{part: "23300-AX000", maker: "nissan", status: "completed", records: [reviewRow]}]};
+assert.equal(api.reviewRows(review, "23300-AX000", "ニッサン").length, 1);
+for (const bad of [
+  {items: [{...review.items[0], status: "blocked"}]},
+  {items: [{...review.items[0], maker: "toyota"}]},
+  {items: [{...review.items[0], records: [{...reviewRow, raw_payload: {...reviewRow.raw_payload, source_url: "https://partsfan.com.evil.test/x"}}]}]},
+  {items: [{...review.items[0], records: [{...reviewRow, raw_payload: {...reviewRow.raw_payload, chassis_range_review: "vehicle_list_vs_detail_conflict"}}]}]}
+]) assert.throws(() => api.reviewRows({...review, ...bad}, "23300-AX000", "ニッサン"));
 const html = api.sourceHtml({partsfan_details: {...clean, representative_model_note: "<img onerror=alert(1)>"}});
 assert(html.includes("noopener noreferrer") && !html.includes("<img"));
 assert(!api.sourceHtml({partsfan_details: {source_url: "javascript:alert(1)"}}).includes("href="));
@@ -124,7 +139,8 @@ vm.runInNewContext(isolate("function hasVehicleApplicationDetail", "function ope
     const value = fs.readFileSync(path.join(root, file), "utf8");
     for (const asset of ["partsfan-research.js", "partsfan-research.css"]) assert(value.includes(asset));
   }
-  assert(!/\.insert\(|\.update\(|\.delete\(|\.rpc\(/.test(source), "research dialog must not mutate or import data");
+  assert(!/\.insert\(|\.update\(|\.delete\(|\.rpc\(/.test(source), "research dialog must only use the app's restricted import entry point");
+  assert(app.includes('sb.rpc("import_partsfan_vehicle_applications"'), "app must use the server-validated import RPC");
   assert(!/dpapi|login_id|storageState|service_role/.test(source));
   console.log("PARTS FAN research: explicit maker, CSV, authorization, provenance, supplemental failure and existing table behavior verified.");
 })().catch(error => { console.error(error); process.exitCode = 1; });
