@@ -4,17 +4,20 @@ const path = require('node:path');
 
 const root = path.resolve(__dirname, '..');
 const fixture = path.join(root, 'tests', 'product-3d-viewer-fixture.html');
+const uiFixture = path.join(root, 'tests', 'product-3d-viewer-ui-fixture.html');
 const viewer = path.join(root, 'product-3d-viewer.js');
+const stylesheet = path.join(root, 'styles.css');
 const vendorRoot = path.join(root, 'vendor', 'three');
 const mime = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
   '.wasm': 'application/wasm'
 };
 const server = http.createServer((request, response) => {
   const pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);
   const fullPath = path.resolve(root, '.' + pathname);
-  if (fullPath !== fixture && fullPath !== viewer &&
+  if (fullPath !== fixture && fullPath !== uiFixture && fullPath !== viewer && fullPath !== stylesheet &&
       !fullPath.startsWith(vendorRoot + path.sep)) {
     response.writeHead(403); response.end(); return;
   }

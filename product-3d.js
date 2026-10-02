@@ -125,7 +125,7 @@
       "product-3d-viewer-overlay", "product-3d-viewer-close", "product-3d-viewer-title",
       "product-3d-viewer-stage", "product-3d-viewer-loading", "product-3d-viewer-reset",
       "product-3d-viewer-zoom-in", "product-3d-viewer-zoom-out",
-      "product-3d-viewer-autorotate", "product-3d-viewer-fullscreen",
+      "product-3d-viewer-autorotate", "product-3d-viewer-fullscreen", "product-3d-viewer-fullscreen-notice",
       "product-3d-glb-file", "product-3d-tripo-overlay", "product-3d-tripo-close",
       "product-3d-tripo-context", "product-3d-tripo-images", "product-3d-tripo-views",
       "product-3d-tripo-image-preview", "product-3d-tripo-image-preview-img",
@@ -1523,6 +1523,7 @@
     elements["product-3d-viewer-title"].textContent = productTitle(target.product) + " / " + kindLabel(model.product_kind);
     elements["product-3d-viewer-loading"].textContent = "3Dモデルを読み込んでいます...";
     elements["product-3d-viewer-loading"].hidden = false;
+    elements["product-3d-viewer-fullscreen-notice"].hidden = true;
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
       var module = await import("./product-3d-viewer.js?v=1.1.1078");
@@ -1568,6 +1569,16 @@
       first.focus();
     }
   }
+  async function toggleViewerFullscreen() {
+    if (!viewer) return;
+    try {
+      await viewer.fullscreen();
+      elements["product-3d-viewer-fullscreen-notice"].hidden = true;
+    } catch (error) {
+      elements["product-3d-viewer-fullscreen-notice"].hidden = false;
+      console.warn("Product 3D fullscreen unavailable", error);
+    }
+  }
   function closeViewer() {
     viewerRequestId += 1;
     if (viewer) { viewer.dispose(); viewer = null; }
@@ -1580,6 +1591,7 @@
     viewerOverlay.classList.remove("show");
     viewerOverlay.setAttribute("aria-hidden", "true");
     elements["product-3d-viewer-loading"].hidden = true;
+    elements["product-3d-viewer-fullscreen-notice"].hidden = true;
     var returnFocus = viewerReturnFocus;
     var focusTarget = viewerFocusTarget;
     viewerReturnFocus = null;
@@ -1634,7 +1646,7 @@
     elements["product-3d-viewer-autorotate"].addEventListener("click", function () {
       if (!viewer) return; var active = this.getAttribute("aria-pressed") !== "true"; viewer.setAutoRotate(active); this.setAttribute("aria-pressed", active ? "true" : "false");
     });
-    elements["product-3d-viewer-fullscreen"].addEventListener("click", function () { if (viewer) viewer.fullscreen(); });
+    elements["product-3d-viewer-fullscreen"].addEventListener("click", toggleViewerFullscreen);
     document.addEventListener("click", function (event) {
       var media = event.target.closest("[data-product-media]");
       if (media) {
