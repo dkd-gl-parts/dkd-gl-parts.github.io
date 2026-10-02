@@ -178,7 +178,15 @@
   }
 
   function productTitle(product) {
-    return String(product.manufacturer_part_number || product.genuine_part_number || product.daiko_part_number || ("商品 " + productId(product)));
+    var id = productId(product);
+    var label = typeof t === "function" ? t("f_product_id") : "商品ID";
+    var title = Number.isSafeInteger(id) && id > 0 ? label + " " + id : "商品";
+    var details = [];
+    var manufacturer = String(product && product.manufacturer_part_number || "").trim();
+    var genuine = String(product && product.genuine_part_number || "").trim();
+    if (manufacturer) details.push((typeof t === "function" ? t("f_mfr_pn") : "メーカー品番") + " " + manufacturer);
+    if (genuine) details.push((typeof t === "function" ? t("f_genuine_pn") : "純正品番") + " " + genuine);
+    return title + (details.length ? " / " + details.join(" / ") : "");
   }
   function closeImageActionOverlays() {
     ["image-actions-overlay", "production-image-actions-overlay"].forEach(function (id) {
