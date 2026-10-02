@@ -122,6 +122,34 @@ test('review permission lost during signed URL request cannot open an internal m
   assert.equal(qa.calls.opens, 0);
 });
 
+test('signed URL transport rejection leaves the product page usable', async () => {
+  const qa = harness({ onSign: () => { throw new Error('network unavailable'); } });
+  await qa.api.openViewerById('uploaded:18', 'sales', 42);
+  assert.equal(qa.calls.signs, 1);
+  assert.equal(qa.calls.opens, 0);
+  assert.equal(qa.calls.alerts.length, 1);
+  assert.match(qa.calls.alerts[0], /network unavailable/);
+  assert.equal(qa.elements['product-3d-viewer-overlay'].classList.contains('show'), false);
+});
+
+test('empty successful signed URL response fails closed', async () => {
+  const qa = harness({ onSign: () => ({ data: {}, error: null }) });
+  await qa.api.openViewerById('uploaded:18', 'sales', 42);
+  assert.equal(qa.calls.signs, 1);
+  assert.equal(qa.calls.opens, 0);
+  assert.match(qa.calls.alerts[0], /署名URLを取得できませんでした/);
+});
+
+test('signed URL failure after a product switch does not show a stale error', async () => {
+  const qa = harness({ onSign: state => {
+    state.productId = 43;
+    throw new Error('stale network failure');
+  } });
+  await qa.api.openViewerById('uploaded:18', 'sales', 42);
+  assert.equal(qa.calls.opens, 0);
+  assert.deepEqual(qa.calls.alerts, []);
+});
+
 test('product switch while the Viewer initializes disposes the stale result', async () => {
   const qa = harness({ onCreate: state => { state.productId = 43; } });
   await qa.api.openViewerById('uploaded:18', 'sales', 42);

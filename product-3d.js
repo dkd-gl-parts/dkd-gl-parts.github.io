@@ -1219,9 +1219,18 @@
     if (!targetStillSelected()) return;
     var model = models.find(function (row) { return String(row.id) === String(modelId); });
     if (!model || (activeContext !== "customer" && model.product_kind !== targetKind)) return;
-    var signed = await sb.storage.from(BUCKET).createSignedUrl(model.published_model_path, 600);
+    var signed;
+    try {
+      signed = await sb.storage.from(BUCKET).createSignedUrl(model.published_model_path, 600);
+    } catch (error) {
+      if (targetStillSelected()) alert("3Dモデルを開けませんでした: " + friendlyError(error));
+      return;
+    }
     if (!targetStillSelected()) return;
-    if (signed.error) { alert("3Dモデルを開けませんでした: " + friendlyError(signed.error)); return; }
+    if (!signed || signed.error || !signed.data || typeof signed.data.signedUrl !== "string" || !signed.data.signedUrl) {
+      alert("3Dモデルを開けませんでした: " + friendlyError(signed && signed.error || "署名URLを取得できませんでした"));
+      return;
+    }
     var viewerOverlay = elements["product-3d-viewer-overlay"];
     if (!viewerOverlay.classList.contains("show")) {
       var previousFocus = document.activeElement;
