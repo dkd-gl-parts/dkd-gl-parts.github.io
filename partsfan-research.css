@@ -3,12 +3,20 @@
 .partsfan-research-dialog header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .partsfan-research-dialog h2 { font-size: 20px; margin: 0; }
 .partsfan-research-dialog header button { border: 0; background: transparent; font-size: 25px; cursor: pointer; }
+.partsfan-research-dialog [hidden] { display: none !important; }
 .partsfan-research-dialog p { line-height: 1.7; font-size: 13px; }
 .partsfan-research-dialog label { display: block; font-weight: 600; margin: 14px 0 6px; }
 .partsfan-research-dialog input, .partsfan-research-dialog select { display: block; width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--border, #d1d5db); border-radius: 6px; font: inherit; background: var(--bg, #fff); color: inherit; }
 .partsfan-research-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 12px 0; }
 .partsfan-research-actions a { font-size: 13px; }
 .partsfan-research-actions a[aria-disabled="true"] { color: #64748b; cursor: default; }
+.partsfan-review { margin-top: 16px; border-top: 1px solid var(--border, #d1d5db); padding-top: 8px; }
+.partsfan-review-scroll { max-width: 100%; max-height: 300px; overflow: auto; }
+.partsfan-review-scroll table { border-collapse: collapse; min-width: 760px; width: 100%; font-size: 12px; }
+.partsfan-review-scroll th, .partsfan-review-scroll td { border-bottom: 1px solid var(--border, #d1d5db); padding: 7px; text-align: left; }
+.partsfan-research-dialog .partsfan-review-confirm { display: flex; align-items: center; gap: 8px; }
+.partsfan-research-dialog .partsfan-review-confirm input { width: auto; }
+.partsfan-review button:disabled { opacity: .55; cursor: not-allowed; }
 .partsfan-vehicle-table-wrap { max-width: 100%; overflow-x: auto; }
 .partsfan-vehicle-table-wrap .vehicle-table { min-width: 860px; }
 .partsfan-vehicle-details { margin-top: 4px; font-size: 11px; font-weight: 400; }

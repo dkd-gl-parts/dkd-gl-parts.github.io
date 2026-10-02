@@ -1238,7 +1238,7 @@
     elements["product-3d-viewer-fullscreen-notice"].hidden = true;
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await import("./product-3d-viewer.js?v=1.1.1084");
+      var module = await import("./product-3d-viewer.js?v=1.1.1086");
       if (!targetStillSelected()) {
         if (requestId === viewerRequestId) closeViewer();
         return;
