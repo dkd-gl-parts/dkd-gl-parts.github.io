@@ -1708,7 +1708,7 @@
           !Number.isFinite(expiresAt) || new Date(expiresAt).toISOString() !== value.expires_at ||
           expiresAt <= Date.now() || expiresAt > Date.now() + 90000 || !value.envelope) throw new Error("invalid_login_response");
       request = { id: id, command: "login_hanbaioh25", deviceId: value.device_id, capability: value.capability, envelope: value.envelope };
-      var response = await bridgeResponse(request, 45000);
+      var response = await bridgeResponse(request, 100000);
       if (token !== loginToken || !isSystemAdminSession()) return;
       if (!response || response.ok !== true || response.command !== "login_hanbaioh25") throw new Error("login_unverified");
       var data = response.data;
