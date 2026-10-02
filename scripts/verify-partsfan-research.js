@@ -38,6 +38,13 @@ const reviewRow = {
 };
 const review = {format: "dcats.partsfan.review.v1", items: [{part: "23300-AX000", maker: "nissan", status: "completed", records: [reviewRow]}]};
 assert.equal(api.reviewRows(review, "23300-AX000", "ニッサン").length, 1);
+const largeReview = {format: review.format, items: [{...review.items[0], records: Array.from({length: 289}, (_, index) => ({
+  ...reviewRow, source_record_key: index.toString(16).padStart(64, "0")
+}))}]};
+assert.equal(api.reviewRows(largeReview, "23300-AX000", "ニッサン").length, 289);
+assert.throws(() => api.reviewRows({...largeReview, items: [{...largeReview.items[0], records: Array.from({length: 501}, (_, index) => ({
+  ...reviewRow, source_record_key: index.toString(16).padStart(64, "0")
+}))}]}, "23300-AX000", "ニッサン"));
 for (const bad of [
   {items: [{...review.items[0], status: "blocked"}]},
   {items: [{...review.items[0], maker: "toyota"}]},
