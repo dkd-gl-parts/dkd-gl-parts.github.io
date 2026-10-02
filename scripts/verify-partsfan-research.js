@@ -25,6 +25,8 @@ assert(api.importErrorLabel({message: "network error"}).includes("押し直し�
 assert(!source.includes("pfr-download") && !source.includes("pfr-review-file"), "the update screen must not require CSV or JSON upload");
 assert(source.includes('bridgeBase = "http://127.0.0.1:37644"'));
 assert(source.includes('bridgeRequest("/current")'), "reopening the update dialog must attach the completed local result without revisiting PARTS FAN");
+assert(source.includes('bridgeRequest("/access")'), "the update dialog must check the site-wide stop before starting another part");
+assert(source.includes('showAccessBlock(access, false)'), "a blocked site must disable a fresh collection before any browser request");
 const clean = api.details({grade: "G", transmission: "AT", chassis_range: "0001 - 9999", source_url: "https://partsfan.com/nissan/jp/pnodetail/TEST/23300AX000/", collected_at: "2026-09-29T01:00:00Z", password: "SHOULD_NOT_APPEAR"});
 assert.equal(clean.grade, "G");
 assert(!Object.hasOwn(clean, "password") && !Object.hasOwn(clean, "source_url"));
