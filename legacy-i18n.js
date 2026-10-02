@@ -3543,7 +3543,8 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "GLBは表示から外れましたが、ファイル削除の結果は確認できません。再実行せず管理者に確認してください。": "The GLB is no longer displayed, but file deletion could not be confirmed. Do not retry; contact an administrator.",
     "画面も更新できませんでした。商品を選び直して確認してください。": "The screen could not be refreshed either. Select the product again to confirm.",
     "GLBは登録されませんでした。送信サイズが上限を超えています。小さいファイルを選び直してください。": "The GLB was not registered because the upload exceeds the size limit. Select a smaller file.",
-    "GLBは登録されませんでした。ファイルの形式・内容を確認してください:": "The GLB was not registered. Check the file format and contents:"
+    "GLBは登録されませんでした。ファイルの形式・内容を確認してください:": "The GLB was not registered. Check the file format and contents:",
+    "D-CATS連携テスト（実データ禁止）": "D-CATS連携テスト（実データ禁止）"
   },
   "zh": {
     "帳票出力 / レポート": "报表 / 报表中心",
@@ -7087,6 +7088,7 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "GLBは表示から外れましたが、ファイル削除の結果は確認できません。再実行せず管理者に確認してください。": "GLB已从展示中移除，但无法确认文件删除结果。请勿重试，请联系管理员。",
     "画面も更新できませんでした。商品を選び直して確認してください。": "页面也无法刷新。请重新选择商品并确认。",
     "GLBは登録されませんでした。送信サイズが上限を超えています。小さいファイルを選び直してください。": "GLB未登记，因为上传内容超过大小上限。请选择更小的文件。",
-    "GLBは登録されませんでした。ファイルの形式・内容を確認してください:": "GLB未登记。请检查文件格式和内容："
+    "GLBは登録されませんでした。ファイルの形式・内容を確認してください:": "GLB未登记。请检查文件格式和内容：",
+    "D-CATS連携テスト（実データ禁止）": "D-CATS連携テスト（実データ禁止）"
   }
 };

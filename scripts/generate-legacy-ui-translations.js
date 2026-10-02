@@ -47,6 +47,8 @@ const curatedTranslations = {
     "GLBは表示から外れましたが、ファイル削除の結果は確認できません。再実行せず管理者に確認してください。": "The GLB is no longer displayed, but file deletion could not be confirmed. Do not retry; contact an administrator.",
     "画面も更新できませんでした。商品を選び直して確認してください。": "The screen could not be refreshed either. Select the product again to confirm.",
     "登録済みの外部GLBを削除しますか？": "Delete the registered uploaded GLB?",
+    // This is an exact vendor company identifier, so keep its spelling in every locale.
+    "D-CATS連携テスト（実データ禁止）": "D-CATS連携テスト（実データ禁止）",
     "照合に使う品番": "Part number used for matching",
     "修正理由（品番を変える場合は必須）": "Correction reason (required when changing the part number)",
     "既存商品を探す": "Find an existing product",
@@ -544,6 +546,7 @@ const curatedTranslations = {
     "GLBは表示から外れましたが、ファイル削除の結果は確認できません。再実行せず管理者に確認してください。": "GLB已从展示中移除，但无法确认文件删除结果。请勿重试，请联系管理员。",
     "画面も更新できませんでした。商品を選び直して確認してください。": "页面也无法刷新。请重新选择商品并确认。",
     "登録済みの外部GLBを削除しますか？": "要删除已登记的外部GLB吗？",
+    "D-CATS連携テスト（実データ禁止）": "D-CATS連携テスト（実データ禁止）",
     "照合に使う品番": "用于匹配的品号",
     "修正理由（品番を変える場合は必須）": "修改原因（更改品号时必填）",
     "既存商品を探す": "查找现有商品",
