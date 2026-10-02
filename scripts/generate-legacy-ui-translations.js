@@ -22,6 +22,8 @@ const runtimeScriptPaths = [
 ];
 const curatedTranslations = {
   en: {
+    // This is an exact vendor company identifier, so keep its spelling in every locale.
+    "D-CATS連携テスト（実データ禁止）": "D-CATS連携テスト（実データ禁止）",
     "照合に使う品番": "Part number used for matching",
     "修正理由（品番を変える場合は必須）": "Correction reason (required when changing the part number)",
     "既存商品を探す": "Find an existing product",
@@ -494,6 +496,7 @@ const curatedTranslations = {
     "本書、対象製品、製造シリアル、車両・取付情報をご提示ください。": "Present this document, the covered product, the manufacturing serial number, and the vehicle and installation information."
   },
   zh: {
+    "D-CATS連携テスト（実データ禁止）": "D-CATS連携テスト（実データ禁止）",
     "照合に使う品番": "用于匹配的品号",
     "修正理由（品番を変える場合は必須）": "修改原因（更改品号时必填）",
     "既存商品を探す": "查找现有商品",
