@@ -7103,7 +7103,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1083";
+var APP_VERSION       = "v1.1.1084";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -8611,6 +8611,9 @@ function canViewProductInfo() {
 }
 function canManageProductSpecs() {
   return !!(userProfile && !isCustomerPortalSearchMode() && userPermissionAllowed(userProfile, "product.manage", isSystemAdmin() || (userProfile.role === "admin" && userProfile.group_name === "daiko")));
+}
+function canImportPartsfanFitments() {
+  return canManageProductSpecs() && isSystemAdmin();
 }
 function canManageSalesPricing() {
   return canEditSalesPricing();
@@ -22417,6 +22420,21 @@ async function fetchCatalogVehicleApplications(product) {
     rows.forEach(function(row) { if (byId[String(row.id)]) row.partsfan_details = byId[String(row.id)]; });
   }
   return rows;
+}
+
+async function importPartsfanApplications(part, maker, rows) {
+  if (!canImportPartsfanFitments()) throw new Error("system_admin_required");
+  var result = await sb.rpc("import_partsfan_vehicle_applications", {
+    target_part: part,
+    target_maker: maker,
+    applications: rows
+  });
+  if (result.error) throw result.error;
+  if (currentProduct && String(currentProduct.genuine_part_number || "").toUpperCase().replace(/[^A-Z0-9]/g, "") ===
+      String(part || "").toUpperCase().replace(/[^A-Z0-9]/g, "")) {
+    await loadCatalogVehicleSummary(document.getElementById("panel-body"), currentProduct, detailSecondaryRequestSeq);
+  }
+  return result.data;
 }
 
 function vehicleMakerLabel(value) {
