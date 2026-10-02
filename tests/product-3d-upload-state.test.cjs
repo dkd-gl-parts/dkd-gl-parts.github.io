@@ -255,3 +255,107 @@ test("delete cannot run while a GLB upload is in flight", async () => {
   await pending;
   assert.equal(qa.context.glbMutationBusy, false);
 });
+
+test("mock GLB upload response reaches the admin card and customer common Viewer", async () => {
+  const modelId = "11111111-1111-4111-8111-111111111111";
+  const modelPath = `uploaded/dkd_42/rebuilt/${modelId}.glb`;
+  const calls = { uploads: 0, signed: [], viewers: [], alerts: [] };
+  const state = { salesId: 42, customerId: 42, row: null };
+  const input = {
+    files: [new File([new Uint8Array(20)], "fixture.glb", { type: "model/gltf-binary" })],
+    disabled: false, value: "selected",
+  };
+  const hosts = {
+    "sales-product-3d-list": { innerHTML: "", isConnected: true },
+    "customer-product-3d-list": { innerHTML: "", isConnected: true },
+  };
+  const shown = new Set();
+  const overlay = {
+    classList: { add: name => shown.add(name), contains: name => shown.has(name) },
+    setAttribute() {},
+  };
+  const elements = {
+    "product-3d-glb-file": input,
+    "product-3d-viewer-overlay": overlay,
+    "product-3d-viewer-close": { focus() {} },
+    "product-3d-viewer-title": { textContent: "" },
+    "product-3d-viewer-loading": { textContent: "", hidden: true },
+    "product-3d-viewer-fullscreen-notice": { hidden: true },
+    "product-3d-viewer-stage": {},
+    "product-3d-viewer-shell": {},
+  };
+  const context = {
+    File, FormData, console, elements, document: { body: {}, activeElement: null },
+    BUCKET: "product-3d", modelCacheEpoch: 0, sessionModelsEnabled: true,
+    mediaPaneRequest: { sales: 0, customer: 0 }, viewerRequestId: 0,
+    viewerReturnFocus: null, viewerFocusTarget: null, viewer: null,
+    glbUploadTarget: { context: "sales", productId: 42, kind: "rebuilt", replacedId: "" },
+    glbMutationBusy: false,
+    selectedTarget: channel => ({ product: { dkd_shohin_id: channel === "customer" ? state.customerId : state.salesId }, kind: "rebuilt" }),
+    productId: product => product?.dkd_shohin_id || 0,
+    canManage3D: () => true, canReview3D: () => true, canPublish3D: () => false,
+    el: id => hosts[id],
+    esc: value => String(value ?? ""),
+    kindLabel: () => "リビルト", productTitle: () => "商品42",
+    modelStatusLabel: status => status,
+    friendlyError: error => String(error?.message || error),
+    edgeErrorMessage: async error => String(error?.message || error),
+    clearModelCaches() {}, refreshMediaAvailability: async () => {}, scheduleBadgeRefresh() {},
+    alert: message => calls.alerts.push(message),
+    sb: {
+      functions: { invoke: async (name, options) => {
+        calls.uploads++;
+        assert.equal(name, "product-3d-glb");
+        assert.equal(options.body.get("product_id"), "42");
+        assert.equal(options.body.get("product_kind"), "rebuilt");
+        state.row = { id: modelId, dkd_shohin_id: 42, product_kind: "rebuilt", status: "ready",
+          storage_path: modelPath, model_bytes: 20, created_at: "2026-10-02T00:00:00Z" };
+        return { data: { ok: true, model_id: modelId } };
+      } },
+      storage: { from: bucket => {
+        assert.equal(bucket, "product-3d");
+        return { createSignedUrl: async path => {
+          calls.signed.push(path);
+          return { data: { signedUrl: "https://example.test/signed-model.glb" }, error: null };
+        } };
+      } },
+    },
+    getViewerModule: async () => ({ createProduct3DViewer: async options => {
+      calls.viewers.push(options);
+      return { dispose() {} };
+    } }),
+  };
+  const normalizeStart = source.indexOf("  function normalizeUploadedModel(");
+  const normalizeEnd = source.indexOf("  async function fetchInternalModels(", normalizeStart);
+  const renderStart = source.indexOf("  async function renderMediaPane(");
+  const renderEnd = source.indexOf("  function modelStatusLabel(", renderStart);
+  const viewerStart = source.indexOf("  async function openViewerById(");
+  const viewerEnd = source.indexOf("  function keepViewerFocus(", viewerStart);
+  assert(normalizeStart >= 0 && normalizeEnd > normalizeStart && renderStart >= 0 &&
+    renderEnd > renderStart && viewerStart >= 0 && viewerEnd > viewerStart);
+  const viewerSource = source.slice(viewerStart, viewerEnd).replace(
+    /await import\("\.\/product-3d-viewer\.js\?v=[^"]+"\)/,
+    "await getViewerModule()"
+  );
+  assert(!viewerSource.includes("await import("));
+  const api = vm.runInNewContext(`${source.slice(normalizeStart, normalizeEnd)}\n${source.slice(renderStart, renderEnd)}\n${uploadSource}\n${viewerSource}\n({ normalizeUploadedModel, renderMediaPane, uploadSelectedGlb, openViewerById })`, context);
+  context.fetchInternalModels = async () => state.row ? [api.normalizeUploadedModel(state.row)] : [];
+  context.fetchPublishedModels = async () => state.row ? [api.normalizeUploadedModel(state.row)] : [];
+
+  await api.uploadSelectedGlb();
+  assert.equal(calls.uploads, 1);
+  assert.match(hosts["sales-product-3d-list"].innerHTML, new RegExp(`data-open-model='uploaded:${modelId}'`));
+  assert.equal(calls.viewers.length, 1);
+  assert.deepEqual(calls.signed, [modelPath]);
+  assert.equal(calls.viewers[0].host, elements["product-3d-viewer-stage"]);
+  assert.equal(calls.viewers[0].url, "https://example.test/signed-model.glb");
+  assert.equal(elements["product-3d-viewer-loading"].hidden, true);
+  assert(shown.has("show"));
+
+  await api.renderMediaPane("customer");
+  assert.match(hosts["customer-product-3d-list"].innerHTML, new RegExp(`data-open-model='uploaded:${modelId}'`));
+  await api.openViewerById(`uploaded:${modelId}`, "customer", 42);
+  assert.equal(calls.viewers.length, 2);
+  assert.deepEqual(calls.signed, [modelPath, modelPath]);
+  assert.deepEqual(calls.alerts, []);
+});
