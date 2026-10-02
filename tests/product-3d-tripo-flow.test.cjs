@@ -23,6 +23,7 @@ function harness({ balance = 100, confirmed = true, failStart = false } = {}) {
   const context = {
     tripoTarget: { context: "sales", productId: 101, kind: "rebuilt" },
     tripoJob: null, tripoBusy: false, tripoRequestId: 1, tripoReturnFocus: null,
+    tripoImageRows: {}, tripoImagePreviewRequestId: 0,
     sessionModelsEnabled: true, crypto: { randomUUID: () => "00000000-0000-4000-8000-000000000001" },
     elements: {
       ...controls,
@@ -36,6 +37,7 @@ function harness({ balance = 100, confirmed = true, failStart = false } = {}) {
     canManage3D: () => true,
     canPublish3D: () => true,
     friendlyError: (error) => String(error.message || error),
+    signProductImageUrl: async () => "https://example.invalid/signed-original",
     edgeErrorMessage: async () => "uncertain",
     window: { confirm: (message) => { prompts.push(message); return confirmed; } },
     sb: { functions: { async invoke(_name, request) {
@@ -100,7 +102,7 @@ test("saved images with equal sort order show the newest registration date first
   assert.equal(qa.api.tripoImageLabel({ id: 182, created_at: "not-a-date" }, 1), "画像 2 / ID 182");
 });
 
-test("saved-image preview uses the already signed thumbnail and resets on close", () => {
+test("saved-image preview displays the signed thumbnail, then the original only on request", async () => {
   const qa = harness();
   const preview = { hidden: true };
   const image = { src: "", alt: "", removeAttribute(name) { if (name === "src") this.src = ""; } };
@@ -108,18 +110,48 @@ test("saved-image preview uses the already signed thumbnail and resets on close"
   qa.context.elements["product-3d-tripo-image-preview"] = preview;
   qa.context.elements["product-3d-tripo-image-preview-img"] = image;
   qa.context.elements["product-3d-tripo-image-preview-label"] = label;
-  const button = { dataset: { tripoLabel: "画像 1 / ID 183（2026/9/1）" },
+  qa.context.tripoImageRows["183"] = { id: 183, storage_path: "2639/photo.jpg" };
+  const paths = [];
+  qa.context.signProductImageUrl = async (path) => {
+    paths.push(path);
+    return "https://example.invalid/signed-original";
+  };
+  const button = { dataset: { tripoLabel: "画像 1 / ID 183（2026/9/1）", tripoImagePreview: "183" },
     getAttribute: () => "画像 1 / ID 183を拡大表示",
-    querySelector: () => ({ getAttribute: () => "https://example.invalid/signed-image" }) };
-  qa.api.showTripoImagePreview(button);
+    querySelector: () => ({ getAttribute: () => "https://example.invalid/signed-thumbnail" }) };
+  const pending = qa.api.showTripoImagePreview(button);
   assert.equal(preview.hidden, false);
-  assert.equal(image.src, "https://example.invalid/signed-image");
+  assert.equal(image.src, "https://example.invalid/signed-thumbnail");
+  await pending;
+  assert.deepEqual(paths, ["2639/photo.jpg"]);
+  assert.equal(image.src, "https://example.invalid/signed-original");
   assert.equal(label.textContent, button.dataset.tripoLabel);
   assert.deepEqual(qa.events, []);
   qa.api.clearTripoImagePreview();
   assert.equal(preview.hidden, true);
   assert.equal(image.src, "");
   assert.equal(label.textContent, "");
+});
+
+test("closing the image preview rejects a late original image URL", async () => {
+  const qa = harness();
+  const preview = { hidden: true };
+  const image = { src: "", removeAttribute(name) { if (name === "src") this.src = ""; } };
+  qa.context.elements["product-3d-tripo-image-preview"] = preview;
+  qa.context.elements["product-3d-tripo-image-preview-img"] = image;
+  qa.context.elements["product-3d-tripo-image-preview-label"] = { textContent: "" };
+  qa.context.tripoImageRows["183"] = { storage_path: "2639/photo.jpg" };
+  let finishSigning;
+  qa.context.signProductImageUrl = () => new Promise((resolve) => { finishSigning = resolve; });
+  const button = { dataset: { tripoLabel: "画像 1", tripoImagePreview: "183" },
+    getAttribute: () => "画像 1を拡大表示",
+    querySelector: () => ({ getAttribute: () => "https://example.invalid/signed-thumbnail" }) };
+  const pending = qa.api.showTripoImagePreview(button);
+  qa.api.clearTripoImagePreview();
+  finishSigning("https://example.invalid/signed-original");
+  await pending;
+  assert.equal(preview.hidden, true);
+  assert.equal(image.src, "");
 });
 
 test("keyboard focus stays in the Tripo dialog unless the Viewer is above it", () => {

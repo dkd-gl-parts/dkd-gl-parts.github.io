@@ -42,6 +42,8 @@
   var tripoBusy = false;
   var tripoRequestId = 0;
   var tripoReturnFocus = null;
+  var tripoImageRows = Object.create(null);
+  var tripoImagePreviewRequestId = 0;
   var mediaAvailabilityRequest = { sales: 0, production: 0, customer: 0 };
   var mediaPaneRequest = { sales: 0, production: 0, customer: 0 };
 
@@ -1085,20 +1087,33 @@
     return "画像 " + (index + 1) + " / ID " + row.id + (date ? "（" + date + "）" : "");
   }
   function clearTripoImagePreview() {
+    tripoImagePreviewRequestId += 1;
     var preview = elements["product-3d-tripo-image-preview"];
     if (!preview) return;
     preview.hidden = true;
     elements["product-3d-tripo-image-preview-img"].removeAttribute("src");
     elements["product-3d-tripo-image-preview-label"].textContent = "";
   }
-  function showTripoImagePreview(button) {
+  async function showTripoImagePreview(button) {
     var thumbnail = button && button.querySelector("img");
     var signedUrl = thumbnail && thumbnail.getAttribute("src");
     if (!signedUrl) { tripoStatus("画像の拡大表示を準備中です。しばらくしてから選択してください。"); return; }
+    var imageId = String(button.dataset.tripoImagePreview || "");
+    var row = tripoImageRows[imageId];
+    var previewRequestId = ++tripoImagePreviewRequestId;
+    var targetRequestId = tripoRequestId;
     elements["product-3d-tripo-image-preview-img"].src = signedUrl;
     elements["product-3d-tripo-image-preview-img"].alt = button.getAttribute("aria-label");
     elements["product-3d-tripo-image-preview-label"].textContent = button.dataset.tripoLabel;
     elements["product-3d-tripo-image-preview"].hidden = false;
+    if (!row || !row.storage_path) return;
+    // Keep the already loaded thumbnail visible while the original private image loads.
+    var originalUrl;
+    try { originalUrl = await signProductImageUrl(row.storage_path); }
+    catch (_) { return; }
+    if (!originalUrl || previewRequestId !== tripoImagePreviewRequestId ||
+        elements["product-3d-tripo-image-preview"].hidden || !sameTripoTarget(targetRequestId)) return;
+    elements["product-3d-tripo-image-preview-img"].src = originalUrl;
   }
   async function openTripo(context) {
     if (!canManage3D()) { deny3D("product_3d_tripo"); return; }
@@ -1111,6 +1126,7 @@
     var requestId = ++tripoRequestId;
     tripoTarget = { context: context || "sales", productId: productId(target.product), kind: target.kind };
     tripoJob = null;
+    tripoImageRows = Object.create(null);
     elements["product-3d-tripo-overlay"].classList.add("show");
     elements["product-3d-tripo-overlay"].setAttribute("aria-hidden", "false");
     elements["product-3d-tripo-close"].focus();
@@ -1128,6 +1144,7 @@
       if (rows.error) throw rows.error;
       if (!sameTripoTarget(requestId)) return;
       var images = (rows.data || []).filter(function (row) { return row.storage_path; });
+      images.forEach(function (row) { tripoImageRows[String(row.id)] = row; });
       elements["product-3d-tripo-images"].innerHTML = images.length ? images.map(function (row, index) {
         var label = tripoImageLabel(row, index);
         return "<figure><button type='button' data-tripo-image-preview='" + esc(row.id) + "' data-tripo-label='" + esc(label) + "' aria-label='" + esc(label + "を拡大表示") + "'><img data-tripo-image='" + esc(row.id) + "' alt='' loading='lazy'></button><figcaption>" + esc(label) + "</figcaption></figure>";
@@ -1162,6 +1179,7 @@
     var wasOpen = elements["product-3d-tripo-overlay"].classList.contains("show");
     tripoRequestId += 1;
     tripoTarget = null; tripoJob = null;
+    tripoImageRows = Object.create(null);
     clearTripoImagePreview();
     elements["product-3d-tripo-overlay"].classList.remove("show");
     elements["product-3d-tripo-overlay"].setAttribute("aria-hidden", "true");
