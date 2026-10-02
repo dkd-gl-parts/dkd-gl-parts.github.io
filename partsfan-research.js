@@ -148,6 +148,15 @@
       resetReview();
       startButton.hidden = false; startButton.disabled = false; startButton.textContent = label("start");
       profileButton.hidden = true; humanWrap.hidden = true; humanConfirm.checked = false;
+      if (validPart(part.value) && makers.indexOf(maker.value) >= 0) {
+        var ticket = generation;
+        bridgeRequest("/current").then(function(job) {
+          if (active !== host || ticket !== generation || !job ||
+              job.part !== clean(part.value) || job.maker !== makerCodes[makers.indexOf(maker.value)]) return;
+          jobId = job.jobId;
+          renderJob(job, ticket);
+        }).catch(function() { /* The user can still start a new collection. */ });
+      }
     }
     part.addEventListener("input", changed); maker.addEventListener("change", changed); changed();
     function renderJob(job, ticket) {
@@ -176,7 +185,8 @@
           preview.innerHTML = "<p>" + readyRows.length + " 件</p>" + previewHtml(readyRows);
           if (review) review.hidden = false;
           status.textContent = label("ready");
-          startButton.hidden = true; profileButton.hidden = true; humanWrap.hidden = true;
+          startButton.hidden = false; startButton.disabled = false; startButton.textContent = label("retry");
+          profileButton.hidden = true; humanWrap.hidden = true;
         } catch (_) { status.textContent = label("badResult"); startButton.disabled = false; startButton.textContent = label("retry"); }
         return;
       }
