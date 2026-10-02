@@ -126,6 +126,8 @@
       "product-3d-viewer-autorotate", "product-3d-viewer-fullscreen",
       "product-3d-glb-file", "product-3d-tripo-overlay", "product-3d-tripo-close",
       "product-3d-tripo-context", "product-3d-tripo-images", "product-3d-tripo-views",
+      "product-3d-tripo-image-preview", "product-3d-tripo-image-preview-img",
+      "product-3d-tripo-image-preview-label", "product-3d-tripo-image-preview-close",
       "product-3d-tripo-status", "product-3d-tripo-start", "product-3d-tripo-poll",
       "product-3d-tripo-preview", "product-3d-tripo-publish", "product-3d-tripo-reject"
     ].forEach(function (id) { elements[id] = el(id); });
@@ -1080,7 +1082,23 @@
     var created = typeof row.created_at === "string" ? new Date(row.created_at) : null;
     var date = created && Number.isFinite(created.getTime())
       ? created.toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" }) : "";
-    return "画像 " + (index + 1) + (date ? "（" + date + "）" : "");
+    return "画像 " + (index + 1) + " / ID " + row.id + (date ? "（" + date + "）" : "");
+  }
+  function clearTripoImagePreview() {
+    var preview = elements["product-3d-tripo-image-preview"];
+    if (!preview) return;
+    preview.hidden = true;
+    elements["product-3d-tripo-image-preview-img"].removeAttribute("src");
+    elements["product-3d-tripo-image-preview-label"].textContent = "";
+  }
+  function showTripoImagePreview(button) {
+    var thumbnail = button && button.querySelector("img");
+    var signedUrl = thumbnail && thumbnail.getAttribute("src");
+    if (!signedUrl) { tripoStatus("画像の拡大表示を準備中です。しばらくしてから選択してください。"); return; }
+    elements["product-3d-tripo-image-preview-img"].src = signedUrl;
+    elements["product-3d-tripo-image-preview-img"].alt = button.getAttribute("aria-label");
+    elements["product-3d-tripo-image-preview-label"].textContent = button.dataset.tripoLabel;
+    elements["product-3d-tripo-image-preview"].hidden = false;
   }
   async function openTripo(context) {
     if (!canManage3D()) { deny3D("product_3d_tripo"); return; }
@@ -1098,6 +1116,7 @@
     elements["product-3d-tripo-close"].focus();
     elements["product-3d-tripo-context"].textContent = tripoContextLabel(target.product, tripoTarget);
     elements["product-3d-tripo-images"].textContent = "保存済み画像を読み込んでいます…";
+    clearTripoImagePreview();
     elements["product-3d-tripo-views"].textContent = "";
     tripoStatus("確認中…");
     try {
@@ -1110,7 +1129,8 @@
       if (!sameTripoTarget(requestId)) return;
       var images = (rows.data || []).filter(function (row) { return row.storage_path; });
       elements["product-3d-tripo-images"].innerHTML = images.length ? images.map(function (row, index) {
-        return "<figure><img data-tripo-image='" + esc(row.id) + "' alt='候補画像 " + (index + 1) + "' loading='lazy'><figcaption>" + esc(tripoImageLabel(row, index)) + "</figcaption></figure>";
+        var label = tripoImageLabel(row, index);
+        return "<figure><button type='button' data-tripo-image-preview='" + esc(row.id) + "' data-tripo-label='" + esc(label) + "' aria-label='" + esc(label + "を拡大表示") + "'><img data-tripo-image='" + esc(row.id) + "' alt='' loading='lazy'></button><figcaption>" + esc(label) + "</figcaption></figure>";
       }).join("") : "この区分に保存済み画像がありません。先に商品画像を登録してください。";
       var options = "<option value=''>選択しない</option>" + images.map(function (row, index) {
         return "<option value='" + esc(row.id) + "'>" + esc(tripoImageLabel(row, index)) + "</option>";
@@ -1142,6 +1162,7 @@
     var wasOpen = elements["product-3d-tripo-overlay"].classList.contains("show");
     tripoRequestId += 1;
     tripoTarget = null; tripoJob = null;
+    clearTripoImagePreview();
     elements["product-3d-tripo-overlay"].classList.remove("show");
     elements["product-3d-tripo-overlay"].setAttribute("aria-hidden", "true");
     var returnFocus = tripoReturnFocus;
@@ -1567,6 +1588,11 @@
     el("btn-image-action-tripo").addEventListener("click", function () { openTripo("sales"); });
     el("production-image-action-tripo").addEventListener("click", function () { openTripo("production"); });
     elements["product-3d-tripo-close"].addEventListener("click", closeTripo);
+    elements["product-3d-tripo-images"].addEventListener("click", function (event) {
+      var button = event.target.closest("[data-tripo-image-preview]");
+      if (button && elements["product-3d-tripo-images"].contains(button)) showTripoImagePreview(button);
+    });
+    elements["product-3d-tripo-image-preview-close"].addEventListener("click", clearTripoImagePreview);
     elements["product-3d-tripo-start"].addEventListener("click", startTripo);
     elements["product-3d-tripo-poll"].addEventListener("click", pollTripo);
     elements["product-3d-tripo-preview"].addEventListener("click", previewTripo);

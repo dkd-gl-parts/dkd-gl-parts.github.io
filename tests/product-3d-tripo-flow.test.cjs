@@ -53,7 +53,7 @@ function harness({ balance = 100, confirmed = true, failStart = false } = {}) {
     } } },
     Set, Array, Number, String, Error,
   };
-  const api = vm.runInNewContext(`${source.slice(start, end)}\n({ selectedTripoImages, startTripo, renderTripoJob, keepTripoFocus, closeTripo, tripoContextLabel, tripoImageLabel, tripoPayload })`, context);
+  const api = vm.runInNewContext(`${source.slice(start, end)}\n({ selectedTripoImages, startTripo, renderTripoJob, keepTripoFocus, closeTripo, tripoContextLabel, tripoImageLabel, tripoPayload, showTripoImagePreview, clearTripoImagePreview })`, context);
   return { api, context, events, prompts, selections };
 }
 
@@ -95,9 +95,31 @@ test("capture and Viewer titles fall back to product ID, never the DAIKO number"
 test("saved images with equal sort order show the newest registration date first", () => {
   const qa = harness();
   assert.match(source, /\.order\("sort_order", \{ ascending: true \}\)\s*\.order\("created_at", \{ ascending: false \}\)\.order\("id", \{ ascending: false \}\)/);
-  assert.equal(qa.api.tripoImageLabel({ created_at: "2026-09-01T00:00:00Z" }, 0),
-    "画像 1（2026/9/1）");
-  assert.equal(qa.api.tripoImageLabel({ created_at: "not-a-date" }, 1), "画像 2");
+  assert.equal(qa.api.tripoImageLabel({ id: 183, created_at: "2026-09-01T00:00:00Z" }, 0),
+    "画像 1 / ID 183（2026/9/1）");
+  assert.equal(qa.api.tripoImageLabel({ id: 182, created_at: "not-a-date" }, 1), "画像 2 / ID 182");
+});
+
+test("saved-image preview uses the already signed thumbnail and resets on close", () => {
+  const qa = harness();
+  const preview = { hidden: true };
+  const image = { src: "", alt: "", removeAttribute(name) { if (name === "src") this.src = ""; } };
+  const label = { textContent: "" };
+  qa.context.elements["product-3d-tripo-image-preview"] = preview;
+  qa.context.elements["product-3d-tripo-image-preview-img"] = image;
+  qa.context.elements["product-3d-tripo-image-preview-label"] = label;
+  const button = { dataset: { tripoLabel: "画像 1 / ID 183（2026/9/1）" },
+    getAttribute: () => "画像 1 / ID 183を拡大表示",
+    querySelector: () => ({ getAttribute: () => "https://example.invalid/signed-image" }) };
+  qa.api.showTripoImagePreview(button);
+  assert.equal(preview.hidden, false);
+  assert.equal(image.src, "https://example.invalid/signed-image");
+  assert.equal(label.textContent, button.dataset.tripoLabel);
+  assert.deepEqual(qa.events, []);
+  qa.api.clearTripoImagePreview();
+  assert.equal(preview.hidden, true);
+  assert.equal(image.src, "");
+  assert.equal(label.textContent, "");
 });
 
 test("keyboard focus stays in the Tripo dialog unless the Viewer is above it", () => {

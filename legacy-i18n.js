@@ -2643,7 +2643,7 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "印刷先で「PDFに保存」を選択してください。": "Please select 'Save as PDF' at the print destination.",
     "右後": "Right rear",
     "右前": "Right front",
-    "右側": "Right side",
+    "右側": "Right",
     "下側": "Bottom side",
     "画像の作成に失敗しました": "Failed to create image",
     "画像を解析できません": "Cannot analyze image",
@@ -2678,7 +2678,7 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "号尺寸": "Number size",
     "左後": "Rear left",
     "左前": "Front left",
-    "左側": "Left side",
+    "左側": "Left",
     "左側のカテゴリにチェックを入れてください。": "Please check the category on the left side.",
     "再読み込みを押すか、管理者にデータ登録を確認してください。": "Please press reload or check data registration with the administrator.",
     "最新の保存済みデータを取得しています。": "Retrieving the latest saved data.",
@@ -2808,8 +2808,6 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "画像 ": "Image ",
     "この区分に保存済み画像がありません。先に商品画像を登録してください。": "No saved images exist for this category. Register product images first.",
     "選択しない": "Do not select",
-    "左側": "Left",
-    "右側": "Right",
     "画像または作成履歴を確認できませんでした: ": "Could not check images or generation history: ",
     "画像または作成履歴を確認できませんでした:": "Could not check images or generation history:",
     "Tripo APIの残高が不足しています。": "Insufficient Tripo API credits.",
@@ -3602,7 +3600,10 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "GLBは表示から外れましたが、ファイル削除の結果は確認できません。再実行せず管理者に確認してください。": "The GLB is no longer displayed, but file deletion could not be confirmed. Do not retry; contact an administrator.",
     "画面も更新できませんでした。商品を選び直して確認してください。": "The screen could not be refreshed either. Select the product again to confirm.",
     "GLBは登録されませんでした。送信サイズが上限を超えています。小さいファイルを選び直してください。": "The GLB was not registered because the upload exceeds the size limit. Select a smaller file.",
-    "GLBは登録されませんでした。ファイルの形式・内容を確認してください:": "The GLB was not registered. Check the file format and contents:"
+    "GLBは登録されませんでした。ファイルの形式・内容を確認してください:": "The GLB was not registered. Check the file format and contents:",
+    "拡大表示を閉じる": "Close enlarged preview",
+    "画像の拡大表示を準備中です。しばらくしてから選択してください。": "The image preview is still loading. Please try selecting it again shortly.",
+    "を拡大表示": " enlarge preview"
   },
   "zh": {
     "帳票出力 / レポート": "报表 / 报表中心",
@@ -6411,8 +6412,6 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "画像 ": "图片 ",
     "この区分に保存済み画像がありません。先に商品画像を登録してください。": "此类别没有已保存图片，请先登记商品图片。",
     "選択しない": "不选择",
-    "左側": "左侧",
-    "右側": "右侧",
     "画像または作成履歴を確認できませんでした: ": "无法检查图片或生成记录：",
     "画像または作成履歴を確認できませんでした:": "无法检查图片或生成记录：",
     "Tripo APIの残高が不足しています。": "Tripo API点数余额不足。",
@@ -7205,6 +7204,9 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "GLBは表示から外れましたが、ファイル削除の結果は確認できません。再実行せず管理者に確認してください。": "GLB已从展示中移除，但无法确认文件删除结果。请勿重试，请联系管理员。",
     "画面も更新できませんでした。商品を選び直して確認してください。": "页面也无法刷新。请重新选择商品并确认。",
     "GLBは登録されませんでした。送信サイズが上限を超えています。小さいファイルを選び直してください。": "GLB未登记，因为上传内容超过大小上限。请选择更小的文件。",
-    "GLBは登録されませんでした。ファイルの形式・内容を確認してください:": "GLB未登记。请检查文件格式和内容："
+    "GLBは登録されませんでした。ファイルの形式・内容を確認してください:": "GLB未登记。请检查文件格式和内容：",
+    "拡大表示を閉じる": "关闭放大预览",
+    "画像の拡大表示を準備中です。しばらくしてから選択してください。": "图片预览仍在加载中。请稍后重新选择。",
+    "を拡大表示": "放大预览"
   }
 };

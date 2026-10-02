@@ -24,6 +24,9 @@ const curatedTranslations = {
   en: {
     "GLBファイルをアップロード": "Upload a GLB file",
     "3Dで見る": "View in 3D",
+    "拡大表示を閉じる": "Close enlarged preview",
+    "を拡大表示": " enlarge preview",
+    "画像の拡大表示を準備中です。しばらくしてから選択してください。": "The image preview is still loading. Please try selecting it again shortly.",
     "GLBをアップロード": "Upload GLB",
     "差し替え": "Replace",
     "外部GLB": "Uploaded GLB",
@@ -521,6 +524,9 @@ const curatedTranslations = {
   zh: {
     "GLBファイルをアップロード": "上传GLB文件",
     "3Dで見る": "以3D查看",
+    "拡大表示を閉じる": "关闭放大预览",
+    "を拡大表示": "放大预览",
+    "画像の拡大表示を準備中です。しばらくしてから選択してください。": "图片预览仍在加载中。请稍后重新选择。",
     "GLBをアップロード": "上传GLB",
     "差し替え": "替换",
     "外部GLB": "上传的GLB",
