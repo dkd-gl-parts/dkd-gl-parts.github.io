@@ -1175,6 +1175,7 @@ var TRANSLATIONS = {
     product_3d_reset: "リセット",
     product_3d_auto_rotate: "自動回転",
     product_3d_fullscreen: "全画面",
+    product_3d_fullscreen_unavailable: "全画面を開始できませんでした。通常表示で操作できます。",
     product_3d_controls_hint: "ドラッグ: 回転 / ホイール・ピンチ: 拡大 / 右ドラッグ・2本指: 移動",
     image_edit_help: "画像ごとに商品区分と得意先への公開を設定できます。",
     image_edit_filter_kind: "表示区分",
@@ -3496,6 +3497,7 @@ var TRANSLATIONS = {
     product_3d_reset: "Reset",
     product_3d_auto_rotate: "Auto rotate",
     product_3d_fullscreen: "Fullscreen",
+    product_3d_fullscreen_unavailable: "Fullscreen could not be started. You can keep using the normal view.",
     product_3d_controls_hint: "Drag: rotate / wheel or pinch: zoom / right drag or two fingers: pan",
     image_edit_help: "Set each image's product kind and customer visibility.",
     image_edit_filter_kind: "Filter Kind",
@@ -5828,6 +5830,7 @@ var TRANSLATIONS = {
     product_3d_reset: "重置",
     product_3d_auto_rotate: "自动旋转",
     product_3d_fullscreen: "全屏",
+    product_3d_fullscreen_unavailable: "无法启动全屏。您仍可使用普通视图。",
     product_3d_controls_hint: "拖动：旋转 / 滚轮或捏合：缩放 / 右键拖动或双指：平移",
     image_edit_help: "可为每张图片设置商品区分和客户可见状态。",
     image_edit_filter_kind: "显示区分",
@@ -7075,6 +7078,7 @@ var parallelCandidateMap = {};
 var assemblyComponentRows = [];
 var editingComponentUsageId = null;
 var currentImages     = [];
+var renderedSalesImageGroups = Object.create(null);
 var productionImages  = { rebuilt: [], aftermarket_new: [] };
 var imageEditRows = [];
 var imageEditFilterKind = "";
@@ -10281,6 +10285,7 @@ async function doLogout() {
   allProducts = []; dataLoaded = false;
   slPartsMap = {}; slPresenceMap = {}; currentSlPartIds = [];
   currentProduct = null; currentProductSpecs = []; currentProductNominalSpec = null; currentImages = [];
+  renderedSalesImageGroups = Object.create(null);
   showScreen("login");
 }
 
@@ -11259,13 +11264,11 @@ function renderCustomerCatalogDetailBase(product) {
   if (isAc && product.manufacturer_clutch_part_number) facts += customerCatalogFact(t("f_mfr_clutch_pn"), product.manufacturer_clutch_part_number);
   var spec = customerCatalogSpecText(product);
   if (spec) facts += customerCatalogFact(t("spec_section"), spec);
-  var imageHtml = settings.show_product_images
-    ? "<div class='customer-product-media'><div class='product-media-switch customer-product-media-switch' role='tablist' aria-label='商品メディア'>" +
-        "<button class='product-media-switch-btn active' type='button' role='tab' aria-selected='true' data-product-media='photos' data-product-media-context='customer'>写真</button>" +
-        "</div>" +
-        "<div class='customer-catalog-images' id='customer-catalog-images' data-product-media-pane='photos' data-product-media-context='customer'><div class='customer-catalog-image-main'>" + esc(t("img_loading")) + "</div></div>" +
-        "<div class='product-3d-detail-pane' id='customer-product-3d-pane' data-product-media-pane='model' data-product-media-context='customer' hidden><div class='product-3d-model-list' id='customer-product-3d-list'></div></div></div>"
-    : "";
+  var imageHtml = "<div class='customer-product-media' data-product-3d-media-shell data-no-photos='" + (!settings.show_product_images) + "'" + (settings.show_product_images ? "" : " hidden") + "><div class='product-media-switch customer-product-media-switch' role='tablist' aria-label='商品メディア'>" +
+    (settings.show_product_images ? "<button class='product-media-switch-btn active' type='button' role='tab' aria-selected='true' data-product-media='photos' data-product-media-context='customer'>写真</button>" : "") +
+    "</div>" +
+    (settings.show_product_images ? "<div class='customer-catalog-images' id='customer-catalog-images' data-product-media-pane='photos' data-product-media-context='customer'><div class='customer-catalog-image-main'>" + esc(t("img_loading")) + "</div></div>" : "") +
+    "<div class='product-3d-detail-pane' id='customer-product-3d-pane' data-product-media-pane='model' data-product-media-context='customer' hidden><div class='product-3d-model-list' id='customer-product-3d-list'></div></div></div>";
   var availabilityTitle = settings.show_sales_price ? t("customer_catalog_stock_price_title") : t("product_kind_stock");
   var availabilityHtml = "<section class='customer-catalog-availability'><h3>" + esc(availabilityTitle) + "</h3><div class='customer-catalog-availability-grid' id='customer-catalog-availability'><div class='customer-catalog-loading'>" + esc(t("loading")) + "</div></div></section>";
   var vehicleHtml = settings.show_vehicle_info
@@ -11471,6 +11474,7 @@ async function openCustomerCatalogProduct(product, options) {
   var seq = ++customerCatalogDetailSeq;
   renderCustomerCatalogList();
   renderCustomerCatalogDetailBase(product);
+  if (window.DcatsProduct3D) window.DcatsProduct3D.refreshMediaAvailability("customer");
   if (!options.autoSelect) {
     logProductDetailOpen("customer-catalog", product);
     if (window.innerWidth < 761) {
@@ -23121,6 +23125,7 @@ async function renderProductionDetail(row) {
   html += "</div>";
   el.innerHTML = html;
   currentProduct = row;
+  if (window.DcatsProduct3D) window.DcatsProduct3D.refreshMediaAvailability("production");
   currentProductVariants = detail.productVariants.slice();
   currentCoreDkdShohinId = row.dkd_shohin_id || null;
   currentProductSpecs = [];
@@ -40188,6 +40193,7 @@ function openPanel(id, options) {
   configureSalesProductAddButton();
   if (!isPC() && options.showMobileOverlay !== false) { document.getElementById("overlay").classList.add("show"); document.getElementById("panel").classList.add("show"); }
   renderPanelStatic();
+  if (window.DcatsProduct3D) window.DcatsProduct3D.refreshMediaAvailability("sales");
   document.querySelectorAll(".card").forEach(function(c){ c.classList.toggle("selected", parseInt(c.dataset.id,10)===id); });
 }
 
@@ -40269,6 +40275,7 @@ function closePanel() {
   configureSalesProductAddButton();
   document.querySelectorAll(".card.selected").forEach(function(c){ c.classList.remove("selected"); });
   currentProduct = null; currentCoreDkdShohinId = null; currentProductSpecs = []; currentProductNominalSpec = null; currentParallelTargetDkdShohinId = null; currentParallelTargetProduct = null; currentImages = []; currentSlPartIds = [];
+  renderedSalesImageGroups = Object.create(null);
 }
 
 function syncSearchFilterControls() {
@@ -51482,6 +51489,9 @@ function salesImagesForKind(kind) {
 
 function salesImageGroupHtml(kind, images, loading) {
   images = images || [];
+  // Keep the gallery bound to the rows actually rendered, even if an unrelated
+  // search or screen transition later clears the mutable currentImages array.
+  renderedSalesImageGroups[kind] = loading ? [] : images.slice();
   var body = "";
   if (loading) {
     body = "<div class='sales-detail-image-empty'>" + esc(t("img_loading")) + "</div>";
@@ -51589,13 +51599,17 @@ function syncProductMediaActionAccess(context) {
         edit: "production-image-action-edit",
         camera: "production-image-action-camera-ai",
         copy: "production-image-action-copy-sales",
-        model: "production-image-action-create-3d"
+        model: "production-image-action-create-3d",
+        uploadModel: "production-image-action-upload-glb",
+        tripoModel: "production-image-action-tripo"
       }
     : {
         upload: "btn-image-action-upload",
         edit: "btn-image-action-edit",
         remove: "btn-image-action-delete",
-        model: "btn-image-action-create-3d"
+        model: "btn-image-action-create-3d",
+        uploadModel: "btn-image-action-upload-glb",
+        tripoModel: "btn-image-action-tripo"
       };
   if (ids.upload) setCspStyle(document.getElementById(ids.upload), "display", imageAllowed ? "" : "none");
   if (ids.edit) setCspStyle(document.getElementById(ids.edit), "display", canManageImages ? "" : "none");
@@ -51603,6 +51617,8 @@ function syncProductMediaActionAccess(context) {
   if (ids.camera) setCspStyle(document.getElementById(ids.camera), "display", canManageImages ? "" : "none");
   if (ids.copy) setCspStyle(document.getElementById(ids.copy), "display", canManageImages ? "" : "none");
   if (ids.model) setCspStyle(document.getElementById(ids.model), "display", canManage3D ? "" : "none");
+  if (ids.uploadModel) setCspStyle(document.getElementById(ids.uploadModel), "display", canManage3D ? "" : "none");
+  if (ids.tripoModel) setCspStyle(document.getElementById(ids.tripoModel), "display", canManage3D ? "" : "none");
 }
 
 function openImageActionsDialog() {
@@ -52160,15 +52176,22 @@ function fullscreenImageList() {
   return activeFullscreenImages || currentImages || [];
 }
 function openFullscreen(i, images) {
+  var list = Array.isArray(images) ? images : (currentImages || []);
+  if (!Number.isInteger(i) || i < 0 || !list[i]) return;
   fsIndex = i;
-  activeFullscreenImages = Array.isArray(images) ? images : null;
+  activeFullscreenImages = list;
   document.getElementById("fullscreen").classList.add("show");
   renderFullscreen();
 }
 function renderFullscreen() {
   var list = fullscreenImageList();
   var img=list[fsIndex]; if(!img)return;
-  setSignedProductImageElementSource(document.getElementById("fs-img"), img, { width: 1600, height: 1200, resize: "contain" });
+  var fullImage = document.getElementById("fs-img");
+  var loading = document.getElementById("fs-loading");
+  loading.textContent = t("img_loading");
+  loading.hidden = false;
+  setSignedProductImageElementSource(fullImage, img, { width: 1600, height: 1200, resize: "contain" });
+  if (fullImage.complete && fullImage.naturalWidth > 0) loading.hidden = true;
   document.getElementById("fs-counter").textContent=(fsIndex+1)+" / "+list.length;
   document.getElementById("fs-prev").classList.toggle("hidden",fsIndex===0);
   document.getElementById("fs-next").classList.toggle("hidden",fsIndex===list.length-1);
@@ -56092,7 +56115,8 @@ document.getElementById("panel").addEventListener("click", function(e){
   var img=e.target.closest("img[data-index]");
   if(!img) return;
   var kind=img.dataset.salesImageKind;
-  openFullscreen(parseInt(img.dataset.index,10), kind ? salesImagesForKind(kind) : null);
+  var displayed = kind ? renderedSalesImageGroups[normalizeProductKind(kind)] : null;
+  openFullscreen(parseInt(img.dataset.index,10), displayed || (kind ? salesImagesForKind(kind) : null));
 });
 document.getElementById("btn-open-image-actions").addEventListener("click", openImageActionsDialog);
 document.getElementById("btn-image-actions-cancel").addEventListener("click", closeImageActionsDialog);
@@ -56135,6 +56159,9 @@ document.getElementById("image-delete-list").addEventListener("click", function(
 document.getElementById("btn-vehicle-info-close").addEventListener("click", closeVehicleApplicationsDialog);
 document.getElementById("vehicle-info-overlay").addEventListener("click", function(e){ if(e.target===this) closeVehicleApplicationsDialog(); });
 document.getElementById("fs-close").addEventListener("click", closeFullscreen);
+document.getElementById("fs-img").addEventListener("load", function(){
+  if (this.complete && this.naturalWidth > 0) document.getElementById("fs-loading").hidden = true;
+});
 document.getElementById("fullscreen").addEventListener("click", function(e){ if(e.target===this) closeFullscreen(); });
 document.getElementById("fs-prev").addEventListener("click", function(){ if(fsIndex>0){fsIndex--;renderFullscreen();} });
 document.getElementById("fs-next").addEventListener("click", function(){ var list = fullscreenImageList(); if(fsIndex<list.length-1){fsIndex++;renderFullscreen();} });

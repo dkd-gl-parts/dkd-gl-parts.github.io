@@ -5107,8 +5107,15 @@
       <button class="image-action-btn" id="btn-image-action-edit" type="button">
         &#9998; <span data-i18n="image_edit_title">画像編集</span>
       </button>
+      <div class="product-3d-action-heading">3D Model</div>
       <button class="image-action-btn model" id="btn-image-action-create-3d" type="button">
         <span class="product-3d-cube" aria-hidden="true">3D</span><span data-i18n="product_3d_create">3Dモデルを作成</span>
+      </button>
+      <button class="image-action-btn model" id="btn-image-action-upload-glb" type="button">
+        <span class="product-3d-cube" aria-hidden="true">3D</span><span>GLBファイルをアップロード</span>
+      </button>
+      <button class="image-action-btn model" id="btn-image-action-tripo" type="button">
+        <span class="product-3d-cube" aria-hidden="true">3D</span><span>保存済み画像から3D作成（Tripo API）</span>
       </button>
       <button class="image-action-btn danger" id="btn-image-action-delete" type="button">
         &#x1F5D1; <span data-i18n="btn_delete_images">写真を削除</span>
@@ -5148,8 +5155,15 @@
       <button class="image-action-btn" id="production-image-action-camera-ai" type="button">
         &#x1F4F9; <span data-i18n="core_camera_ai">カメラAI</span>
       </button>
+      <div class="product-3d-action-heading">3D Model</div>
       <button class="image-action-btn model" id="production-image-action-create-3d" type="button">
         <span class="product-3d-cube" aria-hidden="true">3D</span><span data-i18n="product_3d_create">3Dモデルを作成</span>
+      </button>
+      <button class="image-action-btn model" id="production-image-action-upload-glb" type="button">
+        <span class="product-3d-cube" aria-hidden="true">3D</span><span>GLBファイルをアップロード</span>
+      </button>
+      <button class="image-action-btn model" id="production-image-action-tripo" type="button">
+        <span class="product-3d-cube" aria-hidden="true">3D</span><span>保存済み画像から3D作成（Tripo API）</span>
       </button>
       <button class="image-action-btn" id="production-image-action-copy-sales" type="button">
         &#x1F504; <span data-i18n="production_copy_sales_images">販売画像をコピー</span>
@@ -5218,10 +5232,42 @@
     <div class="product-3d-viewer-stage" id="product-3d-viewer-stage"></div>
     <div class="product-3d-viewer-loading" id="product-3d-viewer-loading">3Dモデルを読み込んでいます...</div>
     <div class="product-3d-viewer-toolbar">
+      <button type="button" id="product-3d-viewer-zoom-in" aria-label="拡大">＋</button>
+      <button type="button" id="product-3d-viewer-zoom-out" aria-label="縮小">－</button>
       <button type="button" id="product-3d-viewer-reset" data-i18n="product_3d_reset">リセット</button>
       <button type="button" id="product-3d-viewer-autorotate" aria-pressed="false" data-i18n="product_3d_auto_rotate">自動回転</button>
       <button type="button" id="product-3d-viewer-fullscreen" data-i18n="product_3d_fullscreen">全画面</button>
       <span data-i18n="product_3d_controls_hint">ドラッグ: 回転 / ホイール・ピンチ: 拡大 / 右ドラッグ・2本指: 移動</span>
+      <span id="product-3d-viewer-fullscreen-notice" role="status" data-i18n="product_3d_fullscreen_unavailable" hidden>全画面を開始できませんでした。通常表示で操作できます。</span>
+    </div>
+  </div>
+</div>
+<input id="product-3d-glb-file" type="file" accept=".glb,model/gltf-binary,application/octet-stream" hidden>
+
+<div class="form-overlay product-3d-tripo-overlay" id="product-3d-tripo-overlay" aria-hidden="true">
+  <div class="product-3d-tripo-shell" role="dialog" aria-modal="true" aria-labelledby="product-3d-tripo-title">
+    <header class="product-3d-capture-head">
+      <div><span class="product-3d-eyebrow">OPTIONAL 3D API</span><h2 id="product-3d-tripo-title">保存済み画像から3D作成</h2>
+        <div class="product-3d-capture-context" id="product-3d-tripo-context"></div></div>
+      <button class="product-3d-close" id="product-3d-tripo-close" type="button" aria-label="閉じる">&times;</button>
+    </header>
+    <div class="product-3d-tripo-body">
+      <p>この商品に保存済みの画像を1～4枚選び、正面・左側・背面・右側を指定します。複数枚では正面が必須です。画像をアップロードし直す必要はありません。</p>
+      <div class="product-3d-tripo-images" id="product-3d-tripo-images"></div>
+      <div class="product-3d-tripo-image-preview" id="product-3d-tripo-image-preview" hidden>
+        <div><strong id="product-3d-tripo-image-preview-label"></strong><button type="button" id="product-3d-tripo-image-preview-close">拡大表示を閉じる</button></div>
+        <img id="product-3d-tripo-image-preview-img" alt="">
+      </div>
+      <div class="product-3d-tripo-views" id="product-3d-tripo-views"></div>
+      <p class="product-3d-tripo-note">選択した保存済み画像は、3D作成のため外部サービスTripoへ送信されます。画像の利用許諾を確認してください。Tripo APIは別契約・従量クレジットです。作成物はまず非公開で確認し、承認するまで商品画面には公開しません。寸法・部品名は自動確定しません。</p>
+      <div id="product-3d-tripo-status" role="status" aria-live="polite"></div>
+      <div class="product-3d-tripo-actions">
+        <button class="btn-primary" id="product-3d-tripo-start" type="button">見積り確認・作成開始</button>
+        <button class="btn-sm-edit" id="product-3d-tripo-poll" type="button" hidden>進捗を確認</button>
+        <button class="btn-sm-edit" id="product-3d-tripo-preview" type="button" hidden>非公開プレビュー</button>
+        <button class="btn-primary" id="product-3d-tripo-publish" type="button" hidden>確認して商品へ登録</button>
+        <button class="btn-cancel" id="product-3d-tripo-reject" type="button" hidden>この生成結果を不採用</button>
+      </div>
     </div>
   </div>
 </div>
@@ -5382,6 +5428,7 @@
   </div>
   <div class="fs-main">
     <img class="fs-img" id="fs-img" src="">
+    <span class="fs-loading" id="fs-loading" role="status" hidden></span>
     <button class="fs-nav fs-prev" id="fs-prev">&#8249;</button>
     <button class="fs-nav fs-next" id="fs-next">&#8250;</button>
   </div>
@@ -5398,7 +5445,7 @@
 <script src="product-data-research.js?v=1.1.1082"></script>
 <script src="partsfan-research.js?v=1.1.1082"></script>
 <script src="container-stock-import.js?v=1.1.1082"></script>
-<script src="product-3d.js?v=1.1.1082"></script>
+<script src="product-3d.js?v=1.1.1084"></script>
 <script src="assets/concierge-pet/concierge-pet.js?v=1.1.1082"></script>
 <script src="manufacturing-ranking-report.js?v=1.1.1082&amp;ranking=18"></script>
 <script src="customer-price-report.js?v=1.1.1082"></script>

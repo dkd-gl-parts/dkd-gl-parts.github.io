@@ -26,10 +26,26 @@
   var elements = {};
   var viewer = null;
   var viewerRequestId = 0;
+  var viewerReturnFocus = null;
+  var viewerFocusTarget = null;
   var modelCache = Object.create(null);
   var internalModelCache = Object.create(null);
   var modelBadgeCache = Object.create(null);
+  var modelCacheEpoch = 0;
+  var sessionModelsEnabled = true;
+  var modelAuthUserId = null;
   var badgeRefreshTimer = null;
+  var glbUploadTarget = null;
+  var glbMutationBusy = false;
+  var tripoTarget = null;
+  var tripoJob = null;
+  var tripoBusy = false;
+  var tripoRequestId = 0;
+  var tripoReturnFocus = null;
+  var tripoImageRows = Object.create(null);
+  var tripoImagePreviewRequestId = 0;
+  var mediaAvailabilityRequest = { sales: 0, production: 0, customer: 0 };
+  var mediaPaneRequest = { sales: 0, production: 0, customer: 0 };
 
   function freshState() {
     return {
@@ -108,7 +124,14 @@
       "product-3d-quality-score", "product-3d-quality-list", "product-3d-submit-status", "product-3d-submit",
       "product-3d-viewer-overlay", "product-3d-viewer-close", "product-3d-viewer-title",
       "product-3d-viewer-stage", "product-3d-viewer-loading", "product-3d-viewer-reset",
-      "product-3d-viewer-autorotate", "product-3d-viewer-fullscreen"
+      "product-3d-viewer-zoom-in", "product-3d-viewer-zoom-out",
+      "product-3d-viewer-autorotate", "product-3d-viewer-fullscreen", "product-3d-viewer-fullscreen-notice",
+      "product-3d-glb-file", "product-3d-tripo-overlay", "product-3d-tripo-close",
+      "product-3d-tripo-context", "product-3d-tripo-images", "product-3d-tripo-views",
+      "product-3d-tripo-image-preview", "product-3d-tripo-image-preview-img",
+      "product-3d-tripo-image-preview-label", "product-3d-tripo-image-preview-close",
+      "product-3d-tripo-status", "product-3d-tripo-start", "product-3d-tripo-poll",
+      "product-3d-tripo-preview", "product-3d-tripo-publish", "product-3d-tripo-reject"
     ].forEach(function (id) { elements[id] = el(id); });
   }
 
@@ -167,7 +190,7 @@
   }
 
   function productTitle(product) {
-    return String(product.manufacturer_part_number || product.genuine_part_number || product.daiko_part_number || ("商品 " + productId(product)));
+    return String(product.manufacturer_part_number || product.genuine_part_number || ("商品 " + productId(product)));
   }
   function closeImageActionOverlays() {
     ["image-actions-overlay", "production-image-actions-overlay"].forEach(function (id) {
@@ -762,33 +785,132 @@
     elements["product-3d-live-feedback"].textContent = messages.join(" / ");
   }
   function friendlyError(error) { return String(error && (error.message || error.error_description) || error || "不明なエラー"); }
+  async function edgeErrorMessage(error) {
+    try {
+      if (error && error.context && typeof error.context.json === "function") {
+        var body = await error.context.json();
+        if (body && typeof body.error === "string") return body.error;
+      }
+    } catch (_) { /* Keep the original transport error. */ }
+    return friendlyError(error);
+  }
 
   async function fetchPublishedModels(dkdId) {
-    if (!dkdId) return [];
+    if (!dkdId || !sessionModelsEnabled) return [];
     var key = String(dkdId);
     if (modelCache[key]) return modelCache[key];
-    var result = await sb.from("product_3d_models")
-      .select("id,dkd_shohin_id,product_kind,revision,status,published_model_path,thumbnail_path,model_bytes,triangle_count,published_at")
-      .eq("dkd_shohin_id", dkdId).eq("status", "published").order("revision", { ascending: false });
-    if (result.error) { console.warn("published 3D lookup failed", result.error); return []; }
-    modelCache[key] = result.data || [];
+    var epoch = modelCacheEpoch;
+    var result = await sb.from("product_3d_viewer_models")
+      .select("id,dkd_shohin_id,product_kind,revision,status,published_model_path,thumbnail_path,model_bytes,triangle_count,published_at,model_source,model_format")
+      .eq("dkd_shohin_id", dkdId).order("revision", { ascending: false });
+    if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return [];
+    if (result.error) {
+      // During a phased release the old generated-model viewer remains usable.
+      result = await sb.from("product_3d_models")
+        .select("id,dkd_shohin_id,product_kind,revision,status,published_model_path,thumbnail_path,model_bytes,triangle_count,published_at")
+        .eq("dkd_shohin_id", dkdId).eq("status", "published").order("revision", { ascending: false });
+      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return [];
+      modelCache[key] = (result.data || []).map(function (row) {
+        return Object.assign({ model_source: "generated", model_format: "glb" }, row);
+      });
+    } else modelCache[key] = result.data || [];
     return modelCache[key];
   }
+  function normalizeUploadedModel(row) {
+    return {
+      id: "uploaded:" + row.id, dkd_shohin_id: row.dkd_shohin_id,
+      product_kind: row.product_kind, revision: 1, status: "published",
+      published_model_path: row.storage_path, model_bytes: row.model_bytes,
+      published_at: row.created_at, updated_at: row.updated_at,
+      model_source: "uploaded", model_format: "glb"
+    };
+  }
   async function fetchInternalModels(dkdId) {
-    if (!dkdId) return [];
+    if (!dkdId || !sessionModelsEnabled) return [];
     var key = String(dkdId);
     if (internalModelCache[key]) return internalModelCache[key];
+    var epoch = modelCacheEpoch;
     var result = await sb.from("product_3d_models")
       .select("id,dkd_shohin_id,product_kind,revision,status,published_model_path,thumbnail_path,model_bytes,triangle_count,published_at,additional_capture_instructions,failure_message,updated_at")
       .eq("dkd_shohin_id", dkdId).order("revision", { ascending: false });
-    if (result.error) { console.warn("internal 3D lookup failed", result.error); return []; }
-    internalModelCache[key] = result.data || [];
+    if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return [];
+    if (result.error) console.warn("internal generated 3D lookup failed", result.error);
+    var uploads = await sb.from("product_3d_uploaded_models")
+      .select("id,dkd_shohin_id,product_kind,status,storage_path,model_bytes,created_at,updated_at")
+      .eq("dkd_shohin_id", dkdId).eq("status", "ready");
+    if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return [];
+    if (uploads.error) console.warn("internal uploaded 3D lookup failed", uploads.error);
+    internalModelCache[key] = (result.data || []).map(function (row) {
+      return Object.assign({ model_source: "generated", model_format: "glb" }, row);
+    }).concat((uploads.data || []).map(normalizeUploadedModel));
     return internalModelCache[key];
+  }
+  async function refreshMediaAvailability(context) {
+    if (!sessionModelsEnabled) return;
+    if (!Object.prototype.hasOwnProperty.call(mediaAvailabilityRequest, context)) return;
+    var request = ++mediaAvailabilityRequest[context];
+    var target = selectedTarget(context);
+    var dkdId = productId(target.product);
+    var pane = document.querySelector("[data-product-media-pane='model'][data-product-media-context='" + context + "']");
+    var switcher = pane && pane.parentElement && pane.parentElement.querySelector(".product-media-switch");
+    if (!pane || !switcher) return;
+    function hideStaleMedia() {
+      var staleTab = switcher.querySelector("[data-product-media='model']");
+      if (staleTab) { staleTab.hidden = true; staleTab.classList.remove("active"); staleTab.setAttribute("aria-selected", "false"); }
+      pane.hidden = true;
+      var photosTab = switcher.querySelector("[data-product-media='photos']");
+      var photosPane = pane.parentElement.querySelector("[data-product-media-pane='photos']");
+      if (photosTab) { photosTab.classList.add("active"); photosTab.setAttribute("aria-selected", "true"); }
+      if (photosPane) photosPane.hidden = false;
+      var mediaShell = switcher.closest("[data-product-3d-media-shell]");
+      if (mediaShell && mediaShell.dataset.noPhotos === "true") mediaShell.hidden = true;
+      var staleHost = el({ sales: "sales-product-3d-list", production: "production-product-3d-list", customer: "customer-product-3d-list" }[context]);
+      if (staleHost) staleHost.textContent = "";
+    }
+    if (!dkdId) { hideStaleMedia(); return; }
+    var internal = context !== "customer" && canReview3D();
+    var models = internal ? await fetchInternalModels(dkdId) : await fetchPublishedModels(dkdId);
+    var current = selectedTarget(context);
+    if (request !== mediaAvailabilityRequest[context] || productId(current.product) !== dkdId ||
+        (context !== "customer" && current.kind !== target.kind) || !pane.isConnected || !sessionModelsEnabled) return;
+    if (internal !== (context !== "customer" && canReview3D())) {
+      hideStaleMedia();
+      return;
+    }
+    var available = context === "customer"
+      ? models.length > 0
+      : models.some(function (model) { return model.product_kind === target.kind; }) || (canManage3D() && !!target.kind);
+    var tab = switcher.querySelector("[data-product-media='model']");
+    if (available && !tab) {
+      tab = document.createElement("button");
+      tab.type = "button";
+      tab.className = "product-media-switch-btn";
+      tab.setAttribute("role", "tab");
+      tab.setAttribute("aria-selected", "false");
+      tab.dataset.productMedia = "model";
+      tab.dataset.productMediaContext = context;
+      tab.textContent = "3Dで見る";
+      switcher.appendChild(tab);
+    }
+    if (tab) tab.hidden = !available;
+    var mediaShell = switcher.closest("[data-product-3d-media-shell]");
+    if (mediaShell && mediaShell.dataset.noPhotos === "true") mediaShell.hidden = !available;
+    if (!available && !pane.hidden) {
+      pane.hidden = true;
+      if (tab) { tab.classList.remove("active"); tab.setAttribute("aria-selected", "false"); }
+      var photos = switcher.querySelector("[data-product-media='photos']");
+      var photoPane = pane.parentElement.querySelector("[data-product-media-pane='photos']");
+      if (photos) { photos.classList.add("active"); photos.setAttribute("aria-selected", "true"); }
+      if (photoPane) photoPane.hidden = false;
+    }
+    if (available && !pane.hidden) await renderMediaPane(context);
   }
   function visibleProductNodes() {
     return Array.from(document.querySelectorAll("#list [data-dkd-id], #production-list [data-dkd-id], [data-customer-catalog-dkd]"));
   }
   async function refreshListBadges() {
+    if (!sessionModelsEnabled) return;
+    var epoch = modelCacheEpoch;
     var nodes = visibleProductNodes();
     var ids = Array.from(new Set(nodes.map(function (node) {
       return Number(node.dataset.dkdId || node.dataset.customerCatalogDkd);
@@ -796,7 +918,10 @@
     var missing = ids.filter(function (id) { return !Object.prototype.hasOwnProperty.call(modelBadgeCache, String(id)); });
     if (missing.length) {
       var batch = missing.slice(0, 300);
-      var result = await sb.from("product_3d_models").select("dkd_shohin_id").eq("status", "published").in("dkd_shohin_id", batch);
+      var result = await sb.from("product_3d_viewer_models").select("dkd_shohin_id").in("dkd_shohin_id", batch);
+      if (result.error) result = await sb.from("product_3d_models")
+        .select("dkd_shohin_id").eq("status", "published").in("dkd_shohin_id", batch);
+      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
       if (!result.error) {
         batch.forEach(function (id) { modelBadgeCache[String(id)] = false; });
         (result.data || []).forEach(function (row) { modelBadgeCache[String(row.dkd_shohin_id)] = true; });
@@ -820,30 +945,53 @@
     badgeRefreshTimer = window.setTimeout(refreshListBadges, 120);
   }
   async function renderMediaPane(context) {
+    if (!sessionModelsEnabled) return;
+    if (!Object.prototype.hasOwnProperty.call(mediaPaneRequest, context)) return;
+    var request = ++mediaPaneRequest[context];
     var target = selectedTarget(context);
+    var dkdId = productId(target.product);
+    var epoch = modelCacheEpoch;
     var hostId = { sales: "sales-product-3d-list", production: "production-product-3d-list", customer: "customer-product-3d-list" }[context];
     var host = el(hostId);
-    if (!host || !target.product) return;
+    if (!host) return;
+    if (!target.product) { host.textContent = ""; return; }
     host.innerHTML = "<div class='product-3d-loading-card'>3Dモデルを確認しています…</div>";
     var internal = context !== "customer" && canReview3D();
     var manageable = context !== "customer" && !!target.kind && canManage3D();
     var publishable = context !== "customer" && canPublish3D();
-    var models = internal ? await fetchInternalModels(productId(target.product)) : await fetchPublishedModels(productId(target.product));
+    var models = internal ? await fetchInternalModels(dkdId) : await fetchPublishedModels(dkdId);
+    var current = selectedTarget(context);
+    if (request !== mediaPaneRequest[context] || epoch !== modelCacheEpoch || !sessionModelsEnabled ||
+        productId(current.product) !== dkdId ||
+        (context !== "customer" && current.kind !== target.kind) || !host.isConnected) return;
+    if (internal !== (context !== "customer" && canReview3D()) ||
+        manageable !== (context !== "customer" && !!current.kind && canManage3D()) ||
+        publishable !== (context !== "customer" && canPublish3D())) {
+      host.textContent = "表示条件が変わりました。3Dタブを開き直してください。";
+      return;
+    }
     var visible = context === "customer" ? models : models.filter(function (model) { return model.product_kind === target.kind; });
     if (!visible.length) {
       var createAction = manageable ? "<button type='button' data-create-3d='" + context + "'>3Dモデルを作成</button>" : "";
-      host.innerHTML = "<div class='product-3d-empty-card'><span class='product-3d-cube'>3D</span><strong>公開済み3Dモデルはありません</strong>" + createAction + "</div>";
+      var uploadAction = manageable ? "<button type='button' data-upload-3d='" + context + "'>GLBをアップロード</button>" : "";
+      var tripoAction = manageable ? "<button type='button' data-tripo-3d='" + context + "'>保存済み画像から3D作成</button>" : "";
+      host.innerHTML = "<div class='product-3d-empty-card'><span class='product-3d-cube'>3D</span><strong>公開済み3Dモデルはありません</strong>" + createAction + uploadAction + tripoAction + "</div>";
       return;
     }
     function modelCardHtml(model) {
       var size = model.model_bytes ? (model.model_bytes / 1048576).toFixed(1) + " MB" : "";
       var status = modelStatusLabel(model.status);
       var canOpen = model.published_model_path && (model.status === "published" || model.status === "review" || model.status === "archived");
-      var action = canOpen ? "<button type='button' class='product-3d-card-action' data-open-model='" + model.id + "' data-model-context='" + context + "' data-model-product='" + productId(target.product) + "'>確認</button>" : "";
-      if (publishable && model.status === "review") action += "<button type='button' class='product-3d-card-action publish' data-publish-model='" + model.id + "' data-publish-context='" + context + "'>公開</button>";
-      if (manageable && ["draft", "needs_capture", "failed"].indexOf(model.status) >= 0) action += "<button type='button' class='product-3d-card-action' data-create-3d='" + context + "'>撮影を再開</button>";
+      var action = canOpen ? "<button type='button' class='product-3d-card-action' data-open-model='" + model.id + "' data-model-context='" + context + "' data-model-product='" + productId(target.product) + "'>3Dで見る</button>" : "";
+      if (publishable && model.model_source !== "uploaded" && model.status === "review") action += "<button type='button' class='product-3d-card-action publish' data-publish-model='" + model.id + "' data-publish-context='" + context + "'>公開</button>";
+      if (manageable && model.model_source === "uploaded") {
+        action += "<button type='button' class='product-3d-card-action' data-replace-uploaded='" + model.id.slice(9) + "' data-upload-context='" + context + "'>差し替え</button>";
+        action += "<button type='button' class='product-3d-card-action' data-delete-uploaded='" + model.id.slice(9) + "' data-upload-context='" + context + "'>削除</button>";
+      }
+      if (manageable && model.model_source !== "uploaded" && ["draft", "needs_capture", "failed"].indexOf(model.status) >= 0) action += "<button type='button' class='product-3d-card-action' data-create-3d='" + context + "'>撮影を再開</button>";
       var note = model.failure_message || (model.additional_capture_instructions && model.additional_capture_instructions.length ? "追加撮影: " + model.additional_capture_instructions.join(" / ") : "");
-      return "<div class='product-3d-model-card'><span class='product-3d-cube'>3D</span><span><strong>" + esc(kindLabel(model.product_kind)) + " 3Dモデル <i data-model-status='" + esc(model.status) + "'>" + esc(status) + "</i></strong><small>rev." + model.revision + " " + size + (note ? " / " + esc(note) : "") + "</small></span><span class='product-3d-card-actions'>" + action + "</span></div>";
+      var source = model.model_source === "uploaded" ? "外部GLB" : "D-CATS生成";
+      return "<div class='product-3d-model-card'><span class='product-3d-cube'>3D</span><span><strong>" + esc(kindLabel(model.product_kind)) + " 3Dモデル <i data-model-status='" + esc(model.status) + "'>" + esc(status) + "</i></strong><small>" + source + " / " + size + (note ? " / " + esc(note) : "") + "</small></span><span class='product-3d-card-actions'>" + action + "</span></div>";
     }
     if (context === "customer") {
       host.innerHTML = ["rebuilt", "aftermarket_new"].map(function (kind) {
@@ -855,7 +1003,20 @@
       }).join("");
       return;
     }
-    host.innerHTML = visible.map(modelCardHtml).join("");
+    var failedGeneration = visible.some(function (model) { return model.model_source !== "uploaded" && model.status === "failed"; });
+    var usableAlternative = visible.some(function (model) {
+      return !!model.published_model_path && ["published", "review"].indexOf(model.status) >= 0;
+    });
+    var fallback = failedGeneration && !usableAlternative && manageable
+      ? "<div class='product-3d-empty-card'>3Dモデルを生成できませんでした。GLBファイルをアップロードしてください。</div>"
+      : "";
+    var uploadAction = manageable
+      ? "<button type='button' class='product-3d-card-action' data-upload-3d='" + context + "'>GLBをアップロード</button>"
+      : "";
+    var tripoAction = manageable
+      ? "<button type='button' class='product-3d-card-action' data-tripo-3d='" + context + "'>保存済み画像から3D作成</button>"
+      : "";
+    host.innerHTML = fallback + visible.map(modelCardHtml).join("") + uploadAction + tripoAction;
   }
   function modelStatusLabel(status) {
     return ({ draft: "撮影途中", waiting: "待機", processing: "処理中", needs_capture: "要追加撮影", failed: "失敗", review: "確認待ち", published: "公開済み", archived: "旧版" })[status] || status;
@@ -863,50 +1024,584 @@
   async function publishModel(modelId, context) {
     if (!canPublish3D()) { deny3D("publish_product_3d_model"); return; }
     if (!window.confirm("確認中の3Dモデルを得意先にも公開します。公開してよろしいですか？")) return;
+    var epoch = modelCacheEpoch;
     var result = await sb.rpc("publish_product_3d_model", { target_model_id: Number(modelId) });
+    if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
     if (result.error) { alert("3Dモデルを公開できませんでした: " + friendlyError(result.error)); return; }
     var dkdId = String(result.data.dkd_shohin_id);
     delete modelCache[dkdId]; delete internalModelCache[dkdId]; delete modelBadgeCache[dkdId];
     await renderMediaPane(context || "sales"); scheduleBadgeRefresh();
   }
-  async function openViewerById(modelId, context, dkdId) {
-    var requestId = ++viewerRequestId;
+  function clearModelCaches(dkdId) {
+    var key = String(dkdId);
+    delete modelCache[key]; delete internalModelCache[key]; delete modelBadgeCache[key];
+  }
+  function sameTripoTarget(requestId) {
+    if (!tripoTarget || !sessionModelsEnabled || requestId !== tripoRequestId) return false;
+    var current = selectedTarget(tripoTarget.context);
+    return productId(current.product) === tripoTarget.productId && current.kind === tripoTarget.kind && canManage3D();
+  }
+  function tripoStatus(text) { elements["product-3d-tripo-status"].textContent = text; }
+  function renderTripoJob() {
+    var status = tripoJob && tripoJob.status || "none";
+    var names = { none: "未作成", reserved: "開始確認中", submitted: "生成を依頼済み", processing: "生成中",
+      review: "非公開の確認待ち", publishing: "商品への登録確認中", published: "商品への登録済み",
+      failed: "生成失敗", cancelled: "生成中止", held: "結果確認が必要（再実行しないでください）", rejected: "不採用" };
+    tripoStatus("Tripo作成状態: " + (names[status] || status) +
+      (tripoJob && tripoJob.credits_consumed != null ? " / 使用 " + tripoJob.credits_consumed + " クレジット" : ""));
+    elements["product-3d-tripo-start"].hidden = !["none", "failed", "cancelled", "rejected", "published"].includes(status);
+    elements["product-3d-tripo-poll"].hidden = !["submitted", "processing"].includes(status);
+    elements["product-3d-tripo-preview"].hidden = status !== "review";
+    elements["product-3d-tripo-publish"].hidden = status !== "review" || !canPublish3D();
+    elements["product-3d-tripo-reject"].hidden = status !== "review";
+  }
+  async function tripoInvoke(payload) {
+    var result = await sb.functions.invoke("product-3d-tripo", { body: payload });
+    if (result.error) throw new Error(await edgeErrorMessage(result.error));
+    return result.data || {};
+  }
+  function tripoPayload(action) {
+    return { action: action, product_id: tripoTarget.productId, product_kind: tripoTarget.kind,
+      request_key: tripoJob && tripoJob.request_key };
+  }
+  function selectedTripoImages() {
+    var selected = Array.from(elements["product-3d-tripo-views"].querySelectorAll("select"))
+      .filter(function (node) { return node.value !== ""; })
+      .map(function (node) { return { view: node.dataset.tripoView, id: Number(node.value) }; });
+    if (!selected.length || new Set(selected.map(function (item) { return item.id; })).size !== selected.length ||
+        (selected.length > 1 && !selected.some(function (item) { return item.view === "front"; }))) {
+      throw new Error("1～4枚を重複なく選択してください。複数枚では正面が必須です。");
+    }
+    return selected;
+  }
+  function tripoContextLabel(product, target) {
+    var primary = productTitle(product);
+    var genuine = String(product.genuine_part_number || "");
+    return [primary, genuine && genuine !== primary ? genuine : null,
+      "商品ID " + target.productId, kindLabel(target.kind)].filter(Boolean).join(" / ");
+  }
+  function tripoImageLabel(row, index) {
+    var created = typeof row.created_at === "string" ? new Date(row.created_at) : null;
+    var date = created && Number.isFinite(created.getTime())
+      ? created.toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" }) : "";
+    return "画像 " + (index + 1) + " / ID " + row.id + (date ? "（" + date + "）" : "");
+  }
+  function clearTripoImagePreview() {
+    tripoImagePreviewRequestId += 1;
+    var preview = elements["product-3d-tripo-image-preview"];
+    if (!preview) return;
+    preview.hidden = true;
+    elements["product-3d-tripo-image-preview-img"].removeAttribute("src");
+    elements["product-3d-tripo-image-preview-label"].textContent = "";
+  }
+  async function showTripoImagePreview(button) {
+    var thumbnail = button && button.querySelector("img");
+    var signedUrl = thumbnail && thumbnail.getAttribute("src");
+    if (!signedUrl) { tripoStatus("画像の拡大表示を準備中です。しばらくしてから選択してください。"); return; }
+    var imageId = String(button.dataset.tripoImagePreview || "");
+    var row = tripoImageRows[imageId];
+    var previewRequestId = ++tripoImagePreviewRequestId;
+    var targetRequestId = tripoRequestId;
+    elements["product-3d-tripo-image-preview-img"].src = signedUrl;
+    elements["product-3d-tripo-image-preview-img"].alt = button.getAttribute("aria-label");
+    elements["product-3d-tripo-image-preview-label"].textContent = button.dataset.tripoLabel;
+    elements["product-3d-tripo-image-preview"].hidden = false;
+    if (!row || !row.storage_path) return;
+    // Keep the already loaded thumbnail visible while the original private image loads.
+    var originalUrl;
+    try { originalUrl = await signProductImageUrl(row.storage_path); }
+    catch (_) { return; }
+    if (!originalUrl || previewRequestId !== tripoImagePreviewRequestId ||
+        elements["product-3d-tripo-image-preview"].hidden || !sameTripoTarget(targetRequestId)) return;
+    elements["product-3d-tripo-image-preview-img"].src = originalUrl;
+  }
+  async function openTripo(context) {
+    if (!canManage3D()) { deny3D("product_3d_tripo"); return; }
     var target = selectedTarget(context || "sales");
-    var internal = context !== "customer" && canReview3D();
-    var models = internal ? await fetchInternalModels(dkdId || productId(target.product)) : await fetchPublishedModels(dkdId || productId(target.product));
-    if (requestId !== viewerRequestId) return;
+    if (!target.product || !productId(target.product) || !target.kind) {
+      alert("対象商品と区分を選択してください。"); return;
+    }
+    tripoReturnFocus = document.activeElement;
+    closeImageActionOverlays();
+    var requestId = ++tripoRequestId;
+    tripoTarget = { context: context || "sales", productId: productId(target.product), kind: target.kind };
+    tripoJob = null;
+    tripoImageRows = Object.create(null);
+    elements["product-3d-tripo-overlay"].classList.add("show");
+    elements["product-3d-tripo-overlay"].setAttribute("aria-hidden", "false");
+    elements["product-3d-tripo-close"].focus();
+    elements["product-3d-tripo-context"].textContent = tripoContextLabel(target.product, tripoTarget);
+    elements["product-3d-tripo-images"].textContent = "保存済み画像を読み込んでいます…";
+    clearTripoImagePreview();
+    elements["product-3d-tripo-views"].textContent = "";
+    tripoStatus("確認中…");
+    try {
+      var rows = await sb.from("core_product_images")
+        .select("id,storage_path,sort_order,created_at").eq("dkd_shohin_id", tripoTarget.productId)
+        .eq("product_kind", tripoTarget.kind).not("storage_path", "is", null)
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: false }).order("id", { ascending: false }).limit(80);
+      if (rows.error) throw rows.error;
+      if (!sameTripoTarget(requestId)) return;
+      var images = (rows.data || []).filter(function (row) { return row.storage_path; });
+      images.forEach(function (row) { tripoImageRows[String(row.id)] = row; });
+      elements["product-3d-tripo-images"].innerHTML = images.length ? images.map(function (row, index) {
+        var label = tripoImageLabel(row, index);
+        return "<figure><button type='button' data-tripo-image-preview='" + esc(row.id) + "' data-tripo-label='" + esc(label) + "' aria-label='" + esc(label + "を拡大表示") + "'><img data-tripo-image='" + esc(row.id) + "' alt='' loading='lazy'></button><figcaption>" + esc(label) + "</figcaption></figure>";
+      }).join("") : "この区分に保存済み画像がありません。先に商品画像を登録してください。";
+      var options = "<option value=''>選択しない</option>" + images.map(function (row, index) {
+        return "<option value='" + esc(row.id) + "'>" + esc(tripoImageLabel(row, index)) + "</option>";
+      }).join("");
+      elements["product-3d-tripo-views"].innerHTML = [
+        ["front", "正面"], ["left", "左側"], ["back", "背面"], ["right", "右側"]
+      ].map(function (entry) {
+        return "<label>" + entry[1] + "<select data-tripo-view='" + entry[0] + "'>" + options + "</select></label>";
+      }).join("");
+      images.forEach(async function (row) {
+        try {
+          var signed = await signProductImageUrl(row.storage_path);
+          if (!sameTripoTarget(requestId)) return;
+          var node = elements["product-3d-tripo-images"].querySelector("[data-tripo-image='" + row.id + "']");
+          if (node) node.src = signed;
+        } catch (_) { /* A missing preview does not authorize generating from an unavailable image. */ }
+      });
+      var latest = await tripoInvoke({ action: "latest", product_id: tripoTarget.productId, product_kind: tripoTarget.kind });
+      if (!sameTripoTarget(requestId)) return;
+      tripoJob = latest.status === "none" ? null : latest;
+      renderTripoJob();
+      if (!images.length) elements["product-3d-tripo-start"].hidden = true;
+    } catch (error) {
+      if (sameTripoTarget(requestId)) tripoStatus("画像または作成履歴を確認できませんでした: " + friendlyError(error));
+    }
+  }
+  function closeTripo() {
+    var previous = tripoTarget;
+    var wasOpen = elements["product-3d-tripo-overlay"].classList.contains("show");
+    tripoRequestId += 1;
+    tripoTarget = null; tripoJob = null;
+    tripoImageRows = Object.create(null);
+    clearTripoImagePreview();
+    elements["product-3d-tripo-overlay"].classList.remove("show");
+    elements["product-3d-tripo-overlay"].setAttribute("aria-hidden", "true");
+    var returnFocus = tripoReturnFocus;
+    tripoReturnFocus = null;
+    if (!wasOpen || !sessionModelsEnabled || !previous) return;
+    var current = selectedTarget(previous.context);
+    if (productId(current.product) !== previous.productId || current.kind !== previous.kind) return;
+    if (!returnFocus || !returnFocus.isConnected || !returnFocus.getClientRects().length) {
+      returnFocus = document.getElementById(previous.context === "production"
+        ? "production-open-image-actions" : "btn-open-image-actions");
+    }
+    if (returnFocus && returnFocus.isConnected && !returnFocus.disabled &&
+        returnFocus.getClientRects().length) returnFocus.focus();
+  }
+  function keepTripoFocus(event) {
+    if (event.key !== "Tab" || !elements["product-3d-tripo-overlay"].classList.contains("show") ||
+        elements["product-3d-viewer-overlay"].classList.contains("show")) return;
+    var controls = Array.from(elements["product-3d-tripo-overlay"].querySelectorAll("button, select"))
+      .filter(function (node) { return node.isConnected && !node.hidden && !node.disabled && node.getClientRects().length; });
+    if (!controls.length) return;
+    var first = controls[0];
+    var last = controls[controls.length - 1];
+    if (!controls.includes(document.activeElement) || (event.shiftKey && document.activeElement === first)) {
+      event.preventDefault();
+      (event.shiftKey && controls.includes(document.activeElement) ? last : first).focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault(); first.focus();
+    }
+  }
+  async function startTripo() {
+    if (tripoBusy || !tripoTarget || !canManage3D()) return;
+    var requestId = tripoRequestId;
+    var images;
+    try { images = selectedTripoImages(); }
+    catch (error) { tripoStatus(friendlyError(error)); return; }
+    tripoBusy = true;
+    try {
+      var quote = await tripoInvoke(Object.assign(tripoPayload("quote"), { images: images }));
+      if (!sameTripoTarget(requestId)) return;
+      if (!quote.can_start) { tripoStatus("Tripo APIの残高が不足しています。"); return; }
+      if (!window.confirm("選択した保存済み画像を外部サービスTripoへ送信し、3Dモデルを1回作成します。見積り " + quote.estimated_credits +
+          " クレジット、現在残高 " + quote.balance + " クレジット。実際の料金はTripo APIで確定します。開始しますか？")) return;
+      var requestKey = crypto.randomUUID();
+      tripoJob = { request_key: requestKey, status: "reserved" };
+      renderTripoJob();
+      var created = await tripoInvoke(Object.assign(tripoPayload("start"), {
+        images: images, confirm_paid_generation: true,
+        accepted_estimate_credits: quote.estimated_credits
+      }));
+      if (!sameTripoTarget(requestId)) return;
+      tripoJob = created; renderTripoJob();
+    } catch (error) {
+      if (sameTripoTarget(requestId)) tripoStatus("開始結果を確認できません。再実行せず管理者に確認してください: " + friendlyError(error));
+    } finally { tripoBusy = false; }
+  }
+  async function pollTripo() {
+    if (tripoBusy || !tripoTarget || !tripoJob || !tripoJob.request_key) return;
+    var requestId = tripoRequestId;
+    tripoBusy = true;
+    try {
+      var result = await tripoInvoke(tripoPayload("poll"));
+      if (sameTripoTarget(requestId)) { tripoJob = result; renderTripoJob(); }
+    } catch (error) {
+      if (sameTripoTarget(requestId)) tripoStatus("生成結果の確認を保留しました。再作成せず管理者に確認してください: " + friendlyError(error));
+    } finally { tripoBusy = false; }
+  }
+  async function previewTripo() {
+    if (tripoBusy || !tripoTarget || !tripoJob || tripoJob.status !== "review") return;
+    var requestId = tripoRequestId;
+    try {
+      var result = await tripoInvoke(tripoPayload("preview"));
+      if (!sameTripoTarget(requestId)) return;
+      var viewerRequest = ++viewerRequestId;
+      var overlay = elements["product-3d-viewer-overlay"];
+      viewerReturnFocus = elements["product-3d-tripo-preview"];
+      viewerFocusTarget = { context: tripoTarget.context, productId: tripoTarget.productId, kind: tripoTarget.kind };
+      overlay.classList.add("show"); overlay.setAttribute("aria-hidden", "false");
+      elements["product-3d-viewer-close"].focus();
+      elements["product-3d-viewer-title"].textContent = "Tripo生成結果 / 非公開プレビュー";
+      elements["product-3d-viewer-loading"].textContent = "3Dモデルを読み込んでいます...";
+      elements["product-3d-viewer-loading"].hidden = false;
+      if (viewer) { viewer.dispose(); viewer = null; }
+      var module = await import("./product-3d-viewer.js?v=1.1.1078");
+      if (!sameTripoTarget(requestId) || viewerRequest !== viewerRequestId) return;
+      var created = await module.createProduct3DViewer({
+        host: elements["product-3d-viewer-stage"], url: result.preview_url,
+        fullscreenElement: elements["product-3d-viewer-shell"] || elements["product-3d-viewer-stage"],
+        autoRotate: false
+      });
+      if (!sameTripoTarget(requestId) || viewerRequest !== viewerRequestId) { created.dispose(); return; }
+      viewer = created; elements["product-3d-viewer-loading"].hidden = true;
+    } catch (error) { if (sameTripoTarget(requestId)) tripoStatus("プレビューできませんでした: " + friendlyError(error)); }
+  }
+  async function publishTripo() {
+    if (tripoBusy || !tripoTarget || !tripoJob || tripoJob.status !== "review" || !canPublish3D()) return;
+    var requestId = tripoRequestId;
+    tripoBusy = true;
+    try {
+      var active = await sb.from("product_3d_uploaded_models").select("id")
+        .eq("dkd_shohin_id", tripoTarget.productId).eq("product_kind", tripoTarget.kind)
+        .eq("status", "ready").maybeSingle();
+      if (active.error) throw active.error;
+      if (!sameTripoTarget(requestId)) return;
+      if (!window.confirm("確認済みのTripoモデルを商品へ登録します。現在の外部GLBがあれば差し替えます。よろしいですか？")) return;
+      var result = await tripoInvoke(Object.assign(tripoPayload("publish"), {
+        confirm_publish: true, replaced_id: active.data && active.data.id || null
+      }));
+      if (!sameTripoTarget(requestId)) return;
+      tripoJob = result; renderTripoJob();
+      clearModelCaches(tripoTarget.productId);
+      await renderMediaPane(tripoTarget.context);
+      scheduleBadgeRefresh();
+    } catch (error) {
+      if (sameTripoTarget(requestId)) tripoStatus("登録結果が未確認です。再実行せず管理者に確認してください: " + friendlyError(error));
+    } finally { tripoBusy = false; }
+  }
+  async function rejectTripo() {
+    if (tripoBusy || !tripoTarget || !tripoJob || tripoJob.status !== "review" ||
+        !window.confirm("この生成結果を不採用にしますか？非公開モデルは監査用に保持します。")) return;
+    var requestId = tripoRequestId;
+    tripoBusy = true;
+    try {
+      var result = await tripoInvoke(tripoPayload("reject"));
+      if (sameTripoTarget(requestId)) { tripoJob = result; renderTripoJob(); }
+    } catch (error) { if (sameTripoTarget(requestId)) tripoStatus("不採用を確定できませんでした: " + friendlyError(error)); }
+    finally { tripoBusy = false; }
+  }
+  function selectGlbForUpload(context, replacedId) {
+    if (!sessionModelsEnabled || glbMutationBusy) return;
+    if (!canManage3D()) { deny3D("upload_product_3d_glb"); return; }
+    var target = selectedTarget(context || "sales");
+    if (!target.product || !productId(target.product) || !target.kind) {
+      alert("3Dモデルを登録する商品と区分を選択してください。");
+      return;
+    }
+    glbUploadTarget = {
+      context: context || "sales", productId: productId(target.product),
+      kind: target.kind, replacedId: replacedId || ""
+    };
+    closeImageActionOverlays();
+    elements["product-3d-glb-file"].value = "";
+    elements["product-3d-glb-file"].click();
+  }
+  async function uploadSelectedGlb() {
+    var input = elements["product-3d-glb-file"];
+    var file = input.files && input.files[0];
+    var target = glbUploadTarget;
+    glbUploadTarget = null;
+    if (!file || !target || !sessionModelsEnabled || glbMutationBusy) return;
+    var epoch = modelCacheEpoch;
+    var selected = selectedTarget(target.context);
+    if (productId(selected.product) !== target.productId || selected.kind !== target.kind || !canManage3D()) {
+      alert("商品・区分・権限が変わりました。GLBを選び直してください。");
+      input.value = "";
+      return;
+    }
+    if (!/\.glb$/i.test(file.name) || file.size < 20 || file.size > 30 * 1024 * 1024 ||
+        ["", "model/gltf-binary", "application/octet-stream"].indexOf(file.type) < 0) {
+      alert("30 MB以下のGLBファイル（.glb）を選択してください。");
+      return;
+    }
+    var form = new FormData();
+    form.append("action", "upload");
+    form.append("product_id", String(target.productId));
+    form.append("product_kind", target.kind);
+    form.append("replaced_id", target.replacedId);
+    form.append("file", file);
+    glbMutationBusy = true;
+    input.disabled = true;
+    var result;
+    try {
+      try {
+        result = await sb.functions.invoke("product-3d-glb", { body: form });
+        if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+        // This Edge contract returns 400/413 before reserving a model or writing Storage.
+        var response = result.error && result.error.context;
+        if (response && (response.status === 400 || response.status === 413) &&
+            typeof response.json === "function") {
+          var rejected = null;
+          try { rejected = await response.json(); }
+          catch (_) { /* An unreadable response remains an uncertain outcome. */ }
+          if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+          if (rejected && typeof rejected.error === "string") {
+            alert(response.status === 413
+              ? "GLBは登録されませんでした。送信サイズが上限を超えています。小さいファイルを選び直してください。"
+              : "GLBは登録されませんでした。ファイルの形式・内容を確認してください: " + rejected.error);
+            return;
+          }
+        }
+        if (result.error || !result.data || !result.data.ok) {
+          throw new Error(await edgeErrorMessage(result.error || (result.data && result.data.error)));
+        }
+      } catch (error) {
+        if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+        // A lost response does not prove the server failed. Refresh read-only
+        // state, and never automatically submit the same file a second time.
+        clearModelCaches(target.productId);
+        try {
+          selected = selectedTarget(target.context);
+          if (productId(selected.product) === target.productId && selected.kind === target.kind) {
+            await renderMediaPane(target.context);
+            if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+            await refreshMediaAvailability(target.context);
+            if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+            scheduleBadgeRefresh();
+          }
+        } catch (refreshError) { console.warn("GLB status refresh failed", refreshError); }
+        if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+        alert("GLB登録の結果を確認できません。再送信せず、登録状態を確認してください: " + friendlyError(error));
+        return;
+      }
+      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+      clearModelCaches(target.productId);
+      // The new model is committed, but the old Storage object may still need
+      // attention. Report that independently of the optional preview refresh.
+      if (result.data.cleanup_pending) alert("新しいGLBは登録されました。旧ファイルの片付けは保留されています。");
+      selected = selectedTarget(target.context);
+      if (productId(selected.product) !== target.productId || selected.kind !== target.kind) {
+        alert("GLBは登録されました。対象商品を選び直してプレビューを確認してください。");
+        return;
+      }
+      try {
+        await renderMediaPane(target.context);
+        if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+        await refreshMediaAvailability(target.context);
+        if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+        scheduleBadgeRefresh();
+        await openViewerById("uploaded:" + result.data.model_id, target.context, target.productId);
+      } catch (error) {
+        if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+        alert("GLBは登録されましたが、プレビューを更新できませんでした: " + friendlyError(error));
+      }
+    } finally {
+      if (epoch === modelCacheEpoch) {
+        input.disabled = false;
+        input.value = "";
+      }
+      glbMutationBusy = false;
+    }
+  }
+  async function deleteUploadedGlb(context, modelId) {
+    if (!sessionModelsEnabled || glbMutationBusy) return;
+    if (!canManage3D()) { deny3D("delete_product_3d_glb"); return; }
+    var target = selectedTarget(context || "sales");
+    if (!target.product || !target.kind || !window.confirm("登録済みの外部GLBを削除しますか？")) return;
+    var dkdId = productId(target.product);
+    var epoch = modelCacheEpoch;
+    var deletionConfirmed = false;
+    var partialCleanupMessage = "";
+    glbMutationBusy = true;
+    try {
+      var result = await sb.functions.invoke("product-3d-glb", {
+        body: { action: "delete", product_id: dkdId, product_kind: target.kind, model_id: modelId }
+      });
+      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+      deletionConfirmed = !!(result && !result.error && result.data && result.data.ok === true);
+      var errorBody = null;
+      if (result.error && result.error.context && typeof result.error.context.json === "function") {
+        try { errorBody = await result.error.context.json(); }
+        catch (_) { /* A transport or malformed response leaves the outcome uncertain. */ }
+      }
+      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+      if (errorBody && errorBody.model_retired === true && errorBody.cleanup_pending === true) {
+        partialCleanupMessage = errorBody.storage_removal_confirmed === true
+          ? "GLBは表示から外れ、ファイルは削除されましたが、管理記録の片付けは保留中です。再実行せず管理者に確認してください。"
+          : "GLBは表示から外れましたが、ファイル削除の結果は確認できません。再実行せず管理者に確認してください。";
+      }
+      clearModelCaches(dkdId);
+      await renderMediaPane(context || "sales");
+      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+      await refreshMediaAvailability(context || "sales");
+      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+      scheduleBadgeRefresh();
+      if (partialCleanupMessage) { alert(partialCleanupMessage); return; }
+      if (result.error || !result.data || !result.data.ok) {
+        var message = errorBody && typeof errorBody.error === "string"
+          ? errorBody.error : await edgeErrorMessage(result.error || (result.data && result.data.error));
+        if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+        alert("GLB削除を完了できませんでした。再実行せず管理者に確認してください: " + message);
+      }
+    } catch (error) {
+      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+      if (deletionConfirmed) {
+        alert("GLBは削除されましたが、画面を更新できませんでした。商品を選び直して確認してください: " + friendlyError(error));
+        return;
+      }
+      if (partialCleanupMessage) {
+        alert(partialCleanupMessage + " 画面も更新できませんでした。商品を選び直して確認してください。");
+        return;
+      }
+      clearModelCaches(dkdId);
+      try {
+        var selectedAfterDelete = selectedTarget(context || "sales");
+        if (productId(selectedAfterDelete.product) === dkdId && selectedAfterDelete.kind === target.kind) {
+          await renderMediaPane(context || "sales");
+          if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+          await refreshMediaAvailability(context || "sales");
+          if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+          scheduleBadgeRefresh();
+        }
+      } catch (refreshError) { console.warn("GLB delete status refresh failed", refreshError); }
+      if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+      alert("GLB削除の状態を確認できません。再実行せず管理者に確認してください: " + friendlyError(error));
+    } finally {
+      glbMutationBusy = false;
+    }
+  }
+  async function openViewerById(modelId, context, dkdId) {
+    var activeContext = context || "sales";
+    var target = selectedTarget(activeContext);
+    var targetId = productId(target.product);
+    if (!sessionModelsEnabled || !targetId || (dkdId != null && Number(dkdId) !== targetId)) return;
+    var targetKind = target.kind;
+    var requestId = ++viewerRequestId;
+    var internal = activeContext !== "customer" && canReview3D();
+    function targetStillSelected() {
+      var current = selectedTarget(activeContext);
+      return requestId === viewerRequestId && sessionModelsEnabled &&
+        productId(current.product) === targetId &&
+        (activeContext === "customer" || current.kind === targetKind) &&
+        internal === (activeContext !== "customer" && canReview3D());
+    }
+    var models = internal ? await fetchInternalModels(targetId) : await fetchPublishedModels(targetId);
+    if (!targetStillSelected()) return;
     var model = models.find(function (row) { return String(row.id) === String(modelId); });
-    if (!model) return;
+    if (!model || (activeContext !== "customer" && model.product_kind !== targetKind)) return;
     var signed = await sb.storage.from(BUCKET).createSignedUrl(model.published_model_path, 600);
-    if (requestId !== viewerRequestId) return;
+    if (!targetStillSelected()) return;
     if (signed.error) { alert("3Dモデルを開けませんでした: " + friendlyError(signed.error)); return; }
-    elements["product-3d-viewer-overlay"].classList.add("show");
-    elements["product-3d-viewer-overlay"].setAttribute("aria-hidden", "false");
+    var viewerOverlay = elements["product-3d-viewer-overlay"];
+    if (!viewerOverlay.classList.contains("show")) {
+      var previousFocus = document.activeElement;
+      viewerReturnFocus = previousFocus && previousFocus !== document.body &&
+        typeof previousFocus.focus === "function" ? previousFocus : null;
+      viewerFocusTarget = { context: activeContext, productId: targetId, kind: targetKind };
+    }
+    viewerOverlay.classList.add("show");
+    viewerOverlay.setAttribute("aria-hidden", "false");
+    elements["product-3d-viewer-close"].focus();
     elements["product-3d-viewer-title"].textContent = productTitle(target.product) + " / " + kindLabel(model.product_kind);
+    elements["product-3d-viewer-loading"].textContent = "3Dモデルを読み込んでいます...";
     elements["product-3d-viewer-loading"].hidden = false;
+    elements["product-3d-viewer-fullscreen-notice"].hidden = true;
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await import("./product-3d-viewer.js?v=1.1.776");
+      var module = await import("./product-3d-viewer.js?v=1.1.1078");
+      if (!targetStillSelected()) {
+        if (requestId === viewerRequestId) closeViewer();
+        return;
+      }
       var createdViewer = await module.createProduct3DViewer({
         host: elements["product-3d-viewer-stage"],
         url: signed.data.signedUrl,
         fullscreenElement: elements["product-3d-viewer-shell"] || elements["product-3d-viewer-stage"],
         autoRotate: false
       });
-      if (requestId !== viewerRequestId) { createdViewer.dispose(); return; }
+      if (!targetStillSelected()) {
+        createdViewer.dispose();
+        if (requestId === viewerRequestId) closeViewer();
+        return;
+      }
       viewer = createdViewer;
       elements["product-3d-viewer-loading"].hidden = true;
     } catch (error) {
-      if (requestId !== viewerRequestId) return;
+      if (!targetStillSelected()) {
+        if (requestId === viewerRequestId) closeViewer();
+        return;
+      }
       elements["product-3d-viewer-loading"].textContent = "3Dモデルの読込に失敗しました: " + friendlyError(error);
+    }
+  }
+  function keepViewerFocus(event) {
+    if (event.key !== "Tab" || !elements["product-3d-viewer-overlay"].classList.contains("show")) return;
+    var controls = ["product-3d-viewer-close", "product-3d-viewer-zoom-in", "product-3d-viewer-zoom-out",
+      "product-3d-viewer-reset", "product-3d-viewer-autorotate", "product-3d-viewer-fullscreen"]
+      .map(function (id) { return elements[id]; })
+      .filter(function (node) { return node && node.isConnected && !node.hidden && !node.disabled; });
+    if (!controls.length) return;
+    var first = controls[0];
+    var last = controls[controls.length - 1];
+    if (!controls.includes(document.activeElement) || (event.shiftKey && document.activeElement === first)) {
+      event.preventDefault();
+      (event.shiftKey && controls.includes(document.activeElement) ? last : first).focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+  async function toggleViewerFullscreen() {
+    if (!viewer) return;
+    try {
+      await viewer.fullscreen();
+      elements["product-3d-viewer-fullscreen-notice"].hidden = true;
+    } catch (error) {
+      elements["product-3d-viewer-fullscreen-notice"].hidden = false;
+      console.warn("Product 3D fullscreen unavailable", error);
     }
   }
   function closeViewer() {
     viewerRequestId += 1;
     if (viewer) { viewer.dispose(); viewer = null; }
-    elements["product-3d-viewer-overlay"].classList.remove("show");
-    elements["product-3d-viewer-overlay"].setAttribute("aria-hidden", "true");
+    var fullscreenTarget = elements["product-3d-viewer-shell"] || elements["product-3d-viewer-stage"];
+    if (document.fullscreenElement === fullscreenTarget && typeof document.exitFullscreen === "function") {
+      document.exitFullscreen().catch(function () {});
+    }
+    var viewerOverlay = elements["product-3d-viewer-overlay"];
+    var wasOpen = viewerOverlay.classList.contains("show");
+    viewerOverlay.classList.remove("show");
+    viewerOverlay.setAttribute("aria-hidden", "true");
     elements["product-3d-viewer-loading"].hidden = true;
+    elements["product-3d-viewer-fullscreen-notice"].hidden = true;
+    var returnFocus = viewerReturnFocus;
+    var focusTarget = viewerFocusTarget;
+    viewerReturnFocus = null;
+    viewerFocusTarget = null;
+    if (wasOpen && sessionModelsEnabled && focusTarget && returnFocus && returnFocus.isConnected &&
+        !returnFocus.disabled && !returnFocus.hidden) {
+      var current = selectedTarget(focusTarget.context);
+      if (productId(current.product) === focusTarget.productId &&
+          (focusTarget.context === "customer" || current.kind === focusTarget.kind)) returnFocus.focus();
+    }
   }
   function closeCapture() {
     stopCamera();
@@ -918,6 +1613,22 @@
   function bind() {
     el("btn-image-action-create-3d").addEventListener("click", function () { openCapture("sales"); });
     el("production-image-action-create-3d").addEventListener("click", function () { openCapture("production"); });
+    el("btn-image-action-upload-glb").addEventListener("click", function () { selectGlbForUpload("sales"); });
+    el("production-image-action-upload-glb").addEventListener("click", function () { selectGlbForUpload("production"); });
+    el("btn-image-action-tripo").addEventListener("click", function () { openTripo("sales"); });
+    el("production-image-action-tripo").addEventListener("click", function () { openTripo("production"); });
+    elements["product-3d-tripo-close"].addEventListener("click", closeTripo);
+    elements["product-3d-tripo-images"].addEventListener("click", function (event) {
+      var button = event.target.closest("[data-tripo-image-preview]");
+      if (button && elements["product-3d-tripo-images"].contains(button)) showTripoImagePreview(button);
+    });
+    elements["product-3d-tripo-image-preview-close"].addEventListener("click", clearTripoImagePreview);
+    elements["product-3d-tripo-start"].addEventListener("click", startTripo);
+    elements["product-3d-tripo-poll"].addEventListener("click", pollTripo);
+    elements["product-3d-tripo-preview"].addEventListener("click", previewTripo);
+    elements["product-3d-tripo-publish"].addEventListener("click", publishTripo);
+    elements["product-3d-tripo-reject"].addEventListener("click", rejectTripo);
+    elements["product-3d-glb-file"].addEventListener("change", uploadSelectedGlb);
     elements["product-3d-capture-close"].addEventListener("click", closeCapture);
     elements["product-3d-start-camera"].addEventListener("click", startCamera);
     elements["product-3d-snapshot"].addEventListener("click", function () { captureSnapshot("camera_still"); });
@@ -929,11 +1640,13 @@
       state.currentDirection = button.dataset.direction; renderDial(); drawGuide(state.guide);
     });
     elements["product-3d-viewer-close"].addEventListener("click", closeViewer);
+    elements["product-3d-viewer-zoom-in"].addEventListener("click", function () { if (viewer) viewer.zoomIn(); });
+    elements["product-3d-viewer-zoom-out"].addEventListener("click", function () { if (viewer) viewer.zoomOut(); });
     elements["product-3d-viewer-reset"].addEventListener("click", function () { if (viewer) viewer.reset(); });
     elements["product-3d-viewer-autorotate"].addEventListener("click", function () {
       if (!viewer) return; var active = this.getAttribute("aria-pressed") !== "true"; viewer.setAutoRotate(active); this.setAttribute("aria-pressed", active ? "true" : "false");
     });
-    elements["product-3d-viewer-fullscreen"].addEventListener("click", function () { if (viewer) viewer.fullscreen(); });
+    elements["product-3d-viewer-fullscreen"].addEventListener("click", toggleViewerFullscreen);
     document.addEventListener("click", function (event) {
       var media = event.target.closest("[data-product-media]");
       if (media) {
@@ -945,22 +1658,87 @@
         if (mode === "model") renderMediaPane(context);
       }
       var create = event.target.closest("[data-create-3d]"); if (create) openCapture(create.dataset.create3d);
+      var tripo = event.target.closest("[data-tripo-3d]"); if (tripo) openTripo(tripo.dataset.tripo3d);
+      var upload = event.target.closest("[data-upload-3d]"); if (upload) selectGlbForUpload(upload.dataset.upload3d);
+      var replace = event.target.closest("[data-replace-uploaded]");
+      if (replace) selectGlbForUpload(replace.dataset.uploadContext, replace.dataset.replaceUploaded);
+      var remove = event.target.closest("[data-delete-uploaded]");
+      if (remove) deleteUploadedGlb(remove.dataset.uploadContext, remove.dataset.deleteUploaded);
       var open = event.target.closest("[data-open-model]"); if (open) openViewerById(open.dataset.openModel, open.dataset.modelContext, Number(open.dataset.modelProduct));
       var publish = event.target.closest("[data-publish-model]"); if (publish) publishModel(publish.dataset.publishModel, publish.dataset.publishContext);
     });
     window.addEventListener("resize", function () { if (state.stream) drawGuide(state.guide); });
-    document.addEventListener("keydown", function (event) { if (event.key === "Escape") { closeCapture(); closeViewer(); } });
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") {
+        if (elements["product-3d-viewer-overlay"].classList.contains("show")) closeViewer();
+        else if (elements["product-3d-tripo-overlay"].classList.contains("show")) closeTripo();
+        else closeCapture();
+      } else { keepViewerFocus(event); keepTripoFocus(event); }
+    });
+  }
+
+  function resetSessionModels() {
+    modelCacheEpoch += 1;
+    modelCache = Object.create(null);
+    internalModelCache = Object.create(null);
+    modelBadgeCache = Object.create(null);
+    Object.keys(mediaAvailabilityRequest).forEach(function (context) { mediaAvailabilityRequest[context] += 1; });
+    Object.keys(mediaPaneRequest).forEach(function (context) { mediaPaneRequest[context] += 1; });
+    if (badgeRefreshTimer) window.clearTimeout(badgeRefreshTimer);
+    badgeRefreshTimer = null;
+    glbUploadTarget = null;
+    if (elements["product-3d-glb-file"]) {
+      elements["product-3d-glb-file"].disabled = false;
+      elements["product-3d-glb-file"].value = "";
+    }
+    closeCapture(); closeViewer(); closeTripo();
+    state = freshState();
+    document.querySelectorAll(".product-3d-has-badge").forEach(function (badge) { badge.remove(); });
+    document.querySelectorAll("[data-product-media-pane='model']").forEach(function (pane) {
+      pane.hidden = true;
+      var switcher = pane.parentElement && pane.parentElement.querySelector(".product-media-switch");
+      var modelTab = switcher && switcher.querySelector("[data-product-media='model']");
+      var photoTab = switcher && switcher.querySelector("[data-product-media='photos']");
+      var photoPane = pane.parentElement && pane.parentElement.querySelector("[data-product-media-pane='photos']");
+      if (modelTab) { modelTab.hidden = true; modelTab.classList.remove("active"); modelTab.setAttribute("aria-selected", "false"); }
+      if (photoTab) { photoTab.classList.add("active"); photoTab.setAttribute("aria-selected", "true"); }
+      if (photoPane) photoPane.hidden = false;
+      var mediaShell = switcher && switcher.closest("[data-product-3d-media-shell]");
+      if (mediaShell && mediaShell.dataset.noPhotos === "true") mediaShell.hidden = true;
+    });
+    ["sales-product-3d-list", "production-product-3d-list", "customer-product-3d-list"].forEach(function (id) {
+      var host = el(id); if (host) host.textContent = "";
+    });
+  }
+
+  function bindSessionBoundary() {
+    if (!sb.auth || typeof sb.auth.onAuthStateChange !== "function") return;
+    sb.auth.onAuthStateChange(function (event, session) {
+      if (["INITIAL_SESSION", "SIGNED_IN", "SIGNED_OUT", "USER_UPDATED"].indexOf(event) < 0) return;
+      var userId = event === "SIGNED_OUT" ? null : (session && session.user && session.user.id || null);
+      if (event === "SIGNED_IN" && userId === modelAuthUserId) return;
+      modelAuthUserId = userId;
+      sessionModelsEnabled = !!userId;
+      resetSessionModels();
+      // Supabase calls auth listeners synchronously; defer all database reads.
+      if (sessionModelsEnabled) window.setTimeout(function () {
+        if (modelAuthUserId !== userId || !sessionModelsEnabled) return;
+        ["sales", "production", "customer"].forEach(refreshMediaAvailability);
+        scheduleBadgeRefresh();
+      }, 0);
+    });
   }
 
   function init() {
     cacheElements();
     if (!elements["product-3d-capture-overlay"] || typeof sb === "undefined") return;
-    bind(); renderAll();
+    bind(); bindSessionBoundary(); renderAll();
+    ["sales", "production", "customer"].forEach(refreshMediaAvailability);
     ["list", "production-list", "customer-catalog-list"].forEach(function (id) {
       var host = el(id); if (host) new MutationObserver(scheduleBadgeRefresh).observe(host, { childList: true, subtree: true });
     });
     scheduleBadgeRefresh();
   }
-  window.DcatsProduct3D = { openCapture: openCapture, renderMediaPane: renderMediaPane, fetchPublishedModels: fetchPublishedModels, refreshListBadges: refreshListBadges };
+  window.DcatsProduct3D = { openCapture: openCapture, renderMediaPane: renderMediaPane, fetchPublishedModels: fetchPublishedModels, refreshListBadges: refreshListBadges, refreshMediaAvailability: refreshMediaAvailability };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
 })();

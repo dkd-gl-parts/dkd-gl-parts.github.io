@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ja">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Product 3D Viewer UI state fixture</title>
+<link rel="stylesheet" href="../styles.css">
+<div class="product-3d-viewer-shell">
+  <div class="product-3d-viewer-loading" id="visible-loading">読み込み中</div>
+  <div class="product-3d-viewer-loading" id="hidden-loading" hidden>表示してはいけない読込層</div>
+  <div class="product-3d-viewer-toolbar">
+    <span id="product-3d-viewer-fullscreen-notice" hidden>表示してはいけない通知</span>
+  </div>
+</div>
+<p id="result" role="status"></p>
+<script>
+  const visible = getComputedStyle(document.getElementById('visible-loading')).display;
+  const hidden = getComputedStyle(document.getElementById('hidden-loading')).display;
+  const notice = getComputedStyle(document.getElementById('product-3d-viewer-fullscreen-notice')).display;
+  document.getElementById('result').textContent =
+    visible === 'grid' && hidden === 'none' && notice === 'none'
+      ? 'PASS: loaded Viewer is unobstructed'
+      : `FAIL: visible=${visible}, hidden=${hidden}, notice=${notice}`;
+</script>
