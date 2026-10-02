@@ -7801,6 +7801,47 @@ async function issueConciergePilotLogin(record, requestId) {
   });
 }
 window.DcatsHanbaiohLoginApi = Object.freeze({ issue: issueConciergePilotLogin });
+function validConciergeTestSalesDevice(record) {
+  var uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return !!currentUser && isSystemAdmin() && record && typeof record === "object" &&
+    !Array.isArray(record) &&
+    Object.keys(record).sort().join(",") ===
+      "actor_id,device_id,public_key_sha256,public_key_spki" &&
+    record.actor_id === currentUser.id && uuid.test(record.device_id) &&
+    typeof record.public_key_sha256 === "string" &&
+    /^[0-9a-f]{64}$/.test(record.public_key_sha256) &&
+    typeof record.public_key_spki === "string" &&
+    record.public_key_spki.length >= 200 && record.public_key_spki.length <= 1600;
+}
+async function issueConciergeTestSalesBinding(record) {
+  if (!validConciergeTestSalesDevice(record)) {
+    return { data: null, error: new Error("invalid_test_sales_device") };
+  }
+  return sb.functions.invoke("issue-hanbaioh-test-sales-binding", {
+    body: { device_id: record.device_id }
+  });
+}
+async function claimConciergeTestSale(record, slipNumber, csvSha256) {
+  if (!validConciergeTestSalesDevice(record) ||
+      typeof slipNumber !== "string" || !/^9\d{5}$/.test(slipNumber) ||
+      typeof csvSha256 !== "string" || !/^[0-9a-f]{64}$/.test(csvSha256)) {
+    return { data: null, error: new Error("invalid_test_sales_claim") };
+  }
+  // This server operation consumes a durable one-shot claim. The caller must
+  // never retry it after a missing or ambiguous response.
+  return sb.functions.invoke("issue-hanbaioh-test-sales-claim", {
+    body: {
+      company_name: "D-CATS連携テスト（実データ禁止）",
+      device_id: record.device_id,
+      slip_number: slipNumber,
+      csv_sha256: csvSha256
+    }
+  });
+}
+window.DcatsHanbaiohTestSalesApi = Object.freeze({
+  issueBinding: issueConciergeTestSalesBinding,
+  claimOnce: claimConciergeTestSale
+});
 var CONCIERGE_AI_SCREEN_IDS = Object.freeze({
   menu: true,
   search: true,
