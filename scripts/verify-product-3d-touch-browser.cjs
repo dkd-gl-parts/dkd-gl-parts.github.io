@@ -146,8 +146,30 @@ async function main() {
   const resetDifference = difference(await pixels(before), await pixels(reset));
   assert.ok(resetDifference < changed * 0.5,
     `reset did not return near the original view (${resetDifference} vs ${changed})`);
+  const button = await evaluate(`(() => {
+    const rect = document.querySelector('#fullscreen').getBoundingClientRect();
+    return { x: Math.round(rect.x + rect.width / 2), y: Math.round(rect.y + rect.height / 2) };
+  })()`);
+  await call('Input.dispatchTouchEvent', {
+    type: 'touchStart', touchPoints: point(button.x, button.y)
+  });
+  await call('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await until(() => evaluate('document.fullscreenElement?.id === "stage"'), 3000);
+  await call('Input.dispatchKeyEvent', {
+    type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27
+  });
+  await call('Input.dispatchKeyEvent', {
+    type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27
+  });
+  await delay(500);
+  const escaped = !(await evaluate('Boolean(document.fullscreenElement)'));
+  // Headless CDP may not deliver Escape to the browser's fullscreen chrome.
+  // Do not report a product failure or claim physical-key QA from that case.
+  if (!escaped) await evaluate('document.exitFullscreen()');
+  assert.equal(await evaluate('Boolean(document.fullscreenElement)'), false);
   console.log(JSON.stringify({ result: 'PASS', viewport: '390x844', changedPixels: changed,
-    resetDifference, fixture: 'synthetic GLB', browser: 'headless Chrome touch emulation' }));
+    resetDifference, fullscreenEntry: 'PASS', fullscreenEscape: escaped ? 'PASS' : 'UNVERIFIED', fixture: 'synthetic GLB',
+    browser: 'headless Chrome touch emulation' }));
 }
 
 main().catch(error => { console.error(error); process.exitCode = 1; }).finally(async () => {
