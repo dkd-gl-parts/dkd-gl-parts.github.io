@@ -51,7 +51,7 @@
     var code = makerCodes[makers.indexOf(maker)];
     if (!validPart(clean(part)) || !code) throw new Error("invalid_research_input");
     var matches = documentValue.items.filter(function(item) { return item && item.maker === code && normalized(item.part) === normalized(part); });
-    if (matches.length !== 1 || matches[0].status !== "completed" || !Array.isArray(matches[0].records) || !matches[0].records.length || matches[0].records.length > 100) throw new Error("incomplete_review_item");
+    if (matches.length !== 1 || matches[0].status !== "completed" || !Array.isArray(matches[0].records) || !matches[0].records.length || matches[0].records.length > 500) throw new Error("incomplete_review_item");
     var seen = {};
     return matches[0].records.map(function(row) {
       var raw = row && row.raw_payload;
