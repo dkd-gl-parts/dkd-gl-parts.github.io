@@ -9,6 +9,15 @@ const viewer = fs.readFileSync(path.join(root, "product-3d-viewer.js"), "utf8");
 const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
 const headers = fs.readFileSync(path.join(root, "_headers"), "utf8");
 const build = fs.readFileSync(path.join(root, "scripts", "build-static-site.js"), "utf8");
+const appVersion = (app.match(/var\s+APP_VERSION\s*=\s*"v([^"]+)"/) || [])[1];
+if (!appVersion) throw new Error("D-CATS app version is missing");
+const viewerImportVersions = Array.from(
+  client.matchAll(/import\("\.\/product-3d-viewer\.js\?v=([^"]+)"\)/g),
+  (match) => match[1]
+);
+if (viewerImportVersions.length !== 1 || viewerImportVersions[0] !== appVersion) {
+  throw new Error("3D Viewer import must use the current D-CATS app version exactly once");
+}
 
 function requireText(source, fragment, label) {
   if (!source.includes(fragment)) throw new Error(`${label} is missing: ${fragment}`);
@@ -27,7 +36,7 @@ function requireText(source, fragment, label) {
   "production-image-action-upload-glb",
   "product-3d-viewer-zoom-in",
   "product-3d-viewer-zoom-out",
-  "product-3d.js?v=1.1.1084"
+  "product-3d.js?v=" + appVersion
 ].forEach((fragment) => requireText(html, fragment, "3D UI contract"));
 
 [
@@ -71,7 +80,6 @@ function requireText(source, fragment, label) {
   "確認待ち",
   "data-publish-model",
   "createSignedUrl(model.published_model_path, 600)",
-  "import(\"./product-3d-viewer.js?v=1.1.1081\")",
   "if (!canManage3D()) { deny3D(\"open_product_3d_capture\"); return; }",
   "if (!canManage3D()) { deny3D(\"submit_product_3d_model\"); return; }",
   "if (!canPublish3D()) { deny3D(\"publish_product_3d_model\"); return; }",
