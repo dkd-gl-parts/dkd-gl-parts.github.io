@@ -52,7 +52,8 @@
   }
   function normalized(value) { return clean(value).toUpperCase().replace(/[^A-Z0-9]/g, ""); }
   function validPeriod(row) {
-    var start = clean(row.effective_start), end = clean(row.effective_end), period = clean(row.production_period_text);
+    var start = clean(row.effective_start), end = clean(row.effective_end);
+    var period = typeof row.production_period_text === "string" ? row.production_period_text : "";
     var basis = clean(row.raw_payload && row.raw_payload.production_period_basis);
     if (!start) return !end && !period && !basis;
     if (!/^(19|20)\d{2}\/(0[1-9]|1[0-2])$/.test(start) ||
