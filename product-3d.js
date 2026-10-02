@@ -1067,6 +1067,21 @@
       try {
         result = await sb.functions.invoke("product-3d-glb", { body: form });
         if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+        // This Edge contract returns 400/413 before reserving a model or writing Storage.
+        var response = result.error && result.error.context;
+        if (response && (response.status === 400 || response.status === 413) &&
+            typeof response.json === "function") {
+          var rejected = null;
+          try { rejected = await response.json(); }
+          catch (_) { /* An unreadable response remains an uncertain outcome. */ }
+          if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return;
+          if (rejected && typeof rejected.error === "string") {
+            alert(response.status === 413
+              ? "GLBは登録されませんでした。送信サイズが上限を超えています。小さいファイルを選び直してください。"
+              : "GLBは登録されませんでした。ファイルの形式・内容を確認してください: " + rejected.error);
+            return;
+          }
+        }
         if (result.error || !result.data || !result.data.ok) {
           throw new Error(await edgeErrorMessage(result.error || (result.data && result.data.error)));
         }
