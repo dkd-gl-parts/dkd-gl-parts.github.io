@@ -21,10 +21,11 @@
   function details(payload) {
     payload = payload && typeof payload === "object" && !Array.isArray(payload) ? payload : {};
     var result = {};
-    ["grade", "transmission", "chassis_range", "representative_model_note"].forEach(function(key) {
+    ["grade", "transmission", "chassis_range", "vehicle_list_chassis_range", "detail_chassis_range", "representative_model_note"].forEach(function(key) {
       var value = clean(payload[key]);
       result[key] = value.length <= 300 ? value : "";
     });
+    result.chassis_range_review = clean(payload.chassis_range_review) === "vehicle_list_vs_detail_conflict";
     result.source_url = "";
     try {
       var url = new URL(clean(payload.source_url));

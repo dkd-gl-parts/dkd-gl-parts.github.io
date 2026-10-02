@@ -1221,6 +1221,10 @@ var TRANSLATIONS = {
     f_vehicle_usage: "車種/用途",
     f_machine_model: "機種/型式",
     f_period: "期間",
+    f_chassis_number: "車体番号",
+    vehicle_info_chassis_review: "要確認",
+    vehicle_info_chassis_vehicle_list: "車種一覧",
+    vehicle_info_chassis_detail: "詳細ページ",
     f_product_id: "商品ID",
     f_part_number: "品番",
     vehicle_info_title: "車両情報",
@@ -3542,6 +3546,10 @@ var TRANSLATIONS = {
     f_vehicle_usage: "Vehicle / Usage",
     f_machine_model: "Model / Type",
     f_period: "Period",
+    f_chassis_number: "Chassis number",
+    vehicle_info_chassis_review: "Review needed",
+    vehicle_info_chassis_vehicle_list: "Vehicle list",
+    vehicle_info_chassis_detail: "Detail page",
     f_product_id: "Product ID",
     f_part_number: "Part No.",
     vehicle_info_title: "Vehicle Info",
@@ -5874,6 +5882,10 @@ var TRANSLATIONS = {
     f_vehicle_usage: "车型/用途",
     f_machine_model: "机型/型号",
     f_period: "期间",
+    f_chassis_number: "车架号码",
+    vehicle_info_chassis_review: "待确认",
+    vehicle_info_chassis_vehicle_list: "车型列表",
+    vehicle_info_chassis_detail: "详情页",
     f_product_id: "商品ID",
     f_part_number: "品番",
     vehicle_info_title: "车辆信息",
@@ -7091,7 +7103,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1082";
+var APP_VERSION       = "v1.1.1083";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -22836,6 +22848,31 @@ function hasVehicleApplicationDetail(row) {
   ));
 }
 
+function isPartsfanChassisPeriod(value) {
+  return /^\s*\d{7,}(?:\s*[-‐–—]\s*\d{7,})?\s*(?:[?？]|（代表）)?\s*$/.test(String(value || ""));
+}
+
+function vehicleApplicationPeriod(row) {
+  var period = String(row.production_period_text || "").trim();
+  if (row.source_code === "partsfan" && isPartsfanChassisPeriod(period)) period = "";
+  if (period) return period;
+  var start = row.effective_start || "", end = row.effective_end || "";
+  if (row.source_code === "partsfan" && (isPartsfanChassisPeriod(start) || isPartsfanChassisPeriod(end))) return "-";
+  return [start, end].filter(Boolean).join(" - ") || "-";
+}
+
+function vehicleApplicationChassis(row) {
+  if (row.source_code !== "partsfan") return { range: "-", review: false };
+  var detail = row.partsfan_details || {};
+  var vehicleListRange = detail.vehicle_list_chassis_range || (isPartsfanChassisPeriod(row.production_period_text) ? row.production_period_text : "");
+  return {
+    range: detail.chassis_range_review ? "-" : (detail.chassis_range || vehicleListRange || "-"),
+    review: !!detail.chassis_range_review,
+    vehicleListRange: vehicleListRange,
+    detailRange: detail.detail_chassis_range || ""
+  };
+}
+
 function renderVehicleApplicationsTable(rows) {
   var sourceRows = rows || [];
   if (sourceRows.length) {
@@ -22847,30 +22884,37 @@ function renderVehicleApplicationsTable(rows) {
   }
   if (!rows || !rows.length) return "<div class='component-empty'>" + esc(t("vehicle_info_no_data")) + "</div>";
   var showPartsfan = !!(window.PartsfanResearch && rows.some(function(row) { return row.source_code === "partsfan"; }));
-  var html = "<table class='vehicle-table'><tr><th>" + esc(t("f_vehicle_mfr")) + "</th><th>" + esc(t("f_vehicle_usage")) + "</th><th>" + esc(t("f_machine_model")) + "</th><th>" + esc(t("f_engine")) + "</th><th>" + esc(t("f_period")) + "</th><th>" + esc(t("f_part_number")) + "</th><th>" + esc(t("component_name")) + "</th>";
+  var html = "<table class='vehicle-table'><tr><th>" + esc(t("f_vehicle_mfr")) + "</th><th>" + esc(t("f_vehicle_usage")) + "</th><th>" + esc(t("f_machine_model")) + "</th><th>" + esc(t("f_engine")) + "</th><th>" + esc(t("f_period")) + "</th><th>" + esc(t("f_chassis_number")) + "</th><th>" + esc(t("f_part_number")) + "</th><th>" + esc(t("component_name")) + "</th>";
   html += "</tr>";
   rows.forEach(function(row) {
+    var chassis = vehicleApplicationChassis(row);
     html += "<tr>";
     html += "<td>" + esc(vehicleMakerLabel(row.vehicle_manufacturer || "-")) + "</td>";
     html += "<td>" + renderVehicleApplicationText(row.vehicle_type || row.vehicle_model || "-") + "</td>";
     html += "<td>" + renderVehicleApplicationText(row.model || row.vehicle_model || "-") + "</td>";
     html += "<td>" + esc(row.engine || "-") + "</td>";
-    html += "<td>" + esc(row.production_period_text || [row.effective_start, row.effective_end].filter(Boolean).join(" - ") || "-") + "</td>";
+    html += "<td>" + esc(vehicleApplicationPeriod(row)) + "</td>";
+    html += "<td>" + esc(chassis.range) + (chassis.review ? "<div class='component-sub'>" + esc(t("vehicle_info_chassis_review")) + "</div>" : "") + "</td>";
     html += "<td><div class='component-pn'>" + esc(row.genuine_part_number || "-") + "</div><div class='component-sub'>" + esc(row.manufacturer_part_number || "") + "</div></td>";
     html += "<td>" + esc(vehicleApplicationPartNameLabel(row.part_name || "-"));
     if (showPartsfan && row.source_code === "partsfan") {
       var detail = row.partsfan_details || {};
       html += "<details class='partsfan-vehicle-details'><summary>" + esc(t("vehicle_info_partsfan_details")) + "</summary><div class='partsfan-vehicle-detail-list'>";
-      [["grade", detail.grade], ["transmission", detail.transmission], ["chassis", detail.chassis_range]].forEach(function(item) {
+      [["grade", detail.grade], ["transmission", detail.transmission]].forEach(function(item) {
         html += "<div><span>" + esc(window.PartsfanResearch.label(item[0])) + "</span><span>" + esc(item[1] || "-") + "</span></div>";
       });
+      if (chassis.review) {
+        [["vehicle_info_chassis_vehicle_list", chassis.vehicleListRange], ["vehicle_info_chassis_detail", chassis.detailRange]].forEach(function(item) {
+          html += "<div><span>" + esc(t(item[0])) + "</span><span>" + esc(item[1] || "-") + "</span></div>";
+        });
+      }
       html += "<div><span>" + esc(window.PartsfanResearch.label("source")) + "</span><span>" + window.PartsfanResearch.sourceHtml(row) + "</span></div></div></details>";
     }
     html += "</td>";
     html += "</tr>";
   });
   html += "</table>";
-  if (showPartsfan) html = "<div class='partsfan-vehicle-table-wrap'>" + html + "</div>";
+  html = "<div class='partsfan-vehicle-table-wrap'>" + html + "</div>";
   return html;
 }
 

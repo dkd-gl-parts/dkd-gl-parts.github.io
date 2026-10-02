@@ -43,7 +43,7 @@ const fetchContext = {window: context.window, console: {warn() {}}, sb: {
   }
 }};
 vm.runInNewContext(isolate("async function fetchCatalogVehicleApplications", "function vehicleMakerLabel"), fetchContext);
-const vehicleHeadings = {f_vehicle_mfr: "車メーカー", f_vehicle_usage: "車種/用途", f_machine_model: "機種/型式", f_engine: "エンジン", f_period: "期間", f_part_number: "品番", component_name: "部品名"};
+const vehicleHeadings = {f_vehicle_mfr: "車メーカー", f_vehicle_usage: "車種/用途", f_machine_model: "機種/型式", f_engine: "エンジン", f_period: "期間", f_chassis_number: "車体番号", f_part_number: "品番", component_name: "部品名"};
 const renderContext = {window: context.window, currentLang: "ja", t: value => vehicleHeadings[value] || value, tf: () => "no results", esc: value => String(value).replace(/</g, "&lt;"), vehicleMakerLabel: value => value, renderVehicleApplicationText: value => String(value), vehicleApplicationPartNameLabel: value => value};
 vm.runInNewContext(isolate("function hasVehicleApplicationDetail", "function openVehicleApplicationsDialog"), renderContext);
 (async () => {
@@ -56,10 +56,22 @@ vm.runInNewContext(isolate("function hasVehicleApplicationDetail", "function ope
   assert(!basic[0].partsfan_details);
   assert.equal(selections, 2);
   const vehicleHtml = renderContext.renderVehicleApplicationsTable(fetched);
-  assert.deepEqual(Array.from(vehicleHtml.matchAll(/<th>(.*?)<\/th>/g), match => match[1]), Object.values(vehicleHeadings), "fitment list must match the seven requested headings and order");
-  assert.equal((vehicleHtml.match(/<td>/g) || []).length, 14, "PARTS FAN details must not add table columns");
+  assert.deepEqual(Array.from(vehicleHtml.matchAll(/<th>(.*?)<\/th>/g), match => match[1]), Object.values(vehicleHeadings), "fitment list must show separate period and chassis headings");
+  assert.equal((vehicleHtml.match(/<td>/g) || []).length, 16, "PARTS FAN details must not add table columns");
   assert(vehicleHtml.includes("<details class='partsfan-vehicle-details'>"));
-  assert(vehicleHtml.includes("グレード") && vehicleHtml.includes("0001 - 9999") && vehicleHtml.includes("PARTS FAN ↗"), "expandable detail must retain grade, chassis, and source");
+  assert(vehicleHtml.includes("グレード") && vehicleHtml.includes("0001 - 9999") && vehicleHtml.includes("PARTS FAN ↗"), "expanded detail and chassis column must retain source values");
+  const capa = {source_code: "partsfan", model: "GF-GA4", production_period_text: "1300001-1399999", effective_start: "1300001", effective_end: "1399999", partsfan_details: {chassis_range: "1300001 - 1399999"}};
+  const capaCells = Array.from(renderContext.renderVehicleApplicationsTable([capa]).matchAll(/<td>(.*?)<\/td>/g), match => match[1]);
+  assert.equal(capaCells[4], "-", "chassis serials must not be shown as a calendar period");
+  assert.equal(capaCells[5], "1300001 - 1399999");
+  const legacy = {...capa, production_period_text: null, effective_start: null, effective_end: null, partsfan_details: {vehicle_list_chassis_range: "1000001-1999999（代表）"}};
+  assert(renderContext.renderVehicleApplicationsTable([legacy]).includes("<td>1000001-1999999（代表）</td>"), "legacy chassis range must survive database cleanup");
+  const conflict = {...capa, partsfan_details: {chassis_range_review: true, vehicle_list_chassis_range: "3300001-3399999", detail_chassis_range: "3400001 - 3499999"}};
+  const conflictHtml = renderContext.renderVehicleApplicationsTable([conflict]);
+  assert(conflictHtml.includes("<td>-<div class='component-sub'>"), "conflicting ranges must not appear as verified chassis numbers");
+  assert(conflictHtml.includes("3300001-3399999") && conflictHtml.includes("3400001 - 3499999"), "both conflicting source ranges must remain available in details");
+  const dated = {...capa, production_period_text: "2010/11", effective_start: null, effective_end: null, partsfan_details: {}};
+  assert(renderContext.renderVehicleApplicationsTable([dated]).includes("<td>2010/11</td>"), "verified calendar periods must remain visible");
   assert(!renderContext.renderVehicleApplicationsTable([rows[1]]).includes("グレード"));
   assert(renderContext.renderVehicleApplicationsTable([]).length > 0);
   let resolveVehicles;
