@@ -41,6 +41,8 @@ const review = {format: "dcats.partsfan.review.v1", items: [{part: "23300-AX000"
 assert.equal(api.reviewRows(review, "23300-AX000", "ニッサン").length, 1);
 const datedReview = {...review, items: [{...review.items[0], records: [{...reviewRow, effective_start: "2002/02", effective_end: "2005/08", production_period_text: "2002/02 - 2005/08", raw_payload: {...reviewRow.raw_payload, production_period_basis: "application_row"}}]}]};
 assert.equal(api.reviewRows(datedReview, "23300-AX000", "ニッサン").length, 1);
+const openPeriodReview = {...datedReview, items: [{...datedReview.items[0], records: [{...datedReview.items[0].records[0], effective_start: "2009/12", effective_end: null, production_period_text: "2009/12 - ", raw_payload: {...reviewRow.raw_payload, production_period_basis: "vehicle_model_page"}}]}]};
+assert.equal(api.reviewRows(openPeriodReview, "23300-AX000", "ニッサン").length, 1, "an observed open-ended production period must remain importable");
 assert.throws(() => api.reviewRows({...datedReview, items: [{...datedReview.items[0], records: [{...datedReview.items[0].records[0], effective_end: "2001/01"}]}]}, "23300-AX000", "ニッサン"));
 const largeReview = {format: review.format, items: [{...review.items[0], records: Array.from({length: 289}, (_, index) => ({
   ...reviewRow, source_record_key: index.toString(16).padStart(64, "0")
