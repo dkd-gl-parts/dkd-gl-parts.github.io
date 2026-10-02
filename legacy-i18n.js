@@ -3517,7 +3517,8 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "選択レコードの保存値を反映しました。純正品番：": "Selected record values applied. OEM number:",
     "／メーカー品番：": " / Manufacturer number:",
     "純正品番（必須）": "OEM number (required)",
-    "メーカー品番（必須）": "Manufacturer number (required)"
+    "メーカー品番（必須）": "Manufacturer number (required)",
+    "D-CATS連携テスト（実データ禁止）": "D-CATS連携テスト（実データ禁止）"
   },
   "zh": {
     "帳票出力 / レポート": "报表 / 报表中心",
@@ -7035,6 +7036,7 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "選択レコードの保存値を反映しました。純正品番：": "已填入所选记录的保存值。原厂品号：",
     "／メーカー品番：": "／制造商品号：",
     "純正品番（必須）": "原厂品号（必填）",
-    "メーカー品番（必須）": "制造商品号（必填）"
+    "メーカー品番（必須）": "制造商品号（必填）",
+    "D-CATS連携テスト（実データ禁止）": "D-CATS連携テスト（実データ禁止）"
   }
 };
