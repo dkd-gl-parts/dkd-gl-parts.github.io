@@ -119,7 +119,7 @@ const panelSource = sourceBetween("function renderPanelStatic", "async function 
   'renderCatalogVehicleSummaryHtml("", { showButton: false })',
   'loadDetailCustomerInfoForCurrent(detailSeq)',
   'loadEcMallPriceSummaryForCurrent(detailSeq)',
-  'loadCatalogVehicleSummary(document.getElementById("panel-body"), p)',
+  'loadCatalogVehicleSummary(document.getElementById("panel-body"), p, detailSeq)',
   'loadSalesComponentKindCountsForCurrent(detailSeq)',
   'loadKikanForCurrentProduct(detailSeq)'
 ].forEach((fragment) => {
