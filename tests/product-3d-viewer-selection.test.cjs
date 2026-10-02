@@ -5,6 +5,7 @@ const test = require('node:test');
 const vm = require('node:vm');
 
 const source = fs.readFileSync(path.join(__dirname, '..', 'product-3d.js'), 'utf8');
+const stylesheet = fs.readFileSync(path.join(__dirname, '..', 'styles.css'), 'utf8');
 const start = source.indexOf('  async function openViewerById(');
 const close = source.indexOf('  function closeViewer() {', start);
 const end = source.indexOf('  function closeCapture() {', close);
@@ -15,7 +16,7 @@ const viewerSource = source.slice(start, end).replace(
 );
 assert(!viewerSource.includes('await import('), 'Viewer test must replace only its dynamic import');
 
-function harness({ onRead, onSign, onCreate } = {}) {
+function harness({ onRead, onSign, onCreate, onFullscreen } = {}) {
   const state = { productId: 42, kind: 'rebuilt', review: true };
   const calls = { reads: 0, signs: 0, opens: 0, closes: 0, disposes: 0, fullscreenExits: 0, alerts: [] };
   const document = { body: {}, activeElement: null, fullscreenElement: null,
@@ -43,6 +44,7 @@ function harness({ onRead, onSign, onCreate } = {}) {
     'product-3d-viewer-fullscreen': control(),
     'product-3d-viewer-title': { textContent: '' },
     'product-3d-viewer-loading': { hidden: true, textContent: '' },
+    'product-3d-viewer-fullscreen-notice': { hidden: true },
     'product-3d-viewer-stage': {},
     'product-3d-viewer-shell': {},
   };
@@ -68,14 +70,15 @@ function harness({ onRead, onSign, onCreate } = {}) {
     getViewerModule: async () => ({ createProduct3DViewer: async () => {
       calls.opens++;
       if (onCreate) await onCreate(state);
-      return { dispose: () => { calls.disposes++; } };
+      return { dispose: () => { calls.disposes++; }, fullscreen: () => onFullscreen ? onFullscreen() : Promise.resolve() };
     } }),
     productTitle: () => 'fixture',
     kindLabel: () => 'リビルト',
     friendlyError: error => String(error),
     alert: message => calls.alerts.push(message),
+    console: { warn() {} },
   };
-  const api = vm.runInNewContext(`${viewerSource}\n({openViewerById, keepViewerFocus, closeViewer})`, context);
+  const api = vm.runInNewContext(`${viewerSource}\n({openViewerById, keepViewerFocus, toggleViewerFullscreen, closeViewer})`, context);
   return { api, state, calls, elements, context, document, trigger };
 }
 
@@ -137,6 +140,31 @@ test('unchanged product opens its uploaded GLB normally', async () => {
   assert.equal(qa.document.activeElement, qa.elements['product-3d-viewer-close']);
   qa.api.closeViewer();
   assert.equal(qa.document.activeElement, qa.trigger);
+});
+
+test('successful GLB load removes the opaque loading layer', () => {
+  assert.match(stylesheet, /\.product-3d-viewer-loading\[hidden\]\s*\{\s*display:\s*none\s*;/);
+});
+
+test('fullscreen denial leaves the Viewer open with a nonblocking notice', async () => {
+  const qa = harness({ onFullscreen: () => Promise.reject(new Error('not granted')) });
+  await qa.api.openViewerById('uploaded:18', 'sales', 42);
+  await qa.api.toggleViewerFullscreen();
+  assert.equal(qa.calls.closes, 0);
+  assert.equal(qa.elements['product-3d-viewer-loading'].hidden, true);
+  assert.equal(qa.elements['product-3d-viewer-fullscreen-notice'].hidden, false);
+  assert.match(stylesheet, /\.product-3d-viewer-toolbar\s+\[hidden\]\s*\{\s*display:\s*none\s*;/);
+});
+
+test('subsequent fullscreen success clears the previous notice', async () => {
+  let denied = true;
+  const qa = harness({ onFullscreen: () => denied ? Promise.reject(new Error('not granted')) : Promise.resolve() });
+  await qa.api.openViewerById('uploaded:18', 'sales', 42);
+  await qa.api.toggleViewerFullscreen();
+  assert.equal(qa.elements['product-3d-viewer-fullscreen-notice'].hidden, false);
+  denied = false;
+  await qa.api.toggleViewerFullscreen();
+  assert.equal(qa.elements['product-3d-viewer-fullscreen-notice'].hidden, true);
 });
 
 test('closing Viewer exits only its own fullscreen shell', async () => {
