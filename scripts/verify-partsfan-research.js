@@ -43,7 +43,8 @@ const fetchContext = {window: context.window, console: {warn() {}}, sb: {
   }
 }};
 vm.runInNewContext(isolate("async function fetchCatalogVehicleApplications", "function vehicleMakerLabel"), fetchContext);
-const renderContext = {window: context.window, currentLang: "ja", t: value => value, tf: () => "no results", esc: value => String(value).replace(/</g, "&lt;"), vehicleMakerLabel: value => value, renderVehicleApplicationText: value => String(value), vehicleApplicationPartNameLabel: value => value};
+const vehicleHeadings = {f_vehicle_mfr: "車メーカー", f_vehicle_usage: "車種/用途", f_machine_model: "機種/型式", f_engine: "エンジン", f_period: "期間", f_part_number: "品番", component_name: "部品名"};
+const renderContext = {window: context.window, currentLang: "ja", t: value => vehicleHeadings[value] || value, tf: () => "no results", esc: value => String(value).replace(/</g, "&lt;"), vehicleMakerLabel: value => value, renderVehicleApplicationText: value => String(value), vehicleApplicationPartNameLabel: value => value};
 vm.runInNewContext(isolate("function hasVehicleApplicationDetail", "function openVehicleApplicationsDialog"), renderContext);
 (async () => {
   const fetched = await fetchContext.fetchCatalogVehicleApplications({id: 1});
@@ -54,7 +55,11 @@ vm.runInNewContext(isolate("function hasVehicleApplicationDetail", "function ope
   assert.equal(basic.length, 2, "supplement failure retains basic application rows");
   assert(!basic[0].partsfan_details);
   assert.equal(selections, 2);
-  assert(renderContext.renderVehicleApplicationsTable(fetched).includes("グレード"));
+  const vehicleHtml = renderContext.renderVehicleApplicationsTable(fetched);
+  assert.deepEqual(Array.from(vehicleHtml.matchAll(/<th>(.*?)<\/th>/g), match => match[1]), Object.values(vehicleHeadings), "fitment list must match the seven requested headings and order");
+  assert.equal((vehicleHtml.match(/<td>/g) || []).length, 14, "PARTS FAN details must not add table columns");
+  assert(vehicleHtml.includes("<details class='partsfan-vehicle-details'>"));
+  assert(vehicleHtml.includes("グレード") && vehicleHtml.includes("0001 - 9999") && vehicleHtml.includes("PARTS FAN ↗"), "expandable detail must retain grade, chassis, and source");
   assert(!renderContext.renderVehicleApplicationsTable([rows[1]]).includes("グレード"));
   assert(renderContext.renderVehicleApplicationsTable([]).length > 0);
   let resolveVehicles;
