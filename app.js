@@ -7069,6 +7069,7 @@ var parallelCandidateMap = {};
 var assemblyComponentRows = [];
 var editingComponentUsageId = null;
 var currentImages     = [];
+var renderedSalesImageGroups = Object.create(null);
 var productionImages  = { rebuilt: [], aftermarket_new: [] };
 var imageEditRows = [];
 var imageEditFilterKind = "";
@@ -10275,6 +10276,7 @@ async function doLogout() {
   allProducts = []; dataLoaded = false;
   slPartsMap = {}; slPresenceMap = {}; currentSlPartIds = [];
   currentProduct = null; currentProductSpecs = []; currentProductNominalSpec = null; currentImages = [];
+  renderedSalesImageGroups = Object.create(null);
   showScreen("login");
 }
 
@@ -40246,6 +40248,7 @@ function closePanel() {
   configureSalesProductAddButton();
   document.querySelectorAll(".card.selected").forEach(function(c){ c.classList.remove("selected"); });
   currentProduct = null; currentCoreDkdShohinId = null; currentProductSpecs = []; currentProductNominalSpec = null; currentParallelTargetDkdShohinId = null; currentParallelTargetProduct = null; currentImages = []; currentSlPartIds = [];
+  renderedSalesImageGroups = Object.create(null);
 }
 
 function syncSearchFilterControls() {
@@ -51459,6 +51462,9 @@ function salesImagesForKind(kind) {
 
 function salesImageGroupHtml(kind, images, loading) {
   images = images || [];
+  // Keep the gallery bound to the rows actually rendered, even if an unrelated
+  // search or screen transition later clears the mutable currentImages array.
+  renderedSalesImageGroups[kind] = loading ? [] : images.slice();
   var body = "";
   if (loading) {
     body = "<div class='sales-detail-image-empty'>" + esc(t("img_loading")) + "</div>";
@@ -52143,15 +52149,22 @@ function fullscreenImageList() {
   return activeFullscreenImages || currentImages || [];
 }
 function openFullscreen(i, images) {
+  var list = Array.isArray(images) ? images : (currentImages || []);
+  if (!Number.isInteger(i) || i < 0 || !list[i]) return;
   fsIndex = i;
-  activeFullscreenImages = Array.isArray(images) ? images : null;
+  activeFullscreenImages = list;
   document.getElementById("fullscreen").classList.add("show");
   renderFullscreen();
 }
 function renderFullscreen() {
   var list = fullscreenImageList();
   var img=list[fsIndex]; if(!img)return;
-  setSignedProductImageElementSource(document.getElementById("fs-img"), img, { width: 1600, height: 1200, resize: "contain" });
+  var fullImage = document.getElementById("fs-img");
+  var loading = document.getElementById("fs-loading");
+  loading.textContent = t("img_loading");
+  loading.hidden = false;
+  setSignedProductImageElementSource(fullImage, img, { width: 1600, height: 1200, resize: "contain" });
+  if (fullImage.complete && fullImage.naturalWidth > 0) loading.hidden = true;
   document.getElementById("fs-counter").textContent=(fsIndex+1)+" / "+list.length;
   document.getElementById("fs-prev").classList.toggle("hidden",fsIndex===0);
   document.getElementById("fs-next").classList.toggle("hidden",fsIndex===list.length-1);
@@ -56075,7 +56088,8 @@ document.getElementById("panel").addEventListener("click", function(e){
   var img=e.target.closest("img[data-index]");
   if(!img) return;
   var kind=img.dataset.salesImageKind;
-  openFullscreen(parseInt(img.dataset.index,10), kind ? salesImagesForKind(kind) : null);
+  var displayed = kind ? renderedSalesImageGroups[normalizeProductKind(kind)] : null;
+  openFullscreen(parseInt(img.dataset.index,10), displayed || (kind ? salesImagesForKind(kind) : null));
 });
 document.getElementById("btn-open-image-actions").addEventListener("click", openImageActionsDialog);
 document.getElementById("btn-image-actions-cancel").addEventListener("click", closeImageActionsDialog);
@@ -56118,6 +56132,9 @@ document.getElementById("image-delete-list").addEventListener("click", function(
 document.getElementById("btn-vehicle-info-close").addEventListener("click", closeVehicleApplicationsDialog);
 document.getElementById("vehicle-info-overlay").addEventListener("click", function(e){ if(e.target===this) closeVehicleApplicationsDialog(); });
 document.getElementById("fs-close").addEventListener("click", closeFullscreen);
+document.getElementById("fs-img").addEventListener("load", function(){
+  if (this.complete && this.naturalWidth > 0) document.getElementById("fs-loading").hidden = true;
+});
 document.getElementById("fullscreen").addEventListener("click", function(e){ if(e.target===this) closeFullscreen(); });
 document.getElementById("fs-prev").addEventListener("click", function(){ if(fsIndex>0){fsIndex--;renderFullscreen();} });
 document.getElementById("fs-next").addEventListener("click", function(){ var list = fullscreenImageList(); if(fsIndex<list.length-1){fsIndex++;renderFullscreen();} });
