@@ -10,6 +10,7 @@
 .partsfan-research-actions a { font-size: 13px; }
 .partsfan-research-actions a[aria-disabled="true"] { color: #64748b; cursor: default; }
 .partsfan-vehicle-table-wrap { max-width: 100%; overflow-x: auto; }
+.partsfan-vehicle-table-wrap .vehicle-table { min-width: 860px; }
 .partsfan-vehicle-details { margin-top: 4px; font-size: 11px; font-weight: 400; }
 .partsfan-vehicle-details summary { color: #315f84; cursor: pointer; white-space: nowrap; }
 .partsfan-vehicle-detail-list { display: grid; gap: 5px; margin-top: 7px; min-width: 180px; }
