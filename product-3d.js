@@ -858,6 +858,8 @@
       var photosPane = pane.parentElement.querySelector("[data-product-media-pane='photos']");
       if (photosTab) { photosTab.classList.add("active"); photosTab.setAttribute("aria-selected", "true"); }
       if (photosPane) photosPane.hidden = false;
+      var mediaShell = switcher.closest("[data-product-3d-media-shell]");
+      if (mediaShell && mediaShell.dataset.noPhotos === "true") mediaShell.hidden = true;
       var staleHost = el({ sales: "sales-product-3d-list", production: "production-product-3d-list", customer: "customer-product-3d-list" }[context]);
       if (staleHost) staleHost.textContent = "";
     }
