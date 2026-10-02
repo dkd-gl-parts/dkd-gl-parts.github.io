@@ -9,6 +9,15 @@ const viewer = fs.readFileSync(path.join(root, "product-3d-viewer.js"), "utf8");
 const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
 const headers = fs.readFileSync(path.join(root, "_headers"), "utf8");
 const build = fs.readFileSync(path.join(root, "scripts", "build-static-site.js"), "utf8");
+const appVersion = (app.match(/var\s+APP_VERSION\s*=\s*"v([^"]+)"/) || [])[1];
+if (!appVersion) throw new Error("D-CATS app version is missing");
+const viewerImportVersions = Array.from(
+  client.matchAll(/import\("\.\/product-3d-viewer\.js\?v=([^"]+)"\)/g),
+  (match) => match[1]
+);
+if (viewerImportVersions.length !== 1 || viewerImportVersions[0] !== appVersion) {
+  throw new Error("3D Viewer import must use the current D-CATS app version exactly once");
+}
 
 function requireText(source, fragment, label) {
   if (!source.includes(fragment)) throw new Error(`${label} is missing: ${fragment}`);
@@ -23,7 +32,11 @@ function requireText(source, fragment, label) {
   "product-3d-video-supplement",
   "product-3d-viewer-overlay",
   "data-product-media-pane=\"model\"",
-  "product-3d.js?v=1.1.1088"
+  "btn-image-action-upload-glb",
+  "production-image-action-upload-glb",
+  "product-3d-viewer-zoom-in",
+  "product-3d-viewer-zoom-out",
+  "product-3d.js?v=" + appVersion
 ].forEach((fragment) => requireText(html, fragment, "3D UI contract"));
 
 [
@@ -67,7 +80,6 @@ function requireText(source, fragment, label) {
   "確認待ち",
   "data-publish-model",
   "createSignedUrl(model.published_model_path, 600)",
-  "import(\"./product-3d-viewer.js?v=1.1.776\")",
   "if (!canManage3D()) { deny3D(\"open_product_3d_capture\"); return; }",
   "if (!canManage3D()) { deny3D(\"submit_product_3d_model\"); return; }",
   "if (!canPublish3D()) { deny3D(\"publish_product_3d_model\"); return; }",
@@ -77,13 +89,26 @@ function requireText(source, fragment, label) {
   ".in(\"dkd_shohin_id\", batch)",
   "batch.forEach(function (id) { modelBadgeCache[String(id)] = false; });",
   "if (missing.length > batch.length) scheduleBadgeRefresh();",
-  "publishable && model.status === \"review\"",
-  "manageable && [\"draft\", \"needs_capture\", \"failed\"].indexOf(model.status) >= 0",
+  "publishable && model.model_source !== \"uploaded\" && model.status === \"review\"",
+  "manageable && model.model_source !== \"uploaded\" && [\"draft\", \"needs_capture\", \"failed\"].indexOf(model.status) >= 0",
   "draft: \"撮影途中\"",
+  "refreshMediaAvailability",
+  "product_3d_viewer_models",
+  "product_3d_uploaded_models",
+  "product-3d-glb",
   "3Dモデルを作成できる商品区分は「リビルト」と「新品」です。",
   "if (viewer) { viewer.dispose(); viewer = null; }",
-  "if (requestId !== viewerRequestId) { createdViewer.dispose(); return; }"
+  "function targetStillSelected()",
+  "productId(current.product) === targetId",
+  '(activeContext === "customer" || current.kind === targetKind)',
+  "createdViewer.dispose();",
+  "if (requestId === viewerRequestId) closeViewer();"
 ].forEach((fragment) => requireText(client, fragment, "3D capture contract"));
+
+const kindRaceGuard = '(context !== "customer" && current.kind !== target.kind)';
+if (client.split(kindRaceGuard).length !== 3) {
+  throw new Error("Both model-tab availability and model-card rendering must reject stale admin product kinds");
+}
 
 if (client.includes("analysisDigest")) throw new Error("Capture dedupe must hash source bytes, not analysis metadata");
 if (client.includes("URL.createObjectURL(blob)")) throw new Error("Existing-image analysis must not depend on CSP-blocked blob image URLs");
@@ -106,11 +131,16 @@ if (client.includes('return kind === "aftermarket_new" ? kind : "rebuilt"')) thr
   "Windows workerの登録・停止・engine変更",
   "canManageAllImages() || canManageProduct3D()",
   "syncProductMediaActionAccess(\"sales\")",
-  "syncProductMediaActionAccess(\"production\")"
+  "syncProductMediaActionAccess(\"production\")",
+  "refreshMediaAvailability(\"sales\")",
+  "refreshMediaAvailability(\"production\")",
+  "refreshMediaAvailability(\"customer\")",
+  "data-product-3d-media-shell",
+  "uploadModel: \"btn-image-action-upload-glb\""
 ].forEach((fragment) => requireText(app, fragment, "3D application integration"));
 
 if (/data-product-media=["']model["']/.test(html + app)) {
-  throw new Error("Product 3D model tabs must stay absent until development and display settings are complete");
+  throw new Error("Product 3D model tabs must be added only for eligible products at runtime");
 }
 
 [

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ja">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Product 3D Viewer local fixture</title>
+<style>
+  body { font-family: sans-serif; margin: 0; }
+  #stage { width: min(100vw, 700px); height: min(70vh, 500px); }
+  #controls { display: flex; flex-wrap: wrap; gap: .5rem; padding: .5rem; }
+</style>
+<label>手元のGLBを確認（商品登録・アップロードなし） <input id="local-glb" type="file" accept=".glb,model/gltf-binary"></label>
+<div id="stage"></div>
+<div id="controls">
+  <button id="zoom-in" type="button">拡大</button>
+  <button id="zoom-out" type="button">縮小</button>
+  <button id="reset" type="button">位置をリセット</button>
+  <button id="fullscreen" type="button">全画面</button>
+</div>
+<div id="result" role="status" aria-live="polite">loading</div>
+<script type="module">
+  import { createProduct3DViewer } from '../product-3d-viewer.js';
+  const status = document.getElementById('result');
+  let viewer = null;
+  let requestId = 0;
+  for (const [id, action] of [['zoom-in', 'zoomIn'], ['zoom-out', 'zoomOut'],
+      ['reset', 'reset'], ['fullscreen', 'fullscreen']]) {
+    document.getElementById(id).addEventListener('click', () => {
+      if (viewer) viewer[action]();
+    });
+  }
+  async function show(url, label) {
+    const current = ++requestId;
+    if (viewer) { viewer.dispose(); viewer = null; }
+    status.textContent = '読み込み中: ' + label;
+    try {
+      const next = await createProduct3DViewer({ host: document.getElementById('stage'), url });
+      if (current !== requestId) { next.dispose(); return; }
+      viewer = next;
+      window.fixtureViewer = next;
+      next.zoomIn(); next.zoomOut(); next.reset();
+      status.textContent = 'PASS: ' + label + ' / 回転・ズーム・リセットを確認できます';
+    } catch (error) {
+      if (current === requestId) status.textContent = 'FAIL: ' + label + ' / ' + error.message;
+    }
+  }
+  document.getElementById('local-glb').addEventListener('change', async (event) => {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    const current = ++requestId;
+    if (viewer) { viewer.dispose(); viewer = null; }
+    window.fixtureViewer = null;
+    document.getElementById('stage').replaceChildren();
+    if (!/\.glb$/i.test(file.name) || file.size < 20 || file.size > 30 * 1024 * 1024 ||
+        !['', 'model/gltf-binary', 'application/octet-stream'].includes(file.type)) {
+      status.textContent = 'FAIL: 30 MB以下のGLBファイルを選択してください';
+      return;
+    }
+    // This fixture never contacts D-CATS or associates the file with a product.
+    // Reject glTF external buffer/image references before the loader can fetch them.
+    try {
+      const bytes = await file.arrayBuffer();
+      if (current !== requestId) return;
+      const data = new DataView(bytes);
+      if (data.getUint32(0, true) !== 0x46546c67 || data.getUint32(4, true) !== 2 ||
+          data.getUint32(8, true) !== bytes.byteLength || data.getUint32(16, true) !== 0x4e4f534a) {
+        throw new Error('GLBヘッダーが正しくありません');
+      }
+      const jsonLength = data.getUint32(12, true);
+      if (jsonLength > bytes.byteLength - 20) throw new Error('GLB JSONが範囲外です');
+      const gltf = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes.slice(20, 20 + jsonLength)));
+      if ([...(gltf.buffers || []), ...(gltf.images || [])].some((item) =>
+          item.uri && !/^data:/i.test(item.uri))) {
+        throw new Error('外部参照を含むGLBはローカル確認できません');
+      }
+      const url = URL.createObjectURL(file);
+      try { await show(url, file.name); }
+      finally { URL.revokeObjectURL(url); }
+    } catch (error) {
+      if (current === requestId) status.textContent = 'FAIL: ' + file.name + ' / ' + error.message;
+    } finally {
+      event.target.value = '';
+    }
+  });
+  const doc = {
+    asset: { version: '2.0' },
+    scenes: [{ nodes: [0] }], nodes: [{ mesh: 0 }],
+    meshes: [{ primitives: [{ attributes: { POSITION: 0 } }] }],
+    buffers: [{ byteLength: 36 }],
+    bufferViews: [{ buffer: 0, byteOffset: 0, byteLength: 36 }],
+    accessors: [{ bufferView: 0, componentType: 5126, count: 3, type: 'VEC3' }]
+  };
+  const json = new TextEncoder().encode(JSON.stringify(doc));
+  const padded = Math.ceil(json.length / 4) * 4;
+  const bytes = new Uint8Array(20 + padded + 8 + 36);
+  const view = new DataView(bytes.buffer);
+  view.setUint32(0, 0x46546c67, true);
+  view.setUint32(4, 2, true);
+  view.setUint32(8, bytes.length, true);
+  view.setUint32(12, padded, true);
+  view.setUint32(16, 0x4e4f534a, true);
+  bytes.fill(0x20, 20);
+  bytes.set(json, 20);
+  view.setUint32(20 + padded, 36, true);
+  view.setUint32(24 + padded, 0x004e4942, true);
+  new Float32Array(bytes.buffer, 28 + padded, 9).set([0,0,0, 1,0,0, 0,1,0]);
+  const url = URL.createObjectURL(new Blob([bytes], { type: 'model/gltf-binary' }));
+  try { await show(url, '合成GLB'); }
+  finally { URL.revokeObjectURL(url); }
+</script>
+</html>
