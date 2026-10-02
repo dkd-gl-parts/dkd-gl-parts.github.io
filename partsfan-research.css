@@ -10,4 +10,9 @@
 .partsfan-research-actions a { font-size: 13px; }
 .partsfan-research-actions a[aria-disabled="true"] { color: #64748b; cursor: default; }
 .partsfan-vehicle-table-wrap { max-width: 100%; overflow-x: auto; }
+.partsfan-vehicle-details { margin-top: 4px; font-size: 11px; font-weight: 400; }
+.partsfan-vehicle-details summary { color: #315f84; cursor: pointer; white-space: nowrap; }
+.partsfan-vehicle-detail-list { display: grid; gap: 5px; margin-top: 7px; min-width: 180px; }
+.partsfan-vehicle-detail-list > div { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 6px; overflow-wrap: anywhere; }
+.partsfan-vehicle-detail-list > div > span:first-child { color: #64748b; }
 @media (max-width: 480px) { .partsfan-research-overlay { padding: 12px; } .partsfan-research-dialog { padding: 18px; max-height: calc(100dvh - 24px); } .partsfan-research-dialog h2 { font-size: 17px; } .partsfan-research-actions > button { max-width: 100%; white-space: normal; } }
