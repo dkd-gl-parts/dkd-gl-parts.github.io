@@ -7106,7 +7106,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1091";
+var APP_VERSION       = "v1.1.1092";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -30830,14 +30830,6 @@ function renderManufacturingCostComponentDetailBody(row) {
   if (row.savedSnapshotUnitPriceDiffers) html += "<span class='manufacturing-cost-detail-badge warn'>" + esc(t("manufacturing_cost_snapshot_unit_price_changed")) + "</span>";
   html += "</div>";
   html += "<div class='manufacturing-cost-component-list'>";
-  html += "<div class='manufacturing-cost-component-header'>";
-  html += "<span>" + esc(t("component_name")) + "</span>";
-  html += "<span>" + esc(t("f_part_number")) + "</span>";
-  html += "<span>" + esc(t("manufacturing_cost_unit_price")) + "</span>";
-  html += "<span>" + esc(t("manufacturing_cost_quantity")) + "</span>";
-  html += "<span>" + esc(t("manufacturing_cost_replacement_rate")) + "</span>";
-  html += "<span>" + esc(t("manufacturing_cost_calculated")) + "</span>";
-  html += "</div>";
   row.components.forEach(function(component) {
     var calc = manufacturingCostComponentCalc(component);
     var name = component.component_name || component.component_part_name || component.component_manufacturer_part_number || "-";
@@ -30846,10 +30838,10 @@ function renderManufacturingCostComponentDetailBody(row) {
     html += "<div class='manufacturing-cost-component-card" + (calc.hasUnit ? "" : " missing-unit") + "'>";
     html += "<div class='manufacturing-cost-component-title'>" + esc(name) + "</div>";
     html += "<div class='manufacturing-cost-component-part'>" + esc(partText) + "</div>";
-    html += "<div class='manufacturing-cost-component-cell'><b>" + esc(unitText) + "</b></div>";
-    html += "<div class='manufacturing-cost-component-cell'><b>" + esc(String(calc.qty)) + "</b></div>";
-    html += "<div class='manufacturing-cost-component-cell'><b>" + esc(manufacturingCostPercent(calc.rate)) + "</b></div>";
-    html += "<div class='manufacturing-cost-component-cell manufacturing-cost-component-subtotal'><b>" + esc(manufacturingCostYen(calc.amount)) + "</b></div>";
+    html += "<div class='manufacturing-cost-component-cell'><span>" + esc(t("manufacturing_cost_unit_price")) + "</span><b>" + esc(unitText) + "</b></div>";
+    html += "<div class='manufacturing-cost-component-cell'><span>" + esc(t("manufacturing_cost_quantity")) + "</span><b>" + esc(String(calc.qty)) + "</b></div>";
+    html += "<div class='manufacturing-cost-component-cell'><span>" + esc(t("manufacturing_cost_replacement_rate")) + "</span><b>" + esc(manufacturingCostPercent(calc.rate)) + "</b></div>";
+    html += "<div class='manufacturing-cost-component-cell manufacturing-cost-component-subtotal'><span>" + esc(t("manufacturing_cost_calculated")) + "</span><b>" + esc(manufacturingCostYen(calc.amount)) + "</b></div>";
     html += "</div>";
   });
   html += "</div>";
@@ -30995,7 +30987,7 @@ function renderManufacturingCostRows() {
     return;
   }
   var html = "<div class='manufacturing-cost-table-wrap'><table class='mgmt-table manufacturing-cost-table'>";
-  html += "<tr><th>" + esc(t("manufacturing_cost_product")) + "</th><th>" + esc(t("manufacturing_cost_components")) + "</th><th>" + esc(t("manufacturing_cost_gltek_costs")) + "</th><th>" + esc(t("manufacturing_cost_gltek_subtotal")) + "</th><th>" + esc(t("manufacturing_cost_dkd_costs")) + "</th><th>" + esc(t("manufacturing_cost_dkd_subtotal")) + "</th><th>" + esc(t("manufacturing_cost_total")) + "</th><th>" + esc(t("manufacturing_cost_notes")) + "</th></tr>";
+  html += "<thead><tr><th scope='col'>" + esc(t("manufacturing_cost_product")) + "</th><th scope='col'>" + esc(t("manufacturing_cost_gltek_costs")) + "</th><th scope='col'>" + esc(t("manufacturing_cost_dkd_costs")) + "</th><th scope='col'>" + esc(t("manufacturing_cost_total")) + "</th><th scope='col'>" + esc(t("manufacturing_cost_notes")) + "</th></tr></thead><tbody>";
   manufacturingCostRows.forEach(function(row, rowIndex) {
     var p = row.product || {};
     var notes = [];
@@ -31018,29 +31010,26 @@ function renderManufacturingCostRows() {
     }).join("");
     var productSub = [p.genuine_part_number_2, tCat(p.category_code || p.category)].filter(Boolean).join(" / ");
     html += "<tr class='manufacturing-cost-main-row'>";
-    html += "<td><div class='manufacturing-cost-product-main'>" + esc(manufacturingCostProductTitle(p)) + "</div>" + (productFacts ? "<div class='manufacturing-cost-product-facts'>" + productFacts + "</div>" : "") + "<div class='manufacturing-cost-product-sub'>" + esc(productSub) + "</div></td>";
-    html += "<td><div class='manufacturing-cost-money'>" + esc(String(row.componentCount || 0)) + "</div></td>";
-    html += "<td><div class='manufacturing-cost-breakdown'>" +
+    html += "<td><div class='manufacturing-cost-product-main'>" + esc(manufacturingCostProductTitle(p)) + "</div>" + (productFacts ? "<div class='manufacturing-cost-product-facts'>" + productFacts + "</div>" : "") + "<div class='manufacturing-cost-product-sub'>" + esc(productSub) + "</div><div class='manufacturing-cost-product-sub'>" + esc(tf("manufacturing_cost_component_count", { n: row.componentCount || 0 })) + "</div></td>";
+    html += "<td data-label='" + esc(t("manufacturing_cost_gltek_costs")) + "'><div class='manufacturing-cost-breakdown'>" +
       "<span><i>" + esc(t("manufacturing_cost_parts_cost")) + "</i><b>" + esc(manufacturingCostYen(row.partsCost)) + "</b></span>" +
       "<span><i>" + esc(t("manufacturing_cost_core_cost_short")) + "</i><b>" + esc(manufacturingCostYen(row.coreCost)) + "</b></span>" +
       "<small>" + esc(coreNote) + "</small>" +
       "<span><i>" + esc(t("manufacturing_cost_labor_cost")) + "</i><b>" + esc(manufacturingCostYen(row.laborCost)) + "</b></span>" +
       "<span><i>" + esc(t("manufacturing_cost_transport_cost")) + "</i><b>" + esc(manufacturingCostYen(row.transportCost)) + "</b></span>" +
-    "</div></td>";
-    html += "<td><div class='manufacturing-cost-money manufacturing-cost-company-subtotal gltek'>" + esc(manufacturingCostYen(row.gltekSubtotal)) + "</div></td>";
-    html += "<td><div class='manufacturing-cost-breakdown'>" +
+    "</div><div class='manufacturing-cost-company-total'><span>" + esc(t("manufacturing_cost_gltek_subtotal")) + "</span><b class='manufacturing-cost-money manufacturing-cost-company-subtotal gltek'>" + esc(manufacturingCostYen(row.gltekSubtotal)) + "</b></div></td>";
+    html += "<td data-label='" + esc(t("manufacturing_cost_dkd_costs")) + "'><div class='manufacturing-cost-breakdown'>" +
       "<span><i>" + esc(t("manufacturing_cost_packaging_cost")) + "</i><b>" + esc(manufacturingCostYen(row.packagingCost)) + "</b></span>" +
       "<span><i>" + esc(t("manufacturing_cost_documents_cost")) + "</i><b>" + esc(manufacturingCostYen(row.documentsCost)) + "</b></span>" +
       "<span class='subtotal'><i>" + esc(t("manufacturing_cost_selling_expense_cost")) + "</i><b>" + esc(manufacturingCostYen(row.sellingExpense)) + "</b></span>" +
       "<span><i>" + esc(t("manufacturing_cost_core_return_shipping_cost")) + "</i><b>" + esc(manufacturingCostYen(row.coreReturnShippingCost)) + "</b></span>" +
-    "</div></td>";
-    html += "<td><div class='manufacturing-cost-money manufacturing-cost-company-subtotal dkd'>" + esc(manufacturingCostYen(row.dkdSubtotal)) + "</div></td>";
-    html += "<td><div class='manufacturing-cost-money manufacturing-cost-total'>" + esc(manufacturingCostYen(row.totalCost)) + "</div><div class='manufacturing-cost-note'>" + esc(t("manufacturing_cost_formula_note")) + "</div></td>";
-    html += "<td>" + (notes.length ? "<div class='manufacturing-cost-missing'>" + esc(notes.join(" / ")) + "</div>" : "") + "</td>";
+    "</div><div class='manufacturing-cost-company-total'><span>" + esc(t("manufacturing_cost_dkd_subtotal")) + "</span><b class='manufacturing-cost-money manufacturing-cost-company-subtotal dkd'>" + esc(manufacturingCostYen(row.dkdSubtotal)) + "</b></div></td>";
+    html += "<td data-label='" + esc(t("manufacturing_cost_total")) + "'><div class='manufacturing-cost-money manufacturing-cost-total'>" + esc(manufacturingCostYen(row.totalCost)) + "</div><div class='manufacturing-cost-note'>" + esc(t("manufacturing_cost_formula_note")) + "</div></td>";
+    html += "<td data-label='" + esc(t("manufacturing_cost_notes")) + "'>" + (notes.length ? "<div class='manufacturing-cost-missing'>" + esc(notes.join(" / ")) + "</div>" : "") + "</td>";
     html += "</tr>";
-    if (detailHtml) html += "<tr class='manufacturing-cost-detail-row'><td colspan='8'>" + detailHtml + "</td></tr>";
+    if (detailHtml) html += "<tr class='manufacturing-cost-detail-row'><td colspan='5'>" + detailHtml + "</td></tr>";
   });
-  html += "</table></div>";
+  html += "</tbody></table></div>";
   list.innerHTML = html;
   bindManufacturingCostComponentDetailToggles();
 }
