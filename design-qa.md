@@ -175,7 +175,7 @@ final result: passed
 
 final result: passed
 
-## Manufacturing-cost processing visibility QA (v1.1.1096)
+## Manufacturing-cost processing visibility QA (v1.1.1097)
 
 - Request: make it obvious that candidate search, cost calculation, and saved-list loading are running.
 - Implemented a high-contrast blue status card, 18px processing title, 30px animated spinner, actual request-phase description, busy button text, and explicit completion messages. No invented percentages or completion estimates.
@@ -184,7 +184,7 @@ final result: passed
 - Desktop 1280 x 900: search matching phase, catalog/component phase, search completion, cost calculation and completion, saved-list loading and completion verified. Status title computed to 18px dark navy; document width stayed 1280px.
 - 390 x 844 and 320 x 844, including English and Chinese at 320px: status text wraps within the card with no horizontal overflow. Reduced-motion animation removal checked by the regression guard; OS/browser preferences were not changed.
 - Synthetic network failure: error displayed, spinner/status card cleared, and search re-enabled. The expected application warning was captured; no uncaught console error was introduced. Zero-result and permission/stale/readonly/duplicate scenarios are covered by the guards.
-- All 118 authoritative workflow Node commands, static build, strict CSP/response headers, JavaScript syntax and diff checks passed. Data matching contracts, financial calculations, save contracts, permissions, stock and database unchanged.
+- All 118 initial authoritative workflow Node commands passed; after preserving the concurrent frontend release, all 119 combined workflow commands, static build, strict CSP/response headers, JavaScript syntax and diff checks passed. Data matching contracts, financial calculations, save contracts, permissions, stock and database unchanged.
 - Evidence (local only): `outputs/cost-workspace/loading-search-1280.png`, `loading-calc-1280.png`, `loading-320.png`, `loading-progress-detail.png`.
 - Authenticated production operations and genuine backend latency were not exercised; fault/delay evidence uses isolated synthetic data only.
 
