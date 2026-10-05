@@ -7130,7 +7130,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1094";
+var APP_VERSION       = "v1.1.1095";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -31042,11 +31042,13 @@ function renderManufacturingCostProductDetail() {
     [t("f_manufacturer"), p.manufacturer],
     [t("f_mfr_pn"), p.manufacturer_part_number],
     [t("f_genuine_pn"), p.genuine_part_number_2 && p.genuine_part_number_2 !== manufacturingCostProductTitle(p) ? p.genuine_part_number_2 : ""],
-    [t("lbl_category"), tCat(p.category_code || p.category)],
-    ["DKD", row.productId]
+    [t("lbl_category"), tCat(p.category_code || p.category)]
   ].filter(function(item) { return item[1] !== null && item[1] !== undefined && item[1] !== ""; });
   var html = "<div class='manufacturing-cost-detail-identity'><h3>" + esc(manufacturingCostProductTitle(p)) + "</h3><dl>";
   facts.forEach(function(item) { html += "<div><dt>" + esc(item[0]) + "</dt><dd>" + esc(String(item[1])) + "</dd></div>"; });
+  if (row.productId !== null && row.productId !== undefined && row.productId !== "") {
+    html += "<div class='manufacturing-cost-detail-product-id'><dt>" + esc(t("f_product_id")) + "</dt><dd>" + esc(String(row.productId)) + "</dd></div>";
+  }
   html += "</dl></div><div class='manufacturing-cost-detail-total'><span>" + esc(t("manufacturing_cost_total")) + "</span><b>" + esc(manufacturingCostYen(row.totalCost)) + "</b></div>";
   if (notes.length) {
     html += "<div class='manufacturing-cost-detail-warning'><div>" + notes.map(function(note) { return "<p>" + esc(note) + "</p>"; }).join("") + "</div>" +

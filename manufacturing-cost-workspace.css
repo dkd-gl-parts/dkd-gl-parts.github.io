@@ -92,6 +92,9 @@
 .manufacturing-cost-detail-identity dl div { min-width: 0; }
 .manufacturing-cost-detail-identity dt { font-size: 12px; color: #52647b; margin-bottom: 3px; }
 .manufacturing-cost-detail-identity dd { font-size: 14px; color: #081f3a; margin: 0; overflow-wrap: anywhere; }
+.manufacturing-cost-detail-identity .manufacturing-cost-detail-product-id { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 8px; }
+.manufacturing-cost-detail-product-id dt { margin-bottom: 0; white-space: nowrap; }
+.manufacturing-cost-detail-product-id dd { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .manufacturing-cost-detail-total { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; background: #f0f7f3; border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; }
 .manufacturing-cost-detail-total span { font-size: 14px; font-weight: 700; }
 .manufacturing-cost-detail-total b { font-size: 28px; line-height: 1.3; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }

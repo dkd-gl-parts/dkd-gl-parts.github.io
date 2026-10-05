@@ -174,3 +174,16 @@ final result: passed
 ## Latest manufacturing-cost workspace acceptance
 
 final result: passed
+
+## Product ID inline detail QA (v1.1.1095)
+
+- Request: keep the product-ID label and number on one horizontal line in the manufacturing-cost detail panel.
+- Implementation: a full-width semantic definition-list row using the existing translated Product ID label; other metadata remains two columns and the full-width part-number heading remains 24px.
+- Synthetic production-renderer fixture only; no copied authentication/session or production data mutations.
+- Hidden IAB at 1280 x 900, 390 x 844, and 320 x 844: label and ID share a baseline, row height is 20px, numeric ID is complete, and document width matches the viewport without horizontal overflow.
+- Japanese, English, and Chinese labels checked at 320px; selected product changes update the ID. Mouse click and keyboard Enter selection remain functional.
+- Empty and loading fixtures retain their existing states; the verifier covers stale selection, escaping, permissions, read-only actions, and dialog keyboard behavior. Authenticated production save/import/delete was not exercised for this display-only change.
+- All 117 authoritative workflow Node commands, static build, response-header/CSP verification, syntax, and diff checks passed. No security, money, stock, database, or permission behavior changed.
+- Evidence (local only): `outputs/cost-workspace/product-id-1280.png`, `product-id-320.png`, and the focused `product-id-detail.png`.
+
+final result: passed
