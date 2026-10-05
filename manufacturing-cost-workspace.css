@@ -10,6 +10,8 @@
 .manufacturing-cost-workbar { background: #fff; border: 1px solid #dce5ef; border-radius: 8px; }
 .manufacturing-cost-progress { display: flex; align-items: center; gap: 16px; margin: 16px 0; padding: 20px; border: 1px solid #9ebcf5; border-left: 4px solid #2f6fed; border-radius: 8px; background: #edf4ff; color: #081f3a; }
 .manufacturing-cost-progress[hidden] { display: none; }
+.manufacturing-cost-previous-link { display: inline-flex; padding: 3px 8px; border: 1px solid #a6d8bc; border-radius: 4px; background: #eaf7ef; color: #146c43; font-size: 12px; font-weight: 700; }
+.manufacturing-cost-history-note { margin: 8px 0; color: #465a73; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
 .manufacturing-cost-progress > div { min-width: 0; }
 .manufacturing-cost-progress strong { display: block; font-size: 18px; line-height: 1.5; }
 .manufacturing-cost-progress p { margin: 4px 0; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
