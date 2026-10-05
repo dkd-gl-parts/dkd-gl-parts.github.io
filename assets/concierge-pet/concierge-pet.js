@@ -100,10 +100,21 @@
       bridgeCheck: "Windows連携を確認",
       bridgeHelp: "連携キューの確認、CSV事前検査、固定フォルダー表示、販売王25の起動を利用できます。承認済み端末の単回ログインは下の管理者テスト欄から行います。端末申請だけではログインやCSV取込は有効になりません。",
       bridgeInboxHelp: "CSVをWindows受信フォルダーへ置き、ファイル名だけを入力してください。フォルダー：%LOCALAPPDATA%\\D-CATS\\HanbaiOhBridge\\inbox",
-      bridgeDesktopHelp: "販売王への取込は自動実行しません。販売王で「D-CATS連携テスト（実データ禁止）」を確認してから手動で行ってください。",
+      bridgeDesktopHelp: "テスト会社への自動取込は、下の「開発テスト売上の取込」から実行できます。事前に端末とログインの照合が必要です。",
       bridgeOpenTestFolder: "取込待ちフォルダーを開く",
       bridgeLaunchHanbaioh: "販売王25を起動",
       loginLegend: "販売王ログイン（管理者テスト）",
+      salesLegend: "開発テスト売上の取込",
+      salesHelp: "ログイン確認後、準備済みCSVを指定してください。D-CATS連携テスト（実データ禁止）へ、DEV-ORDER-001の1行だけを取り込みます。新しいローカルバックアップ、エラーチェック、読戻しまで自動実行します。",
+      salesFile: "準備済みCSVファイル名",
+      salesSubmit: "テスト売上を1回取り込む",
+      salesIdle: "承認済み端末の申請ファイルと、準備済みCSVを選択してください。",
+      salesWorking: "バックアップ・検査・単回取込・読戻しを実行しています。販売王の画面を操作せずお待ちください。",
+      salesVerified: "伝票 {slip} の取込と販売王側の読戻しを確認しました。",
+      salesPresent: "伝票 {slip} は既に同じ内容で登録されています。追加取込は行いませんでした。",
+      salesStopped: "取込処理を停止しました（{code}）。同じCSVを再送せず、販売王の画面と記録を確認してください。",
+      salesUnknown: "取込結果を確認できません。同じCSVを再送せず、販売王の画面と記録を確認してください。",
+      salesInvalidFile: "準備済みの hanbaioh-sales-test-9xxxxx-ハッシュ-55.csv を指定してください。",
       loginHelp: "上の端末申請ファイルを選択し、承認済み端末とテスト会社への連携を確認します。既に開いている販売王では停止します。送信は1回だけで、自動再試行しません。",
       loginSubmit: "テスト会社へ1回ログイン",
       loginIdle: "ログイン設定と端末承認の確認後に利用できます。",
@@ -251,10 +262,20 @@
       bridgeCheck: "Check Windows integration",
       bridgeHelp: "Check the queue, validate CSV files, open the fixed folder or launch Sales King 25. Approved devices can use the administrator test sign-in below. Device enrollment alone does not enable sign-in or CSV import.",
       bridgeInboxHelp: "Place the CSV in the Windows inbox and enter only its file name. Folder: %LOCALAPPDATA%\\D-CATS\\HanbaiOhBridge\\inbox",
-      bridgeDesktopHelp: "Import is never automatic. In Sales King, confirm “D-CATS Integration Test (No Production Data)” before importing manually.",
+      bridgeDesktopHelp: "Use Development test sale import below after verifying the device and sign-in.",
       bridgeOpenTestFolder: "Open import-ready folder",
       bridgeLaunchHanbaioh: "Launch Sales King 25",
       loginLegend: "Sales King sign-in (administrator test)",
+      salesLegend: "Development test sale import",
+      salesHelp: "After verified sign-in, select the staged CSV. Imports one DEV-ORDER-001 row into the fixed synthetic company, with a fresh local backup, error check and readback.",
+      salesFile: "Staged CSV filename", salesSubmit: "Import test sale once",
+      salesIdle: "Select your approved device enrollment file and the staged CSV.",
+      salesWorking: "Creating backup, checking, importing once and reading back. Leave Sales King untouched.",
+      salesVerified: "Import and vendor readback verified for slip {slip}.",
+      salesPresent: "Slip {slip} already contains the same data. No additional import was performed.",
+      salesStopped: "Stopped ({code}). Do not resend this CSV; inspect the vendor screen and records.",
+      salesUnknown: "Import outcome unknown. Do not resend this CSV; inspect the vendor screen and records.",
+      salesInvalidFile: "Specify the staged hanbaioh-sales-test-9xxxxx-hash-55.csv filename.",
       loginHelp: "Select your device enrollment file above. Use an approved device and the test company. Stop if Sales King is open. Submit once; no automatic retry.",
       loginSubmit: "Sign in to test company once",
       loginIdle: "Available after login configuration and device approval are verified.",
@@ -402,10 +423,20 @@
       bridgeCheck: "检查Windows联动",
       bridgeHelp: "可检查队列、预检CSV、打开固定文件夹和启动销售王25。已批准设备可使用下方管理员测试登录。设备申请本身不会启用登录或CSV导入。",
       bridgeInboxHelp: "请将CSV放入Windows收件文件夹，并只输入文件名。文件夹：%LOCALAPPDATA%\\D-CATS\\HanbaiOhBridge\\inbox",
-      bridgeDesktopHelp: "不会自动导入。请在销售王中确认“D-CATS联动测试（禁止使用实际数据）”后再手动导入。",
+      bridgeDesktopHelp: "确认设备和登录后，可使用下方的开发测试销售导入。",
       bridgeOpenTestFolder: "打开待导入文件夹",
       bridgeLaunchHanbaioh: "启动销售王25",
       loginLegend: "销售王登录（管理员测试）",
+      salesLegend: "开发测试销售导入",
+      salesHelp: "确认登录后，指定已准备的CSV。仅向固定测试公司导入DEV-ORDER-001的一行，并自动执行本地备份、检查和回读。",
+      salesFile: "已准备的CSV文件名", salesSubmit: "单次导入测试销售",
+      salesIdle: "请选择已批准的设备申请文件和已准备的CSV。",
+      salesWorking: "正在备份、检查、单次导入和回读。请勿操作销售王。",
+      salesVerified: "已确认凭证 {slip} 的导入及回读。",
+      salesPresent: "凭证 {slip} 已存在且内容一致，未再次导入。",
+      salesStopped: "已停止（{code}）。请勿重发CSV，请核对销售王画面和记录。",
+      salesUnknown: "无法确认导入结果。请勿重发CSV，请核对销售王画面和记录。",
+      salesInvalidFile: "请指定已准备的 hanbaioh-sales-test-9xxxxx-hash-55.csv 文件名。",
       loginHelp: "请在上方选择本人的设备申请文件，使用已批准设备及测试公司。销售王已打开时停止。仅提交一次，不自动重试。",
       loginSubmit: "登录测试公司一次",
       loginIdle: "登录配置与设备批准确认后可用。",
@@ -530,6 +561,12 @@
   var bridgeFolderButton;
   var bridgeLaunchButton;
   var loginButton;
+  var salesButton;
+  var salesFileInput;
+  var salesStatus;
+  var salesPending = false;
+  var salesToken = 0;
+  var salesStatusState = { key: "salesIdle", values: null };
   var loginStatus;
   var loginStatusKey = "loginIdle";
   var loginAttempted = false;
@@ -982,6 +1019,29 @@
     loginCard.appendChild(loginButton);
     loginCard.appendChild(loginStatus);
     bridgeCard.appendChild(loginCard);
+    var salesCard = createElement("section", "dcats-concierge-login-pilot");
+    salesCard.appendChild(createCopyElement("h4", "dcats-concierge-bridge-title", "salesLegend"));
+    salesCard.appendChild(createCopyElement("p", "dcats-concierge-bridge-help", "salesHelp"));
+    var salesLabel = createCopyElement("label", "dcats-concierge-bridge-label", "salesFile");
+    salesLabel.htmlFor = "dcats-concierge-test-sales-file";
+    salesFileInput = createElement("input", "dcats-concierge-bridge-input");
+    salesFileInput.id = salesLabel.htmlFor;
+    salesFileInput.type = "text";
+    salesFileInput.maxLength = 100;
+    salesFileInput.autocomplete = "off";
+    salesFileInput.addEventListener("input", updatePilotTestSale);
+    salesButton = createCopyElement("button", "dcats-concierge-bridge-button", "salesSubmit");
+    salesButton.type = "button";
+    salesButton.id = "dcats-concierge-test-sales-submit";
+    salesButton.addEventListener("click", runPilotTestSale);
+    salesStatus = createElement("p", "dcats-concierge-bridge-status");
+    salesStatus.id = "dcats-concierge-test-sales-status";
+    salesStatus.setAttribute("role", "status");
+    salesStatus.setAttribute("aria-live", "polite");
+    salesButton.setAttribute("aria-describedby", salesStatus.id);
+    salesCard.appendChild(salesLabel); salesCard.appendChild(salesFileInput);
+    salesCard.appendChild(salesButton); salesCard.appendChild(salesStatus);
+    bridgeCard.appendChild(salesCard);
 
     panelBody.appendChild(characterField);
     panelBody.appendChild(modeField);
@@ -1270,6 +1330,7 @@
     reviewButton.disabled = enrollmentPending || reviewPending || reviewAttempted || !reviewPreviewRecord || !reviewConfirmInput.checked;
     updateBackupEnrollment();
     updatePilotLogin();
+    updatePilotTestSale();
   }
 
   function setReviewStatus(key, values) {
@@ -1286,6 +1347,11 @@
     if (!bridgeCard || !panelBody || !conciergeHelp) return;
     var owner = currentSettingsOwner();
     if (loginOwner !== owner) {
+      if (window.DcatsHanbaiohTestSalesBridge) window.DcatsHanbaiohTestSalesBridge.cancelCurrent();
+      salesToken += 1;
+      if (salesPending) bridgeRequestPending = false;
+      salesPending = false;
+      salesStatusState = { key: "salesIdle", values: null };
       loginOwner = owner;
       loginAttempted = false;
       loginStatusKey = "loginIdle";
@@ -1296,7 +1362,11 @@
       return;
     }
     bridgeRequestToken += 1;
+    if (window.DcatsHanbaiohTestSalesBridge) window.DcatsHanbaiohTestSalesBridge.cancelCurrent();
     loginToken += 1;
+    salesToken += 1;
+    if (salesPending) salesStatusState = { key: "salesUnknown", values: null };
+    salesPending = false;
     if (loginPending) loginStatusKey = "loginUnknown";
     loginPending = false;
     bridgeRequestPending = false;
@@ -1314,6 +1384,7 @@
     clearBackupEnrollment();
     if (reviewConfirmInput) reviewConfirmInput.checked = false;
     if (enrollFileInput) enrollFileInput.value = "";
+    if (salesFileInput) salesFileInput.value = "";
     if (bridgeSalesFileInput) bridgeSalesFileInput.value = "sales.csv";
     if (bridgeCustomerFileInput) bridgeCustomerFileInput.value = "customers.csv";
     if (bridgeCard.parentElement) bridgeCard.parentElement.removeChild(bridgeCard);
@@ -1622,6 +1693,7 @@
       var statusValues;
       if (command === "stage_test_company_sales_import") {
         var stage = response.data && response.data.stage || {};
+        if (salesFileInput) salesFileInput.value = String(stage.fileName || "");
         statusKey = response.data && response.data.reused === true ? "bridgeTestSalesExisting" : "bridgeTestSalesStaged";
         statusValues = { file: String(stage.fileName || ""), company: String(stage.testCompanyName || "") };
       } else if (command === "open_test_company_import_folder") {
@@ -1675,6 +1747,51 @@
     loginStatus.classList.toggle("is-success", loginStatusKey === "loginVerified");
     loginStatus.classList.toggle("is-warning", ["loginUnknown", "loginAlreadyRunning", "loginTargetMismatch"].indexOf(loginStatusKey) >= 0);
     loginStatus.classList.toggle("is-error", ["loginUnavailable", "loginForbidden", "loginRefused", "loginRefused1006"].indexOf(loginStatusKey) >= 0);
+  }
+
+  function updatePilotTestSale() {
+    if (!salesButton || !salesStatus) return;
+    salesButton.disabled = salesPending || bridgeRequestPending || !reviewPreviewRecord ||
+      reviewPreviewRecord.actor_id !== currentSettingsOwner() ||
+      !!(window.DcatsHanbaiohTestSalesBridge && window.DcatsHanbaiohTestSalesBridge.wasAttempted(
+        reviewPreviewRecord, String(salesFileInput.value || "").trim()));
+    salesFileInput.disabled = salesPending || bridgeRequestPending;
+    salesStatus.textContent = copy(salesStatusState.key, salesStatusState.values || {});
+    salesStatus.classList.toggle("is-success", ["salesVerified", "salesPresent"].indexOf(salesStatusState.key) >= 0);
+    salesStatus.classList.toggle("is-warning", ["salesStopped", "salesUnknown"].indexOf(salesStatusState.key) >= 0);
+  }
+
+  async function runPilotTestSale() {
+    if (!isSystemAdminSession() || salesPending || bridgeRequestPending || !reviewPreviewRecord) return;
+    var fileName = String(salesFileInput.value || "").trim();
+    if (!/^hanbaioh-sales-test-9\d{5}-[0-9a-f]{12}-55\.csv$/.test(fileName)) {
+      salesStatusState = { key: "salesInvalidFile", values: null }; updatePilotTestSale(); return;
+    }
+    var record = reviewPreviewRecord;
+    var token = ++salesToken;
+    salesPending = true; bridgeRequestPending = true;
+    salesStatusState = { key: "salesWorking", values: null };
+    updateBridgeStatus(); updatePilotLogin(); updatePilotTestSale();
+    try {
+      var data = await window.DcatsHanbaiohTestSalesBridge.importOnce({
+        record: record, fileName: fileName,
+        isCurrent: function () { return token === salesToken && isSystemAdminSession() &&
+          record.actor_id === currentSettingsOwner() && record === reviewPreviewRecord; },
+      });
+      if (token !== salesToken || !isSystemAdminSession()) return;
+      if (data && ["import_verified", "already_present"].indexOf(data.status) >= 0 &&
+          data.slipNumber === /^hanbaioh-sales-test-(9\d{5})-/.exec(fileName)[1]) {
+        salesStatusState = { key: data.status === "import_verified" ? "salesVerified" : "salesPresent", values: { slip: data.slipNumber } };
+      } else if (data && data.status === "stopped" && typeof data.code === "string" && /^[A-Z_]{1,80}$/.test(data.code)) {
+        salesStatusState = { key: "salesStopped", values: { code: data.code } };
+      } else { salesStatusState = { key: "salesUnknown", values: null }; }
+    } catch { if (token === salesToken) salesStatusState = { key: "salesUnknown", values: null }; }
+    finally {
+      if (token === salesToken) {
+        salesPending = false; bridgeRequestPending = false;
+        updateBridgeStatus(); updatePilotLogin(); updatePilotTestSale();
+      }
+    }
   }
 
   async function runPilotLogin() {
