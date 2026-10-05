@@ -1400,6 +1400,8 @@ var TRANSLATIONS = {
     manufacturing_cost_checking_candidates: "カタログ情報と構成部品の登録状況を確認しています。",
     manufacturing_cost_checking_import_history: "以前の紐づけを確認しています。",
     manufacturing_cost_previous_link: "以前の紐づけ",
+    manufacturing_cost_sawafuji_family: "澤藤・末尾1桁省略一致",
+    manufacturing_cost_sawafuji_note: "末尾0～9の正式品番を候補に含めています。純正品番・正式メーカー品番・商品IDを確認して選択してください。末尾違いを同一商品とは確定していません。",
     manufacturing_cost_import_history_note: "以前選んだ商品が特定できた場合のみ、初期チェックが入ります。チェックは変更できます。原価計算はボタンで実行してください。",
     manufacturing_cost_import_history_conflict: "以前の紐づけが複数あるため、自動選択していません。候補を確認してください。",
     manufacturing_cost_import_history_unavailable: "以前の紐づけを確認できなかったため、自動選択していません。候補を確認して選択してください。",
@@ -1414,7 +1416,7 @@ var TRANSLATIONS = {
     manufacturing_cost_candidate_note: "チェックした品番を下の決定リストへ追加します。",
     manufacturing_cost_candidate_count: "候補 {n} 件",
     manufacturing_cost_import_result_summary: "取込 {parts} 品番 / 該当 {matched} 品番 / 候補 {candidates} 件 / 未登録 {missing} 品番",
-    manufacturing_cost_import_exact_note: "取込品番と商品マスタが完全一致した候補を、品番ごとに表示しています。",
+    manufacturing_cost_import_exact_note: "完全一致と澤藤の末尾省略一致の候補を、取込品番ごとに区別して表示しています。",
     manufacturing_cost_import_group_count: "候補 {n} 件",
     manufacturing_cost_import_unregistered_title: "商品マスタ未登録 {n} 品番",
     manufacturing_cost_import_unregistered_note: "次の取込品番は商品マスタに完全一致する商品がありません。",
@@ -3751,6 +3753,8 @@ var TRANSLATIONS = {
     manufacturing_cost_checking_candidates: "Checking catalog information and registered components.",
     manufacturing_cost_checking_import_history: "Checking previous links.",
     manufacturing_cost_previous_link: "Previously linked",
+    manufacturing_cost_sawafuji_family: "Sawafuji · final digit omitted",
+    manufacturing_cost_sawafuji_note: "Candidates include formal numbers ending in 0–9. Check the genuine number, full manufacturer number and product ID. These are not confirmed interchangeable products.",
     manufacturing_cost_import_history_note: "A candidate is checked initially only when the previously selected product can be identified. You can change the selection. Use the button to calculate costs.",
     manufacturing_cost_import_history_conflict: "Multiple previous links exist. No candidate was selected automatically; please review them.",
     manufacturing_cost_import_history_unavailable: "Previous links could not be checked. No candidate was selected automatically; please select candidates manually.",
@@ -3765,7 +3769,7 @@ var TRANSLATIONS = {
     manufacturing_cost_candidate_note: "Checked products will be added to the selected cost list below.",
     manufacturing_cost_candidate_count: "{n} candidates",
     manufacturing_cost_import_result_summary: "{parts} imported / {matched} matched / {candidates} candidates / {missing} not registered",
-    manufacturing_cost_import_exact_note: "Exact product-master matches are grouped by imported part number.",
+    manufacturing_cost_import_exact_note: "Exact matches and Sawafuji final-digit family candidates are distinguished by imported part number.",
     manufacturing_cost_import_group_count: "{n} candidates",
     manufacturing_cost_import_unregistered_title: "Not in product master: {n}",
     manufacturing_cost_import_unregistered_note: "These imported part numbers have no exact match in the product master.",
@@ -6112,6 +6116,8 @@ var TRANSLATIONS = {
     manufacturing_cost_checking_candidates: "正在确认目录信息和已登记的组成零件。",
     manufacturing_cost_checking_import_history: "正在确认以前的关联记录。",
     manufacturing_cost_previous_link: "以前的关联",
+    manufacturing_cost_sawafuji_family: "泽藤·省略末位数字匹配",
+    manufacturing_cost_sawafuji_note: "候选包含末位0～9的正式品番。请选择前核对纯正品番、完整制造商品番和商品ID。这并不代表产品相同或可互换。",
     manufacturing_cost_import_history_note: "仅在能确定以前选择的商品时，才会初始勾选。您可以更改选择，请点击按钮计算成本。",
     manufacturing_cost_import_history_conflict: "存在多个以前的关联，未自动选择。请确认候选。",
     manufacturing_cost_import_history_unavailable: "无法确认以前的关联，未自动选择。请手动确认并选择候选。",
@@ -6126,7 +6132,7 @@ var TRANSLATIONS = {
     manufacturing_cost_candidate_note: "勾选的品番会添加到下方的确定列表。",
     manufacturing_cost_candidate_count: "候选 {n} 条",
     manufacturing_cost_import_result_summary: "导入 {parts} 个 / 匹配 {matched} 个 / 候选 {candidates} 条 / 未登记 {missing} 个",
-    manufacturing_cost_import_exact_note: "按导入品番分别显示与商品主数据完全匹配的候选。",
+    manufacturing_cost_import_exact_note: "按导入品番区分完全匹配和泽藤省略末位数字的候选。",
     manufacturing_cost_import_group_count: "候选 {n} 条",
     manufacturing_cost_import_unregistered_title: "商品主数据未登记 {n} 个",
     manufacturing_cost_import_unregistered_note: "以下导入品番在商品主数据中没有完全匹配的商品。",
@@ -7181,7 +7187,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1099";
+var APP_VERSION       = "v1.1.1100";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -30601,6 +30607,7 @@ function renderManufacturingCostCandidateRow(product, checkedDefault, currentIds
   var isAdded = !!currentIds[String(id || "")];
   var statusLabels = renderManufacturingCostCandidateStatusLabels(product);
   if (options.previouslyLinked) statusLabels += "<span class='manufacturing-cost-previous-link'>" + esc(t("manufacturing_cost_previous_link")) + "</span>";
+  if (options.familyMatch) statusLabels += "<span class='manufacturing-cost-previous-link'>" + esc(t("manufacturing_cost_sawafuji_family")) + "</span>";
   var checked = checkedDefault ? " checked" : "";
   if (isAdded) checked = "";
   var html = "<label class='manufacturing-cost-candidate-row" + (isAdded ? " added" : "") + "'>";
@@ -30655,13 +30662,15 @@ function renderManufacturingCostImportCandidateGroups(groups, checkedDefault, cu
     var previous = history.byToken[normalizePartQuery(group.token)] || {};
     html += "<section class='manufacturing-cost-import-result-group'>";
     html += "<div class='manufacturing-cost-import-result-group-head'><strong>" + esc(group.token) + "</strong><span>" + esc(tf("manufacturing_cost_import_group_count", { n: group.matchCount })) + "</span></div>";
+    if ((group.familyCandidateIds || []).length) html += "<p class='manufacturing-cost-history-note'>" + esc(t("manufacturing_cost_sawafuji_note")) + "</p>";
     if (previous.ambiguous) html += "<p class='manufacturing-cost-history-note'>" + esc(t("manufacturing_cost_import_history_conflict")) + "</p>";
     html += "<div class='manufacturing-cost-import-result-group-rows'>";
     (group.candidates || []).forEach(function(product) {
       var linked = !history.unavailable && previous.productId === String(productDkdId(product));
       var selectionKey = manufacturingCostCandidateSelectionKey(group.token, productDkdId(product));
       var checked = Object.prototype.hasOwnProperty.call(selections, selectionKey) ? selections[selectionKey] : linked;
-      html += renderManufacturingCostCandidateRow(product, checked, currentIds, { token: group.token, previouslyLinked: linked });
+      html += renderManufacturingCostCandidateRow(product, checked, currentIds, { token: group.token, previouslyLinked: linked,
+        familyMatch: (group.familyCandidateIds || []).indexOf(String(productDkdId(product))) >= 0 });
     });
     if (group.truncated) html += "<div class='manufacturing-cost-import-result-limit'>" + esc(t("manufacturing_cost_import_result_limit")) + "</div>";
     html += "</div></section>";
@@ -30825,8 +30834,19 @@ async function fetchManufacturingCostProducts(tokens, category, options) {
         exactOnly: !!options.exactOnly
       });
       if (r.error) return r;
+      var exactIds = {};
+      (r.data || []).forEach(function(p) { exactIds[String(productDkdId(p))] = true; });
+      var familyIds = [];
+      if (options.groupByToken && options.exactOnly) {
+        var family = await fetchSawafujiImportCandidates(tokens[i], category || null, 60);
+        if (family.error) return family;
+        (family.data || []).forEach(function(p) {
+          var id = String(productDkdId(p));
+          if (!exactIds[id]) { r.data.push(p); familyIds.push(id); exactIds[id] = true; }
+        });
+      }
       var matches = filterVisibleProducts(normalizeCoreProductFastRows(r.data || []));
-      if (options.groupByToken) groups.push({ token: tokens[i], candidates: matches });
+      if (options.groupByToken) groups.push({ token: tokens[i], candidates: matches, familyCandidateIds: familyIds });
       addRows(matches);
     }
   } else if (category) {
@@ -30847,6 +30867,7 @@ async function fetchManufacturingCostProducts(tokens, category, options) {
       return {
         token: group.token,
         candidates: candidates,
+        familyCandidateIds: group.familyCandidateIds,
         matchCount: matchCount,
         truncated: candidates.length < matchCount
       };
@@ -39615,6 +39636,43 @@ function normalizePartQuery(q) {
     .toUpperCase()
     .replace(/[\u2010-\u2015\u2212\u30FC\uFF0D]/g, "-")
     .replace(/[-\s]/g, "");
+}
+
+// Sawafuji source convention only. Never remove a last digit from other makers.
+function sawafujiShortPartKey(value) {
+  var key = normalizePartQuery(value || "");
+  return /^0[0-9]{9}$/.test(key) ? key : "";
+}
+
+function sawafujiFamilyPartNumbers(value) {
+  var key = sawafujiShortPartKey(value);
+  return key ? Array.from({ length: 10 }, function(_, i) { return key + i; }) : [];
+}
+
+function sawafujiFamilyCandidate(token, product) {
+  var key = sawafujiShortPartKey(token);
+  var formal = normalizePartQuery(product.manufacturer_part_number || "");
+  var maker = String(product.manufacturer || product.catalog_manufacturer || "").trim().toUpperCase();
+  return !!key && ["SAWAFUJI", "澤藤", "澤藤電機"].indexOf(maker) >= 0 &&
+    /^0[0-9]{10}$/.test(formal) && formal.slice(0, 10) === key;
+}
+
+async function fetchSawafujiImportCandidates(token, category, maxRows) {
+  var parts = sawafujiFamilyPartNumbers(token);
+  if (!parts.length) return { data: [], error: null };
+  maxRows = maxRows || 60;
+  // Equality lookup stays indexable; no generic prefix/fuzzy part matching.
+  var query = sb.from("core_products").select(CORE_PRODUCT_FAST_SELECT)
+    .in("normalized_manufacturer_part_number", parts)
+    .order("manufacturer_part_number", { ascending: true })
+    .order("dkd_shohin_id", { ascending: true }).limit(maxRows * 2);
+  if (category) query = query.eq("category_code", category);
+  var result = await query;
+  if (result.error) return result;
+  result.data = normalizeCoreProductFastRows(result.data || []).filter(function(p) {
+    return sawafujiFamilyCandidate(token, p);
+  }).slice(0, maxRows);
+  return result;
 }
 
 function validateProductPartNumberPair(genuinePartNumber, manufacturerPartNumber) {

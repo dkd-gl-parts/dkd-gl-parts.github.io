@@ -2392,6 +2392,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .container-stock-row-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .container-stock-hold-reason { display: grid; gap: 5px; margin-top: 9px; color: #785117; font-size: 12px; }
 .container-stock-held-badge { color: #785117; background: #fff2ce; padding: 3px 6px; border-radius: 5px; }
+.container-stock-family-confirm { display: flex; align-items: flex-start; gap: 8px; margin-top: 8px; padding: 10px; border: 1px solid #c9dbfa; border-radius: 6px; background: #edf4ff; color: #143b6b; line-height: 1.5; white-space: normal; }
+.container-stock-family-confirm input { flex: 0 0 auto; margin-top: 4px; }
 .container-stock-received { color: #147345; }
 @media (max-width: 640px) { .container-stock-head, .container-stock-held-item { flex-direction: column; align-items: stretch; } }
 .container-stock-head { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
@@ -2446,6 +2448,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .container-stock-table-wrap { max-height: 440px; overflow: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
 .container-stock-table { width: 100%; min-width: 840px; margin: 0; font-size: 12px; }
 .container-stock-table td { vertical-align: middle; }
+.container-stock-table td:first-child > strong { white-space: nowrap; }
 .container-stock-table td:first-child small { display: block; color: #667085; margin-top: 3px; }
 .container-stock-table select { width: 100%; min-width: 245px; font-size: 12px; }
 .container-stock-table .container-stock-source { color: #667085; max-width: 180px; overflow-wrap: anywhere; }

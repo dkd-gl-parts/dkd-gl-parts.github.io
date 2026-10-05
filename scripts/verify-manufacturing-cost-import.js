@@ -135,6 +135,7 @@ if (!masterSearchSource.includes("options.exactOnly") ||
 const groupedFetchSource = sourceBetween("async function fetchManufacturingCostProducts", "async function fetchManufacturingCostProductsByIds");
 const fetchCalls = [];
 const fetchSandbox = {
+  fetchSawafujiImportCandidates: async () => ({ data: [], error: null }),
   fetchCoreProductMasterMatches: async (token, category, limit, options) => {
     fetchCalls.push({ token, category, limit, options });
     if (token === "MISSING") return { data: [], error: null };
