@@ -50,6 +50,8 @@ jobs:
           node scripts/verify-concierge-desktop.js
       - name: Verify release asset versions
         run: node scripts/verify-app-version-assets.js
+      - name: Verify manufacturing cost list and selected-product details
+        run: node scripts/verify-manufacturing-cost-workspace.js
       - name: Verify yen currency display
         run: node scripts/verify-yen-currency-display.js
       - name: Verify Edge-compatible automatic updates
