@@ -41,6 +41,8 @@ const groups = [
   {token:'MISSING-1',matchCount:0,candidates:[]}
 ];
 const sandbox = {
+  manufacturingCostImportHistory:{byToken:{},unavailable:false},
+  normalizePartQuery:s=>String(s).toUpperCase().replace(/[-\s]/g,''),t:s=>s,
   manufacturingCostCandidateMode:'import',manufacturingCostCandidateGroups:groups,
   manufacturingCostCandidateRows:[{dkd_shohin_id:1},{dkd_shohin_id:2},{dkd_shohin_id:3}],
   manufacturingCostCurrentProductIdMap:()=>({1:true}),productDkdId:p=>p.dkd_shohin_id,
@@ -49,6 +51,7 @@ const sandbox = {
 };
 function isolate(start,end) {return app.slice(app.indexOf(start),app.indexOf(end,app.indexOf(start)+1));}
 vm.runInNewContext(isolate('function pendingManufacturingCostCandidateProducts','async function openManufacturingCostProductResearch') +
+  isolate('function manufacturingCostCandidateSelectionKey','function renderManufacturingCostCandidateRow') +
   isolate('function renderManufacturingCostImportCandidateGroups','function pendingManufacturingCostCandidateProducts'),sandbox);
 assert.equal(sandbox.pendingManufacturingCostCandidateProducts().length,1,'hide entire group after an adopted candidate');
 let rendered = sandbox.renderManufacturingCostImportCandidateGroups(groups,false,{1:true});

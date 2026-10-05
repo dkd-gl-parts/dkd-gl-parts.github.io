@@ -153,6 +153,8 @@ vm.runInNewContext(`${groupedFetchSource}; result = fetchManufacturingCostProduc
 const groupedRenderSource = sourceBetween("function renderManufacturingCostCandidateRow", "function selectedManufacturingCostCandidateProducts");
 const candidateWrap = { innerHTML: "" };
 const renderSandbox = {
+  manufacturingCostImportHistory: { byToken: {}, unavailable: false },
+  normalizePartQuery: value => String(value).toUpperCase().replace(/[-\s]/g, ""),
   manufacturingCostCandidateRows: [],
   manufacturingCostCandidateMode: "",
   manufacturingCostCandidateGroups: [],
@@ -176,7 +178,7 @@ const renderSandbox = {
   })[key] || key,
   tf: (key, values) => `${key}:${Object.values(values).join("/")}`
 };
-vm.runInNewContext(`${groupedRenderSource}; result = renderManufacturingCostCandidates;`, renderSandbox);
+vm.runInNewContext(`${sourceBetween("function manufacturingCostCandidateSelectionKey", "function renderManufacturingCostCandidateRow")}${groupedRenderSource}; result = renderManufacturingCostCandidates;`, renderSandbox);
 
 (async () => {
   const result = await fetchSandbox.result(["31100-76G10", "MISSING"], "starter", {

@@ -1398,6 +1398,11 @@ var TRANSLATIONS = {
     manufacturing_cost_matching_parts: "{n}品番を商品マスタと照合しています。",
     manufacturing_cost_matching_category: "選択カテゴリの商品マスタを照合しています。",
     manufacturing_cost_checking_candidates: "カタログ情報と構成部品の登録状況を確認しています。",
+    manufacturing_cost_checking_import_history: "以前の紐づけを確認しています。",
+    manufacturing_cost_previous_link: "以前の紐づけ",
+    manufacturing_cost_import_history_note: "以前選んだ商品が特定できた場合のみ、初期チェックが入ります。チェックは変更できます。原価計算はボタンで実行してください。",
+    manufacturing_cost_import_history_conflict: "以前の紐づけが複数あるため、自動選択していません。候補を確認してください。",
+    manufacturing_cost_import_history_unavailable: "以前の紐づけを確認できなかったため、自動選択していません。候補を確認して選択してください。",
     manufacturing_cost_reading_components: "構成部品と単価を読み込み、原価を計算しています。",
     manufacturing_cost_reading_list: "保存リストの設定と対象品番を取得しています。",
     manufacturing_cost_wait_note: "処理が終わるまで、そのままお待ちください。",
@@ -3744,6 +3749,11 @@ var TRANSLATIONS = {
     manufacturing_cost_matching_parts: "Matching {n} part numbers against the product master.",
     manufacturing_cost_matching_category: "Matching products in the selected category.",
     manufacturing_cost_checking_candidates: "Checking catalog information and registered components.",
+    manufacturing_cost_checking_import_history: "Checking previous links.",
+    manufacturing_cost_previous_link: "Previously linked",
+    manufacturing_cost_import_history_note: "A candidate is checked initially only when the previously selected product can be identified. You can change the selection. Use the button to calculate costs.",
+    manufacturing_cost_import_history_conflict: "Multiple previous links exist. No candidate was selected automatically; please review them.",
+    manufacturing_cost_import_history_unavailable: "Previous links could not be checked. No candidate was selected automatically; please select candidates manually.",
     manufacturing_cost_reading_components: "Loading components and unit prices to calculate costs.",
     manufacturing_cost_reading_list: "Retrieving saved settings and selected products.",
     manufacturing_cost_wait_note: "Please wait until processing finishes.",
@@ -6100,6 +6110,11 @@ var TRANSLATIONS = {
     manufacturing_cost_matching_parts: "正在将{n}个品番与商品主数据匹配。",
     manufacturing_cost_matching_category: "正在匹配所选类别的商品主数据。",
     manufacturing_cost_checking_candidates: "正在确认目录信息和已登记的组成零件。",
+    manufacturing_cost_checking_import_history: "正在确认以前的关联记录。",
+    manufacturing_cost_previous_link: "以前的关联",
+    manufacturing_cost_import_history_note: "仅在能确定以前选择的商品时，才会初始勾选。您可以更改选择，请点击按钮计算成本。",
+    manufacturing_cost_import_history_conflict: "存在多个以前的关联，未自动选择。请确认候选。",
+    manufacturing_cost_import_history_unavailable: "无法确认以前的关联，未自动选择。请手动确认并选择候选。",
     manufacturing_cost_reading_components: "正在读取组成零件和单价并计算成本。",
     manufacturing_cost_reading_list: "正在获取已保存的设置和目标商品。",
     manufacturing_cost_wait_note: "请等待处理完成。",
@@ -7166,7 +7181,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1097";
+var APP_VERSION       = "v1.1.1098";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -7292,6 +7307,7 @@ var manufacturingCostSelectedProductId = null;
 var manufacturingCostProductMap = {};
 var manufacturingCostComponentMap = {};
 var manufacturingCostCandidateRows = [];
+var manufacturingCostImportHistory = { byToken: {}, unavailable: false };
 var manufacturingCostCandidateMode = "";
 var manufacturingCostCandidateGroups = [];
 var manufacturingCostImportSearchContext = null;
@@ -29864,6 +29880,7 @@ function renderManufacturingCostCandidateEmpty(message) {
   manufacturingCostCandidateMode = "";
   manufacturingCostCandidateGroups = [];
   manufacturingCostCandidateStatusMap = {};
+  manufacturingCostImportHistory = { byToken: {}, unavailable: false };
   var wrap = document.getElementById("manufacturing-cost-candidates");
   if (!wrap) return;
   if (!message) {
@@ -30509,15 +30526,85 @@ function renderManufacturingCostCandidateStatusLabels(product) {
   return html;
 }
 
-function renderManufacturingCostCandidateRow(product, checkedDefault, currentIds) {
+function manufacturingCostBuildImportHistory(groups, items) {
+  var byToken = Object.create(null);
+  (groups || []).forEach(function(group) {
+    var key = normalizePartQuery(group.token || "");
+    var candidateIds = Object.create(null);
+    (group.candidates || []).forEach(function(product) { candidateIds[String(productDkdId(product))] = true; });
+    var linkedIds = Object.create(null);
+    (items || []).forEach(function(item) {
+      var id = String(item.dkd_shohin_id || "");
+      if (!candidateIds[id]) return;
+      // Old saved lists predate import provenance; only exact saved part numbers may stand in for it.
+      var parts = Array.isArray(item.import_part_numbers) && item.import_part_numbers.length
+        ? item.import_part_numbers : [item.part_number_snapshot, item.genuine_part_number_snapshot];
+      if (key && parts.some(function(part) { return part && normalizePartQuery(String(part)) === key; })) linkedIds[id] = true;
+    });
+    var ids = Object.keys(linkedIds);
+    byToken[key] = { productId: ids.length === 1 ? ids[0] : null, ambiguous: ids.length > 1 };
+  });
+  return { byToken: byToken, unavailable: false };
+}
+
+async function loadManufacturingCostImportHistory(groups) {
+  if (!canViewManufacturingCostMgmt()) return { byToken: {}, unavailable: true };
+  var ids = Object.create(null);
+  (groups || []).forEach(function(group) {
+    (group.candidates || []).forEach(function(product) {
+      var id = String(productDkdId(product) || "");
+      if (/^[1-9][0-9]*$/.test(id)) ids[id] = true;
+    });
+  });
+  var productIds = Object.keys(ids);
+  var items = [];
+  try {
+    // Read only matching products, minimal fields, active lists, and complete ordered pages.
+    // An incomplete/error response must never become an apparently unique previous link.
+    for (var batch = 0; batch < productIds.length; batch += 100) {
+      var offset = 0;
+      var expectedCount = null;
+      do {
+        var result = await sb.from("manufacturing_cost_list_items")
+          .select("id,dkd_shohin_id,import_part_numbers,part_number_snapshot,genuine_part_number_snapshot,manufacturing_cost_lists!inner(is_active)", { count: "exact" })
+          .in("dkd_shohin_id", productIds.slice(batch, batch + 100))
+          .eq("manufacturing_cost_lists.is_active", true)
+          .order("id", { ascending: true })
+          .range(offset, offset + 499);
+        if (result.error) throw result.error;
+        if (!Number.isInteger(result.count) || result.count < 0 || result.count > 10000 ||
+            (expectedCount !== null && expectedCount !== result.count)) throw new Error("Incomplete manufacturing cost link history");
+        expectedCount = result.count;
+        var rows = result.data || [];
+        if ((!rows.length && offset < expectedCount) || offset + rows.length > expectedCount || items.length + rows.length > 10000) {
+          throw new Error("Incomplete manufacturing cost link history");
+        }
+        items = items.concat(rows);
+        offset += rows.length;
+      } while (offset < expectedCount);
+    }
+    return manufacturingCostBuildImportHistory(groups, items);
+  } catch (e) {
+    console.warn("manufacturing cost import history lookup failed", e);
+    return { byToken: {}, unavailable: true };
+  }
+}
+
+function manufacturingCostCandidateSelectionKey(token, id) {
+  return JSON.stringify([normalizePartQuery(token || ""), String(id || "")]);
+}
+
+function renderManufacturingCostCandidateRow(product, checkedDefault, currentIds, options) {
+  options = options || {};
   var id = productDkdId(product);
   var cat = product.category_code || product.category || "";
   var isAdded = !!currentIds[String(id || "")];
   var statusLabels = renderManufacturingCostCandidateStatusLabels(product);
+  if (options.previouslyLinked) statusLabels += "<span class='manufacturing-cost-previous-link'>" + esc(t("manufacturing_cost_previous_link")) + "</span>";
   var checked = checkedDefault ? " checked" : "";
   if (isAdded) checked = "";
   var html = "<label class='manufacturing-cost-candidate-row" + (isAdded ? " added" : "") + "'>";
-  html += "<input type='checkbox' data-cost-candidate-check='1' value='" + esc(String(id || "")) + "'" + checked + (isAdded ? " disabled data-cost-candidate-added='1'" : "") + ">";
+  html += "<input type='checkbox' data-cost-candidate-check='1' data-cost-import-token='" + esc(options.token || "") + "' value='" + esc(String(id || "")) + "'" + checked + (isAdded ? " disabled data-cost-candidate-added='1'" : "") + ">";
   html += "<span class='manufacturing-cost-candidate-info'><span class='manufacturing-cost-candidate-main'>" + esc(manufacturingCostProductTitle(product)) + "</span>";
   html += "<span class='manufacturing-cost-candidate-sub'>" + esc([product.manufacturer_part_number, product.genuine_part_number_2, product.manufacturer, "DKD " + (id || "-")].filter(Boolean).join(" / ")) + "</span>";
   if (statusLabels) html += "<span class='manufacturing-cost-candidate-data-labels'>" + statusLabels + "</span>";
@@ -30529,8 +30616,10 @@ function renderManufacturingCostCandidateRow(product, checkedDefault, currentIds
   return html;
 }
 
-function renderManufacturingCostImportCandidateGroups(groups, checkedDefault, currentIds) {
+function renderManufacturingCostImportCandidateGroups(groups, checkedDefault, currentIds, selections) {
   groups = groups || [];
+  selections = selections || {};
+  var history = manufacturingCostImportHistory;
   var resolvedGroups = groups.filter(function(group) {
     return (group.candidates || []).some(function(product) { return !!currentIds[String(productDkdId(product))]; });
   });
@@ -30543,6 +30632,7 @@ function renderManufacturingCostImportCandidateGroups(groups, checkedDefault, cu
     candidates: pendingManufacturingCostCandidateProducts().length,
     missing: missingGroups.length
   })) + "</div>";
+  html += "<p class='manufacturing-cost-history-note'>" + esc(t(history.unavailable ? "manufacturing_cost_import_history_unavailable" : "manufacturing_cost_import_history_note")) + "</p>";
   if (resolvedGroups.length) {
     html += "<details class='manufacturing-cost-import-result-summary'><summary>紐づけ済み " + resolvedGroups.length + " 品番（未決定候補から除外）</summary>";
     resolvedGroups.forEach(function(group) {
@@ -30562,11 +30652,16 @@ function renderManufacturingCostImportCandidateGroups(groups, checkedDefault, cu
   }
   html += "<div class='manufacturing-cost-candidate-list manufacturing-cost-import-group-list'>";
   matchedGroups.forEach(function(group) {
+    var previous = history.byToken[normalizePartQuery(group.token)] || {};
     html += "<section class='manufacturing-cost-import-result-group'>";
     html += "<div class='manufacturing-cost-import-result-group-head'><strong>" + esc(group.token) + "</strong><span>" + esc(tf("manufacturing_cost_import_group_count", { n: group.matchCount })) + "</span></div>";
+    if (previous.ambiguous) html += "<p class='manufacturing-cost-history-note'>" + esc(t("manufacturing_cost_import_history_conflict")) + "</p>";
     html += "<div class='manufacturing-cost-import-result-group-rows'>";
     (group.candidates || []).forEach(function(product) {
-      html += renderManufacturingCostCandidateRow(product, checkedDefault, currentIds);
+      var linked = !history.unavailable && previous.productId === String(productDkdId(product));
+      var selectionKey = manufacturingCostCandidateSelectionKey(group.token, productDkdId(product));
+      var checked = Object.prototype.hasOwnProperty.call(selections, selectionKey) ? selections[selectionKey] : linked;
+      html += renderManufacturingCostCandidateRow(product, checked, currentIds, { token: group.token, previouslyLinked: linked });
     });
     if (group.truncated) html += "<div class='manufacturing-cost-import-result-limit'>" + esc(t("manufacturing_cost_import_result_limit")) + "</div>";
     html += "</div></section>";
@@ -30609,6 +30704,9 @@ async function openManufacturingCostProductResearch(token) {
       if (!manufacturingCostCandidateRows.some(function(p) { return String(productDkdId(p)) === String(productDkdId(product)); })) manufacturingCostCandidateRows.push(product);
       await loadManufacturingCostCandidateStatuses(manufacturingCostCandidateRows);
       if (context !== manufacturingCostImportSearchContext) throw new Error("取込条件が変わりました。再照合してください。");
+      var history = await loadManufacturingCostImportHistory(manufacturingCostCandidateGroups);
+      if (context !== manufacturingCostImportSearchContext) throw new Error("取込条件が変わりました。再照合してください。");
+      manufacturingCostImportHistory = history;
       renderManufacturingCostCandidates(manufacturingCostCandidateRows, "import");
       setManufacturingCostListStatus("再照合しました。候補を選択して原価計算が成功すると、未決定一覧から消えます。", false);
     }
@@ -30630,6 +30728,10 @@ function renderManufacturingCostCandidates(products, mode, groups) {
   else if (manufacturingCostCandidateMode !== "import") manufacturingCostCandidateGroups = [];
   var wrap = document.getElementById("manufacturing-cost-candidates");
   if (!wrap) return;
+  var selections = Object.create(null);
+  if (typeof wrap.querySelectorAll === "function") wrap.querySelectorAll("[data-cost-candidate-check]").forEach(function(input) {
+    selections[manufacturingCostCandidateSelectionKey(input.dataset.costImportToken, input.value)] = input.checked;
+  });
   if (!manufacturingCostCandidateRows.length && !(manufacturingCostCandidateMode === "import" && manufacturingCostCandidateGroups.length)) {
     renderManufacturingCostCandidateEmpty(t("no_results"));
     return;
@@ -30647,7 +30749,7 @@ function renderManufacturingCostCandidates(products, mode, groups) {
   html += "<button class='btn-primary' type='button' data-cost-calc-selected='1'>" + esc(t("manufacturing_cost_calc_selected")) + "</button>";
   html += "</div></div>";
   if (manufacturingCostCandidateMode === "import") {
-    html += renderManufacturingCostImportCandidateGroups(manufacturingCostCandidateGroups, checkedDefault, currentIds);
+    html += renderManufacturingCostImportCandidateGroups(manufacturingCostCandidateGroups, checkedDefault, currentIds, selections);
   } else {
     html += "<div class='manufacturing-cost-candidate-list'>";
     pendingProducts.forEach(function(product) {
@@ -31377,6 +31479,7 @@ async function searchManufacturingCostCandidates() {
   if (countEl && !hadRows) countEl.textContent = tf("manufacturing_cost_selected_count", { n: 0 });
   if (summaryEl && !hadRows) summaryEl.innerHTML = "";
   manufacturingCostCandidateStatusMap = {};
+  manufacturingCostImportHistory = { byToken: {}, unavailable: false };
   try {
     var pr = await fetchManufacturingCostProducts(tokens, category, {
       groupByToken: !!importContext,
@@ -31388,6 +31491,12 @@ async function searchManufacturingCostCandidates() {
     updateManufacturingCostOperation(operation, t("manufacturing_cost_checking_candidates"));
     await loadManufacturingCostCandidateStatuses(products);
     if (requestSeq !== manufacturingCostCandidateRequestSeq) return;
+    if (importContext) {
+      updateManufacturingCostOperation(operation, t("manufacturing_cost_checking_import_history"));
+      var history = await loadManufacturingCostImportHistory(pr.groups || []);
+      if (requestSeq !== manufacturingCostCandidateRequestSeq) return;
+      manufacturingCostImportHistory = history;
+    }
     renderManufacturingCostCandidates(products, importContext ? "import" : (tokens.length ? "query" : "category"), pr.groups || []);
     if (!products.length && list && !hadRows) list.innerHTML = "<div class='empty'>" + esc(t("no_results")) + "</div>";
     setManufacturingCostListStatus(t("manufacturing_cost_search_done"), false);
