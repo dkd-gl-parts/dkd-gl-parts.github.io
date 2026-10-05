@@ -1064,6 +1064,34 @@ assert(bridgeRequests.length===bridgeBefore+1 && bridgeRequests.at(-1).command==
   "ISO expiry from the issuer must reach the native bridge exactly once");
 assert(loginStatus.textContent.includes("送信前後") && loginStatus.classList.contains("is-success"),"Controlled verification missing");
 assert(!JSON.stringify(Array.from(storage.values())).includes("v2.synthetic"),"Login ticket persisted");
+
+// The admin sale button uses the dedicated flow once and reports only an exact
+// matching slip. A role downgrade cancels the operation and removes its card.
+const saleButton = byClass("dcats-concierge-bridge-button").find(element => element.id === "dcats-concierge-test-sales-submit");
+const saleStatus = byClass("dcats-concierge-bridge-status").find(element => element.id === "dcats-concierge-test-sales-status");
+const saleInput = byClass("dcats-concierge-bridge-input").find(element => element.id === "dcats-concierge-test-sales-file");
+assert(saleButton && saleStatus && saleInput, "Admin sale controls missing");
+let saleAttempts = 0, saleConsumed = false, saleCancelled = 0;
+windowObject.DcatsHanbaiohTestSalesBridge = {
+  wasAttempted: () => saleConsumed,
+  cancelCurrent: () => { saleCancelled++; },
+  importOnce: async options => {
+    assert(options.isCurrent() && options.record.actor_id === windowObject.currentUser.id, "Sale actor not current");
+    assert(options.fileName === "hanbaioh-sales-test-900009-aaaaaaaaaaaa-55.csv", "Sale filename not passed exactly");
+    saleAttempts++; saleConsumed = true;
+    return { status: "import_verified", slipNumber: "900009", backupSha256: "b".repeat(64) };
+  },
+};
+saleInput.value = "hanbaioh-sales-test-900009-aaaaaaaaaaaa-55.csv";
+dispatch(saleInput.listeners, "input", { target: saleInput });
+dispatch(saleButton.listeners, "click", { target: saleButton });
+dispatch(saleButton.listeners, "click", { target: saleButton });
+await new Promise(resolve => setImmediate(resolve));
+assert(saleAttempts === 1 && saleButton.disabled, "Sale was submitted twice or consumed button stayed enabled");
+assert(saleStatus.textContent.includes("900009") && saleStatus.classList.contains("is-success"), "Sale readback status missing");
+windowObject.userProfile = { role: "company_admin" }; notifyObservers();
+assert(saleCancelled > 0 && byClass("dcats-concierge-bridge-card").length === 0, "Role downgrade did not cancel/hide sale controls");
+windowObject.userProfile = { role: "system_admin" }; notifyObservers(); api.openSettings();
 dispatch(documentObject.listeners,"keydown",{key:"Escape"});
 api.openSettings();
 assert(loginButton.disabled,"Closing/reopening must not permit another login attempt");
