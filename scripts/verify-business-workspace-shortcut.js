@@ -8,8 +8,6 @@ const source = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
 const workflow = fs.readFileSync(path.join(root, ".github", "workflows", "search-performance-guard.yml"), "utf8");
-const shortcutPath = path.join(root, "assets", "integrations", "dcats-business-workspace.lnk");
-const shortcutBytes = fs.readFileSync(shortcutPath);
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -41,14 +39,13 @@ for (const id of [
 const driveUrl = "https://drive.google.com/drive/folders/1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ";
 assert(html.includes(`href="${driveUrl}"`), "The shared Google Drive folder link is missing");
 assert(source.includes(`var DCATS_BUSINESS_WORKSPACE_URL = "${driveUrl}"`), "The shortcut target does not match the shared folder");
-assert(source.includes('var DCATS_BUSINESS_WORKSPACE_SHORTCUT_URL = "assets/integrations/dcats-business-workspace.lnk"'), "The Windows .lnk asset is not configured");
-assert(shortcutBytes.length > 100 && shortcutBytes.readUInt32LE(0) === 0x4c, "The Windows .lnk asset is invalid");
-assert(source.includes('startIn: "desktop"'), "The save picker must start on the Windows desktop");
-assert(source.includes('var DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME = "D-CATS\\u696d\\u52d9\\u9023\\u643a.lnk"'), "The shortcut needs a stable Japanese file name");
-assert(source.includes('suggestedName: DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME'), "The save picker must use the shortcut file name constant");
-assert(source.includes('typeof window.showSaveFilePicker === "function"'), "Chromium desktop save support is missing");
-assert(source.includes("downloadDcatsBusinessWorkspaceShortcut(contents)"), "Unsupported browsers need a download fallback");
-assert(source.includes('pickerError.name === "AbortError"'), "Cancelling the picker must not be reported as an error");
+assert(!fs.existsSync(path.join(root, "assets", "integrations", "dcats-business-workspace.lnk")), "The machine-specific G-drive shortcut must not be distributed");
+assert(source.includes('var DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME = "D-CATS\\u696d\\u52d9\\u9023\\u643a.url"'), "The portable shortcut needs a stable Japanese file name");
+assert(html.includes("デスクトップ用ショートカットを取得"), "The UI must describe download rather than claiming desktop placement");
+const shortcutSource = sourceBetween("function downloadDcatsBusinessWorkspaceShortcut", "function updateSalesOrderSelectionButtons");
+assert(!shortcutSource.includes("showSaveFilePicker") && !shortcutSource.includes("showDirectoryPicker"), "Shortcut writes must not use the browser's restricted file API");
+assert(!shortcutSource.includes("fetch(") && !shortcutSource.includes("createWritable"), "Shortcut creation must not fetch a machine-specific asset or write an unapproved path");
+assert(shortcutSource.includes("link.download = DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME"), "The shortcut must use an explicit download filename");
 assert(source.includes('var DCATS_B2_EXPORT_DIRECTORY_NAME = "01_D-CATS\\u767a\\u884c"'), "The B2 issue-folder name is not fixed");
 assert(source.includes('id: "dcats-b2-csv-export"'), "The B2 folder picker does not have a stable browser identity");
 assert(source.includes('mode: "readwrite"'), "The B2 folder picker must request write access");
@@ -80,64 +77,113 @@ assert(pullRequestTrigger === null || (
 assert(workflow.includes("node scripts/verify-business-workspace-shortcut.js"), "The shortcut verifier is not executed by CI");
 
 const featureSource = sourceBetween("var DCATS_BUSINESS_WORKSPACE_URL", "function updateSalesOrderSelectionButtons");
+const visibleClasses = new Set();
+let shortcutFocused = false;
+let triggerFocused = false;
 const elements = {
-  "dcats-business-workspace-shortcut": { disabled: false },
-  "dcats-business-workspace-message": { textContent: "", className: "" }
+  "dcats-business-workspace-shortcut": { disabled: false, focus: () => { shortcutFocused = true; } },
+  "dcats-business-workspace-message": { textContent: "", className: "" },
+  "dcats-business-workspace-overlay": {
+    classList: { add: (value) => visibleClasses.add(value), remove: (value) => visibleClasses.delete(value) }
+  }
 };
-let pickerOptions;
-let writtenContents = null;
-const testShortcutBytes = Uint8Array.from([0x4c, 0, 0, 0, 1, 2, 3, 4]);
+const timers = [];
+const blobs = [];
+const anchors = [];
+const revoked = [];
+let downloads = 0;
+let failClick = false;
+let failBlob = false;
 const context = {
-  APP_VERSION: "v-test",
   Blob,
-  encodeURIComponent,
-  fetch: async (url, options) => {
-    assert(url.includes("assets/integrations/dcats-business-workspace.lnk?dcats_version=v-test"), "The versioned .lnk asset was not requested");
-    assert(options.cache === "no-store", "The .lnk asset must bypass stale browser cache");
-    return { ok: true, arrayBuffer: async () => testShortcutBytes.buffer };
-  },
+  fetch: () => { throw new Error("Shortcut creation must not make network requests"); },
   t: (key) => ({
-    business_workspace_save_checking: "保存先確認中",
-    business_workspace_created: "作成しました",
-    business_workspace_created_notice: "作成しました",
-    business_workspace_downloaded: "ダウンロードしました",
-    business_workspace_cancelled: "キャンセルしました",
-    business_workspace_failed: "作成できませんでした"
+    business_workspace_downloaded: "Download started",
+    business_workspace_failed: "Download failed"
   })[key] || key,
   URL: {
-    createObjectURL: () => "blob:test",
-    revokeObjectURL: () => {}
+    createObjectURL: (blob) => {
+      if (failBlob) throw new Error("Blob unavailable");
+      blobs.push(blob);
+      return `blob:test-${blobs.length}`;
+    },
+    revokeObjectURL: (url) => revoked.push(url)
   },
   document: {
     activeElement: null,
     body: { appendChild: () => {} },
-    createElement: () => ({ click: () => {}, remove: () => {} }),
+    createElement: (tag) => {
+      assert(tag === "a", "Shortcut creation must use a download link");
+      const anchor = {
+        removed: false,
+        click: () => {
+          if (failClick) throw new Error("Download rejected");
+          downloads += 1;
+        },
+        remove: () => { anchor.removed = true; }
+      };
+      anchors.push(anchor);
+      return anchor;
+    },
     getElementById: (id) => elements[id] || null
   },
-  showDcatsAutoNotice: () => {},
   window: {
-    setTimeout: (callback) => callback(),
-    showSaveFilePicker: async (options) => {
-      pickerOptions = options;
-      return {
-        createWritable: async () => ({
-          write: async (value) => { writtenContents = new Uint8Array(value); },
-          close: async () => {}
-        })
-      };
-    }
+    setTimeout: (callback) => { timers.push(callback); },
+    showSaveFilePicker: () => { throw new Error("Restricted file API must not run"); }
   }
 };
 vm.runInNewContext(featureSource, context);
 
+function flushTimers() {
+  while (timers.length) timers.shift()();
+}
+
 (async () => {
-  await context.createDcatsBusinessWorkspaceShortcut();
-  assert(pickerOptions.startIn === "desktop", "The shortcut picker did not start on the desktop");
-  assert(pickerOptions.suggestedName === "D-CATS業務連携.lnk", "The shortcut file name changed");
-  assert(writtenContents && Buffer.from(writtenContents).equals(Buffer.from(testShortcutBytes)), "The binary Windows shortcut was not written intact");
-  assert(elements["dcats-business-workspace-shortcut"].disabled === false, "The shortcut button remained disabled");
-  assert(elements["dcats-business-workspace-message"].textContent.includes("作成しました"), "Successful creation is not confirmed");
-  console.log("Business workspace shortcut verification passed.");
+  const expected = `[InternetShortcut]\r\nURL=${driveUrl}\r\n`;
+  assert(context.dcatsBusinessWorkspaceShortcutContents() === expected, "The shortcut must contain only the fixed shared-folder URL, with Windows line endings");
+  context.createDcatsBusinessWorkspaceShortcut();
+  assert(downloads === 1, "One click must request one download");
+  assert(anchors[0].download === "D-CATS業務連携.url", "The portable shortcut filename changed");
+  assert(await blobs[0].text() === expected, "The downloaded shortcut content differs from the fixed URL");
+  assert(blobs[0].type === "text/plain;charset=utf-8", "The shortcut must be a plain-text InternetShortcut");
+  assert(elements["dcats-business-workspace-message"].textContent === "Download started", "The UI must confirm initiation, not unverified desktop placement");
+  context.createDcatsBusinessWorkspaceShortcut();
+  assert(downloads === 1, "Rapid repeat clicks must not create duplicate downloads");
+  flushTimers();
+  assert(anchors[0].removed && revoked.includes(anchors[0].href), "Download anchors and object URLs must be cleaned up");
+  assert(!elements["dcats-business-workspace-shortcut"].disabled, "The shortcut button must become available again");
+
+  delete context.window.showSaveFilePicker;
+  context.createDcatsBusinessWorkspaceShortcut();
+  assert(downloads === 2, "Browsers without a file picker must support the same download");
+  flushTimers();
+
+  failClick = true;
+  context.createDcatsBusinessWorkspaceShortcut();
+  assert(elements["dcats-business-workspace-message"].className.endsWith(" error"), "A rejected download must have an error state");
+  assert(elements["dcats-business-workspace-message"].textContent === "Download failed", "A rejected download must not report success");
+  flushTimers();
+  assert(anchors[2].removed && revoked.includes(anchors[2].href), "Failed downloads must clean up their anchor and blob URL");
+  assert(!elements["dcats-business-workspace-shortcut"].disabled, "Failed downloads must allow an explicit retry");
+  failClick = false;
+  failBlob = true;
+  context.createDcatsBusinessWorkspaceShortcut();
+  assert(downloads === 2, "Blob failure must not trigger a download");
+  assert(elements["dcats-business-workspace-message"].textContent === "Download failed", "Blob failure must be reported");
+  flushTimers();
+  failBlob = false;
+  context.createDcatsBusinessWorkspaceShortcut();
+  assert(downloads === 3, "An explicit retry after failure must work");
+  assert(!elements["dcats-business-workspace-message"].className.endsWith(" error"), "A successful retry must clear the old error state");
+  flushTimers();
+
+  const trigger = { focus: () => { triggerFocused = true; } };
+  context.openDcatsBusinessWorkspace({ currentTarget: trigger });
+  assert(visibleClasses.has("show") && shortcutFocused, "The menu must open the workspace and focus the shortcut action");
+  assert(elements["dcats-business-workspace-message"].textContent === "", "Reopening the dialog must clear stale messages");
+  context.closeDcatsBusinessWorkspace();
+  assert(!visibleClasses.has("show") && triggerFocused, "Closing the workspace must restore focus to the menu action");
+  console.log("Business workspace shortcut verification passed (portable URL, download, repeat-click guard, cleanup, failures, retry, modal focus, CSV save-folder guards).");
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;
