@@ -11,6 +11,20 @@
 
 final result: passed
 
+## Business shared-folder shortcut QA (v1.1.1101)
+
+- Request: provide a desktop shortcut to the specified D-CATS business-exchange shared folder from Data Integration / Business Exchange.
+- Replaced the machine-specific G-drive .lnk asset with a portable Windows .url download containing only the fixed HTTPS folder URL. No native execution, shortcut file-API writes, Drive permissions, authentication, or CSV save-folder settings changed.
+- Hidden IAB used the actual menu/dialog markup, translations, and feature functions with an isolated synthetic context; no user browser credentials or production writes.
+- Desktop 1280 x 900 and mobile 390 x 844 / 320 x 844: actions and Japanese/English/Chinese labels fit without horizontal overflow. Mobile actions stack; the document width equals the viewport.
+- Download initiation message, synthetic object-URL failure, error styling, error clearing on reopen, initial button focus, keyboard Tab to the B2 save-folder button, and focus restoration on close passed. Console warn/error count was zero.
+- The IAB download-completion event timed out. Actual downloaded-file persistence and Windows opening were not established by browser QA; the exact CRLF InternetShortcut payload, filename, Blob MIME, anchor download, duplicate-click guard, cleanup, failure, and explicit retry passed the production-function VM guard. The UI does not claim desktop placement or completed saving.
+- All 124 authoritative search-performance workflow Node checks, static build, and strict response-header/CSP verification passed. Existing B2/HanbaiOh CSV-folder contracts remain guarded.
+- Evidence (local only): `outputs/business-workspace/desktop-ja.png`, `mobile-ja.png`, `mobile-en.png`, `mobile-zh.png`, and `mobile-error.png`.
+- The task-owned hidden tab was closed, viewport override reset, and local QA server stopped. No Chrome/Edge tabs or saved groups were created; the user's pointer and clipboard were untouched.
+
+final result: passed (download persistence and Windows desktop placement require the user's normal save operation)
+
 # パレット保留・後日入庫（2026-10-05、v1.1.1099）
 
 - 非表示IABのみ。合成TEST-PALLET / TEST-1001（2台）/ TEST-9999（3台）、本番API/実アカウント接続なし。

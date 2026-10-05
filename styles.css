@@ -7412,6 +7412,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .dcats-business-workspace-message.error { color: #b42318; }
 .dcats-business-workspace-card .form-footer { margin-top: 0; padding: 12px 20px; }
 @media (max-width: 560px) {
+  .dcats-business-workspace-actions { grid-template-columns: 1fr; }
   .dcats-business-workspace-b2 { grid-template-columns: 1fr; }
   .dcats-business-workspace-b2-control { width: 100%; }
 }
