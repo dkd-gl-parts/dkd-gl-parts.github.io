@@ -1,3 +1,67 @@
+# 製造原価・採用2案のDesign QA
+
+Date: 2026-10-05
+
+## Findings
+
+現在、actionable P0/P1/P2はなし。一覧と右側詳細、上部2行の操作と集計帯を採用2案に合わせた。既存の原価計算・保存・CSV・登録条件は変更しない。
+
+## Comparison target and normalization
+
+- Source visual truth: `C:/Users/yamam/.codex/generated_images/01a0a29e-046f-7062-a797-e2b7e2ba44c4/exec-1d516f93-7dcf-4051-851c-84fdc598742c.png`
+- Implementation: `index.html`, `app.js`, `manufacturing-cost-workspace.css` in `D:/Documents/New project/worktrees/manufacturing-cost-workspace-20261005`.
+- Browser-rendered implementation screenshot: `outputs/cost-workspace/desktop-final.png`.
+- Source pixels: 1487×1058. Implementation pixels: 1487×1058. CSS viewport: 1487×1058. Effective captured density: 1 image pixel per CSS pixel; no rescale or device frame. In-app-browser full-page capture excludes browser chrome.
+- State: Japanese, saved list loaded, first product selected, company settings closed, component disclosure collapsed. Synthetic fixture uses the two displayed reference products and explicitly labelled synthetic extra rows. No production account/session copied, no production API requests, no business data writes.
+- Full-view evidence: source and final screenshot opened together in the same comparison input. Major regions match: two-row operations, four-value aggregate strip, approximately 2:1 list/detail split. Workspace top is 371 CSS px, source approximately 374 pixels; all controls and collapsed component-detail control remain visible at the target viewport.
+- Focused evidence: `outputs/cost-workspace/source-detail.png` paired with `implementation-detail.png`, and `source-controls.png` paired with `implementation-controls.png`, in the same comparison input. Crops align actual content regions; source detail 487×684, implementation detail 485×687; controls source 1439×241, implementation 1440×239. No stretching.
+- Responsive screenshots: `outputs/cost-workspace/desktop-1280.png` (1280×900), `mobile-390.png` (390×844, selected detail opened). DOM width checks also at 1024/768/320, long part number and large amount stress states: no document overflow and no overwide rendered element.
+
+## Fidelity surfaces
+
+- Fonts/typography: existing `--dcats-font-ui` Japanese UI font stack retained, scoped consistently to screen and settings. Primary part number is 18px bold in list and 24px in detail; manufacturer codes are 12/14px supporting text. Amounts remain prominent 17/18/28px with tabular digits. No part-number truncation; long identifiers wrap. Target generated typography is inferred, not a supplied licensed typeface; the established D-CATS font and slightly denser supporting labels are intentional product constraints, not a pixel-perfect font identity claim.
+- Spacing/layout rhythm: 24px desktop outer spacing, 16px grid gap, approximately 1.95:1 tracks, compact 40px controls, 8px card radii. Both regions align and component disclosure is above the fold at target size. List height adapts to viewport; detail has independent overflow for longer content. Mobile uses stacked cards and collapsible detail, not a squeezed desktop table.
+- Colors/tokens: original navy/red D-CATS header and action red retained. GLTEK blue, DKD green, navy total, pale blue selected row and amber missing-input warnings follow the visual target. White cards over light neutral background. Focus has visible blue outline. No new global theme or security-style changes.
+- Image quality/assets: real D-CATS branding retained rather than imitating generated logo text. Gear and spreadsheet icons are self-hosted official Bootstrap Icons SVGs with license, not handcrafted SVG or emoji substitutes. The screen needs no product photos or raster illustrations. Native disclosure markers are functional affordances, not replacements for a branded image asset.
+- Copy/content: generated mock's false implication of human review (確認済み) is intentionally replaced with 不足なし. Existing save-scope note, clear action, list naming/deletion, all missing-input and saved-price-difference notices remain. Company subtotal appears once in each company heading, avoiding redundant lines and DKD double-counting. No prompt text or prototype labels appear in production code.
+
+## Comparison history
+
+1. Initial full comparison: blocked. P1/P2 legacy native bevels/font fallback, centred query label, oversized toolbar gaps, table footer below fold. Evidence: `desktop-initial-full.png`. Fix: scoped font and 1px controls, explicit row search layout, compact toolbar, viewport-adaptive table height. Post-fix evidence: `desktop-revised-full.png` and `desktop-revised.png`.
+2. Revised comparison: blocked. P2 repeated primary identifier, stacked metadata and separate core note pushed component detail below fold. Keyboard trap did not cover the nested category dialog. Fix: compact identity grid, omit duplicate primary genuine number, inline core note, tighter detail rhythm, trap active nested dialog and restore opener focus. Evidence: previous `desktop-final.png` capture and actual browser keyboard checks; latest screenshot replaces only this task-owned capture.
+3. Final comparison: passed after the fixes. Source and recaptured `desktop-final.png` compared together, followed by focused detail and control crops. Final detail panel bottom is 1046px within 1058px viewport. No remaining substantive mismatch; observed deviations above are deliberate existing-product constraints.
+
+## Primary interactions and verification
+
+- Product selection changes selected styling, aria-pressed, identity, company subtotals and total; unknown ID ignored; selection retained on recalculation, removed product falls back, empty/loading clear stale detail.
+- Company setting changes recalculate displayed totals; close/Escape restores focus. Background screen becomes inert while open. Nested category dialog: last control Tab wraps to first, Escape closes only nested dialog and returns focus to category opener; second Escape closes parent and removes inert. VM regression also covers reverse Tab.
+- Missing unit price, quantity, replacement rate, no components and snapshot unit-price difference visible in both compact list and detail. 部品を確認 opens and populates real lazy component renderer. No unearned human-confirmed status.
+- Mobile initial detail closed; selection opens and scrolls detail into view. Long-number, large-money, empty, loading, componentless, read-only and Japanese/English/Chinese fixture states verified.
+- Browser console errors/warnings checked: zero for fixture scenarios. Fixture CSP denies external connections; no backend writes. Existing mutation, import, matching, CSV, role and financial verifier contracts all remain tested by authoritative workflow suite.
+- `node --check app.js`; all 117 Node workflow commands passed; static build and security headers passed; `git diff --check` passed.
+
+## Open questions / residual test gaps
+
+- Authenticated production manufacturing list and real save/delete/import mutations were not operated: no approved dedicated test login is available and user browser sessions must not be copied. Synthetic browser QA plus production-function regression verifies changed UI; it is not a claim of live authenticated transaction QA.
+- Error/network/expired-session flows are preserved rather than changed. Loading/empty/stale clear paths are tested; no production failure injection or real database mutation was performed.
+- Actual production delivery verification is recorded separately in the task log after release; this report passes local design/interaction acceptance, not deployment by itself.
+- CSV export button executed the unchanged production exporter and showed the completed row-count message without console errors. IAB did not deliver a download event within 15 seconds, so the physical downloaded file was not inspected; file-format regression remains covered by existing verifier contracts. No switch to user Chrome/Edge was attempted.
+
+## Implementation checklist
+
+- [x] Accepted image resolved and compared against browser-rendered implementation.
+- [x] Full-view and focused-region fidelity surfaces checked.
+- [x] P1/P2 findings fixed, revised screenshots recaptured and compared.
+- [x] Desktop/mobile, warnings, lazy details, keyboard focus and read-only/stale states tested.
+- [x] Workflow-equivalent regression, static assets and strict CSP verified.
+- [x] No production data/session mutation.
+
+Follow-up polish: no blocking polish item. Preserve existing product branding and wording choices described above.
+
+final result: passed
+
+## Earlier release QA history (unchanged)
+
 # D-CATS shared customer/internal/manufacturing UI design QA
 
 final result: passed
@@ -90,5 +154,9 @@ Reference: `C:\Users\yamam\Documents\New project\outputs\design-ideation\dcats-c
 - Colors, spacing, radii, and copy are unchanged from the previously passed common-component design.
 - Comparison history: the earlier P2 typography inconsistency was the sales result-card product code using `monospace` while the detail product code used the UI font. The scoped inheritance override removes that mismatch. Post-fix comparison found no remaining P0, P1, or P2 issue.
 - Accepted exception: barcode text, manufacturing serials, logs, and other technical outputs retain their explicit monospaced font because character alignment is functional there.
+
+final result: passed
+
+## Latest manufacturing-cost workspace acceptance
 
 final result: passed
