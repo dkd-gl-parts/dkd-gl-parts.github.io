@@ -1391,6 +1391,18 @@ var TRANSLATIONS = {
     manufacturing_cost_core_return_shipping_cost: "コア返送費",
     manufacturing_cost_calc: "原価計算",
     manufacturing_cost_find_candidates: "候補検索",
+    manufacturing_cost_search_running: "候補検索中…",
+    manufacturing_cost_calculation_running: "原価計算中…",
+    manufacturing_cost_list_running: "保存リストを読み込み中…",
+    manufacturing_cost_busy_button: "処理中…",
+    manufacturing_cost_matching_parts: "{n}品番を商品マスタと照合しています。",
+    manufacturing_cost_matching_category: "選択カテゴリの商品マスタを照合しています。",
+    manufacturing_cost_checking_candidates: "カタログ情報と構成部品の登録状況を確認しています。",
+    manufacturing_cost_reading_components: "構成部品と単価を読み込み、原価を計算しています。",
+    manufacturing_cost_reading_list: "保存リストの設定と対象品番を取得しています。",
+    manufacturing_cost_wait_note: "処理が終わるまで、そのままお待ちください。",
+    manufacturing_cost_search_done: "候補検索が完了しました。",
+    manufacturing_cost_calculation_done: "原価計算が完了しました。",
     manufacturing_cost_calc_selected: "選択品番を追加して原価計算",
     manufacturing_cost_candidate_badge: "候補",
     manufacturing_cost_candidate_title: "未決定の候補品番",
@@ -3725,6 +3737,18 @@ var TRANSLATIONS = {
     manufacturing_cost_core_return_shipping_cost: "Core return shipping",
     manufacturing_cost_calc: "Calculate",
     manufacturing_cost_find_candidates: "Find Candidates",
+    manufacturing_cost_search_running: "Finding candidates…",
+    manufacturing_cost_calculation_running: "Calculating costs…",
+    manufacturing_cost_list_running: "Loading saved list…",
+    manufacturing_cost_busy_button: "Processing…",
+    manufacturing_cost_matching_parts: "Matching {n} part numbers against the product master.",
+    manufacturing_cost_matching_category: "Matching products in the selected category.",
+    manufacturing_cost_checking_candidates: "Checking catalog information and registered components.",
+    manufacturing_cost_reading_components: "Loading components and unit prices to calculate costs.",
+    manufacturing_cost_reading_list: "Retrieving saved settings and selected products.",
+    manufacturing_cost_wait_note: "Please wait until processing finishes.",
+    manufacturing_cost_search_done: "Candidate search completed.",
+    manufacturing_cost_calculation_done: "Cost calculation completed.",
     manufacturing_cost_calc_selected: "Add Selected and Calculate",
     manufacturing_cost_candidate_badge: "Candidates",
     manufacturing_cost_candidate_title: "Undecided Products",
@@ -6069,6 +6093,18 @@ var TRANSLATIONS = {
     manufacturing_cost_core_return_shipping_cost: "旧芯返送费",
     manufacturing_cost_calc: "成本计算",
     manufacturing_cost_find_candidates: "候选搜索",
+    manufacturing_cost_search_running: "正在搜索候选商品…",
+    manufacturing_cost_calculation_running: "正在计算成本…",
+    manufacturing_cost_list_running: "正在读取已保存列表…",
+    manufacturing_cost_busy_button: "处理中…",
+    manufacturing_cost_matching_parts: "正在将{n}个品番与商品主数据匹配。",
+    manufacturing_cost_matching_category: "正在匹配所选类别的商品主数据。",
+    manufacturing_cost_checking_candidates: "正在确认目录信息和已登记的组成零件。",
+    manufacturing_cost_reading_components: "正在读取组成零件和单价并计算成本。",
+    manufacturing_cost_reading_list: "正在获取已保存的设置和目标商品。",
+    manufacturing_cost_wait_note: "请等待处理完成。",
+    manufacturing_cost_search_done: "候选搜索已完成。",
+    manufacturing_cost_calculation_done: "成本计算已完成。",
     manufacturing_cost_calc_selected: "添加所选品番并计算",
     manufacturing_cost_candidate_badge: "候选",
     manufacturing_cost_candidate_title: "未确定候选品番",
@@ -7130,7 +7166,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1096";
+var APP_VERSION       = "v1.1.1097";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -7261,6 +7297,7 @@ var manufacturingCostCandidateGroups = [];
 var manufacturingCostImportSearchContext = null;
 var manufacturingCostCandidateStatusMap = {};
 var manufacturingCostCandidateRequestSeq = 0;
+var manufacturingCostOperation = null;
 var manufacturingCostSavedLists = [];
 var manufacturingCostActiveListId = null;
 var manufacturingCostCategoryCoreCosts = {};
@@ -31180,11 +31217,69 @@ function renderManufacturingCostRows() {
   renderManufacturingCostProductDetail();
 }
 
-function renderManufacturingCostDetailLoading() {
+function renderManufacturingCostLoading(message) {
+  return "<div class='manufacturing-cost-loading'><span class='manufacturing-cost-spinner' aria-hidden='true'></span><strong>" + esc(message || t("loading")) + "</strong></div>";
+}
+
+function updateManufacturingCostOperation(operation, message) {
+  if (!operation || manufacturingCostOperation !== operation) return;
+  var progress = document.getElementById("manufacturing-cost-progress");
+  if (!progress) return;
+  var titleKey = operation.kind === "search" ? "manufacturing_cost_search_running"
+    : (operation.kind === "calculate" ? "manufacturing_cost_calculation_running" : "manufacturing_cost_list_running");
+  progress.innerHTML = "<span class='manufacturing-cost-spinner' aria-hidden='true'></span><div><strong>" + esc(t(titleKey)) + "</strong><p>" + esc(message) + "</p><small>" + esc(t("manufacturing_cost_wait_note")) + "</small></div>";
+  progress.hidden = false;
+}
+
+function beginManufacturingCostOperation(kind, message) {
+  if (manufacturingCostOperation) return null;
+  var operation = { kind: kind, controls: [] };
+  manufacturingCostOperation = operation;
+  var screen = document.getElementById("screen-manufacturing-cost-mgmt");
+  if (screen) screen.setAttribute("data-cost-processing", "1");
+  document.querySelectorAll("#screen-manufacturing-cost-mgmt .manufacturing-cost-workbar button, #screen-manufacturing-cost-mgmt .manufacturing-cost-workbar input, #screen-manufacturing-cost-mgmt .manufacturing-cost-workbar select, #manufacturing-cost-candidates button, #manufacturing-cost-candidates input").forEach(function(el) {
+    operation.controls.push({ element: el, disabled: el.disabled });
+    el.disabled = true;
+  });
+  operation.button = kind === "search" ? document.getElementById("btn-manufacturing-cost-calc")
+    : (kind === "load" ? document.getElementById("btn-manufacturing-cost-load-list") : document.querySelector("#manufacturing-cost-candidates [data-cost-calc-selected]"));
+  if (operation.button) {
+    operation.buttonMarkup = operation.button.innerHTML;
+    operation.button.textContent = t("manufacturing_cost_busy_button");
+  }
+  ["manufacturing-cost-candidates", "manufacturing-cost-list", "manufacturing-cost-detail"].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.setAttribute("aria-busy", "true");
+  });
+  var removeButton = document.getElementById("btn-manufacturing-cost-remove-open");
+  if (removeButton) removeButton.disabled = true;
+  setManufacturingCostListStatus("", false);
+  updateManufacturingCostOperation(operation, message);
+  return operation;
+}
+
+function finishManufacturingCostOperation(operation) {
+  if (!operation || manufacturingCostOperation !== operation) return;
+  operation.controls.forEach(function(control) { control.element.disabled = control.disabled; });
+  if (operation.button) operation.button.innerHTML = operation.buttonMarkup;
+  ["manufacturing-cost-candidates", "manufacturing-cost-list", "manufacturing-cost-detail"].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.setAttribute("aria-busy", "false");
+  });
+  var progress = document.getElementById("manufacturing-cost-progress");
+  if (progress) { progress.hidden = true; progress.innerHTML = ""; }
+  var screen = document.getElementById("screen-manufacturing-cost-mgmt");
+  if (screen) screen.removeAttribute("data-cost-processing");
+  var removeButton = document.getElementById("btn-manufacturing-cost-remove-open");
+  if (removeButton) removeButton.disabled = !canEditManufacturingCostMgmt() || !manufacturingCostRows.length;
+  manufacturingCostOperation = null;
+}
+
+function renderManufacturingCostDetailLoading(message) {
   var detail = document.getElementById("manufacturing-cost-detail");
   var heading = document.getElementById("manufacturing-cost-detail-heading");
   if (heading) heading.textContent = t("manufacturing_cost_product_detail");
-  if (detail) detail.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
+  if (detail) detail.innerHTML = renderManufacturingCostLoading(message);
 }
 
 function manufacturingCostExportFileName() {
@@ -31258,6 +31353,7 @@ function exportManufacturingCostRows() {
 
 async function searchManufacturingCostCandidates() {
   if (!canViewManufacturingCostMgmt()) { alert(t("err_perm")); return; }
+  if (manufacturingCostOperation) return;
   var requestSeq = ++manufacturingCostCandidateRequestSeq;
   manufacturingCostActiveListId = null;
   var list = document.getElementById("manufacturing-cost-list");
@@ -31274,7 +31370,9 @@ async function searchManufacturingCostCandidates() {
     if (!hadRows) renderManufacturingCostEmpty();
     return;
   }
-  if (candidatesEl) candidatesEl.innerHTML = "<div class='manufacturing-cost-candidate-panel'><div class='loading'>" + esc(t("loading")) + "</div></div>";
+  var operation = beginManufacturingCostOperation("search", tokens.length
+    ? tf("manufacturing_cost_matching_parts", { n: tokens.length }) : t("manufacturing_cost_matching_category"));
+  if (candidatesEl) candidatesEl.innerHTML = "";
   if (list && !hadRows) list.innerHTML = "<div class='empty'>" + esc(t("manufacturing_cost_candidate_search_hint")) + "</div>";
   if (countEl && !hadRows) countEl.textContent = tf("manufacturing_cost_selected_count", { n: 0 });
   if (summaryEl && !hadRows) summaryEl.innerHTML = "";
@@ -31287,10 +31385,12 @@ async function searchManufacturingCostCandidates() {
     if (requestSeq !== manufacturingCostCandidateRequestSeq) return;
     if (pr.error) throw pr.error;
     var products = pr.data || [];
+    updateManufacturingCostOperation(operation, t("manufacturing_cost_checking_candidates"));
     await loadManufacturingCostCandidateStatuses(products);
     if (requestSeq !== manufacturingCostCandidateRequestSeq) return;
     renderManufacturingCostCandidates(products, importContext ? "import" : (tokens.length ? "query" : "category"), pr.groups || []);
     if (!products.length && list && !hadRows) list.innerHTML = "<div class='empty'>" + esc(t("no_results")) + "</div>";
+    setManufacturingCostListStatus(t("manufacturing_cost_search_done"), false);
   } catch (e) {
     if (requestSeq !== manufacturingCostCandidateRequestSeq) return;
     console.warn("manufacturing cost candidate search failed", e);
@@ -31300,11 +31400,14 @@ async function searchManufacturingCostCandidates() {
     if (candidatesEl) candidatesEl.innerHTML = "";
     if (list && !hadRows) list.innerHTML = "<div class='empty'>" + esc(t("msg_part_err") + ": " + ((e && e.message) || String(e))) + "</div>";
     setManufacturingCostListStatus((e && e.message) || String(e), true);
+  } finally {
+    finishManufacturingCostOperation(operation);
   }
 }
 
 async function calculateSelectedManufacturingCost() {
   if (!canViewManufacturingCostMgmt()) { alert(t("err_perm")); return; }
+  if (manufacturingCostOperation) return;
   var duplicates = selectedManufacturingCostDuplicateCandidateProducts();
   if (duplicates.length) {
     alert(t("manufacturing_cost_duplicate_selected_alert"));
@@ -31317,19 +31420,20 @@ async function calculateSelectedManufacturingCost() {
     setManufacturingCostListStatus(t("manufacturing_cost_no_candidate_selected"), true);
     return;
   }
-  setManufacturingCostListStatus("", false);
+  var operation = beginManufacturingCostOperation("calculate", t("manufacturing_cost_reading_components"));
   var list = document.getElementById("manufacturing-cost-list");
   var countEl = document.getElementById("manufacturing-cost-count");
   var summaryEl = document.getElementById("manufacturing-cost-summary");
-  if (list) list.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
+  if (list) list.innerHTML = renderManufacturingCostLoading(t("manufacturing_cost_calculation_running"));
   if (countEl) countEl.textContent = t("loading");
   if (summaryEl) summaryEl.innerHTML = "";
   var previousRows = manufacturingCostRows;
-  renderManufacturingCostDetailLoading();
+  renderManufacturingCostDetailLoading(t("manufacturing_cost_calculation_running"));
   var previousComponents = manufacturingCostComponentMap;
   try {
     await buildAndRenderManufacturingCostProducts(mergeManufacturingCostProducts(products), manufacturingCostSettings());
     renderManufacturingCostCandidates(manufacturingCostCandidateRows, manufacturingCostCandidateMode);
+    setManufacturingCostListStatus(t("manufacturing_cost_calculation_done"), false);
   } catch (e) {
     console.warn("manufacturing cost calculation failed", e);
     manufacturingCostRows = previousRows;
@@ -31337,6 +31441,8 @@ async function calculateSelectedManufacturingCost() {
     renderManufacturingCostRows();
     renderManufacturingCostCandidates(manufacturingCostCandidateRows, manufacturingCostCandidateMode);
     setManufacturingCostListStatus(t("msg_part_err") + ": " + ((e && e.message) || String(e)), true);
+  } finally {
+    finishManufacturingCostOperation(operation);
   }
 }
 
@@ -31470,46 +31576,48 @@ async function saveManufacturingCostList() {
 
 async function loadManufacturingCostList() {
   if (!canViewManufacturingCostMgmt()) { alert(t("err_perm")); return; }
+  if (manufacturingCostOperation) return;
   var selected = selectedManufacturingCostList();
   if (!selected) { setManufacturingCostListStatus(t("manufacturing_cost_list_select_required"), true); return; }
-  renderManufacturingCostDetailLoading();
-  manufacturingCostActiveListId = selected.id;
-  var categoryEl = document.getElementById("manufacturing-cost-category");
-  var kindEl = document.getElementById("manufacturing-cost-kind");
-  var nameEl = document.getElementById("manufacturing-cost-list-name");
-  var queryEl = document.getElementById("manufacturing-cost-query");
-  if (categoryEl) categoryEl.value = selected.category_code || "";
-  if (kindEl) kindEl.value = selected.product_kind || "rebuilt";
-  if (nameEl) nameEl.value = selected.list_name || "";
-  if (queryEl) queryEl.value = "";
-  var coreEl = document.getElementById("manufacturing-cost-core-cost");
-  var amountEl = document.getElementById("manufacturing-cost-labor-amount");
-  var transportEl = document.getElementById("manufacturing-cost-transport-cost");
-  var packagingEl = document.getElementById("manufacturing-cost-packaging-cost");
-  var documentsEl = document.getElementById("manufacturing-cost-documents-cost");
-  var sellingEl = document.getElementById("manufacturing-cost-selling-expense");
-  var coreReturnShippingEl = document.getElementById("manufacturing-cost-core-return-shipping-cost");
-  if (coreEl) coreEl.value = selected.core_cost_jpy == null ? 1500 : selected.core_cost_jpy;
-  if (selected.category_code && selected.core_cost_jpy != null) {
-    manufacturingCostCategoryCoreCosts[selected.category_code] = parseInt(selected.core_cost_jpy, 10) || 0;
-    saveManufacturingCostCategoryCoreCosts();
-    renderManufacturingCostCategoryCoreCosts();
-  }
-  if (amountEl) amountEl.value = selected.labor_amount_jpy == null ? MANUFACTURING_COST_DEFAULT_LABOR_AMOUNT_JPY : selected.labor_amount_jpy;
-  if (transportEl) transportEl.value = selected.transport_cost_jpy == null ? 0 : selected.transport_cost_jpy;
-  if (packagingEl) packagingEl.value = selected.packaging_cost_jpy == null ? MANUFACTURING_COST_DEFAULT_PACKAGING_COST_JPY : selected.packaging_cost_jpy;
-  if (documentsEl) documentsEl.value = selected.included_documents_cost_jpy == null ? MANUFACTURING_COST_DEFAULT_DOCUMENTS_COST_JPY : selected.included_documents_cost_jpy;
-  if (sellingEl) sellingEl.value = Math.round(manufacturingCostNumberFromInput("manufacturing-cost-packaging-cost", MANUFACTURING_COST_DEFAULT_PACKAGING_COST_JPY)) + Math.round(manufacturingCostNumberFromInput("manufacturing-cost-documents-cost", MANUFACTURING_COST_DEFAULT_DOCUMENTS_COST_JPY));
-  if (coreReturnShippingEl) coreReturnShippingEl.value = selected.core_return_shipping_cost_jpy == null ? 0 : selected.core_return_shipping_cost_jpy;
-  await refreshManufacturingCostSavedLists();
-  renderManufacturingCostCandidateEmpty("");
+  var operation = beginManufacturingCostOperation("load", t("manufacturing_cost_reading_list"));
   var list = document.getElementById("manufacturing-cost-list");
   var countEl = document.getElementById("manufacturing-cost-count");
   var summaryEl = document.getElementById("manufacturing-cost-summary");
-  if (list) list.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
+  if (list) list.innerHTML = renderManufacturingCostLoading(t("manufacturing_cost_list_running"));
   if (countEl) countEl.textContent = t("loading");
   if (summaryEl) summaryEl.innerHTML = "";
+  renderManufacturingCostDetailLoading(t("manufacturing_cost_list_running"));
   try {
+    manufacturingCostActiveListId = selected.id;
+    var categoryEl = document.getElementById("manufacturing-cost-category");
+    var kindEl = document.getElementById("manufacturing-cost-kind");
+    var nameEl = document.getElementById("manufacturing-cost-list-name");
+    var queryEl = document.getElementById("manufacturing-cost-query");
+    if (categoryEl) categoryEl.value = selected.category_code || "";
+    if (kindEl) kindEl.value = selected.product_kind || "rebuilt";
+    if (nameEl) nameEl.value = selected.list_name || "";
+    if (queryEl) queryEl.value = "";
+    var coreEl = document.getElementById("manufacturing-cost-core-cost");
+    var amountEl = document.getElementById("manufacturing-cost-labor-amount");
+    var transportEl = document.getElementById("manufacturing-cost-transport-cost");
+    var packagingEl = document.getElementById("manufacturing-cost-packaging-cost");
+    var documentsEl = document.getElementById("manufacturing-cost-documents-cost");
+    var sellingEl = document.getElementById("manufacturing-cost-selling-expense");
+    var coreReturnShippingEl = document.getElementById("manufacturing-cost-core-return-shipping-cost");
+    if (coreEl) coreEl.value = selected.core_cost_jpy == null ? 1500 : selected.core_cost_jpy;
+    if (selected.category_code && selected.core_cost_jpy != null) {
+      manufacturingCostCategoryCoreCosts[selected.category_code] = parseInt(selected.core_cost_jpy, 10) || 0;
+      saveManufacturingCostCategoryCoreCosts();
+      renderManufacturingCostCategoryCoreCosts();
+    }
+    if (amountEl) amountEl.value = selected.labor_amount_jpy == null ? MANUFACTURING_COST_DEFAULT_LABOR_AMOUNT_JPY : selected.labor_amount_jpy;
+    if (transportEl) transportEl.value = selected.transport_cost_jpy == null ? 0 : selected.transport_cost_jpy;
+    if (packagingEl) packagingEl.value = selected.packaging_cost_jpy == null ? MANUFACTURING_COST_DEFAULT_PACKAGING_COST_JPY : selected.packaging_cost_jpy;
+    if (documentsEl) documentsEl.value = selected.included_documents_cost_jpy == null ? MANUFACTURING_COST_DEFAULT_DOCUMENTS_COST_JPY : selected.included_documents_cost_jpy;
+    if (sellingEl) sellingEl.value = Math.round(manufacturingCostNumberFromInput("manufacturing-cost-packaging-cost", MANUFACTURING_COST_DEFAULT_PACKAGING_COST_JPY)) + Math.round(manufacturingCostNumberFromInput("manufacturing-cost-documents-cost", MANUFACTURING_COST_DEFAULT_DOCUMENTS_COST_JPY));
+    if (coreReturnShippingEl) coreReturnShippingEl.value = selected.core_return_shipping_cost_jpy == null ? 0 : selected.core_return_shipping_cost_jpy;
+    await refreshManufacturingCostSavedLists();
+    renderManufacturingCostCandidateEmpty("");
     var itemsR = await sb.from("manufacturing_cost_list_items")
       .select("*")
       .eq("list_id", selected.id)
@@ -31521,6 +31629,7 @@ async function loadManufacturingCostList() {
     var snapshotMap = manufacturingCostBuildSnapshotMap(itemRows);
     var productR = await fetchManufacturingCostProductsByIds(ids);
     if (productR.error) throw productR.error;
+    updateManufacturingCostOperation(operation, t("manufacturing_cost_reading_components"));
     await buildAndRenderManufacturingCostProducts(productR.data || [], manufacturingCostSettings(), { snapshotMap: snapshotMap });
     setManufacturingCostListStatus(t("manufacturing_cost_list_loaded"), false);
   } catch (e) {
@@ -31532,6 +31641,8 @@ async function loadManufacturingCostList() {
     if (countEl) countEl.textContent = "";
     if (list) list.innerHTML = "<div class='empty'>" + esc(t("msg_part_err") + ": " + ((e && e.message) || String(e))) + "</div>";
     setManufacturingCostListStatus((e && e.message) || String(e), true);
+  } finally {
+    finishManufacturingCostOperation(operation);
   }
 }
 

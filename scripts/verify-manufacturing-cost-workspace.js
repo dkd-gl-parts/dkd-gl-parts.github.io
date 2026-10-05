@@ -11,7 +11,7 @@ const ast = acorn.parse(source, { ecmaVersion: "latest" });
 const names = [
   "manufacturingCostConfirmationNotes", "renderManufacturingCostProductDetail",
   "selectManufacturingCostProduct", "renderManufacturingCostRows", "renderManufacturingCostSummary",
-  "renderManufacturingCostDetailLoading", "openManufacturingCostSettings", "closeManufacturingCostSettings",
+  "renderManufacturingCostLoading", "renderManufacturingCostDetailLoading", "openManufacturingCostSettings", "closeManufacturingCostSettings",
   "handleManufacturingCostSettingsKeydown", "closeManufacturingCostCategoryCoreSettings"
 ];
 const declarations = names.map(name => {
