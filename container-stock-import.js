@@ -10,6 +10,8 @@
     costListId: "",
     costListName: "",
     costProductIds: [],
+    costLinkItems: [],
+    familyConfirmed: {},
     costListReady: false,
     costListLoading: false,
     costListRequestSeq: 0,
@@ -63,12 +65,14 @@
   }
   async function fetchCostProductIds(listId) {
     var result = await sb.from("manufacturing_cost_list_items")
-      .select("dkd_shohin_id", { count: "exact" }).eq("list_id", Number(listId)).limit(1001);
+      .select("dkd_shohin_id,import_part_numbers", { count: "exact" }).eq("list_id", Number(listId)).limit(1001);
     if (result.error) throw result.error;
     if (!result.data || !result.data.length) throw new Error("リストに商品がありません。");
     if (result.data.length > 1000 || (result.count != null && result.count > result.data.length))
       throw new Error("原価計算リストの商品数が上限を超えています。");
-    return result.data.map(function(item) { return String(item.dkd_shohin_id); }).sort();
+    var ids = result.data.map(function(item) { return String(item.dkd_shohin_id); }).sort();
+    ids.linkItems = Number.isInteger(result.count) && result.count === result.data.length ? result.data : [];
+    return ids;
   }
   async function loadCostLists() {
     var select = byId("container-stock-cost-list");
@@ -96,6 +100,7 @@
     var listId = state.costListId;
     var requestSeq = ++state.costListRequestSeq;
     state.costProductIds = [];
+    state.costLinkItems = [];
     state.costListReady = listId === "none";
     state.costListLoading = !!listId && listId !== "none";
     var note = byId("container-stock-cost-list-note");
@@ -112,6 +117,7 @@
       var productIds = await fetchCostProductIds(listId);
       if (requestSeq !== state.costListRequestSeq) return;
       state.costProductIds = productIds;
+      state.costLinkItems = productIds.linkItems || [];
       state.costListReady = true;
       if (note) note.textContent = state.costListName + " の照合済み " +
         state.costProductIds.length + " 商品を優先します。一致しない品番は要確認のまま残します。";
@@ -214,6 +220,7 @@
     state.preview = null;
     state.previewInputFingerprint = "";
     state.selections = {};
+    state.familyConfirmed = {};
     state.editingKey = "";
     state.draftPart = "";
     state.draftReason = "";
@@ -415,7 +422,7 @@
     var needsChoice = pending.filter(function(row) {
       var selected = state.selections[sourceKey(row)];
       return (row.candidates || []).length > 0 && !(row.candidates || []).some(function(candidate) {
-        return String(candidate.dkd_shohin_id) === String(selected) && candidate.variant_active !== false;
+        return String(candidate.dkd_shohin_id) === String(selected) && candidate.variant_active !== false && familyReady(row,candidate);
       });
     }).length;
     var statusTone, statusTitle, statusDetail;
@@ -498,6 +505,9 @@
         html += "<span class='container-stock-unresolved'>エラー: 商品マスタに一致なし</span>";
       } else {
         if (!selected) html += "<span class='container-stock-choice'>候補の選択が必要</span>";
+        if (candidates.some(function(c) { return c.match_type === "sawafuji_family"; }))
+          html += "<small class='container-stock-choice'>澤藤の末尾1桁省略候補を含みます。正式品番・純正品番を確認してください。</small>";
+        if (row.previous_family_conflict) html += "<small class='container-stock-choice'>以前の紐づけが競合しています。自動選択しません。</small>";
         if (state.costListId && state.costListId !== "none" && !candidates.some(function(candidate) {
           return state.costProductIds.indexOf(String(candidate.dkd_shohin_id)) >= 0;
         })) html += "<span class='container-stock-choice'>原価計算リストに一致なし・入庫先を確認</span>";
@@ -512,11 +522,20 @@
               (candidate.genuine_part_number || "-") + " / " +
               (candidate.genuine_part_number_2 || "-") + " / " +
               (candidate.manufacturer_part_number || "-") +
+              (candidate.match_type === "sawafuji_family" ? " / 末尾1桁省略一致" : " / 完全一致") +
               (candidate.product_variant_id ? "" : " / 区分を新規作成") +
               (state.costProductIds.indexOf(String(candidate.dkd_shohin_id)) >= 0 ? " / 原価計算リスト" : "") +
               (active ? "" : " / 無効")) + "</option>";
         });
         html += "</select>";
+        if (chosen && chosen.match_type === "sawafuji_family") {
+          html += "<small>正式メーカー品番: " + esc(chosen.manufacturer_part_number || "—") +
+            " / 純正品番: " + esc(chosen.genuine_part_number || "—") + " / 商品ID " + esc(chosen.dkd_shohin_id) + "</small>";
+          if (String(automaticFamilyTarget(row)) === String(selected)) html += "<small>以前に確認した紐づけを初期選択しています。</small>";
+          html += "<label class='container-stock-family-confirm'><input type='checkbox' data-container-family-confirm='" + index + "'" +
+            (familyReady(row,chosen) ? " checked" : "") + (frozen || held(row) ? " disabled" : "") +
+            ">正式品番・純正品番を確認し、この商品へ紐づけます</label>";
+        }
       }
       if (!received(row)) {
         html += "<div class='container-stock-row-actions'><button type='button' class='container-stock-fix-button' data-container-edit='" + index + "'" + (frozen ? " disabled" : "") + ">品番を修正・マスタ登録</button>" +
@@ -579,12 +598,14 @@
       state.preview = result.data;
       state.previewInputFingerprint = inputFingerprint;
       state.selections = {};
+      state.familyConfirmed = {};
       (state.preview.rows || []).forEach(function(row) {
         var key = sourceKey(row);
         if (row.line_status === "held" && !Object.prototype.hasOwnProperty.call(state.holds,key))
           state.holds[key] = row.stored_hold_reason || row.hold_reason || "商品マスタの必要情報が不足しているため";
         var automatic = received(row) ? String(row.target_dkd_shohin_id) : automaticTarget(row);
         if (automatic) state.selections[sourceKey(row)] = automatic;
+        if (automatic && automaticFamilyTarget(row) === automatic) state.familyConfirmed[key] = automatic;
       });
     } catch (error) {
       invalidatePreview();
@@ -600,6 +621,10 @@
     var candidates = (row.candidates || []).filter(function(candidate) {
       return candidate.variant_active !== false;
     });
+    var priorFamily = automaticFamilyTarget(row);
+    if (priorFamily) return priorFamily;
+    // A sole family candidate or cost-list ID is not proof of the omitted digit.
+    candidates = candidates.filter(function(c) { return c.match_type !== "sawafuji_family"; });
     if (state.costListId && state.costListId !== "none") {
       var costCandidates = candidates.filter(function(candidate) {
         return state.costProductIds.indexOf(String(candidate.dkd_shohin_id)) >= 0;
@@ -612,6 +637,26 @@
     })) return preferred;
     return candidates.length === 1 ? String(candidates[0].dkd_shohin_id) : "";
   }
+  function automaticFamilyTarget(row) {
+    if (row.previous_family_conflict) return "";
+    var candidates = (row.candidates || []).filter(function(c) { return c.variant_active !== false; });
+    var ids = [];
+    if (row.previous_family_target_id) ids.push(String(row.previous_family_target_id));
+    if (state.costListId && state.costListId !== "none" && typeof root.manufacturingCostBuildImportHistory === "function") {
+      var explicitItems = (state.costLinkItems || []).filter(function(i) { return Array.isArray(i.import_part_numbers) && i.import_part_numbers.length; });
+      var history = root.manufacturingCostBuildImportHistory([{token:row.part_number,candidates:candidates}],explicitItems);
+      var previous = history.byToken[root.normalizePartQuery(row.part_number)] || {};
+      if (previous.ambiguous) return "";
+      if (previous.productId) ids.push(String(previous.productId));
+    }
+    ids = Array.from(new Set(ids));
+    return ids.length === 1 && candidates.some(function(c) {
+      return c.match_type === "sawafuji_family" && String(c.dkd_shohin_id) === ids[0];
+    }) ? ids[0] : "";
+  }
+  function familyReady(row,candidate) {
+    return candidate.match_type !== "sawafuji_family" || state.familyConfirmed[sourceKey(row)] === String(candidate.dkd_shohin_id);
+  }
   async function applyReceipt() {
     if (state.working || !state.preview || state.preview.duplicate || state.applied ||
         state.editingKey || state.draftDirty) return;
@@ -619,7 +664,7 @@
     if (!rows.length || rows.some(function(row) {
       if (received(row)) return false;
       if (held(row)) return !validHold(row);
-      return !(row.candidates || []).some(function(candidate) { return String(candidate.dkd_shohin_id) === String(state.selections[sourceKey(row)]) && candidate.variant_active !== false; });
+      return !(row.candidates || []).some(function(candidate) { return String(candidate.dkd_shohin_id) === String(state.selections[sourceKey(row)]) && candidate.variant_active !== false && familyReady(row,candidate); });
     })) return;
     var reference = selectedReference();
     var currentFingerprint;
@@ -638,7 +683,7 @@
       setStatus("取込条件が変わりました。再照合してください。", true);
       return;
     }
-    var selectionFingerprint = JSON.stringify([state.selections,state.holds]);
+    var selectionFingerprint = JSON.stringify([state.selections,state.holds,state.familyConfirmed]);
     state.working = true;
     busyControls();
     byId("container-stock-apply").disabled = true;
@@ -658,7 +703,7 @@
       }
     }
     if (!state.preview || currentFingerprint !== state.previewInputFingerprint ||
-        selectionFingerprint !== JSON.stringify([state.selections,state.holds]) || reference !== selectedReference()) {
+        selectionFingerprint !== JSON.stringify([state.selections,state.holds,state.familyConfirmed]) || reference !== selectedReference()) {
       state.working = false;
       invalidatePreview();
       busyControls();
@@ -686,6 +731,7 @@
     setStatus("在庫と入庫履歴を登録しています。");
     try {
       var payload = rows.map(function(row) {
+        var chosen = (row.candidates || []).find(function(c) { return String(c.dkd_shohin_id) === String(state.selections[sourceKey(row)]); });
         return {
           part_number: row.part_number,
           match_part_number: row.match_part_number || row.part_number,
@@ -693,6 +739,11 @@
           category_code: row.category_code,
           quantity: row.quantity,
           sources: row.sources,
+          sawafuji_family_confirmed: !!chosen && chosen.match_type === "sawafuji_family" && familyReady(row,chosen),
+          family_match_snapshot: chosen ? {manufacturer:chosen.manufacturer == null ? null : chosen.manufacturer,
+            manufacturer_part_number:chosen.manufacturer_part_number == null ? null : chosen.manufacturer_part_number,
+            genuine_part_number:chosen.genuine_part_number == null ? null : chosen.genuine_part_number,
+            genuine_part_number_2:chosen.genuine_part_number_2 == null ? null : chosen.genuine_part_number_2} : {},
           target_dkd_shohin_id: received(row) ? row.target_dkd_shohin_id : held(row) ? null : Number(state.selections[sourceKey(row)]),
           held: held(row), hold_reason: held(row) ? state.holds[sourceKey(row)].trim() : ""
         };
@@ -1064,6 +1115,15 @@
       setStatus("シート設定を変更しました。取込内容を再照合してください。");
     });
     byId("container-stock-results").addEventListener("change", function(event) {
+      if (event.target.matches("[data-container-family-confirm]") && state.preview) {
+        var confirmRow = state.preview.rows[Number(event.target.dataset.containerFamilyConfirm)];
+        if (!confirmRow || state.working || state.applied || received(confirmRow) || held(confirmRow) || state.preview.duplicate) return;
+        state.familyConfirmed[sourceKey(confirmRow)] = event.target.checked ? state.selections[sourceKey(confirmRow)] : null;
+        renderPreview();
+        var check = byId("container-stock-results").querySelector("[data-container-family-confirm='" + event.target.dataset.containerFamilyConfirm + "']");
+        if (check) check.focus();
+        return;
+      }
       if (!event.target.matches("[data-container-row]") || !state.preview) return;
       var index = Number(event.target.dataset.containerRow);
       var row = state.preview.rows[index];
@@ -1071,6 +1131,7 @@
       var tableWrap = byId("container-stock-results").querySelector(".container-stock-table-wrap");
       var scrollTop = tableWrap ? tableWrap.scrollTop : 0;
       state.selections[sourceKey(row)] = event.target.value;
+      state.familyConfirmed[sourceKey(row)] = null;
       renderPreview();
       tableWrap = byId("container-stock-results").querySelector(".container-stock-table-wrap");
       if (tableWrap) tableWrap.scrollTop = scrollTop;
@@ -1213,7 +1274,7 @@
   root.DcatsContainerStockImport = {
     enter: enter, _collectRows: collectedRows, _renderPreview: renderPreview,
     _validPartNumber: validPartNumber, _useFileNameAsReference: useFileNameAsReference,
-    _automaticTarget: automaticTarget, _state: state,
+    _automaticTarget: automaticTarget, _automaticFamilyTarget: automaticFamilyTarget, _state: state,
     _toggleHold: toggleHold, _previewReceipt: previewReceipt, _applyReceipt: applyReceipt,
     _resumeReceipt: resumeReceipt, _loadHeld: loadHeld, _resetReceipt: resetReceipt
   };
