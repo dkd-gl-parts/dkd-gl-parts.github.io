@@ -17,6 +17,11 @@
     preview: null,
     previewInputFingerprint: "",
     selections: {},
+    holds: {},
+    resumeRows: null,
+    resumeReceiptId: null,
+    heldOffset: 0,
+    heldLoading: false,
     corrections: {},
     correctionReasons: {},
     preferredTargets: {},
@@ -52,7 +57,7 @@
     return !!byId("container-stock-cost-list");
   }
   function canPreview() {
-    return !state.working && !state.costListLoading && !!state.sheets.length &&
+    return !state.working && !state.costListLoading && !!(state.resumeRows || state.sheets.length) &&
       selectedReference().length >= 3 &&
       (!costListRequired() || (state.costListId && state.costListReady));
   }
@@ -137,6 +142,26 @@
   }
   function sourceKey(row) {
     return row.category_code + "|" + String(row.part_number || "").trim().toUpperCase();
+  }
+  function received(row) { return row.line_status === "received"; }
+  function held(row) { return !received(row) && typeof state.holds[sourceKey(row)] === "string"; }
+  function validHold(row) {
+    var reason = state.holds[sourceKey(row)] || "";
+    return reason.trim().length >= 5 && reason.trim().length <= 300 && !/[\x00-\x1f\x7f]/.test(reason);
+  }
+  function busyControls() {
+    ["container-stock-reference", "container-stock-choose", "container-stock-file", "container-stock-cost-list"].forEach(function(id) {
+      var element = byId(id);
+      if (element) element.disabled = state.working || !!state.resumeRows;
+    });
+    var reset = byId("container-stock-new");
+    if (reset) reset.disabled = state.working;
+  }
+  function toggleHold(index) {
+    var row = state.preview && state.preview.rows[index];
+    if (!row || received(row) || state.working || state.applied || state.preview.duplicate) return;
+    state.holds[sourceKey(row)] = held(row) ? null : "商品マスタの必要情報が不足しているため";
+    renderPreview();
   }
   function matchPartFor(row) {
     return state.corrections[sourceKey(row)] || row.part_number;
@@ -226,6 +251,14 @@
     }).join("");
   }
   function collectedRows() {
+    if (state.resumeRows) return state.resumeRows.map(function(row) {
+      return {
+        part_number: row.part_number, category_code: row.category_code, quantity: row.quantity,
+        sources: row.sources, match_part_number: received(row) ? row.match_part_number || row.part_number : matchPartFor(row),
+        match_reason: received(row) ? row.match_reason || "" : state.correctionReasons[sourceKey(row)] || row.match_reason || "",
+        target_dkd_shohin_id: received(row) ? row.target_dkd_shohin_id : null
+      };
+    });
     var combined = new Map();
     var included = 0;
     state.sheets.forEach(function(sheet) {
@@ -375,8 +408,11 @@
     if (!preview) { host.innerHTML = ""; return; }
     var rows = preview.rows || [];
     var duplicate = preview.duplicate;
-    var unmatched = rows.filter(function(row) { return !(row.candidates || []).length; }).length;
-    var needsChoice = rows.filter(function(row) {
+    var pending = rows.filter(function(row) { return !received(row) && !held(row); });
+    var heldRows = rows.filter(held);
+    var invalidHolds = heldRows.some(function(row) { return !validHold(row); });
+    var unmatched = pending.filter(function(row) { return !(row.candidates || []).length; }).length;
+    var needsChoice = pending.filter(function(row) {
       var selected = state.selections[sourceKey(row)];
       return (row.candidates || []).length > 0 && !(row.candidates || []).some(function(candidate) {
         return String(candidate.dkd_shohin_id) === String(selected) && candidate.variant_active !== false;
@@ -385,8 +421,8 @@
     var statusTone, statusTitle, statusDetail;
     if (state.applied) {
       statusTone = "applied";
-      statusTitle = "入庫完了（在庫反映済み）";
-      statusDetail = "在庫に反映しました。取込履歴から確認できます。";
+      statusTitle = heldRows.length ? "登録完了・保留あり" : "入庫完了（在庫反映済み）";
+      statusDetail = heldRows.length ? "登録可能分だけ在庫に反映しました。保留分は在庫未反映です。「保留品番の管理」から後日再開できます。" : "在庫に反映しました。取込履歴から確認できます。";
     } else if (state.working) {
       statusTone = "working";
       statusTitle = "入庫を登録中です";
@@ -403,21 +439,23 @@
       statusTone = "attention";
       statusTitle = "照合完了・対象品番なし";
       statusDetail = "対象品番がありません。シートと列の設定を確認してください。";
-    } else if (unmatched || needsChoice) {
+    } else if (unmatched || needsChoice || invalidHolds) {
       statusTone = "attention";
       statusTitle = "照合完了・未解決あり（在庫未反映）";
-      statusDetail = "一致なし・候補選択待ちを解消すると入庫できます。まだ在庫には反映していません。";
+      statusDetail = "未解決の品番は修正するか、理由を付けて保留にしてください。保留分は在庫に加算せず、残りの登録を進められます。";
     } else {
       statusTone = "ready";
       statusTitle = "照合完了・入庫可能（在庫未反映）";
-      statusDetail = "すべての入庫先が確定しました。まだ在庫には反映していません。内容を確認してから一括入庫してください。";
+      statusDetail = heldRows.length ? "保留分を保存し、登録可能分だけ入庫します。保留品番のマスタは作成せず、在庫にも加算しません。" : "すべての入庫先が確定しました。まだ在庫には反映していません。内容を確認してから一括入庫してください。";
     }
     var html = "<div class='container-stock-result-state is-" + statusTone + "' role='group' aria-label='照合結果'>" +
       "<strong>" + esc(statusTitle) + "</strong><p>" + esc(statusDetail) + "</p></div>" +
       "<div class='container-stock-summary'>" + rows.length + "品番 / " +
       Number(preview.total_quantity || 0).toLocaleString("ja-JP") + "台" +
       "<span class='container-stock-unresolved' role='status'>一致なし " + unmatched + "件</span>" +
-      "<span>候補選択待ち " + needsChoice + "件</span>";
+      "<span>候補選択待ち " + needsChoice + "件</span>" +
+      "<span class='container-stock-held-badge'>保留 " + heldRows.length + "品番 / " + heldRows.reduce(function(sum,row) { return sum + Number(row.quantity); },0) + "台（在庫未反映）</span>" +
+      "<span>登録済み " + rows.filter(received).length + "品番（再加算なし）</span>";
     if (duplicate) {
       html += "<strong class='container-stock-duplicate'>取込済み: #" + esc(duplicate.id) +
         " · " + esc(duplicate.container_reference) + " · " + esc(duplicate.received_at) + "</strong>";
@@ -443,6 +481,7 @@
       var index = item.index;
       var key = sourceKey(row);
       var candidates = row.candidates || [];
+      var frozen = received(row) || state.working || state.applied || !!duplicate;
       var selected = state.selections[key] || "";
       var chosen = candidates.find(function(candidate) {
         return String(candidate.dkd_shohin_id) === String(selected);
@@ -453,7 +492,9 @@
         (corrected ? "<small>照合品番: " + esc(row.match_part_number) + "</small>" : "") + "<small>" +
         esc(row.category_code === "alternator" ? "オルタネーター" : "スターター") +
         "</small></td><td>" + esc(row.quantity) + "</td><td>";
-      if (!candidates.length) {
+      if (received(row)) {
+        html += "<strong class='container-stock-received'>登録済み · DKD " + esc(row.target_dkd_shohin_id) + "</strong><small>在庫は再加算しません</small>";
+      } else if (!candidates.length) {
         html += "<span class='container-stock-unresolved'>エラー: 商品マスタに一致なし</span>";
       } else {
         if (!selected) html += "<span class='container-stock-choice'>候補の選択が必要</span>";
@@ -461,7 +502,7 @@
           return state.costProductIds.indexOf(String(candidate.dkd_shohin_id)) >= 0;
         })) html += "<span class='container-stock-choice'>原価計算リストに一致なし・入庫先を確認</span>";
         html += "<select class='form-select' data-container-row='" + index + "' aria-label='" +
-          esc(row.part_number + " の入庫先") + "'><option value=''>候補を選択</option>";
+          esc(row.part_number + " の入庫先") + "'" + (frozen || held(row) ? " disabled" : "") + "><option value=''>候補を選択</option>";
         candidates.forEach(function(candidate) {
           var active = candidate.variant_active !== false;
           html += "<option value='" + esc(candidate.dkd_shohin_id) + "'" +
@@ -477,8 +518,12 @@
         });
         html += "</select>";
       }
-      html += "<button type='button' class='container-stock-fix-button' data-container-edit='" + index + "'>品番を修正</button>";
-      html += "</td><td>" + (chosen ?
+      if (!received(row)) {
+        html += "<div class='container-stock-row-actions'><button type='button' class='container-stock-fix-button' data-container-edit='" + index + "'" + (frozen ? " disabled" : "") + ">品番を修正・マスタ登録</button>" +
+          "<button type='button' class='btn-secondary' data-container-hold='" + index + "'" + (frozen ? " disabled" : "") + ">" + (held(row) ? "保留を解除して入庫先を確認" : "この品番を保留") + "</button></div>";
+        if (held(row)) html += "<label class='container-stock-hold-reason'>保留理由（5文字以上）<input class='form-input' data-container-hold-reason='" + index + "' maxlength='300' value='" + esc(state.holds[key]) + "'" + (frozen ? " disabled" : "") + "></label><small class='container-stock-held-badge'>保留・在庫未反映</small>";
+      }
+      html += "</td><td>" + (received(row) ? "登録済み" : held(row) ? "加算しません" : chosen ?
         esc(String(chosen.stock_qty || 0) + " → " +
           String(Number(chosen.stock_qty || 0) + Number(row.quantity))) : "—") +
         "</td><td class='container-stock-source'>" + esc(sources) + "</td></tr>";
@@ -487,7 +532,9 @@
     host.innerHTML = html;
     byId("container-stock-apply").disabled =
       !!duplicate || state.working || state.applied || !!state.editingKey || state.draftDirty ||
-      !rows.length || !!unmatched || !!needsChoice;
+      !rows.length || !!unmatched || !!needsChoice || invalidHolds || (!pending.length && !heldRows.length);
+    byId("container-stock-apply").textContent = heldRows.length ? (pending.length ? "保留を保存して登録可能分を入庫" : "保留だけ保存（在庫は変更しません）") : "確認した内容で一括入庫";
+    busyControls();
     if (!state.working && !state.applied) setStatus(statusTitle,
       statusTone === "duplicate" || statusTone === "attention");
   }
@@ -512,6 +559,7 @@
     });
     invalidatePreview();
     state.working = true;
+    busyControls();
     byId("container-stock-preview").disabled = true;
     byId("container-stock-apply").disabled = true;
     setStatus("品番と取込履歴を照合しています。");
@@ -532,7 +580,10 @@
       state.previewInputFingerprint = inputFingerprint;
       state.selections = {};
       (state.preview.rows || []).forEach(function(row) {
-        var automatic = automaticTarget(row);
+        var key = sourceKey(row);
+        if (row.line_status === "held" && !Object.prototype.hasOwnProperty.call(state.holds,key))
+          state.holds[key] = row.stored_hold_reason || row.hold_reason || "商品マスタの必要情報が不足しているため";
+        var automatic = received(row) ? String(row.target_dkd_shohin_id) : automaticTarget(row);
         if (automatic) state.selections[sourceKey(row)] = automatic;
       });
     } catch (error) {
@@ -540,6 +591,7 @@
       setStatus("照合に失敗しました: " + (error.message || String(error)), true);
     } finally {
       state.working = false;
+      busyControls();
       byId("container-stock-preview").disabled = !canPreview();
       if (state.preview) renderPreview();
     }
@@ -564,7 +616,11 @@
     if (state.working || !state.preview || state.preview.duplicate || state.applied ||
         state.editingKey || state.draftDirty) return;
     var rows = state.preview.rows || [];
-    if (!rows.length || rows.some(function(row) { return !state.selections[sourceKey(row)]; })) return;
+    if (!rows.length || rows.some(function(row) {
+      if (received(row)) return false;
+      if (held(row)) return !validHold(row);
+      return !(row.candidates || []).some(function(candidate) { return String(candidate.dkd_shohin_id) === String(state.selections[sourceKey(row)]) && candidate.variant_active !== false; });
+    })) return;
     var reference = selectedReference();
     var currentFingerprint;
     try {
@@ -582,8 +638,9 @@
       setStatus("取込条件が変わりました。再照合してください。", true);
       return;
     }
-    var selectionFingerprint = JSON.stringify(state.selections);
+    var selectionFingerprint = JSON.stringify([state.selections,state.holds]);
     state.working = true;
+    busyControls();
     byId("container-stock-apply").disabled = true;
     byId("container-stock-preview").disabled = true;
     if (state.costListId && state.costListId !== "none") {
@@ -594,23 +651,34 @@
       } catch (error) {
         state.working = false;
         invalidatePreview();
+        busyControls();
         setStatus("原価計算リストを再確認できません: " +
           (error.message || String(error)) + " 再照合してください。", true);
         return;
       }
     }
     if (!state.preview || currentFingerprint !== state.previewInputFingerprint ||
-        selectionFingerprint !== JSON.stringify(state.selections)) {
+        selectionFingerprint !== JSON.stringify([state.selections,state.holds]) || reference !== selectedReference()) {
       state.working = false;
       invalidatePreview();
+      busyControls();
       setStatus("取込条件が変わりました。再照合してください。", true);
       return;
     }
-    if (!root.confirm(reference + " の " + rows.length + "品番・" +
-      Number(state.preview.total_quantity).toLocaleString("ja-JP") +
-      "台を在庫へ加算します。入庫を確定しますか？")) {
+    var readyRows = rows.filter(function(row) { return !received(row) && !held(row); });
+    var holdRows = rows.filter(held);
+    if (!readyRows.length && !holdRows.length) {
+      state.working = false;
+      busyControls();
+      renderPreview();
+      return;
+    }
+    if (!root.confirm(reference + " の登録可能 " + readyRows.length + "品番・" +
+      readyRows.reduce(function(sum,row) { return sum + Number(row.quantity); },0).toLocaleString("ja-JP") +
+      "台だけを在庫へ加算します。\n保留 " + holdRows.length + "品番は保存のみで、在庫には加算しません。登録済み品番も再加算しません。\n確定しますか？")) {
       state.working = false;
       byId("container-stock-preview").disabled = !canPreview();
+      busyControls();
       renderPreview();
       return;
     }
@@ -625,7 +693,8 @@
           category_code: row.category_code,
           quantity: row.quantity,
           sources: row.sources,
-          target_dkd_shohin_id: Number(state.selections[sourceKey(row)])
+          target_dkd_shohin_id: received(row) ? row.target_dkd_shohin_id : held(row) ? null : Number(state.selections[sourceKey(row)]),
+          held: held(row), hold_reason: held(row) ? state.holds[sourceKey(row)].trim() : ""
         };
       });
       var result = await sb.rpc("apply_container_stock_receipt", {
@@ -636,12 +705,14 @@
       });
       if (result.error) throw result.error;
       state.applied = true;
+      if (result.data.rows) state.preview.rows = result.data.rows;
       setStatus("入庫 #" + result.data.receipt_id + " を登録しました。" +
         result.data.line_count + "品番・" +
-        Number(result.data.total_quantity).toLocaleString("ja-JP") + "台を反映しました。");
+        Number(result.data.total_quantity).toLocaleString("ja-JP") + "台を反映しました。保留 " + Number(result.data.held_count || 0) + "品番は在庫未反映です。");
       renderPreview();
       try {
         await loadHistory();
+        await loadHeld();
         if (typeof root.loadProductKindStockMgmt === "function") await root.loadProductKindStockMgmt();
       } catch (refreshError) {
         setStatus("入庫 #" + result.data.receipt_id +
@@ -653,6 +724,7 @@
       invalidatePreview();
     } finally {
       state.working = false;
+      busyControls();
       byId("container-stock-preview").disabled = !canPreview();
     }
   }
@@ -667,8 +739,102 @@
       rows.map(function(row) {
         return "<li>#" + esc(row.id) + " · " + esc(row.container_reference) +
           " · " + esc(row.source_file_name) + " · " + esc(row.line_count) +
-          "品番 / " + esc(row.total_quantity) + "台 · " + esc(row.received_at) + "</li>";
+          "品番 / " + esc(row.total_quantity) + "台（入庫 " + esc(Number(row.total_quantity) - Number(row.held_quantity || 0)) + "台・保留 " + esc(row.held_count || 0) + "品番 / " + esc(row.held_quantity || 0) + "台） · " + esc(row.received_at) + "</li>";
       }).join("") + "</ul>" : "入庫履歴はありません。";
+  }
+  async function loadHeld() {
+    var host = byId("container-stock-held-list");
+    if (!host || state.heldLoading) return;
+    state.heldLoading = true;
+    host.textContent = "保留品番を読み込んでいます。";
+    try {
+      var result = await sb.rpc("get_container_stock_held_receipts", { p_receipt_id: null, p_offset: state.heldOffset, p_limit: 20 });
+      if (result.error) throw result.error;
+      var data = result.data;
+      if (state.heldOffset && state.heldOffset >= Number(data.total_receipts)) {
+        state.heldOffset = 0;
+        state.heldLoading = false;
+        return loadHeld();
+      }
+      byId("container-stock-held-toggle").textContent = "保留品番の管理（" + data.total_held_count + "品番）";
+      host.innerHTML = "<p><strong>保留 " + esc(data.total_held_count) + "品番 / " + esc(data.total_held_quantity) + "台</strong> · " + esc(data.total_receipts) + "パレット</p><p>保留分は在庫未反映です。マスタの必要情報が揃ってから登録・再照合し、保留を解除して入庫します。</p>" +
+        (data.receipts || []).map(function(item) {
+          return "<article class='container-stock-held-item'><div><strong>#" + esc(item.id) + " · " + esc(item.container_reference) + "</strong><small>" + esc(item.source_file_name) + " · 保留 " + esc(item.held_count) + "品番 / " + esc(item.held_quantity) + "台</small><p>" + esc(item.part_numbers) + "</p></div><button type='button' class='btn-secondary' data-container-resume='" + esc(item.id) + "'>保留品番を確認・再開</button></article>";
+        }).join("") + ((data.receipts || []).length ? "<div class='container-stock-row-actions'><button type='button' class='btn-secondary' data-container-held-page='-1'" + (state.heldOffset ? "" : " disabled") + ">前へ</button><span>" + (state.heldOffset + 1) + "〜" + (state.heldOffset + data.receipts.length) + " / " + esc(data.total_receipts) + "パレット</span><button type='button' class='btn-secondary' data-container-held-page='1'" + (state.heldOffset + 20 < data.total_receipts ? "" : " disabled") + ">次へ</button></div>" : "<p>保留中の品番はありません。</p>");
+    } catch (error) {
+      host.textContent = "保留品番を取得できませんでした: " + (error.message || String(error));
+      byId("container-stock-held-toggle").textContent = "保留品番の管理（取得失敗）";
+    } finally { state.heldLoading = false; }
+  }
+  function resetReceipt() {
+    if (state.working) return;
+    state.resumeRows = null;
+    state.resumeReceiptId = null;
+    state.holds = {};
+    state.sheets = [];
+    state.corrections = {};
+    state.correctionReasons = {};
+    state.preferredTargets = {};
+    state.fileName = "";
+    state.fileSha256 = "";
+    state.autoReferenceName = "";
+    state.costListId = "none";
+    state.costListReady = true;
+    state.costProductIds = [];
+    state.costListRequestSeq += 1;
+    state.costListLoading = false;
+    byId("container-stock-reference").value = "";
+    byId("container-stock-file").value = "";
+    byId("container-stock-file-name").textContent = "";
+    byId("container-stock-sheets").innerHTML = "";
+    byId("container-stock-cost-list").value = "none";
+    invalidatePreview();
+    busyControls();
+    setStatus("新しいファイルを選択してください。保存済みの保留品番は消えません。");
+  }
+  async function resumeReceipt(id) {
+    if (state.working) return;
+    if (state.preview && !state.applied && !root.confirm("編集中の取込内容を閉じ、保存済みの保留パレットを開きますか？")) return;
+    state.working = true;
+    busyControls();
+    invalidatePreview();
+    setStatus("保留パレットを読み込んでいます。");
+    try {
+      var result = await sb.rpc("get_container_stock_held_receipts", { p_receipt_id: Number(id), p_offset: 0, p_limit: 20 });
+      if (result.error) throw result.error;
+      var receipt = result.data.receipt;
+      if (!receipt || !(receipt.lines || []).some(function(row) { return row.line_status === "held"; })) throw new Error("保留分がありません。管理一覧を再読込してください。");
+      state.resumeRows = receipt.lines;
+      state.resumeReceiptId = receipt.id;
+      state.fileName = receipt.source_file_name;
+      state.fileSha256 = receipt.source_sha256;
+      state.sheets = [];
+      state.holds = {};
+      state.corrections = {};
+      state.correctionReasons = {};
+      state.preferredTargets = {};
+      state.costListId = "none";
+      state.costListReady = true;
+      state.costListLoading = false;
+      state.costProductIds = [];
+      state.costListRequestSeq += 1;
+      receipt.lines.forEach(function(row) {
+        if (!received(row)) {
+          state.holds[sourceKey(row)] = row.hold_reason;
+          state.corrections[sourceKey(row)] = row.match_part_number || row.part_number;
+          state.correctionReasons[sourceKey(row)] = row.match_reason || "";
+        }
+      });
+      byId("container-stock-reference").value = receipt.container_reference;
+      byId("container-stock-file-name").textContent = "保留パレット #" + receipt.id + " · " + receipt.source_file_name;
+      byId("container-stock-cost-list").value = "none";
+      byId("container-stock-cost-list-note").textContent = "保存済みの元品番・数量を使用します。登録済み品番の在庫は再加算しません。";
+      byId("container-stock-sheets").innerHTML = "";
+    } catch (error) {
+      setStatus("保留パレットを開けませんでした: " + (error.message || String(error)), true);
+      return;
+    } finally { state.working = false; busyControls(); }
+    await previewReceipt();
   }
   async function searchProducts() {
     if (state.searching || !state.preview || !state.editingKey) return;
@@ -829,13 +995,15 @@
         if (note) note.textContent = "原価計算リストを取得できません: " +
           (error.message || String(error));
       });
+      loadHeld();
     }
   }
   function init() {
     var fileInput = byId("container-stock-file");
     if (!fileInput) return;
-    byId("container-stock-choose").addEventListener("click", function() { fileInput.click(); });
+    byId("container-stock-choose").addEventListener("click", function() { if (!state.working && !state.resumeRows) fileInput.click(); });
     fileInput.addEventListener("change", async function() {
+      if (state.working || state.resumeRows) return;
       var file = fileInput.files && fileInput.files[0];
       if (state.autoReferenceName && selectedReference() === state.autoReferenceName)
         byId("container-stock-reference").value = "";
@@ -844,6 +1012,7 @@
       state.corrections = {};
       state.correctionReasons = {};
       state.preferredTargets = {};
+      state.holds = {};
       state.fileName = "";
       state.fileSha256 = "";
       state.costListId = "";
@@ -873,7 +1042,7 @@
     byId("container-stock-apply").addEventListener("click", applyReceipt);
     byId("container-stock-sheets").addEventListener("change", function(event) {
       var row = event.target.closest("[data-sheet-index]");
-      if (!row) return;
+      if (!row || state.working || state.resumeRows) return;
       var sheet = state.sheets[Number(row.dataset.sheetIndex)];
       if (!sheet) return;
       var field = event.target.dataset.sheetField;
@@ -890,6 +1059,7 @@
       state.corrections = {};
       state.correctionReasons = {};
       state.preferredTargets = {};
+      state.holds = {};
       renderSheets();
       setStatus("シート設定を変更しました。取込内容を再照合してください。");
     });
@@ -897,7 +1067,7 @@
       if (!event.target.matches("[data-container-row]") || !state.preview) return;
       var index = Number(event.target.dataset.containerRow);
       var row = state.preview.rows[index];
-      if (!row) return;
+      if (!row || state.working || state.applied || received(row) || held(row) || state.preview.duplicate) return;
       var tableWrap = byId("container-stock-results").querySelector(".container-stock-table-wrap");
       var scrollTop = tableWrap ? tableWrap.scrollTop : 0;
       state.selections[sourceKey(row)] = event.target.value;
@@ -909,10 +1079,13 @@
     });
     byId("container-stock-results").addEventListener("click", async function(event) {
       var target = event.target;
+      if (state.working || state.applied || (state.preview && state.preview.duplicate)) return;
+      var hold = target.closest("[data-container-hold]");
+      if (hold) { toggleHold(Number(hold.dataset.containerHold)); return; }
       var edit = target.closest("[data-container-edit]");
       if (edit && state.preview) {
         var row = state.preview.rows[Number(edit.dataset.containerEdit)];
-        if (!row) return;
+        if (!row || received(row)) return;
         state.editingKey = sourceKey(row);
         state.searchRequestSeq += 1;
         state.searching = false;
@@ -983,6 +1156,20 @@
       loadCostListProducts();
     });
     byId("container-stock-results").addEventListener("input", function(event) {
+      if (event.target.matches("[data-container-hold-reason]") && state.preview && !state.working && !state.applied) {
+        var row = state.preview.rows[Number(event.target.dataset.containerHoldReason)];
+        if (row && held(row)) {
+          state.holds[sourceKey(row)] = event.target.value;
+          byId("container-stock-apply").disabled = !!state.editingKey || state.draftDirty || !!state.preview.duplicate ||
+            state.preview.rows.some(function(item) {
+              if (received(item)) return false;
+              if (held(item)) return !validHold(item);
+              return !(item.candidates || []).some(function(candidate) {
+                return String(candidate.dkd_shohin_id) === String(state.selections[sourceKey(item)]) && candidate.variant_active !== false;
+              });
+            });
+        }
+      }
       if (event.target.id === "container-stock-match-part") {
         state.draftPart = event.target.value;
         state.draftDirty = true;
@@ -1000,11 +1187,35 @@
       history.hidden = !history.hidden;
       if (!history.hidden) loadHistory();
     });
+    byId("container-stock-results").addEventListener("change", function(event) {
+      if (event.target.matches("[data-container-hold-reason]")) renderPreview();
+    });
+    byId("container-stock-new").addEventListener("click", function() {
+      if (state.preview && !state.applied && !root.confirm("編集中の取込内容を閉じますか？保存済みの保留品番は消えません。")) return;
+      resetReceipt();
+    });
+    byId("container-stock-held-toggle").addEventListener("click", function() {
+      var panel = byId("container-stock-held-panel");
+      panel.hidden = !panel.hidden;
+      if (!panel.hidden) loadHeld();
+    });
+    byId("container-stock-held-refresh").addEventListener("click", loadHeld);
+    byId("container-stock-held-list").addEventListener("click", function(event) {
+      var resume = event.target.closest("[data-container-resume]");
+      if (resume) { resumeReceipt(resume.dataset.containerResume); return; }
+      var page = event.target.closest("[data-container-held-page]");
+      if (page && !state.heldLoading && !state.working) {
+        state.heldOffset = Math.max(0,state.heldOffset + Number(page.dataset.containerHeldPage) * 20);
+        loadHeld();
+      }
+    });
   }
   root.DcatsContainerStockImport = {
     enter: enter, _collectRows: collectedRows, _renderPreview: renderPreview,
     _validPartNumber: validPartNumber, _useFileNameAsReference: useFileNameAsReference,
-    _automaticTarget: automaticTarget, _state: state
+    _automaticTarget: automaticTarget, _state: state,
+    _toggleHold: toggleHold, _previewReceipt: previewReceipt, _applyReceipt: applyReceipt,
+    _resumeReceipt: resumeReceipt, _loadHeld: loadHeld, _resetReceipt: resetReceipt
   };
   if (typeof document !== "undefined") {
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once: true });
