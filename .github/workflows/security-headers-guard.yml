@@ -60,7 +60,6 @@ jobs:
         run: |
           node scripts/verify-concierge-pet.js
           node scripts/verify-concierge-pet-runtime.js
-          node scripts/verify-hanbaioh-test-sales-bridge.js
       - name: Build static deployment
         run: node scripts/build-static-site.js
       - name: Verify security response headers

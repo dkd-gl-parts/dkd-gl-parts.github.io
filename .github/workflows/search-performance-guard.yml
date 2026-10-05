@@ -47,6 +47,7 @@ jobs:
           node scripts/verify-hanbaioh-test-sales-api.js
           node scripts/verify-concierge-ai.js
           node scripts/verify-concierge-pet-runtime.js
+          node scripts/verify-hanbaioh-test-sales-bridge.js
           node scripts/verify-concierge-desktop.js
       - name: Verify release asset versions
         run: node scripts/verify-app-version-assets.js
