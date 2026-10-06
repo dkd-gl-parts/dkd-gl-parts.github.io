@@ -423,6 +423,17 @@ var TRANSLATIONS = {
     sales_order_mgmt_note: "注文受付、B2発送データ取込、現場の製造シリアル照合を管理します。",
     business_workspace_open: "業務連携",
     business_workspace_title: "D-CATS業務連携",
+    business_workspace_account_title: "販売王ログイン設定",
+    business_workspace_account_hint: "初回だけ、販売王のパスワードを登録します。このPCからの連動では、以降の入力は不要です。",
+    business_workspace_account_update_hint: "販売王側でパスワードを変更した場合は、同じボタンから再登録してください。",
+    business_workspace_account_register: "販売王パスワードを登録・再登録",
+    business_workspace_account_note: "このPCの専用入力画面が開きます。会社名と販売王IDを確認して入力してください。",
+    business_workspace_account_opening: "登録画面を開いています。表示された入力画面で操作してください。",
+    business_workspace_account_saved: "このPCにパスワードを保護して登録しました。次回以降の連動では入力不要です。",
+    business_workspace_account_updated: "このPCの保存パスワードを更新しました。次回以降の連動では入力不要です。",
+    business_workspace_account_cancelled: "登録をキャンセルしました。",
+    business_workspace_account_expired: "入力の有効期限（3分）が切れました。ボタンを押して登録画面を開き直してください。",
+    business_workspace_account_failed: "登録を確認できませんでした。このPCの連携アプリ・拡張機能が最新版か確認してください。更新後は、ブラウザを開き直してから再度お試しください。",
     business_workspace_location: "PC上のGoogle Drive（G:）",
     business_workspace_pc_path: "G:\\.shortcut-targets-by-id\\1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ\\D-CATS業務連携",
     business_workspace_open_folder: "Google Drive（Web）",
@@ -2804,6 +2815,17 @@ var TRANSLATIONS = {
     sales_order_mgmt_note: "Manage order acceptance, B2 shipping-data imports, and shop-floor serial verification.",
     business_workspace_open: "Shared Folder",
     business_workspace_title: "D-CATS Business Exchange",
+    business_workspace_account_title: "Sales King sign-in settings",
+    business_workspace_account_hint: "Register your Sales King password once. Integration on this PC will not ask for it again.",
+    business_workspace_account_update_hint: "If you change the password in Sales King, use this button to register the new password.",
+    business_workspace_account_register: "Register or update Sales King password",
+    business_workspace_account_note: "A dedicated input window opens on this PC. Check the company and Sales King ID before entering your password.",
+    business_workspace_account_opening: "Opening the registration window. Continue in the input window.",
+    business_workspace_account_saved: "Password protected and registered on this PC. Future integration will not ask for it again.",
+    business_workspace_account_updated: "Saved password updated on this PC. Future integration will not ask for it again.",
+    business_workspace_account_cancelled: "Registration cancelled.",
+    business_workspace_account_expired: "The 3-minute input period expired. Press the button to reopen the registration window.",
+    business_workspace_account_failed: "Registration could not be confirmed. Check that this PC's integration app and extension are up to date. After updating, reopen the browser and try again.",
     business_workspace_location: "Google Drive on this PC (G:)",
     business_workspace_pc_path: "G:\\.shortcut-targets-by-id\\1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ\\D-CATS業務連携",
     business_workspace_open_folder: "Google Drive (Web)",
@@ -5129,6 +5151,17 @@ var TRANSLATIONS = {
     sales_order_mgmt_note: "管理订单受理、B2发货数据导入和现场序列号核对。",
     business_workspace_open: "业务协作",
     business_workspace_title: "D-CATS业务协作",
+    business_workspace_account_title: "销售王登录设置",
+    business_workspace_account_hint: "首次登记销售王密码。此电脑后续联动无需再次输入。",
+    business_workspace_account_update_hint: "在销售王中修改密码后，请使用同一按钮重新登记。",
+    business_workspace_account_register: "登记・重新登记销售王密码",
+    business_workspace_account_note: "将在此电脑打开专用输入窗口。请确认公司和销售王ID后输入。",
+    business_workspace_account_opening: "正在打开登记窗口。请在输入窗口中继续操作。",
+    business_workspace_account_saved: "已在此电脑保护并登记密码。后续联动无需再次输入。",
+    business_workspace_account_updated: "已更新此电脑保存的密码。后续联动无需再次输入。",
+    business_workspace_account_cancelled: "已取消登记。",
+    business_workspace_account_expired: "3分钟输入期限已过。请点击按钮重新打开登记窗口。",
+    business_workspace_account_failed: "无法确认登记。请确认此电脑的联动应用和扩展为最新版。更新后请重新打开浏览器再试。",
     business_workspace_location: "此电脑的Google Drive（G:）",
     business_workspace_pc_path: "G:\\.shortcut-targets-by-id\\1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ\\D-CATS業務連携",
     business_workspace_open_folder: "Google Drive（网页）",
@@ -7975,7 +8008,7 @@ window.DcatsHanbaiohLoginApi = Object.freeze({ issue: issueConciergePilotLogin }
 async function issueConciergeCompanyOperation(record, request) {
   if (!currentUser || !isSystemAdmin()) return { data: null, error: new Error("system_admin_required") };
   var uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  var commands = { login_hanbaioh_company: false, prepare_hanbaioh_products: true, prepare_hanbaioh_customers: true, prepare_hanbaioh_sales: true };
+  var commands = { enroll_hanbaioh_company_account: false, login_hanbaioh_company: false, prepare_hanbaioh_products: true, prepare_hanbaioh_customers: true, prepare_hanbaioh_sales: true };
   if (!record || Array.isArray(record) || Object.keys(record).sort().join(",") !== "actor_id,device_id,public_key_sha256,public_key_spki" ||
       record.actor_id !== currentUser.id || !uuid.test(record.device_id) ||
       typeof record.public_key_sha256 !== "string" || !/^[0-9a-f]{64}$/.test(record.public_key_sha256) ||
@@ -9982,6 +10015,7 @@ function showScreen(id) {
     resetScreenStateForMenu(previousScreenId);
   }
   syncInstallAppAccess();
+  if (typeof syncDcatsCompanyAccountControls === "function") syncDcatsCompanyAccountControls();
   document.querySelectorAll(".screen").forEach(function(s) { s.classList.remove("active"); });
   var el = document.getElementById("screen-" + id);
   if (el) el.classList.add("active");
@@ -10335,6 +10369,7 @@ async function recordAuthEvent(eventType) {
 }
 
 function updateAllHeaders() {
+  if (typeof syncDcatsCompanyAccountControls === "function") syncDcatsCompanyAccountControls();
   if (!userProfile) return;
   var name  = userProfile.name || userProfile.email.split("@")[0];
   var label = currentRoleDisplayLabel();
@@ -14569,6 +14604,7 @@ function openDcatsBusinessWorkspace(event) {
   dcatsBusinessWorkspaceTrigger = event && event.currentTarget ? event.currentTarget : document.activeElement;
   setDcatsBusinessWorkspaceMessage("", false);
   overlay.classList.add("show");
+  if (typeof syncDcatsCompanyAccountControls === "function") syncDcatsCompanyAccountControls();
   refreshDcatsB2ExportDirectoryState().catch(function() {
     setDcatsB2ExportDirectoryState("error", "");
   });
@@ -14582,12 +14618,46 @@ if (window.indexedDB) {
 }
 
 function closeDcatsBusinessWorkspace() {
+  if(typeof dcatsCompanyAccountBusy!=="undefined"&&dcatsCompanyAccountBusy) window.DcatsHanbaiohCompanyBridge?.cancelCurrent();
   var overlay = document.getElementById("dcats-business-workspace-overlay");
   if (overlay) overlay.classList.remove("show");
   if (dcatsBusinessWorkspaceTrigger && typeof dcatsBusinessWorkspaceTrigger.focus === "function") {
     dcatsBusinessWorkspaceTrigger.focus();
   }
   dcatsBusinessWorkspaceTrigger = null;
+}
+
+var dcatsCompanyAccountBusy = false;
+var dcatsCompanyAccountOwner = "";
+function syncDcatsCompanyAccountControls() {
+  var section=document.getElementById("dcats-business-workspace-account");
+  var user=typeof currentUser!=="undefined"?currentUser:null;
+  var allowed=!!user&&typeof isSystemAdmin==="function"&&isSystemAdmin();
+  if(section) section.hidden=!allowed;
+  var owner=allowed?user.id:"";
+  if(owner!==dcatsCompanyAccountOwner){
+    if(dcatsCompanyAccountBusy)window.DcatsHanbaiohCompanyBridge?.cancelCurrent();
+    var status=document.getElementById("dcats-business-workspace-account-status");
+    if(status){status.textContent="";status.className="";}
+    dcatsCompanyAccountOwner=owner;
+  }
+}
+async function registerDcatsCompanyAccount() {
+  if(dcatsCompanyAccountBusy||!currentUser||!isSystemAdmin())return;
+  var actor=currentUser.id,button=document.getElementById("dcats-business-workspace-account-register"),status=document.getElementById("dcats-business-workspace-account-status");
+  var overlay=document.getElementById("dcats-business-workspace-overlay");
+  function isCurrent(){return !!currentUser&&currentUser.id===actor&&isSystemAdmin()&&overlay.classList.contains("show");}
+  dcatsCompanyAccountBusy=true;button.disabled=true;button.setAttribute("aria-busy","true");status.className="";status.textContent=t("business_workspace_account_opening");
+  try{
+    var bridge=window.DcatsHanbaiohCompanyBridge;
+    if(!bridge||typeof bridge.enrollAccountFromPc!=="function")throw new Error();
+    var result=await bridge.enrollAccountFromPc({actorId:actor,isCurrent:isCurrent});
+    if(!isCurrent())return;
+    if(result.status==="enrolled"){status.className="ready";status.textContent=t(result.replaced?"business_workspace_account_updated":"business_workspace_account_saved");}
+    else{status.className="";status.textContent=t(result.status==="expired"?"business_workspace_account_expired":"business_workspace_account_cancelled");}
+  }catch{
+    if(isCurrent()){status.className="error";status.textContent=t("business_workspace_account_failed");}
+  }finally{dcatsCompanyAccountBusy=false;button.disabled=false;button.removeAttribute("aria-busy");syncDcatsCompanyAccountControls();}
 }
 
 function downloadDcatsBusinessWorkspaceShortcut() {
@@ -55530,6 +55600,7 @@ document.getElementById("dcats-business-workspace-close").addEventListener("clic
 document.getElementById("dcats-business-workspace-cancel").addEventListener("click", closeDcatsBusinessWorkspace);
 document.getElementById("dcats-business-workspace-shortcut").addEventListener("click", createDcatsBusinessWorkspaceShortcut);
 document.getElementById("dcats-business-workspace-b2-select").addEventListener("click", configureDcatsB2ExportDirectory);
+document.getElementById("dcats-business-workspace-account-register").addEventListener("click", registerDcatsCompanyAccount);
 document.getElementById("dcats-business-workspace-overlay").addEventListener("click", function(e) {
   if (e.target === this) closeDcatsBusinessWorkspace();
 });
