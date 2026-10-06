@@ -1191,6 +1191,7 @@ var TRANSLATIONS = {
     product_3d_reset: "リセット",
     product_3d_auto_rotate: "自動回転",
     product_3d_fullscreen: "全画面",
+    product_3d_fullscreen_unavailable: "全画面を開始できませんでした。通常表示で操作できます。",
     product_3d_controls_hint: "ドラッグ: 回転 / ホイール・ピンチ: 拡大 / 右ドラッグ・2本指: 移動",
     image_edit_help: "画像ごとに商品区分と得意先への公開を設定できます。",
     image_edit_filter_kind: "表示区分",
@@ -3560,6 +3561,7 @@ var TRANSLATIONS = {
     product_3d_reset: "Reset",
     product_3d_auto_rotate: "Auto rotate",
     product_3d_fullscreen: "Fullscreen",
+    product_3d_fullscreen_unavailable: "Fullscreen could not be started. You can keep using the normal view.",
     product_3d_controls_hint: "Drag: rotate / wheel or pinch: zoom / right drag or two fingers: pan",
     image_edit_help: "Set each image's product kind and customer visibility.",
     image_edit_filter_kind: "Filter Kind",
@@ -5940,6 +5942,7 @@ var TRANSLATIONS = {
     product_3d_reset: "重置",
     product_3d_auto_rotate: "自动旋转",
     product_3d_fullscreen: "全屏",
+    product_3d_fullscreen_unavailable: "无法启动全屏。您仍可使用普通视图。",
     product_3d_controls_hint: "拖动：旋转 / 滚轮或捏合：缩放 / 右键拖动或双指：平移",
     image_edit_help: "可为每张图片设置商品区分和客户可见状态。",
     image_edit_filter_kind: "显示区分",
@@ -7235,7 +7238,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1104";
+var APP_VERSION       = "v1.1.1105";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -11450,13 +11453,11 @@ function renderCustomerCatalogDetailBase(product) {
   if (isAc && product.manufacturer_clutch_part_number) facts += customerCatalogFact(t("f_mfr_clutch_pn"), product.manufacturer_clutch_part_number);
   var spec = customerCatalogSpecText(product);
   if (spec) facts += customerCatalogFact(t("spec_section"), spec);
-  var imageHtml = settings.show_product_images
-    ? "<div class='customer-product-media'><div class='product-media-switch customer-product-media-switch' role='tablist' aria-label='商品メディア'>" +
-        "<button class='product-media-switch-btn active' type='button' role='tab' aria-selected='true' data-product-media='photos' data-product-media-context='customer'>写真</button>" +
-        "</div>" +
-        "<div class='customer-catalog-images' id='customer-catalog-images' data-product-media-pane='photos' data-product-media-context='customer'><div class='customer-catalog-image-main'>" + esc(t("img_loading")) + "</div></div>" +
-        "<div class='product-3d-detail-pane' id='customer-product-3d-pane' data-product-media-pane='model' data-product-media-context='customer' hidden><div class='product-3d-model-list' id='customer-product-3d-list'></div></div></div>"
-    : "";
+  var imageHtml = "<div class='customer-product-media' data-product-3d-media-shell data-no-photos='" + (!settings.show_product_images) + "'" + (settings.show_product_images ? "" : " hidden") + "><div class='product-media-switch customer-product-media-switch' role='tablist' aria-label='商品メディア'>" +
+    (settings.show_product_images ? "<button class='product-media-switch-btn active' type='button' role='tab' aria-selected='true' data-product-media='photos' data-product-media-context='customer'>写真</button>" : "") +
+    "</div>" +
+    (settings.show_product_images ? "<div class='customer-catalog-images' id='customer-catalog-images' data-product-media-pane='photos' data-product-media-context='customer'><div class='customer-catalog-image-main'>" + esc(t("img_loading")) + "</div></div>" : "") +
+    "<div class='product-3d-detail-pane' id='customer-product-3d-pane' data-product-media-pane='model' data-product-media-context='customer' hidden><div class='product-3d-model-list' id='customer-product-3d-list'></div></div></div>";
   var availabilityTitle = settings.show_sales_price ? t("customer_catalog_stock_price_title") : t("product_kind_stock");
   var availabilityHtml = "<section class='customer-catalog-availability'><h3>" + esc(availabilityTitle) + "</h3><div class='customer-catalog-availability-grid' id='customer-catalog-availability'><div class='customer-catalog-loading'>" + esc(t("loading")) + "</div></div></section>";
   var vehicleHtml = settings.show_vehicle_info
@@ -11662,6 +11663,7 @@ async function openCustomerCatalogProduct(product, options) {
   var seq = ++customerCatalogDetailSeq;
   renderCustomerCatalogList();
   renderCustomerCatalogDetailBase(product);
+  if (window.DcatsProduct3D) window.DcatsProduct3D.refreshMediaAvailability("customer");
   if (!options.autoSelect) {
     logProductDetailOpen("customer-catalog", product);
     if (window.innerWidth < 761) {
@@ -23331,6 +23333,7 @@ async function renderProductionDetail(row) {
   html += "</div>";
   el.innerHTML = html;
   currentProduct = row;
+  if (window.DcatsProduct3D) window.DcatsProduct3D.refreshMediaAvailability("production");
   currentProductVariants = detail.productVariants.slice();
   currentCoreDkdShohinId = row.dkd_shohin_id || null;
   currentProductSpecs = [];
@@ -40738,6 +40741,7 @@ function openPanel(id, options) {
   configureSalesProductAddButton();
   if (!isPC() && options.showMobileOverlay !== false) { document.getElementById("overlay").classList.add("show"); document.getElementById("panel").classList.add("show"); }
   renderPanelStatic();
+  if (window.DcatsProduct3D) window.DcatsProduct3D.refreshMediaAvailability("sales");
   document.querySelectorAll(".card").forEach(function(c){ c.classList.toggle("selected", parseInt(c.dataset.id,10)===id); });
 }
 
@@ -52139,13 +52143,15 @@ function syncProductMediaActionAccess(context) {
         edit: "production-image-action-edit",
         camera: "production-image-action-camera-ai",
         copy: "production-image-action-copy-sales",
-        model: "production-image-action-create-3d"
+        model: "production-image-action-create-3d",
+        uploadModel: "production-image-action-upload-glb"
       }
     : {
         upload: "btn-image-action-upload",
         edit: "btn-image-action-edit",
         remove: "btn-image-action-delete",
-        model: "btn-image-action-create-3d"
+        model: "btn-image-action-create-3d",
+        uploadModel: "btn-image-action-upload-glb"
       };
   if (ids.upload) setCspStyle(document.getElementById(ids.upload), "display", imageAllowed ? "" : "none");
   if (ids.edit) setCspStyle(document.getElementById(ids.edit), "display", canManageImages ? "" : "none");
@@ -52153,6 +52159,7 @@ function syncProductMediaActionAccess(context) {
   if (ids.camera) setCspStyle(document.getElementById(ids.camera), "display", canManageImages ? "" : "none");
   if (ids.copy) setCspStyle(document.getElementById(ids.copy), "display", canManageImages ? "" : "none");
   if (ids.model) setCspStyle(document.getElementById(ids.model), "display", canManage3D ? "" : "none");
+  if (ids.uploadModel) setCspStyle(document.getElementById(ids.uploadModel), "display", canManage3D ? "" : "none");
 }
 
 function openImageActionsDialog() {

@@ -1,4 +1,4 @@
-## B2 CSV save-folder clarity QA (v1.1.1104, 2026-10-06)
+## B2 CSV save-folder clarity QA (v1.1.1105, 2026-10-06)
 
 - Renamed the Business Exchange selection control to "B2 CSVの保存フォルダを選ぶ" and the configured-state control to "B2 CSVの保存フォルダを変更", with English and Chinese equivalents. Setup instructions use the new label.
 - Gave B2 its own heading, existing-folder explanation, path block and lower action row. The selector is an outlined green button separated from the shared-folder/shortcut controls. A visible note, also referenced through aria-describedby, states that selection does not create the D-CATS業務連携 folder.
@@ -7,6 +7,7 @@
 - Screenshots/results are retained in ignored outputs/b2-folder-clarity. Owned IAB tab closed, viewport reset and QA server PID/commandline checked before stop. No user Chrome/Edge tab, group, clipboard or OS pointer operation. Pre-existing .qa-output preserved.
 - Publish through normal PR/CI under existing authorization. Rollback is a normal revert of this PR; stored folder handles and existing user data are retained.
 - PR221's already-published PC-folder shortcut update was merged into this branch. Its shortcut asset, headers, UI labels and verification remain intact. The adjacent HTML help conflict was resolved to retain the new Web label and new B2-specific selection label together. After integration, all 124 guards, build/headers and targeted hidden desktop/narrow layout checks passed. No successful import/export or shortcut download was repeated.
+- PR191's concurrent main merge arrived before PR222 publication. Its GLB Viewer code, current CSP and dynamic version guard were preserved, and this release advanced to v1.1.1105 including the Viewer import cache. The B2 implementation remains scoped to presentation; no upstream feature code or security policy was changed relative to main.
 
 ## Google Drive desktop setup support QA (v1.1.1102, 2026-10-06)
 
@@ -287,3 +288,14 @@ final result: passed
 - Evidence (local only): `outputs/cost-workspace/product-id-1280.png`, `product-id-320.png`, and the focused `product-id-detail.png`.
 
 final result: passed
+## Independent GLB Viewer release QA (v1.1.1104, 2026-10-06)
+
+- Hidden IAB only, using actual product-media markup, product-3d controller and pinned Viewer with synthetic product/Auth responses. No user session was copied and no production product/Storage was written.
+- Desktop 1280x720, smartphone 390x844 and tablet 820x1180: self-contained official Khronos Draco Box rendered under the production CSP. Actual drag changed rendering; zoom/reset, autorotation, whole-shell fullscreen and close worked. Mobile shell width/scrollWidth were 390px and controls remained within the viewport.
+- No registered model, permission denial, generation-failure with a ready uploaded alternative, and logout cleanup were checked. Lookup outages now show a recoverable error, not a cached successful empty result. Unit tests cover product/kind/auth races and ambiguous upload/delete outcomes.
+- Required codec permissions are limited to WebAssembly compilation and self/blob workers. JavaScript eval, inline scripts/handlers and external GLB resources remain forbidden; codecs are pinned and self-hosted.
+- Prior approved isolated authenticated API E2E completed upload, signed-GLB/provenance readback, replacement/old-URL denial and deletion/deleted-URL denial. That environment was deleted; no new billed resources are needed.
+- Local regression: 62 product-3D tests; all authoritative workflow commands, static build and response-header guards. Actual user-created asset quality and physical-device touch remain distinct, unverified checks.
+- Evidence is local-only in the task-owned `.codex-tmp-product3d/viewer-draco-*-20261006.png` files. Regular Chrome/Edge, clipboard and OS pointer are untouched. Owned IAB tab/viewport/helper cleanup is required at completion.
+
+final result: passed for synthetic responsive GLB viewing; production release is verified separately.

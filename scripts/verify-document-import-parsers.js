@@ -27,7 +27,12 @@ for (const item of inventory.files) {
 assert(!fs.readdirSync(path.join(root, "vendor")).some((name) => /^(xlsx-0\.18\.5|pdfjs-3\.11\.174)/.test(name)));
 for (const value of ['type: "module"', 'script.integrity = asset.integrity;', 'script.crossOrigin = "anonymous";', 'root[globalName].version === asset.version', 'delete scriptPromises[asset.src]']) assert(costSource.includes(value));
 assert(rankingSource.includes('await window.DcatsManufacturingCostImport.loadSpreadsheetLibrary();'));
-assert(!/unsafe-eval|unsafe-inline|wasm-unsafe-eval/.test(fs.readFileSync(path.join(root, "_headers"), "utf8")));
+// Only the self-hosted GLB codecs may compile WebAssembly; JS eval and inline
+// scripts remain prohibited for document importers and the rest of the app.
+const headers = fs.readFileSync(path.join(root, "_headers"), "utf8");
+assert(!/'(?:unsafe-eval|unsafe-inline)'/.test(headers));
+assert.match(headers, /script-src 'self' 'wasm-unsafe-eval';/);
+assert.match(headers, /script-src-attr 'none';/);
 
 function costContext(pdfjsLib) {
   const context = { window: { XLSX, pdfjsLib }, console, Uint8Array };
