@@ -104,6 +104,22 @@
       bridgeOpenTestFolder: "取込待ちフォルダーを開く",
       bridgeLaunchHanbaioh: "販売王25を起動",
       loginLegend: "販売王ログイン（管理者テスト）",
+      companyLegend: "実運用会社の販売王連携（管理者テスト）",
+      companyTarget: "大光電機株式会社 2023年度 / DKD551-PC\\SORIMACHI2017 / yamamoto",
+      companyAccountHelp: "初回に専用登録ツールで販売王ログイン用パスワードを保護保存します。登録後の連動ではパスワードを再入力しません。現在開いている販売王は、本人と会社を確認できた連携セッションだけ使用します。",
+      companyLogin: "保存済みパスワードで販売王にログイン",
+      companyCsvHelp: "3種類を別々に処理します。準備するCSVはPCの連携受信フォルダに置き、同じファイルを選択してください。現在は形式検査と取込待ちまで対応しています。実運用会社への取込・出力は準備中です。",
+      companyproducts: "商品台帳",
+      companycustomers: "得意先台帳",
+      companysales: "売上",
+      companyCsvFile: "受信フォルダのCSV",
+      companyPrepare: "CSVを検査して取込待ちへ",
+      companyExportPending: "販売王から出力（準備中）",
+      companyIdle: "会社別の本人対応・承認端末・初回パスワード登録が必要です。",
+      companyWorking: "本人・会社・端末を確認し、連携処理を実行しています。",
+      companyLoginVerified: "yamamotoのログインと、同じ販売王プロセスの会社・本人対応を確認しました。",
+      companyPrepared: "この種類のCSVを取込待ちへ準備しました。販売王への取込はまだ行っていません。",
+      companyUnverified: "連携結果を確認できません。設定や現在の販売王を確認し、結果不明の操作を再送しないでください。",
       salesLegend: "開発テスト売上の取込",
       salesHelp: "ログイン確認後、準備済みCSVを指定してください。D-CATS連携テスト（実データ禁止）へ、DEV-ORDER-001の1行だけを取り込みます。新しいローカルバックアップ、エラーチェック、読戻しまで自動実行します。",
       salesFile: "準備済みCSVファイル名",
@@ -266,6 +282,22 @@
       bridgeOpenTestFolder: "Open import-ready folder",
       bridgeLaunchHanbaioh: "Launch Sales King 25",
       loginLegend: "Sales King sign-in (administrator test)",
+      companyLegend: "Production-company integration (administrator test)",
+      companyTarget: "大光電機株式会社 2023年度 / DKD551-PC\\SORIMACHI2017 / yamamoto",
+      companyAccountHelp: "Use the initial registration tool to protect your Sales King login password. Later integration uses the saved password. An open Sales King session can be used only with verified integration identity and company evidence.",
+      companyLogin: "Sign in with saved Sales King password",
+      companyCsvHelp: "Process the three categories separately. Put a CSV in the PC bridge inbox and select that same file. Format validation and import preparation are available; actual-company import and export are being prepared.",
+      companyproducts: "Product ledger",
+      companycustomers: "Customer ledger",
+      companysales: "Sales",
+      companyCsvFile: "CSV in bridge inbox",
+      companyPrepare: "Validate CSV and prepare for import",
+      companyExportPending: "Export from Sales King (in preparation)",
+      companyIdle: "A company-specific account mapping, approved device and initial password registration are required.",
+      companyWorking: "Verifying your identity, company and device before integration.",
+      companyLoginVerified: "Verified yamamoto sign-in and the company/account mapping in the same Sales King process.",
+      companyPrepared: "Prepared this category of CSV for import. No Sales King import has been performed.",
+      companyUnverified: "The result could not be verified. Check settings and the current Sales King session; do not resend an operation with an unknown result.",
       salesLegend: "Development test sale import",
       salesHelp: "After verified sign-in, select the staged CSV. Imports one DEV-ORDER-001 row into the fixed synthetic company, with a fresh local backup, error check and readback.",
       salesFile: "Staged CSV filename", salesSubmit: "Import test sale once",
@@ -427,6 +459,22 @@
       bridgeOpenTestFolder: "打开待导入文件夹",
       bridgeLaunchHanbaioh: "启动销售王25",
       loginLegend: "销售王登录（管理员测试）",
+      companyLegend: "正式公司销售王联动（管理员测试）",
+      companyTarget: "大光電機株式会社 2023年度 / DKD551-PC\\SORIMACHI2017 / yamamoto",
+      companyAccountHelp: "首次使用专用登记工具保护并保存销售王登录密码。之后联动无需再次输入密码。仅使用已核实公司和本人身份的联动会话。",
+      companyLogin: "使用已保存的密码登录销售王",
+      companyCsvHelp: "三类数据分别处理。请将CSV放入本机联动接收文件夹，并选择同一文件。目前支持格式检查和导入准备，正式公司的导入及导出正在准备中。",
+      companyproducts: "商品台账",
+      companycustomers: "客户台账",
+      companysales: "销售",
+      companyCsvFile: "接收文件夹中的CSV",
+      companyPrepare: "检查CSV并等待导入",
+      companyExportPending: "从销售王导出（准备中）",
+      companyIdle: "需要公司对应的账户绑定、批准设备和首次密码登记。",
+      companyWorking: "正在核实本人、公司和设备并执行联动。",
+      companyLoginVerified: "已确认yamamoto登录及同一销售王进程的公司和本人绑定。",
+      companyPrepared: "已为此类CSV完成导入准备，尚未导入销售王。",
+      companyUnverified: "无法确认联动结果。请检查设置及当前销售王会话，不要重发结果不明的操作。",
       salesLegend: "开发测试销售导入",
       salesHelp: "确认登录后，指定已准备的CSV。仅向固定测试公司导入DEV-ORDER-001的一行，并自动执行本地备份、检查和回读。",
       salesFile: "已准备的CSV文件名", salesSubmit: "单次导入测试销售",
@@ -554,6 +602,8 @@
   var bridgeCard;
   var bridgeButton;
   var bridgeSalesFileInput;
+  var companyLoginButton, companyStatus, companyRows = [];
+  var companyPending = false, companyToken = 0, companyStatusKey = "companyIdle";
   var bridgeCustomerFileInput;
   var bridgeSalesButton;
   var bridgeTestSalesButton;
@@ -1042,6 +1092,37 @@
     salesCard.appendChild(salesLabel); salesCard.appendChild(salesFileInput);
     salesCard.appendChild(salesButton); salesCard.appendChild(salesStatus);
     bridgeCard.appendChild(salesCard);
+    var companyCard = createElement("section", "dcats-concierge-company");
+    companyCard.appendChild(createCopyElement("h4", "dcats-concierge-bridge-title", "companyLegend"));
+    companyCard.appendChild(createCopyElement("p", "dcats-concierge-bridge-help", "companyTarget"));
+    companyCard.appendChild(createCopyElement("p", "dcats-concierge-bridge-help", "companyAccountHelp"));
+    companyLoginButton = createCopyElement("button", "dcats-concierge-bridge-button is-secondary", "companyLogin");
+    companyLoginButton.type = "button"; companyLoginButton.id = "dcats-concierge-company-login";
+    companyCard.appendChild(companyLoginButton);
+    companyCard.appendChild(createCopyElement("p", "dcats-concierge-bridge-help", "companyCsvHelp"));
+    ["products", "customers", "sales"].forEach(function (category) {
+      var row = createElement("section", "dcats-concierge-bridge-action");
+      row.appendChild(createCopyElement("h4", "dcats-concierge-bridge-title", "company" + category));
+      var input = createElement("input", "dcats-concierge-bridge-input");
+      input.type = "file"; input.accept = ".csv,text/csv"; input.id = "dcats-company-" + category + "-file";
+      var label = createCopyElement("label", "dcats-concierge-bridge-label", "companyCsvFile");
+      label.setAttribute("for", input.id); row.appendChild(label); row.appendChild(input);
+      var prepare = createCopyElement("button", "dcats-concierge-bridge-button is-secondary", "companyPrepare");
+      prepare.type = "button"; prepare.id = "dcats-company-" + category + "-prepare";
+      var exportButton = createCopyElement("button", "dcats-concierge-bridge-button is-secondary", "companyExportPending");
+      exportButton.type = "button"; exportButton.disabled = true;
+      row.appendChild(prepare); row.appendChild(exportButton);
+      companyRows.push({ category: category, input: input, button: prepare });
+      input.addEventListener("change", updateCompanyStatus);
+      prepare.addEventListener("click", function () { runCompanyOperation(category, input.files && input.files[0]); });
+      companyCard.appendChild(row);
+    });
+    companyStatus = createElement("p", "dcats-concierge-bridge-status");
+    companyStatus.id = "dcats-concierge-company-status";
+    companyStatus.setAttribute("role", "status"); companyStatus.setAttribute("aria-live", "polite");
+    companyLoginButton.setAttribute("aria-describedby", companyStatus.id);
+    companyLoginButton.addEventListener("click", function () { runCompanyOperation("account"); });
+    companyCard.appendChild(companyStatus); bridgeCard.appendChild(companyCard);
 
     panelBody.appendChild(characterField);
     panelBody.appendChild(modeField);
@@ -1288,6 +1369,7 @@
   }
 
   function updateBridgeStatus() {
+    updateCompanyStatus();
     if (!bridgeButton || !bridgeStatus) return;
     bridgeButton.disabled = bridgeRequestPending;
     if (bridgeSalesButton) bridgeSalesButton.disabled = bridgeRequestPending;
@@ -1331,6 +1413,7 @@
     updateBackupEnrollment();
     updatePilotLogin();
     updatePilotTestSale();
+    updateCompanyStatus();
   }
 
   function setReviewStatus(key, values) {
@@ -1347,6 +1430,8 @@
     if (!bridgeCard || !panelBody || !conciergeHelp) return;
     var owner = currentSettingsOwner();
     if (loginOwner !== owner) {
+      cancelCompanyOperation(); companyStatusKey = "companyIdle";
+      companyRows.forEach(function (row) { row.input.value = ""; });
       if (window.DcatsHanbaiohTestSalesBridge) window.DcatsHanbaiohTestSalesBridge.cancelCurrent();
       salesToken += 1;
       if (salesPending) bridgeRequestPending = false;
@@ -1362,6 +1447,7 @@
       return;
     }
     bridgeRequestToken += 1;
+    cancelCompanyOperation();
     if (window.DcatsHanbaiohTestSalesBridge) window.DcatsHanbaiohTestSalesBridge.cancelCurrent();
     loginToken += 1;
     salesToken += 1;
@@ -1464,6 +1550,7 @@
   }
 
   async function previewPendingDeviceReview() {
+    cancelCompanyOperation();
     clearBackupEnrollment();
     var token = ++reviewPreviewToken;
     reviewPreviewRecord = null;
@@ -1859,6 +1946,45 @@
 
   function checkWindowsBridge() {
     return runWindowsBridgeRequest("get_hanbaioh_queue_status", null, "bridgeWorking");
+  }
+
+  function cancelCompanyOperation() {
+    companyToken += 1;
+    if (window.DcatsHanbaiohCompanyBridge) window.DcatsHanbaiohCompanyBridge.cancelCurrent();
+    if (companyPending) bridgeRequestPending = false;
+    companyPending = false;
+  }
+
+  function updateCompanyStatus() {
+    if (!companyStatus) return;
+    var bridge = window.DcatsHanbaiohCompanyBridge;
+    var ready = !!reviewPreviewRecord && reviewPreviewRecord.actor_id === currentSettingsOwner();
+    companyLoginButton.disabled = bridgeRequestPending || !ready || !bridge || bridge.wasLoginAttempted(reviewPreviewRecord);
+    companyRows.forEach(function (row) {
+      row.input.disabled = bridgeRequestPending;
+      row.button.disabled = bridgeRequestPending || !ready || !bridge || !row.input.files || !row.input.files[0];
+    });
+    companyStatus.textContent = copy(companyStatusKey);
+    companyStatus.classList.toggle("is-success", companyStatusKey === "companyLoginVerified");
+    companyStatus.classList.toggle("is-warning", ["companyPrepared", "companyUnverified"].indexOf(companyStatusKey) >= 0);
+  }
+
+  async function runCompanyOperation(category, file) {
+    var bridge = window.DcatsHanbaiohCompanyBridge;
+    if (!isSystemAdminSession() || bridgeRequestPending || !reviewPreviewRecord || !bridge) return;
+    var record = reviewPreviewRecord, actor = currentSettingsOwner(), token = ++companyToken;
+    if (record.actor_id !== actor) return;
+    companyPending = true; bridgeRequestPending = true; companyStatusKey = "companyWorking"; updateBridgeStatus();
+    try {
+      var options = { record: record, category: category, file: file,
+        isCurrent: function () { return token === companyToken && isSystemAdminSession() && actor === currentSettingsOwner() && record === reviewPreviewRecord; } };
+      var result = category === "account" ? await bridge.loginOnce(options) : await bridge.prepareCsv(options);
+      if (!options.isCurrent()) return;
+      companyStatusKey = result.status === "login_verified" ? "companyLoginVerified" : result.status === "prepared" ? "companyPrepared" : "companyUnverified";
+    } catch { if (token === companyToken) companyStatusKey = "companyUnverified"; }
+    finally {
+      if (token === companyToken) { companyPending = false; bridgeRequestPending = false; updateBridgeStatus(); }
+    }
   }
 
   function prepareWindowsBridgeCsv(command, value) {

@@ -1118,6 +1118,34 @@ dispatch(loginButton.listeners,"click",{target:loginButton});
 await new Promise(resolve=>setImmediate(resolve));
 assert(bridgeRequests.length===bridgeBeforeExpired && loginStatus.textContent.includes("再送信せず"),
   "Expired ISO ticket must stop before the native bridge");
+const companyLogin = byClass("dcats-concierge-bridge-button").find(e => e.id === "dcats-concierge-company-login");
+const companyStatus = byClass("dcats-concierge-bridge-status").find(e => e.id === "dcats-concierge-company-status");
+let companyLoginCount = 0, companyLoginUsed = false, companyCancelCount = 0, companyPrepared = [];
+windowObject.DcatsHanbaiohCompanyBridge = {
+  wasLoginAttempted: () => companyLoginUsed,
+  cancelCurrent: () => { companyCancelCount++; },
+  loginOnce: async options => { assert(options.isCurrent(), "Company owner must be current"); companyLoginCount++; companyLoginUsed = true; return { status: "login_verified" }; },
+  prepareCsv: async options => { assert(options.isCurrent() && options.file.name === options.category + ".csv", "Company category/file must be isolated"); companyPrepared.push(options.category); return { status: "prepared", category: options.category }; }
+};
+notifyObservers();
+assert(companyLogin && companyStatus && !companyLogin.disabled, "Reviewed owner must reach company login");
+dispatch(companyLogin.listeners, "click", { target: companyLogin }); dispatch(companyLogin.listeners, "click", { target: companyLogin });
+await new Promise(resolve => setImmediate(resolve));
+assert(companyLoginCount === 1 && companyLogin.disabled && companyStatus.textContent.includes("yamamoto"), "Saved login must be single and display verified identity");
+for (const category of ["products", "customers", "sales"]) {
+  const input = byClass("dcats-concierge-bridge-input").find(e => e.id === "dcats-company-" + category + "-file");
+  const prepare = byClass("dcats-concierge-bridge-button").find(e => e.id === "dcats-company-" + category + "-prepare");
+  assert(input && prepare && prepare.disabled, "Each category requires its own CSV");
+  input.files = [{ name: category + ".csv" }]; dispatch(input.listeners, "change", { target: input });
+  dispatch(prepare.listeners, "click", { target: prepare }); dispatch(prepare.listeners, "click", { target: prepare });
+  await new Promise(resolve => setImmediate(resolve));
+  assert(companyStatus.textContent.includes("まだ行っていません") && !companyStatus.classList.contains("is-success"), "Preparation cannot display actual import success");
+}
+assert(companyPrepared.join(",") === "products,customers,sales", "The three operations must remain distinct");
+const pendingExports = byClass("dcats-concierge-bridge-button").filter(e => e.textContent.includes("販売王から出力"));
+assert(pendingExports.length === 3 && pendingExports.every(e => e.disabled), "Unconnected exports must be disabled separately");
+windowObject.userProfile = { role: "company_admin" }; notifyObservers();
+assert(companyCancelCount > 0 && byClass("dcats-concierge-bridge-card").length === 0, "Company controls must be removed after role downgrade");
 activeScreen.id = "screen-login";
 notifyObservers();
 assert(root.hidden, "Concierge must be hidden on the login screen");

@@ -27,6 +27,7 @@ const manufacturingImportScriptVersion = "v" + requiredMatch(html, /<script\s+sr
 const manufacturingRankingScriptVersion = "v" + requiredMatch(html, /<script\s+src="manufacturing-ranking-report\.js\?v=([^&\"]+)/, "manufacturing-ranking-report.js cache version");
 const legacyI18nVersion = "v" + requiredMatch(html, /<script\s+src="legacy-i18n\.js\?v=([^\"]+)"/, "legacy-i18n.js cache version");
 const conciergeScriptVersion = "v" + requiredMatch(html, /<script\s+src="assets\/concierge-pet\/concierge-pet\.js\?v=([^\"]+)"/, "concierge-pet.js cache version");
+const companyBridgeScriptVersion = "v" + requiredMatch(html, /<script\s+src="assets\/concierge-pet\/company-bridge\.js\?v=([^\"]+)"/, "company-bridge.js cache version");
 const styleVersion = "v" + requiredMatch(html, /<link\s+rel="stylesheet"\s+href="styles\.css\?v=([^&\"]+)/, "styles.css cache version");
 const conciergeStyleVersion = "v" + requiredMatch(html, /<link\s+rel="stylesheet"\s+href="assets\/concierge-pet\/concierge-pet\.css\?v=([^\"]+)"/, "concierge-pet.css cache version");
 const manifestVersion = "v" + requiredMatch(html, /<link\s+rel="manifest"\s+href="site\.webmanifest\?v=([^&\"]+)/, "manifest cache version");
@@ -486,7 +487,7 @@ expectSupplyChainMutationRejected(
   `${app}\nvar extraLoader = document.createElementNS("http://www.w3.org/1999/xhtml", "script"); extraLoader.src = new URL("https://cdn.jsdelivr.net/npm/unreviewed@1/index.js").href;`,
 );
 
-const versions = { metaVersion, legacyVersion, scriptVersion, installScriptVersion, manufacturingImportScriptVersion, manufacturingRankingScriptVersion, legacyI18nVersion, conciergeScriptVersion, styleVersion, conciergeStyleVersion, manifestVersion };
+const versions = { metaVersion, legacyVersion, scriptVersion, installScriptVersion, manufacturingImportScriptVersion, manufacturingRankingScriptVersion, legacyI18nVersion, conciergeScriptVersion, companyBridgeScriptVersion, styleVersion, conciergeStyleVersion, manifestVersion };
 Object.entries(versions).forEach(([label, version]) => {
   if (version !== appVersion) {
     throw new Error(`${label} ${version} must match ${appVersion}`);

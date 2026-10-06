@@ -309,3 +309,11 @@ final result: passed
 - Evidence is local-only in the task-owned `.codex-tmp-product3d/viewer-draco-*-20261006.png` files. Regular Chrome/Edge, clipboard and OS pointer are untouched. Owned IAB tab/viewport/helper cleanup is required at completion.
 
 final result: passed for synthetic responsive GLB viewing; production release is verified separately.
+
+## 2026-10-06: Company-specific Sales King account and three data categories
+
+- Prepared v1.1.1107 with a system-admin-only actual-company section, saved-password login and separate product/customer/sales CSV preparation controls. Unconnected vendor exports remain explicitly disabled; CSV preparation never reports actual import success.
+- Tested the authenticated browser boundary with synthetic identities: exact requests, actor/device ownership, 180-second expiry, duplicate sign-in, role/session change and ambiguous responses. Passwords and Auth tokens are absent from the Native protocol.
+- The authoritative frontend workflow's 126 Node commands passed, including all 119 verifier coverage, shared role/order/pricing checks, static build and response headers. A version-reference and translation-gate failure was corrected without disabling either guard.
+- Headless isolated Playwright: 1280x900 and 390x900, login success, all three preparation states, pending/error, unauthorized/logged-out hiding, no horizontal control overflow; zero browser errors and zero external requests. Contexts, browser and local server closed in finally.
+- Screenshots inspected: task-owned `.qa-output/company-controls-20261006/company-1280.png` and `company-390.png`. Synthetic protocol replies do not prove real vendor login/import/export. No normal browser, clipboard, cursor or user vendor session was operated.
