@@ -3697,7 +3697,12 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "生成を有効にした後、送信許諾・見積りを確認して作成開始": "After generation is enabled, review transfer permission and the estimate before starting",
     "完成したGLBを非公開でプレビュー": "Preview the completed GLB privately",
     "問題がなければ「確認して商品へ登録」で公開": "If satisfactory, publish with Approve and register for this product",
-    "画像の確認・方向選択ができます。3D生成はまだ無効です。画像送信・課金・商品への登録は行っていません。": "You can review images and select views. 3D generation is still disabled. No images have been sent, credits used or models registered."
+    "画像の確認・方向選択ができます。3D生成はまだ無効です。画像送信・課金・商品への登録は行っていません。": "You can review images and select views. 3D generation is still disabled. No images have been sent, credits used or models registered.",
+    "生成に使う画像を選択": "Select images for generation",
+    "下の写真を拡大して画像番号を確認し、上の選択欄に指定してください。": "Enlarge the photos below to check their image numbers, then select them in the fields above.",
+    "保存済み画像なし": "No saved images",
+    "画像を読み込めませんでした": "Could not load images",
+    "画像を読み込めませんでした。対象商品・区分とログイン状態を確認してください。": "Could not load images. Check the selected product, product kind and sign-in status."
   },
   "zh": {
     "澤藤": "泽藤",
@@ -7395,6 +7400,11 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "生成を有効にした後、送信許諾・見積りを確認して作成開始": "启用生成后，确认发送许可和费用估算再开始生成",
     "完成したGLBを非公開でプレビュー": "私密预览完成的GLB",
     "問題がなければ「確認して商品へ登録」で公開": "确认无误后，点击“确认并登记到此商品”发布",
-    "画像の確認・方向選択ができます。3D生成はまだ無効です。画像送信・課金・商品への登録は行っていません。": "可以查看图片并选择方向。3D生成尚未启用。未发送图片、消耗积分或登记模型。"
+    "画像の確認・方向選択ができます。3D生成はまだ無効です。画像送信・課金・商品への登録は行っていません。": "可以查看图片并选择方向。3D生成尚未启用。未发送图片、消耗积分或登记模型。",
+    "生成に使う画像を選択": "选择用于生成的图片",
+    "下の写真を拡大して画像番号を確認し、上の選択欄に指定してください。": "放大下方照片确认图片编号，然后在上方选择栏中指定。",
+    "保存済み画像なし": "没有已保存的图片",
+    "画像を読み込めませんでした": "无法加载图片",
+    "画像を読み込めませんでした。対象商品・区分とログイン状態を確認してください。": "无法加载图片，请确认所选商品、商品分类和登录状态。"
   }
 };

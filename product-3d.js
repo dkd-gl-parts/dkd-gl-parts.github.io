@@ -1195,7 +1195,7 @@
   }
   function selectedTripoImages() {
     var selected = Array.from(elements["product-3d-tripo-views"].querySelectorAll("select"))
-      .filter(function (node) { return node.value !== ""; })
+      .filter(function (node) { return !node.disabled && node.value !== ""; })
       .map(function (node) { return { view: node.dataset.tripoView, id: Number(node.value) }; });
     if (!selected.length || new Set(selected.map(function (item) { return item.id; })).size !== selected.length ||
         (selected.length > 1 && !selected.some(function (item) { return item.view === "front"; }))) {
@@ -1211,6 +1211,19 @@
     var date = created && Number.isFinite(created.getTime())
       ? created.toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" }) : "";
     return "画像 " + (index + 1) + " / ID " + row.id + (date ? "（" + date + "）" : "");
+  }
+  function renderTripoImageChoices(images, unavailableText) {
+    var placeholder = unavailableText || (images.length ? "選択しない" : "保存済み画像なし");
+    var options = "<option value=''>" + esc(placeholder) + "</option>" + images.map(function (row, index) {
+      return "<option value='" + esc(row.id) + "'>" + esc(tripoImageLabel(row, index)) + "</option>";
+    }).join("");
+    // The four controls are in the initial markup, before the gallery and preview.
+    // Loading/failed image queries must never leave this area blank.
+    Array.from(elements["product-3d-tripo-views"].querySelectorAll("select")).forEach(function (node) {
+      node.innerHTML = options;
+      node.value = "";
+      node.disabled = !!unavailableText || !images.length;
+    });
   }
   function clearTripoImagePreview() {
     tripoImagePreviewRequestId += 1;
@@ -1261,9 +1274,10 @@
     elements["product-3d-tripo-context"].textContent = tripoContextLabel(target.product, tripoTarget);
     elements["product-3d-tripo-images"].textContent = "保存済み画像を読み込んでいます…";
     clearTripoImagePreview();
-    elements["product-3d-tripo-views"].textContent = "";
+    renderTripoImageChoices([], "保存済み画像を読み込んでいます…");
     renderTripoJob();
     tripoStatus("確認中…");
+    var imagesLoaded = false;
     try {
       var rows = await sb.from("core_product_images")
         .select("id,storage_path,sort_order,created_at").eq("dkd_shohin_id", tripoTarget.productId)
@@ -1278,14 +1292,8 @@
         var label = tripoImageLabel(row, index);
         return "<figure><button type='button' data-tripo-image-preview='" + esc(row.id) + "' data-tripo-label='" + esc(label) + "' aria-label='" + esc(label + "を拡大表示") + "'><img data-tripo-image='" + esc(row.id) + "' alt='' loading='lazy'></button><figcaption>" + esc(label) + "</figcaption></figure>";
       }).join("") : "この区分に保存済み画像がありません。先に商品画像を登録してください。";
-      var options = "<option value=''>選択しない</option>" + images.map(function (row, index) {
-        return "<option value='" + esc(row.id) + "'>" + esc(tripoImageLabel(row, index)) + "</option>";
-      }).join("");
-      elements["product-3d-tripo-views"].innerHTML = [
-        ["front", "正面"], ["left", "左側"], ["back", "背面"], ["right", "右側"]
-      ].map(function (entry) {
-        return "<label>" + entry[1] + "<select aria-label='" + entry[1] + "' data-tripo-view='" + entry[0] + "'>" + options + "</select></label>";
-      }).join("");
+      renderTripoImageChoices(images);
+      imagesLoaded = true;
       images.forEach(async function (row) {
         try {
           var signed = await signProductImageUrl(row.storage_path);
@@ -1301,8 +1309,15 @@
       renderTripoJob();
       if (!images.length) elements["product-3d-tripo-start"].hidden = true;
     } catch (error) {
-      if (sameTripoTarget(requestId)) tripoStatus(error.tripoGenerationDisabled
-        ? "画像の確認・方向選択ができます。3D生成はまだ無効です。画像送信・課金・商品への登録は行っていません。"
+      if (!sameTripoTarget(requestId)) return;
+      if (!imagesLoaded) {
+        renderTripoImageChoices([], "画像を読み込めませんでした");
+        elements["product-3d-tripo-images"].textContent = "画像を読み込めませんでした。対象商品・区分とログイン状態を確認してください。";
+      }
+      tripoStatus(error.tripoGenerationDisabled
+        ? (Object.keys(tripoImageRows).length
+          ? "画像の確認・方向選択ができます。3D生成はまだ無効です。画像送信・課金・商品への登録は行っていません。"
+          : "この区分に保存済み画像がありません。先に商品画像を登録してください。")
         : "画像または作成履歴を確認できませんでした: " + friendlyError(error));
     }
   }
@@ -1725,7 +1740,7 @@
     elements["product-3d-viewer-autorotate"].setAttribute("aria-pressed", "false");
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await import("./product-3d-viewer.js?v=1.1.1116");
+      var module = await import("./product-3d-viewer.js?v=1.1.1117");
       if (!targetStillSelected()) {
         if (requestId === viewerRequestId) closeViewer();
         return;

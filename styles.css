@@ -9089,6 +9089,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .product-3d-tripo-image-preview > div { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .product-3d-tripo-image-preview img { display: block; width: 100%; max-height: 320px; object-fit: contain; }
 .product-3d-tripo-views { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.product-3d-tripo-choice-title { margin: 0; font-size: 16px; color: #234664; }
 .product-3d-tripo-views label { display: grid; gap: 5px; font-weight: 600; }
 .product-3d-tripo-views select { min-width: 0; padding: 8px; border: 1px solid #b9c8db; border-radius: 8px; }
 .product-3d-tripo-note { margin: 0; font-size: 13px; color: #52657e; }
