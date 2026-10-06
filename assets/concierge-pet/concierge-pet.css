@@ -38,11 +38,11 @@
 }
 
 .dcats-concierge-sprite.is-suzuto {
-  background-image: url("./suzuto/spritesheet.webp?v=1.1.1111");
+  background-image: url("./suzuto/spritesheet.webp?v=1.1.1112");
 }
 
 .dcats-concierge-sprite.is-rinna {
-  background-image: url("./rinna/spritesheet.webp?v=1.1.1111");
+  background-image: url("./rinna/spritesheet.webp?v=1.1.1112");
 }
 
 .dcats-concierge-hit-target {
@@ -118,6 +118,14 @@
   cursor: pointer;
   pointer-events: auto;
   touch-action: manipulation;
+}
+
+.dcats-concierge-company-registration-path {
+  display: block;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-size: 12px;
 }
 
 .dcats-concierge-launcher[hidden] {
