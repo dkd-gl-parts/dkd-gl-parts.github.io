@@ -55,7 +55,7 @@ function harness({ balance = 100, confirmed = true, failStart = false } = {}) {
     } } },
     Set, Array, Number, String, Error,
   };
-  const api = vm.runInNewContext(`${source.slice(start, end)}\n({ selectedTripoImages, startTripo, pollTripo, publishTripo, tripoInvoke, openTripo, renderTripoJob, keepTripoFocus, closeTripo, tripoContextLabel, tripoImageLabel, tripoPayload, showTripoImagePreview, clearTripoImagePreview })`, context);
+  const api = vm.runInNewContext(`${source.slice(start, end)}\n({ selectedTripoImages, startTripo, pollTripo, publishTripo, tripoInvoke, openTripo, renderTripoJob, keepTripoFocus, closeTripo, tripoContextLabel, tripoImageLabel, tripoPayload, showTripoImagePreview, clearTripoImagePreview, assignTripoImage, renderTripoSelection, changeTripoKind, sameTripoTarget })`, context);
   return { api, context, events, prompts, selections };
 }
 
@@ -69,7 +69,11 @@ function preparationHarness({ status = 503, message = "Tripo generation is not c
   ctx.elements["product-3d-tripo-overlay"] = { classList: { add() {} }, setAttribute() {} };
   ctx.elements["product-3d-tripo-close"] = { focus() {} };
   ctx.elements["product-3d-tripo-context"] = { textContent: "" };
-  ctx.elements["product-3d-tripo-images"] = { textContent: "", innerHTML: "", querySelector: () => null };
+  ctx.elements["product-3d-tripo-images"] = { textContent: "", innerHTML: "", querySelector: () => null, querySelectorAll: () => [] };
+  ctx.elements["product-3d-tripo-kind"] = { value: "rebuilt", focus() {} };
+  ctx.elements["product-3d-tripo-selection"] = { innerHTML: "" };
+  ctx.elements["product-3d-tripo-selection-status"] = { textContent: "" };
+  ctx.elements["product-3d-tripo-image-directions"] = { innerHTML: "", textContent: "", querySelectorAll: () => [] };
   ctx.elements["product-3d-tripo-views"].innerHTML = "";
   ctx.sb.from = () => {
     const query = { select() { return query; }, eq() { return query; }, not() { return query; },
@@ -216,6 +220,145 @@ test("customer and non-admin accounts cannot open the image preparation dialog",
   await sales.api.openTripo("sales");
   assert.equal(sales.denied, true);
   assert.deepEqual(sales.events, []);
+});
+
+test("photo direction assignment updates all four previews and moves a reused photo", async () => {
+  const qa = preparationHarness();
+  await qa.api.openTripo("sales");
+  assert.equal(qa.api.assignTripoImage("front", "11"), true);
+  assert.equal(qa.api.assignTripoImage("back", "12"), true);
+  const html = qa.context.elements["product-3d-tripo-selection"].innerHTML;
+  assert.match(html, /data-tripo-selected-view='front'[\s\S]*signed-original/);
+  assert.match(html, /data-tripo-selected-view='back'[\s\S]*画像 2/);
+  assert.match(qa.context.elements["product-3d-tripo-selection-status"].textContent, /選択済み 2.*未選択: 左側・右側/);
+  assert.equal(qa.api.assignTripoImage("right", "11"), true);
+  assert.equal(qa.selections[0].value, "");
+  assert.equal(qa.selections[3].value, "11");
+  assert.match(qa.context.elements["product-3d-tripo-selection-status"].textContent, /複数枚では正面/);
+  assert.equal(qa.api.assignTripoImage("right", ""), true);
+  assert.equal(qa.selections[3].value, "");
+  assert.deepEqual(qa.events, ["latest"]);
+});
+
+test("unknown photos, invalid directions, busy and stale permissions cannot alter assignments", async () => {
+  for (const mutate of [q => { q.context.tripoBusy = true; },
+    q => { q.context.canManageGlb = () => false; }, q => { q.context.sessionModelsEnabled = false; },
+    q => { q.context.selectedTarget = () => ({ product:{id:102},kind:"rebuilt" }); }]) {
+    const qa = preparationHarness(); await qa.api.openTripo("sales");
+    assert.equal(qa.api.assignTripoImage("other", "11"), false);
+    assert.equal(qa.api.assignTripoImage("front", "999"), false);
+    mutate(qa);
+    assert.equal(qa.api.assignTripoImage("front", "11"), false);
+    assert.ok(qa.selections.every(node => node.value === ""));
+    assert.deepEqual(qa.events, ["latest"]);
+  }
+});
+
+test("dialog kind changes reload that kind, clear assignments and keep outer product unchanged", async () => {
+  const qa = preparationHarness();
+  const queries = [], requests = [];
+  qa.context.sb.from = () => {
+    let kind;
+    const query = { select(){return query;},eq(key,value){if(key==="product_kind")kind=value;return query;},
+      not(){return query;},order(){return query;},async limit(){queries.push(kind);return {data:[{id:kind==="rebuilt"?11:21,storage_path:kind+".jpg"}]};}};
+    return query;
+  };
+  qa.context.sb.functions.invoke = async (_name, options) => { requests.push(options.body); return {data:{status:"none"}}; };
+  await qa.api.openTripo("sales");
+  qa.api.assignTripoImage("front", "11");
+  qa.context.elements["product-3d-tripo-kind"].value = "aftermarket_new";
+  await qa.api.changeTripoKind();
+  assert.deepEqual(queries, ["rebuilt","aftermarket_new"]);
+  assert.deepEqual(requests.map(r=>r.product_kind), ["rebuilt","aftermarket_new"]);
+  assert.ok(requests.every(r=>r.action==="latest" && r.product_id===101));
+  assert.ok(qa.selections.every(node=>node.value===""));
+  assert.deepEqual(Object.keys(qa.context.tripoImageRows), ["21"]);
+  assert.equal(qa.context.tripoTarget.originKind, "rebuilt");
+  assert.equal(qa.context.tripoTarget.kind, "aftermarket_new");
+  assert.equal(qa.context.selectedTarget().kind, "rebuilt");
+  assert.equal(qa.api.sameTripoTarget(qa.context.tripoRequestId), true);
+  qa.context.selectedTarget = () => ({product:{id:101},kind:"aftermarket_new"});
+  assert.equal(qa.api.sameTripoTarget(qa.context.tripoRequestId), false);
+});
+
+test("late old-kind photos cannot overwrite the freshly selected kind", async () => {
+  const qa = preparationHarness(); const pendingQueries=[];
+  qa.context.sb.from = () => {
+    let kind;
+    const query = { select(){return query;},eq(key,value){if(key==="product_kind")kind=value;return query;},
+      not(){return query;},order(){return query;},limit(){return new Promise(resolve=>pendingQueries.push({kind,resolve}));}};
+    return query;
+  };
+  const old = qa.api.openTripo("sales");
+  qa.context.elements["product-3d-tripo-kind"].value="aftermarket_new";
+  const fresh = qa.api.changeTripoKind();
+  pendingQueries[1].resolve({data:[{id:21,storage_path:"new.jpg"}]}); await fresh;
+  qa.api.assignTripoImage("front","21");
+  pendingQueries[0].resolve({data:[{id:11,storage_path:"old.jpg"}]}); await old;
+  assert.equal(qa.selections[0].value,"21");
+  assert.deepEqual(Object.keys(qa.context.tripoImageRows),["21"]);
+  assert.doesNotMatch(qa.context.elements["product-3d-tripo-images"].innerHTML,/data-tripo-image-preview='11'/);
+  assert.deepEqual(qa.events,["latest"]);
+});
+
+test("late old-kind history cannot authorize the new kind", async () => {
+  const qa = preparationHarness(); const histories=[];
+  qa.context.sb.functions.invoke = (_name,options) => new Promise(resolve=>histories.push({kind:options.body.product_kind,resolve}));
+  const old = qa.api.openTripo("sales"); await new Promise(setImmediate);
+  qa.context.elements["product-3d-tripo-kind"].value="aftermarket_new";
+  const fresh=qa.api.changeTripoKind(); await new Promise(setImmediate);
+  histories[0].resolve({data:{status:"none"}}); await old;
+  assert.equal(qa.context.tripoHistoryReady,false);
+  histories[1].resolve({error:{message:"Tripo generation is not configured",context:{status:503}}}); await fresh;
+  assert.equal(qa.context.tripoHistoryReady,false);
+  assert.equal(qa.context.tripoTarget.kind,"aftermarket_new");
+  await qa.api.startTripo(); assert.equal(histories.length,2);
+});
+
+test("kind switching never drops busy or uncertain generation state", async () => {
+  for(const status of ["reserved","submitted","processing","collecting","publishing","held"]) {
+    const qa=preparationHarness(); await qa.api.openTripo("sales");
+    qa.context.tripoJob={status,request_key:"00000000-0000-4000-8000-000000000001"};
+    qa.context.elements["product-3d-tripo-kind"].value="aftermarket_new";
+    await qa.api.changeTripoKind();
+    assert.equal(qa.context.tripoJob.status,status);
+    assert.equal(qa.context.tripoTarget.kind,"rebuilt");
+    assert.equal(qa.context.elements["product-3d-tripo-kind"].value,"rebuilt");
+    assert.deepEqual(qa.events,["latest"]);
+  }
+});
+
+test("photo cards and enlarged preview have direction actions and accessible selected previews", () => {
+  const html=fs.readFileSync(path.join(__dirname,"..","index.html"),"utf8");
+  assert.match(html,/id="product-3d-tripo-kind"/);
+  assert.match(html,/id="product-3d-tripo-selection" aria-label="方向別の選択プレビュー"/);
+  assert.match(html,/id="product-3d-tripo-selection-status" role="status" aria-live="polite"/);
+  assert.match(html,/id="product-3d-tripo-image-directions"/);
+  assert.match(source,/tripoDirectionButtons\(row.id, false\)/);
+  assert.match(source,/tripoDirectionButtons\(imageId, true\)/);
+});
+
+test("busy, invalid, changed-account or changed-product kind requests never reload photos", async () => {
+  for (const mutate of [q=>{q.context.tripoBusy=true;},q=>{q.context.sessionModelsEnabled=false;},
+    q=>{q.context.canManageGlb=()=>false;},q=>{q.context.selectedTarget=()=>({product:{id:102},kind:"rebuilt"});},
+    q=>{q.context.elements["product-3d-tripo-kind"].value="other";}]) {
+    const qa=preparationHarness();await qa.api.openTripo("sales");
+    qa.context.elements["product-3d-tripo-kind"].value="aftermarket_new";mutate(qa);
+    await qa.api.changeTripoKind();
+    assert.equal(qa.context.tripoTarget.kind,"rebuilt");
+    assert.deepEqual(qa.events,["latest"]);
+  }
+});
+
+test("local dialog kind is sent to preview API while common Viewer focus keeps the outer kind", async () => {
+  const qa=previewHarness();
+  qa.context.tripoTarget={context:"sales",productId:101,kind:"aftermarket_new",originKind:"rebuilt"};
+  const requests=[];
+  qa.context.sb.functions.invoke=async(_name,options)=>{requests.push(options.body);return {data:{...qa.context.tripoJob,preview_url:"https://example.invalid/private.glb"}};};
+  await qa.preview();
+  assert.equal(requests[0].product_kind,"aftermarket_new");
+  assert.equal(qa.opened[2].kind,"rebuilt");
+  assert.equal(qa.opened[4](),true);
 });
 
 test("the screen explains preparation, private review and explicit product registration", () => {
