@@ -1,7 +1,7 @@
 ## Google Drive desktop setup support QA (v1.1.1102, 2026-10-06)
 
 - Added setup/help disclosure to Data Integration / Business Exchange: official installation/sign-in guide, shared-folder shortcut guide, per-PC/browser CSV-folder setup, administrator support, missing-folder and reconnection guidance.
-- The existing portable browser shortcut remains available without Drive for desktop. Help does not report installation or cloud synchronization as detected; no installer, authentication, native command or shared-folder permission action was added.
+- Help provides browser access without Drive for desktop and explains that opening a PC sync folder requires Drive installation/setup. This also fits the separate in-progress native-folder shortcut change. Help does not report installation or cloud synchronization as detected; no installer, authentication, native command or shared-folder permission action was added.
 - Tested the real dialog markup, translations and existing functions in a synthetic localhost fixture in a hidden IAB. No browser authentication/session was copied and no production data was read or written.
 - Desktop 1280 x 900: Enter opens the native details disclosure and exposes the setup steps/help links. The dialog is vertically scrollable within the viewport and the close control remains accessible.
 - 390 x 844 and 320 x 844 Japanese, plus 320 x 844 English/Chinese: document width equals viewport width, dialog height 820px, text wraps and the actual Japanese Drive folder name remains identifiable. Closing restores the original trigger focus. Console warnings/errors: 0.
