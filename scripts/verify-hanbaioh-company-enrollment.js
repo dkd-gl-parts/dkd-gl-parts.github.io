@@ -6,10 +6,15 @@ const record={actor_id:actor,device_id:device,public_key_sha256:"a".repeat(64),p
 function fixture(mode={}){
   const listeners=new Map(),posts=[],issues=[];let current=true;
   const emit=m=>queueMicrotask(()=>{for(const fn of listeners.get("message")||[])fn({source:win,origin:win.location.origin,data:{channel:"dcats-hanbaioh25-bridge-v1",...m}});});
-  const win={location:{origin:"https://dcats.daiko-denki.co.jp"},crypto:webcrypto,setTimeout,clearTimeout,setInterval,clearInterval,
+  const win={location:{origin:"https://dcats.daiko-denki.co.jp"},crypto:webcrypto,setTimeout:(fn,ms)=>setTimeout(fn,mode.noReply&&ms===5000?5:ms),clearTimeout,setInterval,clearInterval,
     addEventListener(n,f){if(!listeners.has(n))listeners.set(n,new Set());listeners.get(n).add(f);},removeEventListener(n,f){listeners.get(n)?.delete(f);},
     postMessage(m){posts.push(structuredClone(m));const q=m.request;
-      if(q?.command==="read_hanbaioh_company_device")emit({type:"response",response:{id:q.id,command:q.command,ok:!mode.noDevice,data:mode.wrongOwner?{...record,actor_id:device}:record}});
+      if(q?.command==="read_hanbaioh_company_device"){
+        if(mode.noReply)return;
+        if(mode.oldExtension)emit({type:"response",response:{ok:false,error:{code:"REQUEST_REJECTED",message:"DO-NOT-ECHO"}}});
+        else if(mode.nativeFailure)emit({type:"response",response:{id:q.id,ok:false,error:{code:mode.nativeFailure,message:mode.deviceMissing?"company_device_unavailable":"DO-NOT-ECHO"}}});
+        else emit({type:"response",response:{id:q.id,command:q.command,ok:!mode.noDevice,data:mode.wrongOwner?{...record,actor_id:device}:record}});
+      }
       else if(q?.command==="enroll_hanbaioh_company_account"){
         if(mode.cancel){queueMicrotask(()=>win.DcatsHanbaiohCompanyBridge.cancelCurrent());return;}
         if(mode.sessionChanged){current=false;return;}
@@ -20,7 +25,7 @@ function fixture(mode={}){
         emit({type:"response",response:{id:q.id,command:q.command,ok:true,data:{status:"enrolled",replaced:!!mode.replacing,generation:mode.replacing?2:1}}});
       }
     },
-    DcatsHanbaiohCompanyApi:{issue:async(r,b)=>{assert.equal(r.actor_id,actor);issues.push(structuredClone(b));if(mode.revoked&&issues.length===2)return{error:new Error("DO-NOT-ECHO")};return{data:{ok:true,request_id:b.request_id,device_id:device,expires_at:new Date(Date.now()+170000).toISOString(),capability:"v2.c3ludGhldGlj."+"A".repeat(86)}};}}
+    DcatsHanbaiohCompanyApi:{issue:async(r,b)=>{assert.equal(r.actor_id,actor);issues.push(structuredClone(b));if(mode.httpStatus&&(!mode.freshFailure||issues.length===2))return{error:{context:{status:mode.httpStatus},message:"DO-NOT-ECHO"}};if(mode.revoked&&issues.length===2)return{error:new Error("DO-NOT-ECHO")};return{data:{ok:true,request_id:b.request_id,device_id:device,expires_at:new Date(Date.now()+170000).toISOString(),capability:"v2.c3ludGhldGlj."+"A".repeat(86)}};}}
   };
   vm.runInNewContext(source,{window:win,Date,Object,Set,Promise,Error,Number,Array,Uint8Array});
   return{win,posts,issues,listeners,run:()=>win.DcatsHanbaiohCompanyBridge.enrollAccountFromPc({actorId:actor,isCurrent:()=>current})};
@@ -34,10 +39,26 @@ function fixture(mode={}){
   }
   for(const key of ["noDevice","wrongOwner","revoked","cancel","sessionChanged"]){const f=fixture({[key]:true});await assert.rejects(f.run());assert([...f.listeners.values()].every(s=>s.size===0));}
   for(const key of ["cancelled","expired"]){const f=fixture({[key]:true});assert.equal((await f.run()).status,key);assert.equal(f.issues.length,1);}
+  for(const [mode,code] of [
+    [{oldExtension:true},"company_extension_update_required"],
+    [{noReply:true},"company_bridge_unavailable"],
+    [{nativeFailure:"NATIVE_HOST_UNAVAILABLE"},"company_native_host_unavailable"],
+    [{nativeFailure:"REQUEST_REJECTED",deviceMissing:true},"company_device_unavailable"],
+    [{httpStatus:401},"company_authentication_required"],
+    [{httpStatus:403},"company_not_authorized"],
+    [{httpStatus:409},"company_binding_unavailable"],
+    [{httpStatus:503},"company_issuer_unavailable"],
+    [{httpStatus:401,freshFailure:true},"company_authentication_required"]
+  ]){
+    const f=fixture(mode);await assert.rejects(f.run(),e=>e.message===code);
+    assert.equal(f.issues.length,mode.freshFailure?2:mode.httpStatus?1:0);
+    assert.equal(f.posts.filter(m=>m.request?.command==="enroll_hanbaioh_company_account").length,mode.freshFailure?1:0);
+    assert([...f.listeners.values()].every(s=>s.size===0));
+  }
   const html=fs.readFileSync(path.join(root,"index.html"),"utf8"),app=fs.readFileSync(path.join(root,"app.js"),"utf8");
   const card=html.slice(html.indexOf('<section class="dcats-business-workspace-account"'),html.indexOf('<section class="dcats-business-workspace-b2"'));
   assert(card.includes('id="dcats-business-workspace-account"'));assert(card.includes(" hidden>"));assert(card.includes('role="status"'));assert(!card.includes('<input'));
-  for(const name of ["title","hint","update_hint","register","note","opening","saved","updated","cancelled","expired","failed"])assert.equal((app.match(new RegExp("business_workspace_account_"+name+":","g"))||[]).length,3,name);
+  for(const name of ["title","hint","update_hint","register","note","opening","saved","updated","cancelled","expired","failed","bridge_unavailable","extension_update_required","native_host_unavailable","device_unavailable","authentication_required","not_authorized","binding_unavailable","issuer_unavailable","ticket_unavailable"])assert.equal((app.match(new RegExp("business_workspace_account_"+name+":","g"))||[]).length,3,name);
   assert(app.includes('enroll_hanbaioh_company_account: false'));assert(app.includes('dcats-business-workspace-account-register"'));
   console.log("Company enrollment GUI entry: public device discovery, fresh same-owner approval, cancellation/revocation, no browser passwords, no login retry, three languages: OK");
 })().catch(e=>{console.error(e);process.exitCode=1;});

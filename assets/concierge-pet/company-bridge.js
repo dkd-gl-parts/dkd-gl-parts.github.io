@@ -16,6 +16,22 @@
         typeof value.capability !== "string" || value.capability.length > 8192 || !/^v2\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{86}$/.test(value.capability)) throw new Error("company_ticket_unavailable");
     return value.capability;
   }
+  async function issueEnrollmentTicket(api, record, request) {
+    var result;
+    try { result = await api.issue(record, request); }
+    catch { throw new Error("company_issuer_unavailable"); }
+    if (result && result.error || result && result.data && result.data.ok === false) {
+      // Only fixed categories cross into the UI. Never echo an Auth response,
+      // server exception, signed ticket, or arbitrary error text.
+      var status = result.error && result.error.context && result.error.context.status;
+      var code = result.data && result.data.error;
+      if (status === 401 || code === "authentication_required") throw new Error("company_authentication_required");
+      if (status === 403 || code === "forbidden") throw new Error("company_not_authorized");
+      if (status === 409 || code === "company_binding_unavailable") throw new Error("company_binding_unavailable");
+      throw new Error("company_issuer_unavailable");
+    }
+    return issuedTicket(result, request);
+  }
   function nativeRequest(request, options) {
     return new Promise(function (resolve, reject) {
       var settled = false;
@@ -24,12 +40,24 @@
         if (settled) return; settled = true;
         window.clearTimeout(timer); window.removeEventListener("message", onMessage); cancel = null;
         if (response && options.isCurrent() && response.ok === true && response.command === request.command) resolve(response.data);
-        else reject(new Error("company_result_unverified"));
+        else {
+          var code = response && response.error && response.error.code;
+          if (request.command === "read_hanbaioh_company_device" && options.isCurrent()) {
+            if (code === "REQUEST_REJECTED") reject(new Error(response.error.message === "company_device_unavailable" ? "company_device_unavailable" : "company_extension_update_required"));
+            else if (code === "NATIVE_HOST_UNAVAILABLE") reject(new Error("company_native_host_unavailable"));
+            else reject(new Error("company_bridge_unavailable"));
+          } else reject(new Error("company_result_unverified"));
+        }
       }
       function onMessage(event) {
         if (event.source !== window || event.origin !== window.location.origin) return;
         var message = event.data;
-        if (message && message.channel === channel && message.type === "response" && message.response && message.response.id === request.id) finish(message.response);
+        if (message && message.channel === channel && message.type === "response" && message.response &&
+            (message.response.id === request.id ||
+             // Older extensions reject this new discovery command without an
+             // ID. Accept that rejection only as a failure of this preflight;
+             // it cannot authorize or complete any native operation.
+             request.command === "read_hanbaioh_company_device" && !message.response.id && message.response.ok === false && message.response.error && message.response.error.code === "REQUEST_REJECTED")) finish(message.response);
       }
       cancel = function () { finish(null); };
       window.addEventListener("message", onMessage);
@@ -45,20 +73,20 @@
       var api=window.DcatsHanbaiohCompanyApi;
       if(!api||typeof api.issue!=="function")throw new Error("company_operation_unavailable");
       var body={command:"enroll_hanbaioh_company_account",device_id:record.device_id,request_id:window.crypto.randomUUID()};
-      capability=issuedTicket(await api.issue(record,body),body);
+      capability=await issueEnrollmentTicket(api,record,body);
       if(!options.isCurrent())throw new Error("company_session_changed");
       initial={id:body.request_id,command:body.command,deviceId:body.device_id,capability:capability};
       return await new Promise(function(resolve,reject){
         var settled=false,asked=false;
         var timer=window.setTimeout(function(){finish(null);},405000);
-        function finish(response){
+        function finish(response,failure){
           if(settled)return;settled=true;window.clearTimeout(timer);window.clearInterval(watch);window.removeEventListener("message",onMessage);window.removeEventListener("pagehide",stop);cancel=null;
           window.postMessage({channel:channel,type:"company_enrollment_cancel",id:initial.id},window.location.origin);
           initial.capability="";capability="";
           var data=response&&response.data;
           if(response&&options.isCurrent()&&response.ok===true&&response.command===body.command&&data&&
             (data.status==="enrolled"&&typeof data.replaced==="boolean"&&Number.isSafeInteger(data.generation)&&data.generation>=1||["cancelled","expired"].includes(data.status)))resolve(data);
-          else reject(new Error("company_registration_unverified"));
+          else reject(new Error(failure || "company_registration_unverified"));
         }
         function stop(){finish(null);}
         async function onMessage(event){
@@ -71,10 +99,10 @@
           asked=true;
           try{
             var fresh={command:body.command,device_id:record.device_id,request_id:window.crypto.randomUUID()};
-            var ticket=issuedTicket(await api.issue(record,fresh),fresh);
+            var ticket=await issueEnrollmentTicket(api,record,fresh);
             if(settled||!options.isCurrent()){ticket="";finish(null);return;}
             window.postMessage({channel:channel,type:"company_enrollment_ticket_reply",id:initial.id,challengeId:m.challengeId,requestId:fresh.request_id,capability:ticket},window.location.origin);ticket="";
-          }catch{finish(null);}
+          }catch(error){finish(null,["company_authentication_required","company_not_authorized","company_binding_unavailable","company_issuer_unavailable","company_ticket_unavailable"].includes(error.message)?error.message:"company_registration_unverified");}
         }
         cancel=stop;watch=window.setInterval(function(){if(!options.isCurrent())stop();},250);
         window.addEventListener("pagehide",stop);window.addEventListener("message",onMessage);
