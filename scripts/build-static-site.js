@@ -25,6 +25,7 @@ const files = [
   "legacy-i18n.js",
   "manufacturing-ranking-report.js",
   "manufacturing-cost-import.js",
+  "manufacturing-cost-workspace.css",
   "product-3d.js",
   "product-3d-viewer.js",
   "print.css",

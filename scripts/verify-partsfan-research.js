@@ -19,15 +19,18 @@ assert.equal(api.stopLabel({state: "blocked", reason: "cloudflare_verification_p
 assert(api.stopLabel({state: "blocked", reason: "captcha_or_daily_limit"}).includes("CAPTCHA"));
 assert(api.stopLabel({state: "paused_budget", reason: "page_budget_reached"}).includes("続き"));
 assert(api.importErrorLabel({message: "reviewed_chassis_conflict_requires_manual_resolution"}).includes("要確認"));
+assert(api.importErrorLabel({message: "production_period_change_requires_manual_resolution"}).includes("年式"));
 assert(api.importErrorLabel({message: "legacy_application_match_ambiguous"}).includes("一意"));
 assert(api.importErrorLabel({message: "network error"}).includes("押し直して"));
 assert(!source.includes("pfr-download") && !source.includes("pfr-review-file"), "the update screen must not require CSV or JSON upload");
 assert(source.includes('bridgeBase = "http://127.0.0.1:37644"'));
 assert(source.includes('bridgeRequest("/current")'), "reopening the update dialog must attach the completed local result without revisiting PARTS FAN");
+assert(source.includes('bridgeRequest("/access")'), "the update dialog must check the site-wide stop before starting another part");
+assert(source.includes('showAccessBlock(access, false)'), "a blocked site must disable a fresh collection before any browser request");
 const clean = api.details({grade: "G", transmission: "AT", chassis_range: "0001 - 9999", source_url: "https://partsfan.com/nissan/jp/pnodetail/TEST/23300AX000/", collected_at: "2026-09-29T01:00:00Z", password: "SHOULD_NOT_APPEAR"});
 assert.equal(clean.grade, "G");
-assert(!Object.hasOwn(clean, "password"));
-for (const source_url of ["javascript:alert(1)", "https://partsfan.com.evil.test/x", "https://partsfan.com/login/", "https://partsfan.com/nissan/jp/pnodetail/x/?token=SECRET"]) assert.equal(api.details({source_url}).source_url, "");
+assert(!Object.hasOwn(clean, "password") && !Object.hasOwn(clean, "source_url"));
+for (const source_url of ["javascript:alert(1)", "https://partsfan.com.evil.test/x", "https://partsfan.com/login/", "https://partsfan.com/nissan/jp/pnodetail/x/?token=SECRET"]) assert(!Object.hasOwn(api.details({source_url}), "source_url"));
 assert.equal(api.details({collected_at: "invalid", grade: "x".repeat(301)}).grade, "");
 const reviewRow = {
   source_code: "partsfan", source_table: "genuine_applications", part_role: "partsfan_genuine_application",
@@ -38,6 +41,11 @@ const reviewRow = {
 };
 const review = {format: "dcats.partsfan.review.v1", items: [{part: "23300-AX000", maker: "nissan", status: "completed", records: [reviewRow]}]};
 assert.equal(api.reviewRows(review, "23300-AX000", "ニッサン").length, 1);
+const datedReview = {...review, items: [{...review.items[0], records: [{...reviewRow, effective_start: "2002/02", effective_end: "2005/08", production_period_text: "2002/02 - 2005/08", raw_payload: {...reviewRow.raw_payload, production_period_basis: "application_row"}}]}]};
+assert.equal(api.reviewRows(datedReview, "23300-AX000", "ニッサン").length, 1);
+const openPeriodReview = {...datedReview, items: [{...datedReview.items[0], records: [{...datedReview.items[0].records[0], effective_start: "2009/12", effective_end: null, production_period_text: "2009/12 - ", raw_payload: {...reviewRow.raw_payload, production_period_basis: "vehicle_model_page"}}]}]};
+assert.equal(api.reviewRows(openPeriodReview, "23300-AX000", "ニッサン").length, 1, "an observed open-ended production period must remain importable");
+assert.throws(() => api.reviewRows({...datedReview, items: [{...datedReview.items[0], records: [{...datedReview.items[0].records[0], effective_end: "2001/01"}]}]}, "23300-AX000", "ニッサン"));
 const largeReview = {format: review.format, items: [{...review.items[0], records: Array.from({length: 289}, (_, index) => ({
   ...reviewRow, source_record_key: index.toString(16).padStart(64, "0")
 }))}]};
@@ -52,8 +60,11 @@ for (const bad of [
   {items: [{...review.items[0], records: [{...reviewRow, raw_payload: {...reviewRow.raw_payload, chassis_range_review: "vehicle_list_vs_detail_conflict"}}]}]}
 ]) assert.throws(() => api.reviewRows({...review, ...bad}, "23300-AX000", "ニッサン"));
 const html = api.sourceHtml({partsfan_details: {...clean, representative_model_note: "<img onerror=alert(1)>"}});
-assert(html.includes("noopener noreferrer") && !html.includes("<img"));
+assert(html.includes("PARTS FAN") && !html.includes("href=") && !html.includes("<img"));
 assert(!api.sourceHtml({partsfan_details: {source_url: "javascript:alert(1)"}}).includes("href="));
+const previewSource = source.slice(source.indexOf("function previewHtml"), source.indexOf("function details"));
+assert(previewSource.includes('label("period")') && previewSource.includes("row.production_period_text"), "administrator review shows verified production periods");
+assert(!previewSource.includes("<a href") && !previewSource.includes("esc(raw.source_url)"), "administrator review must not render a source URL");
 function isolate(start, end) { const from = app.indexOf(start); assert(from >= 0); const to = app.indexOf(end, from + 1); assert(to > from); return app.slice(from, to); }
 const rows = [{id: 1, source_code: "partsfan", model: "CBA-K12"}, {id: 2, source_code: "denso", model: "OTHER"}];
 let failure = false, selections = 0;
@@ -74,7 +85,8 @@ const fetchContext = {window: context.window, console: {warn() {}}, sb: {
   }
 }};
 vm.runInNewContext(isolate("async function fetchCatalogVehicleApplications", "function vehicleMakerLabel"), fetchContext);
-const vehicleHeadings = {f_vehicle_mfr: "車メーカー", f_vehicle_usage: "車種/用途", f_machine_model: "機種/型式", f_engine: "エンジン", f_period: "期間", f_chassis_number: "車体番号", f_part_number: "品番", component_name: "部品名"};
+const vehicleHeadings = {f_vehicle_mfr: "車メーカー", f_vehicle_usage: "車種/用途", f_machine_model: "機種/型式", f_engine: "エンジン", f_period: "年式（生産期間）", f_chassis_number: "車体番号", f_part_number: "品番", component_name: "部品名"};
+vehicleHeadings.vehicle_info_year_unverified = "年式未確認";
 const renderContext = {window: context.window, currentLang: "ja", t: value => vehicleHeadings[value] || value, tf: () => "no results", esc: value => String(value).replace(/</g, "&lt;"), vehicleMakerLabel: value => value, renderVehicleApplicationText: value => String(value), vehicleApplicationPartNameLabel: value => value};
 vm.runInNewContext(isolate("function hasVehicleApplicationDetail", "function openVehicleApplicationsDialog"), renderContext);
 (async () => {
@@ -87,13 +99,14 @@ vm.runInNewContext(isolate("function hasVehicleApplicationDetail", "function ope
   assert(!basic[0].partsfan_details);
   assert.equal(selections, 2);
   const vehicleHtml = renderContext.renderVehicleApplicationsTable(fetched);
-  assert.deepEqual(Array.from(vehicleHtml.matchAll(/<th>(.*?)<\/th>/g), match => match[1]), Object.values(vehicleHeadings), "fitment list must show separate period and chassis headings");
+  assert.deepEqual(Array.from(vehicleHtml.matchAll(/<th>(.*?)<\/th>/g), match => match[1]), Object.entries(vehicleHeadings).filter(([key]) => key !== "vehicle_info_year_unverified").map(([, value]) => value), "fitment list must show separate year and chassis headings");
   assert.equal((vehicleHtml.match(/<td>/g) || []).length, 16, "PARTS FAN details must not add table columns");
   assert(vehicleHtml.includes("<details class='partsfan-vehicle-details'>"));
-  assert(vehicleHtml.includes("グレード") && vehicleHtml.includes("0001 - 9999") && vehicleHtml.includes("PARTS FAN ↗"), "expanded detail and chassis column must retain source values");
+  assert(vehicleHtml.includes("グレード") && vehicleHtml.includes("0001 - 9999") && vehicleHtml.includes("PARTS FAN"), "expanded detail and chassis column must retain source labels");
+  assert(!vehicleHtml.includes("https://partsfan.com") && !vehicleHtml.includes("PARTS FAN ↗"), "the ordinary vehicle table must not publish source URLs");
   const capa = {source_code: "partsfan", model: "GF-GA4", production_period_text: "1300001-1399999", effective_start: "1300001", effective_end: "1399999", partsfan_details: {chassis_range: "1300001 - 1399999"}};
   const capaCells = Array.from(renderContext.renderVehicleApplicationsTable([capa]).matchAll(/<td>(.*?)<\/td>/g), match => match[1]);
-  assert.equal(capaCells[4], "-", "chassis serials must not be shown as a calendar period");
+  assert.equal(capaCells[4], "年式未確認", "chassis serials must not be shown as a calendar year");
   assert.equal(capaCells[5], "1300001 - 1399999");
   const legacy = {...capa, production_period_text: null, effective_start: null, effective_end: null, partsfan_details: {vehicle_list_chassis_range: "1000001-1999999（代表）"}};
   assert(renderContext.renderVehicleApplicationsTable([legacy]).includes("<td>1000001-1999999（代表）</td>"), "legacy chassis range must survive database cleanup");

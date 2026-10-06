@@ -115,7 +115,7 @@
       "product-3d-video-supplement", "product-3d-bottom-mode", "product-3d-capture-count",
       "product-3d-capture-dial", "product-3d-analysis-progress", "product-3d-analysis-results",
       "product-3d-quality-score", "product-3d-quality-list", "product-3d-submit-status", "product-3d-submit",
-      "product-3d-viewer-overlay", "product-3d-viewer-close", "product-3d-viewer-title",
+      "product-3d-viewer-overlay", "product-3d-viewer-shell", "product-3d-viewer-close", "product-3d-viewer-title",
       "product-3d-viewer-stage", "product-3d-viewer-loading", "product-3d-viewer-reset",
       "product-3d-viewer-zoom-in", "product-3d-viewer-zoom-out",
       "product-3d-viewer-autorotate", "product-3d-viewer-fullscreen", "product-3d-viewer-fullscreen-notice",
@@ -1253,9 +1253,10 @@
     elements["product-3d-viewer-loading"].textContent = "3Dモデルを読み込んでいます...";
     elements["product-3d-viewer-loading"].hidden = false;
     elements["product-3d-viewer-fullscreen-notice"].hidden = true;
+    elements["product-3d-viewer-autorotate"].setAttribute("aria-pressed", "false");
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await import("./product-3d-viewer.js?v=1.1.1089");
+      var module = await import("./product-3d-viewer.js?v=1.1.1100");
       if (!targetStillSelected()) {
         if (requestId === viewerRequestId) closeViewer();
         return;

@@ -81,8 +81,13 @@ function requireSelfOnlyScriptCsp(source, pattern, label) {
   const directive = csp.match(/(?:^|;)\s*script-src\s+([^;]+)/i);
   if (!directive) throw new Error(label + " is missing script-src");
   const tokens = directive[1].trim().split(/\s+/);
-  if (tokens.length !== 1 || tokens[0] !== "'self'") {
-    throw new Error(label + " script-src must allow only 'self'");
+  // The pinned 3D decoders need WebAssembly; this does not enable JavaScript eval.
+  if (tokens.length !== 2 || tokens[0] !== "'self'" || tokens[1] !== "'wasm-unsafe-eval'") {
+    throw new Error(label + " script-src must allow only self-hosted scripts and the reviewed Wasm decoders");
+  }
+  const worker = csp.match(/(?:^|;)\s*worker-src\s+([^;]+)/i);
+  if (!worker || worker[1].trim() !== "'self' blob:") {
+    throw new Error(label + " worker-src must allow only self-hosted and decoder blob workers");
   }
 }
 

@@ -281,6 +281,7 @@ test("mock GLB upload response reaches the admin card and customer common Viewer
     "product-3d-viewer-title": { textContent: "" },
     "product-3d-viewer-loading": { textContent: "", hidden: true },
     "product-3d-viewer-fullscreen-notice": { hidden: true },
+    "product-3d-viewer-autorotate": { setAttribute() {} },
     "product-3d-viewer-stage": {},
     "product-3d-viewer-shell": {},
   };

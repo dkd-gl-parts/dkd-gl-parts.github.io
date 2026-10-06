@@ -71,16 +71,20 @@ if (!incomplete.hasUnit || incomplete.hasQuantity || incomplete.hasReplacementRa
 }
 
 const rowRenderer = sourceBetween("function renderManufacturingCostRows", "function manufacturingCostExportFileName");
+const confirmationRenderer = sourceBetween("function manufacturingCostConfirmationNotes", "function renderManufacturingCostProductDetail");
 [
   "row.missingQuantityCount",
   "row.missingReplacementRateCount",
-  "row.savedSnapshotUnitPriceDiffers",
-  "notes.length ? \"<div class='manufacturing-cost-missing'"
+  "row.savedSnapshotUnitPriceDiffers"
 ].forEach((fragment) => {
-  if (!rowRenderer.includes(fragment)) throw new Error(`manufacturing cost confirmation is missing: ${fragment}`);
+  if (!confirmationRenderer.includes(fragment)) throw new Error(`manufacturing cost confirmation is missing: ${fragment}`);
 });
+if (!rowRenderer.includes("manufacturingCostConfirmationNotes(row)") ||
+    !rowRenderer.includes("notes.length ? \"<div class='manufacturing-cost-missing'")) {
+  throw new Error("the compact list must retain all confirmation warnings");
+}
 if (rowRenderer.includes("manufacturing-cost-note'>-")) {
-  throw new Error("a complete manufacturing cost row must leave the confirmation cell empty");
+  throw new Error("a complete manufacturing cost row must not show a meaningless dash");
 }
 if (source.includes("manufacturing_cost_saved_snapshot_used")) {
   throw new Error("saved snapshot must not be shown without a current unit-price difference");

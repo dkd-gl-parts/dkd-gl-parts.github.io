@@ -40,7 +40,10 @@ for (const [name, value] of metaDirectives) {
 
 expect(responseDirectives.get("frame-ancestors") === "'none'", "CSP must deny framing");
 expect(responseDirectives.has("upgrade-insecure-requests"), "CSP must upgrade insecure subresources");
-expect(!/unsafe-inline|unsafe-eval/i.test(responseCsp), "CSP must not allow unsafe inline or eval execution");
+expect(!/(?:^|\s)'(?:unsafe-inline|unsafe-eval)'(?:\s|;|$)/i.test(responseCsp), "CSP must not allow unsafe inline or JavaScript eval execution");
+expect(responseDirectives.get("script-src") === "'self' 'wasm-unsafe-eval'", "Only self-hosted scripts and reviewed Wasm decoders may execute");
+expect(responseDirectives.get("script-src-attr") === "'none'", "Inline handlers must remain blocked");
+expect(responseDirectives.get("worker-src") === "'self' blob:", "Decoder workers must remain local");
 
 const hsts = headerValue("Strict-Transport-Security");
 const maxAge = Number((hsts.match(/max-age=(\d+)/i) || [])[1]);

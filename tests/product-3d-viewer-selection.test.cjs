@@ -22,6 +22,8 @@ function harness({ onRead, onSign, onCreate, onFullscreen } = {}) {
   const document = { body: {}, activeElement: null, fullscreenElement: null,
     exitFullscreen() { calls.fullscreenExits++; this.fullscreenElement = null; return Promise.resolve(); } };
   const control = () => ({ isConnected: true, hidden: false, disabled: false,
+    attributes: {},
+    setAttribute(name, value) { this.attributes[name] = value; },
     focus() { document.activeElement = this; } });
   const trigger = control();
   trigger.focus();
