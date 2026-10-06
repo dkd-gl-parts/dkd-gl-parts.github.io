@@ -1,3 +1,44 @@
+## Google Drive desktop setup support QA (v1.1.1102, 2026-10-06)
+
+- Added setup/help disclosure to Data Integration / Business Exchange: official installation/sign-in guide, shared-folder shortcut guide, per-PC/browser CSV-folder setup, administrator support, missing-folder and reconnection guidance.
+- Help provides browser access without Drive for desktop and explains that opening a PC sync folder requires Drive installation/setup. This also fits the separate in-progress native-folder shortcut change. Help does not report installation or cloud synchronization as detected; no installer, authentication, native command or shared-folder permission action was added.
+- Tested the real dialog markup, translations and existing functions in a synthetic localhost fixture in a hidden IAB. No browser authentication/session was copied and no production data was read or written.
+- Desktop 1280 x 900: Enter opens the native details disclosure and exposes the setup steps/help links. The dialog is vertically scrollable within the viewport and the close control remains accessible.
+- 390 x 844 and 320 x 844 Japanese, plus 320 x 844 English/Chinese: document width equals viewport width, dialog height 820px, text wraps and the actual Japanese Drive folder name remains identifiable. Closing restores the original trigger focus. Console warnings/errors: 0.
+- Existing authoritative workflow 124 Node commands passed after synchronizing the new release version in the 3D-workflow guard. Static build, CSP/response headers and diff checks passed. No successful sales import/export was repeated.
+- Owned IAB tab closed, viewport override reset, owned QA HTTP server stopped. Regular Chrome/Edge, shared clipboard and OS cursor were not operated. Existing `.qa-output` files were preserved.
+- Evidence (ignored, local only): `outputs/drive-support/desktop-ja.png`, `mobile-ja-390.png`, `mobile-ja-320.png`, `mobile-en-320.png`, `mobile-zh-320.png`, `ui-results.json`, `workflow-results.json`.
+- Actual installation/sign-in on a PC without Drive and later protected-backup automation were not executed; the new feature provides setup/support guidance. Rollback is a revert of this frontend change through normal CI.
+
+final result: passed
+
+# 澤藤・末尾省略品番の候補照合（2026-10-05、v1.1.1100）
+
+- 合成データのみの非表示IAB。SYNTHETIC-SAW / 0355-502-002 / TEST-OEM-1000,1009 / 商品ID100,109。実API・認証情報のコピー・本番入庫なし。
+- PC1280×1000: 初回は製造原価の候補2件とも未チェック、入庫先未選択。正式品番を選んだだけでは入庫不可。確認チェックでのみ有効化、手動解除で再び無効になる。Tabで次の修正ボタンへ移動し、再描画後の確認フォーカスを保持。
+- 確認済み履歴を再現すると商品109だけが初期チェックされ、正式メーカー品番・純正品番・商品ID・末尾省略ラベルを表示。履歴競合は両候補未チェック・入庫先未選択で案内を表示。
+- 遅延中の照合表示と操作停止、通信失敗の明示と再試行可能、候補なし・保留一覧なし、権限なしのstock画面非表示を確認。無権限/会社違い/古い入力/二重送信は実関数の合成DB・VMでも拒否検証。
+- 390×844 / 320×844: ページのscrollWidthとclientWidthが一致。表は既存の840px最小幅で表内横スクロール。取込品番は一行保持（16px高）、確認文は読めるように折返し。日本語/英語/中国語の追加翻訳と既存キーを自動検査。
+- 実コードの新規guard、旧原価取込・履歴・保留・マスタ登録gate、全authoritative workflow129 Nodeコマンド・静的build・厳格CSP/response headers・syntax・diff検査が成功。
+- proof（ローカル・合成データ）: `outputs/sawafuji-qa/prior-link-desktop.png`, `prior-link-mobile.png`。通常Chrome/Edge・共有clipboard・OSカーソルは変更なし。専用タブ/viewport/helperは完了時に後片付けする。
+- 実業務の入庫/商品作成・複数接続競合実測は実施しない。DBではprivate migrationのsnapshot再比較と選択マスタFOR SHARE、既存台帳/stock lockを審査し、PostgreSQL17/18の44呼出しで原子的失敗を確認する。
+
+final result: passed
+
+## Business shared-folder shortcut QA (v1.1.1101)
+
+- Request: provide a desktop shortcut to the specified D-CATS business-exchange shared folder from Data Integration / Business Exchange.
+- Replaced the machine-specific G-drive .lnk asset with a portable Windows .url download containing only the fixed HTTPS folder URL. No native execution, shortcut file-API writes, Drive permissions, authentication, or CSV save-folder settings changed.
+- Hidden IAB used the actual menu/dialog markup, translations, and feature functions with an isolated synthetic context; no user browser credentials or production writes.
+- Desktop 1280 x 900 and mobile 390 x 844 / 320 x 844: actions and Japanese/English/Chinese labels fit without horizontal overflow. Mobile actions stack; the document width equals the viewport.
+- Download initiation message, synthetic object-URL failure, error styling, error clearing on reopen, initial button focus, keyboard Tab to the B2 save-folder button, and focus restoration on close passed. Console warn/error count was zero.
+- The IAB download-completion event timed out. Actual downloaded-file persistence and Windows opening were not established by browser QA; the exact CRLF InternetShortcut payload, filename, Blob MIME, anchor download, duplicate-click guard, cleanup, failure, and explicit retry passed the production-function VM guard. The UI does not claim desktop placement or completed saving.
+- All 124 authoritative search-performance workflow Node checks, static build, and strict response-header/CSP verification passed. Existing B2/HanbaiOh CSV-folder contracts remain guarded.
+- Evidence (local only): `outputs/business-workspace/desktop-ja.png`, `mobile-ja.png`, `mobile-en.png`, `mobile-zh.png`, and `mobile-error.png`.
+- The task-owned hidden tab was closed, viewport override reset, and local QA server stopped. No Chrome/Edge tabs or saved groups were created; the user's pointer and clipboard were untouched.
+
+final result: passed (download persistence and Windows desktop placement require the user's normal save operation)
+
 # パレット保留・後日入庫（2026-10-05、v1.1.1099）
 
 - 非表示IABのみ。合成TEST-PALLET / TEST-1001（2台）/ TEST-9999（3台）、本番API/実アカウント接続なし。

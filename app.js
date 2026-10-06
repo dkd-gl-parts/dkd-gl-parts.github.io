@@ -423,15 +423,29 @@ var TRANSLATIONS = {
     sales_order_mgmt_note: "注文受付、B2発送データ取込、現場の製造シリアル照合を管理します。",
     business_workspace_open: "業務連携",
     business_workspace_title: "D-CATS業務連携",
-    business_workspace_location: "Google Drive 共通保存先",
-    business_workspace_open_folder: "フォルダを開く",
-    business_workspace_create_shortcut: "デスクトップに作成",
-    business_workspace_save_checking: "デスクトップへの保存先を確認しています。",
-    business_workspace_created: "デスクトップ用ショートカットを作成しました。",
-    business_workspace_created_notice: "D-CATS業務連携のショートカットを作成しました。",
-    business_workspace_downloaded: "ショートカットをダウンロードしました。ファイルをデスクトップへ移動してください。",
-    business_workspace_cancelled: "ショートカットの作成をキャンセルしました。",
-    business_workspace_failed: "ショートカットを作成できませんでした。Google Driveは「フォルダを開く」から利用できます。",
+    business_workspace_location: "Google Drive 共有フォルダ",
+    business_workspace_open_folder: "共有フォルダを開く",
+    business_workspace_create_shortcut: "デスクトップ用ショートカットを取得",
+    business_workspace_downloaded: "デスクトップ用ショートカットのダウンロードを開始しました。",
+    business_workspace_failed: "ショートカットを取得できませんでした。「共有フォルダを開く」からGoogle Driveを利用できます。",
+    business_workspace_shortcut_hint: "PC版Google Driveがない場合も「共有フォルダを開く」からブラウザで利用できます。PCの同期フォルダを開くには、PC版Driveの導入と同期先の設定が必要です。",
+    business_workspace_drive_support: "PC版Google Driveの設定・困ったとき",
+    business_workspace_drive_intro: "同期フォルダへ自動保存するには、PC版Google Driveを導入し、共有フォルダの保存先を設定します。",
+    business_workspace_drive_install_title: "PC版Google Driveを導入する",
+    business_workspace_drive_install_text: "Google公式の手順でインストールし、共有フォルダを利用できる業務用Googleアカウントでログインします。",
+    business_workspace_drive_install_link: "Google公式の導入手順",
+    business_workspace_drive_folder_title: "共有フォルダをPCで表示する",
+    business_workspace_drive_folder_text: "「共有フォルダを開く」でD-CATS業務連携を表示します。必要に応じてフォルダの「ドライブにショートカットを追加」からマイドライブへ追加し、エクスプローラーで表示を確認します。",
+    business_workspace_drive_folder_link: "Google公式のフォルダ追加手順",
+    business_workspace_drive_save_title: "D-CATSの保存先を設定する",
+    business_workspace_drive_save_text: "B2はこの画面の「保存先を設定」、販売王CSVは「販売王連携」の保存先設定から、PC上のD-CATS業務連携フォルダを選択します。PCごと・ブラウザごとに設定してください。",
+    business_workspace_drive_help_title: "うまく設定できない場合",
+    business_workspace_drive_no_install_title: "インストールできない",
+    business_workspace_drive_no_install_text: "社内管理者へPC版Driveの導入を依頼してください。導入までの間は「共有フォルダを開く」からブラウザで利用できます。",
+    business_workspace_drive_no_folder_title: "共有フォルダが表示されない",
+    business_workspace_drive_no_folder_text: "ブラウザとPC版Driveが共有先のGoogleアカウントでログインしているか、PC版Driveが起動しているか確認します。アクセスできない場合は、共有フォルダの管理者へ権限を確認してください。",
+    business_workspace_drive_no_picker_title: "保存先を選べない・再接続が必要",
+    business_workspace_drive_no_picker_text: "Windows版ChromeまたはEdgeでD-CATSを開き、同期フォルダを選び直して保存のアクセスを許可してください。PC版Driveの導入と、D-CATSの保存先設定はそれぞれ必要です。",
     business_workspace_b2_title: "B2 CSV保存先",
     business_workspace_b2_path: "D-CATS業務連携 / B2 / 01_D-CATS発行",
     business_workspace_b2_hint: "Google Drive for desktopで同期しているフォルダを選択します。初回発行と再発行は同じ場所へ保存されます。",
@@ -1401,6 +1415,8 @@ var TRANSLATIONS = {
     manufacturing_cost_checking_candidates: "カタログ情報と構成部品の登録状況を確認しています。",
     manufacturing_cost_checking_import_history: "以前の紐づけを確認しています。",
     manufacturing_cost_previous_link: "以前の紐づけ",
+    manufacturing_cost_sawafuji_family: "澤藤・末尾1桁省略一致",
+    manufacturing_cost_sawafuji_note: "末尾0～9の正式品番を候補に含めています。純正品番・正式メーカー品番・商品IDを確認して選択してください。末尾違いを同一商品とは確定していません。",
     manufacturing_cost_import_history_note: "以前選んだ商品が特定できた場合のみ、初期チェックが入ります。チェックは変更できます。原価計算はボタンで実行してください。",
     manufacturing_cost_import_history_conflict: "以前の紐づけが複数あるため、自動選択していません。候補を確認してください。",
     manufacturing_cost_import_history_unavailable: "以前の紐づけを確認できなかったため、自動選択していません。候補を確認して選択してください。",
@@ -1415,7 +1431,7 @@ var TRANSLATIONS = {
     manufacturing_cost_candidate_note: "チェックした品番を下の決定リストへ追加します。",
     manufacturing_cost_candidate_count: "候補 {n} 件",
     manufacturing_cost_import_result_summary: "取込 {parts} 品番 / 該当 {matched} 品番 / 候補 {candidates} 件 / 未登録 {missing} 品番",
-    manufacturing_cost_import_exact_note: "取込品番と商品マスタが完全一致した候補を、品番ごとに表示しています。",
+    manufacturing_cost_import_exact_note: "完全一致と澤藤の末尾省略一致の候補を、取込品番ごとに区別して表示しています。",
     manufacturing_cost_import_group_count: "候補 {n} 件",
     manufacturing_cost_import_unregistered_title: "商品マスタ未登録 {n} 品番",
     manufacturing_cost_import_unregistered_note: "次の取込品番は商品マスタに完全一致する商品がありません。",
@@ -2776,14 +2792,28 @@ var TRANSLATIONS = {
     business_workspace_open: "Shared Folder",
     business_workspace_title: "D-CATS Business Exchange",
     business_workspace_location: "Shared Google Drive folder",
-    business_workspace_open_folder: "Open Folder",
-    business_workspace_create_shortcut: "Create on Desktop",
-    business_workspace_save_checking: "Checking the desktop save location.",
-    business_workspace_created: "The desktop shortcut was created.",
-    business_workspace_created_notice: "The D-CATS Business Exchange shortcut was created.",
-    business_workspace_downloaded: "The shortcut was downloaded. Move the file to your desktop.",
-    business_workspace_cancelled: "Shortcut creation was cancelled.",
-    business_workspace_failed: "The shortcut could not be created. Use Open Folder to access Google Drive.",
+    business_workspace_open_folder: "Open Shared Folder",
+    business_workspace_create_shortcut: "Get Desktop Shortcut",
+    business_workspace_downloaded: "The desktop shortcut download has started.",
+    business_workspace_failed: "The shortcut could not be downloaded. Use Open Shared Folder to access Google Drive.",
+    business_workspace_shortcut_hint: "Without Google Drive for desktop, use Open Shared Folder to access files in your browser. Opening the synced folder on your PC requires Drive installation and sync-folder setup.",
+    business_workspace_drive_support: "Google Drive for desktop setup and help",
+    business_workspace_drive_intro: "To save automatically to a synced folder, install Google Drive for desktop and configure the shared save folder.",
+    business_workspace_drive_install_title: "Install Google Drive for desktop",
+    business_workspace_drive_install_text: "Follow Google's official instructions, then sign in with the work Google account that can access the shared folder.",
+    business_workspace_drive_install_link: "Google's installation guide",
+    business_workspace_drive_folder_title: "Show the shared folder on your PC",
+    business_workspace_drive_folder_text: "Open Shared Folder to view D-CATS業務連携. If needed, use Add shortcut to Drive to add it to My Drive, then check that it appears in File Explorer.",
+    business_workspace_drive_folder_link: "Google's folder shortcut guide",
+    business_workspace_drive_save_title: "Set the D-CATS save folder",
+    business_workspace_drive_save_text: "For B2, use Set Save Folder here. For Sales King CSVs, use the save-folder settings in Sales King Integration. Select the synced D-CATS業務連携 folder on each PC and browser.",
+    business_workspace_drive_help_title: "Troubleshooting",
+    business_workspace_drive_no_install_title: "Installation is unavailable",
+    business_workspace_drive_no_install_text: "Ask your IT administrator to install Drive for desktop. Until then, use Open Shared Folder to access files in your browser.",
+    business_workspace_drive_no_folder_title: "The shared folder is missing",
+    business_workspace_drive_no_folder_text: "Check that your browser and Drive for desktop use the Google account with shared-folder access, and that Drive is running. Ask the folder administrator about access if you cannot open it.",
+    business_workspace_drive_no_picker_title: "Cannot select a folder or reconnection is needed",
+    business_workspace_drive_no_picker_text: "Open D-CATS in Chrome or Edge on Windows, select the synced folder again and allow save access. Both Drive installation and D-CATS save-folder setup are required.",
     business_workspace_b2_title: "B2 CSV Save Folder",
     business_workspace_b2_path: "D-CATS Business Exchange / B2 / 01_D-CATS Issue",
     business_workspace_b2_hint: "Select the folder synced by Google Drive for desktop. Initial issues and reissues are saved to the same location.",
@@ -3753,6 +3783,8 @@ var TRANSLATIONS = {
     manufacturing_cost_checking_candidates: "Checking catalog information and registered components.",
     manufacturing_cost_checking_import_history: "Checking previous links.",
     manufacturing_cost_previous_link: "Previously linked",
+    manufacturing_cost_sawafuji_family: "Sawafuji · final digit omitted",
+    manufacturing_cost_sawafuji_note: "Candidates include formal numbers ending in 0–9. Check the genuine number, full manufacturer number and product ID. These are not confirmed interchangeable products.",
     manufacturing_cost_import_history_note: "A candidate is checked initially only when the previously selected product can be identified. You can change the selection. Use the button to calculate costs.",
     manufacturing_cost_import_history_conflict: "Multiple previous links exist. No candidate was selected automatically; please review them.",
     manufacturing_cost_import_history_unavailable: "Previous links could not be checked. No candidate was selected automatically; please select candidates manually.",
@@ -3767,7 +3799,7 @@ var TRANSLATIONS = {
     manufacturing_cost_candidate_note: "Checked products will be added to the selected cost list below.",
     manufacturing_cost_candidate_count: "{n} candidates",
     manufacturing_cost_import_result_summary: "{parts} imported / {matched} matched / {candidates} candidates / {missing} not registered",
-    manufacturing_cost_import_exact_note: "Exact product-master matches are grouped by imported part number.",
+    manufacturing_cost_import_exact_note: "Exact matches and Sawafuji final-digit family candidates are distinguished by imported part number.",
     manufacturing_cost_import_group_count: "{n} candidates",
     manufacturing_cost_import_unregistered_title: "Not in product master: {n}",
     manufacturing_cost_import_unregistered_note: "These imported part numbers have no exact match in the product master.",
@@ -5071,15 +5103,29 @@ var TRANSLATIONS = {
     sales_order_mgmt_note: "管理订单受理、B2发货数据导入和现场序列号核对。",
     business_workspace_open: "业务协作",
     business_workspace_title: "D-CATS业务协作",
-    business_workspace_location: "Google Drive共享保存位置",
-    business_workspace_open_folder: "打开文件夹",
-    business_workspace_create_shortcut: "创建到桌面",
-    business_workspace_save_checking: "正在确认桌面保存位置。",
-    business_workspace_created: "桌面快捷方式已创建。",
-    business_workspace_created_notice: "D-CATS业务协作快捷方式已创建。",
-    business_workspace_downloaded: "快捷方式已下载。请将文件移动到桌面。",
-    business_workspace_cancelled: "已取消创建快捷方式。",
-    business_workspace_failed: "无法创建快捷方式。请使用“打开文件夹”访问Google Drive。",
+    business_workspace_location: "Google Drive共享文件夹",
+    business_workspace_open_folder: "打开共享文件夹",
+    business_workspace_create_shortcut: "获取桌面快捷方式",
+    business_workspace_downloaded: "已开始下载桌面快捷方式。",
+    business_workspace_failed: "无法下载快捷方式。请使用“打开共享文件夹”访问Google Drive。",
+    business_workspace_shortcut_hint: "未安装Google Drive桌面版时，可通过“打开共享文件夹”在浏览器中使用。在电脑上打开同步文件夹需要安装Drive并设置同步位置。",
+    business_workspace_drive_support: "Google Drive桌面版设置与帮助",
+    business_workspace_drive_intro: "要自动保存到同步文件夹，请安装Google Drive桌面版并设置共享保存位置。",
+    business_workspace_drive_install_title: "安装Google Drive桌面版",
+    business_workspace_drive_install_text: "按照Google官方说明安装，并使用可访问共享文件夹的工作Google帐号登录。",
+    business_workspace_drive_install_link: "Google官方安装说明",
+    business_workspace_drive_folder_title: "在电脑上显示共享文件夹",
+    business_workspace_drive_folder_text: "点击“打开共享文件夹”查看D-CATS業務連携。必要时使用“添加快捷方式到云端硬盘”将文件夹添加到我的云端硬盘，然后在文件资源管理器中确认。",
+    business_workspace_drive_folder_link: "Google官方文件夹快捷方式说明",
+    business_workspace_drive_save_title: "设置D-CATS保存位置",
+    business_workspace_drive_save_text: "B2请使用此画面的“设置保存位置”，销售王CSV请在“销售王联动”的保存位置设置中选择电脑上的D-CATS業務連携同步文件夹。每台电脑、每个浏览器都需要设置。",
+    business_workspace_drive_help_title: "设置遇到问题时",
+    business_workspace_drive_no_install_title: "无法安装",
+    business_workspace_drive_no_install_text: "请联系公司IT管理员安装Drive桌面版。安装前可通过“打开共享文件夹”在浏览器中使用。",
+    business_workspace_drive_no_folder_title: "找不到共享文件夹",
+    business_workspace_drive_no_folder_text: "请确认浏览器与Drive桌面版使用有共享访问权限的Google帐号，并确认Drive正在运行。如无法打开，请联系共享文件夹管理员确认权限。",
+    business_workspace_drive_no_picker_title: "无法选择保存位置或需要重新连接",
+    business_workspace_drive_no_picker_text: "请在Windows版Chrome或Edge中打开D-CATS，重新选择同步文件夹并允许保存访问。安装Drive和设置D-CATS保存位置都需要完成。",
     business_workspace_b2_title: "B2 CSV保存位置",
     business_workspace_b2_path: "D-CATS业务协作 / B2 / 01_D-CATS发行",
     business_workspace_b2_hint: "请选择Google Drive桌面版同步的文件夹。首次发行和重新发行将保存到同一位置。",
@@ -6115,6 +6161,8 @@ var TRANSLATIONS = {
     manufacturing_cost_checking_candidates: "正在确认目录信息和已登记的组成零件。",
     manufacturing_cost_checking_import_history: "正在确认以前的关联记录。",
     manufacturing_cost_previous_link: "以前的关联",
+    manufacturing_cost_sawafuji_family: "泽藤·省略末位数字匹配",
+    manufacturing_cost_sawafuji_note: "候选包含末位0～9的正式品番。请选择前核对纯正品番、完整制造商品番和商品ID。这并不代表产品相同或可互换。",
     manufacturing_cost_import_history_note: "仅在能确定以前选择的商品时，才会初始勾选。您可以更改选择，请点击按钮计算成本。",
     manufacturing_cost_import_history_conflict: "存在多个以前的关联，未自动选择。请确认候选。",
     manufacturing_cost_import_history_unavailable: "无法确认以前的关联，未自动选择。请手动确认并选择候选。",
@@ -6129,7 +6177,7 @@ var TRANSLATIONS = {
     manufacturing_cost_candidate_note: "勾选的品番会添加到下方的确定列表。",
     manufacturing_cost_candidate_count: "候选 {n} 条",
     manufacturing_cost_import_result_summary: "导入 {parts} 个 / 匹配 {matched} 个 / 候选 {candidates} 条 / 未登记 {missing} 个",
-    manufacturing_cost_import_exact_note: "按导入品番分别显示与商品主数据完全匹配的候选。",
+    manufacturing_cost_import_exact_note: "按导入品番区分完全匹配和泽藤省略末位数字的候选。",
     manufacturing_cost_import_group_count: "候选 {n} 条",
     manufacturing_cost_import_unregistered_title: "商品主数据未登记 {n} 个",
     manufacturing_cost_import_unregistered_note: "以下导入品番在商品主数据中没有完全匹配的商品。",
@@ -7184,7 +7232,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1100";
+var APP_VERSION       = "v1.1.1103";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -14056,8 +14104,7 @@ function salesOrderB2PreflightNeedsContractSettings(preflight) {
 }
 
 var DCATS_BUSINESS_WORKSPACE_URL = "https://drive.google.com/drive/folders/1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ";
-var DCATS_BUSINESS_WORKSPACE_SHORTCUT_URL = "assets/integrations/dcats-business-workspace.lnk";
-var DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME = "D-CATS\u696d\u52d9\u9023\u643a.lnk";
+var DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME = "D-CATS\u696d\u52d9\u9023\u643a.url";
 var DCATS_BUSINESS_WORKSPACE_DIRECTORY_NAME = "D-CATS\u696d\u52d9\u9023\u643a";
 var DCATS_B2_DIRECTORY_NAME = "B2";
 var DCATS_B2_EXPORT_DIRECTORY_NAME = "01_D-CATS\u767a\u884c";
@@ -14478,59 +14525,37 @@ function closeDcatsBusinessWorkspace() {
 }
 
 function downloadDcatsBusinessWorkspaceShortcut(contents) {
-  var blobUrl = URL.createObjectURL(new Blob([contents], { type: "application/x-ms-shortcut" }));
-  var link = document.createElement("a");
-  link.href = blobUrl;
-  link.download = DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
-}
-
-async function loadDcatsBusinessWorkspaceShortcut() {
-  var shortcutUrl = DCATS_BUSINESS_WORKSPACE_SHORTCUT_URL + "?dcats_version=" + encodeURIComponent(APP_VERSION);
-  var response = await fetch(shortcutUrl, { cache: "no-store" });
-  if (!response.ok) throw new Error("shortcut_download_failed");
-  return response.arrayBuffer();
-}
-
-async function createDcatsBusinessWorkspaceShortcut() {
-  var button = document.getElementById("dcats-business-workspace-shortcut");
-  if (button) button.disabled = true;
-  setDcatsBusinessWorkspaceMessage(t("business_workspace_save_checking"), false);
+  var blobUrl = URL.createObjectURL(new Blob([contents], { type: "text/plain;charset=utf-8" }));
+  var link;
   try {
-    var contents = await loadDcatsBusinessWorkspaceShortcut();
-    if (typeof window.showSaveFilePicker === "function") {
-      var pickerOptions = {
-        suggestedName: DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME,
-        startIn: "desktop"
-      };
-      var handle;
-      try {
-        handle = await window.showSaveFilePicker(pickerOptions);
-      } catch (pickerError) {
-        if (pickerError && pickerError.name === "AbortError") throw pickerError;
-        delete pickerOptions.startIn;
-        handle = await window.showSaveFilePicker(pickerOptions);
-      }
-      var writable = await handle.createWritable();
-      await writable.write(contents);
-      await writable.close();
-      setDcatsBusinessWorkspaceMessage(t("business_workspace_created"), false);
-      showDcatsAutoNotice(t("business_workspace_created_notice"));
-      return;
-    }
+    link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME;
+    document.body.appendChild(link);
+    link.click();
+  } finally {
+    if (link) link.remove();
+    window.setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
+  }
+}
+
+function dcatsBusinessWorkspaceShortcutContents() {
+  return "[InternetShortcut]\r\nURL=" + DCATS_BUSINESS_WORKSPACE_URL + "\r\n";
+}
+
+function createDcatsBusinessWorkspaceShortcut() {
+  var button = document.getElementById("dcats-business-workspace-shortcut");
+  if (button && button.disabled) return;
+  if (button) button.disabled = true;
+  try {
+    // Browsers restrict shortcut writes through the file API; use a user download.
+    var contents = dcatsBusinessWorkspaceShortcutContents();
     downloadDcatsBusinessWorkspaceShortcut(contents);
     setDcatsBusinessWorkspaceMessage(t("business_workspace_downloaded"), false);
   } catch (error) {
-    if (error && error.name === "AbortError") {
-      setDcatsBusinessWorkspaceMessage(t("business_workspace_cancelled"), false);
-      return;
-    }
     setDcatsBusinessWorkspaceMessage(t("business_workspace_failed"), true);
   } finally {
-    if (button) button.disabled = false;
+    if (button) window.setTimeout(function() { button.disabled = false; }, 1000);
   }
 }
 
@@ -30604,6 +30629,7 @@ function renderManufacturingCostCandidateRow(product, checkedDefault, currentIds
   var isAdded = !!currentIds[String(id || "")];
   var statusLabels = renderManufacturingCostCandidateStatusLabels(product);
   if (options.previouslyLinked) statusLabels += "<span class='manufacturing-cost-previous-link'>" + esc(t("manufacturing_cost_previous_link")) + "</span>";
+  if (options.familyMatch) statusLabels += "<span class='manufacturing-cost-previous-link'>" + esc(t("manufacturing_cost_sawafuji_family")) + "</span>";
   var checked = checkedDefault ? " checked" : "";
   if (isAdded) checked = "";
   var html = "<label class='manufacturing-cost-candidate-row" + (isAdded ? " added" : "") + "'>";
@@ -30658,13 +30684,15 @@ function renderManufacturingCostImportCandidateGroups(groups, checkedDefault, cu
     var previous = history.byToken[normalizePartQuery(group.token)] || {};
     html += "<section class='manufacturing-cost-import-result-group'>";
     html += "<div class='manufacturing-cost-import-result-group-head'><strong>" + esc(group.token) + "</strong><span>" + esc(tf("manufacturing_cost_import_group_count", { n: group.matchCount })) + "</span></div>";
+    if ((group.familyCandidateIds || []).length) html += "<p class='manufacturing-cost-history-note'>" + esc(t("manufacturing_cost_sawafuji_note")) + "</p>";
     if (previous.ambiguous) html += "<p class='manufacturing-cost-history-note'>" + esc(t("manufacturing_cost_import_history_conflict")) + "</p>";
     html += "<div class='manufacturing-cost-import-result-group-rows'>";
     (group.candidates || []).forEach(function(product) {
       var linked = !history.unavailable && previous.productId === String(productDkdId(product));
       var selectionKey = manufacturingCostCandidateSelectionKey(group.token, productDkdId(product));
       var checked = Object.prototype.hasOwnProperty.call(selections, selectionKey) ? selections[selectionKey] : linked;
-      html += renderManufacturingCostCandidateRow(product, checked, currentIds, { token: group.token, previouslyLinked: linked });
+      html += renderManufacturingCostCandidateRow(product, checked, currentIds, { token: group.token, previouslyLinked: linked,
+        familyMatch: (group.familyCandidateIds || []).indexOf(String(productDkdId(product))) >= 0 });
     });
     if (group.truncated) html += "<div class='manufacturing-cost-import-result-limit'>" + esc(t("manufacturing_cost_import_result_limit")) + "</div>";
     html += "</div></section>";
@@ -30828,8 +30856,19 @@ async function fetchManufacturingCostProducts(tokens, category, options) {
         exactOnly: !!options.exactOnly
       });
       if (r.error) return r;
+      var exactIds = {};
+      (r.data || []).forEach(function(p) { exactIds[String(productDkdId(p))] = true; });
+      var familyIds = [];
+      if (options.groupByToken && options.exactOnly) {
+        var family = await fetchSawafujiImportCandidates(tokens[i], category || null, 60);
+        if (family.error) return family;
+        (family.data || []).forEach(function(p) {
+          var id = String(productDkdId(p));
+          if (!exactIds[id]) { r.data.push(p); familyIds.push(id); exactIds[id] = true; }
+        });
+      }
       var matches = filterVisibleProducts(normalizeCoreProductFastRows(r.data || []));
-      if (options.groupByToken) groups.push({ token: tokens[i], candidates: matches });
+      if (options.groupByToken) groups.push({ token: tokens[i], candidates: matches, familyCandidateIds: familyIds });
       addRows(matches);
     }
   } else if (category) {
@@ -30850,6 +30889,7 @@ async function fetchManufacturingCostProducts(tokens, category, options) {
       return {
         token: group.token,
         candidates: candidates,
+        familyCandidateIds: group.familyCandidateIds,
         matchCount: matchCount,
         truncated: candidates.length < matchCount
       };
@@ -39618,6 +39658,43 @@ function normalizePartQuery(q) {
     .toUpperCase()
     .replace(/[\u2010-\u2015\u2212\u30FC\uFF0D]/g, "-")
     .replace(/[-\s]/g, "");
+}
+
+// Sawafuji source convention only. Never remove a last digit from other makers.
+function sawafujiShortPartKey(value) {
+  var key = normalizePartQuery(value || "");
+  return /^0[0-9]{9}$/.test(key) ? key : "";
+}
+
+function sawafujiFamilyPartNumbers(value) {
+  var key = sawafujiShortPartKey(value);
+  return key ? Array.from({ length: 10 }, function(_, i) { return key + i; }) : [];
+}
+
+function sawafujiFamilyCandidate(token, product) {
+  var key = sawafujiShortPartKey(token);
+  var formal = normalizePartQuery(product.manufacturer_part_number || "");
+  var maker = String(product.manufacturer || product.catalog_manufacturer || "").trim().toUpperCase();
+  return !!key && ["SAWAFUJI", "澤藤", "澤藤電機"].indexOf(maker) >= 0 &&
+    /^0[0-9]{10}$/.test(formal) && formal.slice(0, 10) === key;
+}
+
+async function fetchSawafujiImportCandidates(token, category, maxRows) {
+  var parts = sawafujiFamilyPartNumbers(token);
+  if (!parts.length) return { data: [], error: null };
+  maxRows = maxRows || 60;
+  // Equality lookup stays indexable; no generic prefix/fuzzy part matching.
+  var query = sb.from("core_products").select(CORE_PRODUCT_FAST_SELECT)
+    .in("normalized_manufacturer_part_number", parts)
+    .order("manufacturer_part_number", { ascending: true })
+    .order("dkd_shohin_id", { ascending: true }).limit(maxRows * 2);
+  if (category) query = query.eq("category_code", category);
+  var result = await query;
+  if (result.error) return result;
+  result.data = normalizeCoreProductFastRows(result.data || []).filter(function(p) {
+    return sawafujiFamilyCandidate(token, p);
+  }).slice(0, maxRows);
+  return result;
 }
 
 function validateProductPartNumberPair(genuinePartNumber, manufacturerPartNumber) {

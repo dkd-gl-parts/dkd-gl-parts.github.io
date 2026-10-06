@@ -147,24 +147,38 @@
       var results = await Promise.all([
         root.fetchCoreProductMasterMatches(query, "", 20, { exactOnly: true }),
         root.sb.from("catalog_vehicle_applications").select("id,source_name,source_code,source_record_key,catalog_manufacturer,genuine_part_number,manufacturer_part_number,part_name,part_role,vehicle_model,engine")
-          .or("normalized_genuine_part_number.eq." + norm(query) + ",normalized_manufacturer_part_number.eq." + norm(query)).order("id").limit(20)
+          .or("normalized_genuine_part_number.eq." + norm(query) + ",normalized_manufacturer_part_number.eq." + norm(query)).order("id").limit(20),
+        typeof root.fetchSawafujiImportCandidates === "function" ? root.fetchSawafujiImportCandidates(query,current.category || "",20) : {data:[]},
+        typeof root.sawafujiFamilyPartNumbers === "function" && root.sawafujiFamilyPartNumbers(query).length ?
+          root.sb.from("catalog_vehicle_applications").select("id,source_name,source_code,source_record_key,catalog_manufacturer,genuine_part_number,manufacturer_part_number,part_name,part_role,vehicle_model,engine")
+            .in("normalized_manufacturer_part_number",root.sawafujiFamilyPartNumbers(query)).order("id").limit(40) : {data:[]}
       ]);
       if (seq !== state.seq || current !== state.current) return;
       if (results[0].error) throw results[0].error;
       if (results[1].error) throw results[1].error;
+      if (results[2].error) throw results[2].error;
+      if (results[3].error) throw results[3].error;
       current.products = results[0].data || [];
       current.catalog = results[1].data || [];
+      (results[2].data || []).forEach(function(p) {
+        if (!current.products.some(function(x) { return x.dkd_shohin_id === p.dkd_shohin_id; })) current.products.push(p);
+      });
+      (results[3].data || []).filter(function(p) {
+        return root.sawafujiFamilyCandidate(query,p) && (!current.category || catalogCategoryCode(p) === current.category);
+      }).forEach(function(p) { if (!current.catalog.some(function(x) { return x.id === p.id; })) current.catalog.push(p); });
       current.searchOK = true;
       var html = "<h3>既存商品 " + current.products.length + " 件</h3>";
       current.products.forEach(function(p, i) {
-        html += "<div class='pdr-result'><strong>" + escape(p.genuine_part_number || p.manufacturer_part_number) + "</strong><span>" + escape([p.manufacturer_part_number,p.manufacturer,root.tCat(p.category_code || p.category),"DKD " + p.dkd_shohin_id].filter(Boolean).join(" / ")) + "</span><button type='button' data-pdr-existing='" + i + "'>この既存商品を再照合</button></div>";
+        var familyLabel = typeof root.sawafujiFamilyCandidate === "function" && root.sawafujiFamilyCandidate(query,p) ? "澤藤・末尾1桁省略一致 / " : "";
+        html += "<div class='pdr-result'><strong>" + escape(p.genuine_part_number || p.manufacturer_part_number) + "</strong><span>" + escape(familyLabel + [p.manufacturer_part_number,p.manufacturer,root.tCat(p.category_code || p.category),"商品ID " + p.dkd_shohin_id].filter(Boolean).join(" / ")) + "</span><button type='button' data-pdr-existing='" + i + "'>この既存商品を再照合</button></div>";
       });
       html += "<h3>カタログ候補 " + current.catalog.length + " 行（車種別データを含む）</h3>";
       current.catalog.forEach(function(p, i) {
-        html += "<div class='pdr-result'>" + catalogDescription(p) + "<span>" + escape([p.catalog_manufacturer,p.vehicle_model,p.engine,p.source_name || p.source_code,"ID " + p.id].filter(Boolean).join(" / ")) + "</span><button type='button' data-pdr-catalog='" + i + "'>このレコードを登録欄に反映（未登録）</button></div>";
+        var familyLabel = typeof root.sawafujiFamilyCandidate === "function" && root.sawafujiFamilyCandidate(query,p) ? "澤藤・末尾1桁省略一致 / " : "";
+        html += "<div class='pdr-result'>" + catalogDescription(p) + "<span>" + escape(familyLabel + [p.catalog_manufacturer,p.vehicle_model,p.engine,p.source_name || p.source_code,"ID " + p.id].filter(Boolean).join(" / ")) + "</span><button type='button' data-pdr-catalog='" + i + "'>このレコードを登録欄に反映（未登録）</button></div>";
       });
       byId("pdr-results").innerHTML = html;
-      byId("pdr-search-status").textContent = "検索完了（各先頭20件）。既存商品があれば新規登録せず再照合してください。0件でも未登録とは断定せず、別品番・出典を確認してください。";
+      byId("pdr-search-status").textContent = "検索完了（件数に上限あり）。完全一致に加え、澤藤の末尾省略候補を区別して表示します。既存商品があれば新規登録せず再照合してください。候補だけでは同一性を確定せず、正式登録の必須条件は維持します。";
     } catch (error) {
       if (seq !== state.seq || current !== state.current) return;
       byId("pdr-search-status").textContent = "調査できませんでした。登録せず再検索してください：" + (error.message || String(error));
@@ -231,7 +245,7 @@
     var origin = options.origin === "manufacturing_cost" ? "manufacturing_cost" : "research";
     var draftKey = origin + "|" + text(options.token);
     var draft = state.drafts.get(draftKey) || {};
-    state.current = { token: text(options.token), origin: origin, draftKey: draftKey, catalogRecordId: null, onResolved: options.onResolved, products: [], catalog: [], searchOK: false, searching: false, registeredId: null };
+    state.current = { token: text(options.token), category:options.category || "", origin: origin, draftKey: draftKey, catalogRecordId: null, onResolved: options.onResolved, products: [], catalog: [], searchOK: false, searching: false, registeredId: null };
     var categories = byId("manufacturing-cost-category");
     byId("pdr-category").innerHTML = categories ? categories.innerHTML : "<option value=''>カテゴリを選択</option>";
     var emptyCategory = byId("pdr-category").querySelector("option[value='']");

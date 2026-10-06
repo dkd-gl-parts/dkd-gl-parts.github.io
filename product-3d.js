@@ -806,6 +806,7 @@
         .select("id,dkd_shohin_id,product_kind,revision,status,published_model_path,thumbnail_path,model_bytes,triangle_count,published_at")
         .eq("dkd_shohin_id", dkdId).eq("status", "published").order("revision", { ascending: false });
       if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return [];
+      if (result.error) throw new Error("3Dモデルを確認できませんでした。3Dタブを開き直してください。");
       modelCache[key] = (result.data || []).map(function (row) {
         return Object.assign({ model_source: "generated", model_format: "glb" }, row);
       });
@@ -836,10 +837,13 @@
       .eq("dkd_shohin_id", dkdId).eq("status", "ready");
     if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return [];
     if (uploads.error) console.warn("internal uploaded 3D lookup failed", uploads.error);
-    internalModelCache[key] = (result.data || []).map(function (row) {
+    if (result.error && uploads.error) throw new Error("3Dモデルを確認できませんでした。3Dタブを開き直してください。");
+    var models = (result.data || []).map(function (row) {
       return Object.assign({ model_source: "generated", model_format: "glb" }, row);
     }).concat((uploads.data || []).map(normalizeUploadedModel));
-    return internalModelCache[key];
+    // A partial lookup is usable but must not cache an outage as an empty list.
+    if (!result.error && !uploads.error) internalModelCache[key] = models;
+    return models;
   }
   async function refreshMediaAvailability(context) {
     if (!sessionModelsEnabled) return;
@@ -865,7 +869,9 @@
     }
     if (!dkdId) { hideStaleMedia(); return; }
     var internal = context !== "customer" && canReview3D();
-    var models = internal ? await fetchInternalModels(dkdId) : await fetchPublishedModels(dkdId);
+    var models = [], lookupFailed = false;
+    try { models = internal ? await fetchInternalModels(dkdId) : await fetchPublishedModels(dkdId); }
+    catch (error) { lookupFailed = true; }
     var current = selectedTarget(context);
     if (request !== mediaAvailabilityRequest[context] || productId(current.product) !== dkdId ||
         (context !== "customer" && current.kind !== target.kind) || !pane.isConnected || !sessionModelsEnabled) return;
@@ -876,6 +882,7 @@
     var available = context === "customer"
       ? models.length > 0
       : models.some(function (model) { return model.product_kind === target.kind; }) || (canManage3D() && !!target.kind);
+    if (lookupFailed && !available) { hideStaleMedia(); return; }
     var tab = switcher.querySelector("[data-product-media='model']");
     if (available && !tab) {
       tab = document.createElement("button");
@@ -955,7 +962,9 @@
     var internal = context !== "customer" && canReview3D();
     var manageable = context !== "customer" && !!target.kind && canManage3D();
     var publishable = context !== "customer" && canPublish3D();
-    var models = internal ? await fetchInternalModels(dkdId) : await fetchPublishedModels(dkdId);
+    var models = [], lookupFailed = false;
+    try { models = internal ? await fetchInternalModels(dkdId) : await fetchPublishedModels(dkdId); }
+    catch (error) { lookupFailed = true; }
     var current = selectedTarget(context);
     if (request !== mediaPaneRequest[context] || epoch !== modelCacheEpoch || !sessionModelsEnabled ||
         productId(current.product) !== dkdId ||
@@ -964,6 +973,10 @@
         manageable !== (context !== "customer" && !!current.kind && canManage3D()) ||
         publishable !== (context !== "customer" && canPublish3D())) {
       host.textContent = "表示条件が変わりました。3Dタブを開き直してください。";
+      return;
+    }
+    if (lookupFailed) {
+      host.textContent = "3Dモデルを確認できませんでした。3Dタブを開き直してください。";
       return;
     }
     var visible = context === "customer" ? models : models.filter(function (model) { return model.product_kind === target.kind; });
@@ -1223,7 +1236,12 @@
         (activeContext === "customer" || current.kind === targetKind) &&
         internal === (activeContext !== "customer" && canReview3D());
     }
-    var models = internal ? await fetchInternalModels(targetId) : await fetchPublishedModels(targetId);
+    var models;
+    try { models = internal ? await fetchInternalModels(targetId) : await fetchPublishedModels(targetId); }
+    catch (error) {
+      if (targetStillSelected()) alert("3Dモデルを確認できませんでした。3Dタブを開き直してください。");
+      return;
+    }
     if (!targetStillSelected()) return;
     var model = models.find(function (row) { return String(row.id) === String(modelId); });
     if (!model || (activeContext !== "customer" && model.product_kind !== targetKind)) return;
@@ -1256,7 +1274,7 @@
     elements["product-3d-viewer-autorotate"].setAttribute("aria-pressed", "false");
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await import("./product-3d-viewer.js?v=1.1.1100");
+      var module = await import("./product-3d-viewer.js?v=1.1.1103");
       if (!targetStillSelected()) {
         if (requestId === viewerRequestId) closeViewer();
         return;

@@ -23,6 +23,7 @@ const runtimeScriptPaths = [
 const curatedTranslations = {
   en: {
     "GLBファイルをアップロード": "Upload a GLB file",
+    "3Dモデルを確認できませんでした。3Dタブを開き直してください。": "Could not check the 3D models. Reopen the 3D tab.",
     "3Dで見る": "View in 3D",
     "GLBをアップロード": "Upload GLB",
     "差し替え": "Replace",
@@ -522,6 +523,7 @@ const curatedTranslations = {
   },
   zh: {
     "GLBファイルをアップロード": "上传GLB文件",
+    "3Dモデルを確認できませんでした。3Dタブを開き直してください。": "无法确认3D模型。请重新打开3D标签页。",
     "3Dで見る": "以3D查看",
     "GLBをアップロード": "上传GLB",
     "差し替え": "替换",

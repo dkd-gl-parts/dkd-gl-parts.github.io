@@ -58,6 +58,17 @@ test('generated viewer remains available before the additive migration', async (
   assert.deepEqual(calls, ['product_3d_viewer_models', 'product_3d_models']);
 });
 
+test('a lookup outage is not cached as no registered models', async () => {
+  const rows = {
+    product_3d_viewer_models: { data: null, error: { message: 'network unavailable' } },
+    product_3d_models: { data: null, error: { message: 'network unavailable' } }
+  };
+  const { api } = loadProduct3D(rows);
+  await assert.rejects(api.fetchPublishedModels(42), /3Dモデルを確認できませんでした/);
+  rows.product_3d_viewer_models = { data: [{ id: 'uploaded:123', model_source: 'uploaded' }], error: null };
+  assert.equal((await api.fetchPublishedModels(42)).length, 1);
+});
+
 test('product editor and common viewer controls are wired in the page', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   for (const id of [

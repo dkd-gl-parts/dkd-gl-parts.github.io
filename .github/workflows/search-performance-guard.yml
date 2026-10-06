@@ -59,6 +59,8 @@ jobs:
         run: node scripts/verify-manufacturing-cost-import-history.js
       - name: Verify held pallet parts and partial receipt resume
         run: node scripts/verify-container-held-parts.js
+      - name: Verify Sawafuji abbreviated manufacturer-part linking
+        run: node scripts/verify-sawafuji-short-part.js
       - name: Verify yen currency display
         run: node scripts/verify-yen-currency-display.js
       - name: Verify Edge-compatible automatic updates
