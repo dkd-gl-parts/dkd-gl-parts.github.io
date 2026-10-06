@@ -433,7 +433,16 @@ var TRANSLATIONS = {
     business_workspace_account_updated: "このPCの保存パスワードを更新しました。次回以降の連動では入力不要です。",
     business_workspace_account_cancelled: "登録をキャンセルしました。",
     business_workspace_account_expired: "入力の有効期限（3分）が切れました。ボタンを押して登録画面を開き直してください。",
-    business_workspace_account_failed: "登録を確認できませんでした。このPCの連携アプリ・拡張機能が最新版か確認してください。更新後は、ブラウザを開き直してから再度お試しください。",
+    business_workspace_account_failed: "登録の完了を確認できませんでした。入力画面に保存完了が表示された場合は、再登録せず担当者へ確認してください。（確認コード HBR-09）",
+    business_workspace_account_bridge_unavailable: "このブラウザからPCの連携機能へ接続できません。Chrome／Edgeの「拡張機能の管理」で「D-CATS 管理者用 Windows 連携」が有効か確認し、拡張機能とD-CATSのページを再読み込みしてください。（確認コード HBR-01）",
+    business_workspace_account_extension_update_required: "ブラウザに旧版の連携機能が残っています。「拡張機能の管理」で「D-CATS 管理者用 Windows 連携」を再読み込みし、0.5.3以上になったことを確認後、D-CATSのページを再読み込みしてください。続く場合は連携アプリの更新も必要です。（確認コード HBR-02）",
+    business_workspace_account_native_host_unavailable: "PCの連携アプリを起動できません。連携アプリの導入・修復が必要です。（確認コード HBR-03）",
+    business_workspace_account_device_unavailable: "このPCに、現在のD-CATS利用者の端末登録が見つからないか、読み取れません。担当者へ端末登録の確認を依頼してください。（確認コード HBR-04）",
+    business_workspace_account_authentication_required: "D-CATSの本人確認が切れました。D-CATSへ再度サインインしてから登録を開始してください。（確認コード HBR-05）",
+    business_workspace_account_not_authorized: "現在のD-CATS利用者では、この登録を実行できません。担当者へ権限の確認を依頼してください。（確認コード HBR-06）",
+    business_workspace_account_binding_unavailable: "D-CATS利用者・販売王ID・このPCの対応をサーバーで確認できません。担当者へ対応設定の確認を依頼してください。（確認コード HBR-07）",
+    business_workspace_account_issuer_unavailable: "登録の本人確認サーバーへ接続できないか、処理を完了できません。通信状況を確認し、続く場合は確認コードを担当者へ伝えてください。（確認コード HBR-08）",
+    business_workspace_account_ticket_unavailable: "登録の許可情報を確認できません。PCの日時と時刻同期を確認し、続く場合は担当者へ連絡してください。（確認コード HBR-10）",
     business_workspace_location: "PC上のGoogle Drive（G:）",
     business_workspace_pc_path: "G:\\.shortcut-targets-by-id\\1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ\\D-CATS業務連携",
     business_workspace_open_folder: "Google Drive（Web）",
@@ -2825,7 +2834,16 @@ var TRANSLATIONS = {
     business_workspace_account_updated: "Saved password updated on this PC. Future integration will not ask for it again.",
     business_workspace_account_cancelled: "Registration cancelled.",
     business_workspace_account_expired: "The 3-minute input period expired. Press the button to reopen the registration window.",
-    business_workspace_account_failed: "Registration could not be confirmed. Check that this PC's integration app and extension are up to date. After updating, reopen the browser and try again.",
+    business_workspace_account_failed: "Registration completion could not be confirmed. If the input window showed a saved result, contact support before registering again. (Code HBR-09)",
+    business_workspace_account_bridge_unavailable: "This browser cannot connect to the PC integration. In Chrome/Edge's extension manager, check that D-CATS Windows integration is enabled. Reload the extension and the D-CATS page. (Code HBR-01)",
+    business_workspace_account_extension_update_required: "An older PC integration remains loaded. Reload D-CATS Windows integration in the extension manager, confirm version 0.5.3 or later, then reload the D-CATS page. If this continues, update the PC app too. (Code HBR-02)",
+    business_workspace_account_native_host_unavailable: "The PC integration app could not start. Install or repair it. (Code HBR-03)",
+    business_workspace_account_device_unavailable: "This PC's registration for the current D-CATS user is missing or unreadable. Ask support to check the device registration. (Code HBR-04)",
+    business_workspace_account_authentication_required: "Your D-CATS authentication expired. Sign in to D-CATS again before starting registration. (Code HBR-05)",
+    business_workspace_account_not_authorized: "The current D-CATS user cannot perform this registration. Ask support to check permissions. (Code HBR-06)",
+    business_workspace_account_binding_unavailable: "The server could not verify the D-CATS user, HanbaiOh ID and PC binding. Ask support to check the binding. (Code HBR-07)",
+    business_workspace_account_issuer_unavailable: "The registration authorization server could not be reached or complete the request. Check connectivity and give support this code if it continues. (Code HBR-08)",
+    business_workspace_account_ticket_unavailable: "Registration authorization could not be verified. Check the PC date and time synchronization, then contact support if it continues. (Code HBR-10)",
     business_workspace_location: "Google Drive on this PC (G:)",
     business_workspace_pc_path: "G:\\.shortcut-targets-by-id\\1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ\\D-CATS業務連携",
     business_workspace_open_folder: "Google Drive (Web)",
@@ -5161,7 +5179,16 @@ var TRANSLATIONS = {
     business_workspace_account_updated: "已更新此电脑保存的密码。后续联动无需再次输入。",
     business_workspace_account_cancelled: "已取消登记。",
     business_workspace_account_expired: "3分钟输入期限已过。请点击按钮重新打开登记窗口。",
-    business_workspace_account_failed: "无法确认登记。请确认此电脑的联动应用和扩展为最新版。更新后请重新打开浏览器再试。",
+    business_workspace_account_failed: "无法确认登记完成。若输入窗口已显示保存成功，请先联系负责人，不要再次登记。（确认代码 HBR-09）",
+    business_workspace_account_bridge_unavailable: "此浏览器无法连接电脑联动功能。请在Chrome／Edge的扩展管理中确认D-CATS Windows联动扩展已启用，并重新加载扩展及D-CATS页面。（确认代码 HBR-01）",
+    business_workspace_account_extension_update_required: "浏览器仍加载旧版联动功能。请在扩展管理中重新加载D-CATS Windows联动扩展，确认版本为0.5.3或以上后重新加载D-CATS页面。若仍失败，也需要更新电脑应用。（确认代码 HBR-02）",
+    business_workspace_account_native_host_unavailable: "无法启动电脑联动应用。请安装或修复应用。（确认代码 HBR-03）",
+    business_workspace_account_device_unavailable: "找不到或无法读取当前D-CATS用户在此电脑上的设备登记。请联系负责人确认。（确认代码 HBR-04）",
+    business_workspace_account_authentication_required: "D-CATS身份验证已过期。请重新登录D-CATS后开始登记。（确认代码 HBR-05）",
+    business_workspace_account_not_authorized: "当前D-CATS用户无权执行此登记。请联系负责人确认权限。（确认代码 HBR-06）",
+    business_workspace_account_binding_unavailable: "服务器无法确认D-CATS用户、販売王ID和此电脑的对应关系。请联系负责人确认设置。（确认代码 HBR-07）",
+    business_workspace_account_issuer_unavailable: "无法连接登记身份验证服务器或完成请求。请检查网络，若仍失败请向负责人提供确认代码。（确认代码 HBR-08）",
+    business_workspace_account_ticket_unavailable: "无法确认登记许可信息。请检查电脑日期及时间同步，若仍失败请联系负责人。（确认代码 HBR-10）",
     business_workspace_location: "此电脑的Google Drive（G:）",
     business_workspace_pc_path: "G:\\.shortcut-targets-by-id\\1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ\\D-CATS業務連携",
     business_workspace_open_folder: "Google Drive（网页）",
@@ -14655,8 +14682,13 @@ async function registerDcatsCompanyAccount() {
     if(!isCurrent())return;
     if(result.status==="enrolled"){status.className="ready";status.textContent=t(result.replaced?"business_workspace_account_updated":"business_workspace_account_saved");}
     else{status.className="";status.textContent=t(result.status==="expired"?"business_workspace_account_expired":"business_workspace_account_cancelled");}
-  }catch{
-    if(isCurrent()){status.className="error";status.textContent=t("business_workspace_account_failed");}
+  }catch(error){
+    if(isCurrent()){
+      var reason=error&&error.message;
+      var allowed=["company_bridge_unavailable","company_extension_update_required","company_native_host_unavailable","company_device_unavailable","company_authentication_required","company_not_authorized","company_binding_unavailable","company_issuer_unavailable","company_ticket_unavailable"];
+      var key=allowed.includes(reason)?"business_workspace_account_"+reason.slice("company_".length):"business_workspace_account_failed";
+      status.className="error";status.textContent=t(key);
+    }
   }finally{dcatsCompanyAccountBusy=false;button.disabled=false;button.removeAttribute("aria-busy");syncDcatsCompanyAccountControls();}
 }
 
