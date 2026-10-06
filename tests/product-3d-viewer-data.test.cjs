@@ -158,3 +158,30 @@ test('a usable generated model also clears an older generation failure prompt', 
   assert.doesNotMatch(html, /GLBファイルをアップロードしてください/);
   assert.match(html, /data-open-model='18'/);
 });
+
+test('Tripo origin keeps the common GLB Viewer and system-admin-only asset actions', async () => {
+  const row = { id: 'uploaded:tripo', product_kind: 'rebuilt', model_source: 'generated',
+    status: 'published', published_model_path: 'uploaded/tripo.glb' };
+  const admin = await renderAdminModels([row]);
+  assert.match(admin, /Tripo生成/);
+  assert.match(admin, /data-open-model='uploaded:tripo'/);
+  assert.match(admin, /data-replace-uploaded='tripo'/);
+  assert.match(admin, /data-delete-uploaded='tripo'/);
+  assert.doesNotMatch(admin, /data-publish-model|撮影を再開/);
+  const reader = await renderAdminModels([row], false);
+  assert.match(reader, /data-open-model='uploaded:tripo'/);
+  assert.doesNotMatch(reader, /data-replace-uploaded|data-delete-uploaded/);
+});
+
+test('internal normalization preserves server-verified origin without changing storage IDs', () => {
+  const source = fs.readFileSync(path.join(__dirname, '..', 'product-3d.js'), 'utf8');
+  const start = source.indexOf('  function normalizeUploadedModel(');
+  const end = source.indexOf('  async function fetchInternalModels(', start);
+  const normalize = vm.runInNewContext(`${source.slice(start, end)}\nnormalizeUploadedModel`);
+  for (const [origin, expected] of [['generated', 'generated'], ['uploaded', 'uploaded'], [undefined, 'uploaded'], ['fake', 'uploaded']]) {
+    const model = normalize({ id: 'test', model_source: origin, storage_path: 'uploaded/test.glb' });
+    assert.equal(model.id, 'uploaded:test');
+    assert.equal(model.model_source, expected);
+    assert.equal(model.published_model_path, 'uploaded/test.glb');
+  }
+});

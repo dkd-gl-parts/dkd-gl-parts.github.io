@@ -93,8 +93,8 @@ requireText(viewer, "loader.parseAsync(options.buffer, '')", "Common Viewer loca
   ".in(\"dkd_shohin_id\", batch)",
   "batch.forEach(function (id) { modelBadgeCache[String(id)] = false; });",
   "if (missing.length > batch.length) scheduleBadgeRefresh();",
-  "publishable && model.model_source !== \"uploaded\" && model.status === \"review\"",
-  "manageable && model.model_source !== \"uploaded\" && [\"draft\", \"needs_capture\", \"failed\"].indexOf(model.status) >= 0",
+  "publishable && !glbAsset && model.status === \"review\"",
+  "manageable && !glbAsset && [\"draft\", \"needs_capture\", \"failed\"].indexOf(model.status) >= 0",
   "draft: \"撮影途中\"",
   "refreshMediaAvailability",
   "product_3d_viewer_models",
@@ -149,7 +149,7 @@ if (client.includes('return kind === "aftermarket_new" ? kind : "rebuilt"')) thr
 [
   'typeof canManageProduct3DGlb === "function" && canManageProduct3DGlb()',
   'glbManageable !== (context !== "customer" && !!current.kind && canManageGlb())',
-  'if (glbManageable && model.model_source === "uploaded")',
+  'if (glbManageable && glbAsset)',
   'if (!canManageGlb()) { deny3D("upload_product_3d_glb"); return; }',
   'selected.kind !== target.kind || !canManageGlb()',
   'if (!canManageGlb()) { deny3D("delete_product_3d_glb"); return; }'
