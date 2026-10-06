@@ -423,11 +423,12 @@ var TRANSLATIONS = {
     sales_order_mgmt_note: "注文受付、B2発送データ取込、現場の製造シリアル照合を管理します。",
     business_workspace_open: "業務連携",
     business_workspace_title: "D-CATS業務連携",
-    business_workspace_location: "Google Drive 共有フォルダ",
-    business_workspace_open_folder: "共有フォルダを開く",
-    business_workspace_create_shortcut: "デスクトップ用ショートカットを取得",
-    business_workspace_downloaded: "デスクトップ用ショートカットのダウンロードを開始しました。",
-    business_workspace_failed: "ショートカットを取得できませんでした。「共有フォルダを開く」からGoogle Driveを利用できます。",
+    business_workspace_location: "PC上のGoogle Drive（G:）",
+    business_workspace_pc_path: "G:\\.shortcut-targets-by-id\\1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ\\D-CATS業務連携",
+    business_workspace_open_folder: "Google Drive（Web）",
+    business_workspace_create_shortcut: "フォルダのショートカットを取得",
+    business_workspace_downloaded: "フォルダ用ショートカット（.lnk）のダウンロードを開始しました。",
+    business_workspace_failed: "ショートカットを取得できませんでした。「Google Drive（Web）」から共有フォルダを利用できます。",
     business_workspace_b2_title: "B2 CSV保存先",
     business_workspace_b2_path: "D-CATS業務連携 / B2 / 01_D-CATS発行",
     business_workspace_b2_hint: "Google Drive for desktopで同期しているフォルダを選択します。初回発行と再発行は同じ場所へ保存されます。",
@@ -2772,11 +2773,12 @@ var TRANSLATIONS = {
     sales_order_mgmt_note: "Manage order acceptance, B2 shipping-data imports, and shop-floor serial verification.",
     business_workspace_open: "Shared Folder",
     business_workspace_title: "D-CATS Business Exchange",
-    business_workspace_location: "Shared Google Drive folder",
-    business_workspace_open_folder: "Open Shared Folder",
-    business_workspace_create_shortcut: "Get Desktop Shortcut",
-    business_workspace_downloaded: "The desktop shortcut download has started.",
-    business_workspace_failed: "The shortcut could not be downloaded. Use Open Shared Folder to access Google Drive.",
+    business_workspace_location: "Google Drive on this PC (G:)",
+    business_workspace_pc_path: "G:\\.shortcut-targets-by-id\\1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ\\D-CATS業務連携",
+    business_workspace_open_folder: "Google Drive (Web)",
+    business_workspace_create_shortcut: "Get Folder Shortcut",
+    business_workspace_downloaded: "The folder shortcut (.lnk) download has started.",
+    business_workspace_failed: "The shortcut could not be downloaded. Use Google Drive (Web) to access the shared folder.",
     business_workspace_b2_title: "B2 CSV Save Folder",
     business_workspace_b2_path: "D-CATS Business Exchange / B2 / 01_D-CATS Issue",
     business_workspace_b2_hint: "Select the folder synced by Google Drive for desktop. Initial issues and reissues are saved to the same location.",
@@ -5065,11 +5067,12 @@ var TRANSLATIONS = {
     sales_order_mgmt_note: "管理订单受理、B2发货数据导入和现场序列号核对。",
     business_workspace_open: "业务协作",
     business_workspace_title: "D-CATS业务协作",
-    business_workspace_location: "Google Drive共享文件夹",
-    business_workspace_open_folder: "打开共享文件夹",
-    business_workspace_create_shortcut: "获取桌面快捷方式",
-    business_workspace_downloaded: "已开始下载桌面快捷方式。",
-    business_workspace_failed: "无法下载快捷方式。请使用“打开共享文件夹”访问Google Drive。",
+    business_workspace_location: "此电脑的Google Drive（G:）",
+    business_workspace_pc_path: "G:\\.shortcut-targets-by-id\\1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ\\D-CATS業務連携",
+    business_workspace_open_folder: "Google Drive（网页）",
+    business_workspace_create_shortcut: "获取文件夹快捷方式",
+    business_workspace_downloaded: "已开始下载文件夹快捷方式（.lnk）。",
+    business_workspace_failed: "无法下载快捷方式。请使用“Google Drive（网页）”访问共享文件夹。",
     business_workspace_b2_title: "B2 CSV保存位置",
     business_workspace_b2_path: "D-CATS业务协作 / B2 / 01_D-CATS发行",
     business_workspace_b2_hint: "请选择Google Drive桌面版同步的文件夹。首次发行和重新发行将保存到同一位置。",
@@ -7175,7 +7178,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1101";
+var APP_VERSION       = "v1.1.1102";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -14048,7 +14051,8 @@ function salesOrderB2PreflightNeedsContractSettings(preflight) {
 }
 
 var DCATS_BUSINESS_WORKSPACE_URL = "https://drive.google.com/drive/folders/1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ";
-var DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME = "D-CATS\u696d\u52d9\u9023\u643a.url";
+var DCATS_BUSINESS_WORKSPACE_SHORTCUT_URL = "assets/integrations/dcats-business-workspace.lnk";
+var DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME = "D-CATS\u696d\u52d9\u9023\u643a.lnk";
 var DCATS_BUSINESS_WORKSPACE_DIRECTORY_NAME = "D-CATS\u696d\u52d9\u9023\u643a";
 var DCATS_B2_DIRECTORY_NAME = "B2";
 var DCATS_B2_EXPORT_DIRECTORY_NAME = "01_D-CATS\u767a\u884c";
@@ -14468,23 +14472,17 @@ function closeDcatsBusinessWorkspace() {
   dcatsBusinessWorkspaceTrigger = null;
 }
 
-function downloadDcatsBusinessWorkspaceShortcut(contents) {
-  var blobUrl = URL.createObjectURL(new Blob([contents], { type: "text/plain;charset=utf-8" }));
+function downloadDcatsBusinessWorkspaceShortcut() {
   var link;
   try {
     link = document.createElement("a");
-    link.href = blobUrl;
+    link.href = DCATS_BUSINESS_WORKSPACE_SHORTCUT_URL + "?v=" + encodeURIComponent(APP_VERSION);
     link.download = DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME;
     document.body.appendChild(link);
     link.click();
   } finally {
     if (link) link.remove();
-    window.setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
   }
-}
-
-function dcatsBusinessWorkspaceShortcutContents() {
-  return "[InternetShortcut]\r\nURL=" + DCATS_BUSINESS_WORKSPACE_URL + "\r\n";
 }
 
 function createDcatsBusinessWorkspaceShortcut() {
@@ -14493,8 +14491,7 @@ function createDcatsBusinessWorkspaceShortcut() {
   if (button) button.disabled = true;
   try {
     // Browsers restrict shortcut writes through the file API; use a user download.
-    var contents = dcatsBusinessWorkspaceShortcutContents();
-    downloadDcatsBusinessWorkspaceShortcut(contents);
+    downloadDcatsBusinessWorkspaceShortcut();
     setDcatsBusinessWorkspaceMessage(t("business_workspace_downloaded"), false);
   } catch (error) {
     setDcatsBusinessWorkspaceMessage(t("business_workspace_failed"), true);
