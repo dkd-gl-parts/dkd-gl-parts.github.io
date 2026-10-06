@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
+const { createHash } = require("crypto");
 const YAML = require("yaml");
 
 const root = path.resolve(__dirname, "..");
@@ -39,12 +40,34 @@ for (const id of [
 const driveUrl = "https://drive.google.com/drive/folders/1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ";
 assert(html.includes(`href="${driveUrl}"`), "The shared Google Drive folder link is missing");
 assert(source.includes(`var DCATS_BUSINESS_WORKSPACE_URL = "${driveUrl}"`), "The shortcut target does not match the shared folder");
-assert(!fs.existsSync(path.join(root, "assets", "integrations", "dcats-business-workspace.lnk")), "The machine-specific G-drive shortcut must not be distributed");
-assert(source.includes('var DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME = "D-CATS\\u696d\\u52d9\\u9023\\u643a.url"'), "The portable shortcut needs a stable Japanese file name");
-assert(html.includes("デスクトップ用ショートカットを取得"), "The UI must describe download rather than claiming desktop placement");
+const assetPath = "assets/integrations/dcats-business-workspace.lnk";
+const target = "G:\\.shortcut-targets-by-id\\1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ\\D-CATS業務連携";
+assert(source.includes(`var DCATS_BUSINESS_WORKSPACE_SHORTCUT_URL = "${assetPath}"`), "The download must use the verified folder-link asset");
+assert(source.includes('var DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME = "D-CATS\\u696d\\u52d9\\u9023\\u643a.lnk"'), "The folder shortcut needs a stable Japanese file name");
+assert(html.includes("フォルダのショートカットを取得"), "The UI must describe download rather than claiming desktop placement");
+assert(html.includes("PC上のGoogle Drive（G:）") && html.includes(`title="${target}"`), "The PC-specific target must be explicit");
+assert(html.includes("Google Drive（Web）"), "The web-folder action must be distinct from the PC-folder shortcut");
+const binary = fs.readFileSync(path.join(root, assetPath));
+assert(createHash("sha256").update(binary).digest("hex") === "8d5f4312b2ac441aea976b06c66d3615f8fb22a1a8a43bc1da37b49487327764", "The Windows-verified shortcut bytes changed; regenerate and read back on the approved PC");
+assert(binary.readUInt32LE(0) === 76 && binary.subarray(4, 20).toString("hex") === "0114020000000000c000000000000046", "The asset must be a Windows Shell Link");
+assert(binary.readUInt32LE(20) === 0x740195 && binary.readUInt32LE(24) === 0x10 && binary.readUInt32LE(60) === 1, "The link must target a folder with tracking disabled, no arguments or elevation");
+let offset = 78 + binary.readUInt16LE(76);
+function unicodeString() {
+  const length = binary.readUInt16LE(offset);
+  offset += 2;
+  const value = binary.subarray(offset, offset + length * 2).toString("utf16le");
+  offset += length * 2;
+  return value;
+}
+assert(unicodeString() === "D-CATS business-exchange shared folder (Google Drive G:)", "The description is unexpected");
+assert(unicodeString() === target, "The working directory must be the approved folder");
+assert(offset + 4 === binary.length && binary.readUInt32LE(offset) === 0, "Machine IDs, tracker blocks and other ExtraData must not be distributed");
+const headers = fs.readFileSync(path.join(root, "_headers"), "utf8");
+const attachmentHeaders = headers.split(`/` + assetPath)[1]?.split(/\r?\n\r?\n/)[0] || "";
+assert(attachmentHeaders.includes("Content-Type: application/octet-stream") && attachmentHeaders.includes("filename*=UTF-8''D-CATS%E6%A5%AD%E5%8B%99%E9%80%A3%E6%90%BA.lnk") && attachmentHeaders.includes("Cache-Control: no-cache"), "The folder asset must download with an explicit UTF-8 filename and no stale cache");
 const shortcutSource = sourceBetween("function downloadDcatsBusinessWorkspaceShortcut", "function updateSalesOrderSelectionButtons");
 assert(!shortcutSource.includes("showSaveFilePicker") && !shortcutSource.includes("showDirectoryPicker"), "Shortcut writes must not use the browser's restricted file API");
-assert(!shortcutSource.includes("fetch(") && !shortcutSource.includes("createWritable"), "Shortcut creation must not fetch a machine-specific asset or write an unapproved path");
+assert(!shortcutSource.includes("fetch(") && !shortcutSource.includes("createWritable") && !shortcutSource.includes("createObjectURL"), "Shortcut creation must use a direct attachment download, without file writes or blob URLs");
 assert(shortcutSource.includes("link.download = DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME"), "The shortcut must use an explicit download filename");
 assert(source.includes('var DCATS_B2_EXPORT_DIRECTORY_NAME = "01_D-CATS\\u767a\\u884c"'), "The B2 issue-folder name is not fixed");
 assert(source.includes('id: "dcats-b2-csv-export"'), "The B2 folder picker does not have a stable browser identity");
@@ -88,30 +111,20 @@ const elements = {
   }
 };
 const timers = [];
-const blobs = [];
 const anchors = [];
-const revoked = [];
 let downloads = 0;
 let failClick = false;
-let failBlob = false;
+let failAppend = false;
 const context = {
-  Blob,
+  APP_VERSION: "v-test",
   fetch: () => { throw new Error("Shortcut creation must not make network requests"); },
   t: (key) => ({
     business_workspace_downloaded: "Download started",
     business_workspace_failed: "Download failed"
   })[key] || key,
-  URL: {
-    createObjectURL: (blob) => {
-      if (failBlob) throw new Error("Blob unavailable");
-      blobs.push(blob);
-      return `blob:test-${blobs.length}`;
-    },
-    revokeObjectURL: (url) => revoked.push(url)
-  },
   document: {
     activeElement: null,
-    body: { appendChild: () => {} },
+    body: { appendChild: () => { if (failAppend) throw new Error("DOM unavailable"); } },
     createElement: (tag) => {
       assert(tag === "a", "Shortcut creation must use a download link");
       const anchor = {
@@ -139,18 +152,15 @@ function flushTimers() {
 }
 
 (async () => {
-  const expected = `[InternetShortcut]\r\nURL=${driveUrl}\r\n`;
-  assert(context.dcatsBusinessWorkspaceShortcutContents() === expected, "The shortcut must contain only the fixed shared-folder URL, with Windows line endings");
   context.createDcatsBusinessWorkspaceShortcut();
   assert(downloads === 1, "One click must request one download");
-  assert(anchors[0].download === "D-CATS業務連携.url", "The portable shortcut filename changed");
-  assert(await blobs[0].text() === expected, "The downloaded shortcut content differs from the fixed URL");
-  assert(blobs[0].type === "text/plain;charset=utf-8", "The shortcut must be a plain-text InternetShortcut");
+  assert(anchors[0].download === "D-CATS業務連携.lnk", "The folder shortcut filename changed");
+  assert(anchors[0].href === assetPath + "?v=v-test", "The attachment must be same-origin and versioned");
   assert(elements["dcats-business-workspace-message"].textContent === "Download started", "The UI must confirm initiation, not unverified desktop placement");
   context.createDcatsBusinessWorkspaceShortcut();
   assert(downloads === 1, "Rapid repeat clicks must not create duplicate downloads");
   flushTimers();
-  assert(anchors[0].removed && revoked.includes(anchors[0].href), "Download anchors and object URLs must be cleaned up");
+  assert(anchors[0].removed, "The download anchor must be cleaned up");
   assert(!elements["dcats-business-workspace-shortcut"].disabled, "The shortcut button must become available again");
 
   delete context.window.showSaveFilePicker;
@@ -163,15 +173,16 @@ function flushTimers() {
   assert(elements["dcats-business-workspace-message"].className.endsWith(" error"), "A rejected download must have an error state");
   assert(elements["dcats-business-workspace-message"].textContent === "Download failed", "A rejected download must not report success");
   flushTimers();
-  assert(anchors[2].removed && revoked.includes(anchors[2].href), "Failed downloads must clean up their anchor and blob URL");
+  assert(anchors[2].removed, "Failed downloads must clean up their anchor");
   assert(!elements["dcats-business-workspace-shortcut"].disabled, "Failed downloads must allow an explicit retry");
   failClick = false;
-  failBlob = true;
+  failAppend = true;
   context.createDcatsBusinessWorkspaceShortcut();
-  assert(downloads === 2, "Blob failure must not trigger a download");
-  assert(elements["dcats-business-workspace-message"].textContent === "Download failed", "Blob failure must be reported");
+  assert(downloads === 2, "DOM failure must not trigger a download");
+  assert(anchors[3].removed, "DOM failures must also clean up the temporary anchor");
+  assert(elements["dcats-business-workspace-message"].textContent === "Download failed", "DOM failure must be reported");
   flushTimers();
-  failBlob = false;
+  failAppend = false;
   context.createDcatsBusinessWorkspaceShortcut();
   assert(downloads === 3, "An explicit retry after failure must work");
   assert(!elements["dcats-business-workspace-message"].className.endsWith(" error"), "A successful retry must clear the old error state");
@@ -183,7 +194,7 @@ function flushTimers() {
   assert(elements["dcats-business-workspace-message"].textContent === "", "Reopening the dialog must clear stale messages");
   context.closeDcatsBusinessWorkspace();
   assert(!visibleClasses.has("show") && triggerFocused, "Closing the workspace must restore focus to the menu action");
-  console.log("Business workspace shortcut verification passed (portable URL, download, repeat-click guard, cleanup, failures, retry, modal focus, CSV save-folder guards).");
+  console.log("Business workspace shortcut verification passed (verified PC folder, tracking-free binary, attachment headers, download, repeat-click guard, cleanup, failures, retry, focus, CSV save-folder guards).");
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;
