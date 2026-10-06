@@ -26,7 +26,8 @@ test('3D capture and Viewer titles use product ID, never another company managem
   assert.equal(title(product), '商品ID 2639');
   assert.doesNotMatch(title(product), /ALDK30220/);
   assert.match(source, /product-3d-capture-context"\]\.textContent = productTitle\(target\.product\)/);
-  assert.match(source, /product-3d-viewer-title"\]\.textContent = productTitle\(target\.product\)/);
+  assert.match(source, /showCommonViewer\(\{ url: signed\.data\.signedUrl \},\s*productTitle\(target\.product\)/);
+  assert.match(source, /product-3d-viewer-title"\]\.textContent = title/);
 });
 
 test('manufacturer and genuine numbers are only supplemental, in both languages', () => {
