@@ -31,6 +31,8 @@ for (const id of [
   "dcats-business-workspace-b2-state",
   "dcats-business-workspace-b2-directory",
   "dcats-business-workspace-b2-select",
+  "dcats-business-workspace-b2-warning",
+  "dcats-business-workspace-b2-permission-hint",
   "dcats-business-workspace-message",
   "dcats-business-workspace-cancel"
 ]) {
@@ -106,6 +108,10 @@ let triggerFocused = false;
 const elements = {
   "dcats-business-workspace-shortcut": { disabled: false, focus: () => { shortcutFocused = true; } },
   "dcats-business-workspace-message": { textContent: "", className: "" },
+  "dcats-business-workspace-b2-state": { textContent: "", className: "" },
+  "dcats-business-workspace-b2-directory": { textContent: "" },
+  "dcats-business-workspace-b2-permission-hint": { textContent: "" },
+  "dcats-business-workspace-b2-select": { textContent: "", disabled: false },
   "dcats-business-workspace-overlay": {
     classList: { add: (value) => visibleClasses.add(value), remove: (value) => visibleClasses.delete(value) }
   }
@@ -194,7 +200,52 @@ function flushTimers() {
   assert(elements["dcats-business-workspace-message"].textContent === "", "Reopening the dialog must clear stale messages");
   context.closeDcatsBusinessWorkspace();
   assert(!visibleClasses.has("show") && triggerFocused, "Closing the workspace must restore focus to the menu action");
-  console.log("Business workspace shortcut verification passed (verified PC folder, tracking-free binary, attachment headers, download, repeat-click guard, cleanup, failures, retry, focus, CSV save-folder guards).");
+
+  // A remembered picker location is not proof of a stored handle or write permission.
+  context.window.indexedDB = {};
+  context.window.showDirectoryPicker = () => { throw new Error("Displaying the save-folder state must not open a picker"); };
+  context.storeDcatsB2ExportDirectory = () => { throw new Error("Displaying the state must not replace the stored handle"); };
+  let reads = 0;
+  let failRead = true;
+  let permission = "granted";
+  const storedHandle = {
+    name: "01_D-CATS発行",
+    queryPermission: async (options) => {
+      assert(options.mode === "readwrite", "State display must check write permission");
+      return permission;
+    },
+    requestPermission: () => { throw new Error("State display must not prompt for permission"); }
+  };
+  context.dcatsB2ExportDirectoryLoaded = false;
+  context.readStoredDcatsB2ExportDirectory = async () => {
+    reads += 1;
+    if (failRead) throw new Error("Synthetic storage read failure");
+    return storedHandle;
+  };
+  context.openDcatsBusinessWorkspace({ currentTarget: trigger });
+  await new Promise(resolve => setImmediate(resolve));
+  assert(elements["dcats-business-workspace-b2-state"].textContent === "business_workspace_b2_read_failed", "Read failure must be distinct from a missing registration");
+  assert(!context.dcatsB2ExportDirectoryLoaded, "Read failure must not cache an empty setting");
+  context.closeDcatsBusinessWorkspace();
+  failRead = false;
+  context.openDcatsBusinessWorkspace({ currentTarget: trigger });
+  await new Promise(resolve => setImmediate(resolve));
+  assert(reads === 2 && context.dcatsB2ExportDirectoryHandle === storedHandle, "Reopening after failure must recover the original stored handle");
+  assert(elements["dcats-business-workspace-b2-state"].textContent === "business_workspace_b2_ready", "A granted stored handle must render as allowed");
+  assert(elements["dcats-business-workspace-b2-directory"].textContent.endsWith("01_D-CATS発行"), "The registered folder name must remain visible");
+  assert(elements["dcats-business-workspace-b2-select"].textContent === "business_workspace_b2_change", "Allowed folders must only offer optional reselection");
+  permission = "prompt";
+  await context.refreshDcatsB2ExportDirectoryState();
+  assert(elements["dcats-business-workspace-b2-state"].textContent === "business_workspace_b2_permission", "Existing registration with lost permission must remain distinct from missing registration");
+  assert(elements["dcats-business-workspace-b2-directory"].textContent.endsWith("01_D-CATS発行"), "Permission loss must not hide the registered folder");
+  context.dcatsB2ExportDirectoryLoaded = false;
+  context.readStoredDcatsB2ExportDirectory = async () => null;
+  await context.refreshDcatsB2ExportDirectoryState();
+  assert(elements["dcats-business-workspace-b2-state"].textContent === "business_workspace_b2_unset", "No stored handle must require explicit confirmation");
+  assert(elements["dcats-business-workspace-b2-directory"].textContent === "", "No registration must not invent an actual registered path");
+  assert(!elements["dcats-business-workspace-b2-select"].disabled, "A missing registration must allow explicit confirmation");
+  context.closeDcatsBusinessWorkspace();
+  console.log("Business workspace verification passed (shortcut binary/headers/download/cleanup/focus, CSV folder guards, stored handle display, permission loss, missing registration, read-failure recovery without picker or writes).");
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;
