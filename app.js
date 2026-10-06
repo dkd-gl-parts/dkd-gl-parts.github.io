@@ -423,25 +423,26 @@ var TRANSLATIONS = {
     sales_order_mgmt_note: "注文受付、B2発送データ取込、現場の製造シリアル照合を管理します。",
     business_workspace_open: "業務連携",
     business_workspace_title: "D-CATS業務連携",
-    business_workspace_location: "Google Drive 共有フォルダ",
-    business_workspace_open_folder: "共有フォルダを開く",
-    business_workspace_create_shortcut: "デスクトップ用ショートカットを取得",
-    business_workspace_downloaded: "デスクトップ用ショートカットのダウンロードを開始しました。",
-    business_workspace_failed: "ショートカットを取得できませんでした。「共有フォルダを開く」からGoogle Driveを利用できます。",
-    business_workspace_shortcut_hint: "PC版Google Driveがない場合も「共有フォルダを開く」からブラウザで利用できます。PCの同期フォルダを開くには、PC版Driveの導入と同期先の設定が必要です。",
+    business_workspace_location: "PC上のGoogle Drive（G:）",
+    business_workspace_pc_path: "G:\\.shortcut-targets-by-id\\1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ\\D-CATS業務連携",
+    business_workspace_open_folder: "Google Drive（Web）",
+    business_workspace_create_shortcut: "フォルダのショートカットを取得",
+    business_workspace_downloaded: "フォルダ用ショートカット（.lnk）のダウンロードを開始しました。",
+    business_workspace_failed: "ショートカットを取得できませんでした。「Google Drive（Web）」から共有フォルダを利用できます。",
+    business_workspace_shortcut_hint: "PC版Google Driveがない場合も「Google Drive（Web）」からブラウザで利用できます。フォルダ用ショートカットは、このPCのG:ドライブを参照します。",
     business_workspace_drive_support: "PC版Google Driveの設定・困ったとき",
     business_workspace_drive_intro: "同期フォルダへ自動保存するには、PC版Google Driveを導入し、共有フォルダの保存先を設定します。",
     business_workspace_drive_install_title: "PC版Google Driveを導入する",
     business_workspace_drive_install_text: "Google公式の手順でインストールし、共有フォルダを利用できる業務用Googleアカウントでログインします。",
     business_workspace_drive_install_link: "Google公式の導入手順",
     business_workspace_drive_folder_title: "共有フォルダをPCで表示する",
-    business_workspace_drive_folder_text: "「共有フォルダを開く」でD-CATS業務連携を表示します。必要に応じてフォルダの「ドライブにショートカットを追加」からマイドライブへ追加し、エクスプローラーで表示を確認します。",
+    business_workspace_drive_folder_text: "「Google Drive（Web）」でD-CATS業務連携を表示します。必要に応じてフォルダの「ドライブにショートカットを追加」からマイドライブへ追加し、エクスプローラーで表示を確認します。",
     business_workspace_drive_folder_link: "Google公式のフォルダ追加手順",
     business_workspace_drive_save_title: "D-CATSの保存先を設定する",
     business_workspace_drive_save_text: "B2はこの画面の「B2 CSVの保存フォルダを選ぶ」、販売王CSVは「販売王連携」の保存先設定から、PC上の既存のD-CATS業務連携フォルダを選択します。PCごと・ブラウザごとに設定してください。",
     business_workspace_drive_help_title: "うまく設定できない場合",
     business_workspace_drive_no_install_title: "インストールできない",
-    business_workspace_drive_no_install_text: "社内管理者へPC版Driveの導入を依頼してください。導入までの間は「共有フォルダを開く」からブラウザで利用できます。",
+    business_workspace_drive_no_install_text: "社内管理者へPC版Driveの導入を依頼してください。導入までの間は「Google Drive（Web）」からブラウザで利用できます。",
     business_workspace_drive_no_folder_title: "共有フォルダが表示されない",
     business_workspace_drive_no_folder_text: "ブラウザとPC版Driveが共有先のGoogleアカウントでログインしているか、PC版Driveが起動しているか確認します。アクセスできない場合は、共有フォルダの管理者へ権限を確認してください。",
     business_workspace_drive_no_picker_title: "保存先を選べない・再接続が必要",
@@ -2791,25 +2792,26 @@ var TRANSLATIONS = {
     sales_order_mgmt_note: "Manage order acceptance, B2 shipping-data imports, and shop-floor serial verification.",
     business_workspace_open: "Shared Folder",
     business_workspace_title: "D-CATS Business Exchange",
-    business_workspace_location: "Shared Google Drive folder",
-    business_workspace_open_folder: "Open Shared Folder",
-    business_workspace_create_shortcut: "Get Desktop Shortcut",
-    business_workspace_downloaded: "The desktop shortcut download has started.",
-    business_workspace_failed: "The shortcut could not be downloaded. Use Open Shared Folder to access Google Drive.",
-    business_workspace_shortcut_hint: "Without Google Drive for desktop, use Open Shared Folder to access files in your browser. Opening the synced folder on your PC requires Drive installation and sync-folder setup.",
+    business_workspace_location: "Google Drive on this PC (G:)",
+    business_workspace_pc_path: "G:\\.shortcut-targets-by-id\\1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ\\D-CATS業務連携",
+    business_workspace_open_folder: "Google Drive (Web)",
+    business_workspace_create_shortcut: "Get Folder Shortcut",
+    business_workspace_downloaded: "The folder shortcut (.lnk) download has started.",
+    business_workspace_failed: "The shortcut could not be downloaded. Use Google Drive (Web) to access the shared folder.",
+    business_workspace_shortcut_hint: "Without Google Drive for desktop, use Google Drive (Web) in your browser. The folder shortcut targets this PC's G: drive.",
     business_workspace_drive_support: "Google Drive for desktop setup and help",
     business_workspace_drive_intro: "To save automatically to a synced folder, install Google Drive for desktop and configure the shared save folder.",
     business_workspace_drive_install_title: "Install Google Drive for desktop",
     business_workspace_drive_install_text: "Follow Google's official instructions, then sign in with the work Google account that can access the shared folder.",
     business_workspace_drive_install_link: "Google's installation guide",
     business_workspace_drive_folder_title: "Show the shared folder on your PC",
-    business_workspace_drive_folder_text: "Open Shared Folder to view D-CATS業務連携. If needed, use Add shortcut to Drive to add it to My Drive, then check that it appears in File Explorer.",
+    business_workspace_drive_folder_text: "Use Google Drive (Web) to view D-CATS業務連携. If needed, use Add shortcut to Drive to add it to My Drive, then check that it appears in File Explorer.",
     business_workspace_drive_folder_link: "Google's folder shortcut guide",
     business_workspace_drive_save_title: "Set the D-CATS save folder",
     business_workspace_drive_save_text: "For B2, use Choose B2 CSV Save Folder here. For Sales King CSVs, use the save-folder settings in Sales King Integration. Select the existing synced D-CATS業務連携 folder on each PC and browser.",
     business_workspace_drive_help_title: "Troubleshooting",
     business_workspace_drive_no_install_title: "Installation is unavailable",
-    business_workspace_drive_no_install_text: "Ask your IT administrator to install Drive for desktop. Until then, use Open Shared Folder to access files in your browser.",
+    business_workspace_drive_no_install_text: "Ask your IT administrator to install Drive for desktop. Until then, use Google Drive (Web) to access files in your browser.",
     business_workspace_drive_no_folder_title: "The shared folder is missing",
     business_workspace_drive_no_folder_text: "Check that your browser and Drive for desktop use the Google account with shared-folder access, and that Drive is running. Ask the folder administrator about access if you cannot open it.",
     business_workspace_drive_no_picker_title: "Cannot select a folder or reconnection is needed",
@@ -5103,25 +5105,26 @@ var TRANSLATIONS = {
     sales_order_mgmt_note: "管理订单受理、B2发货数据导入和现场序列号核对。",
     business_workspace_open: "业务协作",
     business_workspace_title: "D-CATS业务协作",
-    business_workspace_location: "Google Drive共享文件夹",
-    business_workspace_open_folder: "打开共享文件夹",
-    business_workspace_create_shortcut: "获取桌面快捷方式",
-    business_workspace_downloaded: "已开始下载桌面快捷方式。",
-    business_workspace_failed: "无法下载快捷方式。请使用“打开共享文件夹”访问Google Drive。",
-    business_workspace_shortcut_hint: "未安装Google Drive桌面版时，可通过“打开共享文件夹”在浏览器中使用。在电脑上打开同步文件夹需要安装Drive并设置同步位置。",
+    business_workspace_location: "此电脑的Google Drive（G:）",
+    business_workspace_pc_path: "G:\\.shortcut-targets-by-id\\1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ\\D-CATS業務連携",
+    business_workspace_open_folder: "Google Drive（网页）",
+    business_workspace_create_shortcut: "获取文件夹快捷方式",
+    business_workspace_downloaded: "已开始下载文件夹快捷方式（.lnk）。",
+    business_workspace_failed: "无法下载快捷方式。请使用“Google Drive（网页）”访问共享文件夹。",
+    business_workspace_shortcut_hint: "未安装Google Drive桌面版时，可通过“Google Drive（网页）”在浏览器中使用。文件夹快捷方式指向此电脑的G:盘。",
     business_workspace_drive_support: "Google Drive桌面版设置与帮助",
     business_workspace_drive_intro: "要自动保存到同步文件夹，请安装Google Drive桌面版并设置共享保存位置。",
     business_workspace_drive_install_title: "安装Google Drive桌面版",
     business_workspace_drive_install_text: "按照Google官方说明安装，并使用可访问共享文件夹的工作Google帐号登录。",
     business_workspace_drive_install_link: "Google官方安装说明",
     business_workspace_drive_folder_title: "在电脑上显示共享文件夹",
-    business_workspace_drive_folder_text: "点击“打开共享文件夹”查看D-CATS業務連携。必要时使用“添加快捷方式到云端硬盘”将文件夹添加到我的云端硬盘，然后在文件资源管理器中确认。",
+    business_workspace_drive_folder_text: "点击“Google Drive（网页）”查看D-CATS業務連携。必要时使用“添加快捷方式到云端硬盘”将文件夹添加到我的云端硬盘，然后在文件资源管理器中确认。",
     business_workspace_drive_folder_link: "Google官方文件夹快捷方式说明",
     business_workspace_drive_save_title: "设置D-CATS保存位置",
     business_workspace_drive_save_text: "B2请使用此画面的“选择B2 CSV保存文件夹”，销售王CSV请在“销售王联动”的保存位置设置中选择电脑上已有的D-CATS業務連携同步文件夹。每台电脑、每个浏览器都需要设置。",
     business_workspace_drive_help_title: "设置遇到问题时",
     business_workspace_drive_no_install_title: "无法安装",
-    business_workspace_drive_no_install_text: "请联系公司IT管理员安装Drive桌面版。安装前可通过“打开共享文件夹”在浏览器中使用。",
+    business_workspace_drive_no_install_text: "请联系公司IT管理员安装Drive桌面版。安装前可通过“Google Drive（网页）”在浏览器中使用。",
     business_workspace_drive_no_folder_title: "找不到共享文件夹",
     business_workspace_drive_no_folder_text: "请确认浏览器与Drive桌面版使用有共享访问权限的Google帐号，并确认Drive正在运行。如无法打开，请联系共享文件夹管理员确认权限。",
     business_workspace_drive_no_picker_title: "无法选择保存位置或需要重新连接",
@@ -7232,7 +7235,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1103";
+var APP_VERSION       = "v1.1.1104";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -14105,7 +14108,8 @@ function salesOrderB2PreflightNeedsContractSettings(preflight) {
 }
 
 var DCATS_BUSINESS_WORKSPACE_URL = "https://drive.google.com/drive/folders/1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ";
-var DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME = "D-CATS\u696d\u52d9\u9023\u643a.url";
+var DCATS_BUSINESS_WORKSPACE_SHORTCUT_URL = "assets/integrations/dcats-business-workspace.lnk";
+var DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME = "D-CATS\u696d\u52d9\u9023\u643a.lnk";
 var DCATS_BUSINESS_WORKSPACE_DIRECTORY_NAME = "D-CATS\u696d\u52d9\u9023\u643a";
 var DCATS_B2_DIRECTORY_NAME = "B2";
 var DCATS_B2_EXPORT_DIRECTORY_NAME = "01_D-CATS\u767a\u884c";
@@ -14525,23 +14529,17 @@ function closeDcatsBusinessWorkspace() {
   dcatsBusinessWorkspaceTrigger = null;
 }
 
-function downloadDcatsBusinessWorkspaceShortcut(contents) {
-  var blobUrl = URL.createObjectURL(new Blob([contents], { type: "text/plain;charset=utf-8" }));
+function downloadDcatsBusinessWorkspaceShortcut() {
   var link;
   try {
     link = document.createElement("a");
-    link.href = blobUrl;
+    link.href = DCATS_BUSINESS_WORKSPACE_SHORTCUT_URL + "?v=" + encodeURIComponent(APP_VERSION);
     link.download = DCATS_BUSINESS_WORKSPACE_SHORTCUT_FILENAME;
     document.body.appendChild(link);
     link.click();
   } finally {
     if (link) link.remove();
-    window.setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
   }
-}
-
-function dcatsBusinessWorkspaceShortcutContents() {
-  return "[InternetShortcut]\r\nURL=" + DCATS_BUSINESS_WORKSPACE_URL + "\r\n";
 }
 
 function createDcatsBusinessWorkspaceShortcut() {
@@ -14550,8 +14548,7 @@ function createDcatsBusinessWorkspaceShortcut() {
   if (button) button.disabled = true;
   try {
     // Browsers restrict shortcut writes through the file API; use a user download.
-    var contents = dcatsBusinessWorkspaceShortcutContents();
-    downloadDcatsBusinessWorkspaceShortcut(contents);
+    downloadDcatsBusinessWorkspaceShortcut();
     setDcatsBusinessWorkspaceMessage(t("business_workspace_downloaded"), false);
   } catch (error) {
     setDcatsBusinessWorkspaceMessage(t("business_workspace_failed"), true);

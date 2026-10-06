@@ -1,4 +1,4 @@
-## B2 CSV save-folder clarity QA (v1.1.1103, 2026-10-06)
+## B2 CSV save-folder clarity QA (v1.1.1104, 2026-10-06)
 
 - Renamed the Business Exchange selection control to "B2 CSVの保存フォルダを選ぶ" and the configured-state control to "B2 CSVの保存フォルダを変更", with English and Chinese equivalents. Setup instructions use the new label.
 - Gave B2 its own heading, existing-folder explanation, path block and lower action row. The selector is an outlined green button separated from the shared-folder/shortcut controls. A visible note, also referenced through aria-describedby, states that selection does not create the D-CATS業務連携 folder.
@@ -6,6 +6,7 @@
 - Existing authoritative workflow: all 124 Node commands passed. Static build and strict CSP/response-header checks passed. No new tests mirroring the presentation change were added. Folder selection, permissions, storage, CSV writes, auth and native integration are unchanged; no real folder picker or CSV write was repeated.
 - Screenshots/results are retained in ignored outputs/b2-folder-clarity. Owned IAB tab closed, viewport reset and QA server PID/commandline checked before stop. No user Chrome/Edge tab, group, clipboard or OS pointer operation. Pre-existing .qa-output preserved.
 - Publish through normal PR/CI under existing authorization. Rollback is a normal revert of this PR; stored folder handles and existing user data are retained.
+- PR221's already-published PC-folder shortcut update was merged into this branch. Its shortcut asset, headers, UI labels and verification remain intact. The adjacent HTML help conflict was resolved to retain the new Web label and new B2-specific selection label together. After integration, all 124 guards, build/headers and targeted hidden desktop/narrow layout checks passed. No successful import/export or shortcut download was repeated.
 
 ## Google Drive desktop setup support QA (v1.1.1102, 2026-10-06)
 
@@ -33,6 +34,18 @@ final result: passed
 - 実業務の入庫/商品作成・複数接続競合実測は実施しない。DBではprivate migrationのsnapshot再比較と選択マスタFOR SHARE、既存台帳/stock lockを審査し、PostgreSQL17/18の44呼出しで原子的失敗を確認する。
 
 final result: passed
+
+## PC folder shortcut QA (2026-10-06)
+
+- Data Integration / Business Exchange downloads the approved PC's Windows folder link. The G-drive target is explicit and the HTTPS Drive action remains separate. Existing CSV save-folder selection is unchanged.
+- The committed 713-byte .lnk is generated with pinned build-only pylnk3 0.4.3. Read-only Windows COM verifies the exact directory target, working directory, empty arguments and existing folder. Deterministic SHA256: `8d5f4312b2ac441aea976b06c66d3615f8fb22a1a8a43bc1da37b49487327764`. No ExtraData tracker blocks or machine IDs are distributed; no Explorer window was opened.
+- The actual production functions pass VM tests for direct same-origin/versioned download, filename, rapid-repeat guard, anchor cleanup, DOM/click failure, explicit retry and modal focus. CI also checks binary/header contracts and existing B2/HanbaiOh folder-selection behavior.
+- Hidden IAB uses isolated actual markup/functions/translations, no real authentication or production API. 1280 x 900 desktop, 390 x 844 mobile and 320 x 844 Chinese: actions fit; DOM scrollWidth equals viewport. Initial focus, close-focus restoration, synthetic error, error clearing, and retry availability pass. Console errors: 0.
+- The IAB download event completed and the resulting 713-byte `.download` file matches the binary SHA256. This browser uses its own temporary filename extension; normal browser `.lnk` filename is requested by both download attribute and Content-Disposition. Browser security prompts, automatic desktop placement and actual Explorer opening are not established by this QA. No file-API restrictions are bypassed.
+- Evidence: ignored local `outputs/folder-workspace/desktop.png`, `mobile-error.png`, `mobile-en.png`, `mobile-zh.png`, workflow results. The owned hidden tab is closed, viewport reset and QA server stopped. No normal Chrome/Edge tabs/groups, pointer, clipboard or existing desktop shortcut were changed.
+- After incorporating concurrent Drive setup support, the final v1.1.1103 release passes all 124 authoritative Node checks, static build and strict security headers again. Hidden IAB rechecks the integrated desktop and 320px English layout, summary keyboard focus, support expansion/scrolling and zero horizontal overflow. Existing support and CSV actions remain present.
+
+final result: passed (normal browser saving and desktop placement remain the user's operation)
 
 ## Business shared-folder shortcut QA (v1.1.1101)
 
