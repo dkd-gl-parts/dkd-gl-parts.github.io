@@ -90,8 +90,11 @@ test("explicit disabled generation keeps the image preparation screen usable wit
   const qa = preparationHarness();
   await qa.api.openTripo("sales");
   assert.match(qa.context.elements["product-3d-tripo-images"].innerHTML, /data-tripo-image-preview='11'/);
-  assert.match(qa.context.elements["product-3d-tripo-views"].innerHTML, /data-tripo-view='front'/);
+  assert.equal(qa.selections.length, 4);
+  assert.ok(qa.selections.every(node => !node.disabled && node.innerHTML.includes("value='11'")));
   assert.match(qa.context.elements["product-3d-tripo-status"].textContent, /方向選択ができます.*まだ無効.*課金/);
+  qa.selections[0].value = "11";
+  qa.selections[1].value = "12";
   assert.equal(qa.api.selectedTripoImages().length, 2);
   assert.equal(qa.context.tripoHistoryReady, false);
   for (const action of ["start", "poll", "preview", "publish", "reject"])
@@ -138,8 +141,70 @@ test("no saved photos directs users to existing photo registration without paid 
   const qa = preparationHarness({ rows: [] });
   await qa.api.openTripo("sales");
   assert.match(qa.context.elements["product-3d-tripo-images"].innerHTML, /先に商品画像を登録してください/);
+  assert.ok(qa.selections.every(node => node.disabled && node.innerHTML.includes("保存済み画像なし")));
+  assert.doesNotMatch(qa.context.elements["product-3d-tripo-status"].textContent, /方向選択ができます/);
   await qa.api.startTripo();
   assert.deepEqual(qa.events, ["latest"]);
+});
+
+test("four selection controls exist above photos even before any image response", () => {
+  const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  const choices = html.slice(html.indexOf('id="product-3d-tripo-views"'), html.indexOf('id="product-3d-tripo-images"'));
+  for (const view of ["front", "left", "back", "right"])
+    assert.match(choices, new RegExp(`data-tripo-view="${view}" disabled`));
+  assert.match(choices, /保存済み画像を読み込んでいます…/);
+  assert.ok(html.indexOf('id="product-3d-tripo-views"') < html.indexOf('id="product-3d-tripo-image-preview"'));
+});
+
+test("pending image query shows loading controls and cannot send or publish", async () => {
+  const qa = preparationHarness();
+  let finish;
+  qa.context.sb.from = () => {
+    const query = { select() { return query; }, eq() { return query; }, not() { return query; },
+      order() { return query; }, limit() { return new Promise(resolve => { finish = resolve; }); } };
+    return query;
+  };
+  const pending = qa.api.openTripo("sales");
+  assert.ok(qa.selections.every(node => node.disabled && node.value === "" && node.innerHTML.includes("読み込んでいます")));
+  await qa.api.startTripo();
+  await qa.api.publishTripo();
+  assert.deepEqual(qa.events, []);
+  finish({ data: [{ id: 11, storage_path: "synthetic/front.jpg" }] });
+  await pending;
+  assert.ok(qa.selections.every(node => !node.disabled && node.innerHTML.includes("value='11'")));
+  assert.deepEqual(qa.events, ["latest"]);
+});
+
+test("image query failure retains four controls with a reason and never reads generation history", async () => {
+  const qa = preparationHarness();
+  qa.context.sb.from = () => {
+    const query = { select() { return query; }, eq() { return query; }, not() { return query; },
+      order() { return query; }, async limit() { return { error: new Error("synthetic image query rejected") }; } };
+    return query;
+  };
+  await qa.api.openTripo("sales");
+  assert.ok(qa.selections.every(node => node.disabled && node.innerHTML.includes("画像を読み込めませんでした")));
+  assert.match(qa.context.elements["product-3d-tripo-images"].textContent, /対象商品・区分とログイン状態/);
+  assert.doesNotMatch(qa.context.elements["product-3d-tripo-status"].textContent, /方向選択ができます/);
+  await qa.api.startTripo();
+  await qa.api.publishTripo();
+  assert.deepEqual(qa.events, []);
+});
+
+test("stale image response does not enable choices for a changed account or product", async () => {
+  const qa = preparationHarness();
+  let finish;
+  qa.context.sb.from = () => {
+    const query = { select() { return query; }, eq() { return query; }, not() { return query; },
+      order() { return query; }, limit() { return new Promise(resolve => { finish = resolve; }); } };
+    return query;
+  };
+  const pending = qa.api.openTripo("sales");
+  qa.context.selectedTarget = () => ({ product: { id: 102 }, kind: "rebuilt" });
+  finish({ data: [{ id: 11, storage_path: "synthetic/front.jpg" }] });
+  await pending;
+  assert.ok(qa.selections.every(node => node.disabled && node.value === ""));
+  assert.deepEqual(qa.events, []);
 });
 
 test("customer and non-admin accounts cannot open the image preparation dialog", async () => {
