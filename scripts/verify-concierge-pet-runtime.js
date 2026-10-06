@@ -1129,9 +1129,19 @@ windowObject.DcatsHanbaiohCompanyBridge = {
 };
 notifyObservers();
 assert(companyLogin && companyStatus && !companyLogin.disabled, "Reviewed owner must reach company login");
+const registrationButton = byClass("dcats-concierge-bridge-button").find(e => e.id === "dcats-concierge-company-registration");
+const registrationGuide = byClass("dcats-concierge-bridge-action").find(e => e.id === "dcats-concierge-company-registration-guide");
+assert(registrationButton && registrationGuide && registrationGuide.hidden, "Registration instructions must be available and initially collapsed");
+dispatch(registrationButton.listeners, "click", { target: registrationButton });
+assert(!registrationGuide.hidden && registrationButton.getAttribute("aria-expanded") === "true", "Registration instructions must expand accessibly");
+assert(companyLoginCount === 0 && companyPrepared.length === 0, "Viewing instructions must not issue or retry any vendor operation");
+dispatch(registrationButton.listeners, "click", { target: registrationButton });
+assert(registrationGuide.hidden && registrationButton.getAttribute("aria-expanded") === "false", "Registration instructions must collapse");
 dispatch(companyLogin.listeners, "click", { target: companyLogin }); dispatch(companyLogin.listeners, "click", { target: companyLogin });
 await new Promise(resolve => setImmediate(resolve));
 assert(companyLoginCount === 1 && companyLogin.disabled && companyStatus.textContent.includes("yamamoto"), "Saved login must be single and display verified identity");
+dispatch(registrationButton.listeners, "click", { target: registrationButton });
+assert(companyLogin.disabled && companyLoginCount === 1, "Opening re-registration instructions must never reset the single-login guard");
 for (const category of ["products", "customers", "sales"]) {
   const input = byClass("dcats-concierge-bridge-input").find(e => e.id === "dcats-company-" + category + "-file");
   const prepare = byClass("dcats-concierge-bridge-button").find(e => e.id === "dcats-company-" + category + "-prepare");
