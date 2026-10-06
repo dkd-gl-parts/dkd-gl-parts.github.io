@@ -146,6 +146,7 @@ test('a delayed old-kind card cannot replace the current kind card', async () =>
     el: () => host,
     canReview3D: () => state.review,
     canManage3D: () => state.manage,
+    canManageGlb: () => state.manage,
     canPublish3D: () => false,
     fetchInternalModels: () => state.first ? oldRows : Promise.resolve([
       { id: 'new-kind', product_kind: 'aftermarket_new', model_source: 'uploaded', status: 'published', published_model_path: 'uploaded/new.glb' },
@@ -175,7 +176,7 @@ test('an older response for the same product cannot overwrite a newer card', asy
     sessionModelsEnabled: true, modelCacheEpoch: 0, mediaPaneRequest: { sales: 0 },
     selectedTarget: () => ({ product: { dkd_shohin_id: 42 }, kind: 'rebuilt' }),
     productId: product => product?.dkd_shohin_id || 0, el: () => host,
-    canReview3D: () => true, canManage3D: () => true, canPublish3D: () => false,
+    canReview3D: () => true, canManage3D: () => true, canManageGlb: () => true, canPublish3D: () => false,
     fetchInternalModels: () => ++calls === 1
       ? new Promise(resolve => { finishOld = resolve; })
       : Promise.resolve([{ id: 'new-card', product_kind: 'rebuilt', model_source: 'uploaded', status: 'published', published_model_path: 'new.glb' }]),
@@ -198,7 +199,7 @@ test('a delayed internal response is not displayed after review permission is lo
     sessionModelsEnabled: true, modelCacheEpoch: 0, mediaPaneRequest: { sales: 0 },
     selectedTarget: () => ({ product: { dkd_shohin_id: 42 }, kind: 'rebuilt' }),
     productId: product => product?.dkd_shohin_id || 0, el: () => host,
-    canReview3D: () => review, canManage3D: () => true, canPublish3D: () => false,
+    canReview3D: () => review, canManage3D: () => true, canManageGlb: () => true, canPublish3D: () => false,
     fetchInternalModels: () => new Promise(resolve => { finish = resolve; }),
     modelStatusLabel: status => status, kindLabel: kind => kind, esc: value => String(value ?? ''),
   };
@@ -212,4 +213,26 @@ test('a delayed internal response is not displayed after review permission is lo
   scope.selectedTarget = () => ({ product: null, kind: 'rebuilt' });
   await render('sales');
   assert.equal(host.textContent, '');
+});
+
+test('a delayed response cannot restore GLB mutations after the system-admin role is lost', async () => {
+  let finish;
+  let glbAllowed = true;
+  const host = { innerHTML: '', textContent: '', isConnected: true };
+  const scope = {
+    sessionModelsEnabled: true, modelCacheEpoch: 0, mediaPaneRequest: { sales: 0 },
+    selectedTarget: () => ({ product: { dkd_shohin_id: 42 }, kind: 'rebuilt' }),
+    productId: product => product?.dkd_shohin_id || 0, el: () => host,
+    canReview3D: () => true, canManage3D: () => true,
+    canManageGlb: () => glbAllowed, canPublish3D: () => false,
+    fetchInternalModels: () => new Promise(resolve => { finish = resolve; }),
+    modelStatusLabel: status => status, kindLabel: kind => kind, esc: value => String(value ?? ''),
+  };
+  const render = vm.runInNewContext(`${renderSource}\nrenderMediaPane`, scope);
+  const pending = render('sales');
+  glbAllowed = false;
+  finish([{ id: 'uploaded:old-admin-card', product_kind: 'rebuilt', model_source: 'uploaded', status: 'published', published_model_path: 'internal.glb' }]);
+  await pending;
+  assert.doesNotMatch(host.innerHTML, /data-(?:upload-3d|replace-uploaded|delete-uploaded)/);
+  assert.match(host.textContent, /表示条件が変わりました/);
 });

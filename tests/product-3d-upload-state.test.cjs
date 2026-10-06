@@ -13,6 +13,27 @@ const deleteEnd = source.indexOf("  async function openViewerById(", end);
 assert(deleteEnd > end, "GLB delete function must remain testable");
 const deleteSource = source.slice(end, deleteEnd);
 
+test("external GLB role restriction cannot be expanded by individual 3D management permission", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  const first = app.indexOf("function canManageProduct3DGlb() {");
+  const next = app.indexOf("function canPublishProduct3D() {", first);
+  assert(first >= 0 && next > first);
+  const context = {
+    userProfile: null,
+    canManageProduct3D: () => !!context.userProfile && context.userProfile.allow,
+    hasAccessRole: (profile, roles) => !!profile && roles.includes(profile.role_code),
+  };
+  const allowed = vm.runInNewContext(`${app.slice(first, next)}\ncanManageProduct3DGlb`, context);
+  assert.equal(allowed(), false);
+  for (const role of ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor",
+    "sales_staff", "sales_editor", "shipping_staff", "business_admin", "sales_viewer", "customer_viewer", "external_viewer"]) {
+    context.userProfile = { role_code: role, allow: true, role: "system_admin" };
+    assert.equal(allowed(), role === "system_admin", `${role}: an allow override or legacy role cannot expand GLB access`);
+  }
+  context.userProfile = { role_code: "system_admin", allow: false };
+  assert.equal(allowed(), false, "a system admin's explicit management deny remains effective");
+});
+
 function harness(invoke, selectedProductId = 123) {
   const alerts = [];
   const calls = { invoke: 0, refresh: 0, viewer: 0, viewerArgs: [] };
@@ -32,6 +53,7 @@ function harness(invoke, selectedProductId = 123) {
     selectedTarget: () => ({ product: { dkd_shohin_id: state.selectedProductId }, kind: "rebuilt" }),
     productId: product => Number(product?.dkd_shohin_id || 0),
     canManage3D: () => state.manage,
+    canManageGlb: () => state.manage,
     sb: { functions: { invoke: async (...args) => { calls.invoke++; return invoke(...args); } } },
     alert: message => alerts.push(message),
     edgeErrorMessage: async error => String(error?.message || error || "unknown"),
@@ -52,6 +74,28 @@ test("product switched while file chooser is open never uploads to stale product
   assert.equal(qa.calls.invoke, 0);
   assert.match(qa.alerts[0], /GLBを選び直してください/);
   assert.equal(qa.input.value, "");
+});
+
+test("a non-system generation manager cannot upload or replace through an old file chooser", async () => {
+  const qa = harness(async () => { throw new Error("must not send"); });
+  qa.context.canManage3D = () => true;
+  qa.context.canManageGlb = () => false;
+  qa.context.glbUploadTarget.replacedId = "old-model";
+  await qa.upload();
+  assert.equal(qa.calls.invoke, 0);
+  assert.equal(qa.calls.viewer, 0);
+  assert.match(qa.alerts[0], /権限が変わりました/);
+});
+
+test("a non-system generation manager cannot delete through an old model action", async () => {
+  const qa = harness(async () => { throw new Error("must not send"); });
+  qa.context.canManage3D = () => true;
+  qa.context.canManageGlb = () => false;
+  qa.context.deny3D = action => qa.alerts.push(action);
+  const remove = vm.runInNewContext(`${deleteSource}\ndeleteUploadedGlb`, qa.context);
+  await remove("old-model", "sales");
+  assert.equal(qa.calls.invoke, 0);
+  assert.deepEqual(qa.alerts, ["delete_product_3d_glb"]);
 });
 
 test("lost response refreshes read-only state and never claims upload failed", async () => {
@@ -163,7 +207,7 @@ test("selection changed during upload does not preview the wrong product", async
 
 test("lost delete response refreshes the registered model without retrying", async () => {
   const qa = harness(async () => { throw new Error("network lost"); });
-  qa.context.canManage3D = () => true;
+  qa.context.canManageGlb = () => true;
   qa.context.window = { confirm: () => true };
   const remove = vm.runInNewContext(`${deleteSource}\ndeleteUploadedGlb`, qa.context);
   await remove("sales", "11111111-1111-4111-8111-111111111111");
@@ -294,7 +338,7 @@ test("mock GLB upload response reaches the admin card and customer common Viewer
     glbMutationBusy: false,
     selectedTarget: channel => ({ product: { dkd_shohin_id: channel === "customer" ? state.customerId : state.salesId }, kind: "rebuilt" }),
     productId: product => product?.dkd_shohin_id || 0,
-    canManage3D: () => true, canReview3D: () => true, canPublish3D: () => false,
+    canManage3D: () => true, canManageGlb: () => true, canReview3D: () => true, canPublish3D: () => false,
     el: id => hosts[id],
     esc: value => String(value ?? ""),
     kindLabel: () => "リビルト", productTitle: () => "商品42",
