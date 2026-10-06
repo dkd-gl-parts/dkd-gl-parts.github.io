@@ -1175,7 +1175,7 @@
         <ol>
           <li><strong data-i18n="business_workspace_drive_install_title">PC版Google Driveを導入する</strong><p data-i18n="business_workspace_drive_install_text">Google公式の手順でインストールし、共有フォルダを利用できる業務用Googleアカウントでログインします。</p><a href="https://support.google.com/drive/answer/10838124?hl=ja" target="_blank" rel="noopener noreferrer" data-i18n="business_workspace_drive_install_link">Google公式の導入手順</a></li>
           <li><strong data-i18n="business_workspace_drive_folder_title">共有フォルダをPCで表示する</strong><p data-i18n="business_workspace_drive_folder_text">「Google Drive（Web）」でD-CATS業務連携を表示します。必要に応じてフォルダの「ドライブにショートカットを追加」からマイドライブへ追加し、エクスプローラーで表示を確認します。</p><a href="https://support.google.com/drive/answer/9700156?co=GENIE.Platform%3DDesktop&amp;hl=ja" target="_blank" rel="noopener noreferrer" data-i18n="business_workspace_drive_folder_link">Google公式のフォルダ追加手順</a></li>
-          <li><strong data-i18n="business_workspace_drive_save_title">D-CATSの保存先を設定する</strong><p data-i18n="business_workspace_drive_save_text">B2はこの画面の「B2 CSVの保存フォルダを選ぶ」、販売王CSVは「販売王連携」の保存先設定から、PC上の既存のD-CATS業務連携フォルダを選択します。PCごと・ブラウザごとに設定してください。</p></li>
+          <li><strong data-i18n="business_workspace_drive_save_title">D-CATSの保存先を設定する</strong><p data-i18n="business_workspace_drive_save_text">B2はこの画面の「B2 CSVの保存先を確認・許可」、販売王CSVは「販売王連携」の保存先設定から、PC上の既存のD-CATS業務連携フォルダを確認します。通常は保存先を変更せず、PCごと・ブラウザごとに保存を許可してください。</p></li>
         </ol>
         <h4 data-i18n="business_workspace_drive_help_title">うまく設定できない場合</h4>
         <dl>
@@ -1188,17 +1188,26 @@
     <section class="dcats-business-workspace-b2" aria-labelledby="dcats-business-workspace-b2-title">
       <div class="dcats-business-workspace-b2-copy">
         <h4 id="dcats-business-workspace-b2-title" data-i18n="business_workspace_b2_title">B2 CSVの保存フォルダ</h4>
-        <p data-i18n="business_workspace_b2_hint">B2 CSVを保存する、PC上の既存の同期フォルダを選択します。初回発行と再発行は同じ場所へ保存されます。</p>
+        <p data-i18n="business_workspace_b2_hint">B2 CSVの通常の保存先は、次の同期フォルダです。初回発行と再発行は同じ場所へ保存されます。</p>
         <strong data-i18n="business_workspace_b2_path">D-CATS業務連携 / B2 / 01_D-CATS発行</strong>
+        <div class="dcats-business-workspace-b2-target">
+          <span data-i18n="business_workspace_b2_link_target">このPC用ショートカットのリンク先（他のPCでは同期先が異なる場合があります）</span>
+          <code data-i18n="business_workspace_b2_pc_path">G:\.shortcut-targets-by-id\1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ\D-CATS業務連携\B2\01_D-CATS発行</code>
+        </div>
         <p class="dcats-business-workspace-b2-picker-note" id="dcats-business-workspace-b2-picker-note" data-i18n="business_workspace_b2_picker_note">この操作では、D-CATS業務連携フォルダを新規作成しません。</p>
       </div>
+      <div class="dcats-business-workspace-b2-warning" id="dcats-business-workspace-b2-warning">
+        <strong data-i18n="business_workspace_b2_keep_title">通常は保存先を変更しないでください</strong>
+        <p data-i18n="business_workspace_b2_keep_hint">保存先の移動や、管理者からの指示がある場合だけ再選択してください。</p>
+      </div>
       <div class="dcats-business-workspace-b2-control">
-        <div class="dcats-business-workspace-b2-status">
-          <span id="dcats-business-workspace-b2-state" class="dcats-business-workspace-b2-state" data-i18n="business_workspace_b2_unset">未設定</span>
+        <div class="dcats-business-workspace-b2-status" aria-live="polite">
+          <span id="dcats-business-workspace-b2-state" class="dcats-business-workspace-b2-state" data-i18n="business_workspace_b2_unset">保存の許可待ち</span>
           <span id="dcats-business-workspace-b2-directory" class="dcats-business-workspace-b2-directory"></span>
         </div>
-        <button type="button" id="dcats-business-workspace-b2-select" aria-describedby="dcats-business-workspace-b2-picker-note" data-i18n="business_workspace_b2_select">B2 CSVの保存フォルダを選ぶ</button>
+        <button type="button" id="dcats-business-workspace-b2-select" aria-describedby="dcats-business-workspace-b2-warning dcats-business-workspace-b2-permission-hint dcats-business-workspace-b2-picker-note" data-i18n="business_workspace_b2_select">B2 CSVの保存先を確認・許可</button>
       </div>
+      <p class="dcats-business-workspace-b2-permission-hint" id="dcats-business-workspace-b2-permission-hint" data-i18n="business_workspace_b2_confirm_hint">選択画面が既存の場所で開く場合も、上の保存先を確認してフォルダを確定し、保存を許可してください。</p>
     </section>
     <div class="dcats-business-workspace-message" id="dcats-business-workspace-message" aria-live="polite"></div>
     <div class="form-footer"><button class="btn-cancel" id="dcats-business-workspace-cancel" type="button">閉じる</button></div>

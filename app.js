@@ -439,7 +439,7 @@ var TRANSLATIONS = {
     business_workspace_drive_folder_text: "「Google Drive（Web）」でD-CATS業務連携を表示します。必要に応じてフォルダの「ドライブにショートカットを追加」からマイドライブへ追加し、エクスプローラーで表示を確認します。",
     business_workspace_drive_folder_link: "Google公式のフォルダ追加手順",
     business_workspace_drive_save_title: "D-CATSの保存先を設定する",
-    business_workspace_drive_save_text: "B2はこの画面の「B2 CSVの保存フォルダを選ぶ」、販売王CSVは「販売王連携」の保存先設定から、PC上の既存のD-CATS業務連携フォルダを選択します。PCごと・ブラウザごとに設定してください。",
+    business_workspace_drive_save_text: "B2はこの画面の「B2 CSVの保存先を確認・許可」、販売王CSVは「販売王連携」の保存先設定から、PC上の既存のD-CATS業務連携フォルダを確認します。通常は保存先を変更せず、PCごと・ブラウザごとに保存を許可してください。",
     business_workspace_drive_help_title: "うまく設定できない場合",
     business_workspace_drive_no_install_title: "インストールできない",
     business_workspace_drive_no_install_text: "社内管理者へPC版Driveの導入を依頼してください。導入までの間は「Google Drive（Web）」からブラウザで利用できます。",
@@ -449,13 +449,24 @@ var TRANSLATIONS = {
     business_workspace_drive_no_picker_text: "Windows版ChromeまたはEdgeでD-CATSを開き、同期フォルダを選び直して保存のアクセスを許可してください。PC版Driveの導入と、D-CATSの保存先設定はそれぞれ必要です。",
     business_workspace_b2_title: "B2 CSVの保存フォルダ",
     business_workspace_b2_path: "D-CATS業務連携 / B2 / 01_D-CATS発行",
-    business_workspace_b2_hint: "B2 CSVを保存する、PC上の既存の同期フォルダを選択します。初回発行と再発行は同じ場所へ保存されます。",
+    business_workspace_b2_hint: "B2 CSVの通常の保存先は、次の同期フォルダです。初回発行と再発行は同じ場所へ保存されます。",
+    business_workspace_b2_link_target: "このPC用ショートカットのリンク先（他のPCでは同期先が異なる場合があります）",
+    business_workspace_b2_pc_path: "G:\\.shortcut-targets-by-id\\1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ\\D-CATS業務連携\\B2\\01_D-CATS発行",
+    business_workspace_b2_keep_title: "通常は保存先を変更しないでください",
+    business_workspace_b2_keep_hint: "保存先の移動や、管理者からの指示がある場合だけ再選択してください。",
+    business_workspace_b2_registered: "登録済みフォルダ:",
+    business_workspace_b2_confirm_hint: "選択画面が既存の場所で開く場合も、上の保存先を確認してフォルダを確定し、保存を許可してください。",
+    business_workspace_b2_ready_hint: "この保存先をそのままお使いください。再選択は通常不要です。",
+    business_workspace_b2_permission_hint: "保存先は登録済みです。同じフォルダを確認し、保存の許可を再確認してください。",
+    business_workspace_b2_read_failed: "登録情報を確認できませんでした",
+    business_workspace_b2_read_failed_hint: "画面を開き直して確認してください。保存先を変更する必要はありません。",
+    business_workspace_b2_unsupported_hint: "保存の許可は、WindowsのChromeまたはEdgeで確認してください。",
     business_workspace_b2_picker_note: "この操作では、D-CATS業務連携フォルダを新規作成しません。",
-    business_workspace_b2_select: "B2 CSVの保存フォルダを選ぶ",
-    business_workspace_b2_change: "B2 CSVの保存フォルダを変更",
-    business_workspace_b2_unset: "未設定",
-    business_workspace_b2_ready: "設定済み",
-    business_workspace_b2_permission: "再接続が必要",
+    business_workspace_b2_select: "B2 CSVの保存先を確認・許可",
+    business_workspace_b2_change: "保存先を再選択（必要な場合のみ）",
+    business_workspace_b2_unset: "保存の許可待ち",
+    business_workspace_b2_ready: "保存の許可済み",
+    business_workspace_b2_permission: "保存の許可を再確認",
     business_workspace_b2_unsupported: "このブラウザでは設定できません",
     business_workspace_b2_selecting: "B2 CSVの保存先を確認しています。",
     business_workspace_b2_selected: "B2 CSVの保存先を設定しました。",
@@ -2809,7 +2820,7 @@ var TRANSLATIONS = {
     business_workspace_drive_folder_text: "Use Google Drive (Web) to view D-CATS業務連携. If needed, use Add shortcut to Drive to add it to My Drive, then check that it appears in File Explorer.",
     business_workspace_drive_folder_link: "Google's folder shortcut guide",
     business_workspace_drive_save_title: "Set the D-CATS save folder",
-    business_workspace_drive_save_text: "For B2, use Choose B2 CSV Save Folder here. For Sales King CSVs, use the save-folder settings in Sales King Integration. Select the existing synced D-CATS業務連携 folder on each PC and browser.",
+    business_workspace_drive_save_text: "For B2, use Confirm & Allow B2 CSV Saving here. For Sales King CSVs, use the save-folder settings in Sales King Integration. Keep the existing synced D-CATS業務連携 folder and allow saving on each PC and browser.",
     business_workspace_drive_help_title: "Troubleshooting",
     business_workspace_drive_no_install_title: "Installation is unavailable",
     business_workspace_drive_no_install_text: "Ask your IT administrator to install Drive for desktop. Until then, use Google Drive (Web) to access files in your browser.",
@@ -2818,14 +2829,25 @@ var TRANSLATIONS = {
     business_workspace_drive_no_picker_title: "Cannot select a folder or reconnection is needed",
     business_workspace_drive_no_picker_text: "Open D-CATS in Chrome or Edge on Windows, select the synced folder again and allow save access. Both Drive installation and D-CATS save-folder setup are required.",
     business_workspace_b2_title: "B2 CSV Save Folder",
-    business_workspace_b2_path: "D-CATS Business Exchange / B2 / 01_D-CATS Issue",
-    business_workspace_b2_hint: "Choose an existing synced folder on this PC for B2 CSVs. Initial issues and reissues are saved to the same location.",
+    business_workspace_b2_path: "D-CATS業務連携 / B2 / 01_D-CATS発行",
+    business_workspace_b2_hint: "The usual B2 CSV destination is the synced folder below. Initial issues and reissues are saved to the same location.",
+    business_workspace_b2_link_target: "Target of the shortcut for this PC (the sync location may differ on other PCs)",
+    business_workspace_b2_pc_path: "G:\\.shortcut-targets-by-id\\1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ\\D-CATS業務連携\\B2\\01_D-CATS発行",
+    business_workspace_b2_keep_title: "Keep this save folder unchanged for normal use",
+    business_workspace_b2_keep_hint: "Select a different folder only after moving the destination or receiving instructions from your administrator.",
+    business_workspace_b2_registered: "Registered folder:",
+    business_workspace_b2_confirm_hint: "Even if the picker opens at the existing location, confirm the destination above, select the folder and allow saving.",
+    business_workspace_b2_ready_hint: "Continue using this save folder. You normally do not need to select it again.",
+    business_workspace_b2_permission_hint: "The save folder is registered. Confirm the same folder and renew its save permission.",
+    business_workspace_b2_read_failed: "Unable to check the registered folder",
+    business_workspace_b2_read_failed_hint: "Reopen this dialog to check again. You do not need to change the save folder.",
+    business_workspace_b2_unsupported_hint: "Confirm save permission using Chrome or Edge on Windows.",
     business_workspace_b2_picker_note: "This action does not create a new D-CATS業務連携 folder.",
-    business_workspace_b2_select: "Choose B2 CSV Save Folder",
-    business_workspace_b2_change: "Change B2 CSV Save Folder",
-    business_workspace_b2_unset: "Not configured",
-    business_workspace_b2_ready: "Configured",
-    business_workspace_b2_permission: "Reconnect required",
+    business_workspace_b2_select: "Confirm & Allow B2 CSV Saving",
+    business_workspace_b2_change: "Reselect Save Folder (Only if Needed)",
+    business_workspace_b2_unset: "Save permission pending",
+    business_workspace_b2_ready: "Saving allowed",
+    business_workspace_b2_permission: "Renew save permission",
     business_workspace_b2_unsupported: "Not supported by this browser",
     business_workspace_b2_selecting: "Checking the B2 CSV save folder.",
     business_workspace_b2_selected: "The B2 CSV save folder was configured.",
@@ -5123,7 +5145,7 @@ var TRANSLATIONS = {
     business_workspace_drive_folder_text: "点击“Google Drive（网页）”查看D-CATS業務連携。必要时使用“添加快捷方式到云端硬盘”将文件夹添加到我的云端硬盘，然后在文件资源管理器中确认。",
     business_workspace_drive_folder_link: "Google官方文件夹快捷方式说明",
     business_workspace_drive_save_title: "设置D-CATS保存位置",
-    business_workspace_drive_save_text: "B2请使用此画面的“选择B2 CSV保存文件夹”，销售王CSV请在“销售王联动”的保存位置设置中选择电脑上已有的D-CATS業務連携同步文件夹。每台电脑、每个浏览器都需要设置。",
+    business_workspace_drive_save_text: "B2请使用此画面的“确认并允许保存B2 CSV”，销售王CSV请在“销售王联动”的保存位置设置中确认电脑上已有的D-CATS業務連携同步文件夹。通常不更改保存位置，每台电脑、每个浏览器都需要允许保存。",
     business_workspace_drive_help_title: "设置遇到问题时",
     business_workspace_drive_no_install_title: "无法安装",
     business_workspace_drive_no_install_text: "请联系公司IT管理员安装Drive桌面版。安装前可通过“Google Drive（网页）”在浏览器中使用。",
@@ -5132,14 +5154,25 @@ var TRANSLATIONS = {
     business_workspace_drive_no_picker_title: "无法选择保存位置或需要重新连接",
     business_workspace_drive_no_picker_text: "请在Windows版Chrome或Edge中打开D-CATS，重新选择同步文件夹并允许保存访问。安装Drive和设置D-CATS保存位置都需要完成。",
     business_workspace_b2_title: "B2 CSV保存文件夹",
-    business_workspace_b2_path: "D-CATS业务协作 / B2 / 01_D-CATS发行",
-    business_workspace_b2_hint: "请选择此电脑上已有的同步文件夹，用于保存B2 CSV。首次发行和重新发行将保存到同一位置。",
+    business_workspace_b2_path: "D-CATS業務連携 / B2 / 01_D-CATS発行",
+    business_workspace_b2_hint: "B2 CSV通常保存到以下同步文件夹。首次发行和重新发行将保存到同一位置。",
+    business_workspace_b2_link_target: "此电脑专用快捷方式的目标（其他电脑的同步位置可能不同）",
+    business_workspace_b2_pc_path: "G:\\.shortcut-targets-by-id\\1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ\\D-CATS業務連携\\B2\\01_D-CATS発行",
+    business_workspace_b2_keep_title: "正常使用时请勿更改保存位置",
+    business_workspace_b2_keep_hint: "仅在保存位置迁移或管理员要求时重新选择。",
+    business_workspace_b2_registered: "已登记文件夹:",
+    business_workspace_b2_confirm_hint: "即使选择画面已打开现有位置，也请确认上述保存位置，选定文件夹并允许保存。",
+    business_workspace_b2_ready_hint: "请继续使用此保存位置。通常无需重新选择。",
+    business_workspace_b2_permission_hint: "保存位置已登记。请确认同一文件夹并重新允许保存。",
+    business_workspace_b2_read_failed: "无法确认已登记的保存位置",
+    business_workspace_b2_read_failed_hint: "请重新打开此画面确认，无需更改保存位置。",
+    business_workspace_b2_unsupported_hint: "请使用Windows上的Chrome或Edge确认保存权限。",
     business_workspace_b2_picker_note: "此操作不会新建D-CATS業務連携文件夹。",
-    business_workspace_b2_select: "选择B2 CSV保存文件夹",
-    business_workspace_b2_change: "更改B2 CSV保存文件夹",
-    business_workspace_b2_unset: "未设置",
-    business_workspace_b2_ready: "已设置",
-    business_workspace_b2_permission: "需要重新连接",
+    business_workspace_b2_select: "确认并允许保存B2 CSV",
+    business_workspace_b2_change: "重新选择保存位置（仅在必要时）",
+    business_workspace_b2_unset: "等待保存许可",
+    business_workspace_b2_ready: "已允许保存",
+    business_workspace_b2_permission: "重新确认保存许可",
     business_workspace_b2_unsupported: "此浏览器不支持设置",
     business_workspace_b2_selecting: "正在确认B2 CSV保存位置。",
     business_workspace_b2_selected: "已设置B2 CSV保存位置。",
@@ -14212,12 +14245,7 @@ async function forgetDcatsHanbaiouExportDirectory() {
 
 async function loadDcatsB2ExportDirectory() {
   if (dcatsB2ExportDirectoryLoaded) return dcatsB2ExportDirectoryHandle;
-  var storedHandle = null;
-  try {
-    storedHandle = await readStoredDcatsB2ExportDirectory();
-  } catch (error) {
-    storedHandle = null;
-  }
+  var storedHandle = await readStoredDcatsB2ExportDirectory();
   if (!dcatsB2ExportDirectoryLoaded) {
     dcatsB2ExportDirectoryHandle = storedHandle;
     dcatsB2ExportDirectoryLoaded = true;
@@ -14228,6 +14256,7 @@ async function loadDcatsB2ExportDirectory() {
 function setDcatsB2ExportDirectoryState(state, directoryName) {
   var stateHost = document.getElementById("dcats-business-workspace-b2-state");
   var directoryHost = document.getElementById("dcats-business-workspace-b2-directory");
+  var hintHost = document.getElementById("dcats-business-workspace-b2-permission-hint");
   var button = document.getElementById("dcats-business-workspace-b2-select");
   if (stateHost) {
     stateHost.className = "dcats-business-workspace-b2-state" + (state === "ready" ? " ready" : (state === "error" ? " error" : ""));
@@ -14235,9 +14264,14 @@ function setDcatsB2ExportDirectoryState(state, directoryName) {
       ? "business_workspace_b2_ready"
       : (state === "permission"
         ? "business_workspace_b2_permission"
-        : (state === "unsupported" ? "business_workspace_b2_unsupported" : (state === "error" ? "business_workspace_b2_failed" : "business_workspace_b2_unset"))));
+        : (state === "unsupported" ? "business_workspace_b2_unsupported" : (state === "error" ? "business_workspace_b2_read_failed" : "business_workspace_b2_unset"))));
   }
-  if (directoryHost) directoryHost.textContent = directoryName || "";
+  if (directoryHost) directoryHost.textContent = directoryName ? t("business_workspace_b2_registered") + " " + directoryName : "";
+  if (hintHost) hintHost.textContent = t(state === "ready"
+    ? "business_workspace_b2_ready_hint"
+    : (state === "permission" ? "business_workspace_b2_permission_hint"
+      : (state === "error" ? "business_workspace_b2_read_failed_hint"
+        : (state === "unsupported" ? "business_workspace_b2_unsupported_hint" : "business_workspace_b2_confirm_hint"))));
   if (button) {
     button.textContent = t(state === "ready" ? "business_workspace_b2_change" : "business_workspace_b2_select");
     button.disabled = state === "unsupported";
@@ -14317,7 +14351,9 @@ async function configureDcatsB2ExportDirectory() {
       setDcatsBusinessWorkspaceMessage(t("business_workspace_b2_cancelled"), false);
     } else {
       setDcatsBusinessWorkspaceMessage((error && error.message) || t("business_workspace_b2_failed"), true);
-      await refreshDcatsB2ExportDirectoryState();
+      await refreshDcatsB2ExportDirectoryState().catch(function() {
+        setDcatsB2ExportDirectoryState("error", "");
+      });
     }
   } finally {
     if (button && supportsDcatsB2SharedFolder()) button.disabled = false;
