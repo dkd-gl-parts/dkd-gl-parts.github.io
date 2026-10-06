@@ -38,6 +38,10 @@ function requireText(source, fragment, label) {
   "product-3d-viewer-zoom-out",
   "product-3d.js?v=" + appVersion
 ].forEach((fragment) => requireText(html, fragment, "3D UI contract"));
+requireText(html, "product-3d-local-glb.js?v=" + appVersion, "Local preview validator");
+requireText(build, '"product-3d-local-glb.js"', "Local preview deployment asset");
+requireText(client, "data-local-glb=", "Non-registering preview action");
+requireText(viewer, "loader.parseAsync(options.buffer, '')", "Common Viewer local buffer path");
 
 [
   "open_product_3d_workspace",

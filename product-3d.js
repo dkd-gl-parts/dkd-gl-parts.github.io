@@ -36,6 +36,7 @@
   var modelAuthUserId = null;
   var badgeRefreshTimer = null;
   var glbUploadTarget = null;
+  var localGlbTarget = null;
   var glbMutationBusy = false;
   var tripoTarget = null;
   var tripoJob = null;
@@ -130,7 +131,7 @@
       "product-3d-viewer-stage", "product-3d-viewer-loading", "product-3d-viewer-reset",
       "product-3d-viewer-zoom-in", "product-3d-viewer-zoom-out",
       "product-3d-viewer-autorotate", "product-3d-viewer-fullscreen", "product-3d-viewer-fullscreen-notice",
-      "product-3d-glb-file", "product-3d-tripo-overlay", "product-3d-tripo-close",
+      "product-3d-glb-file", "product-3d-local-glb-file", "product-3d-tripo-overlay", "product-3d-tripo-close",
       "product-3d-tripo-context", "product-3d-tripo-images", "product-3d-tripo-views",
       "product-3d-tripo-image-preview", "product-3d-tripo-image-preview-img",
       "product-3d-tripo-image-preview-label", "product-3d-tripo-image-preview-close",
@@ -993,8 +994,11 @@
       host.textContent = "表示条件が変わりました。3Dタブを開き直してください。";
       return;
     }
+    var localPreviewAction = glbManageable
+      ? "<button type='button' class='product-3d-card-action' data-local-glb='" + context + "'>GLBをプレビュー（登録しない）</button>"
+      : "";
     if (lookupFailed) {
-      host.textContent = "3Dモデルを確認できませんでした。3Dタブを開き直してください。";
+      host.innerHTML = "<div class='product-3d-empty-card'>3Dモデルを確認できませんでした。3Dタブを開き直してください。" + localPreviewAction + "</div>";
       return;
     }
     var visible = context === "customer" ? models : models.filter(function (model) { return model.product_kind === target.kind; });
@@ -1004,7 +1008,7 @@
     if (!visible.length) {
       var createAction = manageable ? "<button type='button' data-create-3d='" + context + "'>3Dモデルを作成</button>" : "";
       var uploadAction = glbManageable ? "<button type='button' data-upload-3d='" + context + "'>GLBをアップロード</button>" : "";
-      host.innerHTML = "<div class='product-3d-empty-card'><span class='product-3d-cube'>3D</span><strong>公開済み3Dモデルはありません</strong>" + createAction + uploadAction + "</div>" + tripoConnection;
+      host.innerHTML = "<div class='product-3d-empty-card'><span class='product-3d-cube'>3D</span><strong>公開済み3Dモデルはありません</strong>" + createAction + uploadAction + localPreviewAction + "</div>" + tripoConnection;
       return;
     }
     function modelCardHtml(model) {
@@ -1043,7 +1047,7 @@
     var uploadAction = glbManageable
       ? "<button type='button' class='product-3d-card-action' data-upload-3d='" + context + "'>GLBをアップロード</button>"
       : "";
-    host.innerHTML = fallback + visible.map(modelCardHtml).join("") + uploadAction + tripoConnection;
+    host.innerHTML = fallback + visible.map(modelCardHtml).join("") + uploadAction + localPreviewAction + tripoConnection;
   }
   function modelStatusLabel(status) {
     return ({ draft: "撮影途中", waiting: "待機", processing: "処理中", needs_capture: "要追加撮影", failed: "失敗", review: "確認待ち", published: "公開済み", archived: "旧版" })[status] || status;
@@ -1387,33 +1391,11 @@
       var result = await tripoInvoke(tripoPayload("preview"));
       if (!sameTripoTarget(requestId)) return;
       viewerRequest = ++viewerRequestId;
-      var overlay = elements["product-3d-viewer-overlay"];
-      viewerReturnFocus = elements["product-3d-tripo-preview"];
-      viewerFocusTarget = { context: tripoTarget.context, productId: tripoTarget.productId, kind: tripoTarget.kind };
-      overlay.classList.add("show"); overlay.setAttribute("aria-hidden", "false");
-      elements["product-3d-viewer-close"].focus();
-      elements["product-3d-viewer-title"].textContent = "Tripo生成結果 / 非公開プレビュー";
-      elements["product-3d-viewer-loading"].textContent = "3Dモデルを読み込んでいます...";
-      elements["product-3d-viewer-loading"].hidden = false;
-      elements["product-3d-viewer-fullscreen-notice"].hidden = true;
-      elements["product-3d-viewer-autorotate"].setAttribute("aria-pressed", "false");
-      if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await getViewerModule();
-      if (!sameTripoTarget(requestId) || viewerRequest !== viewerRequestId) {
-        if (viewerRequest === viewerRequestId) closeViewer();
-        return;
-      }
-      var created = await module.createProduct3DViewer({
-        host: elements["product-3d-viewer-stage"], url: result.preview_url,
-        fullscreenElement: elements["product-3d-viewer-shell"] || elements["product-3d-viewer-stage"],
-        autoRotate: false
-      });
-      if (!sameTripoTarget(requestId) || viewerRequest !== viewerRequestId) {
-        created.dispose();
-        if (viewerRequest === viewerRequestId) closeViewer();
-        return;
-      }
-      viewer = created; elements["product-3d-viewer-loading"].hidden = true;
+      await showCommonViewer({ url: result.preview_url }, "Tripo生成結果 / 非公開プレビュー",
+        { context: tripoTarget.context, productId: tripoTarget.productId, kind: tripoTarget.kind },
+        viewerRequest, function () {
+          return sameTripoTarget(requestId) && viewerRequest === viewerRequestId;
+        }, elements["product-3d-tripo-preview"]);
     } catch (error) {
       if (sameTripoTarget(requestId)) {
         var message = "プレビューできませんでした: " + friendlyError(error);
@@ -1640,9 +1622,6 @@
       glbMutationBusy = false;
     }
   }
-  function getViewerModule() {
-    return import("./product-3d-viewer.js?v=1.1.1109");
-  }
   async function openViewerById(modelId, context, dkdId) {
     var activeContext = context || "sales";
     var target = selectedTarget(activeContext);
@@ -1679,31 +1658,72 @@
       alert("3Dモデルを開けませんでした: " + friendlyError(signed && signed.error || "署名URLを取得できませんでした"));
       return;
     }
+    await showCommonViewer({ url: signed.data.signedUrl },
+      productTitle(target.product) + " / " + kindLabel(model.product_kind),
+      { context: activeContext, productId: targetId, kind: targetKind }, requestId, targetStillSelected);
+  }
+  function selectLocalGlb(context) {
+    if (!sessionModelsEnabled || !canManageGlb() || context === "customer") return;
+    var target = selectedTarget(context || "sales");
+    if (!productId(target.product) || !target.kind) return;
+    localGlbTarget = { context: context || "sales", productId: productId(target.product), kind: target.kind };
+    var input = elements["product-3d-local-glb-file"];
+    input.value = "";
+    input.click();
+  }
+  async function previewLocalGlb() {
+    var input = elements["product-3d-local-glb-file"];
+    var file = input.files && input.files[0];
+    var target = localGlbTarget;
+    localGlbTarget = null;
+    input.value = "";
+    if (!file || !target) return;
+    var epoch = modelCacheEpoch;
+    var requestId = ++viewerRequestId;
+    function targetStillSelected() {
+      var current = selectedTarget(target.context);
+      return requestId === viewerRequestId && epoch === modelCacheEpoch && sessionModelsEnabled && canManageGlb() &&
+        productId(current.product) === target.productId && current.kind === target.kind;
+    }
+    if (!targetStillSelected()) return;
+    try {
+      window.Product3DLocalGlb.validateFile(file);
+      var buffer = await file.arrayBuffer();
+      if (!targetStillSelected()) return;
+      window.Product3DLocalGlb.validateBytes(buffer);
+      await showCommonViewer({ buffer: buffer }, "端末内プレビュー（未登録） / " + file.name,
+        target, requestId, targetStillSelected);
+    } catch (error) {
+      if (targetStillSelected()) alert("GLBをプレビューできませんでした: " + friendlyError(error));
+    }
+  }
+  async function showCommonViewer(source, title, focusTarget, requestId, targetStillSelected, returnFocus) {
     var viewerOverlay = elements["product-3d-viewer-overlay"];
     if (!viewerOverlay.classList.contains("show")) {
-      var previousFocus = document.activeElement;
+      var previousFocus = returnFocus || document.activeElement;
       viewerReturnFocus = previousFocus && previousFocus !== document.body &&
         typeof previousFocus.focus === "function" ? previousFocus : null;
-      viewerFocusTarget = { context: activeContext, productId: targetId, kind: targetKind };
+      viewerFocusTarget = focusTarget;
     }
     viewerOverlay.classList.add("show");
     viewerOverlay.setAttribute("aria-hidden", "false");
     elements["product-3d-viewer-close"].focus();
-    elements["product-3d-viewer-title"].textContent = productTitle(target.product) + " / " + kindLabel(model.product_kind);
+    elements["product-3d-viewer-title"].textContent = title;
     elements["product-3d-viewer-loading"].textContent = "3Dモデルを読み込んでいます...";
     elements["product-3d-viewer-loading"].hidden = false;
     elements["product-3d-viewer-fullscreen-notice"].hidden = true;
     elements["product-3d-viewer-autorotate"].setAttribute("aria-pressed", "false");
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await getViewerModule();
+      var module = await import("./product-3d-viewer.js?v=1.1.1110");
       if (!targetStillSelected()) {
         if (requestId === viewerRequestId) closeViewer();
         return;
       }
       var createdViewer = await module.createProduct3DViewer({
         host: elements["product-3d-viewer-stage"],
-        url: signed.data.signedUrl,
+        url: source.url,
+        buffer: source.buffer,
         fullscreenElement: elements["product-3d-viewer-shell"] || elements["product-3d-viewer-stage"],
         autoRotate: false
       });
@@ -1797,6 +1817,7 @@
     el("btn-image-action-upload-glb").addEventListener("click", function () { selectGlbForUpload("sales"); });
     el("production-image-action-upload-glb").addEventListener("click", function () { selectGlbForUpload("production"); });
     elements["product-3d-glb-file"].addEventListener("change", uploadSelectedGlb);
+    elements["product-3d-local-glb-file"].addEventListener("change", previewLocalGlb);
     elements["product-3d-capture-close"].addEventListener("click", closeCapture);
     elements["product-3d-start-camera"].addEventListener("click", startCamera);
     elements["product-3d-snapshot"].addEventListener("click", function () { captureSnapshot("camera_still"); });
@@ -1830,6 +1851,7 @@
       if (connection) checkTripoReadiness(connection.dataset.tripoReadiness, connection);
       var tripo = event.target.closest("[data-tripo-3d]"); if (tripo) openTripo(tripo.dataset.tripo3d);
       var upload = event.target.closest("[data-upload-3d]"); if (upload) selectGlbForUpload(upload.dataset.upload3d);
+      var local = event.target.closest("[data-local-glb]"); if (local) selectLocalGlb(local.dataset.localGlb);
       var replace = event.target.closest("[data-replace-uploaded]");
       if (replace) selectGlbForUpload(replace.dataset.uploadContext, replace.dataset.replaceUploaded);
       var remove = event.target.closest("[data-delete-uploaded]");
@@ -1848,6 +1870,8 @@
   }
 
   function resetSessionModels() {
+    localGlbTarget = null;
+    if (elements["product-3d-local-glb-file"]) elements["product-3d-local-glb-file"].value = "";
     modelCacheEpoch += 1;
     modelCache = Object.create(null);
     internalModelCache = Object.create(null);

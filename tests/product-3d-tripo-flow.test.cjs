@@ -77,6 +77,65 @@ test("the shared Viewer appears above the Tripo selection dialog", () => {
   assert.ok(viewerLayer > tripoLayer);
 });
 
+function previewHarness() {
+  const qa = harness();
+  qa.context.tripoJob = { request_key: "00000000-0000-4000-8000-000000000001", status: "review" };
+  qa.context.viewerRequestId = 4;
+  qa.context.showCommonViewer = async (...args) => { qa.opened = args; };
+  qa.context.closeViewer = () => { qa.closed = true; };
+  qa.context.sb.functions.invoke = async () => ({ data: {
+    ...qa.context.tripoJob, preview_url: "https://example.invalid/private.glb",
+  }, error: null });
+  qa.preview = vm.runInNewContext(source.slice(source.indexOf("  async function previewTripo("),
+    source.indexOf("  async function publishTripo(")) + "\npreviewTripo", qa.context);
+  return qa;
+}
+
+test("Tripo review reuses the local and registered GLB common Viewer entrypoint", async () => {
+  const qa = previewHarness();
+  await qa.preview();
+  const [options, title, target, requestId, current] = qa.opened;
+  assert.equal(options.url, "https://example.invalid/private.glb");
+  assert.equal(title, "Tripo生成結果 / 非公開プレビュー");
+  assert.deepEqual(JSON.parse(JSON.stringify(target)), { context: "sales", productId: 101, kind: "rebuilt" });
+  assert.equal(requestId, 5); assert.equal(current(), true); assert.equal(qa.context.tripoBusy, false);
+  assert.equal(qa.opened[5], qa.context.elements['product-3d-tripo-preview']);
+  assert.equal((source.match(/await import\("\.\/product-3d-viewer\.js\?v=/g) || []).length, 1);
+  assert.doesNotMatch(source, /function getViewerModule\(/);
+});
+
+test("late Tripo preview response after product, account or role switch cannot open Viewer", async () => {
+  for (const change of [q => { q.context.selectedTarget = () => ({product:{id:102},kind:'rebuilt'}); },
+    q => { q.context.sessionModelsEnabled = false; }, q => { q.context.canManageGlb = () => false; }]) {
+    const qa = previewHarness(); let finish;
+    qa.context.sb.functions.invoke = () => new Promise(resolve => { finish = resolve; });
+    const pending = qa.preview(); change(qa);
+    finish({ data: { ...qa.context.tripoJob, preview_url: "https://example.invalid/private.glb" } });
+    await pending;
+    assert.equal(qa.opened, undefined); assert.equal(qa.context.tripoBusy, false);
+  }
+});
+
+test("Tripo common Viewer predicate invalidates loading on close, product switch or sign-out", async () => {
+  for (const change of [q => { q.context.viewerRequestId++; },
+    q => { q.context.selectedTarget = () => ({product:{id:102},kind:'rebuilt'}); },
+    q => { q.context.sessionModelsEnabled = false; }]) {
+    const qa = previewHarness(); await qa.preview();
+    change(qa); assert.equal(qa.opened[4](), false);
+  }
+});
+
+test("failed Tripo preview leaves review state and does not submit or publish again", async () => {
+  const qa = previewHarness(); const actions = [];
+  qa.context.sb.functions.invoke = async (_name, options) => {
+    actions.push(options.body.action); return {error:new Error('unavailable')};
+  };
+  await qa.preview();
+  assert.deepEqual(actions, ['preview']); assert.equal(qa.opened, undefined);
+  assert.equal(qa.context.tripoJob.status, 'review');
+  assert.match(qa.context.elements['product-3d-tripo-status'].textContent, /プレビューできませんでした/);
+});
+
 test("the Tripo dialog uses product identity without the third-party DAIKO number", () => {
   const qa = harness();
   const label = qa.api.tripoContextLabel({ id: 2639, manufacturer_part_number: "104210-1870",
