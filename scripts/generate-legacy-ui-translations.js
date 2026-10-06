@@ -22,6 +22,15 @@ const runtimeScriptPaths = [
 ];
 const curatedTranslations = {
   en: {
+    "1～4枚を重複なく選択してください。複数枚では正面が必須です。": "Select 1 to 4 distinct images. A front view is required when using multiple images.",
+    "拡大表示を閉じる": "Close enlarged image",
+    "保存済み画像からTripoで3D作成": "Generate 3D with Tripo from saved images",
+    "見積り確認・作成開始": "Review estimate and start generation",
+    "状態を確認（再生成しません）": "Check status (no regeneration)",
+    "生成GLBを保管中（長時間変わらない場合は管理者へ）": "Storing the generated GLB (contact an administrator if this persists)",
+    "確認して商品へ登録": "Approve and register for this product",
+    "この生成結果を不採用": "Reject this generated model",
+    "クレジット": "credits",
     "Tripo APIキーの保存形式に問題があります。サーバー設定を確認してください。": "The stored Tripo API key has an invalid format. Check the server configuration.",
     "TripoでAPIキーの認証が拒否されました。キーの有効状態とサーバー設定を確認してください。": "Tripo rejected API key authentication. Check that the key is active and configured correctly on the server.",
     "Tripo側で残高照会が許可されませんでした。追加購入せず管理者に確認してください。": "Tripo denied the balance query. Contact an administrator before purchasing more credits.",
@@ -532,6 +541,15 @@ const curatedTranslations = {
     "本書、対象製品、製造シリアル、車両・取付情報をご提示ください。": "Present this document, the covered product, the manufacturing serial number, and the vehicle and installation information."
   },
   zh: {
+    "1～4枚を重複なく選択してください。複数枚では正面が必須です。": "请选择1至4张不同图片。使用多张图片时必须包含正面。",
+    "拡大表示を閉じる": "关闭放大图片",
+    "保存済み画像からTripoで3D作成": "使用已保存图片通过Tripo生成3D",
+    "見積り確認・作成開始": "确认费用并开始生成",
+    "状態を確認（再生成しません）": "查询状态（不会重新生成）",
+    "生成GLBを保管中（長時間変わらない場合は管理者へ）": "正在保存生成的GLB（若长时间未变化，请联系管理员）",
+    "確認して商品へ登録": "确认并登记到此商品",
+    "この生成結果を不採用": "不采用此生成模型",
+    "クレジット": "积分",
     "Tripo APIキーの保存形式に問題があります。サーバー設定を確認してください。": "保存的Tripo API密钥格式不正确，请检查服务器设置。",
     "TripoでAPIキーの認証が拒否されました。キーの有効状態とサーバー設定を確認してください。": "Tripo拒绝了API密钥认证，请检查密钥是否有效以及服务器设置。",
     "Tripo側で残高照会が許可されませんでした。追加購入せず管理者に確認してください。": "Tripo未允许查询余额，请先联系管理员，不要追加购买。",
