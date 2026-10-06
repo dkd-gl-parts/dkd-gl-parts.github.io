@@ -27,3 +27,8 @@
 
 /assets/icons/*-v4.png
   Cache-Control: public, max-age=31536000, immutable
+
+/assets/integrations/dcats-business-workspace.lnk
+  Content-Type: application/octet-stream
+  Content-Disposition: attachment; filename="D-CATS-business-workspace.lnk"; filename*=UTF-8''D-CATS%E6%A5%AD%E5%8B%99%E9%80%A3%E6%90%BA.lnk
+  Cache-Control: no-cache
