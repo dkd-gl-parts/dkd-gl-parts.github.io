@@ -1,3 +1,12 @@
+## B2 CSV save-folder clarity QA (v1.1.1103, 2026-10-06)
+
+- Renamed the Business Exchange selection control to "B2 CSVの保存フォルダを選ぶ" and the configured-state control to "B2 CSVの保存フォルダを変更", with English and Chinese equivalents. Setup instructions use the new label.
+- Gave B2 its own heading, existing-folder explanation, path block and lower action row. The selector is an outlined green button separated from the shared-folder/shortcut controls. A visible note, also referenced through aria-describedby, states that selection does not create the D-CATS業務連携 folder.
+- Hidden IAB synthetic fixture uses the current markup, translations and actual folder-state renderer. At 1280 x 900, unset and ready controls have the expected names. At 320 x 844, Japanese/English/Chinese wrap without horizontal overflow. Keyboard Tab focuses the selector with a visible outline, close restores the entry focus, unsupported disables selection and permission state enables re-selection. Console warnings/errors: 0.
+- Existing authoritative workflow: all 124 Node commands passed. Static build and strict CSP/response-header checks passed. No new tests mirroring the presentation change were added. Folder selection, permissions, storage, CSV writes, auth and native integration are unchanged; no real folder picker or CSV write was repeated.
+- Screenshots/results are retained in ignored outputs/b2-folder-clarity. Owned IAB tab closed, viewport reset and QA server PID/commandline checked before stop. No user Chrome/Edge tab, group, clipboard or OS pointer operation. Pre-existing .qa-output preserved.
+- Publish through normal PR/CI under existing authorization. Rollback is a normal revert of this PR; stored folder handles and existing user data are retained.
+
 ## Google Drive desktop setup support QA (v1.1.1102, 2026-10-06)
 
 - Added setup/help disclosure to Data Integration / Business Exchange: official installation/sign-in guide, shared-folder shortcut guide, per-PC/browser CSV-folder setup, administrator support, missing-folder and reconnection guidance.
