@@ -3702,7 +3702,22 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "下の写真を拡大して画像番号を確認し、上の選択欄に指定してください。": "Enlarge the photos below to check their image numbers, then select them in the fields above.",
     "保存済み画像なし": "No saved images",
     "画像を読み込めませんでした": "Could not load images",
-    "画像を読み込めませんでした。対象商品・区分とログイン状態を確認してください。": "Could not load images. Check the selected product, product kind and sign-in status."
+    "画像を読み込めませんでした。対象商品・区分とログイン状態を確認してください。": "Could not load images. Check the selected product, product kind and sign-in status.",
+    "。画像の向きは写真を見て確認してください。": ".Please check the orientation of the image by looking at the photo.",
+    "。複数枚では正面を選択してください。": ".If there are multiple images, please select the front.",
+    "/ 4方向を選択済み": "/ 4 directions selected",
+    "/ 未選択:": "/ Not selected:",
+    "に指定済み": "Already set",
+    "画像 ID": "Image ID",
+    "選択済み": "Selected",
+    "この画面でも商品区分を変更できます。切り替えると画像の選択は解除されます。商品データ自体は変更しません。": "You can change the product kind here. Switching clears your image selections without changing product data.",
+    "画像番号で選択（補助）": "Select by image number (optional)",
+    "方向別の選択プレビュー": "Selected image previews by direction",
+    "拡大写真の方向を指定": "Assign the enlarged photo to a direction",
+    "写真の下の方向ボタン、または拡大写真の方向ボタンで指定できます。選んだ写真は上のプレビューで確認してください。": "Assign directions with the buttons below each photo or the enlarged photo. Check your chosen photos in the previews above.",
+    "画像を確認中…": "Loading image preview…",
+    "処理中または結果未確認のため、商品区分を変更できません。再実行せず確認してください。": "The product kind cannot be changed while processing or awaiting confirmation. Check the result without submitting again.",
+    "に指定": "Assign to"
   },
   "zh": {
     "澤藤": "泽藤",
@@ -7405,6 +7420,21 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "下の写真を拡大して画像番号を確認し、上の選択欄に指定してください。": "放大下方照片确认图片编号，然后在上方选择栏中指定。",
     "保存済み画像なし": "没有已保存的图片",
     "画像を読み込めませんでした": "无法加载图片",
-    "画像を読み込めませんでした。対象商品・区分とログイン状態を確認してください。": "无法加载图片，请确认所选商品、商品分类和登录状态。"
+    "画像を読み込めませんでした。対象商品・区分とログイン状態を確認してください。": "无法加载图片，请确认所选商品、商品分类和登录状态。",
+    "。画像の向きは写真を見て確認してください。": "。请通过查看照片确认图像方向。",
+    "。複数枚では正面を選択してください。": "。多张图片时请选择正面。",
+    "/ 4方向を選択済み": "/ 已选择 4 方向",
+    "/ 未選択:": "/ 未选择:",
+    "に指定済み": "已指定",
+    "画像 ID": "图像 ID",
+    "選択済み": "已选择",
+    "この画面でも商品区分を変更できます。切り替えると画像の選択は解除されます。商品データ自体は変更しません。": "可在此切换商品分类。切换会清除图片选择，不会更改商品数据。",
+    "画像番号で選択（補助）": "按图片编号选择（辅助）",
+    "方向別の選択プレビュー": "按方向预览所选图片",
+    "拡大写真の方向を指定": "指定放大照片的方向",
+    "写真の下の方向ボタン、または拡大写真の方向ボタンで指定できます。選んだ写真は上のプレビューで確認してください。": "可使用各照片下方或放大照片下方的方向按钮指定，并在上方预览确认所选照片。",
+    "画像を確認中…": "正在确认图片…",
+    "処理中または結果未確認のため、商品区分を変更できません。再実行せず確認してください。": "处理进行中或结果尚未确认，无法切换商品分类。请先确认结果，不要重新提交。",
+    "に指定": "指定为"
   }
 };
