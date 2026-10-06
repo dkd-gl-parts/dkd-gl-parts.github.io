@@ -33,7 +33,7 @@ final result: passed
 - Hidden IAB uses isolated actual markup/functions/translations, no real authentication or production API. 1280 x 900 desktop, 390 x 844 mobile and 320 x 844 Chinese: actions fit; DOM scrollWidth equals viewport. Initial focus, close-focus restoration, synthetic error, error clearing, and retry availability pass. Console errors: 0.
 - The IAB download event completed and the resulting 713-byte `.download` file matches the binary SHA256. This browser uses its own temporary filename extension; normal browser `.lnk` filename is requested by both download attribute and Content-Disposition. Browser security prompts, automatic desktop placement and actual Explorer opening are not established by this QA. No file-API restrictions are bypassed.
 - Evidence: ignored local `outputs/folder-workspace/desktop.png`, `mobile-error.png`, `mobile-en.png`, `mobile-zh.png`, workflow results. The owned hidden tab is closed, viewport reset and QA server stopped. No normal Chrome/Edge tabs/groups, pointer, clipboard or existing desktop shortcut were changed.
-- The 124 authoritative Node workflow checks, static build and strict security-header guard passed. The final integrated release is rechecked after incorporating concurrent Drive setup support.
+- After incorporating concurrent Drive setup support, the final v1.1.1103 release passes all 124 authoritative Node checks, static build and strict security headers again. Hidden IAB rechecks the integrated desktop and 320px English layout, summary keyboard focus, support expansion/scrolling and zero horizontal overflow. Existing support and CSV actions remain present.
 
 final result: passed (normal browser saving and desktop placement remain the user's operation)
 
