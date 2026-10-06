@@ -7411,6 +7411,18 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .dcats-business-workspace-drive-support-body dt { margin-top: 12px; font-weight: 800; }
 .dcats-business-workspace-drive-support-body dd { margin: 3px 0 0; }
 .dcats-business-workspace-b2 { display: grid; gap: 14px; margin: 24px 20px 16px; border: 1px solid #cbd8d1; border-radius: 6px; padding: 16px; background: #fff; }
+.dcats-business-workspace-account { margin: 20px; padding: 16px; border: 1px solid #cbd8d1; border-left: 4px solid #287356; border-radius: 6px; background: #f7faf8; }
+.dcats-business-workspace-account[hidden] { display: none; }
+.dcats-business-workspace-account h4 { margin: 0 0 8px; color: #1d2c25; font-size: 14px; }
+.dcats-business-workspace-account p { margin: 5px 0; color: #46594d; font-size: 12px; line-height: 1.7; }
+.dcats-business-workspace-account button { width: 100%; margin: 12px 0 6px; min-height: 44px; border-radius: 5px; padding: 10px 14px; font-size: 12px; white-space: normal; }
+.dcats-business-workspace-account button:focus-visible { outline: 2px solid #287356; outline-offset: 3px; }
+.dcats-business-workspace-account button:disabled { opacity: .65; cursor: wait; }
+.dcats-business-workspace-account .dcats-business-workspace-account-note { color: #66756c; font-size: 11px; }
+#dcats-business-workspace-account-status { margin-top: 8px; color: #46594d; font-size: 12px; line-height: 1.7; }
+#dcats-business-workspace-account-status:empty { display: none; }
+#dcats-business-workspace-account-status.ready { color: #176b43; }
+#dcats-business-workspace-account-status.error { color: #b42318; }
 .dcats-business-workspace-b2-copy { display: grid; min-width: 0; gap: 3px; }
 .dcats-business-workspace-b2-copy h4 { margin: 0 0 3px; color: #1d2c25; font-size: 14px; font-weight: 800; }
 .dcats-business-workspace-b2-copy strong { margin-top: 7px; border-radius: 4px; padding: 8px 10px; background: #f3f6f4; color: #1d2c25; font-size: 12px; overflow-wrap: anywhere; }

@@ -108,8 +108,8 @@
       companyTarget: "大光電機株式会社 2023年度 / DKD551-PC\\SORIMACHI2017 / yamamoto",
       companyAccountHelp: "各担当者の初回だけ、専用登録ツールで販売王ログイン用パスワードを入力し、保護保存します。登録後の連動では再入力は不要です。販売王側でパスワードを変更した場合は、新しいパスワードを再登録してください。",
       companyRegistrationGuide: "初回登録・パスワード再登録の手順",
-      companyRegistrationStep1: "1. このPCのスタートメニューで「D-CATS 販売王パスワード登録・再登録」を開きます。見つからない場合は、Windowsキー＋Rで下記の登録ツールを開いてください。",
-      companyRegistrationStep2: "2. ご自身のD-CATSアカウントを確認し、表示された会社・接続先・販売王IDを確認します。初回は販売王パスワードを2回入力します。再登録は「再登録」と入力した後、新しいパスワードを2回入力します。入力は非表示です。",
+      companyRegistrationStep1: "1. 受注・出荷管理の「データ連携」から「業務連携」を開き、「販売王パスワードを登録・再登録」を押します。",
+      companyRegistrationStep2: "2. 専用入力画面に表示された会社・接続先・販売王IDを確認し、新しいパスワードを2回入力して保存します。入力は非表示です。登録済みの場合は再登録の画面になります。",
       companyRegistrationStep3: "3. 保存完了後の連動では販売王パスワードの再入力は不要です。再登録はD-CATSが使う保存パスワードを更新します。販売王側のパスワード変更は販売王で行ってください。",
       companyRegistrationSafety: "登録・再登録には本人確認が必要です。登録券の発行後3分以内に入力してください。結果不明の操作は再送せず、販売王の状態を確認してください。再登録だけで連動を自動再開しません。",
       companyLogin: "保存済みパスワードで販売王にログイン",
@@ -291,8 +291,8 @@
       companyTarget: "大光電機株式会社 2023年度 / DKD551-PC\\SORIMACHI2017 / yamamoto",
       companyAccountHelp: "Each operator enters their Sales King login password once in the registration tool. It is protected and saved; later integration needs no password entry. If the password changes in Sales King, register the new password again.",
       companyRegistrationGuide: "First registration and password update instructions",
-      companyRegistrationStep1: "1. Open “D-CATS 販売王パスワード登録・再登録” from this PC's Start menu. If missing, press Windows+R and open the registration tool shown below.",
-      companyRegistrationStep2: "2. Verify your own D-CATS account and the company, connection and Sales King ID displayed. Enter the Sales King password twice for first registration. To update, type 再登録, then enter the new password twice. Input is hidden.",
+      companyRegistrationStep1: "1. In Orders & Shipping, open Data Integration → Business Exchange, then press Register or update Sales King password.",
+      companyRegistrationStep2: "2. Check the company, connection and Sales King ID in the dedicated window. Enter the new password twice and save. Input is masked. Existing registrations open in update mode.",
       companyRegistrationStep3: "3. After saving, integration needs no Sales King password entry. Re-registration updates the password used by D-CATS. Change the password in Sales King itself first.",
       companyRegistrationSafety: "Registration and updates require identity verification. Complete input within three minutes of ticket issuance. Check Sales King's state without resending an operation with an unknown result. Re-registration does not resume integration automatically.",
       companyLogin: "Sign in with saved Sales King password",
@@ -473,8 +473,8 @@
       companyTarget: "大光電機株式会社 2023年度 / DKD551-PC\\SORIMACHI2017 / yamamoto",
       companyAccountHelp: "每位负责人首次在专用登记工具中输入销售王登录密码，保护并保存。登记后的联动无需再次输入。如果在销售王中更改了密码，请重新登记新密码。",
       companyRegistrationGuide: "首次登记和密码重新登记步骤",
-      companyRegistrationStep1: "1. 从此电脑的开始菜单打开「D-CATS 販売王パスワード登録・再登録」。如果找不到，请按Windows＋R打开下方的登记工具。",
-      companyRegistrationStep2: "2. 验证自己的D-CATS账户并确认显示的公司、连接和销售王ID。首次输入两次销售王密码。重新登记时先输入「再登録」，再输入两次新密码。输入不显示。",
+      companyRegistrationStep1: "1. 在订单・发货管理中打开「数据联动」→「业务协作」，点击「登记・重新登记销售王密码」。",
+      companyRegistrationStep2: "2. 确认专用窗口中的公司、连接和销售王ID，输入两次新密码后保存。输入不显示。已登记时显示重新登记画面。",
       companyRegistrationStep3: "3. 保存后的联动无需输入销售王密码。重新登记更新D-CATS使用的保存密码。销售王本身的密码请先在销售王中更改。",
       companyRegistrationSafety: "首次及重新登记均需本人验证，请在登记券签发后三分钟内完成。结果不明时先确认销售王状态，不要重新发送。重新登记不会自动恢复联动。",
       companyLogin: "使用已保存的密码登录销售王",
@@ -1117,9 +1117,6 @@
     registrationGuide.id = "dcats-concierge-company-registration-guide"; registrationGuide.hidden = true;
     registrationButton.setAttribute("aria-controls", registrationGuide.id); registrationButton.setAttribute("aria-expanded", "false");
     registrationGuide.appendChild(createCopyElement("p", "dcats-concierge-bridge-help", "companyRegistrationStep1"));
-    var registrationPath = createElement("code", "dcats-concierge-company-registration-path");
-    registrationPath.textContent = "%LOCALAPPDATA%\\D-CATS\\HanbaiOhBridge\\bin\\dcats-hanbaioh25-company-account-enroll.exe";
-    registrationGuide.appendChild(registrationPath);
     ["companyRegistrationStep2", "companyRegistrationStep3", "companyRegistrationSafety"].forEach(function (key) {
       registrationGuide.appendChild(createCopyElement("p", "dcats-concierge-bridge-help", key));
     });
