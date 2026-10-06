@@ -59,3 +59,9 @@ test('Viewer fullscreen fills the viewport and toggles only its own shell', asyn
   assert.equal(active, unrelated, 'another fullscreen view must remain untouched');
   assert.equal(exits, 1);
 });
+test('unsupported fullscreen does not silently report success', async () => {
+  const actions = vm.runInNewContext(`({${viewerAction('fullscreen')}})`, {
+    options: { fullscreenElement: {} }, host: {}, document: { fullscreenElement: null },
+  });
+  await assert.rejects(() => actions.fullscreen(), /Fullscreen API is not available/);
+});

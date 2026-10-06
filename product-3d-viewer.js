@@ -53,7 +53,9 @@ export async function createProduct3DViewer(options) {
 
   let gltf;
   try {
-    gltf = await loader.loadAsync(options.url);
+    gltf = options.buffer
+      ? await loader.parseAsync(options.buffer, '')
+      : await loader.loadAsync(options.url);
   } catch (error) {
     controls.dispose();
     draco.dispose();
@@ -161,7 +163,10 @@ export async function createProduct3DViewer(options) {
     async fullscreen() {
       const target = options.fullscreenElement || host;
       if (document.fullscreenElement === target) await document.exitFullscreen();
-      else if (!document.fullscreenElement && target.requestFullscreen) await target.requestFullscreen();
+      else if (!document.fullscreenElement) {
+        if (!target.requestFullscreen) throw new Error('Fullscreen API is not available.');
+        await target.requestFullscreen();
+      }
     },
     dispose() {
       if (disposed) return;
