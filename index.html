@@ -1167,6 +1167,24 @@
       <a href="https://drive.google.com/drive/folders/1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ" target="_blank" rel="noopener noreferrer" data-i18n="business_workspace_open_folder">Google Drive（Web）</a>
       <button type="button" class="btn-primary" id="dcats-business-workspace-shortcut" data-i18n="business_workspace_create_shortcut">フォルダのショートカットを取得</button>
     </div>
+    <p class="dcats-business-workspace-shortcut-hint" data-i18n="business_workspace_shortcut_hint">PC版Google Driveがない場合も「Google Drive（Web）」からブラウザで利用できます。フォルダ用ショートカットは、このPCのG:ドライブを参照します。</p>
+    <details class="dcats-business-workspace-drive-support" id="dcats-business-workspace-drive-support">
+      <summary data-i18n="business_workspace_drive_support">PC版Google Driveの設定・困ったとき</summary>
+      <div class="dcats-business-workspace-drive-support-body">
+        <p data-i18n="business_workspace_drive_intro">同期フォルダへ自動保存するには、PC版Google Driveを導入し、共有フォルダの保存先を設定します。</p>
+        <ol>
+          <li><strong data-i18n="business_workspace_drive_install_title">PC版Google Driveを導入する</strong><p data-i18n="business_workspace_drive_install_text">Google公式の手順でインストールし、共有フォルダを利用できる業務用Googleアカウントでログインします。</p><a href="https://support.google.com/drive/answer/10838124?hl=ja" target="_blank" rel="noopener noreferrer" data-i18n="business_workspace_drive_install_link">Google公式の導入手順</a></li>
+          <li><strong data-i18n="business_workspace_drive_folder_title">共有フォルダをPCで表示する</strong><p data-i18n="business_workspace_drive_folder_text">「Google Drive（Web）」でD-CATS業務連携を表示します。必要に応じてフォルダの「ドライブにショートカットを追加」からマイドライブへ追加し、エクスプローラーで表示を確認します。</p><a href="https://support.google.com/drive/answer/9700156?co=GENIE.Platform%3DDesktop&amp;hl=ja" target="_blank" rel="noopener noreferrer" data-i18n="business_workspace_drive_folder_link">Google公式のフォルダ追加手順</a></li>
+          <li><strong data-i18n="business_workspace_drive_save_title">D-CATSの保存先を設定する</strong><p data-i18n="business_workspace_drive_save_text">B2はこの画面の「保存先を設定」、販売王CSVは「販売王連携」の保存先設定から、PC上のD-CATS業務連携フォルダを選択します。PCごと・ブラウザごとに設定してください。</p></li>
+        </ol>
+        <h4 data-i18n="business_workspace_drive_help_title">うまく設定できない場合</h4>
+        <dl>
+          <dt data-i18n="business_workspace_drive_no_install_title">インストールできない</dt><dd data-i18n="business_workspace_drive_no_install_text">社内管理者へPC版Driveの導入を依頼してください。導入までの間は「Google Drive（Web）」からブラウザで利用できます。</dd>
+          <dt data-i18n="business_workspace_drive_no_folder_title">共有フォルダが表示されない</dt><dd data-i18n="business_workspace_drive_no_folder_text">ブラウザとPC版Driveが共有先のGoogleアカウントでログインしているか、PC版Driveが起動しているか確認します。アクセスできない場合は、共有フォルダの管理者へ権限を確認してください。</dd>
+          <dt data-i18n="business_workspace_drive_no_picker_title">保存先を選べない・再接続が必要</dt><dd data-i18n="business_workspace_drive_no_picker_text">Windows版ChromeまたはEdgeでD-CATSを開き、同期フォルダを選び直して保存のアクセスを許可してください。PC版Driveの導入と、D-CATSの保存先設定はそれぞれ必要です。</dd>
+        </dl>
+      </div>
+    </details>
     <section class="dcats-business-workspace-b2" aria-labelledby="dcats-business-workspace-b2-title">
       <div class="dcats-business-workspace-b2-copy">
         <span id="dcats-business-workspace-b2-title" data-i18n="business_workspace_b2_title">B2 CSV保存先</span>
