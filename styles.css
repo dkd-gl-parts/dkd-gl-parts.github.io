@@ -9137,15 +9137,21 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .product-3d-card-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
 .product-3d-card-action { padding: 7px 10px; border: 1px solid #b9c9dd; border-radius: 8px; background: #fff; color: #2563eb; font-weight: 800; cursor: pointer; }
 .product-3d-card-action.publish { border-color: #0f766e; background: #0f766e; color: #fff; }
+.product-3d-action-heading { color: #52647c; font-size: 12px; font-weight: 800; letter-spacing: .08em; }
 .product-3d-empty-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #68768b; text-align: center; }
 .product-3d-empty-card button { border: 0; background: transparent; color: #2563eb; font-weight: 800; cursor: pointer; }
 .customer-product-media { min-width: 0; }
 .customer-product-media-switch { margin-bottom: 8px; }
 .product-3d-viewer-shell { position: relative; width: min(1100px, 100%); overflow: hidden; background: #0b111b; }
 .product-3d-viewer-stage { height: min(72vh, 720px); touch-action: none; }
+.product-3d-viewer-shell:fullscreen { display: flex; flex-direction: column; width: 100vw; height: 100vh; height: 100dvh; max-height: none; border: 0; border-radius: 0; }
+.product-3d-viewer-shell:fullscreen .product-3d-viewer-stage { flex: 1 1 auto; min-height: 0; height: auto; }
 .product-3d-viewer-stage canvas { display: block; width: 100%; height: 100%; }
 .product-3d-viewer-loading { position: absolute; inset: 74px 0 54px; display: grid; place-items: center; color: #dce6f2; background: rgba(8, 15, 25, .76); }
+.product-3d-viewer-loading[hidden] { display: none; }
 .product-3d-viewer-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px; background: #101a29; color: #a9b7ca; font-size: 11px; }
+#product-3d-viewer-fullscreen-notice { color: #fbbf77; }
+.product-3d-viewer-toolbar [hidden] { display: none; }
 .product-3d-viewer-toolbar button { padding: 7px 12px; border: 1px solid #3e4d63; border-radius: 8px; background: #1b293d; color: #eef5ff; cursor: pointer; }
 .product-3d-viewer-toolbar button[aria-pressed="true"] { border-color: #2dd4bf; color: #77f5e7; }
 .product-3d-has-badge { display: inline-flex; margin-left: 5px; padding: 2px 7px; border-radius: 999px; background: #e6fffa; color: #087f75; font-size: 10px; font-weight: 900; }
@@ -9153,11 +9159,13 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 @media (max-width: 820px) {
   .product-3d-capture-overlay, .product-3d-viewer-overlay { padding: 0; align-items: stretch; }
   .product-3d-capture-shell, .product-3d-viewer-shell { max-height: 100dvh; border: 0; border-radius: 0; }
+  .product-3d-viewer-shell { display: flex; flex-direction: column; height: 100dvh; }
   .product-3d-capture-body { grid-template-columns: 1fr; padding: 10px; }
   .product-3d-camera-stage { min-height: min(50vh, 430px); }
   .product-3d-capture-dial { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .product-3d-review-column { padding-bottom: 24px; }
-  .product-3d-viewer-stage { height: calc(100dvh - 132px); }
+  .product-3d-viewer-stage { flex: 1 1 auto; min-height: 0; height: auto; }
+  .product-3d-viewer-toolbar { flex: 0 0 auto; }
   .product-3d-viewer-toolbar span { flex-basis: 100%; }
 }
 

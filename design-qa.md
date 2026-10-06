@@ -277,3 +277,14 @@ final result: passed
 - Evidence (local only): `outputs/cost-workspace/product-id-1280.png`, `product-id-320.png`, and the focused `product-id-detail.png`.
 
 final result: passed
+## Independent GLB Viewer release QA (v1.1.1104, 2026-10-06)
+
+- Hidden IAB only, using actual product-media markup, product-3d controller and pinned Viewer with synthetic product/Auth responses. No user session was copied and no production product/Storage was written.
+- Desktop 1280x720, smartphone 390x844 and tablet 820x1180: self-contained official Khronos Draco Box rendered under the production CSP. Actual drag changed rendering; zoom/reset, autorotation, whole-shell fullscreen and close worked. Mobile shell width/scrollWidth were 390px and controls remained within the viewport.
+- No registered model, permission denial, generation-failure with a ready uploaded alternative, and logout cleanup were checked. Lookup outages now show a recoverable error, not a cached successful empty result. Unit tests cover product/kind/auth races and ambiguous upload/delete outcomes.
+- Required codec permissions are limited to WebAssembly compilation and self/blob workers. JavaScript eval, inline scripts/handlers and external GLB resources remain forbidden; codecs are pinned and self-hosted.
+- Prior approved isolated authenticated API E2E completed upload, signed-GLB/provenance readback, replacement/old-URL denial and deletion/deleted-URL denial. That environment was deleted; no new billed resources are needed.
+- Local regression: 62 product-3D tests; all authoritative workflow commands, static build and response-header guards. Actual user-created asset quality and physical-device touch remain distinct, unverified checks.
+- Evidence is local-only in the task-owned `.codex-tmp-product3d/viewer-draco-*-20261006.png` files. Regular Chrome/Edge, clipboard and OS pointer are untouched. Owned IAB tab/viewport/helper cleanup is required at completion.
+
+final result: passed for synthetic responsive GLB viewing; production release is verified separately.
