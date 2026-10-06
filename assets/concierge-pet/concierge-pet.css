@@ -120,6 +120,14 @@
   touch-action: manipulation;
 }
 
+.dcats-concierge-company-registration-path {
+  display: block;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+
 .dcats-concierge-launcher[hidden] {
   display: none !important;
 }
