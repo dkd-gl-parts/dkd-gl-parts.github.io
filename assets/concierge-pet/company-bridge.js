@@ -19,7 +19,7 @@
   function nativeRequest(request, options) {
     return new Promise(function (resolve, reject) {
       var settled = false;
-      var timer = window.setTimeout(function () { finish(null); }, request.command === "login_hanbaioh_company" ? 210000 : 30000);
+      var timer = window.setTimeout(function () { finish(null); }, request.command === "login_hanbaioh_company" ? 210000 : request.command === "read_hanbaioh_company_device" ? 5000 : 30000);
       function finish(response) {
         if (settled) return; settled = true;
         window.clearTimeout(timer); window.removeEventListener("message", onMessage); cancel = null;
@@ -35,6 +35,52 @@
       window.addEventListener("message", onMessage);
       window.postMessage({ channel: channel, type: "request", request: request }, window.location.origin);
     });
+  }
+  async function enrollAccountFromPc(options) {
+    if(active || !options || !uuid.test(options.actorId) || typeof options.isCurrent!=="function" || !options.isCurrent()) throw new Error("company_operation_unavailable");
+    active=true;var initial,watch,capability;
+    try {
+      var record=await nativeRequest({id:window.crypto.randomUUID(),command:"read_hanbaioh_company_device",actorId:options.actorId},options);
+      if(!validRecord(record)||record.actor_id!==options.actorId||Object.keys(record).sort().join(",")!=="actor_id,device_id,public_key_sha256,public_key_spki"||!options.isCurrent())throw new Error("company_device_unavailable");
+      var api=window.DcatsHanbaiohCompanyApi;
+      if(!api||typeof api.issue!=="function")throw new Error("company_operation_unavailable");
+      var body={command:"enroll_hanbaioh_company_account",device_id:record.device_id,request_id:window.crypto.randomUUID()};
+      capability=issuedTicket(await api.issue(record,body),body);
+      if(!options.isCurrent())throw new Error("company_session_changed");
+      initial={id:body.request_id,command:body.command,deviceId:body.device_id,capability:capability};
+      return await new Promise(function(resolve,reject){
+        var settled=false,asked=false;
+        var timer=window.setTimeout(function(){finish(null);},405000);
+        function finish(response){
+          if(settled)return;settled=true;window.clearTimeout(timer);window.clearInterval(watch);window.removeEventListener("message",onMessage);window.removeEventListener("pagehide",stop);cancel=null;
+          window.postMessage({channel:channel,type:"company_enrollment_cancel",id:initial.id},window.location.origin);
+          initial.capability="";capability="";
+          var data=response&&response.data;
+          if(response&&options.isCurrent()&&response.ok===true&&response.command===body.command&&data&&
+            (data.status==="enrolled"&&typeof data.replaced==="boolean"&&Number.isSafeInteger(data.generation)&&data.generation>=1||["cancelled","expired"].includes(data.status)))resolve(data);
+          else reject(new Error("company_registration_unverified"));
+        }
+        function stop(){finish(null);}
+        async function onMessage(event){
+          if(event.source!==window||event.origin!==window.location.origin)return;
+          var m=event.data;
+          if(!m||m.channel!==channel)return;
+          if(m.type==="response"&&m.response&&m.response.id===initial.id){finish(m.response);return;}
+          if(m.type!=="company_enrollment_ticket_request"||m.id!==initial.id)return;
+          if(asked||!uuid.test(m.challengeId)||!options.isCurrent()){finish(null);return;}
+          asked=true;
+          try{
+            var fresh={command:body.command,device_id:record.device_id,request_id:window.crypto.randomUUID()};
+            var ticket=issuedTicket(await api.issue(record,fresh),fresh);
+            if(settled||!options.isCurrent()){ticket="";finish(null);return;}
+            window.postMessage({channel:channel,type:"company_enrollment_ticket_reply",id:initial.id,challengeId:m.challengeId,requestId:fresh.request_id,capability:ticket},window.location.origin);ticket="";
+          }catch{finish(null);}
+        }
+        cancel=stop;watch=window.setInterval(function(){if(!options.isCurrent())stop();},250);
+        window.addEventListener("pagehide",stop);window.addEventListener("message",onMessage);
+        window.postMessage({channel:channel,type:"request",request:initial},window.location.origin);
+      });
+    }finally{window.clearInterval(watch);if(initial)initial.capability="";capability="";active=false;}
   }
   async function run(options, category) {
     requireCurrent(options);
@@ -79,6 +125,7 @@
   window.DcatsHanbaiohCompanyBridge = Object.freeze({
     loginOnce: function (options) { return run(options, "account"); },
     prepareCsv: function (options) { return run(options, options.category); },
+    enrollAccountFromPc: enrollAccountFromPc,
     wasLoginAttempted: function (record) { return validRecord(record) && loginAttempts.has(actorKey(record)); },
     cancelCurrent: function () { if (cancel) cancel(); }
   });
