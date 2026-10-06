@@ -1,3 +1,13 @@
+## B2 destination and permission guidance QA (v1.1.1106, 2026-10-06)
+
+- Display the usual B2 folder and the exact target of this PC's existing G-drive shortcut. The target directory was confirmed to exist by a read-only filesystem check. This fixed shortcut target is labeled as PC-specific and is not claimed to be the absolute path of an arbitrary browser handle.
+- Add a visible warning to keep the destination unchanged during normal use; only reselect after a move or administrator instructions. Replace ambiguous "未設定" with save-permission status and explicit confirmation guidance. Granted handles show the registered folder name and optional reselection; prompt/denied handles retain that name.
+- Stop caching a failed B2 IndexedDB read as an empty registration. Actual production-function tests cover read failure and recovery on reopen, granted registration, permission loss and no handle. State inspection must not invoke a picker, request permission or write a handle. Existing CSV validation, picker and writes remain intact.
+- Hidden IAB synthetic fixture: desktop 1280 x 1000 / 1280 x 900 and 320 x 844 Japanese/English/Chinese, pending/ready/permission/unsupported/read-error states. Document and section widths have no horizontal overflow; target and warning wrap. Tab reaches the confirmation button with a 2px outline; closing restores entry focus. Console warnings/errors: 0.
+- All 125 authoritative workflow Node commands, static build, strict CSP/response headers and diff checks passed. Initial language-coverage failures found stale HTML help and a misplaced duplicate translation key; both were corrected before the complete successful run. No real picker, CSV write, native sales import/export or browser session copy was performed.
+- Evidence is local/ignored in outputs/b2-default-folder, including desktop-ja-final.jpg and UI/workflow results. Owned IAB tab 6 closed, viewport reset, QA server PID 23864 verified against its command line before stop. No saved group was created; user browsers, clipboard and OS pointer were not operated. Existing .qa-output is preserved.
+- Release uses the standing routine frontend authorization and normal PR/CI. Rollback is a revert of this PR; stored handles and existing data remain intact.
+
 ## B2 CSV save-folder clarity QA (v1.1.1105, 2026-10-06)
 
 - Renamed the Business Exchange selection control to "B2 CSVの保存フォルダを選ぶ" and the configured-state control to "B2 CSVの保存フォルダを変更", with English and Chinese equivalents. Setup instructions use the new label.
