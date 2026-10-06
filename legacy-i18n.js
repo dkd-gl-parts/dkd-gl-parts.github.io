@@ -3613,7 +3613,17 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "画面も更新できませんでした。商品を選び直して確認してください。": "The screen could not be refreshed either. Select the product again to confirm.",
     "GLBは登録されませんでした。送信サイズが上限を超えています。小さいファイルを選び直してください。": "The GLB was not registered because the upload exceeds the size limit. Select a smaller file.",
     "GLBは登録されませんでした。ファイルの形式・内容を確認してください:": "The GLB was not registered. Check the file format and contents:",
-    "D-CATS連携テスト（実データ禁止）": "D-CATS連携テスト（実データ禁止）"
+    "D-CATS連携テスト（実データ禁止）": "D-CATS連携テスト（実データ禁止）",
+    "Tripo APIキーの保存形式に問題があります。サーバー設定を確認してください。": "The stored Tripo API key has an invalid format. Check the server configuration.",
+    "TripoでAPIキーの認証が拒否されました。キーの有効状態とサーバー設定を確認してください。": "Tripo rejected API key authentication. Check that the key is active and configured correctly on the server.",
+    "Tripo側で残高照会が許可されませんでした。追加購入せず管理者に確認してください。": "Tripo denied the balance query. Contact an administrator before purchasing more credits.",
+    "Tripoの接続回数制限に達しました。連打せず、時間を置いて確認してください。": "Tripo's request limit was reached. Wait before checking again; do not click repeatedly.",
+    "Tripo側でサービスエラーが発生しました。時間を置いて確認してください。": "Tripo returned a service error. Check again later.",
+    "Tripo残高照会が時間切れになりました。接続成功は未確認です。": "The Tripo balance query timed out. Connection success has not been confirmed.",
+    "Tripoへの通信を完了できませんでした。サーバー側の接続状況を確認してください。": "Communication with Tripo could not be completed. Check the server's connection.",
+    "Tripoの残高応答を読み取れませんでした。管理者によるAPI仕様の確認が必要です。": "The Tripo balance response could not be read. An administrator must check the API contract.",
+    "Tripoが残高照会を拒否しました。管理者による応答コードの確認が必要です。": "Tripo rejected the balance query. An administrator must check the response code.",
+    "画像送信・生成は開始していません。": "No images were sent and generation has not started."
   },
   "zh": {
     "澤藤": "泽藤",
@@ -7227,6 +7237,16 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "画面も更新できませんでした。商品を選び直して確認してください。": "页面也无法刷新。请重新选择商品并确认。",
     "GLBは登録されませんでした。送信サイズが上限を超えています。小さいファイルを選び直してください。": "GLB未登记，因为上传内容超过大小上限。请选择更小的文件。",
     "GLBは登録されませんでした。ファイルの形式・内容を確認してください:": "GLB未登记。请检查文件格式和内容：",
-    "D-CATS連携テスト（実データ禁止）": "D-CATS連携テスト（実データ禁止）"
+    "D-CATS連携テスト（実データ禁止）": "D-CATS連携テスト（実データ禁止）",
+    "Tripo APIキーの保存形式に問題があります。サーバー設定を確認してください。": "保存的Tripo API密钥格式不正确，请检查服务器设置。",
+    "TripoでAPIキーの認証が拒否されました。キーの有効状態とサーバー設定を確認してください。": "Tripo拒绝了API密钥认证，请检查密钥是否有效以及服务器设置。",
+    "Tripo側で残高照会が許可されませんでした。追加購入せず管理者に確認してください。": "Tripo未允许查询余额，请先联系管理员，不要追加购买。",
+    "Tripoの接続回数制限に達しました。連打せず、時間を置いて確認してください。": "已达到Tripo请求次数限制，请稍后检查，不要连续点击。",
+    "Tripo側でサービスエラーが発生しました。時間を置いて確認してください。": "Tripo返回服务错误，请稍后检查。",
+    "Tripo残高照会が時間切れになりました。接続成功は未確認です。": "Tripo余额查询超时，尚未确认连接成功。",
+    "Tripoへの通信を完了できませんでした。サーバー側の接続状況を確認してください。": "无法完成与Tripo的通信，请检查服务器连接。",
+    "Tripoの残高応答を読み取れませんでした。管理者によるAPI仕様の確認が必要です。": "无法读取Tripo余额响应，需要管理员检查API规范。",
+    "Tripoが残高照会を拒否しました。管理者による応答コードの確認が必要です。": "Tripo拒绝了余额查询，需要管理员检查响应代码。",
+    "画像送信・生成は開始していません。": "未发送图片或开始生成。"
   }
 };

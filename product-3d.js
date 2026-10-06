@@ -1066,6 +1066,26 @@
         paneRequest === mediaPaneRequest[context] && canManageGlb() &&
         productId(current.product) === id && current.kind === target.kind;
     }
+    function connectionFailure(data) {
+      var messages = {
+        key_format: "Tripo APIキーの保存形式に問題があります。サーバー設定を確認してください。",
+        authentication: "TripoでAPIキーの認証が拒否されました。キーの有効状態とサーバー設定を確認してください。",
+        permission: "Tripo側で残高照会が許可されませんでした。追加購入せず管理者に確認してください。",
+        rate_limit: "Tripoの接続回数制限に達しました。連打せず、時間を置いて確認してください。",
+        provider_unavailable: "Tripo側でサービスエラーが発生しました。時間を置いて確認してください。",
+        timeout: "Tripo残高照会が時間切れになりました。接続成功は未確認です。",
+        network: "Tripoへの通信を完了できませんでした。サーバー側の接続状況を確認してください。",
+        invalid_response: "Tripoの残高応答を読み取れませんでした。管理者によるAPI仕様の確認が必要です。",
+        provider_rejected: "Tripoが残高照会を拒否しました。管理者による応答コードの確認が必要です。"
+      };
+      var category = data && data.diagnostic && data.diagnostic.category;
+      if (data && data.configured === true && data.connection_status === "unavailable" &&
+          data.generation_enabled === false && typeof category === "string" &&
+          Object.prototype.hasOwnProperty.call(messages, category)) {
+        return messages[category] + "画像送信・生成は開始していません。";
+      }
+      return "Tripo接続を確認できませんでした。画像送信・生成は開始していません。";
+    }
     button.disabled = true;
     status.textContent = "接続・残高を確認中です。画像送信・生成は開始しません。";
     try {
@@ -1073,7 +1093,18 @@
         action: "readiness", product_id: id, product_kind: target.kind
       } });
       if (!stillCurrent()) return;
-      if (result.error) throw new Error("Connection check unavailable");
+      if (result.error) {
+        // Supabase FunctionsHttpError carries the Response, not its JSON in data.
+        // Never render an exception message, provider body or arbitrary category.
+        var errorData = null;
+        var response = result.error.context;
+        if (response && response.status === 502 && typeof response.json === "function") {
+          try { errorData = await response.json(); } catch (_) { /* Safe generic fallback. */ }
+        }
+        if (!stillCurrent()) return;
+        status.textContent = connectionFailure(errorData);
+        return;
+      }
       var data = result.data || {};
       if (data.connection_status === "not_configured" && data.configured === false) {
         status.textContent = "Tripo APIキーが未設定です。システム管理者がサーバー側に設定してください。";
@@ -1320,7 +1351,7 @@
     elements["product-3d-viewer-autorotate"].setAttribute("aria-pressed", "false");
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await import("./product-3d-viewer.js?v=1.1.1108");
+      var module = await import("./product-3d-viewer.js?v=1.1.1109");
       if (!targetStillSelected()) {
         if (requestId === viewerRequestId) closeViewer();
         return;
