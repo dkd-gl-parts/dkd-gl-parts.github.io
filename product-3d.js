@@ -985,10 +985,13 @@
       return;
     }
     var visible = context === "customer" ? models : models.filter(function (model) { return model.product_kind === target.kind; });
+    var tripoConnection = glbManageable
+      ? "<div class='product-3d-empty-card'><button type='button' data-tripo-readiness='" + context + "'>Tripo接続確認（クレジット消費なし）</button><span data-tripo-readiness-status role='status'>画像送信・3D生成は行いません。</span></div>"
+      : "";
     if (!visible.length) {
       var createAction = manageable ? "<button type='button' data-create-3d='" + context + "'>3Dモデルを作成</button>" : "";
       var uploadAction = glbManageable ? "<button type='button' data-upload-3d='" + context + "'>GLBをアップロード</button>" : "";
-      host.innerHTML = "<div class='product-3d-empty-card'><span class='product-3d-cube'>3D</span><strong>公開済み3Dモデルはありません</strong>" + createAction + uploadAction + "</div>";
+      host.innerHTML = "<div class='product-3d-empty-card'><span class='product-3d-cube'>3D</span><strong>公開済み3Dモデルはありません</strong>" + createAction + uploadAction + "</div>" + tripoConnection;
       return;
     }
     function modelCardHtml(model) {
@@ -1026,7 +1029,7 @@
     var uploadAction = glbManageable
       ? "<button type='button' class='product-3d-card-action' data-upload-3d='" + context + "'>GLBをアップロード</button>"
       : "";
-    host.innerHTML = fallback + visible.map(modelCardHtml).join("") + uploadAction;
+    host.innerHTML = fallback + visible.map(modelCardHtml).join("") + uploadAction + tripoConnection;
   }
   function modelStatusLabel(status) {
     return ({ draft: "撮影途中", waiting: "待機", processing: "処理中", needs_capture: "要追加撮影", failed: "失敗", review: "確認待ち", published: "公開済み", archived: "旧版" })[status] || status;
@@ -1045,6 +1048,44 @@
   function clearModelCaches(dkdId) {
     var key = String(dkdId);
     delete modelCache[key]; delete internalModelCache[key]; delete modelBadgeCache[key];
+  }
+  async function checkTripoReadiness(context, button) {
+    if (!sessionModelsEnabled || !button || button.disabled ||
+        ["sales", "production"].indexOf(context) < 0) return;
+    if (!canManageGlb()) { deny3D("product_3d_tripo_readiness"); return; }
+    var target = selectedTarget(context);
+    var id = productId(target.product);
+    if (!id || !target.kind) return;
+    var epoch = modelCacheEpoch;
+    var paneRequest = mediaPaneRequest[context];
+    var status = button.parentElement && button.parentElement.querySelector("[data-tripo-readiness-status]");
+    if (!status || !button.isConnected) return;
+    function stillCurrent() {
+      var current = selectedTarget(context);
+      return sessionModelsEnabled && epoch === modelCacheEpoch && button.isConnected &&
+        paneRequest === mediaPaneRequest[context] && canManageGlb() &&
+        productId(current.product) === id && current.kind === target.kind;
+    }
+    button.disabled = true;
+    status.textContent = "接続・残高を確認中です。画像送信・生成は開始しません。";
+    try {
+      var result = await sb.functions.invoke("product-3d-tripo-readiness", { body: {
+        action: "readiness", product_id: id, product_kind: target.kind
+      } });
+      if (!stillCurrent()) return;
+      if (result.error) throw new Error("Connection check unavailable");
+      var data = result.data || {};
+      if (data.connection_status === "not_configured" && data.configured === false) {
+        status.textContent = "Tripo APIキーが未設定です。システム管理者がサーバー側に設定してください。";
+      } else if (data.connection_status === "connected" && data.configured === true &&
+          typeof data.balance === "number" && Number.isFinite(data.balance) && data.balance >= 0) {
+        status.textContent = "Tripo接続済み / 残高 " + data.balance + " クレジット。" +
+          (data.generation_enabled === true ? "生成は開始していません。" : "3D生成はまだ無効です。") +
+          (data.has_sufficient_credits === false ? "生成の見積りに対して残高が不足しています。" : "");
+      } else throw new Error("Invalid connection status");
+    } catch (_) {
+      if (stillCurrent()) status.textContent = "Tripo接続を確認できませんでした。画像送信・生成は開始していません。";
+    } finally { if (button.isConnected) button.disabled = false; }
   }
   function selectGlbForUpload(context, replacedId) {
     if (!sessionModelsEnabled || glbMutationBusy) return;
@@ -1279,7 +1320,7 @@
     elements["product-3d-viewer-autorotate"].setAttribute("aria-pressed", "false");
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await import("./product-3d-viewer.js?v=1.1.1107");
+      var module = await import("./product-3d-viewer.js?v=1.1.1108");
       if (!targetStillSelected()) {
         if (requestId === viewerRequestId) closeViewer();
         return;
@@ -1398,6 +1439,8 @@
         if (mode === "model") renderMediaPane(context);
       }
       var create = event.target.closest("[data-create-3d]"); if (create) openCapture(create.dataset.create3d);
+      var connection = event.target.closest("[data-tripo-readiness]");
+      if (connection) checkTripoReadiness(connection.dataset.tripoReadiness, connection);
       var upload = event.target.closest("[data-upload-3d]"); if (upload) selectGlbForUpload(upload.dataset.upload3d);
       var replace = event.target.closest("[data-replace-uploaded]");
       if (replace) selectGlbForUpload(replace.dataset.uploadContext, replace.dataset.replaceUploaded);
