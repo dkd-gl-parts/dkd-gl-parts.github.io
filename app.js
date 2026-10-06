@@ -7271,7 +7271,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1107";
+var APP_VERSION       = "v1.1.1111";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -8184,6 +8184,9 @@ function canManageAllImages() {
 function canManageProduct3D() {
   if (!userProfile || isExternalViewer() || isCustomerPortalSearchMode()) return false;
   return userPermissionAllowed(userProfile, "product_3d.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]));
+}
+function canManageProduct3DGlb() {
+  return canManageProduct3D() && hasAccessRole(userProfile, ["system_admin"]);
 }
 function canPublishProduct3D() {
   if (!userProfile || isExternalViewer() || isCustomerPortalSearchMode()) return false;
@@ -52192,6 +52195,7 @@ function syncProductMediaActionAccess(context) {
   var kind = selectedImageActionKind(production ? "production" : "sales");
   var canManageImages = canManageAllImages();
   var canManage3D = canManageProduct3D() && product3DSupportedKind(kind);
+  var canManageGlb = canManageProduct3DGlb() && product3DSupportedKind(kind);
   var imageAllowed = canManageImageKind(kind, production ? "production" : "sales");
   var ids = production
     ? {
@@ -52215,7 +52219,7 @@ function syncProductMediaActionAccess(context) {
   if (ids.camera) setCspStyle(document.getElementById(ids.camera), "display", canManageImages ? "" : "none");
   if (ids.copy) setCspStyle(document.getElementById(ids.copy), "display", canManageImages ? "" : "none");
   if (ids.model) setCspStyle(document.getElementById(ids.model), "display", canManage3D ? "" : "none");
-  if (ids.uploadModel) setCspStyle(document.getElementById(ids.uploadModel), "display", canManage3D ? "" : "none");
+  if (ids.uploadModel) setCspStyle(document.getElementById(ids.uploadModel), "display", canManageGlb ? "" : "none");
 }
 
 function openImageActionsDialog() {

@@ -36,6 +36,7 @@
   var modelAuthUserId = null;
   var badgeRefreshTimer = null;
   var glbUploadTarget = null;
+  var localGlbTarget = null;
   var glbMutationBusy = false;
   var mediaAvailabilityRequest = { sales: 0, production: 0, customer: 0 };
   var mediaPaneRequest = { sales: 0, production: 0, customer: 0 };
@@ -84,6 +85,9 @@
   function canManage3D() {
     return typeof canManageProduct3D === "function" && canManageProduct3D();
   }
+  function canManageGlb() {
+    return typeof canManageProduct3DGlb === "function" && canManageProduct3DGlb();
+  }
   function canPublish3D() {
     return typeof canPublishProduct3D === "function" && canPublishProduct3D();
   }
@@ -119,7 +123,7 @@
       "product-3d-viewer-stage", "product-3d-viewer-loading", "product-3d-viewer-reset",
       "product-3d-viewer-zoom-in", "product-3d-viewer-zoom-out",
       "product-3d-viewer-autorotate", "product-3d-viewer-fullscreen", "product-3d-viewer-fullscreen-notice",
-      "product-3d-glb-file"
+      "product-3d-glb-file", "product-3d-local-glb-file"
     ].forEach(function (id) { elements[id] = el(id); });
   }
 
@@ -961,6 +965,7 @@
     host.innerHTML = "<div class='product-3d-loading-card'>3Dモデルを確認しています…</div>";
     var internal = context !== "customer" && canReview3D();
     var manageable = context !== "customer" && !!target.kind && canManage3D();
+    var glbManageable = context !== "customer" && !!target.kind && canManageGlb();
     var publishable = context !== "customer" && canPublish3D();
     var models = [], lookupFailed = false;
     try { models = internal ? await fetchInternalModels(dkdId) : await fetchPublishedModels(dkdId); }
@@ -971,19 +976,26 @@
         (context !== "customer" && current.kind !== target.kind) || !host.isConnected) return;
     if (internal !== (context !== "customer" && canReview3D()) ||
         manageable !== (context !== "customer" && !!current.kind && canManage3D()) ||
+        glbManageable !== (context !== "customer" && !!current.kind && canManageGlb()) ||
         publishable !== (context !== "customer" && canPublish3D())) {
       host.textContent = "表示条件が変わりました。3Dタブを開き直してください。";
       return;
     }
+    var localPreviewAction = glbManageable
+      ? "<button type='button' class='product-3d-card-action' data-local-glb='" + context + "'>GLBをプレビュー（登録しない）</button>"
+      : "";
     if (lookupFailed) {
-      host.textContent = "3Dモデルを確認できませんでした。3Dタブを開き直してください。";
+      host.innerHTML = "<div class='product-3d-empty-card'>3Dモデルを確認できませんでした。3Dタブを開き直してください。" + localPreviewAction + "</div>";
       return;
     }
     var visible = context === "customer" ? models : models.filter(function (model) { return model.product_kind === target.kind; });
+    var tripoConnection = glbManageable
+      ? "<div class='product-3d-empty-card'><button type='button' data-tripo-readiness='" + context + "'>Tripo接続確認（クレジット消費なし）</button><span data-tripo-readiness-status role='status'>画像送信・3D生成は行いません。</span></div>"
+      : "";
     if (!visible.length) {
       var createAction = manageable ? "<button type='button' data-create-3d='" + context + "'>3Dモデルを作成</button>" : "";
-      var uploadAction = manageable ? "<button type='button' data-upload-3d='" + context + "'>GLBをアップロード</button>" : "";
-      host.innerHTML = "<div class='product-3d-empty-card'><span class='product-3d-cube'>3D</span><strong>公開済み3Dモデルはありません</strong>" + createAction + uploadAction + "</div>";
+      var uploadAction = glbManageable ? "<button type='button' data-upload-3d='" + context + "'>GLBをアップロード</button>" : "";
+      host.innerHTML = "<div class='product-3d-empty-card'><span class='product-3d-cube'>3D</span><strong>公開済み3Dモデルはありません</strong>" + createAction + uploadAction + localPreviewAction + "</div>" + tripoConnection;
       return;
     }
     function modelCardHtml(model) {
@@ -992,7 +1004,7 @@
       var canOpen = model.published_model_path && (model.status === "published" || model.status === "review" || model.status === "archived");
       var action = canOpen ? "<button type='button' class='product-3d-card-action' data-open-model='" + model.id + "' data-model-context='" + context + "' data-model-product='" + productId(target.product) + "'>3Dで見る</button>" : "";
       if (publishable && model.model_source !== "uploaded" && model.status === "review") action += "<button type='button' class='product-3d-card-action publish' data-publish-model='" + model.id + "' data-publish-context='" + context + "'>公開</button>";
-      if (manageable && model.model_source === "uploaded") {
+      if (glbManageable && model.model_source === "uploaded") {
         action += "<button type='button' class='product-3d-card-action' data-replace-uploaded='" + model.id.slice(9) + "' data-upload-context='" + context + "'>差し替え</button>";
         action += "<button type='button' class='product-3d-card-action' data-delete-uploaded='" + model.id.slice(9) + "' data-upload-context='" + context + "'>削除</button>";
       }
@@ -1015,13 +1027,13 @@
     var usableAlternative = visible.some(function (model) {
       return !!model.published_model_path && ["published", "review"].indexOf(model.status) >= 0;
     });
-    var fallback = failedGeneration && !usableAlternative && manageable
+    var fallback = failedGeneration && !usableAlternative && glbManageable
       ? "<div class='product-3d-empty-card'>3Dモデルを生成できませんでした。GLBファイルをアップロードしてください。</div>"
       : "";
-    var uploadAction = manageable
+    var uploadAction = glbManageable
       ? "<button type='button' class='product-3d-card-action' data-upload-3d='" + context + "'>GLBをアップロード</button>"
       : "";
-    host.innerHTML = fallback + visible.map(modelCardHtml).join("") + uploadAction;
+    host.innerHTML = fallback + visible.map(modelCardHtml).join("") + uploadAction + localPreviewAction + tripoConnection;
   }
   function modelStatusLabel(status) {
     return ({ draft: "撮影途中", waiting: "待機", processing: "処理中", needs_capture: "要追加撮影", failed: "失敗", review: "確認待ち", published: "公開済み", archived: "旧版" })[status] || status;
@@ -1041,9 +1053,78 @@
     var key = String(dkdId);
     delete modelCache[key]; delete internalModelCache[key]; delete modelBadgeCache[key];
   }
+  async function checkTripoReadiness(context, button) {
+    if (!sessionModelsEnabled || !button || button.disabled ||
+        ["sales", "production"].indexOf(context) < 0) return;
+    if (!canManageGlb()) { deny3D("product_3d_tripo_readiness"); return; }
+    var target = selectedTarget(context);
+    var id = productId(target.product);
+    if (!id || !target.kind) return;
+    var epoch = modelCacheEpoch;
+    var paneRequest = mediaPaneRequest[context];
+    var status = button.parentElement && button.parentElement.querySelector("[data-tripo-readiness-status]");
+    if (!status || !button.isConnected) return;
+    function stillCurrent() {
+      var current = selectedTarget(context);
+      return sessionModelsEnabled && epoch === modelCacheEpoch && button.isConnected &&
+        paneRequest === mediaPaneRequest[context] && canManageGlb() &&
+        productId(current.product) === id && current.kind === target.kind;
+    }
+    function connectionFailure(data) {
+      var messages = {
+        key_format: "Tripo APIキーの保存形式に問題があります。サーバー設定を確認してください。",
+        authentication: "TripoでAPIキーの認証が拒否されました。キーの有効状態とサーバー設定を確認してください。",
+        permission: "Tripo側で残高照会が許可されませんでした。追加購入せず管理者に確認してください。",
+        rate_limit: "Tripoの接続回数制限に達しました。連打せず、時間を置いて確認してください。",
+        provider_unavailable: "Tripo側でサービスエラーが発生しました。時間を置いて確認してください。",
+        timeout: "Tripo残高照会が時間切れになりました。接続成功は未確認です。",
+        network: "Tripoへの通信を完了できませんでした。サーバー側の接続状況を確認してください。",
+        invalid_response: "Tripoの残高応答を読み取れませんでした。管理者によるAPI仕様の確認が必要です。",
+        provider_rejected: "Tripoが残高照会を拒否しました。管理者による応答コードの確認が必要です。"
+      };
+      var category = data && data.diagnostic && data.diagnostic.category;
+      if (data && data.configured === true && data.connection_status === "unavailable" &&
+          data.generation_enabled === false && typeof category === "string" &&
+          Object.prototype.hasOwnProperty.call(messages, category)) {
+        return messages[category] + "画像送信・生成は開始していません。";
+      }
+      return "Tripo接続を確認できませんでした。画像送信・生成は開始していません。";
+    }
+    button.disabled = true;
+    status.textContent = "接続・残高を確認中です。画像送信・生成は開始しません。";
+    try {
+      var result = await sb.functions.invoke("product-3d-tripo-readiness", { body: {
+        action: "readiness", product_id: id, product_kind: target.kind
+      } });
+      if (!stillCurrent()) return;
+      if (result.error) {
+        // Supabase FunctionsHttpError carries the Response, not its JSON in data.
+        // Never render an exception message, provider body or arbitrary category.
+        var errorData = null;
+        var response = result.error.context;
+        if (response && response.status === 502 && typeof response.json === "function") {
+          try { errorData = await response.json(); } catch (_) { /* Safe generic fallback. */ }
+        }
+        if (!stillCurrent()) return;
+        status.textContent = connectionFailure(errorData);
+        return;
+      }
+      var data = result.data || {};
+      if (data.connection_status === "not_configured" && data.configured === false) {
+        status.textContent = "Tripo APIキーが未設定です。システム管理者がサーバー側に設定してください。";
+      } else if (data.connection_status === "connected" && data.configured === true &&
+          typeof data.balance === "number" && Number.isFinite(data.balance) && data.balance >= 0) {
+        status.textContent = "Tripo接続済み / 残高 " + data.balance + " クレジット。" +
+          (data.generation_enabled === true ? "生成は開始していません。" : "3D生成はまだ無効です。") +
+          (data.has_sufficient_credits === false ? "生成の見積りに対して残高が不足しています。" : "");
+      } else throw new Error("Invalid connection status");
+    } catch (_) {
+      if (stillCurrent()) status.textContent = "Tripo接続を確認できませんでした。画像送信・生成は開始していません。";
+    } finally { if (button.isConnected) button.disabled = false; }
+  }
   function selectGlbForUpload(context, replacedId) {
     if (!sessionModelsEnabled || glbMutationBusy) return;
-    if (!canManage3D()) { deny3D("upload_product_3d_glb"); return; }
+    if (!canManageGlb()) { deny3D("upload_product_3d_glb"); return; }
     var target = selectedTarget(context || "sales");
     if (!target.product || !productId(target.product) || !target.kind) {
       alert("3Dモデルを登録する商品と区分を選択してください。");
@@ -1065,7 +1146,7 @@
     if (!file || !target || !sessionModelsEnabled || glbMutationBusy) return;
     var epoch = modelCacheEpoch;
     var selected = selectedTarget(target.context);
-    if (productId(selected.product) !== target.productId || selected.kind !== target.kind || !canManage3D()) {
+    if (productId(selected.product) !== target.productId || selected.kind !== target.kind || !canManageGlb()) {
       alert("商品・区分・権限が変わりました。GLBを選び直してください。");
       input.value = "";
       return;
@@ -1156,7 +1237,7 @@
   }
   async function deleteUploadedGlb(context, modelId) {
     if (!sessionModelsEnabled || glbMutationBusy) return;
-    if (!canManage3D()) { deny3D("delete_product_3d_glb"); return; }
+    if (!canManageGlb()) { deny3D("delete_product_3d_glb"); return; }
     var target = selectedTarget(context || "sales");
     if (!target.product || !target.kind || !window.confirm("登録済みの外部GLBを削除しますか？")) return;
     var dkdId = productId(target.product);
@@ -1257,31 +1338,72 @@
       alert("3Dモデルを開けませんでした: " + friendlyError(signed && signed.error || "署名URLを取得できませんでした"));
       return;
     }
+    await showCommonViewer({ url: signed.data.signedUrl },
+      productTitle(target.product) + " / " + kindLabel(model.product_kind),
+      { context: activeContext, productId: targetId, kind: targetKind }, requestId, targetStillSelected);
+  }
+  function selectLocalGlb(context) {
+    if (!sessionModelsEnabled || !canManageGlb() || context === "customer") return;
+    var target = selectedTarget(context || "sales");
+    if (!productId(target.product) || !target.kind) return;
+    localGlbTarget = { context: context || "sales", productId: productId(target.product), kind: target.kind };
+    var input = elements["product-3d-local-glb-file"];
+    input.value = "";
+    input.click();
+  }
+  async function previewLocalGlb() {
+    var input = elements["product-3d-local-glb-file"];
+    var file = input.files && input.files[0];
+    var target = localGlbTarget;
+    localGlbTarget = null;
+    input.value = "";
+    if (!file || !target) return;
+    var epoch = modelCacheEpoch;
+    var requestId = ++viewerRequestId;
+    function targetStillSelected() {
+      var current = selectedTarget(target.context);
+      return requestId === viewerRequestId && epoch === modelCacheEpoch && sessionModelsEnabled && canManageGlb() &&
+        productId(current.product) === target.productId && current.kind === target.kind;
+    }
+    if (!targetStillSelected()) return;
+    try {
+      window.Product3DLocalGlb.validateFile(file);
+      var buffer = await file.arrayBuffer();
+      if (!targetStillSelected()) return;
+      window.Product3DLocalGlb.validateBytes(buffer);
+      await showCommonViewer({ buffer: buffer }, "端末内プレビュー（未登録） / " + file.name,
+        target, requestId, targetStillSelected);
+    } catch (error) {
+      if (targetStillSelected()) alert("GLBをプレビューできませんでした: " + friendlyError(error));
+    }
+  }
+  async function showCommonViewer(source, title, focusTarget, requestId, targetStillSelected) {
     var viewerOverlay = elements["product-3d-viewer-overlay"];
     if (!viewerOverlay.classList.contains("show")) {
       var previousFocus = document.activeElement;
       viewerReturnFocus = previousFocus && previousFocus !== document.body &&
         typeof previousFocus.focus === "function" ? previousFocus : null;
-      viewerFocusTarget = { context: activeContext, productId: targetId, kind: targetKind };
+      viewerFocusTarget = focusTarget;
     }
     viewerOverlay.classList.add("show");
     viewerOverlay.setAttribute("aria-hidden", "false");
     elements["product-3d-viewer-close"].focus();
-    elements["product-3d-viewer-title"].textContent = productTitle(target.product) + " / " + kindLabel(model.product_kind);
+    elements["product-3d-viewer-title"].textContent = title;
     elements["product-3d-viewer-loading"].textContent = "3Dモデルを読み込んでいます...";
     elements["product-3d-viewer-loading"].hidden = false;
     elements["product-3d-viewer-fullscreen-notice"].hidden = true;
     elements["product-3d-viewer-autorotate"].setAttribute("aria-pressed", "false");
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await import("./product-3d-viewer.js?v=1.1.1107");
+      var module = await import("./product-3d-viewer.js?v=1.1.1111");
       if (!targetStillSelected()) {
         if (requestId === viewerRequestId) closeViewer();
         return;
       }
       var createdViewer = await module.createProduct3DViewer({
         host: elements["product-3d-viewer-stage"],
-        url: signed.data.signedUrl,
+        url: source.url,
+        buffer: source.buffer,
         fullscreenElement: elements["product-3d-viewer-shell"] || elements["product-3d-viewer-stage"],
         autoRotate: false
       });
@@ -1364,6 +1486,7 @@
     el("btn-image-action-upload-glb").addEventListener("click", function () { selectGlbForUpload("sales"); });
     el("production-image-action-upload-glb").addEventListener("click", function () { selectGlbForUpload("production"); });
     elements["product-3d-glb-file"].addEventListener("change", uploadSelectedGlb);
+    elements["product-3d-local-glb-file"].addEventListener("change", previewLocalGlb);
     elements["product-3d-capture-close"].addEventListener("click", closeCapture);
     elements["product-3d-start-camera"].addEventListener("click", startCamera);
     elements["product-3d-snapshot"].addEventListener("click", function () { captureSnapshot("camera_still"); });
@@ -1393,7 +1516,10 @@
         if (mode === "model") renderMediaPane(context);
       }
       var create = event.target.closest("[data-create-3d]"); if (create) openCapture(create.dataset.create3d);
+      var connection = event.target.closest("[data-tripo-readiness]");
+      if (connection) checkTripoReadiness(connection.dataset.tripoReadiness, connection);
       var upload = event.target.closest("[data-upload-3d]"); if (upload) selectGlbForUpload(upload.dataset.upload3d);
+      var local = event.target.closest("[data-local-glb]"); if (local) selectLocalGlb(local.dataset.localGlb);
       var replace = event.target.closest("[data-replace-uploaded]");
       if (replace) selectGlbForUpload(replace.dataset.uploadContext, replace.dataset.replaceUploaded);
       var remove = event.target.closest("[data-delete-uploaded]");
@@ -1409,6 +1535,8 @@
   }
 
   function resetSessionModels() {
+    localGlbTarget = null;
+    if (elements["product-3d-local-glb-file"]) elements["product-3d-local-glb-file"].value = "";
     modelCacheEpoch += 1;
     modelCache = Object.create(null);
     internalModelCache = Object.create(null);

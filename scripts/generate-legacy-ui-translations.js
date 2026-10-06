@@ -22,6 +22,16 @@ const runtimeScriptPaths = [
 ];
 const curatedTranslations = {
   en: {
+    "Tripo APIキーの保存形式に問題があります。サーバー設定を確認してください。": "The stored Tripo API key has an invalid format. Check the server configuration.",
+    "TripoでAPIキーの認証が拒否されました。キーの有効状態とサーバー設定を確認してください。": "Tripo rejected API key authentication. Check that the key is active and configured correctly on the server.",
+    "Tripo側で残高照会が許可されませんでした。追加購入せず管理者に確認してください。": "Tripo denied the balance query. Contact an administrator before purchasing more credits.",
+    "Tripoの接続回数制限に達しました。連打せず、時間を置いて確認してください。": "Tripo's request limit was reached. Wait before checking again; do not click repeatedly.",
+    "Tripo側でサービスエラーが発生しました。時間を置いて確認してください。": "Tripo returned a service error. Check again later.",
+    "Tripo残高照会が時間切れになりました。接続成功は未確認です。": "The Tripo balance query timed out. Connection success has not been confirmed.",
+    "Tripoへの通信を完了できませんでした。サーバー側の接続状況を確認してください。": "Communication with Tripo could not be completed. Check the server's connection.",
+    "Tripoの残高応答を読み取れませんでした。管理者によるAPI仕様の確認が必要です。": "The Tripo balance response could not be read. An administrator must check the API contract.",
+    "Tripoが残高照会を拒否しました。管理者による応答コードの確認が必要です。": "Tripo rejected the balance query. An administrator must check the response code.",
+    "画像送信・生成は開始していません。": "No images were sent and generation has not started.",
     "GLBファイルをアップロード": "Upload a GLB file",
     "3Dモデルを確認できませんでした。3Dタブを開き直してください。": "Could not check the 3D models. Reopen the 3D tab.",
     "3Dで見る": "View in 3D",
@@ -522,6 +532,16 @@ const curatedTranslations = {
     "本書、対象製品、製造シリアル、車両・取付情報をご提示ください。": "Present this document, the covered product, the manufacturing serial number, and the vehicle and installation information."
   },
   zh: {
+    "Tripo APIキーの保存形式に問題があります。サーバー設定を確認してください。": "保存的Tripo API密钥格式不正确，请检查服务器设置。",
+    "TripoでAPIキーの認証が拒否されました。キーの有効状態とサーバー設定を確認してください。": "Tripo拒绝了API密钥认证，请检查密钥是否有效以及服务器设置。",
+    "Tripo側で残高照会が許可されませんでした。追加購入せず管理者に確認してください。": "Tripo未允许查询余额，请先联系管理员，不要追加购买。",
+    "Tripoの接続回数制限に達しました。連打せず、時間を置いて確認してください。": "已达到Tripo请求次数限制，请稍后检查，不要连续点击。",
+    "Tripo側でサービスエラーが発生しました。時間を置いて確認してください。": "Tripo返回服务错误，请稍后检查。",
+    "Tripo残高照会が時間切れになりました。接続成功は未確認です。": "Tripo余额查询超时，尚未确认连接成功。",
+    "Tripoへの通信を完了できませんでした。サーバー側の接続状況を確認してください。": "无法完成与Tripo的通信，请检查服务器连接。",
+    "Tripoの残高応答を読み取れませんでした。管理者によるAPI仕様の確認が必要です。": "无法读取Tripo余额响应，需要管理员检查API规范。",
+    "Tripoが残高照会を拒否しました。管理者による応答コードの確認が必要です。": "Tripo拒绝了余额查询，需要管理员检查响应代码。",
+    "画像送信・生成は開始していません。": "未发送图片或开始生成。",
     "GLBファイルをアップロード": "上传GLB文件",
     "3Dモデルを確認できませんでした。3Dタブを開き直してください。": "无法确认3D模型。请重新打开3D标签页。",
     "3Dで見る": "以3D查看",
