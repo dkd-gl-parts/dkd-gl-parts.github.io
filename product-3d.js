@@ -835,7 +835,7 @@
       product_kind: row.product_kind, revision: 1, status: "published",
       published_model_path: row.storage_path, model_bytes: row.model_bytes,
       published_at: row.created_at, updated_at: row.updated_at,
-      model_source: "uploaded", model_format: "glb"
+      model_source: row.model_source === "generated" ? "generated" : "uploaded", model_format: "glb"
     };
   }
   async function fetchInternalModels(dkdId) {
@@ -849,7 +849,7 @@
     if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return [];
     if (result.error) console.warn("internal generated 3D lookup failed", result.error);
     var uploads = await sb.from("product_3d_uploaded_models")
-      .select("id,dkd_shohin_id,product_kind,status,storage_path,model_bytes,created_at,updated_at")
+      .select("id,dkd_shohin_id,product_kind,status,storage_path,model_bytes,created_at,updated_at,model_source")
       .eq("dkd_shohin_id", dkdId).eq("status", "ready");
     if (epoch !== modelCacheEpoch || !sessionModelsEnabled) return [];
     if (uploads.error) console.warn("internal uploaded 3D lookup failed", uploads.error);
@@ -1011,15 +1011,16 @@
       var size = model.model_bytes ? (model.model_bytes / 1048576).toFixed(1) + " MB" : "";
       var status = modelStatusLabel(model.status);
       var canOpen = model.published_model_path && (model.status === "published" || model.status === "review" || model.status === "archived");
+      var glbAsset = typeof model.id === "string" && model.id.indexOf("uploaded:") === 0;
       var action = canOpen ? "<button type='button' class='product-3d-card-action' data-open-model='" + model.id + "' data-model-context='" + context + "' data-model-product='" + productId(target.product) + "'>3Dで見る</button>" : "";
-      if (publishable && model.model_source !== "uploaded" && model.status === "review") action += "<button type='button' class='product-3d-card-action publish' data-publish-model='" + model.id + "' data-publish-context='" + context + "'>公開</button>";
-      if (glbManageable && model.model_source === "uploaded") {
+      if (publishable && !glbAsset && model.status === "review") action += "<button type='button' class='product-3d-card-action publish' data-publish-model='" + model.id + "' data-publish-context='" + context + "'>公開</button>";
+      if (glbManageable && glbAsset) {
         action += "<button type='button' class='product-3d-card-action' data-replace-uploaded='" + model.id.slice(9) + "' data-upload-context='" + context + "'>差し替え</button>";
         action += "<button type='button' class='product-3d-card-action' data-delete-uploaded='" + model.id.slice(9) + "' data-upload-context='" + context + "'>削除</button>";
       }
-      if (manageable && model.model_source !== "uploaded" && ["draft", "needs_capture", "failed"].indexOf(model.status) >= 0) action += "<button type='button' class='product-3d-card-action' data-create-3d='" + context + "'>撮影を再開</button>";
+      if (manageable && !glbAsset && ["draft", "needs_capture", "failed"].indexOf(model.status) >= 0) action += "<button type='button' class='product-3d-card-action' data-create-3d='" + context + "'>撮影を再開</button>";
       var note = model.failure_message || (model.additional_capture_instructions && model.additional_capture_instructions.length ? "追加撮影: " + model.additional_capture_instructions.join(" / ") : "");
-      var source = model.model_source === "uploaded" ? "外部GLB" : "D-CATS生成";
+      var source = model.model_source === "uploaded" ? "外部GLB" : (glbAsset ? "Tripo生成" : "D-CATS生成");
       return "<div class='product-3d-model-card'><span class='product-3d-cube'>3D</span><span><strong>" + esc(kindLabel(model.product_kind)) + " 3Dモデル <i data-model-status='" + esc(model.status) + "'>" + esc(status) + "</i></strong><small>" + source + " / " + size + (note ? " / " + esc(note) : "") + "</small></span><span class='product-3d-card-actions'>" + action + "</span></div>";
     }
     if (context === "customer") {
@@ -1093,7 +1094,7 @@
       };
       var category = data && data.diagnostic && data.diagnostic.category;
       if (data && data.configured === true && data.connection_status === "unavailable" &&
-          data.generation_enabled === false && typeof category === "string" &&
+          typeof data.generation_enabled === "boolean" && typeof category === "string" &&
           Object.prototype.hasOwnProperty.call(messages, category)) {
         return messages[category] + "画像送信・生成は開始していません。";
       }
@@ -1122,7 +1123,8 @@
       if (data.connection_status === "not_configured" && data.configured === false) {
         status.textContent = "Tripo APIキーが未設定です。システム管理者がサーバー側に設定してください。";
       } else if (data.connection_status === "connected" && data.configured === true &&
-          typeof data.balance === "number" && Number.isFinite(data.balance) && data.balance >= 0) {
+          typeof data.balance === "number" && Number.isFinite(data.balance) && data.balance >= 0 &&
+          typeof data.generation_enabled === "boolean") {
         status.textContent = "Tripo接続済み / 残高 " + data.balance + " クレジット。" +
           (data.generation_enabled === true ? "生成は開始していません。" : "3D生成はまだ無効です。") +
           (data.has_sufficient_credits === false ? "生成の見積りに対して残高が不足しています。" : "");

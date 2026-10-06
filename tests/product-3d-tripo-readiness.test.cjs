@@ -128,7 +128,7 @@ test("HTTP 502 diagnostic categories display fixed safe guidance without provide
 test("unknown, spoofed, malformed and old-server diagnostics stay generic", async () => {
   for (const body of [
     {}, { configured: true, connection_status: "unavailable", generation_enabled: false, diagnostic: { category: "__proto__" } },
-    { configured: true, connection_status: "unavailable", generation_enabled: true, diagnostic: { category: "authentication" } },
+    { configured: true, connection_status: "unavailable", generation_enabled: "true", diagnostic: { category: "authentication" } },
     { configured: true, connection_status: "unavailable", generation_enabled: false, diagnostic: { category: "<script>secret</script>" } },
   ]) {
     const qa = harness(async () => ({ error: { context: { status: 502, async json() { return body; } } } }));
@@ -139,6 +139,23 @@ test("unknown, spoofed, malformed and old-server diagnostics stay generic", asyn
   const invalid = harness(async () => ({ error: { context: { status: 502, async json() { throw new Error("secret"); } } } }));
   await invalid.check("sales", invalid.button);
   assert.match(invalid.status.textContent, /確認できませんでした/);
+});
+
+test("an enabled configuration is truthful, still read-only, and rejects malformed flags", async () => {
+  const enabled = harness(async () => ({ data: { configured: true, connection_status: "connected",
+    balance: 100, generation_enabled: true, has_sufficient_credits: true } }));
+  await enabled.check("sales", enabled.button);
+  assert.match(enabled.status.textContent, /残高 100/);
+  assert.match(enabled.status.textContent, /生成は開始していません/);
+  assert.doesNotMatch(enabled.status.textContent, /生成はまだ無効/);
+  assert.equal(enabled.calls.length, 1);
+  for (const flag of [undefined, null, "true", 1]) {
+    const qa = harness(async () => ({ data: { configured: true, connection_status: "connected",
+      balance: 100, generation_enabled: flag } }));
+    await qa.check("sales", qa.button);
+    assert.match(qa.status.textContent, /確認できませんでした/);
+    assert.doesNotMatch(qa.status.textContent, /接続済み/);
+  }
 });
 
 test("session or product changes during diagnostic JSON parsing suppress stale errors", async () => {
