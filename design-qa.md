@@ -1,3 +1,17 @@
+## Google Drive desktop setup support QA (v1.1.1102, 2026-10-06)
+
+- Added setup/help disclosure to Data Integration / Business Exchange: official installation/sign-in guide, shared-folder shortcut guide, per-PC/browser CSV-folder setup, administrator support, missing-folder and reconnection guidance.
+- Help provides browser access without Drive for desktop and explains that opening a PC sync folder requires Drive installation/setup. This also fits the separate in-progress native-folder shortcut change. Help does not report installation or cloud synchronization as detected; no installer, authentication, native command or shared-folder permission action was added.
+- Tested the real dialog markup, translations and existing functions in a synthetic localhost fixture in a hidden IAB. No browser authentication/session was copied and no production data was read or written.
+- Desktop 1280 x 900: Enter opens the native details disclosure and exposes the setup steps/help links. The dialog is vertically scrollable within the viewport and the close control remains accessible.
+- 390 x 844 and 320 x 844 Japanese, plus 320 x 844 English/Chinese: document width equals viewport width, dialog height 820px, text wraps and the actual Japanese Drive folder name remains identifiable. Closing restores the original trigger focus. Console warnings/errors: 0.
+- Existing authoritative workflow 124 Node commands passed after synchronizing the new release version in the 3D-workflow guard. Static build, CSP/response headers and diff checks passed. No successful sales import/export was repeated.
+- Owned IAB tab closed, viewport override reset, owned QA HTTP server stopped. Regular Chrome/Edge, shared clipboard and OS cursor were not operated. Existing `.qa-output` files were preserved.
+- Evidence (ignored, local only): `outputs/drive-support/desktop-ja.png`, `mobile-ja-390.png`, `mobile-ja-320.png`, `mobile-en-320.png`, `mobile-zh-320.png`, `ui-results.json`, `workflow-results.json`.
+- Actual installation/sign-in on a PC without Drive and later protected-backup automation were not executed; the new feature provides setup/support guidance. Rollback is a revert of this frontend change through normal CI.
+
+final result: passed
+
 # 澤藤・末尾省略品番の候補照合（2026-10-05、v1.1.1100）
 
 - 合成データのみの非表示IAB。SYNTHETIC-SAW / 0355-502-002 / TEST-OEM-1000,1009 / 商品ID100,109。実API・認証情報のコピー・本番入庫なし。
