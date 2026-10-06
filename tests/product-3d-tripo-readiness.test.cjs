@@ -102,3 +102,58 @@ test("failure/untrusted values remain safe text and never claim authenticated or
     assert.equal(qa.button.disabled, false);
   }
 });
+
+test("HTTP 502 diagnostic categories display fixed safe guidance without provider details", async () => {
+  for (const [category, expected] of [
+    ["key_format", /保存形式/], ["authentication", /認証が拒否/], ["permission", /許可されません/],
+    ["rate_limit", /接続回数制限/], ["provider_unavailable", /サービスエラー/],
+    ["timeout", /時間切れ/], ["network", /通信を完了/], ["invalid_response", /応答を読み取れません/],
+    ["provider_rejected", /照会を拒否/],
+  ]) {
+    const response = { status: 502, async json() { return {
+      configured: true, connection_status: "unavailable", generation_enabled: false,
+      diagnostic: { category, http_status: 401, provider_code: 1000 },
+      error: "secret-provider-body<script>", key: "server-secret",
+    }; } };
+    const qa = harness(async () => ({ error: { context: response, message: "secret-exception" } }));
+    await qa.check("sales", qa.button);
+    assert.match(qa.status.textContent, expected);
+    assert.match(qa.status.textContent, /画像送信・生成は開始していません/);
+    assert.doesNotMatch(qa.status.textContent, /secret|script|1000|401/);
+    assert.equal(qa.calls.length, 1);
+    assert.equal(qa.button.disabled, false);
+  }
+});
+
+test("unknown, spoofed, malformed and old-server diagnostics stay generic", async () => {
+  for (const body of [
+    {}, { configured: true, connection_status: "unavailable", generation_enabled: false, diagnostic: { category: "__proto__" } },
+    { configured: true, connection_status: "unavailable", generation_enabled: true, diagnostic: { category: "authentication" } },
+    { configured: true, connection_status: "unavailable", generation_enabled: false, diagnostic: { category: "<script>secret</script>" } },
+  ]) {
+    const qa = harness(async () => ({ error: { context: { status: 502, async json() { return body; } } } }));
+    await qa.check("sales", qa.button);
+    assert.match(qa.status.textContent, /確認できませんでした/);
+    assert.doesNotMatch(qa.status.textContent, /script|secret|認証が拒否/);
+  }
+  const invalid = harness(async () => ({ error: { context: { status: 502, async json() { throw new Error("secret"); } } } }));
+  await invalid.check("sales", invalid.button);
+  assert.match(invalid.status.textContent, /確認できませんでした/);
+});
+
+test("session or product changes during diagnostic JSON parsing suppress stale errors", async () => {
+  let finish;
+  let reading;
+  const started = new Promise(resolve => { reading = resolve; });
+  const qa = harness(async () => ({ error: { context: { status: 502,
+    json: () => new Promise(resolve => { finish = resolve; reading(); }),
+  } } }));
+  const pending = qa.check("sales", qa.button);
+  await started;
+  qa.context.modelCacheEpoch++;
+  finish({ configured: true, connection_status: "unavailable", generation_enabled: false,
+    diagnostic: { category: "authentication" } });
+  await pending;
+  assert.doesNotMatch(qa.status.textContent, /認証が拒否/);
+  assert.equal(qa.calls.length, 1);
+});
