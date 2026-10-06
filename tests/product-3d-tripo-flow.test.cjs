@@ -55,9 +55,111 @@ function harness({ balance = 100, confirmed = true, failStart = false } = {}) {
     } } },
     Set, Array, Number, String, Error,
   };
-  const api = vm.runInNewContext(`${source.slice(start, end)}\n({ selectedTripoImages, startTripo, pollTripo, publishTripo, tripoInvoke, renderTripoJob, keepTripoFocus, closeTripo, tripoContextLabel, tripoImageLabel, tripoPayload, showTripoImagePreview, clearTripoImagePreview })`, context);
+  const api = vm.runInNewContext(`${source.slice(start, end)}\n({ selectedTripoImages, startTripo, pollTripo, publishTripo, tripoInvoke, openTripo, renderTripoJob, keepTripoFocus, closeTripo, tripoContextLabel, tripoImageLabel, tripoPayload, showTripoImagePreview, clearTripoImagePreview })`, context);
   return { api, context, events, prompts, selections };
 }
+
+function preparationHarness({ status = 503, message = "Tripo generation is not configured", rows } = {}) {
+  const qa = harness();
+  const ctx = qa.context;
+  ctx.document = { activeElement: null };
+  ctx.closeImageActionOverlays = () => {};
+  ctx.esc = String;
+  ctx.deny3D = () => { qa.denied = true; };
+  ctx.elements["product-3d-tripo-overlay"] = { classList: { add() {} }, setAttribute() {} };
+  ctx.elements["product-3d-tripo-close"] = { focus() {} };
+  ctx.elements["product-3d-tripo-context"] = { textContent: "" };
+  ctx.elements["product-3d-tripo-images"] = { textContent: "", innerHTML: "", querySelector: () => null };
+  ctx.elements["product-3d-tripo-views"].innerHTML = "";
+  ctx.sb.from = () => {
+    const query = { select() { return query; }, eq() { return query; }, not() { return query; },
+      order() { return query; }, async limit() { return { data: rows || [
+        { id: 11, storage_path: "synthetic/front.jpg" }, { id: 12, storage_path: "synthetic/left.jpg" },
+      ] }; } };
+    return query;
+  };
+  ctx.edgeErrorMessage = async (error) => error.message;
+  ctx.sb.functions.invoke = async (_name, options) => {
+    qa.events.push(options.body.action);
+    return { error: { message, context: { status } } };
+  };
+  return qa;
+}
+
+test("explicit disabled generation keeps the image preparation screen usable without mutations", async () => {
+  const qa = preparationHarness();
+  await qa.api.openTripo("sales");
+  assert.match(qa.context.elements["product-3d-tripo-images"].innerHTML, /data-tripo-image-preview='11'/);
+  assert.match(qa.context.elements["product-3d-tripo-views"].innerHTML, /data-tripo-view='front'/);
+  assert.match(qa.context.elements["product-3d-tripo-status"].textContent, /方向選択ができます.*まだ無効.*課金/);
+  assert.equal(qa.api.selectedTripoImages().length, 2);
+  assert.equal(qa.context.tripoHistoryReady, false);
+  for (const action of ["start", "poll", "preview", "publish", "reject"])
+    assert.equal(qa.context.elements[`product-3d-tripo-${action}`].hidden, true);
+  await qa.api.startTripo();
+  await qa.api.publishTripo();
+  assert.deepEqual(qa.events, ["latest"]);
+  assert.deepEqual(qa.prompts, []);
+});
+
+test("auth, network, malformed and unrelated 503 failures are not disabled-generation notices", async () => {
+  for (const [status, message] of [[401, "Tripo generation is not configured"],
+    [403, "Forbidden"], [503, "Service unavailable"], [undefined, "network error"], [503, "Invalid JSON"]]) {
+    const qa = preparationHarness({ status, message });
+    await qa.api.openTripo("sales");
+    assert.match(qa.context.elements["product-3d-tripo-status"].textContent, /画像または作成履歴を確認できませんでした/);
+    assert.equal(qa.context.tripoHistoryReady, false);
+    assert.equal(qa.context.elements["product-3d-tripo-start"].hidden, true);
+    assert.equal(qa.context.elements["product-3d-tripo-publish"].hidden, true);
+  }
+});
+
+test("late disabled response cannot update a different product, role or session", async () => {
+  for (const change of [ctx => { ctx.selectedTarget = () => ({ product: { id: 102 }, kind: "rebuilt" }); },
+    ctx => { ctx.canManageGlb = () => false; }, ctx => { ctx.sessionModelsEnabled = false; }]) {
+    const qa = preparationHarness();
+    let finish;
+    qa.context.sb.functions.invoke = (_name, options) => {
+      qa.events.push(options.body.action);
+      return new Promise(resolve => { finish = resolve; });
+    };
+    const pending = qa.api.openTripo("sales");
+    await new Promise(resolve => setImmediate(resolve));
+    change(qa.context);
+    finish({ error: { message: "Tripo generation is not configured", context: { status: 503 } } });
+    await pending;
+    assert.equal(qa.context.elements["product-3d-tripo-status"].textContent, "確認中…");
+    assert.equal(qa.context.tripoHistoryReady, false);
+    assert.deepEqual(qa.events, ["latest"]);
+  }
+});
+
+test("no saved photos directs users to existing photo registration without paid generation", async () => {
+  const qa = preparationHarness({ rows: [] });
+  await qa.api.openTripo("sales");
+  assert.match(qa.context.elements["product-3d-tripo-images"].innerHTML, /先に商品画像を登録してください/);
+  await qa.api.startTripo();
+  assert.deepEqual(qa.events, ["latest"]);
+});
+
+test("customer and non-admin accounts cannot open the image preparation dialog", async () => {
+  const customer = preparationHarness();
+  await customer.api.openTripo("customer");
+  assert.deepEqual(customer.events, []);
+  const sales = preparationHarness();
+  sales.context.canManageGlb = () => false;
+  await sales.api.openTripo("sales");
+  assert.equal(sales.denied, true);
+  assert.deepEqual(sales.events, []);
+});
+
+test("the screen explains preparation, private review and explicit product registration", () => {
+  const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  assert.match(html, /方向選択だけでは、Tripoへの送信やクレジット消費はありません/);
+  assert.match(html, /選択内容はこの画面を閉じると解除されます/);
+  assert.match(html, /完成したGLBを非公開でプレビュー/);
+  assert.match(html, /問題がなければ「確認して商品へ登録」で公開/);
+});
 
 test("saved-image transfer is disclosed before any paid submission", async () => {
   const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");

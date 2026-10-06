@@ -9092,6 +9092,8 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .product-3d-tripo-views label { display: grid; gap: 5px; font-weight: 600; }
 .product-3d-tripo-views select { min-width: 0; padding: 8px; border: 1px solid #b9c8db; border-radius: 8px; }
 .product-3d-tripo-note { margin: 0; font-size: 13px; color: #52657e; }
+.product-3d-tripo-steps { margin: 0; padding-left: 24px; font-size: 13px; color: #52657e; }
+.product-3d-tripo-steps li + li { margin-top: 4px; }
 .product-3d-tripo-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 #product-3d-tripo-status { min-height: 22px; color: #234664; }
 @media (max-width: 620px) { .product-3d-tripo-overlay { padding: 0; } .product-3d-tripo-shell { max-height: 100dvh; border-radius: 0; } .product-3d-tripo-views { grid-template-columns: 1fr; } }

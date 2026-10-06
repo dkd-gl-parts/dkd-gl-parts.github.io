@@ -1003,7 +1003,7 @@
     }
     var visible = context === "customer" ? models : models.filter(function (model) { return model.product_kind === target.kind; });
     var tripoConnection = glbManageable
-      ? "<div class='product-3d-empty-card'><button type='button' data-tripo-readiness='" + context + "'>Tripo接続確認（クレジット消費なし）</button><span data-tripo-readiness-status role='status'>画像送信・3D生成は行いません。</span><button type='button' data-tripo-3d='" + context + "'>保存済み画像からTripoで3D作成</button></div>"
+      ? "<div class='product-3d-empty-card'><button type='button' data-tripo-readiness='" + context + "'>Tripo接続確認（クレジット消費なし）</button><span data-tripo-readiness-status role='status'>画像送信・3D生成は行いません。</span><button type='button' data-tripo-3d='" + context + "'>保存済み画像を確認・3D作成の準備</button></div>"
       : "";
     if (!visible.length) {
       var createAction = manageable ? "<button type='button' data-create-3d='" + context + "'>3Dモデルを作成</button>" : "";
@@ -1164,7 +1164,15 @@
   }
   async function tripoInvoke(payload) {
     var result = await sb.functions.invoke("product-3d-tripo", { body: payload });
-    if (result.error) throw new Error(await edgeErrorMessage(result.error));
+    if (result.error) {
+      var message = await edgeErrorMessage(result.error);
+      var error = new Error(message);
+      // Only the server's explicit disabled response permits a preparation notice.
+      // Authentication, network and unrelated 503 failures remain errors.
+      error.tripoGenerationDisabled = !!(result.error.context && result.error.context.status === 503 &&
+        message === "Tripo generation is not configured");
+      throw error;
+    }
     var data = result.data || {};
     if (payload.action !== "quote") {
       var statuses = ["reserved", "submitted", "processing", "collecting", "review", "publishing",
@@ -1293,7 +1301,9 @@
       renderTripoJob();
       if (!images.length) elements["product-3d-tripo-start"].hidden = true;
     } catch (error) {
-      if (sameTripoTarget(requestId)) tripoStatus("画像または作成履歴を確認できませんでした: " + friendlyError(error));
+      if (sameTripoTarget(requestId)) tripoStatus(error.tripoGenerationDisabled
+        ? "画像の確認・方向選択ができます。3D生成はまだ無効です。画像送信・課金・商品への登録は行っていません。"
+        : "画像または作成履歴を確認できませんでした: " + friendlyError(error));
     }
   }
   function closeTripo() {
@@ -1715,7 +1725,7 @@
     elements["product-3d-viewer-autorotate"].setAttribute("aria-pressed", "false");
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await import("./product-3d-viewer.js?v=1.1.1115");
+      var module = await import("./product-3d-viewer.js?v=1.1.1116");
       if (!targetStillSelected()) {
         if (requestId === viewerRequestId) closeViewer();
         return;
