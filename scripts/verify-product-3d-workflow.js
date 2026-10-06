@@ -123,6 +123,9 @@ if (client.includes('return kind === "aftermarket_new" ? kind : "rebuilt"')) thr
   "data-product-media-pane='model'",
   "data-dkd-id='",
   "function canManageProduct3D()",
+  "function canManageProduct3DGlb()",
+  'return canManageProduct3D() && hasAccessRole(userProfile, ["system_admin"]);',
+  'var canManageGlb = canManageProduct3DGlb() && product3DSupportedKind(kind);',
   "function canPublishProduct3D()",
   "function canReviewProduct3D()",
   '"product_3d.manage"',
@@ -138,6 +141,15 @@ if (client.includes('return kind === "aftermarket_new" ? kind : "rebuilt"')) thr
   "data-product-3d-media-shell",
   "uploadModel: \"btn-image-action-upload-glb\""
 ].forEach((fragment) => requireText(app, fragment, "3D application integration"));
+
+[
+  'typeof canManageProduct3DGlb === "function" && canManageProduct3DGlb()',
+  'glbManageable !== (context !== "customer" && !!current.kind && canManageGlb())',
+  'if (glbManageable && model.model_source === "uploaded")',
+  'if (!canManageGlb()) { deny3D("upload_product_3d_glb"); return; }',
+  'selected.kind !== target.kind || !canManageGlb()',
+  'if (!canManageGlb()) { deny3D("delete_product_3d_glb"); return; }'
+].forEach((fragment) => requireText(client, fragment, "System-admin external GLB boundary"));
 
 if (/data-product-media=["']model["']/.test(html + app)) {
   throw new Error("Product 3D model tabs must be added only for eligible products at runtime");

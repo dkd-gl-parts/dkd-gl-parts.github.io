@@ -84,6 +84,9 @@
   function canManage3D() {
     return typeof canManageProduct3D === "function" && canManageProduct3D();
   }
+  function canManageGlb() {
+    return typeof canManageProduct3DGlb === "function" && canManageProduct3DGlb();
+  }
   function canPublish3D() {
     return typeof canPublishProduct3D === "function" && canPublishProduct3D();
   }
@@ -961,6 +964,7 @@
     host.innerHTML = "<div class='product-3d-loading-card'>3Dモデルを確認しています…</div>";
     var internal = context !== "customer" && canReview3D();
     var manageable = context !== "customer" && !!target.kind && canManage3D();
+    var glbManageable = context !== "customer" && !!target.kind && canManageGlb();
     var publishable = context !== "customer" && canPublish3D();
     var models = [], lookupFailed = false;
     try { models = internal ? await fetchInternalModels(dkdId) : await fetchPublishedModels(dkdId); }
@@ -971,6 +975,7 @@
         (context !== "customer" && current.kind !== target.kind) || !host.isConnected) return;
     if (internal !== (context !== "customer" && canReview3D()) ||
         manageable !== (context !== "customer" && !!current.kind && canManage3D()) ||
+        glbManageable !== (context !== "customer" && !!current.kind && canManageGlb()) ||
         publishable !== (context !== "customer" && canPublish3D())) {
       host.textContent = "表示条件が変わりました。3Dタブを開き直してください。";
       return;
@@ -982,7 +987,7 @@
     var visible = context === "customer" ? models : models.filter(function (model) { return model.product_kind === target.kind; });
     if (!visible.length) {
       var createAction = manageable ? "<button type='button' data-create-3d='" + context + "'>3Dモデルを作成</button>" : "";
-      var uploadAction = manageable ? "<button type='button' data-upload-3d='" + context + "'>GLBをアップロード</button>" : "";
+      var uploadAction = glbManageable ? "<button type='button' data-upload-3d='" + context + "'>GLBをアップロード</button>" : "";
       host.innerHTML = "<div class='product-3d-empty-card'><span class='product-3d-cube'>3D</span><strong>公開済み3Dモデルはありません</strong>" + createAction + uploadAction + "</div>";
       return;
     }
@@ -992,7 +997,7 @@
       var canOpen = model.published_model_path && (model.status === "published" || model.status === "review" || model.status === "archived");
       var action = canOpen ? "<button type='button' class='product-3d-card-action' data-open-model='" + model.id + "' data-model-context='" + context + "' data-model-product='" + productId(target.product) + "'>3Dで見る</button>" : "";
       if (publishable && model.model_source !== "uploaded" && model.status === "review") action += "<button type='button' class='product-3d-card-action publish' data-publish-model='" + model.id + "' data-publish-context='" + context + "'>公開</button>";
-      if (manageable && model.model_source === "uploaded") {
+      if (glbManageable && model.model_source === "uploaded") {
         action += "<button type='button' class='product-3d-card-action' data-replace-uploaded='" + model.id.slice(9) + "' data-upload-context='" + context + "'>差し替え</button>";
         action += "<button type='button' class='product-3d-card-action' data-delete-uploaded='" + model.id.slice(9) + "' data-upload-context='" + context + "'>削除</button>";
       }
@@ -1015,10 +1020,10 @@
     var usableAlternative = visible.some(function (model) {
       return !!model.published_model_path && ["published", "review"].indexOf(model.status) >= 0;
     });
-    var fallback = failedGeneration && !usableAlternative && manageable
+    var fallback = failedGeneration && !usableAlternative && glbManageable
       ? "<div class='product-3d-empty-card'>3Dモデルを生成できませんでした。GLBファイルをアップロードしてください。</div>"
       : "";
-    var uploadAction = manageable
+    var uploadAction = glbManageable
       ? "<button type='button' class='product-3d-card-action' data-upload-3d='" + context + "'>GLBをアップロード</button>"
       : "";
     host.innerHTML = fallback + visible.map(modelCardHtml).join("") + uploadAction;
@@ -1043,7 +1048,7 @@
   }
   function selectGlbForUpload(context, replacedId) {
     if (!sessionModelsEnabled || glbMutationBusy) return;
-    if (!canManage3D()) { deny3D("upload_product_3d_glb"); return; }
+    if (!canManageGlb()) { deny3D("upload_product_3d_glb"); return; }
     var target = selectedTarget(context || "sales");
     if (!target.product || !productId(target.product) || !target.kind) {
       alert("3Dモデルを登録する商品と区分を選択してください。");
@@ -1065,7 +1070,7 @@
     if (!file || !target || !sessionModelsEnabled || glbMutationBusy) return;
     var epoch = modelCacheEpoch;
     var selected = selectedTarget(target.context);
-    if (productId(selected.product) !== target.productId || selected.kind !== target.kind || !canManage3D()) {
+    if (productId(selected.product) !== target.productId || selected.kind !== target.kind || !canManageGlb()) {
       alert("商品・区分・権限が変わりました。GLBを選び直してください。");
       input.value = "";
       return;
@@ -1156,7 +1161,7 @@
   }
   async function deleteUploadedGlb(context, modelId) {
     if (!sessionModelsEnabled || glbMutationBusy) return;
-    if (!canManage3D()) { deny3D("delete_product_3d_glb"); return; }
+    if (!canManageGlb()) { deny3D("delete_product_3d_glb"); return; }
     var target = selectedTarget(context || "sales");
     if (!target.product || !target.kind || !window.confirm("登録済みの外部GLBを削除しますか？")) return;
     var dkdId = productId(target.product);
@@ -1274,7 +1279,7 @@
     elements["product-3d-viewer-autorotate"].setAttribute("aria-pressed", "false");
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await import("./product-3d-viewer.js?v=1.1.1105");
+      var module = await import("./product-3d-viewer.js?v=1.1.1106");
       if (!targetStillSelected()) {
         if (requestId === viewerRequestId) closeViewer();
         return;

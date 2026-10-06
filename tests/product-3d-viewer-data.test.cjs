@@ -81,7 +81,7 @@ test('product editor and common viewer controls are wired in the page', () => {
   }
 });
 
-async function renderAdminModels(rows) {
+async function renderAdminModels(rows, canManageGlb = true) {
   const source = fs.readFileSync(path.join(__dirname, '..', 'product-3d.js'), 'utf8');
   const start = source.indexOf('  async function renderMediaPane(context) {');
   const end = source.indexOf('  function modelStatusLabel(status) {', start);
@@ -96,6 +96,7 @@ async function renderAdminModels(rows) {
     el: id => id === 'sales-product-3d-list' ? host : null,
     canReview3D: () => true,
     canManage3D: () => true,
+    canManageGlb: () => canManageGlb,
     canPublish3D: () => false,
     fetchInternalModels: async () => rows,
     fetchPublishedModels: async () => { throw new Error('not a customer pane'); },
@@ -107,6 +108,21 @@ async function renderAdminModels(rows) {
   await render('sales');
   return host.innerHTML;
 }
+
+test('a non-system generation manager retains GLB viewing but not external-model mutation actions', async () => {
+  const html = await renderAdminModels([
+    { id: 'uploaded:old', product_kind: 'rebuilt', model_source: 'uploaded', status: 'published', published_model_path: 'uploaded/old.glb' }
+  ], false);
+  assert.match(html, /data-open-model='uploaded:old'/);
+  assert.doesNotMatch(html, /data-upload-3d|data-replace-uploaded|data-delete-uploaded/);
+  const empty = await renderAdminModels([], false);
+  assert.match(empty, /data-create-3d/);
+  assert.doesNotMatch(empty, /data-upload-3d/);
+  const failed = await renderAdminModels([
+    { id: 17, product_kind: 'rebuilt', model_source: 'generated', status: 'failed' }
+  ], false);
+  assert.doesNotMatch(failed, /GLBファイルをアップロードしてください|data-upload-3d/);
+});
 
 test('failed generation still offers GLB upload without a ready alternative', async () => {
   const html = await renderAdminModels([
