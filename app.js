@@ -7271,7 +7271,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1110";
+var APP_VERSION       = "v1.1.1112";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -7972,6 +7972,26 @@ async function issueConciergePilotLogin(record, requestId) {
   });
 }
 window.DcatsHanbaiohLoginApi = Object.freeze({ issue: issueConciergePilotLogin });
+async function issueConciergeCompanyOperation(record, request) {
+  if (!currentUser || !isSystemAdmin()) return { data: null, error: new Error("system_admin_required") };
+  var uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  var commands = { login_hanbaioh_company: false, prepare_hanbaioh_products: true, prepare_hanbaioh_customers: true, prepare_hanbaioh_sales: true };
+  if (!record || Array.isArray(record) || Object.keys(record).sort().join(",") !== "actor_id,device_id,public_key_sha256,public_key_spki" ||
+      record.actor_id !== currentUser.id || !uuid.test(record.device_id) ||
+      typeof record.public_key_sha256 !== "string" || !/^[0-9a-f]{64}$/.test(record.public_key_sha256) ||
+      typeof record.public_key_spki !== "string" || record.public_key_spki.length < 200 || record.public_key_spki.length > 1600 ||
+      !request || Array.isArray(request) || !Object.hasOwn(commands, request.command) || request.device_id !== record.device_id || !uuid.test(request.request_id)) {
+    return { data: null, error: new Error("invalid_company_request") };
+  }
+  var importing = commands[request.command];
+  if (Object.keys(request).sort().join(",") !== (importing ? "command,device_id,file_name,request_id,source_sha256" : "command,device_id,request_id") ||
+      importing && (typeof request.file_name !== "string" || request.file_name.length < 1 || request.file_name.length > 200 || /[\\/:\x00-\x1f\x7f]/.test(request.file_name) ||
+      !request.file_name.endsWith(".csv") || typeof request.source_sha256 !== "string" || !/^[0-9a-f]{64}$/.test(request.source_sha256))) {
+    return { data: null, error: new Error("invalid_company_request") };
+  }
+  return sb.functions.invoke("issue-hanbaioh-company-operation", { body: request });
+}
+window.DcatsHanbaiohCompanyApi = Object.freeze({ issue: issueConciergeCompanyOperation });
 function validConciergeTestSalesDevice(record) {
   var uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return !!currentUser && isSystemAdmin() && record && typeof record === "object" &&
