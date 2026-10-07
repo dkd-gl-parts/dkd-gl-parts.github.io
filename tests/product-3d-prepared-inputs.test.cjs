@@ -27,11 +27,12 @@ async function fixture({ready=false,storageFailure=false,deferred=false,workerFa
   const plan={product_id:2639,product_kind:'aftermarket_new',plan_id:'test-plan',plan_sha256:'a'.repeat(64),
     ready,generation_allowed:false,preparation_mode:'browser',images};
   const target={productId:2639,kind:'aftermarket_new'};
-  const events=[];let current=true,resolveDeferred;
+  const events=[];let current=true,resolveDeferred,resolveWorkerStarted;
+  const workerStarted=new Promise(resolve=>{resolveWorkerStarted=resolve;});
   ctx.Worker=class {
     constructor(){this.stopped=false;}
     terminate(){this.stopped=true;events.push('worker-stop');}
-    postMessage(input){events.push('worker-start');if(workerStalled)return;
+    postMessage(input){events.push('worker-start');resolveWorkerStarted();if(workerStalled)return;
       queueMicrotask(()=>{if(!this.stopped)this.onmessage({data:workerFailure?{ok:false}:{ok:true,bytes:input.bytes}});});}
   };
   ctx.fetch=async url=>{
@@ -60,8 +61,14 @@ async function fixture({ready=false,storageFailure=false,deferred=false,workerFa
     input.stored=true;plan.ready=images.every(i=>i.stored);return {error:null};
   }};}}};
   controller.open(options);
-  return {api,plan,files,nodes,root,events,controller,options,
+  return {api,plan,files,nodes,root,events,controller,options,workerStarted,
     setCurrent(value){current=value;},resolve(value){resolveDeferred(value);}};
+}
+
+async function waitWorkerStarted(f){
+  let timer;
+  try{await Promise.race([f.workerStarted,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Worker never started')),5000);})]);}
+  finally{clearTimeout(timer);}
 }
 test('only exact prepared target can expose the panel, without any automatic provider or Storage access',async()=>{
   const f=await fixture();assert.equal(f.root.hidden,false);assert.deepEqual(f.events,[]);
@@ -124,15 +131,16 @@ test('source URL or Worker failure cannot create any upload capability',async()=
 });
 test('closing during preparation terminates the worker without registration or stale text',async()=>{
   const f=await fixture({workerStalled:true});const pending=f.nodes.auto.click();
-  for(let i=0;i<30&&!f.events.includes('worker-start');i++)await new Promise(setImmediate);
-  assert.equal(f.events.includes('worker-start'),true);f.controller.close();await pending;
+  try{await waitWorkerStarted(f);assert.equal(f.events.includes('worker-start'),true);}
+  finally{f.controller.close();}
+  await pending;
   assert.equal(f.events.includes('worker-stop'),true);assert.equal(f.root.hidden,true);
   assert.equal(f.events.includes('input_upload'),false);assert.equal(f.nodes.status.textContent,'');
 });
 test('permission loss while worker is stalled cancels it and hides the private panel',async()=>{
   const f=await fixture({workerStalled:true});const pending=f.nodes.auto.click();
-  for(let i=0;i<30&&!f.events.includes('worker-start');i++)await new Promise(setImmediate);
-  f.setCurrent(false);await pending;
+  try{await waitWorkerStarted(f);f.setCurrent(false);await pending;}
+  finally{f.controller.close();}
   assert.equal(f.events.includes('worker-stop'),true);assert.equal(f.root.hidden,true);assert.equal(f.events.includes('input_upload'),false);
 });
 test('ready browser inputs are read back rather than prepared or transmitted again',async()=>{
