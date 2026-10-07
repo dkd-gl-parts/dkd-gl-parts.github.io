@@ -330,7 +330,7 @@ final result: passed for synthetic responsive GLB viewing; production release is
 
 final result: passed for synthetic responsive comparison; product-model quality remains failed.
 
-## Production backup readiness QA (v1.1.1125, 2026-10-07)
+## Production backup readiness QA (v1.1.1126, 2026-10-07)
 
 - Admin-only Business Workspace card for seven fixed prerequisites. Initial states are unverified; registered login credentials are never treated as a backup password. A ready result still requires a new backup and shared-storage verification before import. Password registration, Google authorization and real vendor backup creation remain separate work.
 - Uses a fresh existing company-enrollment signature only for the narrower native read of the same actor/device/company. No new Edge/DB authority or credential transport. Public state validation rejects unknown fields, identities, destinations, secret fields and inconsistent ready flags. Login, enrollment, backup and import are not invoked by this check.
