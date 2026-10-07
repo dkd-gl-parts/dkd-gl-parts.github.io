@@ -17,7 +17,10 @@ function harness(options = {}) {
     postMessage(message, origin) {
       assert.equal(origin, win.location.origin); const req = structuredClone(message.request); posts.push(req);
       if (options.noReply) return;
-      const data = req.command === "login_hanbaioh_company" ? { status: "ui_login_verified", code: "HANBAIOH_CONTROLLED_UI_LOGIN_VERIFIED", sessionRecorded: true } :
+      const data = req.command === "login_hanbaioh_company" ? { status: "ui_login_verified", code: "HANBAIOH_CONTROLLED_UI_LOGIN_VERIFIED", sessionRecorded: true } : req.command.startsWith("export_hanbaioh_") ?
+        { status: "company_export_csv_verified", direction: "export", category: req.command.split("_").at(-1), requestId: req.id, reused: false, cleanup: "closed",
+          artifact: { fileName: req.command.split("_").at(-1) + "-" + req.id + ".csv", encoding: "cp932", bytes: 2000, rowCount: 1, entityCount: 1,
+            fieldCount: { products: 67, customers: 118, sales: 55 }[req.command.split("_").at(-1)], sha256: "a".repeat(64), headerSha256: "b".repeat(64) }, ...options.exportOverride } :
         { reused: false, job: { status: "validated_waiting_for_backup", actorId: actor, deviceId: device, category: req.command.split("_").at(-1),
           direction: "import", sourceSha256: issued.at(-1).source_sha256, fileName: req.fileName, jobId: "a".repeat(64) } };
       const response = { id: req.id, command: req.command, ok: true, data: options.badResult ? { status: "import_verified", secret: "DO-NOT-ECHO" } : data };
@@ -42,10 +45,17 @@ function harness(options = {}) {
   const issue = context.window.DcatsHanbaiohCompanyApi.issue;
   const login = { command: "login_hanbaioh_company", request_id: webcrypto.randomUUID(), device_id: device };
   for (const r of [null, { ...record, actor_id: device }, { ...record, password: "DO-NOT-ECHO" }]) assert((await issue(r, login)).error);
-  for (const req of [{ ...login, password: "DO-NOT-ECHO" }, { ...login, connectionName: "other" }, { ...login, command: "export_hanbaioh_sales" }, { ...login, command: "toString" }, { ...login, device_id: actor }]) assert((await issue(record, req)).error);
+  for (const req of [{ ...login, password: "DO-NOT-ECHO" }, { ...login, connectionName: "other" }, { ...login, command: "export_hanbaioh_other" }, { ...login, command: "toString" }, { ...login, device_id: actor }]) assert((await issue(record, req)).error);
   context.isSystemAdmin = () => false; assert((await issue(record, login)).error); context.isSystemAdmin = () => true;
   assert.equal(calls.length, 0); await issue(record, login);
   assert.equal(calls[0].name, "issue-hanbaioh-company-operation"); assert.deepEqual(calls[0].options.body, login);
+  for (const category of ["products", "customers", "sales"]) {
+    const request = { ...login, command: "export_hanbaioh_" + category };
+    for (const extra of [{ file_name: "other.csv" }, { source_sha256: "a".repeat(64) }, { path: "C:\\outside" }, { password: "PRIVATE" }])
+      assert((await issue(record, { ...request, ...extra })).error);
+    const before = calls.length; await issue(record, request);
+    assert.equal(calls.length, before + 1); assert.deepEqual(calls.at(-1).options.body, request);
+  }
   const bytes = new TextEncoder().encode("synthetic CSV,not vendor data\n");
   const file = { name: "synthetic.csv", size: bytes.length, arrayBuffer: async () => bytes.slice().buffer };
   for (const category of ["products", "customers", "sales"]) {
@@ -68,7 +78,35 @@ function harness(options = {}) {
   assert.equal(pending.listeners.size, 0); assert(pending.bridge.wasLoginAttempted(record));
   const invalid = harness(); await assert.rejects(invalid.bridge.prepareCsv({ ...invalid.options, category: "sales", file: { ...file, name: "../other.csv" } }));
   assert.equal(invalid.posts.length, 0); assert.equal(invalid.issued.length, 0);
+  for (const category of ["products", "customers", "sales"]) {
+    const h = harness();
+    await assert.rejects(h.bridge.exportCsvOnce({ ...h.options, category })); assert.equal(h.posts.length, 0);
+    await h.bridge.loginOnce(h.options);
+    const result = await h.bridge.exportCsvOnce({ ...h.options, category });
+    assert.equal(result.status, "export_verified"); assert.equal(result.category, category);
+    assert.equal(result.cleanup, "closed"); assert.equal(result.rowCount, 1);
+    assert.equal(h.posts[1].command, "export_hanbaioh_" + category);
+    assert.equal(Object.keys(h.posts[1]).sort().join(","), "capability,command,deviceId,id");
+    assert.equal(Object.keys(h.issued[1]).sort().join(","), "command,device_id,request_id");
+    assert(h.bridge.wasExportAttempted(record, category));
+    await assert.rejects(h.bridge.exportCsvOnce({ ...h.options, category })); assert.equal(h.posts.length, 2);
+    assert.equal(h.listeners.size, 0);
+  }
+  for (const exportOverride of [{ category: "sales" }, { requestId: actor }, { direction: "import" }, { status: "stopped" },
+    { raw: "PRIVATE" }, { cleanup: "unknown" }, { artifact: { raw: "PRIVATE" } }]) {
+    const h = harness({ exportOverride }); await h.bridge.loginOnce(h.options);
+    await assert.rejects(h.bridge.exportCsvOnce({ ...h.options, category: "products" }), error => !error.message.includes("PRIVATE"));
+    assert(h.bridge.wasExportAttempted(record, "products"));
+    await assert.rejects(h.bridge.exportCsvOnce({ ...h.options, category: "products" })); assert.equal(h.posts.length, 2);
+    assert.equal(h.listeners.size, 0);
+  }
+  const exportSettings = {}, exportCancelled = harness(exportSettings); await exportCancelled.bridge.loginOnce(exportCancelled.options);
+  exportSettings.noReply = true;
+  const pendingExport = exportCancelled.bridge.exportCsvOnce({ ...exportCancelled.options, category: "customers" });
+  await new Promise(resolve => setImmediate(resolve)); exportCancelled.leave(); exportCancelled.bridge.cancelCurrent();
+  await assert.rejects(pendingExport); assert.equal(exportCancelled.listeners.size, 0);
+  assert(exportCancelled.bridge.wasExportAttempted(record, "customers")); assert.equal(exportCancelled.posts.length, 2);
   const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
   assert(html.indexOf("company-bridge.js?") < html.indexOf("concierge-pet.js?"));
-  console.log("Company bridge: owner/admin/exact requests, 180 seconds, three isolated preparations, same-origin results, single login, cancellation, no secrets or vendor writes: OK");
+  console.log("Company bridge: owner/admin/exact requests, 180 seconds, three isolated preparations/exports, full-schema result metadata, same-origin results, single login/export, cancellation, no secrets: OK");
 })().catch(error => { console.error(error); process.exitCode = 1; });

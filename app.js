@@ -8035,7 +8035,8 @@ window.DcatsHanbaiohLoginApi = Object.freeze({ issue: issueConciergePilotLogin }
 async function issueConciergeCompanyOperation(record, request) {
   if (!currentUser || !isSystemAdmin()) return { data: null, error: new Error("system_admin_required") };
   var uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  var commands = { enroll_hanbaioh_company_account: false, login_hanbaioh_company: false, prepare_hanbaioh_products: true, prepare_hanbaioh_customers: true, prepare_hanbaioh_sales: true };
+  var commands = { enroll_hanbaioh_company_account: false, login_hanbaioh_company: false, prepare_hanbaioh_products: true, prepare_hanbaioh_customers: true, prepare_hanbaioh_sales: true,
+    export_hanbaioh_products: false, export_hanbaioh_customers: false, export_hanbaioh_sales: false };
   if (!record || Array.isArray(record) || Object.keys(record).sort().join(",") !== "actor_id,device_id,public_key_sha256,public_key_spki" ||
       record.actor_id !== currentUser.id || !uuid.test(record.device_id) ||
       typeof record.public_key_sha256 !== "string" || !/^[0-9a-f]{64}$/.test(record.public_key_sha256) ||

@@ -2,7 +2,9 @@
   "use strict";
   var channel = "dcats-hanbaioh25-bridge-v1";
   var commands = Object.freeze({ products: "prepare_hanbaioh_products", customers: "prepare_hanbaioh_customers", sales: "prepare_hanbaioh_sales" });
-  var active = false, cancel, loginAttempts = new Set();
+  var exportCommands = Object.freeze({ products: "export_hanbaioh_products", customers: "export_hanbaioh_customers", sales: "export_hanbaioh_sales" });
+  var exportFields = Object.freeze({ products: 67, customers: 118, sales: 55 });
+  var active = false, cancel, loginAttempts = new Set(), verifiedLogins = new Set(), exportAttempts = new Set();
   var uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   function actorKey(record) { return record.actor_id + ":" + record.device_id; }
   function validRecord(record) { return record && uuid.test(record.actor_id) && uuid.test(record.device_id); }
@@ -35,7 +37,7 @@
   function nativeRequest(request, options) {
     return new Promise(function (resolve, reject) {
       var settled = false;
-      var timer = window.setTimeout(function () { finish(null); }, request.command === "login_hanbaioh_company" ? 210000 : request.command === "read_hanbaioh_company_device" ? 5000 : 30000);
+      var timer = window.setTimeout(function () { finish(null); }, request.command === "login_hanbaioh_company" || request.command.startsWith("export_hanbaioh_") ? 210000 : request.command === "read_hanbaioh_company_device" ? 5000 : 30000);
       function finish(response) {
         if (settled) return; settled = true;
         window.clearTimeout(timer); window.removeEventListener("message", onMessage); cancel = null;
@@ -142,6 +144,7 @@
       requireCurrent(options);
       if (isLogin) {
         if (!data || data.status !== "ui_login_verified" || data.code !== "HANBAIOH_CONTROLLED_UI_LOGIN_VERIFIED" || data.sessionRecorded !== true) throw new Error("company_result_unverified");
+        verifiedLogins.add(key);
         return { status: "login_verified" };
       }
       var job = data && data.job;
@@ -150,10 +153,46 @@
       return { status: "prepared", category: category, reused: data.reused === true };
     } finally { bytes && bytes.fill(0); if (request) request.capability = ""; active = false; }
   }
+  // Rollout candidate: no visible export button is enabled yet. The native
+  // host independently checks the protected session, actor, device and schema.
+  async function exportCsvOnce(options) {
+    requireCurrent(options);
+    var api = window.DcatsHanbaiohCompanyApi, category = options.category;
+    var key = actorKey(options.record), operationKey = key + ":" + category;
+    if (active || !api || typeof api.issue !== "function" || !Object.hasOwn(exportCommands, category) ||
+        !verifiedLogins.has(key)) throw new Error("company_operation_unavailable");
+    if (exportAttempts.has(operationKey)) throw new Error("company_export_already_attempted");
+    active = true;
+    var request;
+    try {
+      var body = { command: exportCommands[category], request_id: window.crypto.randomUUID(), device_id: options.record.device_id };
+      var capability = issuedTicket(await api.issue(options.record, body), body);
+      requireCurrent(options);
+      request = { id: body.request_id, command: body.command, deviceId: body.device_id, capability: capability };
+      exportAttempts.add(operationKey);
+      var data = await nativeRequest(request, options);
+      requireCurrent(options);
+      var artifact = data && data.artifact;
+      if (!data || Object.keys(data).sort().join(",") !== "artifact,category,cleanup,direction,requestId,reused,status" ||
+          data.status !== "company_export_csv_verified" || data.category !== category || data.direction !== "export" ||
+          data.requestId !== body.request_id || typeof data.reused !== "boolean" || !["closed", "unverified"].includes(data.cleanup) ||
+          !artifact || Object.keys(artifact).sort().join(",") !== "bytes,encoding,entityCount,fieldCount,fileName,headerSha256,rowCount,sha256" ||
+          artifact.fileName !== category + "-" + body.request_id + ".csv" || artifact.encoding !== "cp932" ||
+          artifact.fieldCount !== exportFields[category] || !Number.isSafeInteger(artifact.bytes) || artifact.bytes < 1 || artifact.bytes > 25 * 1024 * 1024 ||
+          !Number.isSafeInteger(artifact.rowCount) || artifact.rowCount < 0 || artifact.rowCount > 100000 ||
+          !Number.isSafeInteger(artifact.entityCount) || artifact.entityCount < 0 || artifact.entityCount > artifact.rowCount ||
+          ![artifact.sha256, artifact.headerSha256].every(function (value) { return typeof value === "string" && /^[0-9a-f]{64}$/.test(value); }))
+        throw new Error("company_result_unverified");
+      return { status: "export_verified", category: category, rowCount: artifact.rowCount,
+        entityCount: artifact.entityCount, sha256: artifact.sha256, cleanup: data.cleanup };
+    } finally { if (request) request.capability = ""; active = false; }
+  }
   window.DcatsHanbaiohCompanyBridge = Object.freeze({
     loginOnce: function (options) { return run(options, "account"); },
     prepareCsv: function (options) { return run(options, options.category); },
     enrollAccountFromPc: enrollAccountFromPc,
+    exportCsvOnce: exportCsvOnce,
+    wasExportAttempted: function (record, category) { return validRecord(record) && exportAttempts.has(actorKey(record) + ":" + category); },
     wasLoginAttempted: function (record) { return validRecord(record) && loginAttempts.has(actorKey(record)); },
     cancelCurrent: function () { if (cancel) cancel(); }
   });
