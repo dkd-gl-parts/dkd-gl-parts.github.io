@@ -12,18 +12,21 @@ vm.createContext(context);
 vm.runInContext(source.slice(source.indexOf("async function issueConciergeCompanyOperation("), source.indexOf("function validConciergeTestSalesDevice(")), context);
 function harness(options = {}) {
   const listeners = new Set(), posts = [], issued = []; let current = true;
-  const win = { location: { origin: "https://dcats.daiko-denki.co.jp" }, crypto: webcrypto, setTimeout, clearTimeout,
+  const storage=options.storage||new Map();
+  const win = { location: { origin: "https://dcats.daiko-denki.co.jp" }, crypto: webcrypto, setTimeout, clearTimeout, setInterval, clearInterval,
+    sessionStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>{if(options.storageFailure)throw new Error();storage.set(key,value);},removeItem:key=>storage.delete(key)},
     addEventListener: (name, cb) => { if (name === "message") listeners.add(cb); }, removeEventListener: (name, cb) => listeners.delete(cb),
     postMessage(message, origin) {
-      assert.equal(origin, win.location.origin); const req = structuredClone(message.request); posts.push(req);
+      assert.equal(origin, win.location.origin); if(!message.request)return;const req = structuredClone(message.request); posts.push(req);
       if (options.noReply) return;
-      const data = req.command === "login_hanbaioh_company" ? { status: "ui_login_verified", code: "HANBAIOH_CONTROLLED_UI_LOGIN_VERIFIED", sessionRecorded: true } : req.command.startsWith("export_hanbaioh_") ?
-        { status: "company_export_csv_verified", direction: "export", category: req.command.split("_").at(-1), requestId: req.id, reused: false, cleanup: "closed",
-          artifact: { fileName: req.command.split("_").at(-1) + "-" + req.id + ".csv", encoding: "cp932", bytes: 2000, rowCount: 1, entityCount: 1,
-            fieldCount: { products: 67, customers: 118, sales: 55 }[req.command.split("_").at(-1)], sha256: "a".repeat(64), headerSha256: "b".repeat(64) }, ...options.exportOverride } :
+      const category=req.category||req.command.split("_").at(-1),resultId=req.originalRequestId||req.id;
+      const data = req.command === "read_hanbaioh_company_device" ? record : req.command === "login_hanbaioh_company" ? { status: "ui_login_verified", code: "HANBAIOH_CONTROLLED_UI_LOGIN_VERIFIED", sessionRecorded: true } : req.command.startsWith("export_hanbaioh_") || req.command === "read_hanbaioh_company_export" ?
+        { status: "company_export_csv_verified", direction: "export", category, requestId: resultId, reused: false, cleanup: "closed",
+          artifact: { fileName: category + "-" + resultId + ".csv", encoding: "cp932", bytes: 2000, rowCount: 1, entityCount: 1,
+            fieldCount: { products: 67, customers: 118, sales: 55 }[category], sha256: "a".repeat(64), headerSha256: "b".repeat(64) }, ...options.exportOverride } :
         { reused: false, job: { status: "validated_waiting_for_backup", actorId: actor, deviceId: device, category: req.command.split("_").at(-1),
           direction: "import", sourceSha256: issued.at(-1).source_sha256, fileName: req.fileName, jobId: "a".repeat(64) } };
-      const response = { id: req.id, command: req.command, ok: true, data: options.badResult ? { status: "import_verified", secret: "DO-NOT-ECHO" } : data };
+      const response = { id: req.id, command: req.command, ok: true, data: options.fixedExportResult&&req.command.includes("export")?options.fixedExportResult:options.badResult ? { status: "import_verified", secret: "DO-NOT-ECHO" } : data };
       queueMicrotask(() => {
         for (const cb of listeners) cb({ source: {}, origin, data: { channel: message.channel, type: "response", response } });
         for (const cb of listeners) cb({ source: win, origin: "https://other.example", data: { channel: message.channel, type: "response", response } });
@@ -39,7 +42,7 @@ function harness(options = {}) {
   };
   const ctx = { window: win, Uint8Array, Object, Date, Set, Array, Number, Promise, Error };
   vm.createContext(ctx); vm.runInContext(client, ctx);
-  return { bridge: win.DcatsHanbaiohCompanyBridge, posts, issued, listeners, options: { record, isCurrent: () => current }, leave: () => { current = false; } };
+  return { bridge: win.DcatsHanbaiohCompanyBridge, posts, issued, listeners, storage, options: { record, isCurrent: () => current }, leave: () => { current = false; } };
 }
 (async () => {
   const issue = context.window.DcatsHanbaiohCompanyApi.issue;
@@ -106,6 +109,31 @@ function harness(options = {}) {
   await new Promise(resolve => setImmediate(resolve)); exportCancelled.leave(); exportCancelled.bridge.cancelCurrent();
   await assert.rejects(pendingExport); assert.equal(exportCancelled.listeners.size, 0);
   assert(exportCancelled.bridge.wasExportAttempted(record, "customers")); assert.equal(exportCancelled.posts.length, 2);
+  // Reload with only the original job ID. Reading needs fresh authorization,
+  // but must not log in or export again, including after the vendor closes.
+  const restored=harness({storage:exportCancelled.storage});
+  assert.equal((await restored.bridge.readDeviceFromPc({actorId:actor,isCurrent:()=>true})).device_id,device);
+  assert.equal((await restored.bridge.readExportResult({...restored.options,category:"customers"})).status,"export_verified");
+  assert.equal(restored.posts.at(-1).command,"read_hanbaioh_company_export");
+  assert.equal(restored.posts.at(-1).originalRequestId,exportCancelled.posts.at(-1).id);
+  assert.notEqual(restored.posts.at(-1).id,restored.posts.at(-1).originalRequestId);
+  assert.equal(restored.issued[0].command,"export_hanbaioh_customers");
+  assert(!restored.bridge.wasLoginAttempted(record));
+  assert(restored.bridge.wasExportAttempted(record,"customers"));
+  assert(!restored.bridge.wasExportAttempted({...record,actor_id:device},"customers"));
+  for(const exportOverride of [{requestId:actor},{category:"sales"},{raw:"PRIVATE"},{artifact:{raw:"PRIVATE"}}]){
+    const h=harness({storage:exportCancelled.storage,exportOverride});
+    await assert.rejects(h.bridge.readExportResult({...h.options,category:"customers"}),e=>!e.message.includes("PRIVATE"));
+    assert.equal(h.posts.length,1);assert.equal(h.posts[0].command,"read_hanbaioh_company_export");
+  }
+  const unfinished=harness({storage:exportCancelled.storage,exportOverride:{status:"stopped",code:"company_export_outcome_unverified"}});
+  await assert.rejects(unfinished.bridge.readExportResult({...unfinished.options,category:"customers"})); // mixed fields rejected
+  const waiting=harness({storage:exportCancelled.storage,fixedExportResult:{status:"stopped",code:"company_export_outcome_unverified",attemptRecorded:true,exportMayHaveStarted:true}});
+  assert.equal((await waiting.bridge.readExportResult({...waiting.options,category:"customers"})).status,"export_pending");
+  const paused=harness({fixedExportResult:{status:"stopped",code:"company_export_disabled",attemptRecorded:false,exportMayHaveStarted:false}});
+  await paused.bridge.loginOnce(paused.options);await assert.rejects(paused.bridge.exportCsvOnce({...paused.options,category:"products"}),e=>e.message==="company_export_disabled");assert(!paused.bridge.wasExportAttempted(record,"products"));
+  const lost=harness({storageFailure:true});await lost.bridge.loginOnce(lost.options);
+  await assert.rejects(lost.bridge.exportCsvOnce({...lost.options,category:"sales"}));assert.equal(lost.posts.length,1);
   const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
   assert(html.indexOf("company-bridge.js?") < html.indexOf("concierge-pet.js?"));
   console.log("Company bridge: owner/admin/exact requests, 180 seconds, three isolated preparations/exports, full-schema result metadata, same-origin results, single login/export, cancellation, no secrets: OK");
