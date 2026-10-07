@@ -1404,7 +1404,13 @@
       invoke: function (action, body) {
         if (!sameTripoTarget(requestId)) return Promise.reject(new Error("Stale product target"));
         return tripoInvoke(Object.assign({ action: action, product_id: tripoTarget.productId, product_kind: tripoTarget.kind }, body));
-      }, storage: sb.storage
+      }, storage: sb.storage, preview: async function (result, trigger) {
+        if (!sameTripoTarget(requestId)) return;
+        var preparedViewerRequest = ++viewerRequestId;
+        await showCommonViewer({ url: result.preview_url }, "Tripo生成結果 / 非公開プレビュー",
+          { context: tripoTarget.context, productId: tripoTarget.productId, kind: tripoTarget.originKind || tripoTarget.kind },
+          preparedViewerRequest, function () { return sameTripoTarget(requestId) && preparedViewerRequest === viewerRequestId; }, trigger);
+      }
     });
     elements["product-3d-tripo-overlay"].classList.add("show");
     elements["product-3d-tripo-overlay"].setAttribute("aria-hidden", "false");
@@ -1989,7 +1995,7 @@
     elements["product-3d-viewer-autorotate"].setAttribute("aria-pressed", "false");
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await import("./product-3d-viewer.js?v=1.1.1129");
+      var module = await import("./product-3d-viewer.js?v=1.1.1130");
       if (!targetStillSelected()) {
         if (requestId === viewerRequestId) closeViewer();
         return;

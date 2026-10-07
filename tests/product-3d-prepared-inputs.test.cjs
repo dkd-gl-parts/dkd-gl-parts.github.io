@@ -12,8 +12,9 @@ class Element {
   async click(){await this.listeners.click?.();}
 }
 async function fixture({ready=false,storageFailure=false,deferred=false,workerFailure=false,workerStalled=false,badSource=false,
-  costChange=null,costFailure=false,costDeferred=false,balance=70}={}) {
-  const nodes=Object.fromEntries(['status','gallery','check','file','upload','auto','manual','cost'].map(name=>[name,new Element()]));
+  costChange=null,costFailure=false,costDeferred=false,balance=70,connected=false,approved=false,
+  startFailure=false,startDeferred=false,jobStatus='submitted',previewFailure=false}={}) {
+  const nodes=Object.fromEntries(['status','gallery','check','file','upload','auto','manual','cost','start','consent','poll','preview'].map(name=>[name,new Element()]));
   const root=new Element();root.querySelector=selector=>nodes[selector.match(/prepared-(\w+)/)[1]];
   const window={};const ctx={window,document:{createElement:()=>new Element()},crypto,Uint8Array,ArrayBuffer,URL,Set,Map,Array,Number,Error,
     File,AbortController,setTimeout,clearTimeout,setInterval,clearInterval};
@@ -25,10 +26,11 @@ async function fixture({ready=false,storageFailure=false,deferred=false,workerFa
     view,id:[171,175,179,172][i],rotation_clockwise:[0,270,0,90][i],sha256:await api.digest(await files[i].arrayBuffer()),
     bytes:20,width:3,height:2,stored:ready,
   })));
-  const plan={product_id:2639,product_kind:'aftermarket_new',plan_id:'test-plan',plan_sha256:'a'.repeat(64),
+  const requestKey='5e123f39-434b-4ac7-816c-ff7ea12b3290';
+  const plan={product_id:2639,product_kind:'aftermarket_new',plan_id:'test-plan',plan_sha256:connected?'72a66c307fc89f916f2305abbe97f77874f88a02fc3acab73196c3fbf7b3abaa':'a'.repeat(64),
     ready,generation_allowed:false,preparation_mode:'browser',images};
   const target={productId:2639,kind:'aftermarket_new'};
-  const events=[];let current=true,resolveDeferred,resolveWorkerStarted,resolveCost;
+  const events=[];let current=true,resolveDeferred,resolveWorkerStarted,resolveCost,resolveStart,job=null;
   const workerStarted=new Promise(resolve=>{resolveWorkerStarted=resolve;});
   ctx.Worker=class {
     constructor(){this.stopped=false;}
@@ -50,13 +52,32 @@ async function fixture({ready=false,storageFailure=false,deferred=false,workerFa
       source_bytes:i.bytes,source_sha256:i.sha256}))};
     if(action==='input_preview')return {...plan,images:images.map(i=>({...i,
       preview_url:`https://jqoeqximtwfpqwzngutj.supabase.co/storage/v1/object/sign/product-3d/tripo-input-review/${i.view}.jpg?token=synthetic`}))};
-    if(action==='input_check'){
-      assert.equal(body.plan_sha256,plan.plan_sha256);assert.deepEqual(Object.keys(body),['plan_sha256']);
+    if(['prepared_start','prepared_latest','prepared_poll','prepared_preview'].includes(action)){
+      assert.equal(body.request_key,requestKey);assert.equal(body.plan_sha256,plan.plan_sha256);
+      if(action==='prepared_start'){
+        assert.equal(body.confirm_paid_generation,true);assert.equal(body.accepted_estimate_credits,30);
+        if(startFailure)throw Error('secret: unknown submission');
+        job={request_key:requestKey,prepared_plan_sha256:plan.plan_sha256,status:jobStatus,
+          start_allowed:false,publish_allowed:false,reject_allowed:false};
+        if(startDeferred)return new Promise(resolve=>{resolveStart=()=>resolve(job);});
+        return job;
+      }
+      if(action==='prepared_latest')return job||{status:'none'};
+      if(action==='prepared_poll'){job.status='review';return job;}
+      if(previewFailure)throw Error('secret');
+      return {...job,preview_url:'https://jqoeqximtwfpqwzngutj.supabase.co/storage/v1/object/sign/product-3d/tripo-review/dkd_2639/aftermarket_new/test.glb'};
+    }
+    if(action==='input_check'||action==='prepared_quote'){
+      assert.equal(body.plan_sha256,plan.plan_sha256);
+      if(action==='input_check')assert.deepEqual(Object.keys(body),['plan_sha256']);
+      else assert.equal(body.request_key,requestKey);
       if(costFailure)throw Error('provider-secret-detail');
       const result=structuredClone({...plan,estimated_credits:30,balance,balance_sufficient:balance>=30,can_start:false,
         blocked_reason:'prepared_generation_not_connected',checked_at:new Date().toISOString(),
         images:images.map(i=>({...i,preview_url:`https://jqoeqximtwfpqwzngutj.supabase.co/storage/v1/object/sign/product-3d/tripo-input-review/${i.view}.jpg?token=synthetic`}))});
       if(costChange)costChange(result);
+      if(connected){result.request_key=requestKey;result.can_start=approved&&balance>=30;
+        result.blocked_reason=approved?(balance>=30?null:'insufficient_credits'):'prepared_paid_approval_required';}
       if(costDeferred)return new Promise(resolve=>{resolveCost=()=>resolve(result);});
       return result;
     }
@@ -65,7 +86,7 @@ async function fixture({ready=false,storageFailure=false,deferred=false,workerFa
     return {plan_sha256:plan.plan_sha256,already_present:false,bucket:'product-3d',
       path:`tripo-input-review/dkd_2639/aftermarket_new/test-plan/${image.view}-${image.id}-${image.sha256}.jpg`,
       token:'synthetic',bytes:image.bytes,sha256:image.sha256,content_type:'image/jpeg'};
-  },storage:{from(bucket){assert.equal(bucket,'product-3d');return {async uploadToSignedUrl(path,token,file,config){
+  },async preview(result){events.push('common-viewer');assert.equal(result.status,'review');},storage:{from(bucket){assert.equal(bucket,'product-3d');return {async uploadToSignedUrl(path,token,file,config){
     events.push('storage-upload');assert.equal(config.contentType,'image/jpeg');assert.equal('upsert' in config,false);
     const input=images.find(i=>path.includes('/'+i.view+'-'));assert.equal(await api.digest(await file.arrayBuffer()),input.sha256);
     if(storageFailure)return {error:{message:'unconfirmed-secret-detail'}};
@@ -73,7 +94,7 @@ async function fixture({ready=false,storageFailure=false,deferred=false,workerFa
   }};}}};
   controller.open(options);
   return {api,plan,files,nodes,root,events,controller,options,workerStarted,
-    setCurrent(value){current=value;},resolve(value){resolveDeferred(value);},resolveCost(){resolveCost();}};
+    setCurrent(value){current=value;},resolve(value){resolveDeferred(value);},resolveCost(){resolveCost();},resolveStart(){resolveStart();}};
 }
 
 async function waitWorkerStarted(f){
@@ -203,4 +224,38 @@ test('pending cost checks suppress duplicate requests and discard late results o
     assert.doesNotMatch(f.nodes.status.textContent,/推定 30/);
     f.controller.close();assert.equal(f.nodes.gallery.children.length,0);
   }
+});
+
+test('connected cost check remains nonpaid and locked until separate server approval',async()=>{
+  const f=await fixture({ready:true,connected:true});await f.nodes.check.click();await f.nodes.cost.click();
+  assert.equal(f.events.includes('prepared_quote'),true);assert.equal(f.nodes.start.disabled,true);
+  assert.match(f.nodes.status.textContent,/別の有料実行承認/);
+  f.nodes.consent.checked=true;await f.nodes.start.click();assert.equal(f.events.includes('prepared_start'),false);
+});
+test('approved prepared start requires exact quote and consent, then opens the common private viewer',async()=>{
+  const f=await fixture({ready:true,connected:true,approved:true});await f.nodes.check.click();await f.nodes.cost.click();
+  await f.nodes.start.click();assert.equal(f.events.includes('prepared_start'),false);
+  f.nodes.consent.checked=true;await f.nodes.start.click();assert.equal(f.events.filter(e=>e==='prepared_start').length,1);
+  await f.nodes.start.click();assert.equal(f.events.filter(e=>e==='prepared_start').length,1);
+  await f.nodes.poll.click();assert.equal(f.nodes.preview.disabled,false);await f.nodes.preview.click();
+  assert.equal(f.events.includes('common-viewer'),true);assert.equal(f.events.includes('publish'),false);
+});
+test('uncertain prepared start never automatically retries, including repeated clicks',async()=>{
+  const f=await fixture({ready:true,connected:true,approved:true,startFailure:true});
+  await f.nodes.check.click();await f.nodes.cost.click();f.nodes.consent.checked=true;await f.nodes.start.click();
+  await f.nodes.start.click();await f.nodes.cost.click();f.nodes.consent.checked=true;await f.nodes.start.click();
+  assert.equal(f.events.filter(e=>e==='prepared_start').length,1);assert.doesNotMatch(f.nodes.status.textContent,/secret/);
+});
+test('closing during start discards late result and cannot expose another product preview',async()=>{
+  const f=await fixture({ready:true,connected:true,approved:true,startDeferred:true});
+  await f.nodes.check.click();await f.nodes.cost.click();f.nodes.consent.checked=true;const pending=f.nodes.start.click();
+  f.controller.close();f.resolveStart();await pending;assert.equal(f.nodes.status.textContent,'');assert.equal(f.root.hidden,true);
+  assert.equal(f.nodes.preview.disabled,true);assert.equal(f.events.includes('common-viewer'),false);
+});
+test('prepared polling before start cannot generate, and a failed preview retains the model',async()=>{
+  const empty=await fixture({ready:true,connected:true});await empty.nodes.poll.click();
+  assert.match(empty.nodes.status.textContent,/まだ開始/);assert.equal(empty.events.includes('prepared_start'),false);
+  const f=await fixture({ready:true,connected:true,approved:true,jobStatus:'review',previewFailure:true});
+  await f.nodes.check.click();await f.nodes.cost.click();f.nodes.consent.checked=true;await f.nodes.start.click();await f.nodes.preview.click();
+  assert.match(f.nodes.status.textContent,/保持しています/);assert.equal(f.events.includes('common-viewer'),false);
 });
