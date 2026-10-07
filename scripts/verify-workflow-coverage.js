@@ -86,6 +86,7 @@ const securityHeaderPaths = [
   "favicon.ico",
   "index.html",
   "install-app.js",
+  "product-3d-prepared-inputs.js",
   "site.webmanifest",
   "vendor/**",
   "scripts/build-static-site.js",

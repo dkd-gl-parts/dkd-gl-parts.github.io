@@ -40,6 +40,8 @@ function requireText(source, fragment, label) {
 ].forEach((fragment) => requireText(html, fragment, "3D UI contract"));
 requireText(html, "product-3d-local-glb.js?v=" + appVersion, "Local preview validator");
 requireText(build, '"product-3d-local-glb.js"', "Local preview deployment asset");
+requireText(html, "product-3d-prepared-inputs.js?v=" + appVersion, "Prepared input controller asset");
+requireText(build, '"product-3d-prepared-inputs.js"', "Prepared input deployment asset");
 requireText(client, "data-local-glb=", "Non-registering preview action");
 requireText(viewer, "loader.parseAsync(options.buffer, '')", "Common Viewer local buffer path");
 
