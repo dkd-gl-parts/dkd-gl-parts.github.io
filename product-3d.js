@@ -30,6 +30,7 @@
   var viewerFocusTarget = null;
   var viewerComparisonTarget = null;
   var viewerComparisonRequestId = 0;
+  var viewerExportTarget = null;
   var modelCache = Object.create(null);
   var internalModelCache = Object.create(null);
   var modelBadgeCache = Object.create(null);
@@ -138,6 +139,7 @@
       "product-3d-viewer-zoom-in", "product-3d-viewer-zoom-out",
       "product-3d-viewer-autorotate", "product-3d-viewer-fullscreen", "product-3d-viewer-fullscreen-notice",
       "product-3d-viewer-compare", "product-3d-viewer-reference", "product-3d-viewer-reference-image",
+      "product-3d-viewer-export", "product-3d-viewer-export-notice",
       "product-3d-viewer-reference-label", "product-3d-viewer-reference-photos",
       "product-3d-glb-file", "product-3d-local-glb-file", "product-3d-tripo-overlay", "product-3d-tripo-close",
       "product-3d-tripo-context", "product-3d-tripo-images", "product-3d-tripo-views",
@@ -1412,7 +1414,7 @@
       }, storage: sb.storage, preview: async function (result, trigger) {
         if (!sameTripoTarget(requestId)) return;
         var preparedViewerRequest = ++viewerRequestId;
-        await showCommonViewer({ url: result.preview_url }, "Tripo生成結果 / 非公開プレビュー",
+        await showCommonViewer({ url: result.preview_url, reviewExport: true }, "Tripo生成結果 / 非公開プレビュー",
           { context: tripoTarget.context, productId: tripoTarget.productId, kind: tripoTarget.originKind || tripoTarget.kind },
           preparedViewerRequest, function () { return sameTripoTarget(requestId) && preparedViewerRequest === viewerRequestId; }, trigger);
       }
@@ -1584,7 +1586,7 @@
       var result = await tripoInvoke(tripoPayload("preview"));
       if (!sameTripoTarget(requestId)) return;
       viewerRequest = ++viewerRequestId;
-      await showCommonViewer({ url: result.preview_url }, "Tripo生成結果 / 非公開プレビュー",
+      await showCommonViewer({ url: result.preview_url, reviewExport: true }, "Tripo生成結果 / 非公開プレビュー",
         { context: tripoTarget.context, productId: tripoTarget.productId, kind: tripoTarget.originKind || tripoTarget.kind },
         viewerRequest, function () {
           return sameTripoTarget(requestId) && viewerRequest === viewerRequestId;
@@ -1981,7 +1983,56 @@
       else if (target === viewerComparisonTarget && !sameViewerComparison()) clearViewerComparison();
     }
   }
+  function clearViewerExport() {
+    viewerExportTarget = null;
+    var link = elements["product-3d-viewer-export"];
+    if (link) {
+      link.hidden = true;
+      link.removeAttribute("href");
+      link.removeAttribute("download");
+    }
+    var notice = elements["product-3d-viewer-export-notice"];
+    if (notice) { notice.hidden = true; notice.textContent = ""; }
+  }
+  function prepareViewerExport(source, target, requestId, current, openedAt) {
+    var link = elements["product-3d-viewer-export"];
+    if (!link || !source.reviewExport || !sessionModelsEnabled || !canManageGlb() ||
+        !target || target.context === "customer" || !current() || requestId !== viewerRequestId) return;
+    try {
+      var url = new URL(source.url);
+      var prefix = "/storage/v1/object/sign/product-3d/tripo-review/dkd_" + target.productId + "/" + target.kind + "/";
+      var file = url.pathname.slice(prefix.length);
+      // UI gating does not grant access. The existing authenticated Edge signs
+      // only an authorized review object; never mint a URL or copy a session.
+      if (!Number.isSafeInteger(target.productId) || target.productId <= 0 || !cleanKind(target.kind) ||
+          url.origin !== "https://jqoeqximtwfpqwzngutj.supabase.co" || url.username || url.password || url.hash ||
+          !url.pathname.startsWith(prefix) || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}\.glb$/i.test(file) ||
+          !url.searchParams.get("token") || url.searchParams.getAll("token").length !== 1 ||
+          Array.from(url.searchParams.keys()).some(function (key) { return key !== "token"; })) return;
+      var filename = "D-CATS-product-" + target.productId + "-" + target.kind + "-" + file;
+      url.searchParams.set("download", filename);
+      viewerExportTarget = { requestId: requestId, current: current, expiresAt: openedAt + 240000 };
+      if (Date.now() >= viewerExportTarget.expiresAt) { clearViewerExport(); return; }
+      link.href = url.href;
+      link.download = filename;
+      link.hidden = false;
+    } catch (_) { clearViewerExport(); }
+  }
+  function guardViewerExport(event) {
+    var target = viewerExportTarget;
+    if (target && target.requestId === viewerRequestId && sessionModelsEnabled && canManageGlb() &&
+        target.current() && Date.now() < target.expiresAt) return;
+    event.preventDefault();
+    clearViewerExport();
+    var notice = elements["product-3d-viewer-export-notice"];
+    if (notice) {
+      notice.textContent = t("product_3d_review_export_stale");
+      notice.hidden = false;
+    }
+  }
   async function showCommonViewer(source, title, focusTarget, requestId, targetStillSelected, returnFocus) {
+    clearViewerExport();
+    var exportOpenedAt = Date.now();
     clearViewerComparison();
     var viewerOverlay = elements["product-3d-viewer-overlay"];
     if (!viewerOverlay.classList.contains("show")) {
@@ -2000,7 +2051,7 @@
     elements["product-3d-viewer-autorotate"].setAttribute("aria-pressed", "false");
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await import("./product-3d-viewer.js?v=1.1.1131");
+      var module = await import("./product-3d-viewer.js?v=1.1.1132");
       if (!targetStillSelected()) {
         if (requestId === viewerRequestId) closeViewer();
         return;
@@ -2019,6 +2070,7 @@
       }
       viewer = createdViewer;
       elements["product-3d-viewer-loading"].hidden = true;
+      prepareViewerExport(source, focusTarget, requestId, targetStillSelected, exportOpenedAt);
     } catch (error) {
       if (!targetStillSelected()) {
         if (requestId === viewerRequestId) closeViewer();
@@ -2029,7 +2081,7 @@
   }
   function keepViewerFocus(event) {
     if (event.key !== "Tab" || !elements["product-3d-viewer-overlay"].classList.contains("show")) return;
-    var controls = Array.from(elements["product-3d-viewer-overlay"].querySelectorAll("button"))
+    var controls = Array.from(elements["product-3d-viewer-overlay"].querySelectorAll("button, a[href]"))
       .filter(function (node) { return node.isConnected && !node.hidden && !node.disabled && node.getClientRects().length; });
     if (!controls.length) return;
     var first = controls[0];
@@ -2055,6 +2107,7 @@
   function closeViewer() {
     viewerRequestId += 1;
     clearViewerComparison();
+    clearViewerExport();
     if (viewer) { viewer.dispose(); viewer = null; }
     var fullscreenTarget = elements["product-3d-viewer-shell"] || elements["product-3d-viewer-stage"];
     if (document.fullscreenElement === fullscreenTarget && typeof document.exitFullscreen === "function") {
@@ -2085,6 +2138,7 @@
   }
 
   function bind() {
+    if (elements["product-3d-viewer-export"]) elements["product-3d-viewer-export"].addEventListener("click", guardViewerExport);
     elements["product-3d-tripo-close"].addEventListener("click", closeTripo);
     elements["product-3d-tripo-kind"].addEventListener("change", changeTripoKind);
     elements["product-3d-tripo-auto-assign"].addEventListener("click", autoAssignTripoImages);

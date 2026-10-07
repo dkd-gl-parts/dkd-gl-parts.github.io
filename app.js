@@ -1278,6 +1278,8 @@ var TRANSLATIONS = {
     product_3d_quality: "品質チェック",
     product_3d_submit: "3D生成を依頼",
     product_3d_reset: "リセット",
+    product_3d_review_export: "補正用GLBを保存",
+    product_3d_review_export_stale: "保存リンクの期限または対象が変わりました。対象商品の非公開プレビューを開き直してください。再生成・課金は不要です。",
     product_3d_auto_rotate: "自動回転",
     product_3d_fullscreen: "全画面",
     product_3d_fullscreen_unavailable: "全画面を開始できませんでした。通常表示で操作できます。",
@@ -3737,6 +3739,8 @@ var TRANSLATIONS = {
     product_3d_quality: "Quality check",
     product_3d_submit: "Request 3D generation",
     product_3d_reset: "Reset",
+    product_3d_review_export: "Save GLB for correction",
+    product_3d_review_export_stale: "The download link expired or the target changed. Reopen this product's private preview. No regeneration or additional credits are needed.",
     product_3d_auto_rotate: "Auto rotate",
     product_3d_fullscreen: "Fullscreen",
     product_3d_fullscreen_unavailable: "Fullscreen could not be started. You can keep using the normal view.",
@@ -6207,6 +6211,8 @@ var TRANSLATIONS = {
     product_3d_quality: "质量检查",
     product_3d_submit: "请求生成3D",
     product_3d_reset: "重置",
+    product_3d_review_export: "保存GLB以便修正",
+    product_3d_review_export_stale: "下载链接已过期或目标已更改。请重新打开该商品的非公开预览。无需重新生成或支付额外点数。",
     product_3d_auto_rotate: "自动旋转",
     product_3d_fullscreen: "全屏",
     product_3d_fullscreen_unavailable: "无法启动全屏。您仍可使用普通视图。",
@@ -7505,7 +7511,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1131";
+var APP_VERSION       = "v1.1.1132";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.

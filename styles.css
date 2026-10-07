@@ -9279,6 +9279,8 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 #product-3d-viewer-fullscreen-notice { color: #fbbf77; }
 .product-3d-viewer-toolbar [hidden] { display: none; }
 .product-3d-viewer-toolbar button { padding: 7px 12px; border: 1px solid #3e4d63; border-radius: 8px; background: #1b293d; color: #eef5ff; cursor: pointer; }
+.product-3d-viewer-export { padding: 7px 12px; border: 1px solid #3e4d63; border-radius: 8px; background: #1b293d; color: #eef5ff; text-decoration: none; }
+.product-3d-viewer-export:focus-visible { outline: 2px solid #77f5e7; outline-offset: 2px; }
 .product-3d-viewer-toolbar button[aria-pressed="true"] { border-color: #2dd4bf; color: #77f5e7; }
 .product-3d-has-badge { display: inline-flex; margin-left: 5px; padding: 2px 7px; border-radius: 999px; background: #e6fffa; color: #087f75; font-size: 10px; font-weight: 900; }
 
