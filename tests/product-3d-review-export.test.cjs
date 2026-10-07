@@ -74,6 +74,15 @@ test('a very slow GLB load cannot renew the download lifetime', () => {
   const q = harness(); q.state.now = 241000; q.prepare();
   assert.equal(q.link.hidden, true); assert.equal(q.context.viewerExportTarget, null);
 });
+test('a kind changed inside preparation uses the reviewed kind, not the background pane kind', () => {
+  const q = harness(); q.target.kind = 'rebuilt';
+  q.prepare(validUrl, {reviewKind: 'aftermarket_new'});
+  assert.equal(q.link.hidden, false); assert.match(q.link.download, /aftermarket_new/);
+  for (const reviewKind of ['rebuilt', 'unknown', '../aftermarket_new']) {
+    const rejected = harness(); rejected.prepare(validUrl, {reviewKind});
+    assert.equal(rejected.link.hidden, true);
+  }
+});
 test('both Tripo preview entry paths opt in; close and keyboard focus include the download link', () => {
   assert.equal((source.match(/url: result.preview_url, reviewExport: true/g) || []).length, 2);
   assert.match(source.slice(source.indexOf('  function closeViewer()'), source.indexOf('  function closeCapture()')), /clearViewerExport\(\)/);
