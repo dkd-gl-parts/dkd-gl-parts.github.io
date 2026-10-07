@@ -7413,6 +7413,21 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .dcats-business-workspace-b2 { display: grid; gap: 14px; margin: 24px 20px 16px; border: 1px solid #cbd8d1; border-radius: 6px; padding: 16px; background: #fff; }
 .dcats-business-workspace-account { margin: 20px; padding: 16px; border: 1px solid #cbd8d1; border-left: 4px solid #287356; border-radius: 6px; background: #f7faf8; }
 .dcats-business-workspace-account[hidden] { display: none; }
+.dcats-business-workspace-company { margin: 20px; padding: 16px; border: 1px solid #cbd8d1; border-radius: 6px; background: #fff; color: #1d2c25; }
+.dcats-business-workspace-company[hidden] { display: none; }
+.dcats-business-workspace-company h4 { margin: 0 0 8px; font-size: 14px; }
+.dcats-business-workspace-company p { font-size: 12px; line-height: 1.7; }
+.dcats-business-workspace-company-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.dcats-business-workspace-company button { min-height: 44px; border: 1px solid #287356; border-radius: 5px; padding: 8px 12px; background: #fff; color: #1f6248; font-size: 12px; font-weight: 700; white-space: normal; cursor: pointer; }
+.dcats-business-workspace-company button:disabled { opacity: .55; cursor: default; }
+.dcats-business-workspace-company button:focus-visible { outline: 2px solid #287356; outline-offset: 3px; }
+.dcats-business-workspace-company-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e1e6e3; }
+.dcats-business-workspace-company-row h5 { grid-column: 1 / -1; margin: 0; font-size: 13px; }
+.dcats-business-workspace-company-row [role="status"], #dcats-business-workspace-company-status { grid-column: 1 / -1; margin-top: 6px; font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
+.dcats-business-workspace-company .error { color: #b42318; }
+.dcats-business-workspace-company .ready { color: #176b43; }
+.dcats-business-workspace-company .dcats-business-workspace-company-note { color: #66756c; font-size: 11px; }
+@media (max-width: 480px) { .dcats-business-workspace-company-row { grid-template-columns: 1fr; } .dcats-business-workspace-company-actions button { width: 100%; } }
 .dcats-business-workspace-account h4 { margin: 0 0 8px; color: #1d2c25; font-size: 14px; }
 .dcats-business-workspace-account p { margin: 5px 0; color: #46594d; font-size: 12px; line-height: 1.7; }
 .dcats-business-workspace-account button { width: 100%; margin: 12px 0 6px; min-height: 44px; border-radius: 5px; padding: 10px 14px; font-size: 12px; white-space: normal; }

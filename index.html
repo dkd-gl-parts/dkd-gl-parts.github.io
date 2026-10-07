@@ -1193,6 +1193,34 @@
       <p class="dcats-business-workspace-account-note" data-i18n="business_workspace_account_note">このPCの専用入力画面が開きます。会社名と販売王IDを確認して入力してください。</p>
       <div id="dcats-business-workspace-account-status" role="status" aria-live="polite"></div>
     </section>
+    <section class="dcats-business-workspace-company" id="dcats-business-workspace-company" aria-labelledby="dcats-business-workspace-company-title" hidden>
+      <h4 id="dcats-business-workspace-company-title" data-i18n="business_workspace_company_title">販売王データ連携（管理者検証）</h4>
+      <p data-i18n="business_workspace_company_hint">登録済みの販売王IDとパスワードでログインし、商品・得意先・売上を別々のCSVへ出力します。</p>
+      <div class="dcats-business-workspace-company-actions">
+        <button type="button" id="dcats-business-workspace-company-connect" data-i18n="business_workspace_company_connect">このPCの接続を確認</button>
+        <button type="button" id="dcats-business-workspace-company-login" data-i18n="business_workspace_company_login" disabled>保存したパスワードでログイン</button>
+      </div>
+      <div id="dcats-business-workspace-company-status" role="status" aria-live="polite"></div>
+      <p class="dcats-business-workspace-company-note" data-i18n="business_workspace_company_note">結果が確認できない場合は「結果を確認」を使ってください。同じ処理の記録を照合し、再出力はしません。</p>
+      <div class="dcats-business-workspace-company-row" data-company-category="products">
+        <h5 data-i18n="business_workspace_company_products">商品台帳</h5>
+        <button type="button" data-company-export="products" data-i18n="business_workspace_company_export" disabled>販売王からCSV出力</button>
+        <button type="button" data-company-result="products" data-i18n="business_workspace_company_result" disabled>結果を確認</button>
+        <div data-company-status="products" role="status" aria-live="polite"></div>
+      </div>
+      <div class="dcats-business-workspace-company-row" data-company-category="customers">
+        <h5 data-i18n="business_workspace_company_customers">得意先台帳</h5>
+        <button type="button" data-company-export="customers" data-i18n="business_workspace_company_export" disabled>販売王からCSV出力</button>
+        <button type="button" data-company-result="customers" data-i18n="business_workspace_company_result" disabled>結果を確認</button>
+        <div data-company-status="customers" role="status" aria-live="polite"></div>
+      </div>
+      <div class="dcats-business-workspace-company-row" data-company-category="sales">
+        <h5 data-i18n="business_workspace_company_sales">売上</h5>
+        <button type="button" data-company-export="sales" data-i18n="business_workspace_company_export" disabled>販売王からCSV出力</button>
+        <button type="button" data-company-result="sales" data-i18n="business_workspace_company_result" disabled>結果を確認</button>
+        <div data-company-status="sales" role="status" aria-live="polite"></div>
+      </div>
+    </section>
     <section class="dcats-business-workspace-b2" aria-labelledby="dcats-business-workspace-b2-title">
       <div class="dcats-business-workspace-b2-copy">
         <h4 id="dcats-business-workspace-b2-title" data-i18n="business_workspace_b2_title">B2 CSVの保存フォルダ</h4>

@@ -423,6 +423,28 @@ var TRANSLATIONS = {
     sales_order_mgmt_note: "注文受付、B2発送データ取込、現場の製造シリアル照合を管理します。",
     business_workspace_open: "業務連携",
     business_workspace_title: "D-CATS業務連携",
+    business_workspace_company_title: "販売王データ連携（管理者検証）",
+    business_workspace_company_hint: "登録済みの販売王IDとパスワードでログインし、商品・得意先・売上を別々のCSVへ出力します。",
+    business_workspace_company_connect: "このPCの接続を確認",
+    business_workspace_company_login: "保存したパスワードでログイン",
+    business_workspace_company_note: "結果が確認できない場合は「結果を確認」を使ってください。同じ処理の記録を照合し、再出力はしません。",
+    business_workspace_company_products: "商品台帳",
+    business_workspace_company_customers: "得意先台帳",
+    business_workspace_company_sales: "売上",
+    business_workspace_company_export: "販売王からCSV出力",
+    business_workspace_company_result: "結果を確認",
+    business_workspace_company_connect_working: "このPCの接続を確認しています。",
+    business_workspace_company_login_working: "保存したパスワードで販売王へログインしています。",
+    business_workspace_company_export_working: "販売王からCSVを出力しています。完了までお待ちください。",
+    business_workspace_company_result_working: "同じ処理の完了記録とCSVを確認しています。販売王の再起動・再出力は行いません。",
+    business_workspace_company_connected: "このPCの端末登録を確認しました。販売王IDとの対応は、ログイン時にサーバーとPCで照合します。",
+    business_workspace_company_logged_in: "販売王の会社・利用者の照合が完了しました。種類を選んで出力できます。",
+    business_workspace_company_verified: "CSV出力を確認しました：{rows}行・{entities}件。",
+    business_workspace_company_cleanup_pending: "CSVの確認は完了しました。販売王の出力画面の終了確認は残っています。",
+    business_workspace_company_pending: "出力の完了をまだ確認できません。「結果を確認」で照合してください。再出力せず、続く場合は担当者に確認してください。",
+    business_workspace_company_connection_failed: "このPCの接続を確認できません。連携アプリ・拡張機能と端末登録を確認してください。",
+    business_workspace_company_login_failed: "ログインの完了を確認できません。連携受付と保存パスワードを担当者に確認してください。販売王側で変更した場合は、上のボタンから再登録できます。",
+    business_workspace_company_disabled: "このPCの出力受付は停止中です。管理者に開始を依頼してください。CSV出力は始まっていません。",
     business_workspace_account_title: "販売王ログイン設定",
     business_workspace_account_hint: "初回だけ、販売王のパスワードを登録します。このPCからの連動では、以降の入力は不要です。",
     business_workspace_account_update_hint: "販売王側でパスワードを変更した場合は、同じボタンから再登録してください。",
@@ -2824,6 +2846,28 @@ var TRANSLATIONS = {
     sales_order_mgmt_note: "Manage order acceptance, B2 shipping-data imports, and shop-floor serial verification.",
     business_workspace_open: "Shared Folder",
     business_workspace_title: "D-CATS Business Exchange",
+    business_workspace_company_title: "Sales King integration (admin verification)",
+    business_workspace_company_hint: "Sign in with the registered Sales King ID and saved password. Export products, customers and sales as separate CSV files.",
+    business_workspace_company_connect: "Check this PC connection",
+    business_workspace_company_login: "Sign in with saved password",
+    business_workspace_company_note: "If completion is uncertain, use Check result. It verifies the original job without exporting again.",
+    business_workspace_company_products: "Products",
+    business_workspace_company_customers: "Customers",
+    business_workspace_company_sales: "Sales",
+    business_workspace_company_export: "Export CSV from Sales King",
+    business_workspace_company_result: "Check result",
+    business_workspace_company_connect_working: "Checking this PC connection.",
+    business_workspace_company_login_working: "Signing in to Sales King with the saved password.",
+    business_workspace_company_export_working: "Exporting CSV from Sales King. Please wait for completion.",
+    business_workspace_company_result_working: "Checking the original completion record and CSV. No Sales King restart or repeat export.",
+    business_workspace_company_connected: "PC device registration verified. The server and PC check its Sales King account binding during sign-in.",
+    business_workspace_company_logged_in: "Sales King company and user verified. Choose a category to export.",
+    business_workspace_company_verified: "CSV export verified: {rows} rows, {entities} records.",
+    business_workspace_company_cleanup_pending: "CSV verification is complete. Closing the Sales King export screen is still unverified.",
+    business_workspace_company_pending: "Export completion is not yet verified. Use Check result and contact support if this continues. Do not repeat the export.",
+    business_workspace_company_connection_failed: "PC connection could not be verified. Check the integration app, extension and device registration.",
+    business_workspace_company_login_failed: "Sign-in completion could not be verified. Ask support to check integration availability and the saved password. If changed in Sales King, register the new password using the button above.",
+    business_workspace_company_disabled: "CSV export is paused on this PC. Ask the administrator to enable it. No CSV export was started.",
     business_workspace_account_title: "Sales King sign-in settings",
     business_workspace_account_hint: "Register your Sales King password once. Integration on this PC will not ask for it again.",
     business_workspace_account_update_hint: "If you change the password in Sales King, use this button to register the new password.",
@@ -5169,6 +5213,28 @@ var TRANSLATIONS = {
     sales_order_mgmt_note: "管理订单受理、B2发货数据导入和现场序列号核对。",
     business_workspace_open: "业务协作",
     business_workspace_title: "D-CATS业务协作",
+    business_workspace_company_title: "销售王数据联动（管理员验证）",
+    business_workspace_company_hint: "使用已登记的销售王ID及已保存的密码登录，将商品、客户和销售分别导出为CSV。",
+    business_workspace_company_connect: "确认此电脑连接",
+    business_workspace_company_login: "使用已保存的密码登录",
+    business_workspace_company_note: "无法确认结果时请使用“确认结果”。仅核对原处理记录，不会重新导出。",
+    business_workspace_company_products: "商品台账",
+    business_workspace_company_customers: "客户台账",
+    business_workspace_company_sales: "销售",
+    business_workspace_company_export: "从销售王导出CSV",
+    business_workspace_company_result: "确认结果",
+    business_workspace_company_connect_working: "正在确认此电脑连接。",
+    business_workspace_company_login_working: "正在使用已保存的密码登录销售王。",
+    business_workspace_company_export_working: "正在从销售王导出CSV。请等待完成。",
+    business_workspace_company_result_working: "正在核对原处理的完成记录及CSV。不会重启销售王或重新导出。",
+    business_workspace_company_connected: "已确认此电脑设备登记。登录时服务器及电脑将核对销售王账号对应。",
+    business_workspace_company_logged_in: "销售王公司及用户核对完成。请选择类别导出。",
+    business_workspace_company_verified: "已确认CSV导出：{rows}行、{entities}条记录。",
+    business_workspace_company_cleanup_pending: "CSV验证已完成，销售王导出画面的关闭尚未确认。",
+    business_workspace_company_pending: "尚无法确认导出完成。请使用“确认结果”核对；若持续失败请联系负责人，不要重新导出。",
+    business_workspace_company_connection_failed: "无法确认此电脑连接。请检查联动应用、扩展及设备登记。",
+    business_workspace_company_login_failed: "无法确认登录完成。请负责人确认联动许可及保存的密码。销售王密码已更改时，可使用上方按钮重新登记。",
+    business_workspace_company_disabled: "此电脑的导出许可已暂停。请管理员开启。CSV导出尚未开始。",
     business_workspace_account_title: "销售王登录设置",
     business_workspace_account_hint: "首次登记销售王密码。此电脑后续联动无需再次输入。",
     business_workspace_account_update_hint: "在销售王中修改密码后，请使用同一按钮重新登记。",
@@ -8035,7 +8101,8 @@ window.DcatsHanbaiohLoginApi = Object.freeze({ issue: issueConciergePilotLogin }
 async function issueConciergeCompanyOperation(record, request) {
   if (!currentUser || !isSystemAdmin()) return { data: null, error: new Error("system_admin_required") };
   var uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  var commands = { enroll_hanbaioh_company_account: false, login_hanbaioh_company: false, prepare_hanbaioh_products: true, prepare_hanbaioh_customers: true, prepare_hanbaioh_sales: true };
+  var commands = { enroll_hanbaioh_company_account: false, login_hanbaioh_company: false, prepare_hanbaioh_products: true, prepare_hanbaioh_customers: true, prepare_hanbaioh_sales: true,
+    export_hanbaioh_products: false, export_hanbaioh_customers: false, export_hanbaioh_sales: false };
   if (!record || Array.isArray(record) || Object.keys(record).sort().join(",") !== "actor_id,device_id,public_key_sha256,public_key_spki" ||
       record.actor_id !== currentUser.id || !uuid.test(record.device_id) ||
       typeof record.public_key_sha256 !== "string" || !/^[0-9a-f]{64}$/.test(record.public_key_sha256) ||
@@ -14645,6 +14712,8 @@ if (window.indexedDB) {
 }
 
 function closeDcatsBusinessWorkspace() {
+  dcatsCompanyIntegrationEpoch++;
+  if(dcatsCompanyIntegrationBusy) window.DcatsHanbaiohCompanyBridge?.cancelCurrent();
   if(typeof dcatsCompanyAccountBusy!=="undefined"&&dcatsCompanyAccountBusy) window.DcatsHanbaiohCompanyBridge?.cancelCurrent();
   var overlay = document.getElementById("dcats-business-workspace-overlay");
   if (overlay) overlay.classList.remove("show");
@@ -14656,25 +14725,36 @@ function closeDcatsBusinessWorkspace() {
 
 var dcatsCompanyAccountBusy = false;
 var dcatsCompanyAccountOwner = "";
+var dcatsCompanyIntegrationBusy = false;
+var dcatsCompanyIntegrationEpoch = 0;
+var dcatsCompanyIntegrationRecord = null;
 function syncDcatsCompanyAccountControls() {
   var section=document.getElementById("dcats-business-workspace-account");
   var user=typeof currentUser!=="undefined"?currentUser:null;
   var allowed=!!user&&typeof isSystemAdmin==="function"&&isSystemAdmin();
   if(section) section.hidden=!allowed;
+  var integration=document.getElementById("dcats-business-workspace-company");
+  if(integration)integration.hidden=!allowed;
   var owner=allowed?user.id:"";
   if(owner!==dcatsCompanyAccountOwner){
-    if(dcatsCompanyAccountBusy)window.DcatsHanbaiohCompanyBridge?.cancelCurrent();
+    dcatsCompanyIntegrationEpoch++;
+    if(dcatsCompanyAccountBusy||dcatsCompanyIntegrationBusy)window.DcatsHanbaiohCompanyBridge?.cancelCurrent();
+    dcatsCompanyIntegrationRecord=null;
+    if(integration)integration.querySelectorAll('[role="status"]').forEach(function(node){node.textContent="";node.className="";});
     var status=document.getElementById("dcats-business-workspace-account-status");
     if(status){status.textContent="";status.className="";}
     dcatsCompanyAccountOwner=owner;
   }
+  updateDcatsCompanyIntegrationControls();
 }
 async function registerDcatsCompanyAccount() {
-  if(dcatsCompanyAccountBusy||!currentUser||!isSystemAdmin())return;
+  if(dcatsCompanyAccountBusy||dcatsCompanyIntegrationBusy||!currentUser||!isSystemAdmin())return;
   var actor=currentUser.id,button=document.getElementById("dcats-business-workspace-account-register"),status=document.getElementById("dcats-business-workspace-account-status");
   var overlay=document.getElementById("dcats-business-workspace-overlay");
-  function isCurrent(){return !!currentUser&&currentUser.id===actor&&isSystemAdmin()&&overlay.classList.contains("show");}
+  var epoch=dcatsCompanyIntegrationEpoch;
+  function isCurrent(){return !!currentUser&&currentUser.id===actor&&isSystemAdmin()&&epoch===dcatsCompanyIntegrationEpoch&&overlay.classList.contains("show");}
   dcatsCompanyAccountBusy=true;button.disabled=true;button.setAttribute("aria-busy","true");status.className="";status.textContent=t("business_workspace_account_opening");
+  updateDcatsCompanyIntegrationControls();
   try{
     var bridge=window.DcatsHanbaiohCompanyBridge;
     if(!bridge||typeof bridge.enrollAccountFromPc!=="function")throw new Error();
@@ -14690,6 +14770,57 @@ async function registerDcatsCompanyAccount() {
       status.className="error";status.textContent=t(key);
     }
   }finally{dcatsCompanyAccountBusy=false;button.disabled=false;button.removeAttribute("aria-busy");syncDcatsCompanyAccountControls();}
+}
+
+function updateDcatsCompanyIntegrationControls() {
+  var section=document.getElementById("dcats-business-workspace-company"),bridge=window.DcatsHanbaiohCompanyBridge;
+  if(!section)return;
+  var record=dcatsCompanyIntegrationRecord,busy=dcatsCompanyAccountBusy||dcatsCompanyIntegrationBusy;
+  var allowed=!!currentUser&&isSystemAdmin()&&record&&record.actor_id===currentUser.id;
+  section.querySelectorAll("button").forEach(function(button){
+    var category=button.dataset.companyExport||button.dataset.companyResult;
+    if(button.id==="dcats-business-workspace-company-connect")button.disabled=busy;
+    else if(button.id==="dcats-business-workspace-company-login")button.disabled=busy||!allowed||!bridge||bridge.wasLoginAttempted(record);
+    else if(button.dataset.companyExport)button.disabled=busy||!allowed||!bridge||!bridge.wasLoginVerified(record)||bridge.wasExportAttempted(record,category);
+    else button.disabled=busy||!allowed||!bridge||!bridge.wasExportAttempted(record,category);
+  });
+  var register=document.getElementById("dcats-business-workspace-account-register");
+  if(register)register.disabled=busy;
+}
+
+async function runDcatsCompanyIntegration(action, category) {
+  if(dcatsCompanyAccountBusy||dcatsCompanyIntegrationBusy||!currentUser||!isSystemAdmin()||!["connect","login","export","result"].includes(action))return;
+  if(["export","result"].includes(action)&&!["products","customers","sales"].includes(category))return;
+  var actor=currentUser.id,epoch=dcatsCompanyIntegrationEpoch,overlay=document.getElementById("dcats-business-workspace-overlay");
+  var status=category?document.querySelector('[data-company-status="'+category+'"]'):document.getElementById("dcats-business-workspace-company-status");
+  function isCurrent(){return !!currentUser&&currentUser.id===actor&&isSystemAdmin()&&epoch===dcatsCompanyIntegrationEpoch&&overlay.classList.contains("show");}
+  if(!isCurrent())return;
+  dcatsCompanyIntegrationBusy=true;updateDcatsCompanyIntegrationControls();
+  status.className="";status.textContent=t("business_workspace_company_"+action+"_working");
+  try {
+    var bridge=window.DcatsHanbaiohCompanyBridge;
+    if(!bridge)throw new Error("company_bridge_unavailable");
+    if(action==="connect") {
+      var record=await bridge.readDeviceFromPc({actorId:actor,isCurrent:isCurrent});
+      if(!isCurrent())return;dcatsCompanyIntegrationRecord=record;
+      status.className="ready";status.textContent=t("business_workspace_company_connected");return;
+    }
+    var options={record:dcatsCompanyIntegrationRecord,isCurrent:isCurrent,category:category};
+    var result=action==="login"?await bridge.loginOnce(options):action==="export"?await bridge.exportCsvOnce(options):await bridge.readExportResult(options);
+    if(!isCurrent())return;
+    if(result.status==="login_verified"){status.className="ready";status.textContent=t("business_workspace_company_logged_in");}
+    else if(result.status==="export_verified") {
+      status.className="ready";status.textContent=tf("business_workspace_company_verified",{rows:result.rowCount,entities:result.entityCount});
+      if(result.cleanup!=="closed")status.textContent+=" "+t("business_workspace_company_cleanup_pending");
+    } else {status.className="";status.textContent=t("business_workspace_company_pending");}
+  } catch(error) {
+    if(isCurrent()) {
+      var reason=error&&error.message;
+      var codes=["company_bridge_unavailable","company_extension_update_required","company_native_host_unavailable","company_device_unavailable"];
+      status.className="error";
+      status.textContent=reason==="company_export_disabled"?t("business_workspace_company_disabled"):codes.includes(reason)?t("business_workspace_account_"+reason.slice(8)):t(action==="connect"?"business_workspace_company_connection_failed":action==="login"?"business_workspace_company_login_failed":"business_workspace_company_pending");
+    }
+  } finally {dcatsCompanyIntegrationBusy=false;updateDcatsCompanyIntegrationControls();}
 }
 
 function downloadDcatsBusinessWorkspaceShortcut() {
@@ -55633,6 +55764,10 @@ document.getElementById("dcats-business-workspace-cancel").addEventListener("cli
 document.getElementById("dcats-business-workspace-shortcut").addEventListener("click", createDcatsBusinessWorkspaceShortcut);
 document.getElementById("dcats-business-workspace-b2-select").addEventListener("click", configureDcatsB2ExportDirectory);
 document.getElementById("dcats-business-workspace-account-register").addEventListener("click", registerDcatsCompanyAccount);
+document.getElementById("dcats-business-workspace-company-connect").addEventListener("click", function(){runDcatsCompanyIntegration("connect");});
+document.getElementById("dcats-business-workspace-company-login").addEventListener("click", function(){runDcatsCompanyIntegration("login");});
+document.querySelectorAll("[data-company-export]").forEach(function(button){button.addEventListener("click",function(){runDcatsCompanyIntegration("export",button.dataset.companyExport);});});
+document.querySelectorAll("[data-company-result]").forEach(function(button){button.addEventListener("click",function(){runDcatsCompanyIntegration("result",button.dataset.companyResult);});});
 document.getElementById("dcats-business-workspace-overlay").addEventListener("click", function(e) {
   if (e.target === this) closeDcatsBusinessWorkspace();
 });

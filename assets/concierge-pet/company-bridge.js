@@ -2,10 +2,26 @@
   "use strict";
   var channel = "dcats-hanbaioh25-bridge-v1";
   var commands = Object.freeze({ products: "prepare_hanbaioh_products", customers: "prepare_hanbaioh_customers", sales: "prepare_hanbaioh_sales" });
-  var active = false, cancel, loginAttempts = new Set();
+  var exportCommands = Object.freeze({ products: "export_hanbaioh_products", customers: "export_hanbaioh_customers", sales: "export_hanbaioh_sales" });
+  var exportFields = Object.freeze({ products: 67, customers: 118, sales: 55 });
+  var active = false, cancel, loginAttempts = new Set(), verifiedLogins = new Set(), exportAttempts = new Map();
   var uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   function actorKey(record) { return record.actor_id + ":" + record.device_id; }
   function validRecord(record) { return record && uuid.test(record.actor_id) && uuid.test(record.device_id); }
+  function exportKey(record, category) { return actorKey(record) + ":" + category; }
+  function previousExport(record, category) {
+    if (!validRecord(record) || !Object.hasOwn(exportCommands, category)) return null;
+    var key = exportKey(record, category), id = exportAttempts.get(key);
+    if (!id) { try { id = window.sessionStorage.getItem("dcats-company-export:" + key); } catch {} }
+    return typeof id === "string" && uuid.test(id) ? id : null;
+  }
+  function rememberExport(record, category, id) {
+    // Store only the original job ID, never a permit, password or CSV contents.
+    // Keep it across a page reload so uncertain output cannot be resubmitted.
+    try { window.sessionStorage.setItem("dcats-company-export:" + exportKey(record, category), id); }
+    catch { throw new Error("company_operation_unavailable"); }
+    exportAttempts.set(exportKey(record, category), id);
+  }
   function requireCurrent(options) {
     if (!validRecord(options.record) || typeof options.isCurrent !== "function" || !options.isCurrent()) throw new Error("company_session_changed");
   }
@@ -35,10 +51,13 @@
   function nativeRequest(request, options) {
     return new Promise(function (resolve, reject) {
       var settled = false;
-      var timer = window.setTimeout(function () { finish(null); }, request.command === "login_hanbaioh_company" ? 210000 : request.command === "read_hanbaioh_company_device" ? 5000 : 30000);
+      var isExport = request.command.startsWith("export_hanbaioh_") || request.command === "read_hanbaioh_company_export";
+      var timer = window.setTimeout(function () { finish(null); }, request.command === "login_hanbaioh_company" || isExport ? 210000 : request.command === "read_hanbaioh_company_device" ? 5000 : 30000);
+      var watch = window.setInterval(function () { if (!options.isCurrent()) finish(null); }, 250);
       function finish(response) {
         if (settled) return; settled = true;
-        window.clearTimeout(timer); window.removeEventListener("message", onMessage); cancel = null;
+        window.clearTimeout(timer); window.clearInterval(watch); window.removeEventListener("message", onMessage); window.removeEventListener("pagehide", stop); cancel = null;
+        if (isExport) window.postMessage({channel:channel,type:"company_export_cancel",id:request.id},window.location.origin);
         if (response && options.isCurrent() && response.ok === true && response.command === request.command) resolve(response.data);
         else {
           var code = response && response.error && response.error.code;
@@ -59,10 +78,22 @@
              // it cannot authorize or complete any native operation.
              request.command === "read_hanbaioh_company_device" && !message.response.id && message.response.ok === false && message.response.error && message.response.error.code === "REQUEST_REJECTED")) finish(message.response);
       }
-      cancel = function () { finish(null); };
+      function stop() { finish(null); }
+      cancel = stop;
+      window.addEventListener("pagehide", stop);
       window.addEventListener("message", onMessage);
       window.postMessage({ channel: channel, type: "request", request: request }, window.location.origin);
     });
+  }
+  async function readDeviceFromPc(options) {
+    if(active || !options || !uuid.test(options.actorId) || typeof options.isCurrent!=="function" || !options.isCurrent()) throw new Error("company_operation_unavailable");
+    active=true;
+    try {
+      var record=await nativeRequest({id:window.crypto.randomUUID(),command:"read_hanbaioh_company_device",actorId:options.actorId},options);
+      if(!validRecord(record)||record.actor_id!==options.actorId||Object.keys(record).sort().join(",")!=="actor_id,device_id,public_key_sha256,public_key_spki"||
+         !/^[0-9a-f]{64}$/.test(record.public_key_sha256)||typeof record.public_key_spki!=="string"||record.public_key_spki.length>2048||!record.public_key_spki.startsWith("-----BEGIN PUBLIC KEY-----")||!options.isCurrent())throw new Error("company_device_unavailable");
+      return record;
+    } finally { active=false; }
   }
   async function enrollAccountFromPc(options) {
     if(active || !options || !uuid.test(options.actorId) || typeof options.isCurrent!=="function" || !options.isCurrent()) throw new Error("company_operation_unavailable");
@@ -142,6 +173,7 @@
       requireCurrent(options);
       if (isLogin) {
         if (!data || data.status !== "ui_login_verified" || data.code !== "HANBAIOH_CONTROLLED_UI_LOGIN_VERIFIED" || data.sessionRecorded !== true) throw new Error("company_result_unverified");
+        verifiedLogins.add(key);
         return { status: "login_verified" };
       }
       var job = data && data.job;
@@ -150,10 +182,70 @@
       return { status: "prepared", category: category, reused: data.reused === true };
     } finally { bytes && bytes.fill(0); if (request) request.capability = ""; active = false; }
   }
+  function verifiedExport(data, category, requestId) {
+      var artifact = data && data.artifact;
+      if (!data || Object.keys(data).sort().join(",") !== "artifact,category,cleanup,direction,requestId,reused,status" ||
+          data.status !== "company_export_csv_verified" || data.category !== category || data.direction !== "export" ||
+          data.requestId !== requestId || typeof data.reused !== "boolean" || !["closed", "unverified"].includes(data.cleanup) ||
+          !artifact || Object.keys(artifact).sort().join(",") !== "bytes,encoding,entityCount,fieldCount,fileName,headerSha256,rowCount,sha256" ||
+          artifact.fileName !== category + "-" + requestId + ".csv" || artifact.encoding !== "cp932" ||
+          artifact.fieldCount !== exportFields[category] || !Number.isSafeInteger(artifact.bytes) || artifact.bytes < 1 || artifact.bytes > 25 * 1024 * 1024 ||
+          !Number.isSafeInteger(artifact.rowCount) || artifact.rowCount < 0 || artifact.rowCount > 100000 ||
+          !Number.isSafeInteger(artifact.entityCount) || artifact.entityCount < 0 || artifact.entityCount > artifact.rowCount ||
+          ![artifact.sha256, artifact.headerSha256].every(function (value) { return typeof value === "string" && /^[0-9a-f]{64}$/.test(value); }))
+        throw new Error("company_result_unverified");
+      return { status: "export_verified", category: category, rowCount: artifact.rowCount,
+        entityCount: artifact.entityCount, sha256: artifact.sha256, cleanup: data.cleanup };
+  }
+  // The native host independently checks the protected session and binding.
+  async function exportCsvOnce(options) {
+    requireCurrent(options);
+    var api = window.DcatsHanbaiohCompanyApi, category = options.category;
+    var key = actorKey(options.record);
+    if (active || !api || typeof api.issue !== "function" || !Object.hasOwn(exportCommands, category) ||
+        !verifiedLogins.has(key)) throw new Error("company_operation_unavailable");
+    if (previousExport(options.record, category)) throw new Error("company_export_already_attempted");
+    active = true;
+    var request;
+    try {
+      var body = { command: exportCommands[category], request_id: window.crypto.randomUUID(), device_id: options.record.device_id };
+      var capability = issuedTicket(await api.issue(options.record, body), body);
+      requireCurrent(options);
+      request = { id: body.request_id, command: body.command, deviceId: body.device_id, capability: capability };
+      rememberExport(options.record, category, body.request_id);
+      var data = await nativeRequest(request, options);
+      requireCurrent(options);
+      if(data&&Object.keys(data).sort().join(",")==="attemptRecorded,code,exportMayHaveStarted,status"&&data.status==="stopped"&&data.code==="company_export_disabled"&&data.attemptRecorded===false&&data.exportMayHaveStarted===false) {
+        window.sessionStorage.removeItem("dcats-company-export:"+exportKey(options.record,category));
+        exportAttempts.delete(exportKey(options.record,category));
+        throw new Error("company_export_disabled");
+      }
+      return verifiedExport(data, category, body.request_id);
+    } finally { if (request) request.capability = ""; active = false; }
+  }
+  async function readExportResult(options) {
+    requireCurrent(options);
+    var category=options.category,original=previousExport(options.record,category),api=window.DcatsHanbaiohCompanyApi,request;
+    if(active||!original||!api||typeof api.issue!=="function")throw new Error("company_operation_unavailable");
+    active=true;
+    try {
+      var body={command:exportCommands[category],request_id:window.crypto.randomUUID(),device_id:options.record.device_id};
+      var capability=issuedTicket(await api.issue(options.record,body),body);requireCurrent(options);
+      request={id:body.request_id,command:"read_hanbaioh_company_export",deviceId:body.device_id,category:category,originalRequestId:original,capability:capability};
+      var data=await nativeRequest(request,options);requireCurrent(options);
+      if(data&&Object.keys(data).sort().join(",")==="attemptRecorded,code,exportMayHaveStarted,status"&&data.status==="stopped"&&typeof data.code==="string"&&typeof data.attemptRecorded==="boolean"&&typeof data.exportMayHaveStarted==="boolean")return {status:"export_pending",category:category};
+      return verifiedExport(data,category,original);
+    } finally { if(request)request.capability="";active=false; }
+  }
   window.DcatsHanbaiohCompanyBridge = Object.freeze({
     loginOnce: function (options) { return run(options, "account"); },
     prepareCsv: function (options) { return run(options, options.category); },
     enrollAccountFromPc: enrollAccountFromPc,
+    readDeviceFromPc: readDeviceFromPc,
+    exportCsvOnce: exportCsvOnce,
+    readExportResult: readExportResult,
+    wasExportAttempted: function (record, category) { return !!previousExport(record, category); },
+    wasLoginVerified: function (record) { return validRecord(record) && verifiedLogins.has(actorKey(record)); },
     wasLoginAttempted: function (record) { return validRecord(record) && loginAttempts.has(actorKey(record)); },
     cancelCurrent: function () { if (cancel) cancel(); }
   });
