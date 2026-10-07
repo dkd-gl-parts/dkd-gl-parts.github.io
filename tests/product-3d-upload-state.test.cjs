@@ -333,6 +333,7 @@ test("mock GLB upload response reaches the admin card and customer common Viewer
     File, FormData, console, elements, document: { body: {}, activeElement: null },
     BUCKET: "product-3d", modelCacheEpoch: 0, sessionModelsEnabled: true,
     mediaPaneRequest: { sales: 0, customer: 0 }, viewerRequestId: 0,
+    viewerComparisonRequestId: 0, viewerComparisonTarget: null,
     viewerReturnFocus: null, viewerFocusTarget: null, viewer: null,
     glbUploadTarget: { context: "sales", productId: 42, kind: "rebuilt", replacedId: "" },
     glbMutationBusy: false,

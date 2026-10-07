@@ -35,6 +35,7 @@ function harness({ balance = 100, confirmed = true, failStart = false, quoteKey,
     productTitle: (product) => "商品ID " + product.id,
     kindLabel: (kind) => kind === "aftermarket_new" ? "新品" : "リビルト",
     canManageGlb: () => true,
+    clearViewerComparison: () => {},
     canPublish3D: () => true,
     friendlyError: (error) => String(error.message || error),
     signProductImageUrl: async () => "https://example.invalid/signed-original",
@@ -425,6 +426,8 @@ function previewHarness() {
   const qa = harness();
   qa.context.tripoJob = { request_key: "00000000-0000-4000-8000-000000000001", status: "review" };
   qa.context.viewerRequestId = 4;
+  qa.context.viewer = {};
+  qa.context.prepareViewerComparison = (...args) => { qa.comparison = args; };
   qa.context.showCommonViewer = async (...args) => { qa.opened = args; };
   qa.context.closeViewer = () => { qa.closed = true; };
   qa.context.sb.functions.invoke = async () => ({ data: {
@@ -444,6 +447,7 @@ test("Tripo review reuses the local and registered GLB common Viewer entrypoint"
   assert.deepEqual(JSON.parse(JSON.stringify(target)), { context: "sales", productId: 101, kind: "rebuilt" });
   assert.equal(requestId, 5); assert.equal(current(), true); assert.equal(qa.context.tripoBusy, false);
   assert.equal(qa.opened[5], qa.context.elements['product-3d-tripo-preview']);
+  assert.deepEqual(qa.comparison, [1, 5]);
   assert.equal((source.match(/await import\("\.\/product-3d-viewer\.js\?v=/g) || []).length, 1);
   assert.doesNotMatch(source, /function getViewerModule\(/);
 });
