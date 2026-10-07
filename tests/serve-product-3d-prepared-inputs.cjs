@@ -19,8 +19,12 @@ const controller=DcatsPreparedInputs.create(document.querySelector('#product-3d-
 controller.open({target:{productId:2639,kind:'aftermarket_new'},isCurrent:()=>params.get('role')!=='staff',
   async invoke(action){events.push(action);if(params.get('mode')==='error')throw Error('Synthetic unavailable');
     if(action==='input_plan')return plan;
-    if(action!=='input_preview')throw Error('No upload or paid operation in this visual fixture');
-    return {...plan,images:images.map(i=>({...i,preview_url:'https://jqoeqximtwfpqwzngutj.supabase.co/storage/v1/object/sign/product-3d/tripo-input-review/'+i.view+'.jpg?token=synthetic'}))};
+    if(!['input_preview','input_check'].includes(action))throw Error('No upload or paid operation in this visual fixture');
+    if(action==='input_check'&&params.get('mode')==='balance-error')throw Error('Synthetic balance unavailable');
+    const balance=params.get('mode')==='low'?10:70;
+    return {...plan,images:images.map(i=>({...i,preview_url:'https://jqoeqximtwfpqwzngutj.supabase.co/storage/v1/object/sign/product-3d/tripo-input-review/'+i.view+'.jpg?token=synthetic'})),
+      ...(action==='input_check'?{estimated_credits:30,balance,balance_sufficient:balance>=30,can_start:false,
+        blocked_reason:'prepared_generation_not_connected',checked_at:new Date().toISOString()}: {})};
   },storage:{from(){throw Error('No Storage write in this fixture');}}});
 document.querySelector('#close-fixture').addEventListener('click',()=>controller.close());
 `;
