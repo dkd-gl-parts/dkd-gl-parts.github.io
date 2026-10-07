@@ -11,8 +11,9 @@ class Element {
   addEventListener(name,fn){this.listeners[name]=fn;}
   async click(){await this.listeners.click?.();}
 }
-async function fixture({ready=false,storageFailure=false,deferred=false,workerFailure=false,workerStalled=false,badSource=false}={}) {
-  const nodes=Object.fromEntries(['status','gallery','check','file','upload','auto','manual'].map(name=>[name,new Element()]));
+async function fixture({ready=false,storageFailure=false,deferred=false,workerFailure=false,workerStalled=false,badSource=false,
+  costChange=null,costFailure=false,costDeferred=false,balance=70}={}) {
+  const nodes=Object.fromEntries(['status','gallery','check','file','upload','auto','manual','cost'].map(name=>[name,new Element()]));
   const root=new Element();root.querySelector=selector=>nodes[selector.match(/prepared-(\w+)/)[1]];
   const window={};const ctx={window,document:{createElement:()=>new Element()},crypto,Uint8Array,ArrayBuffer,URL,Set,Map,Array,Number,Error,
     File,AbortController,setTimeout,clearTimeout,setInterval,clearInterval};
@@ -27,7 +28,7 @@ async function fixture({ready=false,storageFailure=false,deferred=false,workerFa
   const plan={product_id:2639,product_kind:'aftermarket_new',plan_id:'test-plan',plan_sha256:'a'.repeat(64),
     ready,generation_allowed:false,preparation_mode:'browser',images};
   const target={productId:2639,kind:'aftermarket_new'};
-  const events=[];let current=true,resolveDeferred,resolveWorkerStarted;
+  const events=[];let current=true,resolveDeferred,resolveWorkerStarted,resolveCost;
   const workerStarted=new Promise(resolve=>{resolveWorkerStarted=resolve;});
   ctx.Worker=class {
     constructor(){this.stopped=false;}
@@ -49,6 +50,16 @@ async function fixture({ready=false,storageFailure=false,deferred=false,workerFa
       source_bytes:i.bytes,source_sha256:i.sha256}))};
     if(action==='input_preview')return {...plan,images:images.map(i=>({...i,
       preview_url:`https://jqoeqximtwfpqwzngutj.supabase.co/storage/v1/object/sign/product-3d/tripo-input-review/${i.view}.jpg?token=synthetic`}))};
+    if(action==='input_check'){
+      assert.equal(body.plan_sha256,plan.plan_sha256);assert.deepEqual(Object.keys(body),['plan_sha256']);
+      if(costFailure)throw Error('provider-secret-detail');
+      const result=structuredClone({...plan,estimated_credits:30,balance,balance_sufficient:balance>=30,can_start:false,
+        blocked_reason:'prepared_generation_not_connected',checked_at:new Date().toISOString(),
+        images:images.map(i=>({...i,preview_url:`https://jqoeqximtwfpqwzngutj.supabase.co/storage/v1/object/sign/product-3d/tripo-input-review/${i.view}.jpg?token=synthetic`}))});
+      if(costChange)costChange(result);
+      if(costDeferred)return new Promise(resolve=>{resolveCost=()=>resolve(result);});
+      return result;
+    }
     assert.equal(action,'input_upload');assert.equal(body.plan_sha256,plan.plan_sha256);
     const image=images.find(i=>i.view===body.view);
     return {plan_sha256:plan.plan_sha256,already_present:false,bucket:'product-3d',
@@ -62,7 +73,7 @@ async function fixture({ready=false,storageFailure=false,deferred=false,workerFa
   }};}}};
   controller.open(options);
   return {api,plan,files,nodes,root,events,controller,options,workerStarted,
-    setCurrent(value){current=value;},resolve(value){resolveDeferred(value);}};
+    setCurrent(value){current=value;},resolve(value){resolveDeferred(value);},resolveCost(){resolveCost();}};
 }
 
 async function waitWorkerStarted(f){
@@ -151,4 +162,45 @@ test('ready browser inputs are read back rather than prepared or transmitted aga
 test('manual fallback remains opt-in and never invokes a preparation worker',async()=>{
   const f=await fixture();await f.nodes.manual.click();f.nodes.file.files=f.files;await f.nodes.upload.click();
   assert.equal(f.events.includes('worker-start'),false);assert.equal(f.events.filter(e=>e==='storage-upload').length,4);
+});
+
+test('cost check requires all four files, revalidates their preview and never starts or uploads',async()=>{
+  const partial=await fixture();assert.equal(partial.nodes.cost.disabled,true);
+  await partial.nodes.cost.click();await partial.nodes.check.click();await partial.nodes.cost.click();
+  assert.deepEqual(partial.events,['input_plan']);
+  for(const balance of [70,10,0]){
+    const f=await fixture({ready:true,balance});await f.nodes.check.click();
+    assert.equal(f.nodes.cost.disabled,false);await f.nodes.cost.click();
+    assert.deepEqual(f.events,['input_plan','input_preview','input_check']);
+    assert.match(f.nodes.status.textContent,/推定 30 クレジット/);
+    assert.match(f.nodes.status.textContent,/有料再生成の接続は未完了/);
+    assert.equal(f.nodes.status.textContent.includes('残高が不足'),balance<30);
+    assert.equal(f.nodes.gallery.children.length,4);
+  }
+});
+
+test('invalid, changed, paid-capable or failed cost responses are not shown as successful checks',async()=>{
+  for(const costChange of [r=>r.can_start=true,r=>r.generation_allowed=true,r=>r.ready=false,
+    r=>r.plan_sha256='b'.repeat(64),r=>r.images[0].sha256='c'.repeat(64),r=>r.images[0].rotation_clockwise=90,
+    r=>r.images[0].preview_url='https://evil.invalid/image.jpg',r=>r.balance=-1,r=>r.balance='70',
+    r=>r.balance_sufficient=false,r=>r.estimated_credits=0,r=>r.checked_at='invalid']){
+    const f=await fixture({ready:true,costChange});await f.nodes.check.click();await f.nodes.cost.click();
+    assert.match(f.nodes.status.textContent,/確認できませんでした/);
+    assert.equal(f.nodes.gallery.children.length,0);assert.equal(f.nodes.cost.disabled,true);
+    assert.equal(f.events.includes('start'),false);
+  }
+  const f=await fixture({ready:true,costFailure:true});await f.nodes.check.click();await f.nodes.cost.click();
+  assert.doesNotMatch(f.nodes.status.textContent,/secret/);assert.equal(f.nodes.cost.disabled,true);
+});
+
+test('pending cost checks suppress duplicate requests and discard late results on close or context loss',async()=>{
+  for(const close of [true,false]){
+    const f=await fixture({ready:true,costDeferred:true});await f.nodes.check.click();
+    const pending=f.nodes.cost.click();await f.nodes.cost.click();assert.equal(f.nodes.cost.disabled,true);
+    assert.equal(f.events.filter(e=>e==='input_check').length,1);
+    if(close)f.controller.close();else f.setCurrent(false);
+    f.resolveCost();await pending;
+    assert.doesNotMatch(f.nodes.status.textContent,/推定 30/);
+    f.controller.close();assert.equal(f.nodes.gallery.children.length,0);
+  }
 });

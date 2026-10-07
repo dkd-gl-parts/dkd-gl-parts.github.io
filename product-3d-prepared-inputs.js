@@ -38,6 +38,7 @@
     var status = root.querySelector("[data-prepared-status]"), gallery = root.querySelector("[data-prepared-gallery]");
     var check = root.querySelector("[data-prepared-check]"), file = root.querySelector("[data-prepared-file]");
     var upload = root.querySelector("[data-prepared-upload]");
+    var cost = root.querySelector("[data-prepared-cost]");
     var auto = root.querySelector("[data-prepared-auto]"), manual = root.querySelector("[data-prepared-manual]");
     function current(revision) { return context && revision === epoch && context.isCurrent(); }
     function message(value) { status.textContent = value; }
@@ -45,6 +46,7 @@
       check.disabled = busy; file.disabled = busy || !plan || plan.ready; upload.disabled = busy || !plan || plan.ready;
       if (auto) auto.disabled = busy || typeof Worker !== "function" || Boolean(plan && plan.ready && mode === "browser");
       if (manual) manual.disabled = busy;
+      if (cost) cost.disabled = busy || !plan || !plan.ready;
     }
     function clear() {
       if (abortRef) abortRef.abort(); abortRef = null;
@@ -139,6 +141,37 @@
         if (current(revision)) message("登録を停止しました。部分登録は保持しています。再送・上書きせず「状態確認」で結果を確認してください。");
       } finally { if (current(revision)) { busy = false; controls(); } }
     }
+    async function checkCost() {
+      if (busy || !plan || !plan.ready || !context || !context.isCurrent()) return;
+      var revision = epoch, approved = plan;
+      busy = true; controls(); message("4枚の実画像と費用・現在残高を確認しています。生成は開始しません…");
+      try {
+        var result = await context.invoke("input_check", { plan_sha256: approved.plan_sha256 });
+        if (!current(revision)) { if (epoch === revision) clear(); return; }
+        if (!validPlan(result, context.target) || !result.ready || result.plan_id !== approved.plan_id ||
+            result.plan_sha256 !== approved.plan_sha256 || result.can_start !== false ||
+            result.blocked_reason !== "prepared_generation_not_connected" ||
+            !Number.isSafeInteger(result.estimated_credits) || result.estimated_credits < 1 || result.estimated_credits > 100 ||
+            typeof result.balance !== "number" || !Number.isFinite(result.balance) || result.balance < 0 ||
+            result.balance_sufficient !== (result.balance >= result.estimated_credits) ||
+            typeof result.checked_at !== "string" || !Number.isFinite(Date.parse(result.checked_at)) ||
+            !result.images.every(function (image, i) {
+              var expected = approved.images[i];
+              return previewUrl(image.preview_url) && image.id === expected.id && image.sha256 === expected.sha256 &&
+                image.bytes === expected.bytes && image.rotation_clockwise === expected.rotation_clockwise &&
+                image.width === expected.width && image.height === expected.height;
+            })) throw new Error("Invalid prepared cost check");
+        render(result, revision);
+        message("推定 " + result.estimated_credits + " クレジット / 確認時の残高 " + result.balance +
+          " クレジット。" + (result.balance_sufficient ? "" : "残高が不足しています。") +
+          "有料再生成の接続は未完了です。画像のTripo送信・生成・課金は行っていません。");
+      } catch (_) {
+        if (current(revision)) {
+          plan = null; gallery.textContent = "";
+          message("画像または残高を確認できませんでした。生成・課金は行っていません。「状態確認」から確認してください。");
+        }
+      } finally { if (current(revision)) { busy = false; controls(); } }
+    }
     function validSourceUrl(value) {
       try {
         var url = new URL(value);
@@ -231,6 +264,7 @@
     check.addEventListener("click", refresh); upload.addEventListener("click", function () { return uploadFiles(); });
     if (auto) auto.addEventListener("click", prepareFromSaved);
     if (manual) manual.addEventListener("click", function () { if (busy) return; mode = "offline"; return refresh(); });
+    if (cost) cost.addEventListener("click", checkCost);
     return { close: clear, open: function (options) {
       clear();
       if (!options || options.target.productId !== 2639 || options.target.kind !== "aftermarket_new" || !options.isCurrent()) return;
