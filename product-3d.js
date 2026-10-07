@@ -142,6 +142,7 @@
       "product-3d-glb-file", "product-3d-local-glb-file", "product-3d-tripo-overlay", "product-3d-tripo-close",
       "product-3d-tripo-context", "product-3d-tripo-images", "product-3d-tripo-views",
       "product-3d-tripo-kind", "product-3d-tripo-selection", "product-3d-tripo-selection-status",
+      "product-3d-tripo-preset", "product-3d-tripo-auto-assign", "product-3d-tripo-preset-status",
       "product-3d-tripo-image-directions",
       "product-3d-tripo-image-preview", "product-3d-tripo-image-preview-img",
       "product-3d-tripo-image-preview-label", "product-3d-tripo-image-preview-close",
@@ -1228,6 +1229,42 @@
     return "画像 " + (index + 1) + " / ID " + row.id + (date ? "（" + date + "）" : "");
   }
   function tripoViewLabels() { return { front: "正面", left: "左側", back: "背面", right: "右側" }; }
+  function reviewedTripoDirections() {
+    // Reviewed candidate only; not camera calibration or generation permission.
+    return tripoTarget && tripoTarget.productId === 2639 && tripoTarget.kind === "aftermarket_new"
+      ? { front: "171", left: "175", back: "179", right: "172" } : null;
+  }
+  function tripoPresetAvailable() {
+    var preset = reviewedTripoDirections();
+    if (!preset || tripoBusy || !sameTripoTarget(tripoRequestId)) return false;
+    var controls = Array.from(elements["product-3d-tripo-views"].querySelectorAll("select"));
+    return controls.length === 4 && Object.keys(preset).every(function (view) {
+      var row = tripoImageRows[preset[view]];
+      return row && String(row.id) === preset[view] && row.storage_path && row.previewUrl &&
+        controls.filter(function (node) { return node.dataset.tripoView === view && !node.disabled; }).length === 1;
+    });
+  }
+  function renderTripoPreset() {
+    var host = elements["product-3d-tripo-preset"];
+    if (!host) return;
+    host.hidden = !reviewedTripoDirections() || !sameTripoTarget(tripoRequestId);
+    var available = !host.hidden && tripoPresetAvailable();
+    elements["product-3d-tripo-auto-assign"].disabled = !available;
+    elements["product-3d-tripo-preset-status"].textContent = host.hidden ? "" : available
+      ? "商品2639・新品専用。選択中の写真を候補で置き換えます（生成・課金なし）。"
+      : "候補4枚の画像を確認できるまで自動セットできません。画像不足・取得失敗時は手動で選択してください。";
+  }
+  function autoAssignTripoImages() {
+    // Preflight all four before changing any control. No API/quote/start/upload.
+    if (!tripoPresetAvailable()) { renderTripoPreset(); return false; }
+    var preset = reviewedTripoDirections();
+    Array.from(elements["product-3d-tripo-views"].querySelectorAll("select")).forEach(function (node) {
+      node.value = preset[node.dataset.tripoView];
+    });
+    renderTripoSelection();
+    elements["product-3d-tripo-preset-status"].textContent = "4方向をセットしました。写真を確認し、必要なら変更してください（生成・課金なし）。";
+    return true;
+  }
   function tripoDirectionButtons(imageId, enabled) {
     var labels = tripoViewLabels();
     return Object.keys(labels).map(function (view) {
@@ -1305,6 +1342,7 @@
       node.disabled = !!unavailableText || !images.length;
     });
     renderTripoSelection();
+    renderTripoPreset();
   }
   function clearTripoImagePreview() {
     tripoImagePreviewRequestId += 1;
@@ -1403,6 +1441,7 @@
           if (node) node.src = signed;
           if (signed) {
             row.previewUrl = signed;
+            renderTripoPreset();
             Array.from(elements["product-3d-tripo-images"].querySelectorAll("[data-tripo-image-id='" + row.id + "']")).forEach(function (button) { button.disabled = false; });
             if (Array.from(elements["product-3d-tripo-views"].querySelectorAll("select")).some(function (control) { return control.value === String(row.id); })) renderTripoSelection();
           }
@@ -1435,6 +1474,7 @@
     tripoRequestId += 1;
     tripoTarget = null; tripoJob = null; tripoHistoryReady = false;
     tripoImageRows = Object.create(null);
+    renderTripoPreset();
     clearTripoImagePreview();
     if (elements["product-3d-tripo-selection"]) elements["product-3d-tripo-selection"].textContent = "";
     if (elements["product-3d-tripo-selection-status"]) elements["product-3d-tripo-selection-status"].textContent = "";
@@ -1949,7 +1989,7 @@
     elements["product-3d-viewer-autorotate"].setAttribute("aria-pressed", "false");
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await import("./product-3d-viewer.js?v=1.1.1124");
+      var module = await import("./product-3d-viewer.js?v=1.1.1125");
       if (!targetStillSelected()) {
         if (requestId === viewerRequestId) closeViewer();
         return;
@@ -2036,6 +2076,7 @@
   function bind() {
     elements["product-3d-tripo-close"].addEventListener("click", closeTripo);
     elements["product-3d-tripo-kind"].addEventListener("change", changeTripoKind);
+    elements["product-3d-tripo-auto-assign"].addEventListener("click", autoAssignTripoImages);
     elements["product-3d-tripo-views"].addEventListener("change", function (event) {
       if (event.target.matches("select")) assignTripoImage(event.target.dataset.tripoView, event.target.value);
     });

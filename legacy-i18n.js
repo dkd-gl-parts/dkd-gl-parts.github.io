@@ -2,6 +2,15 @@
 // Runtime translation is local; this file makes no external requests.
 var DCATS_LEGACY_UI_TRANSLATIONS = {
   "en": {
+    "候補と処理範囲について": "About the candidate and action scope",
+    "商品2639・新品専用。選択中の写真を候補で置き換えます（生成・課金なし）。": "Only for product 2639 (new). Replaces current photo selections with candidates (no generation or charge).",
+    "4方向をセットしました。写真を確認し、必要なら変更してください（生成・課金なし）。": "All four views are selected. Check the photos and change them if needed (no generation or charge).",
+    "4方向の候補を自動セット": "Set all four candidate views",
+    "商品2639・新品の確認済み候補です。正面171・左175・背面179・右172を選択します。セット後も写真の変更・解除ができます。これは原本の選択だけで、整列・保存・生成は開始しません。": "Reviewed candidate for product 2639 (new): front 171, left 175, back 179 and right 172. You can change or clear photos afterwards. This only selects originals; it does not align, save or generate anything.",
+    "左右写真の回転整列は下の「端面を含む整列済み4方向」で別に確認してください。この選択だけで再生成はできません。": "Check rotation alignment of the side photos separately in Four aligned views including the end faces below. This selection does not enable regeneration.",
+    "候補4枚をセットできます。選択中の写真は候補で置き換わります。生成・課金は開始しません。": "All four candidates are available. They will replace your current selections. No generation or charge will start.",
+    "候補4枚の画像を確認できるまで自動セットできません。画像不足・取得失敗時は手動で選択してください。": "Automatic selection is unavailable until all four candidate previews are available. Select manually if photos are missing or cannot be retrieved.",
+    "4方向の候補をセットしました。プレビューで確認・変更してください。原本変更・保存・送信・生成・課金は行っていません。": "All four candidate views are selected. Review or change them in the preview. Originals are unchanged; nothing has been saved, sent or generated, and no charge was incurred.",
     "保存済み写真から整列・非公開登録（課金なし）": "Align saved photos and save privately (no generation charge)",
     "端末内で1枚ずつ準備します。原本変更・Tripo送信・有料生成は行いません。閉じると準備を中止します。": "Photos are prepared one at a time on this device. Originals are unchanged; nothing is sent to Tripo and no paid generation runs. Closing cancels preparation.",
     "4枚合計で約10MBのダウンロードと約13MBの非公開登録が必要です。モバイル回線の通信量にご注意ください。": "The four photos require about 10 MB of downloads and 13 MB of private uploads. Please consider mobile data usage.",
@@ -3760,6 +3769,15 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "に指定": "Assign to"
   },
   "zh": {
+    "候補と処理範囲について": "候选图片和操作范围",
+    "商品2639・新品専用。選択中の写真を候補で置き換えます（生成・課金なし）。": "仅限商品2639新品，将用候选图片替换当前选择（不生成、不计费）。",
+    "4方向をセットしました。写真を確認し、必要なら変更してください（生成・課金なし）。": "已选择四个方向，请确认图片并按需修改（不生成、不计费）。",
+    "4方向の候補を自動セット": "自动选择四个方向的候选图片",
+    "商品2639・新品の確認済み候補です。正面171・左175・背面179・右172を選択します。セット後も写真の変更・解除ができます。これは原本の選択だけで、整列・保存・生成は開始しません。": "商品2639新品的已确认候选：正面171、左侧175、背面179、右侧172。选择后仍可更换或取消图片。仅选择原图，不启动对齐、保存或生成。",
+    "左右写真の回転整列は下の「端面を含む整列済み4方向」で別に確認してください。この選択だけで再生成はできません。": "请在下方的包含端面的已对齐四个方向中另行确认左右图片的旋转对齐。此选择不会启用重新生成。",
+    "候補4枚をセットできます。選択中の写真は候補で置き換わります。生成・課金は開始しません。": "四张候选图片均可用，将替换当前选择。不启动生成或计费。",
+    "候補4枚の画像を確認できるまで自動セットできません。画像不足・取得失敗時は手動で選択してください。": "四张候选预览均可用之前无法自动选择。图片缺失或获取失败时请手动选择。",
+    "4方向の候補をセットしました。プレビューで確認・変更してください。原本変更・保存・送信・生成・課金は行っていません。": "已选择四个方向的候选图片，请在预览中确认或修改。未修改原图、保存、发送、生成或计费。",
     "保存済み写真から整列・非公開登録（課金なし）": "对齐已保存图片并私密保存（不消耗生成点数）",
     "端末内で1枚ずつ準備します。原本変更・Tripo送信・有料生成は行いません。閉じると準備を中止します。": "在此设备上逐张准备，不修改原图、不发送到Tripo、不执行付费生成。关闭将取消准备。",
     "4枚合計で約10MBのダウンロードと約13MBの非公開登録が必要です。モバイル回線の通信量にご注意ください。": "四张图片总计需要下载约10MB并私密上传约13MB。请注意移动网络流量。",
