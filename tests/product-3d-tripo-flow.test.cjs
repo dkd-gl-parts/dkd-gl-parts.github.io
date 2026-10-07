@@ -24,6 +24,7 @@ function harness({ balance = 100, confirmed = true, failStart = false, quoteKey,
     tripoTarget: { context: "sales", productId: 101, kind: "rebuilt" },
     tripoJob: null, tripoBusy: false, tripoHistoryReady: true, tripoRequestId: 1, tripoReturnFocus: null,
     tripoImageRows: { "11": { id: 11 }, "12": { id: 12 } }, tripoImagePreviewRequestId: 0,
+    preparedInputsController: null,
     sessionModelsEnabled: true, crypto: { randomUUID: () => "00000000-0000-4000-8000-000000000001" },
     elements: {
       ...controls,

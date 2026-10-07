@@ -48,6 +48,7 @@
   var tripoReturnFocus = null;
   var tripoImageRows = Object.create(null);
   var tripoImagePreviewRequestId = 0;
+  var preparedInputsController = null;
   var mediaAvailabilityRequest = { sales: 0, production: 0, customer: 0 };
   var mediaPaneRequest = { sales: 0, production: 0, customer: 0 };
 
@@ -121,6 +122,9 @@
   }
 
   function cacheElements() {
+    if (window.DcatsPreparedInputs && el("product-3d-prepared-inputs")) {
+      preparedInputsController = window.DcatsPreparedInputs.create(el("product-3d-prepared-inputs"));
+    }
     [
       "product-3d-capture-overlay", "product-3d-capture-close", "product-3d-capture-context",
       "product-3d-camera-stage", "product-3d-camera-video", "product-3d-guide-canvas",
@@ -1356,6 +1360,14 @@
     tripoJob = null;
     tripoHistoryReady = false;
     tripoImageRows = Object.create(null);
+    if (preparedInputsController) preparedInputsController.open({
+      target: { productId: tripoTarget.productId, kind: tripoTarget.kind },
+      isCurrent: function () { return sameTripoTarget(requestId); },
+      invoke: function (action, body) {
+        if (!sameTripoTarget(requestId)) return Promise.reject(new Error("Stale product target"));
+        return tripoInvoke(Object.assign({ action: action, product_id: tripoTarget.productId, product_kind: tripoTarget.kind }, body));
+      }, storage: sb.storage
+    });
     elements["product-3d-tripo-overlay"].classList.add("show");
     elements["product-3d-tripo-overlay"].setAttribute("aria-hidden", "false");
     elements["product-3d-tripo-kind"].value = tripoTarget.kind;
@@ -1417,6 +1429,7 @@
   }
   function closeTripo() {
     clearViewerComparison();
+    if (preparedInputsController) preparedInputsController.close();
     var previous = tripoTarget;
     var wasOpen = elements["product-3d-tripo-overlay"].classList.contains("show");
     tripoRequestId += 1;
@@ -1443,7 +1456,7 @@
   function keepTripoFocus(event) {
     if (event.key !== "Tab" || !elements["product-3d-tripo-overlay"].classList.contains("show") ||
         elements["product-3d-viewer-overlay"].classList.contains("show")) return;
-    var controls = Array.from(elements["product-3d-tripo-overlay"].querySelectorAll("button, select"))
+    var controls = Array.from(elements["product-3d-tripo-overlay"].querySelectorAll("button, select, input"))
       .filter(function (node) { return node.isConnected && !node.hidden && !node.disabled && node.getClientRects().length; });
     if (!controls.length) return;
     var first = controls[0];
@@ -1936,7 +1949,7 @@
     elements["product-3d-viewer-autorotate"].setAttribute("aria-pressed", "false");
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await import("./product-3d-viewer.js?v=1.1.1121");
+      var module = await import("./product-3d-viewer.js?v=1.1.1122");
       if (!targetStillSelected()) {
         if (requestId === viewerRequestId) closeViewer();
         return;
