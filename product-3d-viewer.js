@@ -7,6 +7,22 @@ import { MeshoptDecoder } from './vendor/three/examples/jsm/libs/meshopt_decoder
 
 const DECODER_ROOT = './vendor/three/examples/jsm/libs/';
 
+export function configureProduct3DTextureLoader(loader) {
+  // The pinned GLTFLoader normally fetches embedded blob: images through
+  // ImageBitmapLoader. Our CSP intentionally excludes blob: from connect-src,
+  // but permits it in img-src. Decode images through TextureLoader instead;
+  // preserve the CSP, vendor bytes and compressed-texture extension handlers.
+  loader.register((parser) => {
+    if (parser.textureLoader && parser.textureLoader.isImageBitmapLoader) {
+      parser.textureLoader = new THREE.TextureLoader(parser.options.manager)
+        .setCrossOrigin(parser.options.crossOrigin)
+        .setRequestHeader(parser.options.requestHeader);
+    }
+    return { name: 'DCATS_ImageTextureDecode' };
+  });
+  return loader;
+}
+
 export async function createProduct3DViewer(options) {
   const host = options.host;
   if (!host) throw new Error('3D viewer host is missing.');
@@ -46,7 +62,10 @@ export async function createProduct3DViewer(options) {
   const ktx2 = new KTX2Loader();
   ktx2.setTranscoderPath(DECODER_ROOT + 'basis/');
   ktx2.detectSupport(renderer);
-  const loader = new GLTFLoader();
+  let assetLoadFailed = false;
+  const manager = new THREE.LoadingManager();
+  manager.onError = () => { assetLoadFailed = true; };
+  const loader = configureProduct3DTextureLoader(new GLTFLoader(manager));
   loader.setDRACOLoader(draco);
   loader.setKTX2Loader(ktx2);
   loader.setMeshoptDecoder(MeshoptDecoder);
@@ -56,6 +75,12 @@ export async function createProduct3DViewer(options) {
     gltf = options.buffer
       ? await loader.parseAsync(options.buffer, '')
       : await loader.loadAsync(options.url);
+    // GLTFLoader catches image errors internally and otherwise resolves a
+    // white, incomplete model. Do not present that as a successful preview.
+    if (assetLoadFailed) {
+      (gltf.scenes || []).forEach(disposeObject);
+      throw new Error('GLB texture could not be loaded.');
+    }
   } catch (error) {
     controls.dispose();
     draco.dispose();
