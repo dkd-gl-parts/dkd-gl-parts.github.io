@@ -47,6 +47,7 @@ jobs:
           node scripts/verify-hanbaioh-company-bridge.js
           node scripts/verify-hanbaioh-company-enrollment.js
           node scripts/verify-hanbaioh-backup-readiness.js
+          node scripts/verify-hanbaioh-backup-setup.js
           node scripts/verify-hanbaioh-test-sales-api.js
           node scripts/verify-concierge-ai.js
           node scripts/verify-concierge-pet-runtime.js

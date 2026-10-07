@@ -7433,6 +7433,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .dcats-business-workspace-backup p { margin: 6px 0; font-size: 12px; line-height: 1.7; color: #46594d; }
 .dcats-business-workspace-backup > button { width: 100%; min-height: 44px; margin: 10px 0; padding: 10px; border: 1px solid #287356; border-radius: 5px; color: #176b43; background: #fff; font-size: 12px; white-space: normal; }
 .dcats-business-workspace-backup > button:disabled { opacity: .65; cursor: wait; }
+#dcats-business-workspace-backup-setup { background: #176b43; color: #fff; }
 .dcats-business-workspace-backup button:focus-visible, .dcats-business-workspace-backup summary:focus-visible { outline: 2px solid #287356; outline-offset: 3px; }
 .dcats-business-workspace-backup-checks { margin: 12px 0; font-size: 12px; }
 .dcats-business-workspace-backup-checks > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(80px, auto); gap: 12px; padding: 8px 0; border-bottom: 1px solid #dce5e0; }

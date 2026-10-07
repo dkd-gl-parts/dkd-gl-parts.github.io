@@ -52,16 +52,19 @@
     return new Promise(function (resolve, reject) {
       var settled = false;
       var isReadiness = request.command === "read_hanbaioh_company_backup_readiness";
+      var isBackupSetup = request.command === "open_hanbaioh_company_backup_setup";
       var isExport = request.command.startsWith("export_hanbaioh_") || request.command === "read_hanbaioh_company_export" || isReadiness;
-      var timer = window.setTimeout(function () { finish(null); }, isReadiness ? 20000 : request.command === "login_hanbaioh_company" || isExport ? 210000 : request.command === "read_hanbaioh_company_device" ? 5000 : 30000);
+      var timer = window.setTimeout(function () { finish(null); }, isBackupSetup ? 610000 : isReadiness ? 20000 : request.command === "login_hanbaioh_company" || isExport ? 210000 : request.command === "read_hanbaioh_company_device" ? 5000 : 30000);
       var watch = window.setInterval(function () { if (!options.isCurrent()) finish(null); }, 250);
       function finish(response) {
         if (settled) return; settled = true;
         window.clearTimeout(timer); window.clearInterval(watch); window.removeEventListener("message", onMessage); window.removeEventListener("pagehide", stop); cancel = null;
         if (isExport) window.postMessage({channel:channel,type:"company_export_cancel",id:request.id},window.location.origin);
+        if (isBackupSetup) window.postMessage({channel:channel,type:"company_backup_setup_cancel",id:request.id},window.location.origin);
         if (response && options.isCurrent() && response.ok === true && response.command === request.command) resolve(response.data);
         else {
           var code = response && response.error && response.error.code;
+          if (isBackupSetup && code === "REQUEST_REJECTED" && options.isCurrent()) { reject(new Error("company_extension_update_required")); return; }
           if (request.command === "read_hanbaioh_company_device" && options.isCurrent()) {
             if (code === "REQUEST_REJECTED") reject(new Error(response.error.message === "company_device_unavailable" ? "company_device_unavailable" : "company_extension_update_required"));
             else if (code === "NATIVE_HOST_UNAVAILABLE") reject(new Error("company_native_host_unavailable"));
@@ -77,7 +80,7 @@
              // Older extensions reject this new discovery command without an
              // ID. Accept that rejection only as a failure of this preflight;
              // it cannot authorize or complete any native operation.
-             request.command === "read_hanbaioh_company_device" && !message.response.id && message.response.ok === false && message.response.error && message.response.error.code === "REQUEST_REJECTED")) finish(message.response);
+             (request.command === "read_hanbaioh_company_device" || isBackupSetup) && !message.response.id && message.response.ok === false && message.response.error && message.response.error.code === "REQUEST_REJECTED")) finish(message.response);
       }
       function stop() { finish(null); }
       cancel = stop;
@@ -95,6 +98,27 @@
          !/^[0-9a-f]{64}$/.test(record.public_key_sha256)||typeof record.public_key_spki!=="string"||record.public_key_spki.length>2048||!record.public_key_spki.startsWith("-----BEGIN PUBLIC KEY-----")||!options.isCurrent())throw new Error("company_device_unavailable");
       return record;
     } finally { active=false; }
+  }
+  async function openBackupSetupFromPc(options) {
+    if (active || !options || !uuid.test(options.actorId) || typeof options.isCurrent !== "function" || !options.isCurrent()) throw new Error("company_operation_unavailable");
+    active = true;
+    var native;
+    try {
+      var record = await nativeRequest({ id: window.crypto.randomUUID(), command: "read_hanbaioh_company_device", actorId: options.actorId }, options);
+      if (!validRecord(record) || record.actor_id !== options.actorId || Object.keys(record).sort().join(",") !== "actor_id,device_id,public_key_sha256,public_key_spki" ||
+          !/^[0-9a-f]{64}$/.test(record.public_key_sha256) || typeof record.public_key_spki !== "string" || record.public_key_spki.length > 2048 || !record.public_key_spki.startsWith("-----BEGIN PUBLIC KEY-----") || !options.isCurrent()) throw new Error("company_device_unavailable");
+      var api = window.DcatsHanbaiohCompanyApi;
+      if (!api || typeof api.issue !== "function") throw new Error("company_issuer_unavailable");
+      // This same-owner permit only opens a view. The native setup performs its
+      // own product sign-in and obtains separate authorization for enrollment.
+      var request = { request_id: window.crypto.randomUUID(), command: "enroll_hanbaioh_company_account", device_id: record.device_id };
+      var capability = await issueEnrollmentTicket(api, record, request);
+      if (!options.isCurrent()) throw new Error("company_session_changed");
+      native = { id: request.request_id, command: "open_hanbaioh_company_backup_setup", deviceId: record.device_id, capability: capability };
+      var result = await nativeRequest(native, options);
+      if (!options.isCurrent() || !result || Object.keys(result).join(",") !== "status" || !["saved","cancelled","failed","outcome_unknown","expired"].includes(result.status)) throw new Error("company_backup_setup_unverified");
+      return Object.freeze({ status: result.status });
+    } finally { if (native) native.capability = ""; active = false; }
   }
   async function readBackupReadinessFromPc(options) {
     if (active || !options || !uuid.test(options.actorId) || typeof options.isCurrent !== "function" || !options.isCurrent()) throw new Error("company_operation_unavailable");
@@ -270,6 +294,7 @@
     enrollAccountFromPc: enrollAccountFromPc,
     readDeviceFromPc: readDeviceFromPc,
     readBackupReadinessFromPc: readBackupReadinessFromPc,
+    openBackupSetupFromPc: openBackupSetupFromPc,
     exportCsvOnce: exportCsvOnce,
     readExportResult: readExportResult,
     wasExportAttempted: function (record, category) { return !!previousExport(record, category); },
