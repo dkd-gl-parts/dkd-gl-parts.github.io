@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; base-uri 'none'; form-action 'none'">
+  <title>Google接続設定の作成手順 | D-CATS</title>
+  <link rel="stylesheet" href="google-backup-setup.css?v=1.1.1129">
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">D-CATS業務連携 · 初回設定</p>
+      <h1>Google接続設定の作成手順</h1>
+      <p>共有フォルダに届いたバックアップをD-CATSが読み直して確認するため、管理者がGoogle側のアプリ設定を用意します。</p>
+    </header>
+    <aside class="notice" aria-label="設定の目的">
+      <h2>PC版Google Driveの同期設定とは別の準備です</h2>
+      <p>PC版Google Driveはファイルを同期します。ここで用意する設定JSONは、D-CATSがGoogle側のファイルを照合するために使います。設定JSONの取得後、ご本人のGoogleアカウントで読取を許可します。</p>
+      <p>通常は、指定済みの「D-CATS業務連携」保存先を変更しないでください。</p>
+    </aside>
+    <nav aria-label="作成手順の目次">
+      <h2>設定の順序</h2>
+      <ol>
+        <li><a href="#project">Google Cloudのプロジェクト</a></li>
+        <li><a href="#api">Google Drive API</a></li>
+        <li><a href="#audience">アプリ名とテスト利用者</a></li>
+        <li><a href="#scope">読取権限</a></li>
+        <li><a href="#client">デスクトップアプリのJSON取得</a></li>
+        <li><a href="#install">PCへの導入と本人の接続</a></li>
+      </ol>
+    </nav>
+    <section id="project" aria-labelledby="project-title">
+      <span class="step">1</span><h2 id="project-title">Google Cloudのプロジェクトを選ぶ</h2>
+      <p><a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer">Google Cloud Consoleを開く（新しいタブ）</a>。会社で管理するアカウントでログインし、D-CATS用のプロジェクトを選びます。用意されていない場合は、会社の管理者と新しいプロジェクトを準備してください。</p>
+      <p>名称の例は「D-CATS業務連携」です。以降も同じプロジェクトが選択されていることを確認してください。</p>
+    </section>
+    <section id="api" aria-labelledby="api-title">
+      <span class="step">2</span><h2 id="api-title">Google Drive APIを有効にする</h2>
+      <p>「APIとサービス」→「ライブラリ」で「Google Drive API」を検索し、「有効にする」を押します。すでに有効なら次へ進みます。</p>
+      <p class="reference"><a href="https://developers.google.com/workspace/drive/api/guides/enable-sdk" target="_blank" rel="noopener noreferrer">Google公式：Drive APIの有効化（新しいタブ）</a></p>
+    </section>
+    <section id="audience" aria-labelledby="audience-title">
+      <span class="step">3</span><h2 id="audience-title">アプリ名と利用者を設定する</h2>
+      <p>「Google Auth Platform」→「ブランディング（Branding）」で、アプリ名「D-CATS業務連携」と、会社のサポート用・管理者用メールアドレスを設定します。未設定なら「使ってみる（Get started）」から進みます。</p>
+      <ul>
+        <li>同じGoogle Workspace組織のアカウントだけで使用できる場合は、「対象（Audience）」で「内部（Internal）」を選びます。</li>
+        <li>それ以外の試験では「外部（External）」のテスト状態にし、「テストユーザー」に、共有フォルダを開けるご本人のGoogleアカウントを追加します。</li>
+      </ul>
+      <p>Google Cloudを管理するアカウントと、共有フォルダの読取許可を出すアカウントは同じとは限りません。D-CATSのメールアドレスとも別に確認してください。</p>
+      <p class="reference"><a href="https://developers.google.com/workspace/guides/configure-oauth-consent" target="_blank" rel="noopener noreferrer">Google公式：同意画面とテストユーザー（新しいタブ）</a></p>
+    </section>
+    <section id="scope" aria-labelledby="scope-title">
+      <span class="step">4</span><h2 id="scope-title">読取権限を設定する</h2>
+      <p>「データアクセス（Data Access）」→「スコープを追加または削除」で、次の権限を選んで保存します。</p>
+      <code>https://www.googleapis.com/auth/drive.readonly</code>
+      <aside class="notice">
+        <h3>Google側の許可はDrive全体の読取権限です</h3>
+        <p>この権限は指定フォルダだけに限定されません。現在のD-CATSは、設定された「D-CATS業務連携」フォルダ内の対象ファイルを照合するために使い、Google APIからファイルを追加・変更・削除しません。</p>
+      </aside>
+      <p class="reference"><a href="https://developers.google.com/workspace/drive/api/guides/api-specific-auth" target="_blank" rel="noopener noreferrer">Google公式：Driveの権限範囲（新しいタブ）</a></p>
+    </section>
+    <section id="client" aria-labelledby="client-title">
+      <span class="step">5</span><h2 id="client-title">デスクトップアプリのJSONを取得する</h2>
+      <ol>
+        <li>「Google Auth Platform」→「クライアント（Clients）」→「クライアントを作成（Create client）」を開きます。</li>
+        <li>種類に「デスクトップ アプリ（Desktop app）」を選びます。</li>
+        <li>名前の例：「D-CATS販売王バックアップ Windows」。作成後、JSONをダウンロードします。</li>
+        <li>このPCの「ダウンロード」などへ保存します。JSONを手で書き換える必要はありません。</li>
+      </ol>
+      <p class="reference"><a href="https://developers.google.com/workspace/guides/create-credentials" target="_blank" rel="noopener noreferrer">Google公式：デスクトップアプリの作成（新しいタブ）</a> · <a href="https://developers.google.com/workspace/drive/api/quickstart/python#authorize_credentials_for_a_desktop_application" target="_blank" rel="noopener noreferrer">Google公式：JSONのダウンロード（新しいタブ）</a></p>
+    </section>
+    <section id="install" aria-labelledby="install-title">
+      <span class="step">6</span><h2 id="install-title">このPCへ導入し、本人の接続を設定する</h2>
+      <p>導入担当者へ、保存したJSONの<strong>ファイルのフルパスだけ</strong>を伝えてください。JSONの中身・パスワードはチャットへ貼らず、共有フォルダやGitへ置かないでください。</p>
+      <details>
+        <summary>導入担当者向け：このPCの設定先</summary>
+        <code>%LOCALAPPDATA%\D-CATS\HanbaiOhBridge\config\production-drive-desktop-client.json</code>
+        <p>デスクトップアプリ形式の確認後、このWindows利用者の設定先へ導入します。</p>
+      </details>
+      <ol>
+        <li>D-CATSの「受注・出荷管理」→「データ連携」→「業務連携」を開きます。</li>
+        <li>「取込前バックアップの準備」の<strong>「Google接続・バックアップ用パスワードを設定」</strong>を押します。</li>
+        <li>専用画面で会社名・販売王IDを確認し、ご本人のD-CATSアカウントで本人確認を行います。</li>
+        <li>「Google接続を設定」を押し、Googleの画面で共有フォルダを開けるアカウントと読取許可を確認します。</li>
+        <li>接続の確認後、バックアップ用パスワードの登録へ進みます。準備が整うと入力欄が開きます。3分以内に2回入力し、保存確認後は画面が自動で閉じます。</li>
+      </ol>
+      <p>GoogleのパスワードはD-CATSの入力欄に入れません。販売王のログイン用パスワードと、バックアップ用パスワードは別です。</p>
+    </section>
+    <section aria-labelledby="finish-title">
+      <h2 id="finish-title">設定後の確認</h2>
+      <p>D-CATSへ戻り「このPCのバックアップ準備を確認」を押します。接続・パスワード・復旧方法などに不足がある場合は、表示された項目を確認してください。初回設定の終了だけでバックアップの作成・保存・復元が完了したことにはなりません。</p>
+      <aside class="notice">
+        <h3>外部のテスト設定は7日で再接続が必要になります</h3>
+        <p>外部のテスト状態でDriveの許可を出した場合、継続接続用の情報は7日で期限切れになります。長期の実運用前に、組織内利用またはGoogleの公開・審査条件を管理者が確認してください。</p>
+        <p class="reference"><a href="https://developers.google.com/identity/protocols/oauth2#expiration" target="_blank" rel="noopener noreferrer">Google公式：接続情報の有効期限（新しいタブ）</a></p>
+      </aside>
+    </section>
+    <footer>
+      <p>設定JSONを取得できない場合は、導入担当者に表示項目やエラー名を伝えてください。秘密値のある画面やJSONの中身を送る必要はありません。</p>
+      <p>PC版Google Driveがない場合は、D-CATS業務連携の「PC版Google Driveの設定・困ったとき」を確認してください。</p>
+      <p>この手順タブを閉じると、元のD-CATS画面に戻れます。</p>
+      <p class="reference">手順確認日：2026年10月7日</p>
+    </footer>
+  </main>
+</body>
+</html>
