@@ -7428,6 +7428,23 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .dcats-business-workspace-company .ready { color: #176b43; }
 .dcats-business-workspace-company .dcats-business-workspace-company-note { color: #66756c; font-size: 11px; }
 @media (max-width: 480px) { .dcats-business-workspace-company-row { grid-template-columns: 1fr; } .dcats-business-workspace-company-actions button { width: 100%; } }
+.dcats-business-workspace-backup { margin: 20px 0; padding: 16px; border: 1px solid #c8d8d0; border-left: 4px solid #287356; border-radius: 6px; background: #f6faf8; }
+.dcats-business-workspace-backup h4 { margin: 0 0 8px; font-size: 14px; color: #1d2c25; }
+.dcats-business-workspace-backup p { margin: 6px 0; font-size: 12px; line-height: 1.7; color: #46594d; }
+.dcats-business-workspace-backup > button { width: 100%; min-height: 44px; margin: 10px 0; padding: 10px; border: 1px solid #287356; border-radius: 5px; color: #176b43; background: #fff; font-size: 12px; white-space: normal; }
+.dcats-business-workspace-backup > button:disabled { opacity: .65; cursor: wait; }
+.dcats-business-workspace-backup button:focus-visible, .dcats-business-workspace-backup summary:focus-visible { outline: 2px solid #287356; outline-offset: 3px; }
+.dcats-business-workspace-backup-checks { margin: 12px 0; font-size: 12px; }
+.dcats-business-workspace-backup-checks > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(80px, auto); gap: 12px; padding: 8px 0; border-bottom: 1px solid #dce5e0; }
+.dcats-business-workspace-backup-checks dt, .dcats-business-workspace-backup-checks dd { margin: 0; line-height: 1.6; overflow-wrap: anywhere; }
+.dcats-business-workspace-backup-checks dd { text-align: right; font-weight: 600; }
+.dcats-business-workspace-backup-help { padding: 10px; border: 1px solid #c8d8d0; border-radius: 4px; background: #fff; }
+.dcats-business-workspace-backup-help summary { cursor: pointer; color: #176b43; font-size: 12px; font-weight: 600; }
+.dcats-business-workspace-backup .dcats-business-workspace-backup-note { font-size: 11px; color: #66756c; }
+#dcats-business-workspace-backup-status { font-size: 12px; line-height: 1.7; }
+.dcats-business-workspace-backup .ready { color: #176b43; }
+.dcats-business-workspace-backup .pending { color: #875400; }
+.dcats-business-workspace-backup .error { color: #b42318; }
 .dcats-business-workspace-account h4 { margin: 0 0 8px; color: #1d2c25; font-size: 14px; }
 .dcats-business-workspace-account p { margin: 5px 0; color: #46594d; font-size: 12px; line-height: 1.7; }
 .dcats-business-workspace-account button { width: 100%; margin: 12px 0 6px; min-height: 44px; border-radius: 5px; padding: 10px 14px; font-size: 12px; white-space: normal; }
