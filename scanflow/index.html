@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>DKD ScanFlow | 共有書類ライブラリ</title>
+  <link rel="stylesheet" href="./app.css"><script type="module" src="./app.js"></script>
+</head>
+<body>
+  <header class="app-header"><a class="brand" href="./"><span>DKD</span> ScanFlow <small>共有版 0.1.0</small></a><span id="connection">接続確認中</span><button id="logout" hidden>D-CATSへ戻る</button></header>
+  <div id="notice" class="notice" role="status" aria-live="polite"></div>
+  <section id="login-panel" hidden><h1>D-CATSへのログインが必要です</h1><p>既存のD-CATSログインを使用します。</p><a href="/">D-CATSへ戻る</a></section>
+  <section id="mfa-panel" class="login-card" hidden aria-labelledby="mfa-heading">
+    <p class="eyebrow">管理者の本人確認</p><h1 id="mfa-heading">認証器のコードを入力</h1>
+    <p>登録済みの認証器に表示されたコードで本人確認します。</p>
+    <p id="mfa-status" role="status" aria-live="polite"></p>
+    <form id="mfa-form" hidden><label>認証器<select id="mfa-factor"></select></label><label>6桁のコード<input id="mfa-code" type="text" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="one-time-code" spellcheck="false" required></label><button class="primary" type="submit">本人確認して続ける</button></form>
+    <button id="mfa-retry" type="button">認証器情報を再確認</button><a href="https://dcats.daiko-denki.co.jp/">D-CATSへ戻る</a>
+    <section id="mfa-enrollment" hidden>
+      <h2>認証器を登録する</h2><p>D-CATSと同じアカウントに認証器を追加します。登録を完了すると、このアカウントのほかのログイン状態が終了します。</p>
+      <label class="check"><input id="mfa-enroll-saved" type="checkbox">D-CATSと帳票画面の作業を保存しました</label>
+      <label class="check"><input id="mfa-enroll-consent" type="checkbox">このアカウントに認証器を追加します</label>
+      <button id="mfa-enroll-start" type="button">本人操作で認証器を追加</button><p id="mfa-enroll-status" role="status" aria-live="polite"></p>
+      <div id="mfa-enroll-secret" hidden><p>ご本人の認証器アプリで読み取ってください。画像やコードをチャットへ送る操作は不要です。</p><img id="mfa-enroll-qr" alt="ご本人の認証器に登録する画像" width="240" height="240"><button id="mfa-enroll-close" type="button">登録用画像を閉じる</button></div>
+      <form id="mfa-enroll-form"><label>登録した認証器の6桁コード<input id="mfa-enroll-code" type="text" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="one-time-code" spellcheck="false" required disabled></label><button id="mfa-enroll-verify" class="primary" type="submit" disabled>登録を完了して続ける</button></form>
+    </section>
+  </section>
+  <div id="app" class="app-shell" hidden>
+    <aside class="sidebar"><label class="workspace-label">保管する会社<select id="workspace"></select></label><p class="eyebrow">書類ライブラリ</p><button id="nav-library" class="nav-active">書類を探す</button><button id="nav-upload">撮影・アップロード</button><button id="nav-admin" hidden>運用と費用</button><div class="sidebar-note"><strong>新規書類は個人保管</strong><p>共有した書類だけ、会社や指定した担当者が閲覧できます。</p></div><a href="https://dcats.daiko-denki.co.jp/">← D-CATS</a></aside>
+    <main>
+      <section id="admin-panel" hidden aria-labelledby="admin-heading">
+        <div class="section-heading"><div><p class="eyebrow">ADMINISTRATION</p><h1 id="admin-heading">運用と費用</h1><p id="admin-period"></p></div><button id="admin-refresh">最新情報を取得</button></div>
+        <p id="admin-status" role="status" aria-live="polite"></p><p id="admin-observed" class="help"></p>
+        <div class="admin-card"><h2>OCRの月額枠</h2><dl id="admin-amounts" class="admin-amounts"></dl><p>既存の利用額と共有版の予約を、全サービス合算で確認します。支払記録や対象が未確認の場合、残額は「未確認」と表示します。</p><p id="admin-unknown"></p><ul id="admin-reasons"></ul></div>
+        <div class="admin-card"><h2>処理PCと単価</h2><p id="admin-workers"></p><p id="admin-modes"></p><div id="admin-rates"></div><p class="help">この集計は発行元の請求書そのものではありません。単価・税・為替・支払上限の確認が必要です。</p></div>
+        <section id="admin-operations" hidden><h2>利用量と運用設定</h2><div id="platform-usage"></div><form id="admin-settings-form"><label>月額OCR上限（円・全社合算）<input id="admin-limit" type="number" min="1" max="3000" step="1"></label><label class="check"><input id="admin-intake" type="checkbox">新規取込</label><label class="check"><input id="admin-worker" type="checkbox">処理PC</label><label class="check"><input id="admin-paid" type="checkbox">有料OCR</label><label>停止する処理PC<select id="admin-disable-worker"><option value="">変更しない</option></select></label><div id="admin-rate-inputs"></div><label class="check"><input id="admin-reviewed" type="checkbox" required>変更内容と費用を確認しました</label><button type="submit">確認した設定を保存</button></form><p class="help">利用量が未確認の場合も、停止と上限の引下げは可能です。単価は承認済み記録の保守的な見積額だけを引き上げられます。</p></section>
+         <section id="chat-mapping-admin" hidden><h2>Googleアカウントの対応確認</h2><button id="chat-mapping-load" type="button">確認待ちを取得</button><div id="chat-mapping-list"></div></section>
+         <section id="learning-admin" aria-labelledby="learning-title">
+          <h3 id="learning-title">補正規則の評価と承認</h3>
+          <p>会社共有された人の修正だけを使います。学習用は3原本以上、評価用は別の5原本以上を選び、各規則は3つ以上の別原本で確認します。</p>
+          <button id="learning-refresh">補正規則を取得</button><p id="learning-status" role="status"></p>
+          <div id="learning-events"></div><button id="learning-more">学習証拠をさらに表示</button><button id="learning-prepare">選択した証拠で評価</button>
+          <p id="learning-evaluation" role="status"></p><label><input id="learning-approval" type="checkbox">評価結果と変更する版を確認しました</label>
+          <button id="learning-promote" disabled>評価済みの補正規則を承認</button><button id="learning-rollback" disabled>直前の承認版へ戻す</button>
+        </section>
+      </section>
+      <section id="library-panel">
+        <div class="section-heading"><div><p class="eyebrow">DOCUMENT LIBRARY</p><h1>書類を探す</h1><p>ファイル名・OCR全文から、必要なページへ。</p></div><button id="open-upload" class="primary">＋ 書類を追加</button></div>
+        <form id="search-form" class="search-card"><label class="keyword">キーワード<input id="query" placeholder="会社名、商品名、品番、ファイル名など" maxlength="100"></label><button class="primary" type="submit">検索する</button><div class="filters"><label>共有範囲<select id="scope"><option value="all">閲覧できるすべて</option><option value="private">個人保管</option><option value="company">会社共有</option><option value="selected">担当者へ共有</option></select></label><label>分類<select id="category"><option value="">すべての分類</option><option>未分類</option><option>納品書</option><option>請求書</option><option>レシート</option><option>見積書</option><option>カタログ</option><option>一般文書</option></select></label><label class="check"><input id="case-sensitive" type="checkbox">大文字・小文字を区別</label><button id="clear-search" type="button">条件をクリア</button></div></form>
+        <div class="results-heading"><h2 id="result-label">閲覧できる書類</h2><span id="result-count"></span><button id="export-excel">検索条件の全行をExcel出力</button></div><div id="results" aria-live="polite"></div><button id="more-results" hidden>次の結果を表示</button>
+      </section>
+      <section id="upload-panel" hidden>
+        <button id="upload-back">← 書類一覧へ戻る</button><div class="section-heading"><div><p class="eyebrow">CAPTURE &amp; UPLOAD</p><h1>書類を取り込む</h1><p>撮影した原本とOCRを、まとめて保管します。</p></div></div>
+        <form id="upload-form" class="upload-card"><div class="upload-choices"><label class="file-choice">スマホで撮影<input id="camera-file" type="file" accept="image/jpeg,image/png" capture="environment"></label><label class="file-choice">ファイルを選択<input id="document-file" type="file" accept=".pdf,.jpg,.jpeg,.png,.tif,.tiff"></label></div><p id="selected-file">ファイルは選択されていません。</p><p class="help">PDF・JPEG・PNG・TIFF、20MBまで。HEICはJPEGへ変換してください。</p><label>分類<input id="upload-category" value="未分類" maxlength="80"></label><label>OCR方式<select id="upload-kind"><option value="auto">自動判定</option><option value="form">帳票OCR</option><option value="general">一般OCR・全文検索</option></select></label><div class="privacy-note">この書類は最初に「個人保管」へ入ります。アップロードだけで他の担当者には公開されません。</div><button id="upload-submit" class="primary" type="submit">個人保管へ取り込む</button><p id="upload-progress" role="status"></p></form>
+      </section>
+      <section id="viewer-panel" hidden>
+        <button id="viewer-back">← 検索結果に戻る</button><div class="section-heading"><div><h1 id="viewer-title"></h1><p id="viewer-subtitle"></p></div><button id="download-original">原本をダウンロード</button></div>
+        <div class="viewer-toolbar"><button id="page-prev">前のページ</button><span id="page-label"></span><button id="page-next">次のページ</button><button id="toggle-frame">赤枠を消す</button><button id="print-page">表示ページを印刷</button></div><p id="position-notice" class="help"></p><figure id="page-figure"><img id="page-image" alt="読み取り方向を補正した原本ページ"><svg id="highlight" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true"><rect id="highlight-rect" vector-effect="non-scaling-stroke"></rect></svg></figure>
+        <section id="draft-editor" hidden class="draft-editor" aria-labelledby="draft-heading">
+          <h2 id="draft-heading">選んだ行のOCR修正・下書き</h2>
+          <p>原本を見ながら修正できます。下書きを保存し、修正した項目を原本と照合してから確定してください。</p>
+          <p id="draft-status" role="status" aria-live="polite"></p>
+          <div id="draft-fields" class="draft-fields"></div>
+          <section id="draft-conflict" hidden><h3>保存済みの内容との比較</h3><div id="draft-conflict-values"></div><button id="draft-keep-local">入力を保持して現在の版で編集</button><button id="draft-use-saved">保存済みの内容から復帰</button></section>
+          <div class="draft-actions"><button id="draft-acquire">編集を再開</button><button id="draft-save">下書きを保存</button><button id="draft-release">編集を終了</button><button id="draft-discard">未保存の入力を破棄</button></div>
+          <p id="draft-confirm-status" role="status"></p><label class="check"><input id="draft-source-reviewed" type="checkbox">修正した項目を表示中の原本ページと照合しました</label><button id="draft-confirm">この行の修正を確定</button>
+        </section>
+        <section id="full-confirmation" hidden aria-labelledby="full-confirmation-title">
+          <h3 id="full-confirmation-title">文書の全行を確認</h3>
+          <p>途中保存の内容を原本で確認します。すべてのページの向き・全体と、各行の本文・項目・位置を照合してください。</p>
+          <button id="full-load">全行の確認を開始</button><p id="full-progress" role="status"></p>
+          <div id="full-pages"></div><div id="full-rows"></div><button id="full-confirm" disabled>文書を確定し、学習証拠を保存</button>
+        </section>
+        <section id="financial-review" hidden aria-labelledby="financial-title">
+          <h3 id="financial-title">金融項目の候補を原本で確認</h3>
+          <p>取り込む項目だけを選びます。保存先は途中入力です。台帳への確定と学習は、全行確認を完了してから行います。</p>
+          <button id="financial-build">この行の候補を取得</button><p id="financial-status" role="status"></p>
+          <div id="financial-checks"></div><div id="financial-fields"></div>
+          <details><summary>候補の原文</summary><pre id="financial-original"></pre></details>
+          <label class="check"><input id="financial-reviewed" type="checkbox">選んだ候補値を原本で確認しました</label>
+          <button id="financial-apply" disabled>選んだ項目を途中保存</button>
+        </section>
+        <section id="chat-panel" hidden><h2>Google Chatへ共有</h2><p id="chat-status" role="status"></p><button id="chat-connect" type="button">Googleアカウントを接続</button><button id="chat-load-targets" type="button">宛先を取得</button><form id="chat-form"><label>宛先の種類<select id="chat-type"><option value="space">スペース</option><option value="users">利用者（複数選択可）</option><option value="groups">グループ</option></select></label><label>送信する会話・スペース<select id="chat-space"></select></label><div id="chat-target-names"></div><label class="check"><input id="chat-include-line" type="checkbox">選択中のOCR行を本文に添える</label><label class="check"><input id="chat-include-pdf" type="checkbox">PDF原本を添付する（Chatにコピーを送ります）</label><label class="check"><input id="chat-pdf-reviewed" type="checkbox">PDF添付を確認しました</label><button id="chat-preview" type="button">宛先と内容を確認</button><pre id="chat-preview-text"></pre><p id="chat-audience"></p><label class="check"><input id="chat-reviewed" type="checkbox" required>参加者全員と送信内容を確認しました</label><button id="chat-send" type="submit">確認した宛先へ送信</button><button id="chat-recover" type="button">結果不明の送信を確認</button></form><p class="help">原本リンクにはログインと帳票の閲覧権限が必要です。共有範囲は自動で変更しません。送信成功は既読や承認を意味しません。</p></section>
+         <details id="document-settings"><summary>分類・共有範囲を変更</summary><form id="metadata-form"><label>分類<input id="edit-category" maxlength="80" required></label><label>見出し<input id="edit-title" maxlength="200"></label><button type="submit">分類を保存</button></form><form id="share-form"><label>共有範囲<select id="share-scope"><option value="private">個人保管（自分だけ）</option><option value="company">会社の招待済み利用者</option><option value="selected">指定した担当者だけ</option></select></label><div id="recipients"></div><label class="check"><input id="share-consent" type="checkbox" required>選んだ共有範囲で閲覧できることを確認しました</label><button type="submit">共有範囲を更新する</button></form></details>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
