@@ -4,6 +4,15 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const crypto = require('node:crypto').webcrypto;
 const source = fs.readFileSync(require('node:path').join(__dirname,'../product-3d-prepared-inputs.js'),'utf8');
+const sharedSource = fs.readFileSync(require('node:path').join(__dirname,'../product-3d.js'),'utf8');
+const sharedInvokeSource = sharedSource.slice(sharedSource.indexOf('  async function tripoInvoke(payload)'),
+  sharedSource.indexOf('  function tripoPayload(action)'));
+function realInvoker(mock) {
+  return vm.runInNewContext('('+sharedInvokeSource+')', {
+    sb:{functions:{async invoke(name,options){assert.equal(name,'product-3d-tripo');return mock(options.body);}}},
+    edgeErrorMessage:async()=> 'Synthetic failure',Error,
+  });
+}
 class Element {
   constructor(){this.children=[];this.listeners={};this.hidden=false;this.value='';this.files=[];}
   set textContent(value){this.text=value;this.children=[];} get textContent(){return this.text||'';}
@@ -13,7 +22,7 @@ class Element {
 }
 async function fixture({ready=false,storageFailure=false,deferred=false,workerFailure=false,workerStalled=false,badSource=false,
   costChange=null,costFailure=false,costDeferred=false,balance=70,connected=false,approved=false,
-  startFailure=false,startDeferred=false,jobStatus='submitted',previewFailure=false}={}) {
+  startFailure=false,startDeferred=false,jobStatus='submitted',previewFailure=false,integrated=false}={}) {
   const nodes=Object.fromEntries(['status','gallery','check','file','upload','auto','manual','cost','start','consent','poll','preview'].map(name=>[name,new Element()]));
   const root=new Element();root.querySelector=selector=>nodes[selector.match(/prepared-(\w+)/)[1]];
   const window={};const ctx={window,document:{createElement:()=>new Element()},crypto,Uint8Array,ArrayBuffer,URL,Set,Map,Array,Number,Error,
@@ -92,6 +101,10 @@ async function fixture({ready=false,storageFailure=false,deferred=false,workerFa
     if(storageFailure)return {error:{message:'unconfirmed-secret-detail'}};
     input.stored=true;plan.ready=images.every(i=>i.stored);return {error:null};
   }};}}};
+  if(integrated){
+    const route=options.invoke,invoke=realInvoker(async payload=>({data:await route(payload.action,payload),error:null}));
+    options.invoke=(action,body)=>invoke({action,product_id:target.productId,product_kind:target.kind,...body});
+  }
   controller.open(options);
   return {api,plan,files,nodes,root,events,controller,options,workerStarted,
     setCurrent(value){current=value;},resolve(value){resolveDeferred(value);},resolveCost(){resolveCost();},resolveStart(){resolveStart();}};
@@ -108,6 +121,40 @@ test('only exact prepared target can expose the panel, without any automatic pro
     f.controller.open({...f.options,target});assert.equal(f.root.hidden,true);
   }
   f.controller.open({...f.options,isCurrent:()=>false});assert.equal(f.root.hidden,true);
+});
+test('real shared invoker connects empty plan, free alignment, private upload, preview and locked quote',async()=>{
+  const f=await fixture({integrated:true,connected:true});
+  await f.nodes.check.click();assert.equal(f.nodes.gallery.children.length,4);
+  assert.match(f.nodes.status.textContent,/非公開登録できます/);
+  await f.nodes.auto.click();
+  assert.equal(f.events.filter(e=>e==='storage-upload').length,4);
+  assert.match(f.nodes.status.textContent,/4枚の実ファイル/);
+  await f.nodes.cost.click();
+  assert.match(f.nodes.status.textContent,/推定 30.*残高 70/);
+  assert.equal(f.nodes.start.disabled,true);assert.equal(f.nodes.consent.disabled,true);
+  assert.equal(f.events.includes('prepared_start'),false);
+  await f.nodes.poll.click();assert.match(f.nodes.status.textContent,/まだ開始/);
+});
+test('real shared invoker preserves existing generation-state validation and known empty histories',async()=>{
+  for(const action of ['latest','prepared_latest']) {
+    const invoke=realInvoker(async()=>({data:{status:'none'},error:null}));
+    assert.equal((await invoke({action})).status,'none');
+  }
+  for(const data of [{status:'none'},{status:'review',request_key:'invalid'},
+    {status:'review',request_key:'5e123f39-434b-4ac7-816c-ff7ea12b3290',publish_allowed:'true'}]){
+    const invoke=realInvoker(async()=>({data,error:null}));
+    await assert.rejects(invoke({action:'prepared_poll'}),/Invalid generation/);
+  }
+  const invoke=realInvoker(async()=>({data:{status:'review',request_key:'9e98c930-17c7-4198-b85e-5ca29fcba3f6'},error:null}));
+  await assert.rejects(invoke({action:'prepared_poll',request_key:'5e123f39-434b-4ac7-816c-ff7ea12b3290'}),/Invalid generation/);
+});
+test('input responses through real invoker still face strict helper plan validation and transport failure',async()=>{
+  const f=await fixture({integrated:true,connected:true});f.plan.generation_allowed=true;
+  await f.nodes.check.click();assert.equal(f.nodes.gallery.children.length,0);
+  assert.match(f.nodes.status.textContent,/確認できませんでした/);
+  assert.equal(f.events.includes('input_upload'),false);
+  const invoke=realInvoker(async()=>({data:null,error:{message:'synthetic'}}));
+  await assert.rejects(invoke({action:'input_plan'}),/Synthetic failure/);
 });
 test('plan validation refuses paid capability, wrong target, duplicates, oversized and incomplete ready claims',async()=>{
   const f=await fixture();assert.equal(f.api.validPlan(f.plan,f.options.target),true);

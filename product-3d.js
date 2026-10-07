@@ -1190,10 +1190,15 @@
     ["start_allowed", "publish_allowed", "reject_allowed"].forEach(function (field) {
       if (data[field] != null && typeof data[field] !== "boolean") throw new Error("Invalid generation permission");
     });
-    if (payload.action !== "quote") {
+    // Prepared-image responses are plans/capabilities, not generation ledger
+    // rows. Their strict target/hash/geometry/cost validation is performed by
+    // DcatsPreparedInputs; applying the job parser first rejects valid plans.
+    var inputResponse = ["input_plan", "input_sources", "input_preview", "input_upload", "input_check", "prepared_quote"]
+      .includes(payload.action);
+    if (payload.action !== "quote" && !inputResponse) {
       var statuses = ["reserved", "submitted", "processing", "collecting", "review", "publishing",
         "published", "failed", "cancelled", "held", "rejected"];
-      var emptyHistory = payload.action === "latest" && data.status === "none";
+      var emptyHistory = ["latest", "prepared_latest"].includes(payload.action) && data.status === "none";
       if (!emptyHistory && (!statuses.includes(data.status) || typeof data.request_key !== "string" ||
           !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.request_key) ||
           (payload.request_key && data.request_key.toLowerCase() !== payload.request_key.toLowerCase()))) {
@@ -1995,7 +2000,7 @@
     elements["product-3d-viewer-autorotate"].setAttribute("aria-pressed", "false");
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await import("./product-3d-viewer.js?v=1.1.1130");
+      var module = await import("./product-3d-viewer.js?v=1.1.1131");
       if (!targetStillSelected()) {
         if (requestId === viewerRequestId) closeViewer();
         return;

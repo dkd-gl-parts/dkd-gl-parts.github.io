@@ -15,6 +15,8 @@ for(const i of approved.inputs){
 }
 const page=fs.readFileSync(path.join(root,'index.html'),'utf8'),start=page.indexOf('<section class="product-3d-prepared-inputs"');
 const markup=page.slice(start,page.indexOf('</section>',start)+10);
+const shared=fs.readFileSync(path.join(root,'product-3d.js'),'utf8');
+const sharedInvoke=shared.slice(shared.indexOf('  async function tripoInvoke(payload)'),shared.indexOf('  function tripoPayload(action)'));
 const plan={product_id:2639,product_kind:'aftermarket_new',plan_id:approved.id,plan_sha256:manifest.plan_sha256,
   generation_allowed:false,preparation_mode:'browser',ready:false,images:approved.inputs.map(i=>({...i,stored:false}))};
 const fixture=`
@@ -38,8 +40,9 @@ window.fetch=(value,options)=>{
 };
 function currentPlan(){const images=initial.images.map(i=>({...i,stored:saved.has(i.view)}));return {...initial,images,ready:images.every(i=>i.stored)};}
 const controller=DcatsPreparedInputs.create(document.querySelector('#product-3d-prepared-inputs'));
-controller.open({target:{productId:2639,kind:'aftermarket_new'},isCurrent:()=>params.get('role')!=='staff',
+const options={target:{productId:2639,kind:'aftermarket_new'},isCurrent:()=>params.get('role')!=='staff',
  async invoke(action,body){events.push(action);if(params.get('mode')==='error')throw Error('Synthetic unavailable');
+   if(action==='prepared_latest')return {status:'none',start_allowed:false,publish_allowed:false,reject_allowed:false};
    if(action==='input_plan')return currentPlan();
    if(body.plan_sha256!==initial.plan_sha256)throw Error('Stale plan');
    if(action==='input_sources')return {...currentPlan(),images:initial.images.map(i=>({...i,
@@ -50,8 +53,14 @@ controller.open({target:{productId:2639,kind:'aftermarket_new'},isCurrent:()=>pa
        path:'tripo-input-review/dkd_2639/aftermarket_new/'+initial.plan_id+'/'+image.view+'-'+image.id+'-'+image.sha256+'.jpg',
        token:'synthetic',sha256:image.sha256,bytes:image.bytes,content_type:'image/jpeg'};
    }
-   if(action==='input_preview')return {...currentPlan(),images:currentPlan().images.map(i=>({...i,
-     preview_url:'https://jqoeqximtwfpqwzngutj.supabase.co/storage/v1/object/sign/product-3d/tripo-input-review/'+i.view+'.jpg?view='+i.view}))};
+   if(['input_preview','input_check','prepared_quote'].includes(action)){
+     const preview={...currentPlan(),images:currentPlan().images.map(i=>({...i,
+       preview_url:'https://jqoeqximtwfpqwzngutj.supabase.co/storage/v1/object/sign/product-3d/tripo-input-review/'+i.view+'.jpg?view='+i.view}))};
+     if(action==='input_preview')return preview;
+     const balance=Number(params.get('balance')||70);
+     return {...preview,request_key:'5e123f39-434b-4ac7-816c-ff7ea12b3290',estimated_credits:30,balance,
+       balance_sufficient:balance>=30,can_start:false,blocked_reason:'prepared_paid_approval_required',checked_at:new Date().toISOString()};
+   }
    throw Error('Paid or unknown action prohibited');
  },storage:{from(bucket){if(bucket!=='product-3d')throw Error('Wrong bucket');return {
    async uploadToSignedUrl(p,token,file){
@@ -60,7 +69,14 @@ controller.open({target:{productId:2639,kind:'aftermarket_new'},isCurrent:()=>pa
      if(token!=='synthetic'||!image)throw Error('Output not verified');saved.set(image.view,file);events.push('verified-upload:'+image.view);
      document.querySelector('#fixture-evidence').textContent=JSON.stringify({events,verified:saved.size,external_calls:0});
      return {error:null};
-   }};}}});
+   }};}}};
+const route=options.invoke,sb={functions:{async invoke(name,{body}){
+  if(name!=='product-3d-tripo')throw Error('Unknown fixture function');
+  return {data:await route(body.action,body),error:null};
+}}},edgeErrorMessage=async()=> 'Synthetic unavailable';
+${sharedInvoke}
+options.invoke=(action,body)=>tripoInvoke({action,product_id:2639,product_kind:'aftermarket_new',...body});
+controller.open(options);
 document.querySelector('#close-fixture').addEventListener('click',()=>controller.close());
 `;
 const html=`<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
