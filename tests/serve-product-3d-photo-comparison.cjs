@@ -15,12 +15,17 @@ const script = `
 const params = new URLSearchParams(location.search);
 var viewer = null, viewerRequestId = 1, viewerReturnFocus = null, viewerFocusTarget = null;
 var viewerComparisonTarget = null, viewerComparisonRequestId = 0, sessionModelsEnabled = true;
+var viewerExportTarget = null;
 var tripoJob = { status: 'review' }, tripoRequestId = 1;
 var elements = Object.fromEntries(Array.from(document.querySelectorAll('[id]')).map(node => [node.id, node]));
 var current = true;
 var sameTripoTarget = id => id === tripoRequestId && current && params.get('role') !== 'staff';
 var selectedTarget = () => ({product: {id: 900001}, kind: 'aftermarket_new'});
 var productId = product => product.id;
+var canManageGlb = () => params.get('role') !== 'staff';
+var t = key => key === 'product_3d_review_export_stale'
+  ? '保存リンクの期限または対象が変わりました。非公開プレビューを開き直してください。再生成・課金は不要です。' : key;
+var cleanKind = kind => ['rebuilt', 'aftermarket_new'].includes(kind) ? kind : '';
 var friendlyError = error => error.message;
 var esc = value => String(value).replace(/[&<>"']/g, char => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[char]);
 var signProductImageUrl = async file => {
@@ -51,6 +56,19 @@ document.addEventListener('keydown', event => {if(event.key === 'Escape') closeV
 await showCommonViewer({buffer: bytes.buffer}, '合成3D / 元写真比較の試験（実商品ではありません）',
   {context: 'sales', productId: 900001, kind: 'aftermarket_new'}, 1, () => viewerRequestId === 1, null);
 prepareViewerComparison(1, 1);
+if (params.get('export') === '1') {
+  document.getElementById('product-3d-viewer-export').addEventListener('click', guardViewerExport);
+  prepareViewerExport({reviewExport: true,
+    url: 'https://jqoeqximtwfpqwzngutj.supabase.co/storage/v1/object/sign/product-3d/tripo-review/dkd_900001/aftermarket_new/00000000-0000-4000-8000-000000000001.glb?token=synthetic-not-a-credential'},
+    {context: 'sales', productId: 900001, kind: 'aftermarket_new'}, 1, () => current, Date.now());
+  // Synthetic QA never downloads from production. Keep the validated filename,
+  // then serve a disposable, self-contained GLB from this loopback server only.
+  if (viewerExportTarget) {
+    document.getElementById('product-3d-viewer-export').href = '/synthetic.glb?download=' +
+      encodeURIComponent(document.getElementById('product-3d-viewer-export').download);
+    if (params.get('mode') === 'expired') viewerExportTarget.expiresAt = 0;
+  }
+}
 `;
 const html = `<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>商品3D 元写真比較・合成QA</title><link rel="stylesheet" href="/styles.css"><body>${markup}<script type="module" src="/fixture.js"></script></body></html>`;
@@ -61,6 +79,18 @@ const server = http.createServer((request, response) => {
   let body, type;
   if (url.pathname === '/') {body = html; type = 'text/html';}
   else if (url.pathname === '/fixture.js') {body = script; type = 'text/javascript';}
+  else if (url.pathname === '/synthetic.glb') {
+    const doc = {asset: {version: '2.0'}, scenes: [{nodes: [0]}], nodes: [{mesh: 0}],
+      meshes: [{primitives: [{attributes: {POSITION: 0}}]}], buffers: [{byteLength: 36}],
+      bufferViews: [{buffer: 0, byteLength: 36}], accessors: [{bufferView: 0, componentType: 5126, count: 3, type: 'VEC3'}]};
+    const json = Buffer.from(JSON.stringify(doc)), padded = Math.ceil(json.length / 4) * 4;
+    body = Buffer.alloc(28 + padded + 36); body.write('glTF'); body.writeUInt32LE(2, 4); body.writeUInt32LE(body.length, 8);
+    body.writeUInt32LE(padded, 12); body.writeUInt32LE(0x4e4f534a, 16); body.fill(0x20, 20, 20 + padded); json.copy(body, 20);
+    body.writeUInt32LE(36, 20 + padded); body.writeUInt32LE(0x004e4942, 24 + padded);
+    [0,0,0,1,0,0,0,1,0].forEach((number, index) => body.writeFloatLE(number, 28 + padded + index * 4));
+    type = 'model/gltf-binary';
+    response.setHeader('Content-Disposition', 'attachment; filename="synthetic-review.glb"');
+  }
   else if (url.pathname === '/photo.svg') {
     const index = Number(url.searchParams.get('view')) || 0;
     body = '<svg xmlns="http://www.w3.org/2000/svg" width="360" height="280" viewBox="0 0 360 280"><rect width="360" height="280" fill="#e1efed"/><circle cx="180" cy="130" r="85" fill="' +
