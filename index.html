@@ -1193,6 +1193,29 @@
       <p class="dcats-business-workspace-account-note" data-i18n="business_workspace_account_note">このPCの専用入力画面が開きます。会社名と販売王IDを確認して入力してください。</p>
       <div id="dcats-business-workspace-account-status" role="status" aria-live="polite"></div>
     </section>
+    <section class="dcats-business-workspace-backup" id="dcats-business-workspace-backup" aria-labelledby="dcats-business-workspace-backup-title" hidden>
+      <h4 id="dcats-business-workspace-backup-title" data-i18n="business_workspace_backup_title">取込前バックアップの準備</h4>
+      <p data-i18n="business_workspace_backup_hint">商品・得意先・売上の取込前に、パスワードで保護したバックアップをD-CATS業務連携の共有フォルダへ保存します。</p>
+      <p class="dcats-business-workspace-backup-note" data-i18n="business_workspace_backup_separate">バックアップ用パスワードは、上の販売王ログイン用とは別に登録します。</p>
+      <button type="button" id="dcats-business-workspace-backup-check" data-i18n="business_workspace_backup_check">このPCのバックアップ準備を確認</button>
+      <div id="dcats-business-workspace-backup-status" role="status" aria-live="polite"></div>
+      <dl class="dcats-business-workspace-backup-checks">
+        <div><dt data-i18n="business_workspace_backup_identity">会社・利用者・このPCの対応</dt><dd data-backup-check="identity" data-i18n="business_workspace_backup_unverified">未確認</dd></div>
+        <div><dt data-i18n="business_workspace_backup_syncFolder">共有フォルダの同期先</dt><dd data-backup-check="syncFolder" data-i18n="business_workspace_backup_unverified">未確認</dd></div>
+        <div><dt data-i18n="business_workspace_backup_driveConfiguration">D-CATS用のGoogle接続設定</dt><dd data-backup-check="driveConfiguration" data-i18n="business_workspace_backup_unverified">未確認</dd></div>
+        <div><dt data-i18n="business_workspace_backup_driveAuthorization">Googleの読取許可</dt><dd data-backup-check="driveAuthorization" data-i18n="business_workspace_backup_unverified">未確認</dd></div>
+        <div><dt data-i18n="business_workspace_backup_backupPassword">バックアップ用パスワード</dt><dd data-backup-check="backupPassword" data-i18n="business_workspace_backup_unverified">未確認</dd></div>
+        <div><dt data-i18n="business_workspace_backup_recovery">復旧方法の確認</dt><dd data-backup-check="recovery" data-i18n="business_workspace_backup_unverified">未確認</dd></div>
+        <div><dt data-i18n="business_workspace_backup_backupAdapter">販売王のバックアップ処理</dt><dd data-backup-check="backupAdapter" data-i18n="business_workspace_backup_unverified">未確認</dd></div>
+      </dl>
+      <details class="dcats-business-workspace-backup-help">
+        <summary data-i18n="business_workspace_backup_help">登録・接続設定について</summary>
+        <p data-i18n="business_workspace_backup_google_help">PC版Google Driveの同期設定に加え、共有フォルダへ保存できたことをD-CATSが確認するための接続設定が必要です。管理者がD-CATS用の設定を用意し、その後ご本人がGoogleの画面で読取を許可します。</p>
+        <p data-i18n="business_workspace_backup_password_help">バックアップ用パスワードの登録画面は接続準備中です。復旧用には共有フォルダ内の暗号ファイル、このPCでは保護されたファイルで保管します。パスワードを通常の文書に書いて共有しないでください。</p>
+        <p data-i18n="business_workspace_backup_recovery_help">接続試験は指定のテスト担当者で進めます。実運用開始前に、復旧担当者とバックアップを復元できることを確認します。</p>
+      </details>
+      <p class="dcats-business-workspace-backup-note" data-i18n="business_workspace_backup_note">このボタンは設定状況の確認だけです。販売王の起動やバックアップ作成、データ取込は開始しません。</p>
+    </section>
     <section class="dcats-business-workspace-company" id="dcats-business-workspace-company" aria-labelledby="dcats-business-workspace-company-title" hidden>
       <h4 id="dcats-business-workspace-company-title" data-i18n="business_workspace_company_title">販売王データ連携（管理者検証）</h4>
       <p data-i18n="business_workspace_company_hint">登録済みの販売王IDとパスワードでログインし、商品・得意先・売上を別々のCSVへ出力します。</p>

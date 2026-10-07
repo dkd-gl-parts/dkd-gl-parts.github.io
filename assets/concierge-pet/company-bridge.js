@@ -51,8 +51,9 @@
   function nativeRequest(request, options) {
     return new Promise(function (resolve, reject) {
       var settled = false;
-      var isExport = request.command.startsWith("export_hanbaioh_") || request.command === "read_hanbaioh_company_export";
-      var timer = window.setTimeout(function () { finish(null); }, request.command === "login_hanbaioh_company" || isExport ? 210000 : request.command === "read_hanbaioh_company_device" ? 5000 : 30000);
+      var isReadiness = request.command === "read_hanbaioh_company_backup_readiness";
+      var isExport = request.command.startsWith("export_hanbaioh_") || request.command === "read_hanbaioh_company_export" || isReadiness;
+      var timer = window.setTimeout(function () { finish(null); }, isReadiness ? 20000 : request.command === "login_hanbaioh_company" || isExport ? 210000 : request.command === "read_hanbaioh_company_device" ? 5000 : 30000);
       var watch = window.setInterval(function () { if (!options.isCurrent()) finish(null); }, 250);
       function finish(response) {
         if (settled) return; settled = true;
@@ -94,6 +95,32 @@
          !/^[0-9a-f]{64}$/.test(record.public_key_sha256)||typeof record.public_key_spki!=="string"||record.public_key_spki.length>2048||!record.public_key_spki.startsWith("-----BEGIN PUBLIC KEY-----")||!options.isCurrent())throw new Error("company_device_unavailable");
       return record;
     } finally { active=false; }
+  }
+  async function readBackupReadinessFromPc(options) {
+    if (active || !options || !uuid.test(options.actorId) || typeof options.isCurrent !== "function" || !options.isCurrent()) throw new Error("company_operation_unavailable");
+    active = true;
+    try {
+      var record = await nativeRequest({ id: window.crypto.randomUUID(), command: "read_hanbaioh_company_device", actorId: options.actorId }, options);
+      if (!validRecord(record) || record.actor_id !== options.actorId || !options.isCurrent()) throw new Error("company_device_unavailable");
+      var api = window.DcatsHanbaiohCompanyApi;
+      if (!api || typeof api.issue !== "function") throw new Error("company_issuer_unavailable");
+      // The existing enrollment scope is used only for a read of the same
+      // signed binding. No enrollment or backup start is requested from Native.
+      var request = { request_id: window.crypto.randomUUID(), command: "enroll_hanbaioh_company_account", device_id: record.device_id };
+      var capability = await issueEnrollmentTicket(api, record, request);
+      if (!options.isCurrent()) throw new Error("company_session_changed");
+      var result = await nativeRequest({ id: request.request_id, command: "read_hanbaioh_company_backup_readiness", deviceId: record.device_id, capability: capability }, options);
+      var unavailable = { identity: "unverified", syncFolder: "unverified", driveConfiguration: "configuration_required", driveAuthorization: "unverified", backupPassword: "registration_required", recovery: "unverified", backupAdapter: "unavailable" };
+      if (!options.isCurrent() || !result || Object.keys(result).sort().join(",") !== "actorId,backupPolicy,checks,deviceId,folderId,ready,status,targetSha256" ||
+          result.status !== "production_backup_prerequisites" || result.actorId !== options.actorId || result.deviceId !== record.device_id ||
+          result.targetSha256 !== "975d8e446b7dd638ef46ba90dcf3baf4fa9f77c4f22ae9187fbb7913a0029a37" ||
+          result.backupPolicy !== "password_protected_google_drive" || result.folderId !== "1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ" ||
+          typeof result.ready !== "boolean" || !result.checks || Array.isArray(result.checks) ||
+          Object.keys(result.checks).sort().join(",") !== Object.keys(unavailable).sort().join(",")) throw new Error("company_backup_readiness_unverified");
+      Object.keys(unavailable).forEach(function (name) { if (!["available", unavailable[name]].includes(result.checks[name])) throw new Error("company_backup_readiness_unverified"); });
+      if (result.checks.identity !== "available" || result.ready !== Object.values(result.checks).every(function (value) { return value === "available"; })) throw new Error("company_backup_readiness_unverified");
+      return result;
+    } finally { active = false; }
   }
   async function enrollAccountFromPc(options) {
     if(active || !options || !uuid.test(options.actorId) || typeof options.isCurrent!=="function" || !options.isCurrent()) throw new Error("company_operation_unavailable");
@@ -242,6 +269,7 @@
     prepareCsv: function (options) { return run(options, options.category); },
     enrollAccountFromPc: enrollAccountFromPc,
     readDeviceFromPc: readDeviceFromPc,
+    readBackupReadinessFromPc: readBackupReadinessFromPc,
     exportCsvOnce: exportCsvOnce,
     readExportResult: readExportResult,
     wasExportAttempted: function (record, category) { return !!previousExport(record, category); },
