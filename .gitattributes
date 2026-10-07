@@ -8,3 +8,4 @@
 /vendor/pdfjs-6.3.289-LICENSE -text -diff
 /vendor/pdfjs-6.3.289-cmaps/** -text -diff
 /vendor/pdfjs-6.3.289-standard-fonts/** -text -diff
+/vendor/product3d-inputs/** -text

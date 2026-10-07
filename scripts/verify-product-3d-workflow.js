@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const crypto = require("node:crypto");
 
 const root = path.resolve(__dirname, "..");
 const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
@@ -42,6 +43,15 @@ requireText(html, "product-3d-local-glb.js?v=" + appVersion, "Local preview vali
 requireText(build, '"product-3d-local-glb.js"', "Local preview deployment asset");
 requireText(html, "product-3d-prepared-inputs.js?v=" + appVersion, "Prepared input controller asset");
 requireText(build, '"product-3d-prepared-inputs.js"', "Prepared input deployment asset");
+const preparedController = fs.readFileSync(path.join(root, "product-3d-prepared-inputs.js"), "utf8");
+requireText(preparedController, 'product-3d-input-worker.mjs?v=' + appVersion, "Versioned isolated input worker");
+requireText(build, '"product-3d-input-worker.mjs"', "Isolated input worker deployment asset");
+const inputInventory = JSON.parse(fs.readFileSync(path.join(root, "vendor/product3d-inputs/inventory.json"), "utf8"));
+for (const [name, expected] of Object.entries(inputInventory.hashes)) {
+  if (!/^[a-zA-Z0-9_.-]+$/.test(name) || !/^[a-f0-9]{64}$/.test(expected)) throw Error("Unsafe codec inventory");
+  const actual = crypto.createHash("sha256").update(fs.readFileSync(path.join(root, "vendor/product3d-inputs", name))).digest("hex");
+  if (actual !== expected) throw Error("Pinned codec asset changed: " + name);
+}
 requireText(client, "data-local-glb=", "Non-registering preview action");
 requireText(viewer, "loader.parseAsync(options.buffer, '')", "Common Viewer local buffer path");
 

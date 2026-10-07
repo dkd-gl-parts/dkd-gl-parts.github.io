@@ -28,6 +28,7 @@ const files = [
   "manufacturing-cost-workspace.css",
   "product-3d.js",
   "product-3d-prepared-inputs.js",
+  "product-3d-input-worker.mjs",
   "product-3d-local-glb.js",
   "product-3d-viewer.js",
   "print.css",

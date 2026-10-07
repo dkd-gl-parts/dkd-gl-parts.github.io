@@ -34,15 +34,23 @@
     } catch (_) { return false; }
   }
   function create(root) {
-    var context = null, epoch = 0, busy = false, plan = null;
+    var context = null, epoch = 0, busy = false, plan = null, mode = "browser", workerRef = null, abortRef = null;
     var status = root.querySelector("[data-prepared-status]"), gallery = root.querySelector("[data-prepared-gallery]");
     var check = root.querySelector("[data-prepared-check]"), file = root.querySelector("[data-prepared-file]");
     var upload = root.querySelector("[data-prepared-upload]");
+    var auto = root.querySelector("[data-prepared-auto]"), manual = root.querySelector("[data-prepared-manual]");
     function current(revision) { return context && revision === epoch && context.isCurrent(); }
     function message(value) { status.textContent = value; }
-    function controls() { check.disabled = busy; file.disabled = busy || !plan || plan.ready; upload.disabled = busy || !plan || plan.ready; }
+    function controls() {
+      check.disabled = busy; file.disabled = busy || !plan || plan.ready; upload.disabled = busy || !plan || plan.ready;
+      if (auto) auto.disabled = busy || typeof Worker !== "function" || Boolean(plan && plan.ready && mode === "browser");
+      if (manual) manual.disabled = busy;
+    }
     function clear() {
+      if (abortRef) abortRef.abort(); abortRef = null;
+      if (workerRef) workerRef.terminate(); workerRef = null;
       epoch++; context = null; plan = null; busy = false; root.hidden = true;
+      mode = "browser";
       gallery.textContent = ""; message(""); file.value = ""; controls();
     }
     function render(value, revision) {
@@ -70,7 +78,7 @@
       var revision = epoch; busy = true; plan = null; gallery.textContent = "";
       controls(); message("元写真と整列ファイルを照合しています…");
       try {
-        var result = await context.invoke("input_plan", {});
+        var result = await context.invoke("input_plan", mode === "browser" ? { preparation_mode: "browser" } : {});
         if (!current(revision)) return;
         if (!validPlan(result, context.target)) throw new Error("Invalid reviewed plan");
         plan = result;
@@ -83,7 +91,7 @@
           message("4枚の実ファイルを照合済み。原本は不変更です。有料再生成はまだ開始できません。");
         } else {
           render(plan, revision);
-          message("整列済みJPEG4枚を選択して非公開登録できます。原本の再登録・Tripo送信・課金は行いません。");
+          message(mode === "browser" ? "保存済み写真から整列・非公開登録できます。原本変更・Tripo送信・課金は行いません。" : "整列済みJPEG4枚を選択して非公開登録できます。原本の再登録・Tripo送信・課金は行いません。");
         }
       } catch (_) {
         if (current(revision)) {
@@ -92,9 +100,9 @@
         }
       } finally { if (current(revision)) { busy = false; controls(); } }
     }
-    async function uploadFiles() {
+    async function uploadFiles(suppliedFiles) {
       if (busy || !plan || !context || !context.isCurrent()) return;
-      var revision = epoch, approved = plan, files = Array.from(file.files || []);
+      var revision = epoch, approved = plan, files = Array.isArray(suppliedFiles) ? suppliedFiles : Array.from(file.files || []);
       file.value = "";
       if (files.length !== 4 || files.some(function (item) {
         return item.size > MAX_BYTES || item.size < 12 || (item.type && item.type !== "image/jpeg");
@@ -131,7 +139,98 @@
         if (current(revision)) message("登録を停止しました。部分登録は保持しています。再送・上書きせず「状態確認」で結果を確認してください。");
       } finally { if (current(revision)) { busy = false; controls(); } }
     }
-    check.addEventListener("click", refresh); upload.addEventListener("click", uploadFiles);
+    function validSourceUrl(value) {
+      try {
+        var url = new URL(value);
+        return url.protocol === "https:" && url.hostname === "jqoeqximtwfpqwzngutj.supabase.co" &&
+          !url.username && !url.password && !url.port &&
+          url.pathname.startsWith("/storage/v1/object/sign/product-images/dkd_2639/aftermarket_new/");
+      } catch (_) { return false; }
+    }
+    async function downloadOriginal(image, signal) {
+      if (!validSourceUrl(image.source_url) || !hashPattern.test(image.source_sha256) ||
+          !Number.isSafeInteger(image.source_bytes) || image.source_bytes < 12 || image.source_bytes > MAX_BYTES) throw new Error("Invalid original reference");
+      var response = await fetch(image.source_url, { signal: signal, credentials: "omit", redirect: "error", cache: "no-store" });
+      if (!response.ok || (response.headers.get("content-type") || "").split(";")[0] !== "image/jpeg") throw new Error("Original unavailable");
+      var reader = response.body.getReader(), chunks = [], total = 0;
+      try {
+        for (;;) {
+          var part = await reader.read(); if (part.done) break;
+          total += part.value.length;
+          if (total > image.source_bytes) { await reader.cancel(); throw new Error("Original too large"); }
+          chunks.push(part.value);
+        }
+      } finally { reader.releaseLock(); }
+      if (total !== image.source_bytes) throw new Error("Original size changed");
+      var bytes = new Uint8Array(total), offset = 0;
+      chunks.forEach(function (chunk) { bytes.set(chunk, offset); offset += chunk.length; });
+      if (await digest(bytes) !== image.source_sha256) throw new Error("Original content changed");
+      return bytes.buffer;
+    }
+    function prepareOne(image, bytes, signal) {
+      return new Promise(function (resolve, reject) {
+        var worker = new Worker("product-3d-input-worker.mjs?v=1.1.1124", { type: "module" });
+        workerRef = worker;
+        var timer = setTimeout(function () { stop(new Error("Preparation timeout")); }, 120000);
+        function cancel() { stop(new Error("Preparation cancelled")); }
+        function stop(error, result) {
+          clearTimeout(timer); signal.removeEventListener("abort", cancel); worker.terminate();
+          if (workerRef === worker) workerRef = null;
+          if (error) reject(error); else resolve(result);
+        }
+        signal.addEventListener("abort", cancel, { once: true });
+        worker.onerror = function () { stop(new Error("Preparation worker failed")); };
+        worker.onmessage = function (event) {
+          if (!event.data || event.data.ok !== true || !(event.data.bytes instanceof ArrayBuffer)) stop(new Error("Preparation mismatch"));
+          else stop(null, new File([event.data.bytes], image.view + "-" + image.id + ".jpg", { type: "image/jpeg" }));
+        };
+        worker.postMessage({ bytes: bytes, source_sha256: image.source_sha256, source_bytes: image.source_bytes,
+          rotation_clockwise: image.rotation_clockwise, sha256: image.sha256, output_bytes: image.bytes,
+          width: image.width, height: image.height }, [bytes]);
+      });
+    }
+    async function prepareFromSaved() {
+      if (busy || !context || !context.isCurrent() || typeof Worker !== "function") return;
+      var revision = epoch, abort = new AbortController(); abortRef = abort; mode = "browser";
+      var guard = setInterval(function () {
+        if (!current(revision)) { abort.abort(); if (epoch === revision) clear(); }
+      }, 250);
+      busy = true; plan = null; gallery.textContent = ""; controls();
+      message("保存済み原本を確認しています。Tripo送信・課金は行いません…");
+      try {
+        var reviewed = await context.invoke("input_plan", { preparation_mode: "browser" });
+        if (!current(revision)) return;
+        if (!validPlan(reviewed, context.target) || reviewed.preparation_mode !== "browser") throw new Error("Unexpected preparation plan");
+        plan = reviewed;
+        if (reviewed.ready) { busy = false; await refresh(); return; }
+        var sources = await context.invoke("input_sources", { plan_sha256: reviewed.plan_sha256 });
+        if (!current(revision)) return;
+        if (!validPlan(sources, context.target) || sources.plan_sha256 !== reviewed.plan_sha256 || sources.preparation_mode !== "browser") throw new Error("Original plan changed");
+        var files = [];
+        for (var index = 0; index < reviewed.images.length; index++) {
+          var image = sources.images[index], expected = reviewed.images[index];
+          if (image.id !== expected.id || image.sha256 !== expected.sha256 || image.bytes !== expected.bytes ||
+              image.rotation_clockwise !== expected.rotation_clockwise || image.width !== expected.width || image.height !== expected.height) throw new Error("Input binding changed");
+          if (!current(revision)) return;
+          message(labels[image.view] + "を端末内で整列しています（" + (index + 1) + "/4）。登録・Tripo送信はまだ行っていません…");
+          var bytes = await downloadOriginal(image, abort.signal);
+          if (!current(revision)) return;
+          files.push(await prepareOne(image, bytes, abort.signal));
+          if (!current(revision)) return;
+        }
+        // Existing upload path validates ALL four hashes before any capability.
+        busy = false; await uploadFiles(files);
+      } catch (_) {
+        if (current(revision)) message("画像準備を停止しました。原本は不変更です。自動再試行せず、状態確認または手動登録を使用してください。");
+      } finally {
+        clearInterval(guard);
+        if (abortRef === abort) abortRef = null;
+        if (current(revision)) { busy = false; controls(); }
+      }
+    }
+    check.addEventListener("click", refresh); upload.addEventListener("click", function () { return uploadFiles(); });
+    if (auto) auto.addEventListener("click", prepareFromSaved);
+    if (manual) manual.addEventListener("click", function () { if (busy) return; mode = "offline"; return refresh(); });
     return { close: clear, open: function (options) {
       clear();
       if (!options || options.target.productId !== 2639 || options.target.kind !== "aftermarket_new" || !options.isCurrent()) return;

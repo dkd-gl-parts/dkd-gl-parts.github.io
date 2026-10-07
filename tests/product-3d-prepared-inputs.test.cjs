@@ -11,10 +11,11 @@ class Element {
   addEventListener(name,fn){this.listeners[name]=fn;}
   async click(){await this.listeners.click?.();}
 }
-async function fixture({ready=false,storageFailure=false,deferred=false}={}) {
-  const nodes=Object.fromEntries(['status','gallery','check','file','upload'].map(name=>[name,new Element()]));
+async function fixture({ready=false,storageFailure=false,deferred=false,workerFailure=false,workerStalled=false,badSource=false}={}) {
+  const nodes=Object.fromEntries(['status','gallery','check','file','upload','auto','manual'].map(name=>[name,new Element()]));
   const root=new Element();root.querySelector=selector=>nodes[selector.match(/prepared-(\w+)/)[1]];
-  const window={};const ctx={window,document:{createElement:()=>new Element()},crypto,Uint8Array,URL,Set,Map,Array,Number,Error};
+  const window={};const ctx={window,document:{createElement:()=>new Element()},crypto,Uint8Array,ArrayBuffer,URL,Set,Map,Array,Number,Error,
+    File,AbortController,setTimeout,clearTimeout,setInterval,clearInterval};
   vm.runInNewContext(source,ctx);
   const api=window.DcatsPreparedInputs;
   const files=Array.from({length:4},(_,i)=>({name:'not-a-binding-'+i+'.jpg',type:'image/jpeg',size:20,
@@ -24,14 +25,28 @@ async function fixture({ready=false,storageFailure=false,deferred=false}={}) {
     bytes:20,width:3,height:2,stored:ready,
   })));
   const plan={product_id:2639,product_kind:'aftermarket_new',plan_id:'test-plan',plan_sha256:'a'.repeat(64),
-    ready,generation_allowed:false,images};
+    ready,generation_allowed:false,preparation_mode:'browser',images};
   const target={productId:2639,kind:'aftermarket_new'};
-  const events=[];let current=true,resolveDeferred;
+  const events=[];let current=true,resolveDeferred,resolveWorkerStarted;
+  const workerStarted=new Promise(resolve=>{resolveWorkerStarted=resolve;});
+  ctx.Worker=class {
+    constructor(){this.stopped=false;}
+    terminate(){this.stopped=true;events.push('worker-stop');}
+    postMessage(input){events.push('worker-start');resolveWorkerStarted();if(workerStalled)return;
+      queueMicrotask(()=>{if(!this.stopped)this.onmessage({data:workerFailure?{ok:false}:{ok:true,bytes:input.bytes}});});}
+  };
+  ctx.fetch=async url=>{
+    events.push('source-download');const image=images.find(i=>url.includes('/'+i.view+'.jpg'));
+    return new Response(await files[images.indexOf(image)].arrayBuffer(),{headers:{'content-type':'image/jpeg'}});
+  };
   const controller=api.create(root);
   const options={target,isCurrent:()=>current,async invoke(action,body){
     events.push(action);
     if(deferred&&action==='input_plan') return new Promise(resolve=>{resolveDeferred=resolve;});
     if(action==='input_plan')return plan;
+    if(action==='input_sources')return {...plan,ready:false,images:images.map(i=>({...i,stored:false,
+      source_url:(badSource?'https://evil.invalid':'https://jqoeqximtwfpqwzngutj.supabase.co')+'/storage/v1/object/sign/product-images/dkd_2639/aftermarket_new/'+i.view+'.jpg',
+      source_bytes:i.bytes,source_sha256:i.sha256}))};
     if(action==='input_preview')return {...plan,images:images.map(i=>({...i,
       preview_url:`https://jqoeqximtwfpqwzngutj.supabase.co/storage/v1/object/sign/product-3d/tripo-input-review/${i.view}.jpg?token=synthetic`}))};
     assert.equal(action,'input_upload');assert.equal(body.plan_sha256,plan.plan_sha256);
@@ -46,8 +61,14 @@ async function fixture({ready=false,storageFailure=false,deferred=false}={}) {
     input.stored=true;plan.ready=images.every(i=>i.stored);return {error:null};
   }};}}};
   controller.open(options);
-  return {api,plan,files,nodes,root,events,controller,options,
+  return {api,plan,files,nodes,root,events,controller,options,workerStarted,
     setCurrent(value){current=value;},resolve(value){resolveDeferred(value);}};
+}
+
+async function waitWorkerStarted(f){
+  let timer;
+  try{await Promise.race([f.workerStarted,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Worker never started')),5000);})]);}
+  finally{clearTimeout(timer);}
 }
 test('only exact prepared target can expose the panel, without any automatic provider or Storage access',async()=>{
   const f=await fixture();assert.equal(f.root.hidden,false);assert.deepEqual(f.events,[]);
@@ -92,4 +113,42 @@ test('close and changed role/product suppress late previews and clear private UR
   assert.equal(f.root.hidden,true);assert.equal(f.nodes.gallery.children.length,0);
   const g=await fixture({deferred:true});const delayed=g.nodes.check.click();g.setCurrent(false);g.resolve(g.plan);await delayed;
   assert.equal(g.nodes.gallery.children.length,0);
+});
+test('one click prepares sequentially and verifies all four outputs before any upload grant',async()=>{
+  const f=await fixture();await f.nodes.auto.click();
+  assert.equal(f.events.filter(e=>e==='worker-start').length,4);
+  assert.equal(f.events.filter(e=>e==='worker-stop').length,4);
+  const grant=f.events.indexOf('input_upload');assert.ok(grant>f.events.lastIndexOf('worker-start'));
+  assert.equal(f.events.filter(e=>e==='storage-upload').length,4);
+  assert.equal(f.plan.ready,true);assert.equal(f.events.includes('start'),false);
+});
+test('source URL or Worker failure cannot create any upload capability',async()=>{
+  for(const config of [{badSource:true},{workerFailure:true}]){
+    const f=await fixture(config);await f.nodes.auto.click();
+    assert.equal(f.events.includes('input_upload'),false);assert.equal(f.events.includes('storage-upload'),false);
+    assert.match(f.nodes.status.textContent,/画像準備を停止/);
+  }
+});
+test('closing during preparation terminates the worker without registration or stale text',async()=>{
+  const f=await fixture({workerStalled:true});const pending=f.nodes.auto.click();
+  try{await waitWorkerStarted(f);assert.equal(f.events.includes('worker-start'),true);}
+  finally{f.controller.close();}
+  await pending;
+  assert.equal(f.events.includes('worker-stop'),true);assert.equal(f.root.hidden,true);
+  assert.equal(f.events.includes('input_upload'),false);assert.equal(f.nodes.status.textContent,'');
+});
+test('permission loss while worker is stalled cancels it and hides the private panel',async()=>{
+  const f=await fixture({workerStalled:true});const pending=f.nodes.auto.click();
+  try{await waitWorkerStarted(f);f.setCurrent(false);await pending;}
+  finally{f.controller.close();}
+  assert.equal(f.events.includes('worker-stop'),true);assert.equal(f.root.hidden,true);assert.equal(f.events.includes('input_upload'),false);
+});
+test('ready browser inputs are read back rather than prepared or transmitted again',async()=>{
+  const f=await fixture({ready:true});await f.nodes.auto.click();
+  assert.equal(f.events.includes('source-download'),false);assert.equal(f.events.includes('input_upload'),false);
+  assert.equal(f.events.includes('input_preview'),true);
+});
+test('manual fallback remains opt-in and never invokes a preparation worker',async()=>{
+  const f=await fixture();await f.nodes.manual.click();f.nodes.file.files=f.files;await f.nodes.upload.click();
+  assert.equal(f.events.includes('worker-start'),false);assert.equal(f.events.filter(e=>e==='storage-upload').length,4);
 });
