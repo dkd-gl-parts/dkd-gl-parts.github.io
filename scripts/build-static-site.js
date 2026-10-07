@@ -52,4 +52,8 @@ for (const file of files) {
 
 fs.cpSync(path.join(root, "vendor"), path.join(output, "vendor"), { recursive: true });
 fs.cpSync(path.join(root, "assets"), path.join(output, "assets"), { recursive: true });
-console.log(`Static site build complete (${files.length} files + vendor + assets)`);
+const scanflow = path.join(root, "scanflow");
+if (fs.existsSync(scanflow)) {
+  fs.cpSync(scanflow, path.join(output, "scanflow"), { recursive: true });
+}
+console.log(`Static site build complete (${files.length} files + vendor + assets${fs.existsSync(scanflow) ? " + scanflow" : ""})`);
