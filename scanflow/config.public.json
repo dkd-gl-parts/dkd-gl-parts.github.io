@@ -1,0 +1,11 @@
+{
+  "enabled": false,
+  "supabaseUrl": "https://jqoeqximtwfpqwzngutj.supabase.co",
+  "publishableKey": "sb_publishable_TXdCwBQOD_s3N0TqFCDOAw_8B44a0kv",
+  "apiUrl": "https://jqoeqximtwfpqwzngutj.supabase.co/functions/v1/scanflow-api",
+  "fixture": false,
+  "mfaEnrollmentEnabled": true,
+  "adminOperationsEnabled": false,
+  "chatEnabled": false,
+  "mfaSetupOnly": true
+}
