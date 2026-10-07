@@ -2,6 +2,15 @@
 // Runtime translation is local; this file makes no external requests.
 var DCATS_LEGACY_UI_TRANSLATIONS = {
   "en": {
+    "保存済み写真から整列・非公開登録（課金なし）": "Align saved photos and save privately (no generation charge)",
+    "端末内で1枚ずつ準備します。原本変更・Tripo送信・有料生成は行いません。閉じると準備を中止します。": "Photos are prepared one at a time on this device. Originals are unchanged; nothing is sent to Tripo and no paid generation runs. Closing cancels preparation.",
+    "4枚合計で約10MBのダウンロードと約13MBの非公開登録が必要です。モバイル回線の通信量にご注意ください。": "The four photos require about 10 MB of downloads and 13 MB of private uploads. Please consider mobile data usage.",
+    "手動登録を使用（補助）": "Use manual upload (alternative)",
+    "保存済み写真から整列・非公開登録できます。原本変更・Tripo送信・課金は行いません。": "Saved photos can be aligned and saved privately. Originals are unchanged; nothing is sent to Tripo and no generation charge is incurred.",
+    "保存済み原本を確認しています。Tripo送信・課金は行いません…": "Checking saved originals. Nothing is sent to Tripo and no generation charge is incurred…",
+    "を端末内で整列しています（": " is being aligned on this device (",
+    "/4）。登録・Tripo送信はまだ行っていません…": "/4). No uploads or Tripo requests have started yet…",
+    "画像準備を停止しました。原本は不変更です。自動再試行せず、状態確認または手動登録を使用してください。": "Image preparation stopped. Originals are unchanged. There is no automatic retry; check status or use manual upload.",
     "端面を含む整列済み4方向": "Four aligned views including the end faces",
     "整列済み端面入力候補": "Aligned end-face input candidate",
     "正面171・左175・背面179・右172。EXIFを正規化し、左を反時計90°・右を時計90°に整列した候補です。形状の改善は保証されません。再生成は別の入力・費用確認まで無効です。": "Front 171, left 175, back 179 and right 172. EXIF is normalized; left is turned 90° counterclockwise and right 90° clockwise. Better geometry is not guaranteed. Regeneration remains disabled pending separate input and cost approval.",
@@ -3751,6 +3760,15 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "に指定": "Assign to"
   },
   "zh": {
+    "保存済み写真から整列・非公開登録（課金なし）": "对齐已保存图片并私密保存（不消耗生成点数）",
+    "端末内で1枚ずつ準備します。原本変更・Tripo送信・有料生成は行いません。閉じると準備を中止します。": "在此设备上逐张准备，不修改原图、不发送到Tripo、不执行付费生成。关闭将取消准备。",
+    "4枚合計で約10MBのダウンロードと約13MBの非公開登録が必要です。モバイル回線の通信量にご注意ください。": "四张图片总计需要下载约10MB并私密上传约13MB。请注意移动网络流量。",
+    "手動登録を使用（補助）": "使用手动上传（备用）",
+    "保存済み写真から整列・非公開登録できます。原本変更・Tripo送信・課金は行いません。": "可以对齐已保存图片并私密保存，不修改原图、不发送到Tripo、不消耗生成点数。",
+    "保存済み原本を確認しています。Tripo送信・課金は行いません…": "正在检查已保存原图，不发送到Tripo、不消耗生成点数…",
+    "を端末内で整列しています（": "正在此设备上对齐（",
+    "/4）。登録・Tripo送信はまだ行っていません…": "/4）。尚未上传或发送到Tripo…",
+    "画像準備を停止しました。原本は不変更です。自動再試行せず、状態確認または手動登録を使用してください。": "图片准备已停止，原图不变。不自动重试，请检查状态或使用手动上传。",
     "端面を含む整列済み4方向": "包含端面的四个对齐视角",
     "整列済み端面入力候補": "对齐后的端面输入候选",
     "正面171・左175・背面179・右172。EXIFを正規化し、左を反時計90°・右を時計90°に整列した候補です。形状の改善は保証されません。再生成は別の入力・費用確認まで無効です。": "正面171、左侧175、背面179、右侧172。已规范化EXIF，左侧逆时针旋转90°，右侧顺时针旋转90°。不保证模型形状改善。另行确认输入和费用前禁止重新生成。",
