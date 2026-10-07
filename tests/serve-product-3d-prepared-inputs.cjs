@@ -13,18 +13,19 @@ Object.defineProperty(HTMLImageElement.prototype,'src',{...property,set(url){
 }});
 const images=['front','left','back','right'].map((view,i)=>({view,id:[171,175,179,172][i],rotation_clockwise:[0,270,0,90][i],
   bytes:20,sha256:String(i+1).repeat(64),width:3024,height:4032,stored:params.get('mode')!=='partial'}));
-const plan={product_id:2639,product_kind:'aftermarket_new',plan_id:'synthetic-plan',plan_sha256:'a'.repeat(64),
+const plan={product_id:2639,product_kind:'aftermarket_new',plan_id:'synthetic-plan',plan_sha256:'72a66c307fc89f916f2305abbe97f77874f88a02fc3acab73196c3fbf7b3abaa',
   ready:images.every(i=>i.stored),generation_allowed:false,images};
 const controller=DcatsPreparedInputs.create(document.querySelector('#product-3d-prepared-inputs'));
 controller.open({target:{productId:2639,kind:'aftermarket_new'},isCurrent:()=>params.get('role')!=='staff',
   async invoke(action){events.push(action);if(params.get('mode')==='error')throw Error('Synthetic unavailable');
     if(action==='input_plan')return plan;
-    if(!['input_preview','input_check'].includes(action))throw Error('No upload or paid operation in this visual fixture');
-    if(action==='input_check'&&params.get('mode')==='balance-error')throw Error('Synthetic balance unavailable');
+    if(action==='prepared_latest')return {status:'none'};
+    if(!['input_preview','input_check','prepared_quote'].includes(action))throw Error('No upload or paid operation in this visual fixture');
+    if(['input_check','prepared_quote'].includes(action)&&params.get('mode')==='balance-error')throw Error('Synthetic balance unavailable');
     const balance=params.get('mode')==='low'?10:70;
     return {...plan,images:images.map(i=>({...i,preview_url:'https://jqoeqximtwfpqwzngutj.supabase.co/storage/v1/object/sign/product-3d/tripo-input-review/'+i.view+'.jpg?token=synthetic'})),
-      ...(action==='input_check'?{estimated_credits:30,balance,balance_sufficient:balance>=30,can_start:false,
-        blocked_reason:'prepared_generation_not_connected',checked_at:new Date().toISOString()}: {})};
+      ...(['input_check','prepared_quote'].includes(action)?{request_key:'5e123f39-434b-4ac7-816c-ff7ea12b3290',estimated_credits:30,balance,balance_sufficient:balance>=30,can_start:params.get('mode')==='approved',
+        blocked_reason:params.get('mode')==='approved'?null:'prepared_paid_approval_required',checked_at:new Date().toISOString()}: {})};
   },storage:{from(){throw Error('No Storage write in this fixture');}}});
 document.querySelector('#close-fixture').addEventListener('click',()=>controller.close());
 `;

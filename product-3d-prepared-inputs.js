@@ -3,6 +3,8 @@
   var labels = { front: "正面", left: "左側", back: "背面", right: "右側" };
   var views = Object.keys(labels), hashPattern = /^[a-f0-9]{64}$/;
   var MAX_BYTES = 20 * 1024 * 1024;
+  var REQUEST_KEY = "5e123f39-434b-4ac7-816c-ff7ea12b3290";
+  var PLAN_SHA256 = "72a66c307fc89f916f2305abbe97f77874f88a02fc3acab73196c3fbf7b3abaa";
   function digest(bytes) {
     return crypto.subtle.digest("SHA-256", bytes).then(function (hash) {
       return Array.from(new Uint8Array(hash), function (b) { return b.toString(16).padStart(2, "0"); }).join("");
@@ -39,6 +41,9 @@
     var check = root.querySelector("[data-prepared-check]"), file = root.querySelector("[data-prepared-file]");
     var upload = root.querySelector("[data-prepared-upload]");
     var cost = root.querySelector("[data-prepared-cost]");
+    var start = root.querySelector("[data-prepared-start]"), consent = root.querySelector("[data-prepared-consent]");
+    var poll = root.querySelector("[data-prepared-poll]"), previewButton = root.querySelector("[data-prepared-preview]");
+    var quote = null, job = null, startAttempted = false;
     var auto = root.querySelector("[data-prepared-auto]"), manual = root.querySelector("[data-prepared-manual]");
     function current(revision) { return context && revision === epoch && context.isCurrent(); }
     function message(value) { status.textContent = value; }
@@ -47,11 +52,18 @@
       if (auto) auto.disabled = busy || typeof Worker !== "function" || Boolean(plan && plan.ready && mode === "browser");
       if (manual) manual.disabled = busy;
       if (cost) cost.disabled = busy || !plan || !plan.ready;
+      var canStart = !busy && !startAttempted && plan && plan.ready && quote && quote.can_start === true &&
+        quote.plan_sha256 === PLAN_SHA256 && Date.now() - Date.parse(quote.checked_at) < 300000;
+      if (consent) consent.disabled = !canStart;
+      if (start) start.disabled = !canStart || !consent || consent.checked !== true;
+      if (poll) poll.disabled = busy || mode !== "browser";
+      if (previewButton) previewButton.disabled = busy || !job || job.status !== "review";
     }
     function clear() {
       if (abortRef) abortRef.abort(); abortRef = null;
       if (workerRef) workerRef.terminate(); workerRef = null;
       epoch++; context = null; plan = null; busy = false; root.hidden = true;
+      quote = null; job = null; startAttempted = false; if (consent) consent.checked = false;
       mode = "browser";
       gallery.textContent = ""; message(""); file.value = ""; controls();
     }
@@ -78,6 +90,7 @@
     async function refresh() {
       if (busy || !context || !context.isCurrent()) return;
       var revision = epoch; busy = true; plan = null; gallery.textContent = "";
+      quote = null; if (consent) consent.checked = false;
       controls(); message("元写真と整列ファイルを照合しています…");
       try {
         var result = await context.invoke("input_plan", mode === "browser" ? { preparation_mode: "browser" } : {});
@@ -144,14 +157,19 @@
     async function checkCost() {
       if (busy || !plan || !plan.ready || !context || !context.isCurrent()) return;
       var revision = epoch, approved = plan;
+      quote = null; if (consent) consent.checked = false;
       busy = true; controls(); message("4枚の実画像と費用・現在残高を確認しています。生成は開始しません…");
       try {
-        var result = await context.invoke("input_check", { plan_sha256: approved.plan_sha256 });
+        var connected = mode === "browser" && approved.plan_sha256 === PLAN_SHA256;
+        var result = await context.invoke(connected ? "prepared_quote" : "input_check",
+          Object.assign({ plan_sha256: approved.plan_sha256 }, connected ? { request_key: REQUEST_KEY } : {}));
         if (!current(revision)) { if (epoch === revision) clear(); return; }
         if (!validPlan(result, context.target) || !result.ready || result.plan_id !== approved.plan_id ||
-            result.plan_sha256 !== approved.plan_sha256 || result.can_start !== false ||
-            result.blocked_reason !== "prepared_generation_not_connected" ||
+            result.plan_sha256 !== approved.plan_sha256 || typeof result.can_start !== "boolean" ||
+            (connected ? result.request_key !== REQUEST_KEY || ![null,"prepared_paid_approval_required","prepared_already_reserved","insufficient_credits"].includes(result.blocked_reason) ||
+              result.can_start !== (result.blocked_reason === null && result.balance_sufficient === true) : result.can_start !== false || result.blocked_reason !== "prepared_generation_not_connected") ||
             !Number.isSafeInteger(result.estimated_credits) || result.estimated_credits < 1 || result.estimated_credits > 100 ||
+            (connected && result.estimated_credits !== 30) ||
             typeof result.balance !== "number" || !Number.isFinite(result.balance) || result.balance < 0 ||
             result.balance_sufficient !== (result.balance >= result.estimated_credits) ||
             typeof result.checked_at !== "string" || !Number.isFinite(Date.parse(result.checked_at)) ||
@@ -162,15 +180,81 @@
                 image.width === expected.width && image.height === expected.height;
             })) throw new Error("Invalid prepared cost check");
         render(result, revision);
+        quote = connected ? result : null;
         message("推定 " + result.estimated_credits + " クレジット / 確認時の残高 " + result.balance +
           " クレジット。" + (result.balance_sufficient ? "" : "残高が不足しています。") +
-          "有料再生成の接続は未完了です。画像のTripo送信・生成・課金は行っていません。");
+          (connected ? result.blocked_reason === "prepared_already_reserved" ? "この再生成要求は実行済みです。状態を確認してください。" : result.can_start ? "生成はまだ開始していません。同意後に一回だけ開始できます。" : "再生成の接続は準備済みです。別の有料実行承認まで開始できません。" :
+            "有料再生成の接続は未完了です。画像のTripo送信・生成・課金は行っていません。"));
       } catch (_) {
         if (current(revision)) {
           plan = null; gallery.textContent = "";
           message("画像または残高を確認できませんでした。生成・課金は行っていません。「状態確認」から確認してください。");
         }
       } finally { if (current(revision)) { busy = false; controls(); } }
+    }
+    function requestBody() { return { request_key: REQUEST_KEY, plan_sha256: PLAN_SHA256 }; }
+    function validJob(value) {
+      return value && value.request_key === REQUEST_KEY && value.prepared_plan_sha256 === PLAN_SHA256 &&
+        ["reserved","submitted","processing","collecting","review","publishing","published","failed","cancelled","held","rejected"].includes(value.status) &&
+        value.start_allowed === false && value.publish_allowed === false && value.reject_allowed === false;
+    }
+    function jobMessage(value) {
+      if (value.status === "review") return "再生成GLBを非公開で保存しました。プレビューで形状を確認してください。商品には公開していません。";
+      if (["held","reserved","collecting","publishing"].includes(value.status)) return "処理結果の確認が必要です。再生成を繰り返さず、この要求と初回GLBを保持してください。";
+      if (["failed","cancelled","rejected"].includes(value.status)) return "再生成は完了しませんでした。自動再試行しません。初回GLBと商品データは保持しています。";
+      return "再生成を処理中です。「再生成の状態を確認」で結果を確認できます。追加生成はしません。";
+    }
+    async function startPrepared() {
+      controls();
+      if (!context || !context.isCurrent() || !start || start.disabled || !quote || quote.can_start !== true) return;
+      var revision = epoch;
+      // Once transmitted, uncertainty must never re-enable this request in the
+      // current screen. Server request_key UNIQUE protects reopen/concurrency.
+      startAttempted = true; quote = null; consent.checked = false; busy = true; controls();
+      message("整列済み4枚で一回だけ生成を開始しています。再送しないでください…");
+      try {
+        var result = await context.invoke("prepared_start", Object.assign(requestBody(), {
+          confirm_paid_generation: true, accepted_estimate_credits: 30,
+        }));
+        if (!current(revision)) { if (epoch === revision) clear(); return; }
+        if (!validJob(result)) throw new Error("Unconfirmed prepared submission");
+        job = result; message(jobMessage(result));
+      } catch (_) {
+        if (current(revision)) message("生成開始の結果を確認できません。再送せず「再生成の状態を確認」を使用してください。初回GLBは保持しています。");
+      } finally { if (current(revision)) { busy = false; controls(); } }
+    }
+    async function pollPrepared() {
+      if (busy || !context || !context.isCurrent() || mode !== "browser") return;
+      var revision = epoch; busy = true; quote = null; if (consent) consent.checked = false; controls();
+      message("再生成の保存済み状態を確認しています。新しい生成は開始しません…");
+      try {
+        var result = await context.invoke("prepared_latest", requestBody());
+        if (!current(revision)) { if (epoch === revision) clear(); return; }
+        if (result.status === "none") { job = null; message("この整列入力での再生成はまだ開始していません。初回GLBは保持しています。"); return; }
+        if (!validJob(result)) throw new Error("Invalid prepared state");
+        if (["submitted","processing"].includes(result.status)) {
+          result = await context.invoke("prepared_poll", requestBody());
+          if (!current(revision)) { if (epoch === revision) clear(); return; }
+          if (!validJob(result)) throw new Error("Invalid prepared state");
+        }
+        job = result; startAttempted = true; message(jobMessage(result));
+      } catch (_) {
+        if (current(revision)) { job = null; message("再生成の状態を確認できません。新しい生成は開始せず、時間を置いて状態だけ確認してください。"); }
+      } finally { if (current(revision)) { busy = false; controls(); } }
+    }
+    async function previewPrepared() {
+      if (busy || !job || job.status !== "review" || !context || !context.isCurrent() || typeof context.preview !== "function") return;
+      var revision = epoch; busy = true; controls();
+      try {
+        var result = await context.invoke("prepared_preview", requestBody());
+        if (!current(revision)) { if (epoch === revision) clear(); return; }
+        var url = new URL(result.preview_url);
+        if (!validJob(result) || result.status !== "review" || url.protocol !== "https:" ||
+            url.hostname !== "jqoeqximtwfpqwzngutj.supabase.co" || url.username || url.password || url.port ||
+            !url.pathname.startsWith("/storage/v1/object/sign/product-3d/tripo-review/dkd_2639/aftermarket_new/")) throw new Error("Invalid model preview");
+        await context.preview(result, previewButton);
+      } catch (_) { if (current(revision)) message("GLBプレビューを確認できません。初回モデルと非公開生成結果は保持しています。"); }
+      finally { if (current(revision)) { busy = false; controls(); } }
     }
     function validSourceUrl(value) {
       try {
@@ -265,6 +349,10 @@
     if (auto) auto.addEventListener("click", prepareFromSaved);
     if (manual) manual.addEventListener("click", function () { if (busy) return; mode = "offline"; return refresh(); });
     if (cost) cost.addEventListener("click", checkCost);
+    if (consent) consent.addEventListener("change", controls);
+    if (start) start.addEventListener("click", startPrepared);
+    if (poll) poll.addEventListener("click", pollPrepared);
+    if (previewButton) previewButton.addEventListener("click", previewPrepared);
     return { close: clear, open: function (options) {
       clear();
       if (!options || options.target.productId !== 2639 || options.target.kind !== "aftermarket_new" || !options.isCurrent()) return;
