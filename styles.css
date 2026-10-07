@@ -7442,6 +7442,9 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .dcats-business-workspace-backup-help { padding: 10px; border: 1px solid #c8d8d0; border-radius: 4px; background: #fff; }
 .dcats-business-workspace-backup-help summary { cursor: pointer; color: #176b43; font-size: 12px; font-weight: 600; }
 .dcats-business-workspace-backup .dcats-business-workspace-backup-note { font-size: 11px; color: #66756c; }
+.dcats-business-workspace-backup-first-setup { margin: 12px 0; padding: 12px; border: 1px solid #c8d8d0; border-radius: 5px; background: #fff; }
+.dcats-business-workspace-backup-first-setup a { display: block; min-height: 44px; padding: 10px; box-sizing: border-box; border: 1px solid #287356; border-radius: 5px; color: #176b43; font-size: 12px; line-height: 1.7; text-align: center; overflow-wrap: anywhere; }
+.dcats-business-workspace-backup-first-setup a:focus-visible { outline: 2px solid #287356; outline-offset: 3px; }
 #dcats-business-workspace-backup-status { font-size: 12px; line-height: 1.7; }
 .dcats-business-workspace-backup .ready { color: #176b43; }
 .dcats-business-workspace-backup .pending { color: #875400; }

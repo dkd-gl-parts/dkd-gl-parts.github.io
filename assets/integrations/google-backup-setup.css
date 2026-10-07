@@ -1,0 +1,27 @@
+:root { color-scheme: light; font-family: "Yu Gothic", "Meiryo", sans-serif; color: #20372c; background: #f2f6f4; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 860px; margin: 32px auto; padding: 28px; background: #fff; border: 1px solid #c8d8d0; border-radius: 12px; }
+h1 { font-size: clamp(23px, 4vw, 32px); margin: 8px 0 20px; line-height: 1.5; }
+h2 { font-size: 19px; margin: 0 0 12px; line-height: 1.6; }
+h3 { font-size: 16px; margin: 0 0 8px; }
+p, li { font-size: 15px; line-height: 1.9; overflow-wrap: anywhere; }
+p { margin: 8px 0; }
+li { padding: 3px 0; }
+ul, ol { padding-left: 24px; }
+a { color: #176b43; text-underline-offset: 3px; overflow-wrap: anywhere; }
+a:focus-visible, summary:focus-visible { outline: 3px solid #176b43; outline-offset: 4px; border-radius: 2px; }
+header { border-bottom: 2px solid #176b43; padding-bottom: 20px; }
+.eyebrow { color: #176b43; font-size: 13px; font-weight: 700; }
+.notice { margin: 20px 0; padding: 16px; border-left: 4px solid #bc7a25; border-radius: 4px; background: #fff8e9; }
+nav { padding: 20px 0; }
+section { position: relative; margin-top: 24px; padding-top: 22px; border-top: 1px solid #c8d8d0; scroll-margin-top: 20px; }
+.step { display: inline-grid; place-items: center; width: 30px; height: 30px; margin-bottom: 10px; border-radius: 50%; font-size: 14px; font-weight: 700; color: #fff; background: #176b43; }
+code { display: block; padding: 12px; border-radius: 4px; background: #eef4f0; color: #20372c; font-size: 13px; line-height: 1.8; overflow-wrap: anywhere; white-space: normal; }
+details { margin: 16px 0; padding: 12px; border: 1px solid #c8d8d0; border-radius: 4px; }
+summary { cursor: pointer; color: #176b43; font-size: 14px; line-height: 1.8; }
+details code { margin-top: 12px; }
+.reference { font-size: 13px; color: #596b62; }
+footer { margin-top: 28px; padding-top: 20px; border-top: 1px solid #c8d8d0; }
+@media (max-width: 600px) { main { margin: 0; padding: 20px 16px; border: 0; border-radius: 0; } p, li { font-size: 14px; } h2 { font-size: 18px; } .notice { padding: 12px; } }
+@media print { :root { background: #fff; } main { max-width: none; margin: 0; border: 0; } section, .notice { break-inside: avoid; } }
