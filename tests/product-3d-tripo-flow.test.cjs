@@ -9,7 +9,7 @@ const start = source.indexOf("  function sameTripoTarget(");
 const end = source.indexOf("  function selectGlbForUpload(", start);
 assert.ok(start >= 0 && end > start, "Tripo UI flow must remain testable");
 
-function harness({ balance = 100, confirmed = true, failStart = false } = {}) {
+function harness({ balance = 100, confirmed = true, failStart = false, quoteKey, canStart, blockedReason } = {}) {
   const events = [];
   const prompts = [];
   const controls = ["start", "poll", "preview", "publish", "reject"]
@@ -43,11 +43,13 @@ function harness({ balance = 100, confirmed = true, failStart = false } = {}) {
     sb: { functions: { async invoke(_name, request) {
       events.push(request.body.action);
       if (request.body.action === "quote") return { data: {
-        can_start: balance >= 30, balance, estimated_credits: 30,
+        can_start: canStart == null ? balance >= 30 : canStart, balance, estimated_credits: 30,
+        ...(quoteKey == null ? {} : { request_key: quoteKey }), start_blocked_reason: blockedReason,
       }, error: null };
       if (failStart) return { data: null, error: new Error("lost response") };
       assert.equal(request.body.confirm_paid_generation, true);
       assert.equal(request.body.accepted_estimate_credits, 30);
+      assert.equal(request.body.request_key, quoteKey || "00000000-0000-4000-8000-000000000001");
       assert.deepEqual(JSON.parse(JSON.stringify(request.body.images)), [
         { view: "front", id: 11 }, { view: "left", id: 12 },
       ]);
@@ -106,6 +108,38 @@ test("explicit disabled generation keeps the image preparation screen usable wit
   await qa.api.startTripo();
   await qa.api.publishTripo();
   assert.deepEqual(qa.events, ["latest"]);
+  assert.deepEqual(qa.prompts, []);
+});
+
+test("server pilot quote key is used once and malformed keys stop before confirmation", async () => {
+  const qa = harness({ quoteKey: "9e98c930-17c7-4198-b85e-5ca29fcba3f6" });
+  await qa.api.startTripo();
+  await qa.api.startTripo();
+  assert.deepEqual(qa.events, ["quote", "start"]);
+  assert.equal(qa.context.tripoJob.request_key, "9e98c930-17c7-4198-b85e-5ca29fcba3f6");
+  for (const quoteKey of ["bad", 123, {}, "javascript:alert(1)"]) {
+    const invalid = harness({ quoteKey });
+    await invalid.api.startTripo();
+    assert.deepEqual(invalid.events, ["quote"]);
+    assert.deepEqual(invalid.prompts, []);
+  }
+});
+test("pilot terminal states never rearm start and private review hides publication controls", async () => {
+  const qa = harness();
+  for (const status of ["failed", "cancelled", "rejected", "published", "review"]) {
+    qa.context.tripoJob = { status, start_allowed: false, publish_allowed: false, reject_allowed: false };
+    qa.api.renderTripoJob();
+    for (const action of ["start", "publish", "reject"]) assert.equal(qa.context.elements[`product-3d-tripo-${action}`].hidden, true);
+    await qa.api.startTripo(); await qa.api.publishTripo();
+  }
+  assert.deepEqual(qa.events, []);
+  assert.deepEqual(qa.prompts, []);
+});
+test("already-reserved pilot quote explains single use, not low balance", async () => {
+  const qa = harness({ canStart: false, blockedReason: "pilot_already_reserved" });
+  await qa.api.startTripo();
+  assert.match(qa.context.elements["product-3d-tripo-status"].textContent, /初回1回.*再作成せず/);
+  assert.deepEqual(qa.events, ["quote"]);
   assert.deepEqual(qa.prompts, []);
 });
 

@@ -1148,7 +1148,7 @@
   }
   function tripoStatus(text) { elements["product-3d-tripo-status"].textContent = text; }
   function canStartTripoJob() {
-    return tripoHistoryReady && canManageGlb() &&
+    return tripoHistoryReady && canManageGlb() && !(tripoJob && tripoJob.start_allowed === false) &&
       ["none", "failed", "cancelled", "rejected", "published"].includes(tripoJob && tripoJob.status || "none");
   }
   function renderTripoJob() {
@@ -1163,8 +1163,8 @@
     elements["product-3d-tripo-poll"].hidden = !tripoHistoryReady ||
       !["reserved", "submitted", "processing", "collecting", "publishing", "held"].includes(status);
     elements["product-3d-tripo-preview"].hidden = !tripoHistoryReady || status !== "review";
-    elements["product-3d-tripo-publish"].hidden = !tripoHistoryReady || status !== "review" || !canPublish3D();
-    elements["product-3d-tripo-reject"].hidden = !tripoHistoryReady || status !== "review";
+    elements["product-3d-tripo-publish"].hidden = !tripoHistoryReady || status !== "review" || !canPublish3D() || tripoJob.publish_allowed === false;
+    elements["product-3d-tripo-reject"].hidden = !tripoHistoryReady || status !== "review" || tripoJob.reject_allowed === false;
   }
   async function tripoInvoke(payload) {
     var result = await sb.functions.invoke("product-3d-tripo", { body: payload });
@@ -1178,6 +1178,9 @@
       throw error;
     }
     var data = result.data || {};
+    ["start_allowed", "publish_allowed", "reject_allowed"].forEach(function (field) {
+      if (data[field] != null && typeof data[field] !== "boolean") throw new Error("Invalid generation permission");
+    });
     if (payload.action !== "quote") {
       var statuses = ["reserved", "submitted", "processing", "collecting", "review", "publishing",
         "published", "failed", "cancelled", "held", "rejected"];
@@ -1458,13 +1461,19 @@
       if (!sameTripoTarget(requestId)) return;
       if (typeof quote.can_start !== "boolean" || !Number.isSafeInteger(quote.estimated_credits) ||
           quote.estimated_credits < 1 || quote.estimated_credits > 100 ||
-          typeof quote.balance !== "number" || !Number.isFinite(quote.balance) || quote.balance < 0) {
+          typeof quote.balance !== "number" || !Number.isFinite(quote.balance) || quote.balance < 0 ||
+          (quote.request_key != null && (typeof quote.request_key !== "string" ||
+            !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(quote.request_key)))) {
         throw new Error("Tripoの見積りを確認できませんでした。");
       }
-      if (!quote.can_start) { tripoStatus("Tripo APIの残高が不足しています。"); return; }
+      if (!quote.can_start) {
+        tripoStatus(quote.start_blocked_reason === "pilot_already_reserved"
+          ? "初回1回の作成は依頼済みです。再作成せず、画面を開き直して結果を確認してください。"
+          : "Tripo APIの残高が不足しています。"); return;
+      }
       if (!window.confirm("選択した保存済み画像を外部サービスTripoへ送信し、3Dモデルを1回作成します。見積り " + quote.estimated_credits +
           " クレジット、現在残高 " + quote.balance + " クレジット。実際の料金はTripo APIで確定します。開始しますか？")) return;
-      var requestKey = crypto.randomUUID();
+      var requestKey = quote.request_key ? quote.request_key.toLowerCase() : crypto.randomUUID();
       tripoJob = { request_key: requestKey, status: "reserved" };
       renderTripoJob();
       var created = await tripoInvoke(Object.assign(tripoPayload("start"), {
@@ -1519,7 +1528,7 @@
     } finally { tripoBusy = false; }
   }
   async function publishTripo() {
-    if (tripoBusy || !tripoTarget || !tripoJob || tripoJob.status !== "review" || !canPublish3D() ||
+    if (tripoBusy || !tripoTarget || !tripoJob || tripoJob.status !== "review" || tripoJob.publish_allowed === false || !canPublish3D() ||
         !sameTripoTarget(tripoRequestId)) return;
     var requestId = tripoRequestId;
     tripoBusy = true;
@@ -1545,7 +1554,7 @@
     } finally { tripoBusy = false; }
   }
   async function rejectTripo() {
-    if (tripoBusy || !tripoTarget || !tripoJob || tripoJob.status !== "review" ||
+    if (tripoBusy || !tripoTarget || !tripoJob || tripoJob.status !== "review" || tripoJob.reject_allowed === false ||
         !sameTripoTarget(tripoRequestId) ||
         !window.confirm("この生成結果を不採用にしますか？非公開モデルは監査用に保持します。")) return;
     var requestId = tripoRequestId;
@@ -1829,7 +1838,7 @@
     elements["product-3d-viewer-autorotate"].setAttribute("aria-pressed", "false");
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await import("./product-3d-viewer.js?v=1.1.1118");
+      var module = await import("./product-3d-viewer.js?v=1.1.1119");
       if (!targetStillSelected()) {
         if (requestId === viewerRequestId) closeViewer();
         return;
