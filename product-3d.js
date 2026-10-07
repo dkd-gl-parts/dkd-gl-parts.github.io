@@ -1414,7 +1414,7 @@
       }, storage: sb.storage, preview: async function (result, trigger) {
         if (!sameTripoTarget(requestId)) return;
         var preparedViewerRequest = ++viewerRequestId;
-        await showCommonViewer({ url: result.preview_url, reviewExport: true }, "Tripo生成結果 / 非公開プレビュー",
+        await showCommonViewer({ url: result.preview_url, reviewExport: true, reviewKind: tripoTarget.kind }, "Tripo生成結果 / 非公開プレビュー",
           { context: tripoTarget.context, productId: tripoTarget.productId, kind: tripoTarget.originKind || tripoTarget.kind },
           preparedViewerRequest, function () { return sameTripoTarget(requestId) && preparedViewerRequest === viewerRequestId; }, trigger);
       }
@@ -1586,7 +1586,7 @@
       var result = await tripoInvoke(tripoPayload("preview"));
       if (!sameTripoTarget(requestId)) return;
       viewerRequest = ++viewerRequestId;
-      await showCommonViewer({ url: result.preview_url, reviewExport: true }, "Tripo生成結果 / 非公開プレビュー",
+      await showCommonViewer({ url: result.preview_url, reviewExport: true, reviewKind: tripoTarget.kind }, "Tripo生成結果 / 非公開プレビュー",
         { context: tripoTarget.context, productId: tripoTarget.productId, kind: tripoTarget.originKind || tripoTarget.kind },
         viewerRequest, function () {
           return sameTripoTarget(requestId) && viewerRequest === viewerRequestId;
@@ -2000,16 +2000,19 @@
         !target || target.context === "customer" || !current() || requestId !== viewerRequestId) return;
     try {
       var url = new URL(source.url);
-      var prefix = "/storage/v1/object/sign/product-3d/tripo-review/dkd_" + target.productId + "/" + target.kind + "/";
+      // The preparation dialog may use a different kind from the underlying
+      // detail pane. Export the reviewed kind, not the return-focus target.
+      var exportKind = source.reviewKind || target.kind;
+      var prefix = "/storage/v1/object/sign/product-3d/tripo-review/dkd_" + target.productId + "/" + exportKind + "/";
       var file = url.pathname.slice(prefix.length);
       // UI gating does not grant access. The existing authenticated Edge signs
       // only an authorized review object; never mint a URL or copy a session.
-      if (!Number.isSafeInteger(target.productId) || target.productId <= 0 || !cleanKind(target.kind) ||
+      if (!Number.isSafeInteger(target.productId) || target.productId <= 0 || !["rebuilt", "aftermarket_new"].includes(exportKind) ||
           url.origin !== "https://jqoeqximtwfpqwzngutj.supabase.co" || url.username || url.password || url.hash ||
           !url.pathname.startsWith(prefix) || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}\.glb$/i.test(file) ||
           !url.searchParams.get("token") || url.searchParams.getAll("token").length !== 1 ||
           Array.from(url.searchParams.keys()).some(function (key) { return key !== "token"; })) return;
-      var filename = "D-CATS-product-" + target.productId + "-" + target.kind + "-" + file;
+      var filename = "D-CATS-product-" + target.productId + "-" + exportKind + "-" + file;
       url.searchParams.set("download", filename);
       viewerExportTarget = { requestId: requestId, current: current, expiresAt: openedAt + 240000 };
       if (Date.now() >= viewerExportTarget.expiresAt) { clearViewerExport(); return; }
@@ -2051,7 +2054,7 @@
     elements["product-3d-viewer-autorotate"].setAttribute("aria-pressed", "false");
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await import("./product-3d-viewer.js?v=1.1.1132");
+      var module = await import("./product-3d-viewer.js?v=1.1.1133");
       if (!targetStillSelected()) {
         if (requestId === viewerRequestId) closeViewer();
         return;
