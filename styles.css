@@ -9206,10 +9206,28 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .customer-product-media-switch { margin-bottom: 8px; }
 .product-3d-viewer-shell { position: relative; width: min(1100px, 100%); overflow: hidden; background: #0b111b; }
 .product-3d-viewer-stage { height: min(72vh, 720px); touch-action: none; }
+.product-3d-viewer-content, .product-3d-viewer-render { min-width: 0; min-height: 0; }
+.product-3d-viewer-render { position: relative; }
+.has-photo-comparison .product-3d-viewer-content { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); }
+.product-3d-viewer-reference { display: flex; flex-direction: column; gap: 8px; min-width: 0; min-height: 0; max-height: min(72vh, 720px); padding: 12px; overflow: auto; background: #f7fafc; color: #13233b; }
+.product-3d-viewer-reference[hidden], .product-3d-viewer-reference img[hidden] { display: none; }
+.product-3d-viewer-reference h3, .product-3d-viewer-reference p { margin: 0; font-size: 12px; overflow-wrap: anywhere; }
+.product-3d-viewer-reference h3 { font-size: 15px; }
+#product-3d-viewer-reference-image { width: 100%; height: min(35vh, 300px); flex: 0 0 auto; object-fit: contain; background: #e8edf4; }
+.product-3d-viewer-reference-photos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.product-3d-viewer-reference-photos button { min-width: 0; padding: 5px; border: 1px solid #b9c8db; border-radius: 7px; background: #fff; color: #13233b; cursor: pointer; }
+.product-3d-viewer-reference-photos img { width: 100%; height: 58px; object-fit: contain; }
+.product-3d-viewer-reference-photos span { display: block; font-size: 10px; overflow-wrap: anywhere; }
+.product-3d-viewer-reference-photos button[aria-pressed="true"] { border-color: #008b91; box-shadow: 0 0 0 1px #008b91; background: #e7f8f6; }
+.product-3d-viewer-reference-photos button:disabled { opacity: .5; cursor: default; }
+.product-3d-viewer-reference-photos button:focus-visible { outline: 3px solid #2676dd; outline-offset: 1px; }
 .product-3d-viewer-shell:fullscreen { display: flex; flex-direction: column; width: 100vw; height: 100vh; height: 100dvh; max-height: none; border: 0; border-radius: 0; }
+.product-3d-viewer-shell:fullscreen .product-3d-viewer-content { flex: 1 1 auto; display: grid; }
+.product-3d-viewer-shell:fullscreen .product-3d-viewer-render { display: flex; }
+.product-3d-viewer-shell:fullscreen .product-3d-viewer-reference { max-height: none; }
 .product-3d-viewer-shell:fullscreen .product-3d-viewer-stage { flex: 1 1 auto; min-height: 0; height: auto; }
 .product-3d-viewer-stage canvas { display: block; width: 100%; height: 100%; }
-.product-3d-viewer-loading { position: absolute; inset: 74px 0 54px; display: grid; place-items: center; color: #dce6f2; background: rgba(8, 15, 25, .76); }
+.product-3d-viewer-loading { position: absolute; inset: 0; display: grid; place-items: center; color: #dce6f2; background: rgba(8, 15, 25, .76); }
 .product-3d-viewer-loading[hidden] { display: none; }
 .product-3d-viewer-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px; background: #101a29; color: #a9b7ca; font-size: 11px; }
 #product-3d-viewer-fullscreen-notice { color: #fbbf77; }
@@ -9229,6 +9247,11 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   .product-3d-capture-dial { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .product-3d-review-column { padding-bottom: 24px; }
   .product-3d-viewer-stage { flex: 1 1 auto; min-height: 0; height: auto; }
+  .product-3d-viewer-content { flex: 1 1 auto; display: grid; }
+  .product-3d-viewer-render { display: flex; }
+  .has-photo-comparison .product-3d-viewer-content { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(160px, 1fr) minmax(240px, 1fr); }
+  .product-3d-viewer-reference { max-height: none; }
+  #product-3d-viewer-reference-image { height: 170px; }
   .product-3d-viewer-toolbar { flex: 0 0 auto; }
   .product-3d-viewer-toolbar span { flex-basis: 100%; }
 }

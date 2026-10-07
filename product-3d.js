@@ -28,6 +28,8 @@
   var viewerRequestId = 0;
   var viewerReturnFocus = null;
   var viewerFocusTarget = null;
+  var viewerComparisonTarget = null;
+  var viewerComparisonRequestId = 0;
   var modelCache = Object.create(null);
   var internalModelCache = Object.create(null);
   var modelBadgeCache = Object.create(null);
@@ -131,6 +133,8 @@
       "product-3d-viewer-stage", "product-3d-viewer-loading", "product-3d-viewer-reset",
       "product-3d-viewer-zoom-in", "product-3d-viewer-zoom-out",
       "product-3d-viewer-autorotate", "product-3d-viewer-fullscreen", "product-3d-viewer-fullscreen-notice",
+      "product-3d-viewer-compare", "product-3d-viewer-reference", "product-3d-viewer-reference-image",
+      "product-3d-viewer-reference-label", "product-3d-viewer-reference-photos",
       "product-3d-glb-file", "product-3d-local-glb-file", "product-3d-tripo-overlay", "product-3d-tripo-close",
       "product-3d-tripo-context", "product-3d-tripo-images", "product-3d-tripo-views",
       "product-3d-tripo-kind", "product-3d-tripo-selection", "product-3d-tripo-selection-status",
@@ -1345,6 +1349,7 @@
     }
     if (!switchingKind) tripoReturnFocus = document.activeElement;
     closeImageActionOverlays();
+    clearViewerComparison();
     var requestId = ++tripoRequestId;
     tripoTarget = { context: context || "sales", productId: productId(target.product),
       kind: switchingKind ? requestedKind : target.kind, originKind: target.kind };
@@ -1371,7 +1376,7 @@
       if (rows.error) throw rows.error;
       if (!sameTripoTarget(requestId)) return;
       var images = (rows.data || []).filter(function (row) { return row.storage_path; });
-      images.forEach(function (row, index) { row.selectionLabel = tripoImageLabel(row, index); tripoImageRows[String(row.id)] = row; });
+      images.forEach(function (row, index) { row.selectionIndex = index; row.selectionLabel = tripoImageLabel(row, index); tripoImageRows[String(row.id)] = row; });
       elements["product-3d-tripo-images"].innerHTML = images.length ? images.map(function (row, index) {
         var label = tripoImageLabel(row, index);
         return "<figure><button type='button' data-tripo-image-preview='" + esc(row.id) + "' data-tripo-label='" + esc(label) + "' aria-label='" + esc(label + "を拡大表示") + "'><img data-tripo-image='" + esc(row.id) + "' alt='' loading='lazy'></button><figcaption>" + esc(label) + "<span class='product-3d-tripo-assigned-label' data-tripo-assigned-label='" + esc(row.id) + "'></span></figcaption><div class='product-3d-tripo-photo-directions'>" + tripoDirectionButtons(row.id, false) + "</div></figure>";
@@ -1411,6 +1416,7 @@
     }
   }
   function closeTripo() {
+    clearViewerComparison();
     var previous = tripoTarget;
     var wasOpen = elements["product-3d-tripo-overlay"].classList.contains("show");
     tripoRequestId += 1;
@@ -1519,6 +1525,9 @@
         viewerRequest, function () {
           return sameTripoTarget(requestId) && viewerRequest === viewerRequestId;
         }, elements["product-3d-tripo-preview"]);
+      if (viewer && sameTripoTarget(requestId) && viewerRequest === viewerRequestId) {
+        prepareViewerComparison(requestId, viewerRequest);
+      }
     } catch (error) {
       if (sameTripoTarget(requestId)) {
         var message = "プレビューできませんでした: " + friendlyError(error);
@@ -1820,7 +1829,96 @@
       if (targetStillSelected()) alert("GLBをプレビューできませんでした: " + friendlyError(error));
     }
   }
+  function clearViewerComparison() {
+    viewerComparisonRequestId += 1;
+    viewerComparisonTarget = null;
+    var image = elements["product-3d-viewer-reference-image"];
+    if (!image) return;
+    image.onload = null; image.onerror = null;
+    image.removeAttribute("src"); image.alt = ""; image.hidden = true;
+    elements["product-3d-viewer-reference-photos"].textContent = "";
+    elements["product-3d-viewer-reference-label"].textContent = "";
+    elements["product-3d-viewer-reference"].hidden = true;
+    elements["product-3d-viewer-compare"].hidden = true;
+    elements["product-3d-viewer-compare"].setAttribute("aria-expanded", "false");
+    elements["product-3d-viewer-shell"].classList.remove("has-photo-comparison");
+  }
+  function sameViewerComparison() {
+    return !!viewerComparisonTarget && viewerComparisonTarget.viewerRequestId === viewerRequestId &&
+      sameTripoTarget(viewerComparisonTarget.tripoRequestId) && tripoJob && tripoJob.status === "review";
+  }
+  function prepareViewerComparison(tripoRequest, viewerRequest) {
+    clearViewerComparison();
+    if (viewerRequest !== viewerRequestId || !sameTripoTarget(tripoRequest) ||
+        !tripoJob || tripoJob.status !== "review") return;
+    viewerComparisonTarget = { tripoRequestId: tripoRequest, viewerRequestId: viewerRequest,
+      rows: tripoImageRows };
+    elements["product-3d-viewer-compare"].hidden = false;
+  }
+  function toggleViewerComparison() {
+    if (!sameViewerComparison()) { clearViewerComparison(); return; }
+    var panel = elements["product-3d-viewer-reference"];
+    if (!panel.hidden) {
+      viewerComparisonRequestId += 1;
+      var image = elements["product-3d-viewer-reference-image"];
+      image.onload = null; image.onerror = null; image.removeAttribute("src"); image.hidden = true;
+      elements["product-3d-viewer-reference-photos"].textContent = "";
+      elements["product-3d-viewer-reference-label"].textContent = "";
+      panel.hidden = true;
+    } else {
+      var rows = Object.values(viewerComparisonTarget.rows).sort(function (a, b) { return a.selectionIndex - b.selectionIndex; });
+      elements["product-3d-viewer-reference-photos"].innerHTML = rows.map(function (row) {
+        return "<button type='button' data-viewer-reference='" + esc(row.id) + "' aria-pressed='false'" +
+          (row.previewUrl ? "" : " disabled") + ">" + (row.previewUrl
+            ? "<img src='" + esc(row.previewUrl) + "' alt='' loading='lazy'>" : "<span>写真を読込中</span>") +
+          "<span>" + esc(row.selectionLabel || "画像 ID " + row.id) + "</span></button>";
+      }).join("");
+      elements["product-3d-viewer-reference-label"].textContent = rows.length
+        ? "下の写真を選んで、上下・端子・取付穴・プーリーを照合してください。"
+        : "照合できる保存済み写真がありません。";
+      panel.hidden = false;
+    }
+    elements["product-3d-viewer-compare"].setAttribute("aria-expanded", panel.hidden ? "false" : "true");
+    elements["product-3d-viewer-shell"].classList.toggle("has-photo-comparison", !panel.hidden);
+  }
+  async function selectViewerReference(imageId) {
+    if (!sameViewerComparison()) { clearViewerComparison(); return; }
+    if (elements["product-3d-viewer-reference"].hidden) return;
+    var row = viewerComparisonTarget.rows[String(imageId)];
+    if (!row || !row.previewUrl || !row.storage_path) return;
+    var requestId = ++viewerComparisonRequestId;
+    var target = viewerComparisonTarget;
+    var image = elements["product-3d-viewer-reference-image"];
+    var label = elements["product-3d-viewer-reference-label"];
+    function current() {
+      return requestId === viewerComparisonRequestId && target === viewerComparisonTarget &&
+        sameViewerComparison() && !elements["product-3d-viewer-reference"].hidden;
+    }
+    image.onload = null; image.onerror = null;
+    image.hidden = false; image.src = row.previewUrl;
+    image.alt = row.selectionLabel || "画像 ID " + row.id;
+    label.textContent = image.alt + " / 元画像を読み込んでいます…";
+    Array.from(elements["product-3d-viewer-reference-photos"].querySelectorAll("[data-viewer-reference]")).forEach(function (button) {
+      button.setAttribute("aria-pressed", button.dataset.viewerReference === String(imageId) ? "true" : "false");
+    });
+    try {
+      var originalUrl = await signProductImageUrl(row.storage_path);
+      if (!current()) { if (target === viewerComparisonTarget && !sameViewerComparison()) clearViewerComparison(); return; }
+      if (!originalUrl) throw new Error("Original unavailable");
+      image.onload = function () { if (current()) label.textContent = image.alt + " / 元画像（照合専用）"; };
+      image.onerror = function () {
+        if (!current()) return;
+        image.hidden = true; image.removeAttribute("src");
+        label.textContent = "元画像を表示できませんでした。3Dの形状確認は未完了です。";
+      };
+      image.src = originalUrl;
+    } catch (_) {
+      if (current()) label.textContent = image.alt + " / 元画像を取得できません。縮小写真のみ表示しています。";
+      else if (target === viewerComparisonTarget && !sameViewerComparison()) clearViewerComparison();
+    }
+  }
   async function showCommonViewer(source, title, focusTarget, requestId, targetStillSelected, returnFocus) {
+    clearViewerComparison();
     var viewerOverlay = elements["product-3d-viewer-overlay"];
     if (!viewerOverlay.classList.contains("show")) {
       var previousFocus = returnFocus || document.activeElement;
@@ -1838,7 +1936,7 @@
     elements["product-3d-viewer-autorotate"].setAttribute("aria-pressed", "false");
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await import("./product-3d-viewer.js?v=1.1.1120");
+      var module = await import("./product-3d-viewer.js?v=1.1.1121");
       if (!targetStillSelected()) {
         if (requestId === viewerRequestId) closeViewer();
         return;
@@ -1867,10 +1965,8 @@
   }
   function keepViewerFocus(event) {
     if (event.key !== "Tab" || !elements["product-3d-viewer-overlay"].classList.contains("show")) return;
-    var controls = ["product-3d-viewer-close", "product-3d-viewer-zoom-in", "product-3d-viewer-zoom-out",
-      "product-3d-viewer-reset", "product-3d-viewer-autorotate", "product-3d-viewer-fullscreen"]
-      .map(function (id) { return elements[id]; })
-      .filter(function (node) { return node && node.isConnected && !node.hidden && !node.disabled; });
+    var controls = Array.from(elements["product-3d-viewer-overlay"].querySelectorAll("button"))
+      .filter(function (node) { return node.isConnected && !node.hidden && !node.disabled && node.getClientRects().length; });
     if (!controls.length) return;
     var first = controls[0];
     var last = controls[controls.length - 1];
@@ -1894,6 +1990,7 @@
   }
   function closeViewer() {
     viewerRequestId += 1;
+    clearViewerComparison();
     if (viewer) { viewer.dispose(); viewer = null; }
     var fullscreenTarget = elements["product-3d-viewer-shell"] || elements["product-3d-viewer-stage"];
     if (document.fullscreenElement === fullscreenTarget && typeof document.exitFullscreen === "function") {
@@ -1973,6 +2070,11 @@
       if (!viewer) return; var active = this.getAttribute("aria-pressed") !== "true"; viewer.setAutoRotate(active); this.setAttribute("aria-pressed", active ? "true" : "false");
     });
     elements["product-3d-viewer-fullscreen"].addEventListener("click", toggleViewerFullscreen);
+    elements["product-3d-viewer-compare"].addEventListener("click", toggleViewerComparison);
+    elements["product-3d-viewer-reference-photos"].addEventListener("click", function (event) {
+      var button = event.target.closest("[data-viewer-reference]");
+      if (button) selectViewerReference(button.dataset.viewerReference);
+    });
     document.addEventListener("click", function (event) {
       var media = event.target.closest("[data-product-media]");
       if (media) {

@@ -317,3 +317,15 @@ final result: passed for synthetic responsive GLB viewing; production release is
 - The authoritative frontend workflow's 126 Node commands passed, including all 119 verifier coverage, shared role/order/pricing checks, static build and response headers. A version-reference and translation-gate failure was corrected without disabling either guard.
 - Headless isolated Playwright: 1280x900 and 390x900, login success, all three preparation states, pending/error, unauthorized/logged-out hiding, no horizontal control overflow; zero browser errors and zero external requests. Contexts, browser and local server closed in finally.
 - Screenshots inspected: task-owned `.qa-output/company-controls-20261006/company-1280.png` and `company-390.png`. Synthetic protocol replies do not prove real vendor login/import/export. No normal browser, clipboard, cursor or user vendor session was operated.
+
+## 2026-10-07: Private product-3D source-photo comparison (v1.1.1121)
+
+- Optional system-admin-only comparison in a current private Tripo review. All already-authorized source photos can be reviewed, including top/bottom images not submitted to the first four-view generation. No generation-slot, paid API, Storage, database or publication mutation.
+- Hidden IAB using the production markup, styles, comparison functions and pinned GLB Viewer with six synthetic photos and an embedded textured GLB; no copied credentials or real product data.
+- PC 1280x720 renders 3D and the source-photo panel side by side; 390x844 stacks them with independent photo scrolling and no horizontal document overflow. Top/bottom original selection, zoom/reset and keyboard focus verified.
+- Original retrieval failure explicitly reports thumbnail-only display. A synthetic non-admin identity cannot open comparison. Unit tests cover pending requests after close, collapse, product/kind/session loss, selection races, image decoding failure, escaping and non-mutation.
+- 142 product-3D tests and all 127 authoritative workflow Node commands passed, including static build, strict CSP/response headers and syntax. No pinned vendor codec, permission or CSP change.
+- Local evidence: task-owned `PHOTO-COMPARISON-PC-20261007.png` and `PHOTO-COMPARISON-MOBILE-20261007.png` in `.codex-tmp-product3d`. These are synthetic UI evidence, not proof of alternator shape accuracy or authenticated real-photo comparison.
+- The actual first alternator GLB remains private and fails top/bottom geometry quality. Comparison does not correct a mesh or enable six-view generation. Public delivery and owned-tab/helper cleanup are recorded separately.
+
+final result: passed for synthetic responsive comparison; product-model quality remains failed.

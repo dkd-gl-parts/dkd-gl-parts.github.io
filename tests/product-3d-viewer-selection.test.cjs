@@ -22,6 +22,7 @@ function harness({ onRead, onSign, onCreate, onFullscreen } = {}) {
   const document = { body: {}, activeElement: null, fullscreenElement: null,
     exitFullscreen() { calls.fullscreenExits++; this.fullscreenElement = null; return Promise.resolve(); } };
   const control = () => ({ isConnected: true, hidden: false, disabled: false,
+    getClientRects: () => [1],
     attributes: {},
     setAttribute(name, value) { this.attributes[name] = value; },
     focus() { document.activeElement = this; } });
@@ -50,10 +51,13 @@ function harness({ onRead, onSign, onCreate, onFullscreen } = {}) {
     'product-3d-viewer-stage': {},
     'product-3d-viewer-shell': {},
   };
+  overlay.querySelectorAll = () => ['close', 'zoom-in', 'zoom-out', 'reset', 'autorotate', 'fullscreen']
+    .map(id => elements['product-3d-viewer-' + id]);
   const model = { id: 'uploaded:18', product_kind: 'rebuilt', published_model_path: 'uploaded/18.glb' };
   const context = {
     BUCKET: 'product-3d',
     viewerRequestId: 0,
+    viewerComparisonRequestId: 0, viewerComparisonTarget: null,
     viewerReturnFocus: null,
     viewerFocusTarget: null,
     sessionModelsEnabled: true,
