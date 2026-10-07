@@ -451,6 +451,9 @@ var TRANSLATIONS = {
     business_workspace_backup_check: "このPCのバックアップ準備を確認",
     business_workspace_backup_setup: "Google接続・バックアップ用パスワードを設定",
     business_workspace_backup_setup_hint: "このPCの専用設定画面が開きます。初回はD-CATSの本人確認とGoogleの読取許可を行い、登録準備が整ってからバックアップ用パスワードを入力します。",
+    business_workspace_backup_guide_hint: "Google接続が未設定の場合は、先に管理者が設定JSONを用意します。PC版Google Driveの同期設定とは別の準備です。",
+    business_workspace_backup_guide: "Google接続設定の作成手順を開く（新しいタブ）",
+    business_workspace_backup_guide_next: "設定JSONをこのPCへ導入してから、上の設定ボタンで本人の読取許可を行います。",
     business_workspace_backup_setup_opening: "設定画面を開いています。このPCに表示された専用画面で操作してください。",
     business_workspace_backup_setup_saved: "バックアップ用パスワードの保護登録を確認しました。「このPCのバックアップ準備を確認」で残りの準備状況を確認できます。",
     business_workspace_backup_setup_cancelled: "設定画面を閉じました。準備状況は未確認です。",
@@ -2907,6 +2910,9 @@ var TRANSLATIONS = {
     business_workspace_backup_check: "Check backup preparation on this PC",
     business_workspace_backup_setup: "Set up Google connection and backup password",
     business_workspace_backup_setup_hint: "A setup window opens on this PC. On first setup, verify your D-CATS account and grant Google read access. Enter the backup password after registration is ready.",
+    business_workspace_backup_guide_hint: "If Google access is not configured, an administrator first prepares the configuration JSON. This is separate from Google Drive for desktop sync settings.",
+    business_workspace_backup_guide: "Open Google configuration guide (Japanese, new tab)",
+    business_workspace_backup_guide_next: "Install the configuration JSON on this PC, then use the setup button above to grant read access with your own account.",
     business_workspace_backup_setup_opening: "Opening the setup window. Continue in the dedicated window on this PC.",
     business_workspace_backup_setup_saved: "Protected backup password registration was confirmed. Use Check backup preparation on this PC to check the remaining preparation.",
     business_workspace_backup_setup_cancelled: "The setup window was closed. Preparation has not been verified.",
@@ -5307,6 +5313,9 @@ var TRANSLATIONS = {
     business_workspace_backup_check: "确认此电脑的备份准备",
     business_workspace_backup_setup: "设置Google连接及备份密码",
     business_workspace_backup_setup_hint: "此电脑将打开专用设置窗口。首次设置时需确认D-CATS本人账户并授予Google读取权限。登记准备完成后再输入备份密码。",
+    business_workspace_backup_guide_hint: "如果尚未设置Google连接，请先由管理员准备设置JSON文件。此步骤与电脑版Google Drive的同步设置不同。",
+    business_workspace_backup_guide: "打开Google连接设置步骤（日语，新标签页）",
+    business_workspace_backup_guide_next: "将设置JSON文件安装到此电脑后，通过上方设置按钮，以本人账户授予读取权限。",
     business_workspace_backup_setup_opening: "正在打开设置窗口。请在此电脑的专用窗口中操作。",
     business_workspace_backup_setup_saved: "已确认备份密码的受保护登记。请通过“确认此电脑的备份准备”查看其他准备状态。",
     business_workspace_backup_setup_cancelled: "设置窗口已关闭。准备状态尚未确认。",
@@ -7496,7 +7505,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1128";
+var APP_VERSION       = "v1.1.1129";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
