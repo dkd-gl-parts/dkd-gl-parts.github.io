@@ -59,7 +59,7 @@ function harness({ balance = 100, confirmed = true, failStart = false, quoteKey,
     } } },
     Set, Array, Number, String, Error,
   };
-  const api = vm.runInNewContext(`${source.slice(start, end)}\n({ selectedTripoImages, startTripo, pollTripo, publishTripo, tripoInvoke, openTripo, renderTripoJob, keepTripoFocus, closeTripo, tripoContextLabel, tripoImageLabel, tripoPayload, showTripoImagePreview, clearTripoImagePreview, assignTripoImage, renderTripoSelection, changeTripoKind, sameTripoTarget })`, context);
+  const api = vm.runInNewContext(`${source.slice(start, end)}\n({ selectedTripoImages, startTripo, pollTripo, publishTripo, tripoInvoke, openTripo, renderTripoJob, keepTripoFocus, closeTripo, tripoContextLabel, tripoImageLabel, tripoPayload, showTripoImagePreview, clearTripoImagePreview, assignTripoImage, renderTripoSelection, changeTripoKind, sameTripoTarget, autoAssignTripoImages, renderTripoPreset, renderTripoImageChoices })`, context);
   return { api, context, events, prompts, selections };
 }
 
@@ -288,6 +288,83 @@ test("unknown photos, invalid directions, busy and stale permissions cannot alte
     assert.ok(qa.selections.every(node => node.value === ""));
     assert.deepEqual(qa.events, ["latest"]);
   }
+});
+
+async function directionPresetHarness() {
+  const qa = preparationHarness({ rows: [179, 172, 175, 171].map(id => ({ id, storage_path: "synthetic/" + id + ".jpg" })) });
+  qa.context.selectedTarget = () => ({ product: { id: 2639 }, kind: "aftermarket_new" });
+  qa.context.elements["product-3d-tripo-preset"] = { hidden: true };
+  qa.context.elements["product-3d-tripo-auto-assign"] = { disabled: true };
+  qa.context.elements["product-3d-tripo-preset-status"] = { textContent: "" };
+  await qa.api.openTripo("sales");
+  await new Promise(resolve => setImmediate(resolve));
+  return qa;
+}
+
+test("reviewed preset fills all four by ID, updates preview and never invokes a mutation", async () => {
+  const qa = await directionPresetHarness();
+  assert.ok(qa.selections.every(node => node.value === ""), "opening does not overwrite selections");
+  assert.equal(qa.context.elements["product-3d-tripo-preset"].hidden, false);
+  assert.equal(qa.context.elements["product-3d-tripo-auto-assign"].disabled, false);
+  assert.equal(qa.api.autoAssignTripoImages(), true);
+  assert.deepEqual(qa.selections.map(node => node.value), ["171", "175", "179", "172"]);
+  const html = qa.context.elements["product-3d-tripo-selection"].innerHTML;
+  for (const [view, id] of [["front", 171], ["left", 175], ["back", 179], ["right", 172]])
+    assert.match(html, new RegExp("data-tripo-selected-view='" + view + "'[\\s\\S]*?ID " + id));
+  assert.match(qa.context.elements["product-3d-tripo-selection-status"].textContent, /選択済み 4.*4方向/);
+  assert.match(qa.context.elements["product-3d-tripo-preset-status"].textContent, /セットしました.*生成・課金なし/);
+  assert.deepEqual(qa.events, ["latest"]);
+  assert.deepEqual(qa.prompts, []);
+  assert.equal(qa.api.assignTripoImage("front", "179"), true);
+  assert.equal(qa.selections[0].value, "179");
+  assert.equal(qa.selections[2].value, "");
+  assert.equal(qa.api.autoAssignTripoImages(), true);
+  assert.equal(qa.api.assignTripoImage("right", ""), true);
+  assert.equal(qa.selections[3].value, "");
+});
+
+test("missing, unsigned, loading, duplicate controls, busy or stale preset never partially overwrites", async () => {
+  for (const mutate of [q => { delete q.context.tripoImageRows[171]; },
+    q => { q.context.tripoImageRows[175].previewUrl = ""; },
+    q => { q.context.tripoImageRows[179].storage_path = ""; },
+    q => { q.selections[3].disabled = true; },
+    q => { q.selections[3].dataset.tripoView = "front"; },
+    q => { q.context.tripoBusy = true; },
+    q => { q.context.canManageGlb = () => false; },
+    q => { q.context.sessionModelsEnabled = false; },
+    q => { q.context.tripoTarget.productId = 2640; },
+    q => { q.context.tripoTarget.kind = "rebuilt"; },
+    q => { q.context.selectedTarget = () => ({ product: { id: 2640 }, kind: "aftermarket_new" }); },
+    q => { q.context.selectedTarget = () => ({ product: { id: 2639 }, kind: "rebuilt" }); },
+    q => { q.context.tripoTarget = null; }]) {
+    const qa = await directionPresetHarness();
+    qa.selections[0].value = "179";
+    const before = qa.selections.map(node => node.value);
+    mutate(qa);
+    assert.equal(qa.api.autoAssignTripoImages(), false);
+    assert.deepEqual(qa.selections.map(node => node.value), before);
+    assert.equal(qa.context.elements["product-3d-tripo-auto-assign"].disabled, true);
+    assert.deepEqual(qa.events, ["latest"]);
+    assert.deepEqual(qa.prompts, []);
+  }
+});
+
+test("image reload clears preset selections and blocks auto selection until current previews return", async () => {
+  const qa = await directionPresetHarness();
+  qa.api.autoAssignTripoImages();
+  qa.api.renderTripoImageChoices([], "画像を読み込めませんでした");
+  assert.ok(qa.selections.every(node => node.value === "" && node.disabled));
+  assert.equal(qa.api.autoAssignTripoImages(), false);
+  assert.match(qa.context.elements["product-3d-tripo-preset-status"].textContent, /画像不足・取得失敗/);
+});
+
+test("preset is before the four previews, bound explicitly, mobile-wrapped and explains no alignment/generation", () => {
+  const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
+  assert.ok(html.indexOf('id="product-3d-tripo-auto-assign"') < html.indexOf('id="product-3d-tripo-selection"'));
+  assert.match(source, /auto-assign"\]\.addEventListener\("click", autoAssignTripoImages\)/);
+  assert.match(html, /原本の選択だけで、整列・保存・生成は開始しません/);
+  assert.match(css, /\.product-3d-tripo-preset button[^}]*white-space: normal/);
 });
 
 test("dialog kind changes reload that kind, clear assignments and keep outer product unchanged", async () => {
