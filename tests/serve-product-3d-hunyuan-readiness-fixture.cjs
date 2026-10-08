@@ -68,4 +68,7 @@ const server = http.createServer((req, res) => {
     "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'" });
   res.end(content);
 });
-server.listen(0, "127.0.0.1", () => { process.stdout.write("http://127.0.0.1:" + server.address().port + "/\n"); });
+// Optional fixed local port lets an explicitly approved QA origin be reused.
+const port = process.argv[2] === undefined ? 0 : Number(process.argv[2]);
+if (!Number.isInteger(port) || port < 0 || port > 65535) throw new Error("Invalid local QA port");
+server.listen(port, "127.0.0.1", () => { process.stdout.write("http://127.0.0.1:" + server.address().port + "/\n"); });
