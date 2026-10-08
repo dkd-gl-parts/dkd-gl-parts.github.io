@@ -461,7 +461,11 @@ var TRANSLATIONS = {
     business_workspace_backup_guide_hint: "Google接続が未設定の場合は、先に管理者がD-CATSの共通接続設定を登録します。PC版Google Driveの同期設定とは別の準備です。",
     business_workspace_backup_guide: "Google接続設定の作成手順を開く（新しいタブ）",
     business_workspace_backup_guide_next: "このPCはD-CATSから共通設定を取得します。上の設定ボタンで、本人のGoogleアカウントによる読取許可を行います。",
-    business_workspace_backup_setup_opening: "設定画面を開いています。このPCに表示された専用画面で操作してください。",
+    business_workspace_backup_setup_device: "このPCの連携接続を確認しています…",
+    business_workspace_backup_setup_authorization: "会社・利用者の対応を確認し、設定画面の起動を準備しています…",
+    business_workspace_backup_setup_opening: "専用設定画面の起動を確認しています…",
+    business_workspace_backup_setup_opened: "専用設定画面を開きました。このPCに表示された画面で操作してください。",
+    business_workspace_backup_setup_window_unavailable: "専用設定画面の起動を確認できませんでした。設定パネルを閉じてD-CATSを更新してください。改善しない場合は、このPCの連携拡張機能を更新してください。",
     business_workspace_backup_setup_saved: "バックアップ用パスワードの保護登録を確認しました。「このPCのバックアップ準備を確認」で残りの準備状況を確認できます。",
     business_workspace_backup_setup_cancelled: "設定画面を閉じました。準備状況は未確認です。",
     business_workspace_backup_setup_failed: "設定を完了できませんでした。専用画面の案内を確認してください。",
@@ -2944,7 +2948,11 @@ var TRANSLATIONS = {
     business_workspace_backup_guide_hint: "If Google access is not configured, an administrator first registers the shared D-CATS connection settings. This is separate from Google Drive for desktop sync settings.",
     business_workspace_backup_guide: "Open Google configuration guide (Japanese, new tab)",
     business_workspace_backup_guide_next: "This PC retrieves the shared settings from D-CATS. Use the setup button above to grant read access with your own Google account.",
-    business_workspace_backup_setup_opening: "Opening the setup window. Continue in the dedicated window on this PC.",
+    business_workspace_backup_setup_device: "Checking this PC's integration connection…",
+    business_workspace_backup_setup_authorization: "Checking the company and user before opening setup…",
+    business_workspace_backup_setup_opening: "Waiting for the dedicated setup window to open…",
+    business_workspace_backup_setup_opened: "The setup window has opened. Continue in the dedicated window on this PC.",
+    business_workspace_backup_setup_window_unavailable: "The setup window did not confirm startup. Close Settings and update D-CATS. If the problem continues, update this PC's integration extension.",
     business_workspace_backup_setup_saved: "Protected backup password registration was confirmed. Use Check backup preparation on this PC to check the remaining preparation.",
     business_workspace_backup_setup_cancelled: "The setup window was closed. Preparation has not been verified.",
     business_workspace_backup_setup_failed: "Setup was not completed. Check the instructions in the dedicated window.",
@@ -5371,7 +5379,11 @@ var TRANSLATIONS = {
     business_workspace_backup_guide_hint: "如果尚未设置Google连接，请先由管理员登记D-CATS共用连接设置。此步骤与电脑版Google Drive的同步设置不同。",
     business_workspace_backup_guide: "打开Google连接设置步骤（日语，新标签页）",
     business_workspace_backup_guide_next: "本机会从D-CATS获取共用设置。通过上方设置按钮，以本人的Google账户授予读取权限。",
-    business_workspace_backup_setup_opening: "正在打开设置窗口。请在此电脑的专用窗口中操作。",
+    business_workspace_backup_setup_device: "正在确认此电脑的联动连接…",
+    business_workspace_backup_setup_authorization: "正在确认公司和用户，准备打开设置…",
+    business_workspace_backup_setup_opening: "正在等待专用设置窗口打开…",
+    business_workspace_backup_setup_opened: "专用设置窗口已打开。请在此电脑的窗口中操作。",
+    business_workspace_backup_setup_window_unavailable: "未能确认设置窗口启动。请关闭设置并更新D-CATS。如果问题仍然存在，请更新此电脑的联动扩展程序。",
     business_workspace_backup_setup_saved: "已确认备份密码的受保护登记。请通过“确认此电脑的备份准备”查看其他准备状态。",
     business_workspace_backup_setup_cancelled: "设置窗口已关闭。准备状态尚未确认。",
     business_workspace_backup_setup_failed: "设置未完成。请确认专用窗口中的说明。",
@@ -15080,14 +15092,16 @@ async function openDcatsCompanyBackupSetup() {
   try {
     var bridge=window.DcatsHanbaiohCompanyBridge;
     if(!bridge||typeof bridge.openBackupSetupFromPc!=="function")throw new Error("company_extension_update_required");
-    var result=await bridge.openBackupSetupFromPc({actorId:actor,isCurrent:isCurrent});
+    var result=await bridge.openBackupSetupFromPc({actorId:actor,isCurrent:isCurrent,onStage:function(stage){
+      if(isCurrent()&&["device","authorization","opening","opened"].includes(stage))setDcatsCompanyBackupStatus("business_workspace_backup_setup_"+stage);
+    }});
     if(!isCurrent())return;
     var status=result.status;
     setDcatsCompanyBackupStatus("business_workspace_backup_setup_"+status,status==="saved"?"ready":["failed","outcome_unknown","expired"].includes(status)?"error":"pending");
   } catch(error) {
     if(isCurrent()) {
       var reason=error&&error.message,known=["company_bridge_unavailable","company_extension_update_required","company_native_host_unavailable","company_device_unavailable","company_authentication_required","company_not_authorized","company_binding_unavailable","company_issuer_unavailable","company_ticket_unavailable"];
-      setDcatsCompanyBackupStatus(known.includes(reason)?"business_workspace_account_"+reason.slice(8):"business_workspace_backup_setup_outcome_unknown","error");
+      setDcatsCompanyBackupStatus(reason==="company_backup_window_unavailable"?"business_workspace_backup_setup_window_unavailable":known.includes(reason)?"business_workspace_account_"+reason.slice(8):"business_workspace_backup_setup_outcome_unknown","error");
     }
   } finally {dcatsCompanyBackupBusy=false;button.removeAttribute("aria-busy");updateDcatsCompanyIntegrationControls();}
 }
