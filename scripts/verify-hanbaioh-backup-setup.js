@@ -10,7 +10,7 @@ function fixture(mode={}){
     addEventListener(n,f){if(!listeners.has(n))listeners.set(n,new Set());listeners.get(n).add(f);},removeEventListener(n,f){listeners.get(n)?.delete(f);},
     postMessage(m){posts.push(structuredClone(m));const q=m.request;if(!q)return;
       if(q.command==='read_hanbaioh_company_device'){emit({id:q.id,ok:true,command:q.command,data:{...record,...(mode.actor?{actor_id:device}:{})}});return;}
-      assert.equal(q.command,'open_hanbaioh_company_backup_setup');assert.equal(Object.keys(q).sort().join(','),'capability,command,deviceId,id');
+      assert.equal(q.command,'open_hanbaioh_company_backup_setup');assert.equal(Object.keys(q).sort().join(','),'capability,command,confirmStartup,deviceId,id');assert.equal(q.confirmStartup,true);
       if(mode.oldExtension){emit({ok:false,error:{code:'REQUEST_REJECTED',message:'PRIVATE'}});return;}
       if(!mode.noOpened){queueMicrotask(()=>{for(const fn of listeners.get('message')||[])fn({source:win,origin:win.location.origin,data:{channel:'dcats-hanbaioh25-bridge-v1',type:'company_backup_setup_opened',id:q.id,...(mode.badOpened?{password:'PRIVATE'}:{})}});});}
       if(mode.timeout)return;
