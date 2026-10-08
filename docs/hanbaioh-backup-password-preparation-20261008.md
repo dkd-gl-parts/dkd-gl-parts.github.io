@@ -8,12 +8,12 @@ The public request remains administrator-only. Browser presentation and fixed fl
 
 Verification:
 
-- All129 commands from `.github/workflows/search-performance-guard.yml` passed, including syntax, feature contracts, static build and response headers.
-- 65 headless UI cases passed across Japanese/English/Chinese at1280/390/320px, with pending, failure, expiry, unknown and hidden-role states. No private session was copied; no user browser tab was opened.
-- Native528 related tests:526 passed, zero failures, two optional legacy product-EXE tests skipped. The new packaged host and private-pipe WinForms test passed.
+- All 129 commands from `.github/workflows/search-performance-guard.yml` passed, including syntax, feature contracts, static build and response headers.
+- 65 headless UI cases passed across Japanese/English/Chinese at 1280/390/320px, with missing startup notification, silent issuer, opened, failed, saved, pending, 403 and hidden-role states. No private session was copied; no user browser tab was opened.
+- Native 528 related tests: 526 passed, zero failures, two optional legacy product-EXE tests skipped. The new packaged host and private-pipe WinForms test passed.
 - Separate synthetic CurrentUser DPAPI check and immutable preparation/full-registration separation passed.
 
-Native compatibility: host/GUI password-preparation package and extension0.5.8. An old extension rejects the new fixed request and receives the existing update guidance. Personal extension activation remains a user action.
+Native compatibility: host/GUI password-preparation package and extension 0.5.8. An old extension rejects the new fixed request and receives the existing update guidance. Personal extension activation remains a user action.
 
 Rollback: review a coordinated frontend/extension/native rollback using retained previous artifacts. Do not erase protected settings or preparations. Actual rollback has not been executed.
 
