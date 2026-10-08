@@ -1295,6 +1295,8 @@ var TRANSLATIONS = {
     product_3d_hunyuan_failed: "Tencentの確認を完了できませんでした。認証・生成権限は未確認です。自動再試行・写真送信・生成は行っていません。",
     product_3d_hunyuan_session: "ログイン状態を確認できません。本人の管理者アカウントでログインし直してください。写真送信・生成は行っていません。",
     product_3d_hunyuan_denied: "この確認には有効なシステム管理者権限が必要です。写真送信・生成は行っていません。",
+    product_3d_hunyuan_code: "エラーコード",
+    product_3d_hunyuan_request: "問い合わせ番号（RequestId）",
     product_3d_model: "3Dモデル",
     product_3d_create: "3Dモデルを作成",
     product_3d_camera_ready: "カメラを開始して商品を枠へ合わせます",
@@ -3786,6 +3788,8 @@ var TRANSLATIONS = {
     product_3d_hunyuan_failed: "Tencent readiness could not be checked. Authentication and generation permission remain unverified. No automatic retry, photos, or generation.",
     product_3d_hunyuan_session: "Your sign-in could not be verified. Sign in again with your own administrator account. No photos or generation were sent.",
     product_3d_hunyuan_denied: "An active system administrator is required for this check. No photos or generation were sent.",
+    product_3d_hunyuan_code: "Error code",
+    product_3d_hunyuan_request: "Support request ID (RequestId)",
     product_3d_model: "3D Model",
     product_3d_create: "Create 3D Model",
     product_3d_camera_ready: "Start the camera and align the product with the guide",
@@ -6288,6 +6292,8 @@ var TRANSLATIONS = {
     product_3d_hunyuan_failed: "未能完成Tencent检查。认证和生成权限尚未确认。未自动重试、未发送照片、未生成。",
     product_3d_hunyuan_session: "无法确认登录状态。请使用本人的管理员账户重新登录。未发送照片、未生成。",
     product_3d_hunyuan_denied: "此检查需要有效的系统管理员权限。未发送照片、未生成。",
+    product_3d_hunyuan_code: "错误代码",
+    product_3d_hunyuan_request: "查询编号（RequestId）",
     product_3d_model: "3D模型",
     product_3d_create: "创建3D模型",
     product_3d_camera_ready: "启动相机并将商品对准轮廓框",
@@ -7601,7 +7607,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1139";
+var APP_VERSION       = "v1.1.1140";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.

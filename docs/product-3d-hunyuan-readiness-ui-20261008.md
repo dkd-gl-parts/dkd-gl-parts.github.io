@@ -1,5 +1,44 @@
 # Tencent query-only readiness UI
 
+## Safe diagnostic extension — v1.1.1140 (local candidate, not released)
+
+On October 8 at17:15JST, additional human screenshot requests were stopped.
+Code tests remain distinct from pending desktop/mobile/keyboard visual gates.
+Concurrent upstream PR259/260/261 (main d15545a, v1.1.1139) were preserved by a
+normal candidate-branch merge. All 13 conflicting files/28 chunks were confirmed
+to differ only in version1137 versus1139; cache/runtime/guard versions were
+synchronized to local candidate1140. This is not a production release. Earlier
+1137 synthetic screenshots remain scoped historical evidence, not1140 acceptance.
+
+The approved admin-only query control can append an exact allowlisted public
+error code and a validated 36-character UUID RequestId using textContent only.
+The client mirrors the server's 47 documented code enums. Unknown extra fields,
+arbitrary text, URLs, malformed IDs and raw messages are omitted. Known status
+text remains compatible with older endpoint replies. Diagnostics are shown only
+for the three provider-error outcomes, after all existing stale-session/role/
+target/pane/DOM checks; they never imply authentication or generation success.
+Japanese, English and Chinese labels are provided. The status wraps on mobile.
+
+Automatic tests: 11 focused Hunyuan behavioral tests, 190 product3D tests and all
+128 authoritative workflow commands pass, as do static build/security-header
+checks. Client/server allowlist parity is 47/47. The first focused assertion
+matched SecretId inside an official enum; it now still forbids key identifiers
+while permitting the documented error enum, without relaxing network/auth rules.
+
+Hidden synthetic browser QA was blocked by a denied localhost browser permission.
+No ordinary browser, credential/session copy or indirect browser workaround was
+used. Desktop/mobile visual and keyboard QA and publication remain pending.
+On October 8 at14:21JST, the human's screenshot confirmed the exact local
+origin's Browse permission was saved as Always allow. A same-origin hidden
+attempt still returned a saved-policy denial before producing a tab or UI.
+The effective blocking source is unknown; no permission bypass was attempted.
+Source CI can run on draft PRs, independently of the blocked visual QA. The
+draft must not merge or deploy until the required QA actually passes. Concurrent
+upstream PR257 was preserved by a normal merge; cache versions were advanced to
+v1.1.1137 rather than reuse its v1.1.1136. This diagnostic candidate is not live.
+The prior verified release below is retained as historical evidence, not proof
+that this new diagnostic UI has passed visual QA or been deployed.
+
 Purpose: let the signed-in administrator check the already deployed
 `product-3d-hunyuan-readiness` endpoint without exposing credentials or starting
 generation. Product 2639 / `aftermarket_new` only, in internal sales/production

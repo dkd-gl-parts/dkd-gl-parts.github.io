@@ -12,7 +12,7 @@ function section(first, next) {
   assert(start >= 0 && end > start);
   return source.slice(start, end);
 }
-const checkSource = section("  async function checkHunyuanReadiness(", "  function sameTripoTarget(");
+const checkSource = section("  function hunyuanDiagnosticText(", "  function sameTripoTarget(");
 const renderSource = section("  async function renderMediaPane(", "  function modelStatusLabel(");
 const response = (status = "provider_response_received_unverified", configured = true) => ({
   data: { status, configured, generation_enabled: false, authentication_verified: false }
@@ -51,7 +51,7 @@ test("explicit click invokes only one fixed query-only readiness request", async
   assert.match(qa.status.textContent, /応答を受信/);
   assert.match(qa.status.textContent, /認証・生成権限・無料枠・Model3.1は未確定/);
   assert.equal(qa.scope.hunyuanReadinessBusy, false);
-  assert.doesNotMatch(checkSource, /\.from\(|\.rpc\(|fetch\(|console\.|SecretId|SecretKey|DCATS_HUNYUAN|setTimeout|action: "(?:start|quote|publish|submit)"/);
+  assert.doesNotMatch(checkSource, /\.from\(|\.rpc\(|fetch\(|console\.|\bSecretId\b|\bSecretKey\b|DCATS_HUNYUAN|setTimeout|action: "(?:start|quote|publish|submit)"/);
   assert.match(source, /if \(hunyuan\) checkHunyuanReadiness\(hunyuan.dataset.hunyuanReadiness, hunyuan\)/);
 });
 test("only the approved admin product/kind gets the button; rendering never invokes Tencent", async () => {
@@ -137,4 +137,40 @@ test("HTTP failures and throws never expose response bodies or exception message
   }
   const qa = harness(async () => { throw new Error("secret-key"); }); await qa.check("sales", qa.button);
   assert.match(qa.status.textContent, /自動再試行/); assert.doesNotMatch(qa.status.textContent, /secret-key/);
+});
+
+const diagnostic = { provider_code: "UnauthorizedOperation", request_id: "ebfba3b4-2547-49f3-8f4f-38701c81a127" };
+test("validated optional diagnostics are text-only and localized without changing the outcome", async () => {
+  for (const lang of ["ja", "en", "zh"]) {
+    const qa = harness(async () => ({ data: { ...response("permission_denied").data, diagnostic } }));
+    qa.scope.t = key => translations[lang][key];
+    await qa.check("sales", qa.button);
+    assert.ok(qa.status.textContent.includes(translations[lang].product_3d_hunyuan_code + ": UnauthorizedOperation"));
+    assert.ok(qa.status.textContent.includes(translations[lang].product_3d_hunyuan_request + ": " + diagnostic.request_id));
+    assert.equal(qa.calls.length, 1);
+  }
+  assert.doesNotMatch(checkSource, /innerHTML|\.json\(|\.text\(|data\.error|data\.message/);
+});
+test("untrusted diagnostics are omitted without breaking older responses", async () => {
+  for (const value of [null, [], "script-secret", {},
+    { ...diagnostic, Message: "script-secret" },
+    { provider_code: "UnauthorizedOperation.NoPermission", request_id: diagnostic.request_id + "\n" },
+    { provider_code: "ResourceNotFound\n", request_id: "https://secret.invalid" },
+    { provider_code: "<script>secret</script>", request_id: 123 }]) {
+    const qa = harness(async () => ({ data: { ...response("permission_denied").data, diagnostic: value } }));
+    await qa.check("sales", qa.button);
+    assert.equal(qa.status.textContent, translations.ja.product_3d_hunyuan_permission);
+  }
+});
+test("only a safe provider outcome displays diagnostics; stale and sign-out responses do not", async () => {
+  for (const status of ["not_configured", "invalid_credentials", "timeout", "provider_http_error", "connected"]) {
+    const qa = harness(async () => ({ data: { ...response(status, status !== "not_configured").data, diagnostic } }));
+    await qa.check("sales", qa.button);
+    assert.doesNotMatch(qa.status.textContent, /UnauthorizedOperation|ebfba3b4/);
+  }
+  let finish;
+  const qa = harness(() => new Promise(resolve => { finish = resolve; }));
+  const pending = qa.check("sales", qa.button); qa.scope.modelCacheEpoch++;
+  finish({ data: { ...response("permission_denied").data, diagnostic } }); await pending;
+  assert.doesNotMatch(qa.status.textContent, /UnauthorizedOperation|ebfba3b4/);
 });

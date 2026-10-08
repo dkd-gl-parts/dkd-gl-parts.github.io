@@ -1157,6 +1157,37 @@
       if (stillCurrent()) status.textContent = "Tripo接続を確認できませんでした。画像送信・生成は開始していません。";
     } finally { if (button.isConnected) button.disabled = false; }
   }
+  function hunyuanDiagnosticText(value) {
+    if (!value || typeof value !== "object" || Array.isArray(value) ||
+        Object.keys(value).some(function (key) { return key !== "provider_code" && key !== "request_id"; })) return "";
+    // Mirror the server's exact documented public enums; never show provider messages.
+    var codes = [
+      "ActionOffline", "AuthFailure.InvalidAuthorization", "AuthFailure.InvalidSecretId",
+      "AuthFailure.MFAFailure", "AuthFailure.SecretIdNotFound", "AuthFailure.SignatureExpire",
+      "AuthFailure.SignatureFailure", "AuthFailure.TokenFailure", "AuthFailure.UnauthorizedOperation",
+      "DryRunOperation", "FailedOperation", "InternalError", "InvalidAction", "InvalidParameter",
+      "InvalidParameterValue", "InvalidRequest", "IpInBlacklist", "IpNotInWhitelist", "LimitExceeded",
+      "MissingParameter", "NoSuchProduct", "NoSuchVersion", "RequestLimitExceeded",
+      "RequestLimitExceeded.GlobalRegionUinLimitExceeded", "RequestLimitExceeded.IPLimitExceeded",
+      "RequestLimitExceeded.UinLimitExceeded", "RequestSizeLimitExceeded", "ResourceInUse",
+      "ResourceInsufficient", "ResourceNotFound", "ResourceUnavailable", "ResponseSizeLimitExceeded",
+      "ServiceUnavailable", "UnauthorizedOperation", "UnknownParameter", "UnsupportedOperation",
+      "UnsupportedProtocol", "UnsupportedRegion", "FailedOperation.EngineRequestTimeout",
+      "FailedOperation.EngineServerError", "FailedOperation.EngineServerLimitExceeded",
+      "FailedOperation.FreeResourcePackExhausted", "FailedOperation.ResourcePackExhausted",
+      "FailedOperation.ServiceNotActivated", "FailedOperation.ServiceStop",
+      "FailedOperation.ServiceStopArrears", "InvalidParameterValue.Model"
+    ];
+    var fields = [];
+    if (typeof value.provider_code === "string" && codes.includes(value.provider_code)) {
+      fields.push(t("product_3d_hunyuan_code") + ": " + value.provider_code);
+    }
+    if (typeof value.request_id === "string" && value.request_id.length === 36 &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value.request_id)) {
+      fields.push(t("product_3d_hunyuan_request") + ": " + value.request_id);
+    }
+    return fields.length ? " / " + fields.join(" / ") : "";
+  }
   async function checkHunyuanReadiness(context, button) {
     if (!sessionModelsEnabled || hunyuanReadinessBusy || !button || button.disabled ||
         ["sales", "production"].indexOf(context) < 0) return;
@@ -1212,6 +1243,9 @@
       } else if (data.configured === true && typeof data.status === "string" &&
           Object.prototype.hasOwnProperty.call(messages, data.status)) {
         status.textContent = t(messages[data.status]);
+        if (["permission_denied", "authentication_rejected", "provider_response_received_unverified"].includes(data.status)) {
+          status.textContent += hunyuanDiagnosticText(data.diagnostic);
+        }
       } else throw new Error("Invalid readiness status");
     } catch (_) {
       if (stillCurrent()) status.textContent = t("product_3d_hunyuan_failed");
@@ -2121,7 +2155,7 @@
     elements["product-3d-viewer-autorotate"].setAttribute("aria-pressed", "false");
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await import("./product-3d-viewer.js?v=1.1.1139");
+      var module = await import("./product-3d-viewer.js?v=1.1.1140");
       if (!targetStillSelected()) {
         if (requestId === viewerRequestId) closeViewer();
         return;
