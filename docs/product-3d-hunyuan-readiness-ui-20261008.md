@@ -1,6 +1,14 @@
 # Tencent query-only readiness UI
 
-## Safe diagnostic extension — v1.1.1137 (local candidate, not released)
+## Safe diagnostic extension — v1.1.1140 (local candidate, not released)
+
+On October 8 at17:15JST, additional human screenshot requests were stopped.
+Code tests remain distinct from pending desktop/mobile/keyboard visual gates.
+Concurrent upstream PR259/260/261 (main d15545a, v1.1.1139) were preserved by a
+normal candidate-branch merge. All 13 conflicting files/28 chunks were confirmed
+to differ only in version1137 versus1139; cache/runtime/guard versions were
+synchronized to local candidate1140. This is not a production release. Earlier
+1137 synthetic screenshots remain scoped historical evidence, not1140 acceptance.
 
 The approved admin-only query control can append an exact allowlisted public
 error code and a validated 36-character UUID RequestId using textContent only.

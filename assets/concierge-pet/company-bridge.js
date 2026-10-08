@@ -82,6 +82,7 @@
         if (response && options.isCurrent() && response.ok === true && response.command === request.command && (!isBackupSetup || opened)) resolve(response.data);
         else {
           var code = response && response.error && response.error.code;
+          if (code === "EXTENSION_CONTEXT_INVALIDATED" && options.isCurrent() && (request.command === "read_hanbaioh_company_device" || isBackupSetup && !opened)) { reject(new Error("company_extension_reload_required")); return; }
           if (isBackupSetup && code === "REQUEST_REJECTED" && options.isCurrent()) { reject(new Error("company_extension_update_required")); return; }
           if (isBackupSetup && !opened) { reject(new Error("company_backup_window_unavailable")); return; }
           if (request.command === "read_hanbaioh_company_device" && options.isCurrent()) {
@@ -140,10 +141,12 @@
       if (typeof options.onStage === "function") options.onStage("authorization");
       var capability = await issueEnrollmentTicket(api, record, request, options);
       if (!options.isCurrent()) throw new Error("company_session_changed");
-      native = { id: request.request_id, command: "open_hanbaioh_company_backup_setup", deviceId: record.device_id, capability: capability, confirmStartup: true };
+      native = { id: request.request_id, command: "open_hanbaioh_company_backup_setup", deviceId: record.device_id, capability: capability, confirmStartup: true, ...(options.recoverPassword === true ? {recoverPassword:true} : {allowPasswordPreparation:true}) };
       if (typeof options.onStage === "function") options.onStage("opening");
       var result = await nativeRequest(native, options);
-      if (!options.isCurrent() || !result || Object.keys(result).join(",") !== "status" || !["saved","cancelled","failed","outcome_unknown","expired"].includes(result.status)) throw new Error("company_backup_setup_unverified");
+      if (!options.isCurrent() || !result || Object.keys(result).join(",") !== "status" || !["saved","pending_recovery","password_recovery_closed","password_not_saved","cancelled","failed","outcome_unknown","expired"].includes(result.status)) throw new Error("company_backup_setup_unverified");
+      if (["password_recovery_closed","password_not_saved"].includes(result.status) && options.recoverPassword !== true) throw new Error("company_backup_setup_unverified");
+      if (options.recoverPassword === true && ["saved","pending_recovery","outcome_unknown"].includes(result.status)) throw new Error("company_backup_setup_unverified");
       return Object.freeze({ status: result.status });
     } finally { if (native) native.capability = ""; active = false; }
   }

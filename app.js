@@ -457,6 +457,10 @@ var TRANSLATIONS = {
     business_workspace_backup_separate: "バックアップ用パスワードは、上の販売王ログイン用とは別に登録します。",
     business_workspace_backup_check: "このPCのバックアップ準備を確認",
     business_workspace_backup_setup: "Google接続・バックアップ用パスワードを設定",
+    business_workspace_backup_recover: "保存したバックアップ用パスワードを確認",
+    business_workspace_backup_recover_hint: "忘れた場合は、登録時と同じD-CATSアカウントで本人確認して、このPCに保存したパスワードを確認できます。PC故障・交換時の共有復旧設定は別途準備が必要です。",
+    business_workspace_backup_setup_password_recovery_closed: "パスワード確認画面を閉じました。",
+    business_workspace_backup_setup_password_not_saved: "このPCにはバックアップ用パスワードが保存されていません。設定ボタンから先に登録してください。",
     business_workspace_backup_setup_hint: "このPCの専用設定画面が開きます。初回はD-CATSの本人確認とGoogleの読取許可を行い、登録準備が整ってからバックアップ用パスワードを入力します。",
     business_workspace_backup_guide_hint: "Google接続が未設定の場合は、先に管理者がD-CATSの共通接続設定を登録します。PC版Google Driveの同期設定とは別の準備です。",
     business_workspace_backup_guide: "Google接続設定の作成手順を開く（新しいタブ）",
@@ -466,6 +470,7 @@ var TRANSLATIONS = {
     business_workspace_backup_setup_opening: "専用設定画面の起動を確認しています…",
     business_workspace_backup_setup_opened: "専用設定画面を開きました。このPCに表示された画面で操作してください。",
     business_workspace_backup_setup_window_unavailable: "専用設定画面の起動を確認できませんでした。設定パネルを閉じてD-CATSを更新してください。改善しない場合は、このPCの連携拡張機能を更新してください。",
+    business_workspace_backup_setup_pending_recovery: "試験用パスワードをこのPCに保護して仮登録しました。復旧設定と本登録の準備が残っています。バックアップ作成・データ取込はまだ開始しません。",
     business_workspace_backup_setup_saved: "バックアップ用パスワードの保護登録を確認しました。「このPCのバックアップ準備を確認」で残りの準備状況を確認できます。",
     business_workspace_backup_setup_cancelled: "設定画面を閉じました。準備状況は未確認です。",
     business_workspace_backup_setup_failed: "設定を完了できませんでした。専用画面の案内を確認してください。",
@@ -503,7 +508,8 @@ var TRANSLATIONS = {
     business_workspace_account_cancelled: "登録をキャンセルしました。",
     business_workspace_account_expired: "入力の有効期限（3分）が切れました。ボタンを押して登録画面を開き直してください。",
     business_workspace_account_failed: "登録の完了を確認できませんでした。入力画面に保存完了が表示された場合は、再登録せず担当者へ確認してください。（確認コード HBR-09）",
-    business_workspace_account_bridge_unavailable: "このブラウザからPCの連携機能へ接続できません。Chrome／Edgeの「拡張機能の管理」で「D-CATS 管理者用 Windows 連携」が有効か確認し、拡張機能とD-CATSのページを再読み込みしてください。（確認コード HBR-01）",
+    business_workspace_account_bridge_unavailable: "PCの連携機能へ接続できません。① 拡張機能の管理で「D-CATS 管理者用 Windows 連携」を有効にし、そのカードの丸い矢印で再読み込みします。② D-CATSに戻り、設定パネルを閉じて画面上部の［更新］を押します。この順に行ってからもう一度お試しください。（確認コード HBR-01）",
+    business_workspace_account_extension_reload_required: "このD-CATS画面と拡張機能の接続が切れています。設定パネルを閉じ、画面上部の［更新］を押してください。再読み込み後、設定を開いてもう一度お試しください。（確認コード HBR-11）",
     business_workspace_account_extension_update_required: "ブラウザに旧版の連携機能が残っています。「拡張機能の管理」で「D-CATS 管理者用 Windows 連携」を再読み込みし、0.5.3以上になったことを確認後、D-CATSのページを再読み込みしてください。続く場合は連携アプリの更新も必要です。（確認コード HBR-02）",
     business_workspace_account_native_host_unavailable: "PCの連携アプリを起動できません。連携アプリの導入・修復が必要です。（確認コード HBR-03）",
     business_workspace_account_device_unavailable: "このPCに、現在のD-CATS利用者の端末登録が見つからないか、読み取れません。担当者へ端末登録の確認を依頼してください。（確認コード HBR-04）",
@@ -2944,6 +2950,10 @@ var TRANSLATIONS = {
     business_workspace_backup_separate: "Register a separate backup password from the Sales King sign-in password above.",
     business_workspace_backup_check: "Check backup preparation on this PC",
     business_workspace_backup_setup: "Set up Google connection and backup password",
+    business_workspace_backup_recover: "View saved backup password",
+    business_workspace_backup_recover_hint: "If forgotten, sign in with the same D-CATS account to view the password protected on this PC. Shared recovery for PC failure or replacement requires separate setup.",
+    business_workspace_backup_setup_password_recovery_closed: "The password viewing window was closed.",
+    business_workspace_backup_setup_password_not_saved: "No backup password is saved on this PC. Register it using the setup button first.",
     business_workspace_backup_setup_hint: "A setup window opens on this PC. On first setup, verify your D-CATS account and grant Google read access. Enter the backup password after registration is ready.",
     business_workspace_backup_guide_hint: "If Google access is not configured, an administrator first registers the shared D-CATS connection settings. This is separate from Google Drive for desktop sync settings.",
     business_workspace_backup_guide: "Open Google configuration guide (Japanese, new tab)",
@@ -2953,6 +2963,7 @@ var TRANSLATIONS = {
     business_workspace_backup_setup_opening: "Waiting for the dedicated setup window to open…",
     business_workspace_backup_setup_opened: "The setup window has opened. Continue in the dedicated window on this PC.",
     business_workspace_backup_setup_window_unavailable: "The setup window did not confirm startup. Close Settings and update D-CATS. If the problem continues, update this PC's integration extension.",
+    business_workspace_backup_setup_pending_recovery: "A test password preparation was protected on this PC. Recovery setup and full registration remain. Backup creation and data imports have not started.",
     business_workspace_backup_setup_saved: "Protected backup password registration was confirmed. Use Check backup preparation on this PC to check the remaining preparation.",
     business_workspace_backup_setup_cancelled: "The setup window was closed. Preparation has not been verified.",
     business_workspace_backup_setup_failed: "Setup was not completed. Check the instructions in the dedicated window.",
@@ -2990,7 +3001,8 @@ var TRANSLATIONS = {
     business_workspace_account_cancelled: "Registration cancelled.",
     business_workspace_account_expired: "The 3-minute input period expired. Press the button to reopen the registration window.",
     business_workspace_account_failed: "Registration completion could not be confirmed. If the input window showed a saved result, contact support before registering again. (Code HBR-09)",
-    business_workspace_account_bridge_unavailable: "This browser cannot connect to the PC integration. In Chrome/Edge's extension manager, check that D-CATS Windows integration is enabled. Reload the extension and the D-CATS page. (Code HBR-01)",
+    business_workspace_account_bridge_unavailable: "Cannot connect to the PC integration. 1. Enable D-CATS Windows integration in the extension manager and reload it using the round arrow on its card. 2. Return to D-CATS, close the settings panel, and press Update at the top of the page. Follow this order, then try again. (Code HBR-01)",
+    business_workspace_account_extension_reload_required: "This D-CATS page is disconnected from the extension. Close the settings panel and press Update at the top of the page. After reloading, open settings and try again. (Code HBR-11)",
     business_workspace_account_extension_update_required: "An older PC integration remains loaded. Reload D-CATS Windows integration in the extension manager, confirm version 0.5.3 or later, then reload the D-CATS page. If this continues, update the PC app too. (Code HBR-02)",
     business_workspace_account_native_host_unavailable: "The PC integration app could not start. Install or repair it. (Code HBR-03)",
     business_workspace_account_device_unavailable: "This PC's registration for the current D-CATS user is missing or unreadable. Ask support to check the device registration. (Code HBR-04)",
@@ -5375,6 +5387,10 @@ var TRANSLATIONS = {
     business_workspace_backup_separate: "备份密码与上方的销售王登录密码分别登记。",
     business_workspace_backup_check: "确认此电脑的备份准备",
     business_workspace_backup_setup: "设置Google连接及备份密码",
+    business_workspace_backup_recover: "查看已保存的备份密码",
+    business_workspace_backup_recover_hint: "忘记密码时，使用登记时的D-CATS账号验证身份，即可查看此电脑保护保存的密码。电脑故障或更换时的共享恢复需要另外设置。",
+    business_workspace_backup_setup_password_recovery_closed: "已关闭密码查看窗口。",
+    business_workspace_backup_setup_password_not_saved: "此电脑尚未保存备份密码。请先通过设置按钮登记。",
     business_workspace_backup_setup_hint: "此电脑将打开专用设置窗口。首次设置时需确认D-CATS本人账户并授予Google读取权限。登记准备完成后再输入备份密码。",
     business_workspace_backup_guide_hint: "如果尚未设置Google连接，请先由管理员登记D-CATS共用连接设置。此步骤与电脑版Google Drive的同步设置不同。",
     business_workspace_backup_guide: "打开Google连接设置步骤（日语，新标签页）",
@@ -5384,6 +5400,7 @@ var TRANSLATIONS = {
     business_workspace_backup_setup_opening: "正在等待专用设置窗口打开…",
     business_workspace_backup_setup_opened: "专用设置窗口已打开。请在此电脑的窗口中操作。",
     business_workspace_backup_setup_window_unavailable: "未能确认设置窗口启动。请关闭设置并更新D-CATS。如果问题仍然存在，请更新此电脑的联动扩展程序。",
+    business_workspace_backup_setup_pending_recovery: "已在此电脑保护并暂存测试密码。恢复设置和正式登记尚未完成，不会开始备份或数据导入。",
     business_workspace_backup_setup_saved: "已确认备份密码的受保护登记。请通过“确认此电脑的备份准备”查看其他准备状态。",
     business_workspace_backup_setup_cancelled: "设置窗口已关闭。准备状态尚未确认。",
     business_workspace_backup_setup_failed: "设置未完成。请确认专用窗口中的说明。",
@@ -5421,7 +5438,8 @@ var TRANSLATIONS = {
     business_workspace_account_cancelled: "已取消登记。",
     business_workspace_account_expired: "3分钟输入期限已过。请点击按钮重新打开登记窗口。",
     business_workspace_account_failed: "无法确认登记完成。若输入窗口已显示保存成功，请先联系负责人，不要再次登记。（确认代码 HBR-09）",
-    business_workspace_account_bridge_unavailable: "此浏览器无法连接电脑联动功能。请在Chrome／Edge的扩展管理中确认D-CATS Windows联动扩展已启用，并重新加载扩展及D-CATS页面。（确认代码 HBR-01）",
+    business_workspace_account_bridge_unavailable: "无法连接电脑联动功能。① 在扩展管理中启用D-CATS Windows联动扩展，并点击该卡片的圆形箭头重新加载。② 返回D-CATS，关闭设置面板，点击页面顶部的［更新］。请按此顺序操作后重试。（确认代码 HBR-01）",
+    business_workspace_account_extension_reload_required: "此D-CATS页面与扩展的连接已断开。请关闭设置面板，点击页面顶部的［更新］。重新加载后打开设置并重试。（确认代码 HBR-11）",
     business_workspace_account_extension_update_required: "浏览器仍加载旧版联动功能。请在扩展管理中重新加载D-CATS Windows联动扩展，确认版本为0.5.3或以上后重新加载D-CATS页面。若仍失败，也需要更新电脑应用。（确认代码 HBR-02）",
     business_workspace_account_native_host_unavailable: "无法启动电脑联动应用。请安装或修复应用。（确认代码 HBR-03）",
     business_workspace_account_device_unavailable: "找不到或无法读取当前D-CATS用户在此电脑上的设备登记。请联系负责人确认。（确认代码 HBR-04）",
@@ -7589,7 +7607,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1137";
+var APP_VERSION       = "v1.1.1140";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -15020,7 +15038,7 @@ async function registerDcatsCompanyAccount() {
   }catch(error){
     if(isCurrent()){
       var reason=error&&error.message;
-      var allowed=["company_bridge_unavailable","company_extension_update_required","company_native_host_unavailable","company_device_unavailable","company_authentication_required","company_not_authorized","company_binding_unavailable","company_issuer_unavailable","company_ticket_unavailable"];
+      var allowed=["company_bridge_unavailable","company_extension_reload_required","company_extension_update_required","company_native_host_unavailable","company_device_unavailable","company_authentication_required","company_not_authorized","company_binding_unavailable","company_issuer_unavailable","company_ticket_unavailable"];
       var key=allowed.includes(reason)?"business_workspace_account_"+reason.slice("company_".length):"business_workspace_account_failed";
       status.className="error";status.textContent=t(key);
     }
@@ -15045,6 +15063,8 @@ function updateDcatsCompanyIntegrationControls() {
   if(backupCheck)backupCheck.disabled=busy;
   var backupSetup=document.getElementById("dcats-business-workspace-backup-setup");
   if(backupSetup)backupSetup.disabled=busy;
+  var backupRecover=document.getElementById("dcats-business-workspace-backup-recover");
+  if(backupRecover)backupRecover.disabled=busy;
 }
 
 async function runDcatsCompanyIntegration(action, category) {
@@ -15075,16 +15095,17 @@ async function runDcatsCompanyIntegration(action, category) {
   } catch(error) {
     if(isCurrent()) {
       var reason=error&&error.message;
-      var codes=["company_bridge_unavailable","company_extension_update_required","company_native_host_unavailable","company_device_unavailable"];
+      var codes=["company_bridge_unavailable","company_extension_reload_required","company_extension_update_required","company_native_host_unavailable","company_device_unavailable"];
       status.className="error";
       status.textContent=reason==="company_export_disabled"?t("business_workspace_company_disabled"):codes.includes(reason)?t("business_workspace_account_"+reason.slice(8)):t(action==="connect"?"business_workspace_company_connection_failed":action==="login"?"business_workspace_company_login_failed":"business_workspace_company_pending");
     }
   } finally {dcatsCompanyIntegrationBusy=false;updateDcatsCompanyIntegrationControls();}
 }
 
-async function openDcatsCompanyBackupSetup() {
+async function openDcatsCompanyBackupSetup(recoverPassword) {
+  recoverPassword=recoverPassword===true;
   if(dcatsCompanyAccountBusy||dcatsCompanyIntegrationBusy||dcatsCompanyBackupBusy||!currentUser||!isSystemAdmin())return;
-  var actor=currentUser.id,epoch=dcatsCompanyIntegrationEpoch,overlay=document.getElementById("dcats-business-workspace-settings-overlay"),button=document.getElementById("dcats-business-workspace-backup-setup");
+  var actor=currentUser.id,epoch=dcatsCompanyIntegrationEpoch,overlay=document.getElementById("dcats-business-workspace-settings-overlay"),button=document.getElementById(recoverPassword?"dcats-business-workspace-backup-recover":"dcats-business-workspace-backup-setup");
   function isCurrent(){return !!currentUser&&currentUser.id===actor&&isSystemAdmin()&&epoch===dcatsCompanyIntegrationEpoch&&overlay.classList.contains("show");}
   if(!isCurrent())return;
   resetDcatsCompanyBackupReadiness();dcatsCompanyBackupBusy=true;updateDcatsCompanyIntegrationControls();button.setAttribute("aria-busy","true");
@@ -15092,7 +15113,7 @@ async function openDcatsCompanyBackupSetup() {
   try {
     var bridge=window.DcatsHanbaiohCompanyBridge;
     if(!bridge||typeof bridge.openBackupSetupFromPc!=="function")throw new Error("company_extension_update_required");
-    var result=await bridge.openBackupSetupFromPc({actorId:actor,isCurrent:isCurrent,onStage:function(stage){
+    var result=await bridge.openBackupSetupFromPc({actorId:actor,isCurrent:isCurrent,recoverPassword:recoverPassword,onStage:function(stage){
       if(isCurrent()&&["device","authorization","opening","opened"].includes(stage))setDcatsCompanyBackupStatus("business_workspace_backup_setup_"+stage);
     }});
     if(!isCurrent())return;
@@ -15100,7 +15121,7 @@ async function openDcatsCompanyBackupSetup() {
     setDcatsCompanyBackupStatus("business_workspace_backup_setup_"+status,status==="saved"?"ready":["failed","outcome_unknown","expired"].includes(status)?"error":"pending");
   } catch(error) {
     if(isCurrent()) {
-      var reason=error&&error.message,known=["company_bridge_unavailable","company_extension_update_required","company_native_host_unavailable","company_device_unavailable","company_authentication_required","company_not_authorized","company_binding_unavailable","company_issuer_unavailable","company_ticket_unavailable"];
+      var reason=error&&error.message,known=["company_bridge_unavailable","company_extension_reload_required","company_extension_update_required","company_native_host_unavailable","company_device_unavailable","company_authentication_required","company_not_authorized","company_binding_unavailable","company_issuer_unavailable","company_ticket_unavailable"];
       setDcatsCompanyBackupStatus(reason==="company_backup_window_unavailable"?"business_workspace_backup_setup_window_unavailable":known.includes(reason)?"business_workspace_account_"+reason.slice(8):"business_workspace_backup_setup_outcome_unknown","error");
     }
   } finally {dcatsCompanyBackupBusy=false;button.removeAttribute("aria-busy");updateDcatsCompanyIntegrationControls();}
@@ -15142,7 +15163,7 @@ async function checkDcatsCompanyBackupReadiness() {
   } catch(error) {
     if(isCurrent()) {
       var reason=error&&error.message;
-      var known=["company_bridge_unavailable","company_extension_update_required","company_native_host_unavailable","company_device_unavailable","company_authentication_required","company_not_authorized","company_binding_unavailable","company_issuer_unavailable","company_ticket_unavailable"];
+      var known=["company_bridge_unavailable","company_extension_reload_required","company_extension_update_required","company_native_host_unavailable","company_device_unavailable","company_authentication_required","company_not_authorized","company_binding_unavailable","company_issuer_unavailable","company_ticket_unavailable"];
       setDcatsCompanyBackupStatus(known.includes(reason)?"business_workspace_account_"+reason.slice(8):"business_workspace_backup_failed","error");
     }
   } finally {dcatsCompanyBackupBusy=false;button.removeAttribute("aria-busy");updateDcatsCompanyIntegrationControls();}
@@ -56099,7 +56120,8 @@ document.getElementById("dcats-business-workspace-shortcut").addEventListener("c
 document.getElementById("dcats-business-workspace-b2-select").addEventListener("click", configureDcatsB2ExportDirectory);
 document.getElementById("dcats-business-workspace-account-register").addEventListener("click", registerDcatsCompanyAccount);
 document.getElementById("dcats-business-workspace-backup-check").addEventListener("click", checkDcatsCompanyBackupReadiness);
-document.getElementById("dcats-business-workspace-backup-setup").addEventListener("click", openDcatsCompanyBackupSetup);
+document.getElementById("dcats-business-workspace-backup-setup").addEventListener("click", function(){openDcatsCompanyBackupSetup(false);});
+document.getElementById("dcats-business-workspace-backup-recover").addEventListener("click", function(){openDcatsCompanyBackupSetup(true);});
 document.getElementById("dcats-business-workspace-company-connect").addEventListener("click", function(){runDcatsCompanyIntegration("connect");});
 document.getElementById("dcats-business-workspace-company-login").addEventListener("click", function(){runDcatsCompanyIntegration("login");});
 document.querySelectorAll("[data-company-export]").forEach(function(button){button.addEventListener("click",function(){runDcatsCompanyIntegration("export",button.dataset.companyExport);});});

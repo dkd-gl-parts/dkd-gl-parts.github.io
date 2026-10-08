@@ -42,6 +42,7 @@ function fixture(mode={}){
   for(const [mode,code] of [
     [{oldExtension:true},"company_extension_update_required"],
     [{noReply:true},"company_bridge_unavailable"],
+    [{nativeFailure:"EXTENSION_CONTEXT_INVALIDATED"},"company_extension_reload_required"],
     [{nativeFailure:"NATIVE_HOST_UNAVAILABLE"},"company_native_host_unavailable"],
     [{nativeFailure:"REQUEST_REJECTED",deviceMissing:true},"company_device_unavailable"],
     [{httpStatus:401},"company_authentication_required"],
@@ -58,7 +59,7 @@ function fixture(mode={}){
   const html=fs.readFileSync(path.join(root,"index.html"),"utf8"),app=fs.readFileSync(path.join(root,"app.js"),"utf8");
   const card=html.slice(html.indexOf('<section class="dcats-business-workspace-account"'),html.indexOf('</section>', html.indexOf('<section class="dcats-business-workspace-account"')));
   assert(card.includes('id="dcats-business-workspace-account"'));assert(card.includes(" hidden>"));assert(card.includes('role="status"'));assert(!card.includes('<input'));
-  for(const name of ["title","hint","update_hint","register","note","opening","saved","updated","cancelled","expired","failed","bridge_unavailable","extension_update_required","native_host_unavailable","device_unavailable","authentication_required","not_authorized","binding_unavailable","issuer_unavailable","ticket_unavailable"])assert.equal((app.match(new RegExp("business_workspace_account_"+name+":","g"))||[]).length,3,name);
+  for(const name of ["title","hint","update_hint","register","note","opening","saved","updated","cancelled","expired","failed","bridge_unavailable","extension_update_required","extension_reload_required","native_host_unavailable","device_unavailable","authentication_required","not_authorized","binding_unavailable","issuer_unavailable","ticket_unavailable"])assert.equal((app.match(new RegExp("business_workspace_account_"+name+":","g"))||[]).length,3,name);
   assert(app.includes('enroll_hanbaioh_company_account: false'));assert(app.includes('dcats-business-workspace-account-register"'));
   console.log("Company enrollment GUI entry: public device discovery, fresh same-owner approval, cancellation/revocation, no browser passwords, no login retry, three languages: OK");
 })().catch(e=>{console.error(e);process.exitCode=1;});
