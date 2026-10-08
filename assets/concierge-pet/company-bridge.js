@@ -70,7 +70,7 @@
     return new Promise(function (resolve, reject) {
       var settled = false, opened = false;
       var isReadiness = request.command === "read_hanbaioh_company_backup_readiness";
-      var isBackupSetup = request.command === "open_hanbaioh_company_backup_setup" || request.command === "open_hanbaioh_preimport_backup";
+      var isBackupSetup = request.command === "open_hanbaioh_company_backup_setup" || request.command === "open_hanbaioh_preimport_backup" || request.command === "open_hanbaioh_preimport_backup_result";
       var isExport = request.command.startsWith("export_hanbaioh_") || request.command === "read_hanbaioh_company_export" || isReadiness;
       var timer = window.setTimeout(function () { finish(null); }, isBackupSetup ? 20000 : isReadiness ? 20000 : request.command === "login_hanbaioh_company" || isExport ? 210000 : request.command === "read_hanbaioh_company_device" ? 5000 : 30000);
       var watch = window.setInterval(function () { if (!options.isCurrent()) finish(null); }, 250);
@@ -238,6 +238,21 @@
     var exact = function (value, fields) { return value && !Array.isArray(value) && Object.keys(value).sort().join(",") === fields; };
     var sha = function (value) { return typeof value === "string" && /^[0-9a-f]{64}$/.test(value); };
     if (!data || data.category !== request.category) fail();
+    if (request.command === "open_hanbaioh_preimport_backup_result") {
+      if (["cancelled", "failed", "expired", "outcome_unknown"].includes(data.status)) {
+        if (!exact(data, "category,status")) fail();
+        return { category: data.category, status: data.status, requestId: request.id };
+      }
+      var c = data.checkpoint, stages = ["not_started", "attempt_recorded", "local_backup_verified", "delivery_recorded"];
+      if (!exact(data, "category,checkpoint,status") || data.status !== "checkpoint" || !exact(c, "backupRequestId,finishedAt,stage,startedAt") || !stages.includes(c.stage)) fail();
+      if (c.stage === "not_started") { if (c.backupRequestId !== null || c.startedAt !== null || c.finishedAt !== null) fail(); }
+      else {
+        if (typeof c.backupRequestId !== "string" || !uuid.test(c.backupRequestId) || !Number.isSafeInteger(c.startedAt) || c.startedAt <= 0 || c.startedAt > Date.now()) fail();
+        if (c.stage === "attempt_recorded") { if (c.finishedAt !== null) fail(); }
+        else if (!Number.isSafeInteger(c.finishedAt) || c.finishedAt < c.startedAt || c.finishedAt > Date.now() || c.finishedAt >= c.startedAt + 600000) fail();
+      }
+      return { category: data.category, status: "checkpoint", requestId: request.id, checkpoint: { stage: c.stage, backupRequestId: c.backupRequestId, startedAt: c.startedAt, finishedAt: c.finishedAt } };
+    }
     if (["cancelled", "failed", "expired", "outcome_unknown"].includes(data.status)) {
       if (!exact(data, "category,status")) fail();
     } else if (data.status === "blocked") {
@@ -263,7 +278,7 @@
       ...(data.status === "blocked" ? { readiness: data.readiness } : {}),
       ...(data.status === "stopped" ? { attemptRecorded: data.receipt.attemptRecorded, backupMayHaveStarted: data.receipt.backupMayHaveStarted } : {}) };
   }
-  async function run(options, category, preimport) {
+  async function run(options, category, preimport, inspectResult) {
     requireCurrent(options);
     var api = window.DcatsHanbaiohCompanyApi;
     if (active || !api || typeof api.issue !== "function" || preimport && category === "account" || category !== "account" && !Object.hasOwn(commands, category)) throw new Error("company_operation_unavailable");
@@ -284,7 +299,7 @@
         bytes.fill(0); bytes = null;
       }
       requireCurrent(options);
-      if (preimport) {
+      if (preimport && !inspectResult) {
         backupMarker = "dcats-company-preimport:" + actorKey(options.record) + ":" + category + ":" + body.source_sha256;
         try { if (window.sessionStorage.getItem(backupMarker)) throw new Error("company_backup_already_attempted"); }
         catch (error) { throw new Error(error.message === "company_backup_already_attempted" ? error.message : "company_operation_unavailable"); }
@@ -296,10 +311,10 @@
       request = { id: body.request_id, command: body.command, deviceId: body.device_id, capability: capability };
       if (!isLogin) request.fileName = body.file_name;
       if (preimport) {
-        request.command = "open_hanbaioh_preimport_backup"; request.category = category; request.confirmStartup = true;
+        request.command = inspectResult ? "open_hanbaioh_preimport_backup_result" : "open_hanbaioh_preimport_backup"; request.category = category; request.confirmStartup = true;
         // Persist only the request ID, keyed by owner, device, category and CSV
         // hash. Reload or a lost response must not submit the same source again.
-        try { window.sessionStorage.setItem(backupMarker, request.id); }
+        try { if (!inspectResult) window.sessionStorage.setItem(backupMarker, request.id); }
         catch { throw new Error("company_operation_unavailable"); }
       }
       if (isLogin) loginAttempts.add(key);
@@ -307,7 +322,7 @@
       requireCurrent(options);
       if (preimport) {
         var result = validatePreimportResult(data, request, options);
-        if (["blocked", "cancelled", "failed", "expired"].includes(result.status) || result.status === "stopped" && !result.attemptRecorded && !result.backupMayHaveStarted)
+        if (!inspectResult && (["blocked", "cancelled", "failed", "expired"].includes(result.status) || result.status === "stopped" && !result.attemptRecorded && !result.backupMayHaveStarted))
           window.sessionStorage.removeItem(backupMarker);
         return result;
       }
@@ -381,6 +396,7 @@
     loginOnce: function (options) { return run(options, "account"); },
     prepareCsv: function (options) { return run(options, options.category); },
     backupBeforePrepare: function (options) { return run(options, options.category, true); },
+    readBackupCheckpointFromPc: function (options) { return run(options, options.category, true, true); },
     enrollAccountFromPc: enrollAccountFromPc,
     readDeviceFromPc: readDeviceFromPc,
     readBackupReadinessFromPc: readBackupReadinessFromPc,
