@@ -440,6 +440,18 @@ var TRANSLATIONS = {
     business_workspace_company_sales: "売上",
     business_workspace_company_export: "販売王からCSV出力",
     business_workspace_company_result: "結果を確認",
+    business_workspace_company_backup_hint: "取込用CSVは、このPCの受信フォルダーへ保存した同じファイルを選択します。本人確認と準備状況の確認後に、バックアップを実行します。販売王への取込はまだ行いません。",
+    business_workspace_company_inbox: "CSV受信フォルダーの場所",
+    business_workspace_company_backup_csv: "取込用CSVを選択",
+    business_workspace_company_backup: "バックアップ・CSV取込準備",
+    business_workspace_company_backup_working: "このPCの専用画面を開いています。",
+    business_workspace_company_backup_opened: "専用画面でD-CATSの本人確認を行い、準備状況を確認してください。準備が整うと実行ボタンが表示されます。",
+    business_workspace_company_backup_completed: "バックアップの保存とCSV準備を確認しました。販売王への取込は行っていません。",
+    business_workspace_company_backup_blocked: "バックアップの準備が不足しています。専用画面に表示された項目を、メニューの「D-CATS業務連携設定」で確認してください。",
+    business_workspace_company_backup_cancelled: "キャンセルしました。バックアップは開始していません。",
+    business_workspace_company_backup_stopped: "バックアップを完了できませんでした。担当者が処理記録を確認してください。",
+    business_workspace_company_backup_unknown: "結果を確認できません。同じCSVを再実行せず、担当者が処理記録を確認してください。",
+    business_workspace_company_backup_csv_invalid: "受信フォルダーに保存したCSVファイルを1つ選択してください。",
     business_workspace_company_connect_working: "このPCの接続を確認しています。",
     business_workspace_company_login_working: "保存したパスワードで販売王へログインしています。",
     business_workspace_company_export_working: "販売王からCSVを出力しています。完了までお待ちください。",
@@ -2932,6 +2944,18 @@ var TRANSLATIONS = {
     business_workspace_company_sales: "Sales",
     business_workspace_company_export: "Export CSV from Sales King",
     business_workspace_company_result: "Check result",
+    business_workspace_company_backup_hint: "Select the same import CSV saved in this PC's inbox. After identity and readiness checks, start the backup. Sales King import is not performed yet.",
+    business_workspace_company_inbox: "CSV inbox location",
+    business_workspace_company_backup_csv: "Select import CSV",
+    business_workspace_company_backup: "Backup and prepare CSV import",
+    business_workspace_company_backup_working: "Opening this PC's dedicated window.",
+    business_workspace_company_backup_opened: "Verify your D-CATS identity and readiness in the dedicated window. The start button appears when all requirements are ready.",
+    business_workspace_company_backup_completed: "Backup delivery and CSV preparation verified. No Sales King import was performed.",
+    business_workspace_company_backup_blocked: "Backup requirements are incomplete. Review the items shown in the dedicated window under D-CATS workspace settings.",
+    business_workspace_company_backup_cancelled: "Cancelled. No backup was started.",
+    business_workspace_company_backup_stopped: "Backup could not be completed. Ask the administrator to review the operation record.",
+    business_workspace_company_backup_unknown: "The result is unverified. Do not run the same CSV again. Ask the administrator to review the operation record.",
+    business_workspace_company_backup_csv_invalid: "Select one CSV saved in the PC inbox.",
     business_workspace_company_connect_working: "Checking this PC connection.",
     business_workspace_company_login_working: "Signing in to Sales King with the saved password.",
     business_workspace_company_export_working: "Exporting CSV from Sales King. Please wait for completion.",
@@ -5368,6 +5392,18 @@ var TRANSLATIONS = {
     business_workspace_company_sales: "销售",
     business_workspace_company_export: "从销售王导出CSV",
     business_workspace_company_result: "确认结果",
+    business_workspace_company_backup_hint: "请选择保存在此电脑收件文件夹中的同一导入CSV。完成身份及准备确认后开始备份。尚不执行销售王导入。",
+    business_workspace_company_inbox: "CSV收件文件夹位置",
+    business_workspace_company_backup_csv: "选择导入CSV",
+    business_workspace_company_backup: "备份及CSV导入准备",
+    business_workspace_company_backup_working: "正在打开此电脑的专用画面。",
+    business_workspace_company_backup_opened: "请在专用画面完成D-CATS身份及准备确认。全部就绪后显示执行按钮。",
+    business_workspace_company_backup_completed: "已确认备份保存及CSV准备。尚未执行销售王导入。",
+    business_workspace_company_backup_blocked: "备份准备尚未完成。请在菜单中的D-CATS业务联动设置核对专用画面显示的项目。",
+    business_workspace_company_backup_cancelled: "已取消。备份尚未开始。",
+    business_workspace_company_backup_stopped: "无法完成备份。请负责人确认处理记录。",
+    business_workspace_company_backup_unknown: "无法确认结果。请勿再次执行同一CSV，请负责人确认处理记录。",
+    business_workspace_company_backup_csv_invalid: "请选择此电脑收件文件夹中的一个CSV。",
     business_workspace_company_connect_working: "正在确认此电脑连接。",
     business_workspace_company_login_working: "正在使用已保存的密码登录销售王。",
     business_workspace_company_export_working: "正在从销售王导出CSV。请等待完成。",
@@ -7604,7 +7640,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1140";
+var APP_VERSION       = "v1.1.1141";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -14981,6 +15017,7 @@ function closeDcatsBusinessWorkspace(restoreFocus) {
   var settings = document.getElementById("dcats-business-workspace-settings-overlay");
   if (settings) settings.classList.remove("show");
   dcatsBusinessWorkspaceSettingsReturn = false;
+  if (overlay) overlay.querySelectorAll("[data-company-backup-file]").forEach(function(input){input.value="";});
   if (restoreFocus !== false && dcatsBusinessWorkspaceTrigger && typeof dcatsBusinessWorkspaceTrigger.focus === "function") {
     dcatsBusinessWorkspaceTrigger.focus();
   }
@@ -15009,6 +15046,7 @@ function syncDcatsCompanyAccountControls() {
     if(dcatsCompanyAccountBusy||dcatsCompanyIntegrationBusy||dcatsCompanyBackupBusy)window.DcatsHanbaiohCompanyBridge?.cancelCurrent();
     resetDcatsCompanyBackupReadiness();
     dcatsCompanyIntegrationRecord=null;
+    if(integration)integration.querySelectorAll("[data-company-backup-file]").forEach(function(input){input.value="";});
     if(integration)integration.querySelectorAll('[role="status"]').forEach(function(node){node.textContent="";node.className="";});
     var status=document.getElementById("dcats-business-workspace-account-status");
     if(status){status.textContent="";status.className="";}
@@ -15048,12 +15086,14 @@ function updateDcatsCompanyIntegrationControls() {
   var record=dcatsCompanyIntegrationRecord,busy=dcatsCompanyAccountBusy||dcatsCompanyIntegrationBusy||dcatsCompanyBackupBusy;
   var allowed=!!currentUser&&isSystemAdmin()&&record&&record.actor_id===currentUser.id;
   section.querySelectorAll("button").forEach(function(button){
-    var category=button.dataset.companyExport||button.dataset.companyResult;
+    var category=button.dataset.companyExport||button.dataset.companyResult||button.dataset.companyBackup;
     if(button.id==="dcats-business-workspace-company-connect")button.disabled=busy;
     else if(button.id==="dcats-business-workspace-company-login")button.disabled=busy||!allowed||!bridge||bridge.wasLoginAttempted(record);
     else if(button.dataset.companyExport)button.disabled=busy||!allowed||!bridge||!bridge.wasLoginVerified(record)||bridge.wasExportAttempted(record,category);
+    else if(button.dataset.companyBackup){var file=section.querySelector('[data-company-backup-file="'+category+'"]');button.disabled=busy||!allowed||!bridge||!file||!file.files||file.files.length!==1;}
     else button.disabled=busy||!allowed||!bridge||!bridge.wasExportAttempted(record,category);
   });
+  section.querySelectorAll("[data-company-backup-file]").forEach(function(input){input.disabled=busy||!allowed;});
   var register=document.getElementById("dcats-business-workspace-account-register");
   if(register)register.disabled=busy;
   var backupCheck=document.getElementById("dcats-business-workspace-backup-check");
@@ -15065,8 +15105,8 @@ function updateDcatsCompanyIntegrationControls() {
 }
 
 async function runDcatsCompanyIntegration(action, category) {
-  if(dcatsCompanyAccountBusy||dcatsCompanyIntegrationBusy||dcatsCompanyBackupBusy||!currentUser||!isSystemAdmin()||!["connect","login","export","result"].includes(action))return;
-  if(["export","result"].includes(action)&&!["products","customers","sales"].includes(category))return;
+  if(dcatsCompanyAccountBusy||dcatsCompanyIntegrationBusy||dcatsCompanyBackupBusy||!currentUser||!isSystemAdmin()||!["connect","login","export","result","backup"].includes(action))return;
+  if(["export","result","backup"].includes(action)&&!["products","customers","sales"].includes(category))return;
   var actor=currentUser.id,epoch=dcatsCompanyIntegrationEpoch,overlay=document.getElementById("dcats-business-workspace-overlay");
   var status=category?document.querySelector('[data-company-status="'+category+'"]'):document.getElementById("dcats-business-workspace-company-status");
   function isCurrent(){return !!currentUser&&currentUser.id===actor&&isSystemAdmin()&&epoch===dcatsCompanyIntegrationEpoch&&overlay.classList.contains("show");}
@@ -15082,8 +15122,17 @@ async function runDcatsCompanyIntegration(action, category) {
       status.className="ready";status.textContent=t("business_workspace_company_connected");return;
     }
     var options={record:dcatsCompanyIntegrationRecord,isCurrent:isCurrent,category:category};
-    var result=action==="login"?await bridge.loginOnce(options):action==="export"?await bridge.exportCsvOnce(options):await bridge.readExportResult(options);
+    if(action==="backup"){
+      var input=document.querySelector('[data-company-backup-file="'+category+'"]');
+      if(!input||!input.files||input.files.length!==1)throw new Error("company_csv_unavailable");
+      options.file=input.files[0];options.onStage=function(stage){if(stage==="opened"&&isCurrent())status.textContent=t("business_workspace_company_backup_opened");};
+    }
+    var result=action==="backup"?await bridge.backupBeforePrepare(options):action==="login"?await bridge.loginOnce(options):action==="export"?await bridge.exportCsvOnce(options):await bridge.readExportResult(options);
     if(!isCurrent())return;
+    if(action==="backup"){
+      status.className=result.status==="completed"?"ready":result.status==="cancelled"?"":"error";
+      status.textContent=t(result.status==="completed"?"business_workspace_company_backup_completed":result.status==="blocked"?"business_workspace_company_backup_blocked":result.status==="cancelled"?"business_workspace_company_backup_cancelled":result.status==="outcome_unknown"||result.backupMayHaveStarted?"business_workspace_company_backup_unknown":"business_workspace_company_backup_stopped");return;
+    }
     if(result.status==="login_verified"){status.className="ready";status.textContent=t("business_workspace_company_logged_in");}
     else if(result.status==="export_verified") {
       status.className="ready";status.textContent=tf("business_workspace_company_verified",{rows:result.rowCount,entities:result.entityCount});
@@ -15094,7 +15143,7 @@ async function runDcatsCompanyIntegration(action, category) {
       var reason=error&&error.message;
       var codes=["company_bridge_unavailable","company_extension_reload_required","company_extension_update_required","company_native_host_unavailable","company_device_unavailable"];
       status.className="error";
-      status.textContent=reason==="company_export_disabled"?t("business_workspace_company_disabled"):codes.includes(reason)?t("business_workspace_account_"+reason.slice(8)):t(action==="connect"?"business_workspace_company_connection_failed":action==="login"?"business_workspace_company_login_failed":"business_workspace_company_pending");
+      status.textContent=reason==="company_export_disabled"?t("business_workspace_company_disabled"):codes.includes(reason)?t("business_workspace_account_"+reason.slice(8)):t(action==="backup"?reason==="company_csv_unavailable"?"business_workspace_company_backup_csv_invalid":reason==="company_backup_window_unavailable"?"business_workspace_backup_setup_not_opened":"business_workspace_company_backup_unknown":action==="connect"?"business_workspace_company_connection_failed":action==="login"?"business_workspace_company_login_failed":"business_workspace_company_pending");
     }
   } finally {dcatsCompanyIntegrationBusy=false;updateDcatsCompanyIntegrationControls();}
 }
@@ -56127,6 +56176,8 @@ document.getElementById("dcats-business-workspace-backup-recover").addEventListe
 document.getElementById("dcats-business-workspace-company-connect").addEventListener("click", function(){runDcatsCompanyIntegration("connect");});
 document.getElementById("dcats-business-workspace-company-login").addEventListener("click", function(){runDcatsCompanyIntegration("login");});
 document.querySelectorAll("[data-company-export]").forEach(function(button){button.addEventListener("click",function(){runDcatsCompanyIntegration("export",button.dataset.companyExport);});});
+document.querySelectorAll("[data-company-backup]").forEach(function(button){button.addEventListener("click",function(){runDcatsCompanyIntegration("backup",button.dataset.companyBackup);});});
+document.querySelectorAll("[data-company-backup-file]").forEach(function(input){input.addEventListener("change",updateDcatsCompanyIntegrationControls);});
 document.querySelectorAll("[data-company-result]").forEach(function(button){button.addEventListener("click",function(){runDcatsCompanyIntegration("result",button.dataset.companyResult);});});
 document.getElementById("dcats-business-workspace-overlay").addEventListener("click", function(e) {
   if (e.target === this) closeDcatsBusinessWorkspace();
