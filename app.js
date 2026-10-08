@@ -514,6 +514,17 @@ var TRANSLATIONS = {
     business_workspace_backup_working: "このPCのバックアップ設定を確認しています。",
     business_workspace_backup_ready: "設定の確認が完了しました。取込には今回分のバックアップ作成・共有保存の確認が必要です。",
     business_workspace_backup_pending: "登録・設定・確認が残っています。下の項目と案内を確認してください。",
+    business_workspace_backup_next_steps: "不足項目と次の操作",
+    business_workspace_backup_next_identity: "販売王IDに対応付けたD-CATSアカウントで本人確認し、このPCの対応付けを確認します。",
+    business_workspace_backup_next_syncFolder: "PC版Google Driveで「D-CATS業務連携」が同期され、このPCから開けることを確認します。通常は保存先を変更しません。",
+    business_workspace_backup_next_driveConfiguration: "管理者がD-CATSの共通Google接続設定を確認します。各利用者が設定JSONを作り直す必要はありません。",
+    business_workspace_backup_next_driveAuthorization: "「Google接続・バックアップ用パスワードを設定」から、共有フォルダを開けるGoogleアカウントの接続を確認します。",
+    business_workspace_backup_next_backupPassword: "復旧担当者と共有復旧の準備後に、設定画面からバックアップ用パスワードを本登録します。",
+    business_workspace_backup_next_password_local_only: "このPCの試験用登録は済んでいます。繰り返し仮登録する必要はありません。復旧担当者と共有復旧の準備後に本登録します。",
+    business_workspace_backup_next_recovery: "復旧担当者の登録・承認と、バックアップを復元できることの確認が必要です。",
+    business_workspace_backup_next_backupAdapter: "販売王の実機バックアップ処理は開発者による検証が必要です。設定の再登録やGoogleの再認証を繰り返しても、この項目は完了しません。",
+    business_workspace_backup_next_note: "確認時点の不足項目です。設定変更後は、もう一度「このPCのバックアップ準備を確認」を押してください。",
+    business_workspace_backup_adapter_pending: "実機検証が必要",
     business_workspace_backup_failed: "準備状況を確認できません。このPCの連携アプリ・拡張機能を更新し、作業を保存した後にD-CATSを開き直して再度確認してください。",
     business_workspace_backup_help: "登録・接続設定について",
     business_workspace_backup_google_help: "PC版Google Driveの同期設定に加え、共有フォルダへ保存できたことをD-CATSが確認するための接続設定が必要です。管理者がD-CATS用の設定を用意し、その後ご本人がGoogleの画面で読取を許可します。",
@@ -3028,6 +3039,17 @@ var TRANSLATIONS = {
     business_workspace_backup_working: "Checking backup settings on this PC.",
     business_workspace_backup_ready: "Settings verified. Import still requires creation and shared-storage verification of a new backup for this operation.",
     business_workspace_backup_pending: "Registration, setup or verification remains. See the items and guidance below.",
+    business_workspace_backup_next_steps: "Missing prerequisites and next steps",
+    business_workspace_backup_next_identity: "Verify the D-CATS account mapped to your HanbaiOh ID and confirm this PC binding.",
+    business_workspace_backup_next_syncFolder: "Confirm that Google Drive for desktop syncs D-CATS業務連携 and that the folder opens on this PC. Keep the usual destination.",
+    business_workspace_backup_next_driveConfiguration: "Ask the administrator to check the shared Google connection configuration in D-CATS. Individual users do not need to recreate a JSON file.",
+    business_workspace_backup_next_driveAuthorization: "Use the Google connection and backup password settings to verify the Google account that can open the shared folder.",
+    business_workspace_backup_next_backupPassword: "After recovery operators and shared recovery are ready, register the production backup password in settings.",
+    business_workspace_backup_next_password_local_only: "The trial password is already saved on this PC. Do not repeat trial registration. Complete production registration after recovery operators and shared recovery are ready.",
+    business_workspace_backup_next_recovery: "Recovery operators must be registered and approved, and a successful backup restore must be verified.",
+    business_workspace_backup_next_backupAdapter: "The developer must verify the physical HanbaiOh backup workflow. Repeating password registration or Google consent will not complete this item.",
+    business_workspace_backup_next_note: "These were missing when checked. After a setting changes, check backup readiness on this PC again.",
+    business_workspace_backup_adapter_pending: "Physical verification required",
     business_workspace_backup_failed: "Could not verify preparation. Update the integration app and extension, save your work, reopen D-CATS and check again.",
     business_workspace_backup_help: "About registration and connection settings",
     business_workspace_backup_google_help: "In addition to Google Drive desktop sync, D-CATS needs connection settings to verify that the backup reached the shared folder. An administrator prepares D-CATS settings, then you grant read permission on Google's screen.",
@@ -5486,6 +5508,17 @@ var TRANSLATIONS = {
     business_workspace_backup_working: "正在确认此电脑的备份设置。",
     business_workspace_backup_ready: "设置已确认。导入仍需创建本次操作的备份并确认共享保存成功。",
     business_workspace_backup_pending: "仍有登记、设置或确认事项。请查看下方项目与说明。",
+    business_workspace_backup_next_steps: "未完成项目及下一步",
+    business_workspace_backup_next_identity: "使用与销售王ID关联的D-CATS账号完成本人验证，并确认此电脑的关联。",
+    business_workspace_backup_next_syncFolder: "确认电脑版Google Drive已同步D-CATS業務連携文件夹，且此电脑可以打开。通常不要更改保存位置。",
+    business_workspace_backup_next_driveConfiguration: "请管理员检查D-CATS共用的Google连接配置。每个用户无需重新创建JSON文件。",
+    business_workspace_backup_next_driveAuthorization: "通过Google连接及备份密码设置，确认可以打开共享文件夹的Google账号连接。",
+    business_workspace_backup_next_backupPassword: "恢复负责人及共享恢复准备完成后，在设置画面正式登记备份密码。",
+    business_workspace_backup_next_password_local_only: "此电脑已保存试验用密码，无需重复临时登记。恢复负责人及共享恢复准备完成后再正式登记。",
+    business_workspace_backup_next_recovery: "需要登记并批准恢复负责人，并确认备份可以成功恢复。",
+    business_workspace_backup_next_backupAdapter: "开发者需要验证销售王实机备份流程。重复登记密码或重复Google授权不能完成此项。",
+    business_workspace_backup_next_note: "这些是确认时未完成的项目。设置更改后，请再次确认此电脑的备份准备情况。",
+    business_workspace_backup_adapter_pending: "需要实机验证",
     business_workspace_backup_failed: "无法确认准备状态。请更新联动应用及扩展，保存工作后重新打开D-CATS再确认。",
     business_workspace_backup_help: "关于登记与连接设置",
     business_workspace_backup_google_help: "除桌面版Google Drive的同步设置外，D-CATS还需要连接设置以确认备份已保存到共享文件夹。管理员准备D-CATS设置后，由本人在Google页面允许读取。",
@@ -7670,7 +7703,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1142";
+var APP_VERSION       = "v1.1.1143";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -15207,7 +15240,24 @@ async function openDcatsCompanyBackupSetup(recoverPassword) {
   } finally {dcatsCompanyBackupBusy=false;button.removeAttribute("aria-busy");updateDcatsCompanyIntegrationControls();}
 }
 
+function renderDcatsCompanyBackupNextSteps(result) {
+  var section=document.getElementById("dcats-business-workspace-backup-next"),list=document.getElementById("dcats-business-workspace-backup-next-list");
+  if(!section||!list)return;
+  list.replaceChildren();section.hidden=true;section.open=false;
+  if(!result||result.status!=="production_backup_prerequisites"||!result.checks)return;
+  var values={identity:["unverified"],syncFolder:["unverified"],driveConfiguration:["unverified","configuration_required"],driveAuthorization:["unverified"],backupPassword:["registration_required","local_only"],recovery:["unverified"],backupAdapter:["unavailable"]};
+  Object.keys(values).forEach(function(name){
+    var value=result.checks[name];if(!values[name].includes(value))return;
+    var item=document.createElement("li"),title=document.createElement("strong"),text=document.createElement("p");
+    title.dataset.i18n="business_workspace_backup_"+name;title.textContent=t(title.dataset.i18n);
+    text.dataset.i18n="business_workspace_backup_next_"+(name==="backupPassword"&&value==="local_only"?"password_local_only":name);text.textContent=t(text.dataset.i18n);
+    item.append(title,text);list.append(item);
+  });
+  section.hidden=list.childElementCount===0;section.open=!section.hidden;
+}
+
 function resetDcatsCompanyBackupReadiness() {
+  renderDcatsCompanyBackupNextSteps(null);
   dcatsCompanyBackupResult=null;
   var section=document.getElementById("dcats-business-workspace-backup"),status=document.getElementById("dcats-business-workspace-backup-status");
   if(status){status.textContent="";status.className="";delete status.dataset.i18n;}
@@ -15242,8 +15292,9 @@ async function checkDcatsCompanyBackupReadiness() {
     dcatsCompanyBackupResult=result;
     section.querySelectorAll("[data-backup-check]").forEach(function(node){
       var value=result.checks[node.dataset.backupCheck];
-      node.dataset.i18n="business_workspace_backup_"+value;node.textContent=t(node.dataset.i18n);node.className=value==="available"?"ready":"pending";
+      node.dataset.i18n="business_workspace_backup_"+(node.dataset.backupCheck==="backupAdapter"&&value==="unavailable"?"adapter_pending":value);node.textContent=t(node.dataset.i18n);node.className=value==="available"?"ready":"pending";
     });
+    renderDcatsCompanyBackupNextSteps(result);
     setDcatsCompanyBackupStatus(result.ready?"business_workspace_backup_ready":"business_workspace_backup_pending",result.ready?"ready":"pending");
   } catch(error) {
     if(isCurrent()) {

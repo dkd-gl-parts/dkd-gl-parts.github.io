@@ -33,7 +33,8 @@ function harness(role = 'system_admin') {
   };
   function element(id) {
     const classes = new Set();
-    const node = { id, dataset: {}, disabled: false, hidden: false, textContent: '', className: '',
+    const node = { id, dataset: {}, disabled: false, hidden: false, textContent: '', className: '', children: [],
+      replaceChildren: (...children) => { node.children = children; },
       classList: { add: value => classes.add(value), remove: value => classes.delete(value), contains: value => classes.has(value) },
       focus: () => { context.document.activeElement = node; }, setAttribute() {}, removeAttribute() {}, querySelectorAll: () => [] };
     elements.set(id, node); return node;

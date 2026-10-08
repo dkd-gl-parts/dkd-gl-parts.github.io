@@ -76,5 +76,26 @@ function fixture(mode = {}) {
     assert.equal((app.match(new RegExp(name+":","g"))||[]).length,3,name);
   const handler=app.slice(app.indexOf("async function checkDcatsCompanyBackupReadiness()"),app.indexOf("function downloadDcatsBusinessWorkspaceShortcut()"));
   assert(handler.includes("checkBackupReadinessFromPc"));assert(!handler.includes("readBackupReadinessFromPc"));assert(handler.includes("isCurrent()"));assert(handler.includes("result.status"));
+  const acorn=require("acorn"),tree=acorn.parse(app,{ecmaVersion:"latest"});
+  const pick=name=>{const node=tree.body.find(n=>n.type==="FunctionDeclaration"&&n.id.name===name);assert(node,name);return app.slice(node.start,node.end);};
+  const tr=tree.body.find(n=>n.type==="VariableDeclaration"&&n.declarations.some(d=>d.id.name==="TRANSLATIONS"));
+  class Node { constructor(){this.dataset={};this.children=[];this.textContent="";} append(...nodes){this.children.push(...nodes);} replaceChildren(){this.children=[];} get childElementCount(){return this.children.length;} }
+  const next=new Node(),list=new Node(),status=new Node();
+  const context={currentLang:"ja",document:{getElementById:id=>id==="dcats-business-workspace-backup-next"?next:id==="dcats-business-workspace-backup-next-list"?list:id==="dcats-business-workspace-backup-status"?status:null,createElement:()=>new Node()},console};
+  vm.createContext(context);vm.runInContext(app.slice(tr.start,tr.end)+"\n"+pick("t")+"\n"+pick("renderDcatsCompanyBackupNextSteps")+"\n"+pick("resetDcatsCompanyBackupReadiness"),context);
+  const observed={status:"production_backup_prerequisites",checks:{identity:"available",syncFolder:"available",driveConfiguration:"available",driveAuthorization:"available",backupPassword:"local_only",recovery:"unverified",backupAdapter:"unavailable"}};
+  for(const lang of ["ja","en","zh"]){
+    context.currentLang=lang;context.renderDcatsCompanyBackupNextSteps(observed);
+    assert.equal(next.hidden,false);assert.equal(next.open,true);assert.equal(list.childElementCount,3);
+    assert.deepEqual(list.children.map(n=>n.children[1].dataset.i18n),["business_workspace_backup_next_password_local_only","business_workspace_backup_next_recovery","business_workspace_backup_next_backupAdapter"]);
+    assert(list.children.every(n=>n.children[0].textContent.length>0&&!n.children[0].textContent.startsWith("business_workspace_")&&n.children[1].textContent.length>10));assert.doesNotMatch(list.children.map(n=>n.children[1].textContent).join(" "),/PRIVATE|SYNTHETIC|token|passwordBase64/);
+    context.renderDcatsCompanyBackupNextSteps({status:observed.status,checks:Object.fromEntries(Object.keys(observed.checks).map(k=>[k,"available"]))});assert.equal(list.childElementCount,0);assert.equal(next.hidden,true);assert.equal(next.open,false);
+    context.renderDcatsCompanyBackupNextSteps({status:observed.status,checks:{identity:"unverified",syncFolder:"unverified",driveConfiguration:"configuration_required",driveAuthorization:"unverified",backupPassword:"registration_required",recovery:"unverified",backupAdapter:"unavailable"}});assert.equal(list.childElementCount,7);
+    context.resetDcatsCompanyBackupReadiness();assert.equal(next.hidden,true);assert.equal(list.childElementCount,0);assert.equal(context.dcatsCompanyBackupResult,null);
+    context.renderDcatsCompanyBackupNextSteps({status:observed.status,checks:{...observed.checks,backupPassword:"<script>PRIVATE</script>",recovery:"PRIVATE",backupAdapter:"PRIVATE"}});assert.equal(next.hidden,true);assert.equal(list.childElementCount,0);
+  }
+  assert(card.includes('id="dcats-business-workspace-backup-next" hidden>'));assert(handler.includes("renderDcatsCompanyBackupNextSteps(result)"));
+  for(const key of ["next_identity","next_syncFolder","next_driveConfiguration","next_driveAuthorization","next_backupPassword","next_password_local_only","next_recovery","next_backupAdapter","adapter_pending"])
+    assert.equal((app.match(new RegExp("business_workspace_backup_"+key+":","g"))||[]).length,3,key);
   console.log("Backup readiness: signed same-owner read, fixed states, no vendor start/enrollment, errors/cancellation/stale sessions and three-language UI: OK");
 })().catch(error => { console.error(error); process.exitCode = 1; });

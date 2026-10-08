@@ -10862,3 +10862,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .dcats-business-workspace-settings-group .dcats-business-workspace-actions { padding: 0 0 12px; }
 .dcats-business-workspace-settings-group .dcats-business-workspace-shortcut-hint { margin: 0; }
 .dcats-business-workspace-settings-card .dcats-business-workspace-backup { margin: 20px; }
+
+#dcats-business-workspace-backup-next ul { margin: 12px 0 0; padding-left: 20px; }
+#dcats-business-workspace-backup-next li { margin: 0 0 12px; font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
+#dcats-business-workspace-backup-next li p { margin: 3px 0 0; }
