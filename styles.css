@@ -9248,6 +9248,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .product-3d-action-heading { color: #52647c; font-size: 12px; font-weight: 800; letter-spacing: .08em; }
 .product-3d-empty-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #68768b; text-align: center; }
 .product-3d-empty-card button { border: 0; background: transparent; color: #2563eb; font-weight: 800; cursor: pointer; }
+.product-3d-empty-card [data-hunyuan-readiness]:disabled { opacity: .6; cursor: wait; }
 .customer-product-media { min-width: 0; }
 .customer-product-media-switch { margin-bottom: 8px; }
 .product-3d-viewer-shell { position: relative; width: min(1100px, 100%); overflow: hidden; background: #0b111b; }
