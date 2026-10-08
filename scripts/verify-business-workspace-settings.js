@@ -25,7 +25,7 @@ function harness(role = 'system_admin') {
   let resolvePending;
   const defer = options => { calls.push(options); return new Promise(resolve => { resolvePending = resolve; }); };
   const context = { window: { DcatsHanbaiohCompanyBridge: {
-    cancelCurrent: () => calls.push('cancel'), enrollAccountFromPc: defer, openBackupSetupFromPc: defer, readBackupReadinessFromPc: defer
+    cancelCurrent: () => calls.push('cancel'), enrollAccountFromPc: defer, openBackupSetupFromPc: defer, checkBackupReadinessFromPc: defer
   } }, currentUser: { id: 'test-actor' }, t: key => key,
     isSystemAdmin: () => role === 'system_admin', canManageSalesOrders: () => role !== 'customer',
     document: { getElementById: id => elements.get(id) || null, querySelector: () => null, activeElement: null },

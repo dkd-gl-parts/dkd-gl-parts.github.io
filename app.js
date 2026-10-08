@@ -455,7 +455,7 @@ var TRANSLATIONS = {
     business_workspace_backup_title: "取込前バックアップの準備",
     business_workspace_backup_hint: "商品・得意先・売上の取込前に、パスワードで保護したバックアップをD-CATS業務連携の共有フォルダへ保存します。",
     business_workspace_backup_separate: "バックアップ用パスワードは、上の販売王ログイン用とは別に登録します。",
-    business_workspace_backup_check: "このPCのバックアップ準備を確認",
+    business_workspace_backup_check: "D-CATS本人確認でバックアップ準備を確認",
     business_workspace_backup_setup: "Google接続・バックアップ用パスワードを設定",
     business_workspace_backup_recover: "保存したバックアップ用パスワードを確認",
     business_workspace_backup_recover_hint: "忘れた場合は、登録時と同じD-CATSアカウントで本人確認して、このPCに保存したパスワードを確認できます。PC故障・交換時の共有復旧設定は別途準備が必要です。",
@@ -485,7 +485,8 @@ var TRANSLATIONS = {
     business_workspace_backup_backupAdapter: "販売王のバックアップ処理",
     business_workspace_backup_available: "確認済み",
     business_workspace_backup_unverified: "未確認",
-    business_workspace_backup_registration_required: "登録が必要",
+    business_workspace_backup_registration_required: "本登録が必要",
+    business_workspace_backup_local_only: "このPCに仮登録済み",
     business_workspace_backup_configuration_required: "設定が必要",
     business_workspace_backup_unavailable: "接続準備中",
     business_workspace_backup_working: "このPCのバックアップ設定を確認しています。",
@@ -2946,7 +2947,7 @@ var TRANSLATIONS = {
     business_workspace_backup_title: "Backup preparation before import",
     business_workspace_backup_hint: "Before importing products, customers or sales, save a password-protected backup to the shared D-CATS workspace folder.",
     business_workspace_backup_separate: "Register a separate backup password from the Sales King sign-in password above.",
-    business_workspace_backup_check: "Check backup preparation on this PC",
+    business_workspace_backup_check: "Verify backup preparation with D-CATS sign-in",
     business_workspace_backup_setup: "Set up Google connection and backup password",
     business_workspace_backup_recover: "View saved backup password",
     business_workspace_backup_recover_hint: "If forgotten, sign in with the same D-CATS account to view the password protected on this PC. Shared recovery for PC failure or replacement requires separate setup.",
@@ -2976,7 +2977,8 @@ var TRANSLATIONS = {
     business_workspace_backup_backupAdapter: "Sales King backup process",
     business_workspace_backup_available: "Verified",
     business_workspace_backup_unverified: "Not verified",
-    business_workspace_backup_registration_required: "Registration required",
+    business_workspace_backup_registration_required: "Full registration required",
+    business_workspace_backup_local_only: "Trial password saved on this PC",
     business_workspace_backup_configuration_required: "Setup required",
     business_workspace_backup_unavailable: "Connection in preparation",
     business_workspace_backup_working: "Checking backup settings on this PC.",
@@ -5381,7 +5383,7 @@ var TRANSLATIONS = {
     business_workspace_backup_title: "导入前的备份准备",
     business_workspace_backup_hint: "导入商品、客户或销售数据前，将受密码保护的备份保存到D-CATS业务联动共享文件夹。",
     business_workspace_backup_separate: "备份密码与上方的销售王登录密码分别登记。",
-    business_workspace_backup_check: "确认此电脑的备份准备",
+    business_workspace_backup_check: "通过D-CATS身份验证确认备份准备",
     business_workspace_backup_setup: "设置Google连接及备份密码",
     business_workspace_backup_recover: "查看已保存的备份密码",
     business_workspace_backup_recover_hint: "忘记密码时，使用登记时的D-CATS账号验证身份，即可查看此电脑保护保存的密码。电脑故障或更换时的共享恢复需要另外设置。",
@@ -5411,7 +5413,8 @@ var TRANSLATIONS = {
     business_workspace_backup_backupAdapter: "销售王备份处理",
     business_workspace_backup_available: "已确认",
     business_workspace_backup_unverified: "未确认",
-    business_workspace_backup_registration_required: "需要登记",
+    business_workspace_backup_registration_required: "需要正式登记",
+    business_workspace_backup_local_only: "已在此电脑临时登记",
     business_workspace_backup_configuration_required: "需要设置",
     business_workspace_backup_unavailable: "正在准备连接",
     business_workspace_backup_working: "正在确认此电脑的备份设置。",
@@ -7601,7 +7604,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1139";
+var APP_VERSION       = "v1.1.1140";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -15145,9 +15148,14 @@ async function checkDcatsCompanyBackupReadiness() {
   setDcatsCompanyBackupStatus("business_workspace_backup_working");
   try {
     var bridge=window.DcatsHanbaiohCompanyBridge;
-    if(!bridge||typeof bridge.readBackupReadinessFromPc!=="function")throw new Error("company_extension_update_required");
-    var result=await bridge.readBackupReadinessFromPc({actorId:actor,isCurrent:isCurrent});
+    if(!bridge||typeof bridge.checkBackupReadinessFromPc!=="function")throw new Error("company_extension_update_required");
+    var result=await bridge.checkBackupReadinessFromPc({actorId:actor,isCurrent:isCurrent,onStage:function(stage){
+      if(isCurrent()&&["device","authorization","opening","opened"].includes(stage))setDcatsCompanyBackupStatus("business_workspace_backup_setup_"+stage);
+    }});
     if(!isCurrent())return;
+    if(result.status!=="production_backup_prerequisites"){
+      setDcatsCompanyBackupStatus("business_workspace_backup_setup_"+result.status,["failed","expired"].includes(result.status)?"error":"pending");return;
+    }
     dcatsCompanyBackupResult=result;
     section.querySelectorAll("[data-backup-check]").forEach(function(node){
       var value=result.checks[node.dataset.backupCheck];
