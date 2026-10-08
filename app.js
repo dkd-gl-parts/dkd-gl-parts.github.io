@@ -466,6 +466,7 @@ var TRANSLATIONS = {
     business_workspace_backup_setup_opening: "専用設定画面の起動を確認しています…",
     business_workspace_backup_setup_opened: "専用設定画面を開きました。このPCに表示された画面で操作してください。",
     business_workspace_backup_setup_window_unavailable: "専用設定画面の起動を確認できませんでした。設定パネルを閉じてD-CATSを更新してください。改善しない場合は、このPCの連携拡張機能を更新してください。",
+    business_workspace_backup_setup_pending_recovery: "試験用パスワードをこのPCに保護して仮登録しました。復旧設定と本登録の準備が残っています。バックアップ作成・データ取込はまだ開始しません。",
     business_workspace_backup_setup_saved: "バックアップ用パスワードの保護登録を確認しました。「このPCのバックアップ準備を確認」で残りの準備状況を確認できます。",
     business_workspace_backup_setup_cancelled: "設定画面を閉じました。準備状況は未確認です。",
     business_workspace_backup_setup_failed: "設定を完了できませんでした。専用画面の案内を確認してください。",
@@ -2951,6 +2952,7 @@ var TRANSLATIONS = {
     business_workspace_backup_setup_opening: "Waiting for the dedicated setup window to open…",
     business_workspace_backup_setup_opened: "The setup window has opened. Continue in the dedicated window on this PC.",
     business_workspace_backup_setup_window_unavailable: "The setup window did not confirm startup. Close Settings and update D-CATS. If the problem continues, update this PC's integration extension.",
+    business_workspace_backup_setup_pending_recovery: "A test password preparation was protected on this PC. Recovery setup and full registration remain. Backup creation and data imports have not started.",
     business_workspace_backup_setup_saved: "Protected backup password registration was confirmed. Use Check backup preparation on this PC to check the remaining preparation.",
     business_workspace_backup_setup_cancelled: "The setup window was closed. Preparation has not been verified.",
     business_workspace_backup_setup_failed: "Setup was not completed. Check the instructions in the dedicated window.",
@@ -5380,6 +5382,7 @@ var TRANSLATIONS = {
     business_workspace_backup_setup_opening: "正在等待专用设置窗口打开…",
     business_workspace_backup_setup_opened: "专用设置窗口已打开。请在此电脑的窗口中操作。",
     business_workspace_backup_setup_window_unavailable: "未能确认设置窗口启动。请关闭设置并更新D-CATS。如果问题仍然存在，请更新此电脑的联动扩展程序。",
+    business_workspace_backup_setup_pending_recovery: "已在此电脑保护并暂存测试密码。恢复设置和正式登记尚未完成，不会开始备份或数据导入。",
     business_workspace_backup_setup_saved: "已确认备份密码的受保护登记。请通过“确认此电脑的备份准备”查看其他准备状态。",
     business_workspace_backup_setup_cancelled: "设置窗口已关闭。准备状态尚未确认。",
     business_workspace_backup_setup_failed: "设置未完成。请确认专用窗口中的说明。",
@@ -7583,7 +7586,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1136";
+var APP_VERSION       = "v1.1.1137";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
