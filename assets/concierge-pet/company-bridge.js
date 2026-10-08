@@ -32,9 +32,27 @@
         typeof value.capability !== "string" || value.capability.length > 8192 || !/^v2\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{86}$/.test(value.capability)) throw new Error("company_ticket_unavailable");
     return value.capability;
   }
-  async function issueEnrollmentTicket(api, record, request) {
+  function boundedIssue(api, record, request, options) {
+    // Discard late permits after timeout, page exit or owner change. A timeout
+    // must never start a native window later or retry the request.
+    return new Promise(function (resolve, reject) {
+      var settled = false, previousCancel = cancel;
+      var timer = window.setTimeout(stop, 30000);
+      var watch = window.setInterval(function () { if (options && !options.isCurrent()) stop(); }, 250);
+      function finish(value, failed) {
+        if (settled) return; settled = true;
+        window.clearTimeout(timer); window.clearInterval(watch); window.removeEventListener("pagehide", stop);
+        if (cancel === stop) cancel = previousCancel;
+        if (failed) reject(new Error("company_issuer_unavailable")); else resolve(value);
+      }
+      function stop() { finish(null, true); }
+      cancel = stop; window.addEventListener("pagehide", stop);
+      Promise.resolve().then(function () { return api.issue(record, request); }).then(function (value) { finish(value, false); }, stop);
+    });
+  }
+  async function issueEnrollmentTicket(api, record, request, options) {
     var result;
-    try { result = await api.issue(record, request); }
+    try { result = await boundedIssue(api, record, request, options); }
     catch { throw new Error("company_issuer_unavailable"); }
     if (result && result.error || result && result.data && result.data.ok === false) {
       // Only fixed categories cross into the UI. Never echo an Auth response,
@@ -50,21 +68,22 @@
   }
   function nativeRequest(request, options) {
     return new Promise(function (resolve, reject) {
-      var settled = false;
+      var settled = false, opened = false;
       var isReadiness = request.command === "read_hanbaioh_company_backup_readiness";
       var isBackupSetup = request.command === "open_hanbaioh_company_backup_setup";
       var isExport = request.command.startsWith("export_hanbaioh_") || request.command === "read_hanbaioh_company_export" || isReadiness;
-      var timer = window.setTimeout(function () { finish(null); }, isBackupSetup ? 610000 : isReadiness ? 20000 : request.command === "login_hanbaioh_company" || isExport ? 210000 : request.command === "read_hanbaioh_company_device" ? 5000 : 30000);
+      var timer = window.setTimeout(function () { finish(null); }, isBackupSetup ? 20000 : isReadiness ? 20000 : request.command === "login_hanbaioh_company" || isExport ? 210000 : request.command === "read_hanbaioh_company_device" ? 5000 : 30000);
       var watch = window.setInterval(function () { if (!options.isCurrent()) finish(null); }, 250);
       function finish(response) {
         if (settled) return; settled = true;
         window.clearTimeout(timer); window.clearInterval(watch); window.removeEventListener("message", onMessage); window.removeEventListener("pagehide", stop); cancel = null;
         if (isExport) window.postMessage({channel:channel,type:"company_export_cancel",id:request.id},window.location.origin);
         if (isBackupSetup) window.postMessage({channel:channel,type:"company_backup_setup_cancel",id:request.id},window.location.origin);
-        if (response && options.isCurrent() && response.ok === true && response.command === request.command) resolve(response.data);
+        if (response && options.isCurrent() && response.ok === true && response.command === request.command && (!isBackupSetup || opened)) resolve(response.data);
         else {
           var code = response && response.error && response.error.code;
           if (isBackupSetup && code === "REQUEST_REJECTED" && options.isCurrent()) { reject(new Error("company_extension_update_required")); return; }
+          if (isBackupSetup && !opened) { reject(new Error("company_backup_window_unavailable")); return; }
           if (request.command === "read_hanbaioh_company_device" && options.isCurrent()) {
             if (code === "REQUEST_REJECTED") reject(new Error(response.error.message === "company_device_unavailable" ? "company_device_unavailable" : "company_extension_update_required"));
             else if (code === "NATIVE_HOST_UNAVAILABLE") reject(new Error("company_native_host_unavailable"));
@@ -75,6 +94,11 @@
       function onMessage(event) {
         if (event.source !== window || event.origin !== window.location.origin) return;
         var message = event.data;
+        if (isBackupSetup && message && message.channel === channel && message.type === "company_backup_setup_opened" && message.id === request.id) {
+          if (opened || Object.keys(message).sort().join(",") !== "channel,id,type" || !options.isCurrent()) { finish(null); return; }
+          opened = true; window.clearTimeout(timer); timer = window.setTimeout(function () { finish(null); }, 610000);
+          if (typeof options.onStage === "function") options.onStage("opened"); return;
+        }
         if (message && message.channel === channel && message.type === "response" && message.response &&
             (message.response.id === request.id ||
              // Older extensions reject this new discovery command without an
@@ -104,6 +128,7 @@
     active = true;
     var native;
     try {
+      if (typeof options.onStage === "function") options.onStage("device");
       var record = await nativeRequest({ id: window.crypto.randomUUID(), command: "read_hanbaioh_company_device", actorId: options.actorId }, options);
       if (!validRecord(record) || record.actor_id !== options.actorId || Object.keys(record).sort().join(",") !== "actor_id,device_id,public_key_sha256,public_key_spki" ||
           !/^[0-9a-f]{64}$/.test(record.public_key_sha256) || typeof record.public_key_spki !== "string" || record.public_key_spki.length > 2048 || !record.public_key_spki.startsWith("-----BEGIN PUBLIC KEY-----") || !options.isCurrent()) throw new Error("company_device_unavailable");
@@ -112,9 +137,11 @@
       // This same-owner permit only opens a view. The native setup performs its
       // own product sign-in and obtains separate authorization for enrollment.
       var request = { request_id: window.crypto.randomUUID(), command: "enroll_hanbaioh_company_account", device_id: record.device_id };
-      var capability = await issueEnrollmentTicket(api, record, request);
+      if (typeof options.onStage === "function") options.onStage("authorization");
+      var capability = await issueEnrollmentTicket(api, record, request, options);
       if (!options.isCurrent()) throw new Error("company_session_changed");
       native = { id: request.request_id, command: "open_hanbaioh_company_backup_setup", deviceId: record.device_id, capability: capability };
+      if (typeof options.onStage === "function") options.onStage("opening");
       var result = await nativeRequest(native, options);
       if (!options.isCurrent() || !result || Object.keys(result).join(",") !== "status" || !["saved","cancelled","failed","outcome_unknown","expired"].includes(result.status)) throw new Error("company_backup_setup_unverified");
       return Object.freeze({ status: result.status });
@@ -131,7 +158,7 @@
       // The existing enrollment scope is used only for a read of the same
       // signed binding. No enrollment or backup start is requested from Native.
       var request = { request_id: window.crypto.randomUUID(), command: "enroll_hanbaioh_company_account", device_id: record.device_id };
-      var capability = await issueEnrollmentTicket(api, record, request);
+      var capability = await issueEnrollmentTicket(api, record, request, options);
       if (!options.isCurrent()) throw new Error("company_session_changed");
       var result = await nativeRequest({ id: request.request_id, command: "read_hanbaioh_company_backup_readiness", deviceId: record.device_id, capability: capability }, options);
       var unavailable = { identity: "unverified", syncFolder: "unverified", driveConfiguration: "configuration_required", driveAuthorization: "unverified", backupPassword: "registration_required", recovery: "unverified", backupAdapter: "unavailable" };
@@ -155,7 +182,7 @@
       var api=window.DcatsHanbaiohCompanyApi;
       if(!api||typeof api.issue!=="function")throw new Error("company_operation_unavailable");
       var body={command:"enroll_hanbaioh_company_account",device_id:record.device_id,request_id:window.crypto.randomUUID()};
-      capability=await issueEnrollmentTicket(api,record,body);
+      capability=await issueEnrollmentTicket(api,record,body,options);
       if(!options.isCurrent())throw new Error("company_session_changed");
       initial={id:body.request_id,command:body.command,deviceId:body.device_id,capability:capability};
       return await new Promise(function(resolve,reject){
@@ -181,7 +208,7 @@
           asked=true;
           try{
             var fresh={command:body.command,device_id:record.device_id,request_id:window.crypto.randomUUID()};
-            var ticket=await issueEnrollmentTicket(api,record,fresh);
+            var ticket=await issueEnrollmentTicket(api,record,fresh,options);
             if(settled||!options.isCurrent()){ticket="";finish(null);return;}
             window.postMessage({channel:channel,type:"company_enrollment_ticket_reply",id:initial.id,challengeId:m.challengeId,requestId:fresh.request_id,capability:ticket},window.location.origin);ticket="";
           }catch(error){finish(null,["company_authentication_required","company_not_authorized","company_binding_unavailable","company_issuer_unavailable","company_ticket_unavailable"].includes(error.message)?error.message:"company_registration_unverified");}
