@@ -44,6 +44,7 @@
   var tripoTarget = null;
   var tripoJob = null;
   var tripoBusy = false;
+  var hunyuanReadinessBusy = false;
   var tripoHistoryReady = false;
   var tripoRequestId = 0;
   var tripoReturnFocus = null;
@@ -1018,10 +1019,16 @@
     var tripoConnection = glbManageable
       ? "<div class='product-3d-empty-card'><button type='button' data-tripo-readiness='" + context + "'>Tripo接続確認（クレジット消費なし）</button><span data-tripo-readiness-status role='status'>画像送信・3D生成は行いません。</span><button type='button' data-tripo-3d='" + context + "'>保存済み画像を確認・3D作成の準備</button></div>"
       : "";
+    var hunyuanConnection = glbManageable && dkdId === 2639 && target.kind === "aftermarket_new"
+      ? "<div class='product-3d-empty-card'><strong>" + esc(t("product_3d_hunyuan_title")) + "</strong>" +
+        "<span>" + esc(t("product_3d_hunyuan_notice")) + "</span>" +
+        "<button type='button' data-hunyuan-readiness='" + context + "'" + (hunyuanReadinessBusy ? " disabled" : "") + ">" +
+        esc(t("product_3d_hunyuan_check")) + "</button><span data-hunyuan-readiness-status role='status' aria-live='polite'></span></div>"
+      : "";
     if (!visible.length) {
       var createAction = manageable ? "<button type='button' data-create-3d='" + context + "'>3Dモデルを作成</button>" : "";
       var uploadAction = glbManageable ? "<button type='button' data-upload-3d='" + context + "'>GLBをアップロード</button>" : "";
-      host.innerHTML = "<div class='product-3d-empty-card'><span class='product-3d-cube'>3D</span><strong>公開済み3Dモデルはありません</strong>" + createAction + uploadAction + localPreviewAction + "</div>" + tripoConnection;
+      host.innerHTML = "<div class='product-3d-empty-card'><span class='product-3d-cube'>3D</span><strong>公開済み3Dモデルはありません</strong>" + createAction + uploadAction + localPreviewAction + "</div>" + tripoConnection + hunyuanConnection;
       return;
     }
     function modelCardHtml(model) {
@@ -1060,7 +1067,7 @@
     var uploadAction = glbManageable
       ? "<button type='button' class='product-3d-card-action' data-upload-3d='" + context + "'>GLBをアップロード</button>"
       : "";
-    host.innerHTML = fallback + visible.map(modelCardHtml).join("") + uploadAction + localPreviewAction + tripoConnection;
+    host.innerHTML = fallback + visible.map(modelCardHtml).join("") + uploadAction + localPreviewAction + tripoConnection + hunyuanConnection;
   }
   function modelStatusLabel(status) {
     return ({ draft: "撮影途中", waiting: "待機", processing: "処理中", needs_capture: "要追加撮影", failed: "失敗", review: "確認待ち", published: "公開済み", archived: "旧版" })[status] || status;
@@ -1149,6 +1156,66 @@
     } catch (_) {
       if (stillCurrent()) status.textContent = "Tripo接続を確認できませんでした。画像送信・生成は開始していません。";
     } finally { if (button.isConnected) button.disabled = false; }
+  }
+  async function checkHunyuanReadiness(context, button) {
+    if (!sessionModelsEnabled || hunyuanReadinessBusy || !button || button.disabled ||
+        ["sales", "production"].indexOf(context) < 0) return;
+    if (!canManageGlb()) { deny3D("product_3d_hunyuan_readiness"); return; }
+    var target = selectedTarget(context);
+    if (productId(target.product) !== 2639 || target.kind !== "aftermarket_new") return;
+    var epoch = modelCacheEpoch;
+    var paneRequest = mediaPaneRequest[context];
+    var status = button.parentElement && button.parentElement.querySelector("[data-hunyuan-readiness-status]");
+    if (!status || !button.isConnected) return;
+    function stillCurrent() {
+      var current = selectedTarget(context);
+      return sessionModelsEnabled && epoch === modelCacheEpoch && button.isConnected &&
+        paneRequest === mediaPaneRequest[context] && canManageGlb() &&
+        productId(current.product) === 2639 && current.kind === "aftermarket_new";
+    }
+    function setBusy(busy) {
+      hunyuanReadinessBusy = busy;
+      document.querySelectorAll("[data-hunyuan-readiness]").forEach(function (node) { node.disabled = busy; });
+    }
+    setBusy(true);
+    status.textContent = t("product_3d_hunyuan_working");
+    try {
+      var result = await sb.functions.invoke("product-3d-hunyuan-readiness", { body: {
+        action: "check_connection", consent: "query-only-no-product-data"
+      } });
+      if (!stillCurrent()) return;
+      if (result.error) {
+        // Never read/echo provider bodies, secret values or arbitrary exceptions.
+        var httpStatus = result.error.context && result.error.context.status;
+        status.textContent = t(httpStatus === 401 ? "product_3d_hunyuan_session" :
+          (httpStatus === 403 ? "product_3d_hunyuan_denied" : "product_3d_hunyuan_failed"));
+        return;
+      }
+      var data = result.data || {};
+      if (data.generation_enabled !== false || data.authentication_verified !== false ||
+          typeof data.configured !== "boolean") throw new Error("Invalid readiness response");
+      var messages = {
+        provider_response_received_unverified: "product_3d_hunyuan_response",
+        authentication_rejected: "product_3d_hunyuan_auth",
+        permission_denied: "product_3d_hunyuan_permission",
+        invalid_credentials: "product_3d_hunyuan_invalid",
+        timeout: "product_3d_hunyuan_timeout",
+        provider_http_error: "product_3d_hunyuan_failed",
+        provider_invalid_response: "product_3d_hunyuan_failed",
+        provider_unexpected_response: "product_3d_hunyuan_failed",
+        runtime_unavailable: "product_3d_hunyuan_failed",
+        invalid_clock: "product_3d_hunyuan_failed",
+        check_failed: "product_3d_hunyuan_failed"
+      };
+      if (data.configured === false && data.status === "not_configured") {
+        status.textContent = t("product_3d_hunyuan_missing");
+      } else if (data.configured === true && typeof data.status === "string" &&
+          Object.prototype.hasOwnProperty.call(messages, data.status)) {
+        status.textContent = t(messages[data.status]);
+      } else throw new Error("Invalid readiness status");
+    } catch (_) {
+      if (stillCurrent()) status.textContent = t("product_3d_hunyuan_failed");
+    } finally { setBusy(false); }
   }
   function sameTripoTarget(requestId) {
     if (!tripoTarget || !sessionModelsEnabled || requestId !== tripoRequestId) return false;
@@ -2054,7 +2121,7 @@
     elements["product-3d-viewer-autorotate"].setAttribute("aria-pressed", "false");
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await import("./product-3d-viewer.js?v=1.1.1134");
+      var module = await import("./product-3d-viewer.js?v=1.1.1135");
       if (!targetStillSelected()) {
         if (requestId === viewerRequestId) closeViewer();
         return;
@@ -2210,6 +2277,8 @@
       var create = event.target.closest("[data-create-3d]"); if (create) openCapture(create.dataset.create3d);
       var connection = event.target.closest("[data-tripo-readiness]");
       if (connection) checkTripoReadiness(connection.dataset.tripoReadiness, connection);
+      var hunyuan = event.target.closest("[data-hunyuan-readiness]");
+      if (hunyuan) checkHunyuanReadiness(hunyuan.dataset.hunyuanReadiness, hunyuan);
       var tripo = event.target.closest("[data-tripo-3d]"); if (tripo) openTripo(tripo.dataset.tripo3d);
       var upload = event.target.closest("[data-upload-3d]"); if (upload) selectGlbForUpload(upload.dataset.upload3d);
       var local = event.target.closest("[data-local-glb]"); if (local) selectLocalGlb(local.dataset.localGlb);

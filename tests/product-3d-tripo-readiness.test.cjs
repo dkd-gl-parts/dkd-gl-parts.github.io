@@ -6,7 +6,7 @@ const vm = require("node:vm");
 
 const source = fs.readFileSync(path.join(__dirname, "..", "product-3d.js"), "utf8");
 const start = source.indexOf("  async function checkTripoReadiness(");
-const end = source.indexOf("  function sameTripoTarget(", start);
+const end = source.indexOf("  async function checkHunyuanReadiness(", start);
 assert(start >= 0 && end > start);
 const checkSource = source.slice(start, end);
 

@@ -4,6 +4,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 const root = path.resolve(__dirname, "..");
 const source = fs.readFileSync(path.join(root, "product-3d.js"), "utf8");
+const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+const translations = require("node:vm").runInNewContext(app.slice(app.indexOf("var TRANSLATIONS = "), app.indexOf("\nvar currentLang")) + "\nTRANSLATIONS");
 function section(first, next) {
   const start = source.indexOf(first);
   const end = source.indexOf(next, start);
@@ -16,7 +18,9 @@ const script = `
 var params = new URLSearchParams(location.search);
 var role = params.get("role") || "system_admin";
 var mode = params.get("mode") || "connected";
-var sessionModelsEnabled = true, modelCacheEpoch = 0;
+var sessionModelsEnabled = true, modelCacheEpoch = 0, hunyuanReadinessBusy = false;
+var translations = ${JSON.stringify(translations)};
+var t = key => translations.ja[key];
 var mediaPaneRequest = { sales: 0, production: 0, customer: 0 };
 var selectedProduct = { id: 2639 };
 var el = id => document.getElementById(id);
