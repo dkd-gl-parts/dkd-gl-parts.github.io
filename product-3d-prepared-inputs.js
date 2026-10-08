@@ -286,7 +286,7 @@
     }
     function prepareOne(image, bytes, signal) {
       return new Promise(function (resolve, reject) {
-        var worker = new Worker("product-3d-input-worker.mjs?v=1.1.1137", { type: "module" });
+        var worker = new Worker("product-3d-input-worker.mjs?v=1.1.1138", { type: "module" });
         workerRef = worker;
         var timer = setTimeout(function () { stop(new Error("Preparation timeout")); }, 120000);
         function cancel() { stop(new Error("Preparation cancelled")); }
