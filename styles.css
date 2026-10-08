@@ -10845,3 +10845,16 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-sales-order-mgmt .sales-order-print-job { grid-template-columns: minmax(0, 1fr) auto; }
   #screen-sales-order-mgmt .sales-order-print-job > time { grid-column: 1 / -1; }
 }
+
+/* Setup belongs to the menu Settings section; daily integration stays compact. */
+.dcats-business-workspace-daily-actions { grid-template-columns: minmax(0, 1fr); }
+.dcats-business-workspace-settings-link { margin: 20px; padding-top: 16px; border-top: 1px solid #d8dfdb; }
+.dcats-business-workspace-settings-link p, .dcats-business-workspace-settings-description { color: #58685f; font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
+.dcats-business-workspace-settings-description { margin: 16px 20px; }
+.dcats-business-workspace-settings-link button { min-height: 44px; padding: 10px 14px; border: 1px solid #287356; border-radius: 5px; background: #fff; color: #176b43; cursor: pointer; }
+.dcats-business-workspace-settings-link button:focus-visible, .dcats-business-workspace-actions a:focus-visible { outline: 2px solid #287356; outline-offset: 3px; }
+.dcats-business-workspace-settings-group { margin: 20px; border: 1px solid #cbd8d1; border-radius: 6px; padding: 16px; }
+.dcats-business-workspace-settings-group h4 { margin: 0 0 12px; color: #1d2c25; font-size: 14px; }
+.dcats-business-workspace-settings-group .dcats-business-workspace-actions { padding: 0 0 12px; }
+.dcats-business-workspace-settings-group .dcats-business-workspace-shortcut-hint { margin: 0; }
+.dcats-business-workspace-settings-card .dcats-business-workspace-backup { margin: 20px; }

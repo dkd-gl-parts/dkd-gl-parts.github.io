@@ -72,15 +72,14 @@
       <p class="reference"><a href="https://developers.google.com/workspace/guides/create-credentials" target="_blank" rel="noopener noreferrer">Google公式：デスクトップアプリの作成（新しいタブ）</a> · <a href="https://developers.google.com/workspace/drive/api/quickstart/python#authorize_credentials_for_a_desktop_application" target="_blank" rel="noopener noreferrer">Google公式：JSONのダウンロード（新しいタブ）</a></p>
     </section>
     <section id="install" aria-labelledby="install-title">
-      <span class="step">6</span><h2 id="install-title">このPCへ導入し、本人の接続を設定する</h2>
+      <span class="step">6</span><h2 id="install-title">共通設定を登録し、本人の接続を設定する</h2>
       <p>導入担当者へ、保存したJSONの<strong>ファイルのフルパスだけ</strong>を伝えてください。JSONの中身・パスワードはチャットへ貼らず、共有フォルダやGitへ置かないでください。</p>
       <details>
-        <summary>導入担当者向け：このPCの設定先</summary>
-        <code>%LOCALAPPDATA%\D-CATS\HanbaiOhBridge\config\production-drive-desktop-client.json</code>
-        <p>デスクトップアプリ形式の確認後、このWindows利用者の設定先へ導入します。</p>
+        <summary>管理者向け：D-CATSの共通設定</summary>
+        <p>デスクトップアプリ形式を確認し、D-CATSのサーバーへ共通接続設定として登録します。各PCは本人確認後に必要な設定を取得するため、JSONをPCごとに配布する必要はありません。</p>
       </details>
       <ol>
-        <li>D-CATSの「受注・出荷管理」→「データ連携」→「業務連携」を開きます。</li>
+        <li>D-CATSのメニューで「設定」→「D-CATS業務連携設定」を開きます。</li>
         <li>「取込前バックアップの準備」の<strong>「Google接続・バックアップ用パスワードを設定」</strong>を押します。</li>
         <li>専用画面で会社名・販売王IDを確認し、ご本人のD-CATSアカウントで本人確認を行います。</li>
         <li>「Google接続を設定」を押し、Googleの画面で共有フォルダを開けるアカウントと読取許可を確認します。</li>
@@ -99,7 +98,7 @@
     </section>
     <footer>
       <p>設定JSONを取得できない場合は、導入担当者に表示項目やエラー名を伝えてください。秘密値のある画面やJSONの中身を送る必要はありません。</p>
-      <p>PC版Google Driveがない場合は、D-CATS業務連携の「PC版Google Driveの設定・困ったとき」を確認してください。</p>
+      <p>PC版Google Driveがない場合は、メニューの「設定」→「D-CATS業務連携設定」にある「PC版Google Driveの設定・困ったとき」を確認してください。</p>
       <p>この手順タブを閉じると、元のD-CATS画面に戻れます。</p>
       <p class="reference">手順確認日：2026年10月7日</p>
     </footer>

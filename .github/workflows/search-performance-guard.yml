@@ -177,6 +177,8 @@ jobs:
         run: node scripts/verify-hanbaiou-billing-settings.js
       - name: Verify shared business workspace shortcut
         run: node scripts/verify-business-workspace-shortcut.js
+      - name: Verify business workspace Settings navigation
+        run: node scripts/verify-business-workspace-settings.js
       - name: Verify offline postal data
         run: node scripts/verify-postal-data.js
       - name: Verify postal lookup fallback

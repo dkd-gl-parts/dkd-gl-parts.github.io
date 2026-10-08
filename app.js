@@ -422,6 +422,13 @@ var TRANSLATIONS = {
     sales_order_mgmt_desc: "得意先注文の受付、B2発送データ取込、製造シリアル照合を管理します。",
     sales_order_mgmt_note: "注文受付、B2発送データ取込、現場の製造シリアル照合を管理します。",
     business_workspace_open: "業務連携",
+    business_workspace_settings_menu_title: "設定",
+    business_workspace_settings_title: "D-CATS業務連携設定",
+    business_workspace_settings_desc: "初回登録・Google接続・CSV保存先を設定します。",
+    business_workspace_settings_location: "初回登録・接続・保存先の設定は、メニューの「設定」→「D-CATS業務連携設定」から行います。",
+    business_workspace_settings_open: "業務連携設定を開く",
+    business_workspace_settings_hint: "初回の準備や、パスワード・接続・保存先を変更するときに使います。設定画面を開くだけでは、販売王の起動やデータ取込は行いません。",
+    business_workspace_settings_drive_title: "PCの共有フォルダ設定",
     business_workspace_title: "D-CATS業務連携",
     business_workspace_company_title: "販売王データ連携（管理者検証）",
     business_workspace_company_hint: "登録済みの販売王IDとパスワードでログインし、商品・得意先・売上を別々のCSVへ出力します。",
@@ -451,9 +458,9 @@ var TRANSLATIONS = {
     business_workspace_backup_check: "このPCのバックアップ準備を確認",
     business_workspace_backup_setup: "Google接続・バックアップ用パスワードを設定",
     business_workspace_backup_setup_hint: "このPCの専用設定画面が開きます。初回はD-CATSの本人確認とGoogleの読取許可を行い、登録準備が整ってからバックアップ用パスワードを入力します。",
-    business_workspace_backup_guide_hint: "Google接続が未設定の場合は、先に管理者が設定JSONを用意します。PC版Google Driveの同期設定とは別の準備です。",
+    business_workspace_backup_guide_hint: "Google接続が未設定の場合は、先に管理者がD-CATSの共通接続設定を登録します。PC版Google Driveの同期設定とは別の準備です。",
     business_workspace_backup_guide: "Google接続設定の作成手順を開く（新しいタブ）",
-    business_workspace_backup_guide_next: "設定JSONをこのPCへ導入してから、上の設定ボタンで本人の読取許可を行います。",
+    business_workspace_backup_guide_next: "このPCはD-CATSから共通設定を取得します。上の設定ボタンで、本人のGoogleアカウントによる読取許可を行います。",
     business_workspace_backup_setup_opening: "設定画面を開いています。このPCに表示された専用画面で操作してください。",
     business_workspace_backup_setup_saved: "バックアップ用パスワードの保護登録を確認しました。「このPCのバックアップ準備を確認」で残りの準備状況を確認できます。",
     business_workspace_backup_setup_cancelled: "設定画面を閉じました。準備状況は未確認です。",
@@ -2883,6 +2890,13 @@ var TRANSLATIONS = {
     sales_order_mgmt_desc: "Manage customer orders, B2 shipping-data imports, and manufacturing-serial verification.",
     sales_order_mgmt_note: "Manage order acceptance, B2 shipping-data imports, and shop-floor serial verification.",
     business_workspace_open: "Shared Folder",
+    business_workspace_settings_menu_title: "Settings",
+    business_workspace_settings_title: "D-CATS Integration Settings",
+    business_workspace_settings_desc: "Set up passwords, Google connection and CSV folders.",
+    business_workspace_settings_location: "For initial registration, connections and save folders, go to Menu → Settings → D-CATS Integration Settings.",
+    business_workspace_settings_open: "Open Integration Settings",
+    business_workspace_settings_hint: "Use this screen for initial setup or to change passwords, connections and save folders. Opening it does not start Sales King or import data.",
+    business_workspace_settings_drive_title: "Shared Folder Setup on This PC",
     business_workspace_title: "D-CATS Business Exchange",
     business_workspace_company_title: "Sales King integration (admin verification)",
     business_workspace_company_hint: "Sign in with the registered Sales King ID and saved password. Export products, customers and sales as separate CSV files.",
@@ -2912,9 +2926,9 @@ var TRANSLATIONS = {
     business_workspace_backup_check: "Check backup preparation on this PC",
     business_workspace_backup_setup: "Set up Google connection and backup password",
     business_workspace_backup_setup_hint: "A setup window opens on this PC. On first setup, verify your D-CATS account and grant Google read access. Enter the backup password after registration is ready.",
-    business_workspace_backup_guide_hint: "If Google access is not configured, an administrator first prepares the configuration JSON. This is separate from Google Drive for desktop sync settings.",
+    business_workspace_backup_guide_hint: "If Google access is not configured, an administrator first registers the shared D-CATS connection settings. This is separate from Google Drive for desktop sync settings.",
     business_workspace_backup_guide: "Open Google configuration guide (Japanese, new tab)",
-    business_workspace_backup_guide_next: "Install the configuration JSON on this PC, then use the setup button above to grant read access with your own account.",
+    business_workspace_backup_guide_next: "This PC retrieves the shared settings from D-CATS. Use the setup button above to grant read access with your own Google account.",
     business_workspace_backup_setup_opening: "Opening the setup window. Continue in the dedicated window on this PC.",
     business_workspace_backup_setup_saved: "Protected backup password registration was confirmed. Use Check backup preparation on this PC to check the remaining preparation.",
     business_workspace_backup_setup_cancelled: "The setup window was closed. Preparation has not been verified.",
@@ -5288,6 +5302,13 @@ var TRANSLATIONS = {
     sales_order_mgmt_desc: "管理客户订单、B2发货数据导入和制造序列号核对。",
     sales_order_mgmt_note: "管理订单受理、B2发货数据导入和现场序列号核对。",
     business_workspace_open: "业务协作",
+    business_workspace_settings_menu_title: "设置",
+    business_workspace_settings_title: "D-CATS业务联动设置",
+    business_workspace_settings_desc: "设置首次注册、Google连接和CSV保存位置。",
+    business_workspace_settings_location: "首次注册、连接及保存位置请通过菜单 → 设置 → D-CATS业务联动设置操作。",
+    business_workspace_settings_open: "打开业务联动设置",
+    business_workspace_settings_hint: "首次准备或更改密码、连接及保存位置时使用此画面。打开设置不会启动销售王或导入数据。",
+    business_workspace_settings_drive_title: "本机共享文件夹设置",
     business_workspace_title: "D-CATS业务协作",
     business_workspace_company_title: "销售王数据联动（管理员验证）",
     business_workspace_company_hint: "使用已登记的销售王ID及已保存的密码登录，将商品、客户和销售分别导出为CSV。",
@@ -5317,9 +5338,9 @@ var TRANSLATIONS = {
     business_workspace_backup_check: "确认此电脑的备份准备",
     business_workspace_backup_setup: "设置Google连接及备份密码",
     business_workspace_backup_setup_hint: "此电脑将打开专用设置窗口。首次设置时需确认D-CATS本人账户并授予Google读取权限。登记准备完成后再输入备份密码。",
-    business_workspace_backup_guide_hint: "如果尚未设置Google连接，请先由管理员准备设置JSON文件。此步骤与电脑版Google Drive的同步设置不同。",
+    business_workspace_backup_guide_hint: "如果尚未设置Google连接，请先由管理员登记D-CATS共用连接设置。此步骤与电脑版Google Drive的同步设置不同。",
     business_workspace_backup_guide: "打开Google连接设置步骤（日语，新标签页）",
-    business_workspace_backup_guide_next: "将设置JSON文件安装到此电脑后，通过上方设置按钮，以本人账户授予读取权限。",
+    business_workspace_backup_guide_next: "本机会从D-CATS获取共用设置。通过上方设置按钮，以本人的Google账户授予读取权限。",
     business_workspace_backup_setup_opening: "正在打开设置窗口。请在此电脑的专用窗口中操作。",
     business_workspace_backup_setup_saved: "已确认备份密码的受保护登记。请通过“确认此电脑的备份准备”查看其他准备状态。",
     business_workspace_backup_setup_cancelled: "设置窗口已关闭。准备状态尚未确认。",
@@ -7511,7 +7532,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1133";
+var APP_VERSION       = "v1.1.1134";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -10816,6 +10837,10 @@ function renderMenu() {
     { icon: "&#x1F4CB;", titleKey: "mi_logs_title", descKey: "mi_logs_desc", action: "logs", available: canViewOperationLogs() }
   ].filter(function(item) { return item.available; });
 
+  var settingsItems = [
+    { icon: "&#x1F517;", titleKey: "business_workspace_settings_title", descKey: "business_workspace_settings_desc", action: "business-workspace-settings", available: canManageSalesOrders() }
+  ].filter(function(item) { return item.available; });
+
   function renderCard(item) {
     var act = item.action ? " data-action=\"" + item.action + "\"" : "";
     var html = "";
@@ -10854,10 +10879,18 @@ function renderMenu() {
     html += "</div></div></section>";
   }
 
+  if (settingsItems.length) {
+    html += '<section class="menu-section" id="menu-settings-section">';
+    html += '<div class="menu-section-head"><h3 class="menu-section-title">' + t("business_workspace_settings_menu_title") + '</h3></div>';
+    html += '<div class="menu-admin-panel"><div class="menu-admin-grid">';
+    settingsItems.forEach(function(item) { html += renderAdminLink(item); });
+    html += '</div></div></section>';
+  }
+
   grid.innerHTML = html;
 
   grid.querySelectorAll(".menu-card:not(.disabled)[data-action], .menu-admin-link:not(.disabled)[data-action]").forEach(function(card) {
-    card.addEventListener("click", function() {
+    card.addEventListener("click", function(event) {
       if (card.dataset.action === "search") enterSearch();
       else if (card.dataset.action === "customer-portal") enterCustomerPortal();
       else if (card.dataset.action === "sales-order-mgmt") enterSalesOrderMgmt();
@@ -10884,6 +10917,7 @@ function renderMenu() {
       else if (card.dataset.action === "rakuten-price") enterRakutenPrice();
       else if (card.dataset.action === "rakuten-bulk") enterRakutenBulk();
       else if (card.dataset.action === "rakuten-price-list") enterRakutenPriceList();
+      else if (card.dataset.action === "business-workspace-settings") openDcatsBusinessWorkspaceSettings(event);
       else if (card.dataset.action === "api-settings") enterApiSettings();
       else if (card.dataset.action === "logs") enterLogs();
     });
@@ -14421,6 +14455,7 @@ var DCATS_BUSINESS_WORKSPACE_DB_STORE = "directory-handles";
 var DCATS_B2_EXPORT_DIRECTORY_KEY = "b2-issued-directory";
 var DCATS_HANBAIOU_EXPORT_DIRECTORY_KEY = "hanbaiou-issued-directory";
 var dcatsBusinessWorkspaceTrigger = null;
+var dcatsBusinessWorkspaceSettingsReturn = false;
 var dcatsBusinessWorkspaceDbPromise = null;
 var dcatsB2ExportDirectoryHandle = null;
 var dcatsB2ExportDirectoryLoaded = false;
@@ -14816,8 +14851,8 @@ function openDcatsBusinessWorkspace(event) {
   refreshDcatsB2ExportDirectoryState().catch(function() {
     setDcatsB2ExportDirectoryState("error", "");
   });
-  var shortcutButton = document.getElementById("dcats-business-workspace-shortcut");
-  if (shortcutButton) shortcutButton.focus();
+  var folderLink = document.getElementById("dcats-business-workspace-folder-open");
+  if (folderLink) folderLink.focus();
 }
 
 if (window.indexedDB) {
@@ -14825,7 +14860,45 @@ if (window.indexedDB) {
   loadDcatsHanbaiouExportDirectory().catch(function() {});
 }
 
-function closeDcatsBusinessWorkspace() {
+function openDcatsBusinessWorkspaceSettings(event) {
+  if (!currentUser || !canManageSalesOrders()) return;
+  var daily = document.getElementById("dcats-business-workspace-overlay");
+  var fromDaily = !!daily && daily.classList.contains("show");
+  var trigger = fromDaily ? dcatsBusinessWorkspaceTrigger : (event && event.currentTarget ? event.currentTarget : document.activeElement);
+  closeDcatsBusinessWorkspace(false);
+  dcatsBusinessWorkspaceTrigger = trigger;
+  dcatsBusinessWorkspaceSettingsReturn = fromDaily;
+  var overlay = document.getElementById("dcats-business-workspace-settings-overlay");
+  if (!overlay) return;
+  setDcatsBusinessWorkspaceMessage("", false);
+  syncDcatsCompanyAccountControls();
+  overlay.classList.add("show");
+  refreshDcatsB2ExportDirectoryState().catch(function() { setDcatsB2ExportDirectoryState("error", ""); });
+  document.getElementById("dcats-business-workspace-shortcut").focus();
+}
+
+function closeDcatsBusinessWorkspaceSettings() {
+  var returnToDaily = dcatsBusinessWorkspaceSettingsReturn;
+  var trigger = dcatsBusinessWorkspaceTrigger;
+  closeDcatsBusinessWorkspace();
+  if (returnToDaily && currentUser && canManageSalesOrders()) openDcatsBusinessWorkspace({ currentTarget: trigger });
+}
+
+function handleDcatsBusinessWorkspaceKeys(event) {
+  if (event.key === "Escape") { event.preventDefault();
+    if (event.currentTarget.id === "dcats-business-workspace-settings-overlay") closeDcatsBusinessWorkspaceSettings();
+    else closeDcatsBusinessWorkspace();
+    return;
+  }
+  if (event.key !== "Tab") return;
+  var controls = Array.from(event.currentTarget.querySelectorAll('a[href], button:not(:disabled), summary, input:not(:disabled), select:not(:disabled), [tabindex="0"]')).filter(function(node) { return !!node.getClientRects().length; });
+  if (!controls.length) return;
+  var first = controls[0], last = controls[controls.length - 1];
+  if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+  else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+}
+
+function closeDcatsBusinessWorkspace(restoreFocus) {
   dcatsCompanyIntegrationEpoch++;
   if(dcatsCompanyBackupBusy) window.DcatsHanbaiohCompanyBridge?.cancelCurrent();
   resetDcatsCompanyBackupReadiness();
@@ -14833,7 +14906,10 @@ function closeDcatsBusinessWorkspace() {
   if(typeof dcatsCompanyAccountBusy!=="undefined"&&dcatsCompanyAccountBusy) window.DcatsHanbaiohCompanyBridge?.cancelCurrent();
   var overlay = document.getElementById("dcats-business-workspace-overlay");
   if (overlay) overlay.classList.remove("show");
-  if (dcatsBusinessWorkspaceTrigger && typeof dcatsBusinessWorkspaceTrigger.focus === "function") {
+  var settings = document.getElementById("dcats-business-workspace-settings-overlay");
+  if (settings) settings.classList.remove("show");
+  dcatsBusinessWorkspaceSettingsReturn = false;
+  if (restoreFocus !== false && dcatsBusinessWorkspaceTrigger && typeof dcatsBusinessWorkspaceTrigger.focus === "function") {
     dcatsBusinessWorkspaceTrigger.focus();
   }
   dcatsBusinessWorkspaceTrigger = null;
@@ -14871,9 +14947,10 @@ function syncDcatsCompanyAccountControls() {
 async function registerDcatsCompanyAccount() {
   if(dcatsCompanyAccountBusy||dcatsCompanyIntegrationBusy||dcatsCompanyBackupBusy||!currentUser||!isSystemAdmin())return;
   var actor=currentUser.id,button=document.getElementById("dcats-business-workspace-account-register"),status=document.getElementById("dcats-business-workspace-account-status");
-  var overlay=document.getElementById("dcats-business-workspace-overlay");
+  var overlay=document.getElementById("dcats-business-workspace-settings-overlay");
   var epoch=dcatsCompanyIntegrationEpoch;
   function isCurrent(){return !!currentUser&&currentUser.id===actor&&isSystemAdmin()&&epoch===dcatsCompanyIntegrationEpoch&&overlay.classList.contains("show");}
+  if(!isCurrent())return;
   dcatsCompanyAccountBusy=true;button.disabled=true;button.setAttribute("aria-busy","true");status.className="";status.textContent=t("business_workspace_account_opening");
   updateDcatsCompanyIntegrationControls();
   try{
@@ -14950,7 +15027,7 @@ async function runDcatsCompanyIntegration(action, category) {
 
 async function openDcatsCompanyBackupSetup() {
   if(dcatsCompanyAccountBusy||dcatsCompanyIntegrationBusy||dcatsCompanyBackupBusy||!currentUser||!isSystemAdmin())return;
-  var actor=currentUser.id,epoch=dcatsCompanyIntegrationEpoch,overlay=document.getElementById("dcats-business-workspace-overlay"),button=document.getElementById("dcats-business-workspace-backup-setup");
+  var actor=currentUser.id,epoch=dcatsCompanyIntegrationEpoch,overlay=document.getElementById("dcats-business-workspace-settings-overlay"),button=document.getElementById("dcats-business-workspace-backup-setup");
   function isCurrent(){return !!currentUser&&currentUser.id===actor&&isSystemAdmin()&&epoch===dcatsCompanyIntegrationEpoch&&overlay.classList.contains("show");}
   if(!isCurrent())return;
   resetDcatsCompanyBackupReadiness();dcatsCompanyBackupBusy=true;updateDcatsCompanyIntegrationControls();button.setAttribute("aria-busy","true");
@@ -14986,7 +15063,7 @@ function setDcatsCompanyBackupStatus(key, className) {
 
 async function checkDcatsCompanyBackupReadiness() {
   if(dcatsCompanyAccountBusy||dcatsCompanyIntegrationBusy||dcatsCompanyBackupBusy||!currentUser||!isSystemAdmin())return;
-  var actor=currentUser.id,epoch=dcatsCompanyIntegrationEpoch,overlay=document.getElementById("dcats-business-workspace-overlay");
+  var actor=currentUser.id,epoch=dcatsCompanyIntegrationEpoch,overlay=document.getElementById("dcats-business-workspace-settings-overlay");
   var section=document.getElementById("dcats-business-workspace-backup"),button=document.getElementById("dcats-business-workspace-backup-check"),status=document.getElementById("dcats-business-workspace-backup-status");
   function isCurrent(){return !!currentUser&&currentUser.id===actor&&isSystemAdmin()&&epoch===dcatsCompanyIntegrationEpoch&&overlay.classList.contains("show");}
   if(!isCurrent())return;
@@ -55947,6 +56024,15 @@ document.querySelectorAll("#sales-order-data-actions button").forEach(function(b
 document.addEventListener("click", function(event) {
   var menu = document.getElementById("sales-order-data-actions");
   if (menu && menu.hasAttribute("open") && !menu.contains(event.target)) menu.removeAttribute("open");
+});
+document.getElementById("dcats-business-workspace-settings-open").addEventListener("click", openDcatsBusinessWorkspaceSettings);
+document.getElementById("dcats-business-workspace-settings-close").addEventListener("click", closeDcatsBusinessWorkspaceSettings);
+document.getElementById("dcats-business-workspace-settings-cancel").addEventListener("click", closeDcatsBusinessWorkspaceSettings);
+document.getElementById("dcats-business-workspace-settings-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeDcatsBusinessWorkspaceSettings();
+});
+["dcats-business-workspace-overlay", "dcats-business-workspace-settings-overlay"].forEach(function(id) {
+  document.getElementById(id).addEventListener("keydown", handleDcatsBusinessWorkspaceKeys);
 });
 document.getElementById("dcats-business-workspace-close").addEventListener("click", closeDcatsBusinessWorkspace);
 document.getElementById("dcats-business-workspace-cancel").addEventListener("click", closeDcatsBusinessWorkspace);
