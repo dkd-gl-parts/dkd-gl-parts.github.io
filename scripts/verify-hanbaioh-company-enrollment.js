@@ -56,7 +56,7 @@ function fixture(mode={}){
     assert([...f.listeners.values()].every(s=>s.size===0));
   }
   const html=fs.readFileSync(path.join(root,"index.html"),"utf8"),app=fs.readFileSync(path.join(root,"app.js"),"utf8");
-  const card=html.slice(html.indexOf('<section class="dcats-business-workspace-account"'),html.indexOf('<section class="dcats-business-workspace-b2"'));
+  const card=html.slice(html.indexOf('<section class="dcats-business-workspace-account"'),html.indexOf('</section>', html.indexOf('<section class="dcats-business-workspace-account"')));
   assert(card.includes('id="dcats-business-workspace-account"'));assert(card.includes(" hidden>"));assert(card.includes('role="status"'));assert(!card.includes('<input'));
   for(const name of ["title","hint","update_hint","register","note","opening","saved","updated","cancelled","expired","failed","bridge_unavailable","extension_update_required","native_host_unavailable","device_unavailable","authentication_required","not_authorized","binding_unavailable","issuer_unavailable","ticket_unavailable"])assert.equal((app.match(new RegExp("business_workspace_account_"+name+":","g"))||[]).length,3,name);
   assert(app.includes('enroll_hanbaioh_company_account: false'));assert(app.includes('dcats-business-workspace-account-register"'));

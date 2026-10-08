@@ -106,6 +106,7 @@ const visibleClasses = new Set();
 let shortcutFocused = false;
 let triggerFocused = false;
 const elements = {
+  "dcats-business-workspace-folder-open": { focus: () => { shortcutFocused = true; } },
   "dcats-business-workspace-shortcut": { disabled: false, focus: () => { shortcutFocused = true; } },
   "dcats-business-workspace-message": { textContent: "", className: "" },
   "dcats-business-workspace-b2-state": { textContent: "", className: "" },
@@ -196,7 +197,7 @@ function flushTimers() {
 
   const trigger = { focus: () => { triggerFocused = true; } };
   context.openDcatsBusinessWorkspace({ currentTarget: trigger });
-  assert(visibleClasses.has("show") && shortcutFocused, "The menu must open the workspace and focus the shortcut action");
+  assert(visibleClasses.has("show") && shortcutFocused, "The menu must open the workspace and focus the shared folder action");
   assert(elements["dcats-business-workspace-message"].textContent === "", "Reopening the dialog must clear stale messages");
   context.closeDcatsBusinessWorkspace();
   assert(!visibleClasses.has("show") && triggerFocused, "Closing the workspace must restore focus to the menu action");
