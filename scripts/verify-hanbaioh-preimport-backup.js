@@ -25,6 +25,10 @@ function harness(config = {}) {
         const send = data => { for (const fn of messages) fn({ source: win, origin, data }); };
         let data = { category: req.category, status: config.status || 'completed' };
         if (data.status === 'completed') data.receipt = { schemaVersion: 1, prepareRequestId: req.id, category: req.category, status: 'production_preimport_backup_verified', backupRequestId: webcrypto.randomUUID(), jobId: 'a'.repeat(64), sha256: 'b'.repeat(64), size: 100 };
+        if (data.status === 'checkpoint') {
+          const stage=config.checkpointStage||'delivery_recorded',startedAt=Date.now()-5000;
+          data.checkpoint={stage,backupRequestId:stage==='not_started'?null:webcrypto.randomUUID(),startedAt:stage==='not_started'?null:startedAt,finishedAt:['not_started','attempt_recorded'].includes(stage)?null:startedAt+1000};
+        }
         if (data.status === 'blocked') data.readiness = { ...readiness, ...config.readiness };
         if (data.status === 'stopped') data.receipt = { schemaVersion: 1, prepareRequestId: req.id, category: req.category, status: 'stopped', code: 'production_preimport_backup_unverified', phase: 'create', attemptRecorded: true, backupMayHaveStarted: true, ...config.receipt };
         if (config.patch) data = config.patch(data);
@@ -89,11 +93,33 @@ async function scenario(name, action) { await action(); checks++; }
     const raw = bytes.slice(); await h.bridge.backupBeforePrepare({ ...h.options, file: { ...file, arrayBuffer: async () => raw.buffer } }); assert(raw.every(b => b === 0));
   });
   for (const category of ['products', 'customers', 'sales']) {
-    assert(html.includes('data-company-backup="' + category + '"')); assert(html.includes('data-company-backup-file="' + category + '"'));
+    assert(html.includes('data-company-backup-result="' + category + '"')); assert(html.includes('data-company-backup="' + category + '"')); assert(html.includes('data-company-backup-file="' + category + '"'));
   }
   assert(html.indexOf('data-company-backup="products"') < html.indexOf('id="dcats-business-workspace-settings-overlay"'));
   for (const key of ['hint', 'csv', 'working', 'opened', 'completed', 'blocked', 'cancelled', 'stopped', 'unknown', 'csv_invalid']) assert.equal((app.match(new RegExp('business_workspace_company_backup_' + key + ':', 'g')) || []).length, 3);
-  assert(app.includes('else if(button.dataset.companyBackup)')); assert(app.includes('!["connect","login","export","result","backup"].includes(action)'));
+  assert(app.includes('else if(button.dataset.companyBackup||button.dataset.companyBackupResult)')); assert(app.includes('!["connect","login","export","result","backup","backup_result"].includes(action)'));
   assert(app.includes('!currentUser||!isSystemAdmin()')); assert(!source.includes('refreshToken'));
+  for(const category of ['products','customers','sales'])for(const checkpointStage of ['not_started','attempt_recorded','local_backup_verified','delivery_recorded'])await scenario('read-only '+category+' '+checkpointStage,async()=>{
+    const started=harness();await started.bridge.backupBeforePrepare({...started.options,category});const original=[...started.storage];
+    const h=harness({status:'checkpoint',checkpointStage,storage:started.storage});let opened=0;
+    const r=await h.bridge.readBackupCheckpointFromPc({...h.options,category,onStage:()=>opened++});
+    assert.equal(r.status,'checkpoint');assert.equal(r.checkpoint.stage,checkpointStage);assert.equal(r.category,category);assert.equal(opened,1);
+    assert.equal(h.posts[0].command,'open_hanbaioh_preimport_backup_result');assert.equal(h.issued[0].command,'prepare_hanbaioh_'+category);
+    assert.deepEqual([...h.storage],original);assert.equal(h.messages.size,0);assert.equal(h.page.size,0);
+    assert.doesNotMatch(JSON.stringify(r),/password|token|capability|remoteFileId|filePath/);
+    await h.bridge.readBackupCheckpointFromPc({...h.options,category});assert.deepEqual([...h.storage],original);assert.equal(h.posts.length,2);
+    await assert.rejects(h.bridge.backupBeforePrepare({...h.options,category}),/company_backup_already_attempted/);assert.equal(h.posts.length,2);
+  });
+  await scenario('read absent record without creating any browser marker',async()=>{const h=harness({status:'checkpoint',checkpointStage:'not_started'});await h.bridge.readBackupCheckpointFromPc(h.options);assert.equal(h.storage.size,0);});
+  for(const config of [{status:'completed'},{status:'blocked'},{status:'stopped'},{status:'checkpoint',noOpened:true},{status:'checkpoint',repeatOpened:true},{status:'checkpoint',leave:true},
+    {status:'checkpoint',patch:r=>({...r,password:'PRIVATE'})},{status:'checkpoint',patch:r=>({...r,category:'sales'})},
+    {status:'checkpoint',patch:r=>({...r,checkpoint:{...r.checkpoint,stage:'unknown'}})},{status:'checkpoint',patch:r=>({...r,checkpoint:{...r.checkpoint,token:'PRIVATE'}})},
+    {status:'checkpoint',patch:r=>({...r,checkpoint:{...r.checkpoint,startedAt:Date.now()+100000}})},{status:'checkpoint',patch:r=>({...r,checkpoint:{...r.checkpoint,finishedAt:1}})},
+    {status:'checkpoint',checkpointStage:'not_started',patch:r=>({...r,checkpoint:{...r.checkpoint,backupRequestId:actor}})}])await scenario('reject forged checkpoint',async()=>{
+      const seed=harness();await seed.bridge.backupBeforePrepare(seed.options);const original=[...seed.storage],h=harness({...config,storage:seed.storage});
+      await assert.rejects(h.bridge.readBackupCheckpointFromPc(h.options),e=>!e.message.includes('PRIVATE'));assert.deepEqual([...h.storage],original);assert.equal(h.messages.size,0);assert.equal(h.page.size,0);
+  });
+  for(const status of ['cancelled','failed','expired','outcome_unknown'])await scenario('read-only '+status,async()=>{const storage=new Map([['dcats-company-preimport:synthetic','original']]),h=harness({status,storage});assert.equal((await h.bridge.readBackupCheckpointFromPc(h.options)).status,status);assert.equal(storage.size,1);});
+  for(const key of ['result','result_hint','result_working','result_opened','result_not_started','result_attempt_recorded','result_local_backup_verified','result_delivery_recorded','result_failed','result_cancelled'])assert.equal((app.match(new RegExp('business_workspace_company_backup_'+key+':','g'))||[]).length,3);
   console.log('Preimport backup: ' + checks + ' scenarios; isolated categories, dedicated window, explicit startup, readiness only, safe projection, timeout, owner change, no repeat after reload, no browser secrets: OK');
 })().catch(error => { console.error(error); process.exitCode = 1; });
