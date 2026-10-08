@@ -10859,3 +10859,5 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .dcats-business-workspace-settings-group .dcats-business-workspace-actions { padding: 0 0 12px; }
 .dcats-business-workspace-settings-group .dcats-business-workspace-shortcut-hint { margin: 0; }
 .dcats-business-workspace-settings-card .dcats-business-workspace-backup { margin: 20px; }
+/* Safe query-only diagnostics must wrap even at narrow mobile widths. */
+[data-hunyuan-readiness-status] { overflow-wrap: anywhere; }

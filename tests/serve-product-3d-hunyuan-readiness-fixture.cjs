@@ -13,7 +13,7 @@ function section(first, next) {
   return source.slice(start, end);
 }
 const render = section("  async function renderMediaPane(", "  async function publishModel(");
-const check = section("  async function checkHunyuanReadiness(", "  function sameTripoTarget(");
+const check = section("  function hunyuanDiagnosticText(", "  function sameTripoTarget(");
 const script = `
 var params = new URLSearchParams(location.search);
 var role = params.get("role") || "system_admin", mode = params.get("mode") || "response";
@@ -40,7 +40,8 @@ var sb = { functions: { invoke: async (name, options) => {
   if (mode === "session" || mode === "denied") return { error: { context: { status: mode === "session" ? 401 : 403 } } };
   if (mode === "stale") { modelCacheEpoch++; selectedProduct = { id: 2640 }; await renderMediaPane("sales"); }
   var status = ({ missing: "not_configured", auth: "authentication_rejected", permission: "permission_denied", timeout: "timeout" })[mode] || "provider_response_received_unverified";
-  return { data: { status, configured: mode !== "missing", generation_enabled: false, authentication_verified: false } };
+  var diagnostic = mode === "permission" ? { provider_code: "UnauthorizedOperation", request_id: "ebfba3b4-2547-49f3-8f4f-38701c81a127" } : undefined;
+  return { data: { status, diagnostic, configured: mode !== "missing", generation_enabled: false, authentication_verified: false } };
 } } };
 ${render}
 ${check}

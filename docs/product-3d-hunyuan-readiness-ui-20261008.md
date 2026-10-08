@@ -1,5 +1,29 @@
 # Tencent query-only readiness UI
 
+## Safe diagnostic extension — v1.1.1136 (local candidate, not released)
+
+The approved admin-only query control can append an exact allowlisted public
+error code and a validated 36-character UUID RequestId using textContent only.
+The client mirrors the server's 47 documented code enums. Unknown extra fields,
+arbitrary text, URLs, malformed IDs and raw messages are omitted. Known status
+text remains compatible with older endpoint replies. Diagnostics are shown only
+for the three provider-error outcomes, after all existing stale-session/role/
+target/pane/DOM checks; they never imply authentication or generation success.
+Japanese, English and Chinese labels are provided. The status wraps on mobile.
+
+Automatic tests: 11 focused Hunyuan behavioral tests, 190 product3D tests and all
+128 authoritative workflow commands pass, as do static build/security-header
+checks. Client/server allowlist parity is 47/47. The first focused assertion
+matched SecretId inside an official enum; it now still forbids key identifiers
+while permitting the documented error enum, without relaxing network/auth rules.
+
+Hidden synthetic browser QA was blocked by a denied localhost browser permission.
+No ordinary browser, credential/session copy or indirect browser workaround was
+used. Desktop/mobile visual and keyboard QA, source CI and publication remain
+pending. v1.1.1136 is a local candidate only; production remains v1.1.1135.
+The prior verified release below is retained as historical evidence, not proof
+that this new diagnostic UI has passed visual QA or been deployed.
+
 Purpose: let the signed-in administrator check the already deployed
 `product-3d-hunyuan-readiness` endpoint without exposing credentials or starting
 generation. Product 2639 / `aftermarket_new` only, in internal sales/production
