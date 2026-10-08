@@ -504,7 +504,8 @@ var TRANSLATIONS = {
     business_workspace_account_cancelled: "登録をキャンセルしました。",
     business_workspace_account_expired: "入力の有効期限（3分）が切れました。ボタンを押して登録画面を開き直してください。",
     business_workspace_account_failed: "登録の完了を確認できませんでした。入力画面に保存完了が表示された場合は、再登録せず担当者へ確認してください。（確認コード HBR-09）",
-    business_workspace_account_bridge_unavailable: "このブラウザからPCの連携機能へ接続できません。Chrome／Edgeの「拡張機能の管理」で「D-CATS 管理者用 Windows 連携」が有効か確認し、拡張機能とD-CATSのページを再読み込みしてください。（確認コード HBR-01）",
+    business_workspace_account_bridge_unavailable: "PCの連携機能へ接続できません。① 拡張機能の管理で「D-CATS 管理者用 Windows 連携」を有効にし、そのカードの丸い矢印で再読み込みします。② D-CATSに戻り、設定パネルを閉じて画面上部の［更新］を押します。この順に行ってからもう一度お試しください。（確認コード HBR-01）",
+    business_workspace_account_extension_reload_required: "拡張機能の更新により、このD-CATS画面の接続が切れています。設定パネルを閉じ、画面上部の［更新］を押してください。再読み込み後、設定を開いてもう一度お試しください。（確認コード HBR-11）",
     business_workspace_account_extension_update_required: "ブラウザに旧版の連携機能が残っています。「拡張機能の管理」で「D-CATS 管理者用 Windows 連携」を再読み込みし、0.5.3以上になったことを確認後、D-CATSのページを再読み込みしてください。続く場合は連携アプリの更新も必要です。（確認コード HBR-02）",
     business_workspace_account_native_host_unavailable: "PCの連携アプリを起動できません。連携アプリの導入・修復が必要です。（確認コード HBR-03）",
     business_workspace_account_device_unavailable: "このPCに、現在のD-CATS利用者の端末登録が見つからないか、読み取れません。担当者へ端末登録の確認を依頼してください。（確認コード HBR-04）",
@@ -2990,7 +2991,8 @@ var TRANSLATIONS = {
     business_workspace_account_cancelled: "Registration cancelled.",
     business_workspace_account_expired: "The 3-minute input period expired. Press the button to reopen the registration window.",
     business_workspace_account_failed: "Registration completion could not be confirmed. If the input window showed a saved result, contact support before registering again. (Code HBR-09)",
-    business_workspace_account_bridge_unavailable: "This browser cannot connect to the PC integration. In Chrome/Edge's extension manager, check that D-CATS Windows integration is enabled. Reload the extension and the D-CATS page. (Code HBR-01)",
+    business_workspace_account_bridge_unavailable: "Cannot connect to the PC integration. 1. Enable D-CATS Windows integration in the extension manager and reload it using the round arrow on its card. 2. Return to D-CATS, close the settings panel, and press Update at the top of the page. Follow this order, then try again. (Code HBR-01)",
+    business_workspace_account_extension_reload_required: "The extension update disconnected this D-CATS page. Close the settings panel and press Update at the top of the page. After reloading, open settings and try again. (Code HBR-11)",
     business_workspace_account_extension_update_required: "An older PC integration remains loaded. Reload D-CATS Windows integration in the extension manager, confirm version 0.5.3 or later, then reload the D-CATS page. If this continues, update the PC app too. (Code HBR-02)",
     business_workspace_account_native_host_unavailable: "The PC integration app could not start. Install or repair it. (Code HBR-03)",
     business_workspace_account_device_unavailable: "This PC's registration for the current D-CATS user is missing or unreadable. Ask support to check the device registration. (Code HBR-04)",
@@ -5420,7 +5422,8 @@ var TRANSLATIONS = {
     business_workspace_account_cancelled: "已取消登记。",
     business_workspace_account_expired: "3分钟输入期限已过。请点击按钮重新打开登记窗口。",
     business_workspace_account_failed: "无法确认登记完成。若输入窗口已显示保存成功，请先联系负责人，不要再次登记。（确认代码 HBR-09）",
-    business_workspace_account_bridge_unavailable: "此浏览器无法连接电脑联动功能。请在Chrome／Edge的扩展管理中确认D-CATS Windows联动扩展已启用，并重新加载扩展及D-CATS页面。（确认代码 HBR-01）",
+    business_workspace_account_bridge_unavailable: "无法连接电脑联动功能。① 在扩展管理中启用D-CATS Windows联动扩展，并点击该卡片的圆形箭头重新加载。② 返回D-CATS，关闭设置面板，点击页面顶部的［更新］。请按此顺序操作后重试。（确认代码 HBR-01）",
+    business_workspace_account_extension_reload_required: "扩展更新后，此D-CATS页面的连接已断开。请关闭设置面板，点击页面顶部的［更新］。重新加载后打开设置并重试。（确认代码 HBR-11）",
     business_workspace_account_extension_update_required: "浏览器仍加载旧版联动功能。请在扩展管理中重新加载D-CATS Windows联动扩展，确认版本为0.5.3或以上后重新加载D-CATS页面。若仍失败，也需要更新电脑应用。（确认代码 HBR-02）",
     business_workspace_account_native_host_unavailable: "无法启动电脑联动应用。请安装或修复应用。（确认代码 HBR-03）",
     business_workspace_account_device_unavailable: "找不到或无法读取当前D-CATS用户在此电脑上的设备登记。请联系负责人确认。（确认代码 HBR-04）",
@@ -7586,7 +7589,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1137";
+var APP_VERSION       = "v1.1.1138";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -15017,7 +15020,7 @@ async function registerDcatsCompanyAccount() {
   }catch(error){
     if(isCurrent()){
       var reason=error&&error.message;
-      var allowed=["company_bridge_unavailable","company_extension_update_required","company_native_host_unavailable","company_device_unavailable","company_authentication_required","company_not_authorized","company_binding_unavailable","company_issuer_unavailable","company_ticket_unavailable"];
+      var allowed=["company_bridge_unavailable","company_extension_reload_required","company_extension_update_required","company_native_host_unavailable","company_device_unavailable","company_authentication_required","company_not_authorized","company_binding_unavailable","company_issuer_unavailable","company_ticket_unavailable"];
       var key=allowed.includes(reason)?"business_workspace_account_"+reason.slice("company_".length):"business_workspace_account_failed";
       status.className="error";status.textContent=t(key);
     }
@@ -15072,7 +15075,7 @@ async function runDcatsCompanyIntegration(action, category) {
   } catch(error) {
     if(isCurrent()) {
       var reason=error&&error.message;
-      var codes=["company_bridge_unavailable","company_extension_update_required","company_native_host_unavailable","company_device_unavailable"];
+      var codes=["company_bridge_unavailable","company_extension_reload_required","company_extension_update_required","company_native_host_unavailable","company_device_unavailable"];
       status.className="error";
       status.textContent=reason==="company_export_disabled"?t("business_workspace_company_disabled"):codes.includes(reason)?t("business_workspace_account_"+reason.slice(8)):t(action==="connect"?"business_workspace_company_connection_failed":action==="login"?"business_workspace_company_login_failed":"business_workspace_company_pending");
     }
@@ -15097,7 +15100,7 @@ async function openDcatsCompanyBackupSetup() {
     setDcatsCompanyBackupStatus("business_workspace_backup_setup_"+status,status==="saved"?"ready":["failed","outcome_unknown","expired"].includes(status)?"error":"pending");
   } catch(error) {
     if(isCurrent()) {
-      var reason=error&&error.message,known=["company_bridge_unavailable","company_extension_update_required","company_native_host_unavailable","company_device_unavailable","company_authentication_required","company_not_authorized","company_binding_unavailable","company_issuer_unavailable","company_ticket_unavailable"];
+      var reason=error&&error.message,known=["company_bridge_unavailable","company_extension_reload_required","company_extension_update_required","company_native_host_unavailable","company_device_unavailable","company_authentication_required","company_not_authorized","company_binding_unavailable","company_issuer_unavailable","company_ticket_unavailable"];
       setDcatsCompanyBackupStatus(reason==="company_backup_window_unavailable"?"business_workspace_backup_setup_window_unavailable":known.includes(reason)?"business_workspace_account_"+reason.slice(8):"business_workspace_backup_setup_outcome_unknown","error");
     }
   } finally {dcatsCompanyBackupBusy=false;button.removeAttribute("aria-busy");updateDcatsCompanyIntegrationControls();}
@@ -15139,7 +15142,7 @@ async function checkDcatsCompanyBackupReadiness() {
   } catch(error) {
     if(isCurrent()) {
       var reason=error&&error.message;
-      var known=["company_bridge_unavailable","company_extension_update_required","company_native_host_unavailable","company_device_unavailable","company_authentication_required","company_not_authorized","company_binding_unavailable","company_issuer_unavailable","company_ticket_unavailable"];
+      var known=["company_bridge_unavailable","company_extension_reload_required","company_extension_update_required","company_native_host_unavailable","company_device_unavailable","company_authentication_required","company_not_authorized","company_binding_unavailable","company_issuer_unavailable","company_ticket_unavailable"];
       setDcatsCompanyBackupStatus(known.includes(reason)?"business_workspace_account_"+reason.slice(8):"business_workspace_backup_failed","error");
     }
   } finally {dcatsCompanyBackupBusy=false;button.removeAttribute("aria-busy");updateDcatsCompanyIntegrationControls();}

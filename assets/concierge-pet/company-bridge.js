@@ -82,6 +82,7 @@
         if (response && options.isCurrent() && response.ok === true && response.command === request.command && (!isBackupSetup || opened)) resolve(response.data);
         else {
           var code = response && response.error && response.error.code;
+          if (code === "EXTENSION_CONTEXT_INVALIDATED" && options.isCurrent() && (request.command === "read_hanbaioh_company_device" || isBackupSetup && !opened)) { reject(new Error("company_extension_reload_required")); return; }
           if (isBackupSetup && code === "REQUEST_REJECTED" && options.isCurrent()) { reject(new Error("company_extension_update_required")); return; }
           if (isBackupSetup && !opened) { reject(new Error("company_backup_window_unavailable")); return; }
           if (request.command === "read_hanbaioh_company_device" && options.isCurrent()) {
