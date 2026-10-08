@@ -141,14 +141,34 @@
       if (typeof options.onStage === "function") options.onStage("authorization");
       var capability = await issueEnrollmentTicket(api, record, request, options);
       if (!options.isCurrent()) throw new Error("company_session_changed");
-      native = { id: request.request_id, command: "open_hanbaioh_company_backup_setup", deviceId: record.device_id, capability: capability, confirmStartup: true, ...(options.recoverPassword === true ? {recoverPassword:true} : {allowPasswordPreparation:true}) };
+      native = { id: request.request_id, command: "open_hanbaioh_company_backup_setup", deviceId: record.device_id, capability: capability, confirmStartup: true, ...(options.checkReadiness === true ? {checkReadiness:true} : options.recoverPassword === true ? {recoverPassword:true} : {allowPasswordPreparation:true}) };
       if (typeof options.onStage === "function") options.onStage("opening");
       var result = await nativeRequest(native, options);
+      if (options.checkReadiness === true && result && result.status === "readiness_closed") {
+        if (Object.keys(result).sort().join(",") !== "readiness,status") throw new Error("company_backup_readiness_unverified");
+        return validateBackupReadiness(result.readiness,options.actorId,record.device_id,options);
+      }
+      if (options.checkReadiness === true && result && !["cancelled","failed","expired"].includes(result.status)) throw new Error("company_backup_readiness_unverified");
       if (!options.isCurrent() || !result || Object.keys(result).join(",") !== "status" || !["saved","pending_recovery","password_recovery_closed","password_not_saved","cancelled","failed","outcome_unknown","expired"].includes(result.status)) throw new Error("company_backup_setup_unverified");
       if (["password_recovery_closed","password_not_saved"].includes(result.status) && options.recoverPassword !== true) throw new Error("company_backup_setup_unverified");
       if (options.recoverPassword === true && ["saved","pending_recovery","outcome_unknown"].includes(result.status)) throw new Error("company_backup_setup_unverified");
       return Object.freeze({ status: result.status });
     } finally { if (native) native.capability = ""; active = false; }
+  }
+  function validateBackupReadiness(result,actorId,deviceId,options) {
+      var unavailable = { identity: "unverified", syncFolder: "unverified", driveConfiguration: "configuration_required", driveAuthorization: "unverified", backupPassword: "registration_required", recovery: "unverified", backupAdapter: "unavailable" };
+      if (!options.isCurrent() || !result || Object.keys(result).sort().join(",") !== "actorId,backupPolicy,checks,deviceId,folderId,ready,status,targetSha256" ||
+          result.status !== "production_backup_prerequisites" || result.actorId !== actorId || result.deviceId !== deviceId ||
+          result.targetSha256 !== "975d8e446b7dd638ef46ba90dcf3baf4fa9f77c4f22ae9187fbb7913a0029a37" ||
+          result.backupPolicy !== "password_protected_google_drive" || result.folderId !== "1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ" ||
+          typeof result.ready !== "boolean" || !result.checks || Array.isArray(result.checks) ||
+          Object.keys(result.checks).sort().join(",") !== Object.keys(unavailable).sort().join(",")) throw new Error("company_backup_readiness_unverified");
+      Object.keys(unavailable).forEach(function (name) { if (!["available", unavailable[name]].concat(name==="driveConfiguration"?["unverified"]:name==="backupPassword"?["local_only"]:[]).includes(result.checks[name])) throw new Error("company_backup_readiness_unverified"); });
+      if (result.checks.identity !== "available" || result.ready !== Object.values(result.checks).every(function (value) { return value === "available"; })) throw new Error("company_backup_readiness_unverified");
+      return result;
+  }
+  async function checkBackupReadinessFromPc(options) {
+    return openBackupSetupFromPc({...options,checkReadiness:true,recoverPassword:false});
   }
   async function readBackupReadinessFromPc(options) {
     if (active || !options || !uuid.test(options.actorId) || typeof options.isCurrent !== "function" || !options.isCurrent()) throw new Error("company_operation_unavailable");
@@ -164,16 +184,7 @@
       var capability = await issueEnrollmentTicket(api, record, request, options);
       if (!options.isCurrent()) throw new Error("company_session_changed");
       var result = await nativeRequest({ id: request.request_id, command: "read_hanbaioh_company_backup_readiness", deviceId: record.device_id, capability: capability }, options);
-      var unavailable = { identity: "unverified", syncFolder: "unverified", driveConfiguration: "configuration_required", driveAuthorization: "unverified", backupPassword: "registration_required", recovery: "unverified", backupAdapter: "unavailable" };
-      if (!options.isCurrent() || !result || Object.keys(result).sort().join(",") !== "actorId,backupPolicy,checks,deviceId,folderId,ready,status,targetSha256" ||
-          result.status !== "production_backup_prerequisites" || result.actorId !== options.actorId || result.deviceId !== record.device_id ||
-          result.targetSha256 !== "975d8e446b7dd638ef46ba90dcf3baf4fa9f77c4f22ae9187fbb7913a0029a37" ||
-          result.backupPolicy !== "password_protected_google_drive" || result.folderId !== "1JLtJIHpZS5SdDAusy4yc0RijxN0YwoSQ" ||
-          typeof result.ready !== "boolean" || !result.checks || Array.isArray(result.checks) ||
-          Object.keys(result.checks).sort().join(",") !== Object.keys(unavailable).sort().join(",")) throw new Error("company_backup_readiness_unverified");
-      Object.keys(unavailable).forEach(function (name) { if (!["available", unavailable[name]].includes(result.checks[name])) throw new Error("company_backup_readiness_unverified"); });
-      if (result.checks.identity !== "available" || result.ready !== Object.values(result.checks).every(function (value) { return value === "available"; })) throw new Error("company_backup_readiness_unverified");
-      return result;
+      return validateBackupReadiness(result,options.actorId,record.device_id,options);
     } finally { active = false; }
   }
   async function enrollAccountFromPc(options) {
@@ -324,6 +335,7 @@
     enrollAccountFromPc: enrollAccountFromPc,
     readDeviceFromPc: readDeviceFromPc,
     readBackupReadinessFromPc: readBackupReadinessFromPc,
+    checkBackupReadinessFromPc: checkBackupReadinessFromPc,
     openBackupSetupFromPc: openBackupSetupFromPc,
     exportCsvOnce: exportCsvOnce,
     readExportResult: readExportResult,
