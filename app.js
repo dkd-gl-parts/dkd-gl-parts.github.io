@@ -457,6 +457,10 @@ var TRANSLATIONS = {
     business_workspace_backup_separate: "バックアップ用パスワードは、上の販売王ログイン用とは別に登録します。",
     business_workspace_backup_check: "このPCのバックアップ準備を確認",
     business_workspace_backup_setup: "Google接続・バックアップ用パスワードを設定",
+    business_workspace_backup_recover: "保存したバックアップ用パスワードを確認",
+    business_workspace_backup_recover_hint: "忘れた場合は、登録時と同じD-CATSアカウントで本人確認して、このPCに保存したパスワードを確認できます。PC故障・交換時の共有復旧設定は別途準備が必要です。",
+    business_workspace_backup_setup_password_recovery_closed: "パスワード確認画面を閉じました。",
+    business_workspace_backup_setup_password_not_saved: "このPCにはバックアップ用パスワードが保存されていません。設定ボタンから先に登録してください。",
     business_workspace_backup_setup_hint: "このPCの専用設定画面が開きます。初回はD-CATSの本人確認とGoogleの読取許可を行い、登録準備が整ってからバックアップ用パスワードを入力します。",
     business_workspace_backup_guide_hint: "Google接続が未設定の場合は、先に管理者がD-CATSの共通接続設定を登録します。PC版Google Driveの同期設定とは別の準備です。",
     business_workspace_backup_guide: "Google接続設定の作成手順を開く（新しいタブ）",
@@ -2944,6 +2948,10 @@ var TRANSLATIONS = {
     business_workspace_backup_separate: "Register a separate backup password from the Sales King sign-in password above.",
     business_workspace_backup_check: "Check backup preparation on this PC",
     business_workspace_backup_setup: "Set up Google connection and backup password",
+    business_workspace_backup_recover: "View saved backup password",
+    business_workspace_backup_recover_hint: "If forgotten, sign in with the same D-CATS account to view the password protected on this PC. Shared recovery for PC failure or replacement requires separate setup.",
+    business_workspace_backup_setup_password_recovery_closed: "The password viewing window was closed.",
+    business_workspace_backup_setup_password_not_saved: "No backup password is saved on this PC. Register it using the setup button first.",
     business_workspace_backup_setup_hint: "A setup window opens on this PC. On first setup, verify your D-CATS account and grant Google read access. Enter the backup password after registration is ready.",
     business_workspace_backup_guide_hint: "If Google access is not configured, an administrator first registers the shared D-CATS connection settings. This is separate from Google Drive for desktop sync settings.",
     business_workspace_backup_guide: "Open Google configuration guide (Japanese, new tab)",
@@ -5375,6 +5383,10 @@ var TRANSLATIONS = {
     business_workspace_backup_separate: "备份密码与上方的销售王登录密码分别登记。",
     business_workspace_backup_check: "确认此电脑的备份准备",
     business_workspace_backup_setup: "设置Google连接及备份密码",
+    business_workspace_backup_recover: "查看已保存的备份密码",
+    business_workspace_backup_recover_hint: "忘记密码时，使用登记时的D-CATS账号验证身份，即可查看此电脑保护保存的密码。电脑故障或更换时的共享恢复需要另外设置。",
+    business_workspace_backup_setup_password_recovery_closed: "已关闭密码查看窗口。",
+    business_workspace_backup_setup_password_not_saved: "此电脑尚未保存备份密码。请先通过设置按钮登记。",
     business_workspace_backup_setup_hint: "此电脑将打开专用设置窗口。首次设置时需确认D-CATS本人账户并授予Google读取权限。登记准备完成后再输入备份密码。",
     business_workspace_backup_guide_hint: "如果尚未设置Google连接，请先由管理员登记D-CATS共用连接设置。此步骤与电脑版Google Drive的同步设置不同。",
     business_workspace_backup_guide: "打开Google连接设置步骤（日语，新标签页）",
@@ -7589,7 +7601,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1138";
+var APP_VERSION       = "v1.1.1139";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -15045,6 +15057,8 @@ function updateDcatsCompanyIntegrationControls() {
   if(backupCheck)backupCheck.disabled=busy;
   var backupSetup=document.getElementById("dcats-business-workspace-backup-setup");
   if(backupSetup)backupSetup.disabled=busy;
+  var backupRecover=document.getElementById("dcats-business-workspace-backup-recover");
+  if(backupRecover)backupRecover.disabled=busy;
 }
 
 async function runDcatsCompanyIntegration(action, category) {
@@ -15082,9 +15096,10 @@ async function runDcatsCompanyIntegration(action, category) {
   } finally {dcatsCompanyIntegrationBusy=false;updateDcatsCompanyIntegrationControls();}
 }
 
-async function openDcatsCompanyBackupSetup() {
+async function openDcatsCompanyBackupSetup(recoverPassword) {
+  recoverPassword=recoverPassword===true;
   if(dcatsCompanyAccountBusy||dcatsCompanyIntegrationBusy||dcatsCompanyBackupBusy||!currentUser||!isSystemAdmin())return;
-  var actor=currentUser.id,epoch=dcatsCompanyIntegrationEpoch,overlay=document.getElementById("dcats-business-workspace-settings-overlay"),button=document.getElementById("dcats-business-workspace-backup-setup");
+  var actor=currentUser.id,epoch=dcatsCompanyIntegrationEpoch,overlay=document.getElementById("dcats-business-workspace-settings-overlay"),button=document.getElementById(recoverPassword?"dcats-business-workspace-backup-recover":"dcats-business-workspace-backup-setup");
   function isCurrent(){return !!currentUser&&currentUser.id===actor&&isSystemAdmin()&&epoch===dcatsCompanyIntegrationEpoch&&overlay.classList.contains("show");}
   if(!isCurrent())return;
   resetDcatsCompanyBackupReadiness();dcatsCompanyBackupBusy=true;updateDcatsCompanyIntegrationControls();button.setAttribute("aria-busy","true");
@@ -15092,7 +15107,7 @@ async function openDcatsCompanyBackupSetup() {
   try {
     var bridge=window.DcatsHanbaiohCompanyBridge;
     if(!bridge||typeof bridge.openBackupSetupFromPc!=="function")throw new Error("company_extension_update_required");
-    var result=await bridge.openBackupSetupFromPc({actorId:actor,isCurrent:isCurrent,onStage:function(stage){
+    var result=await bridge.openBackupSetupFromPc({actorId:actor,isCurrent:isCurrent,recoverPassword:recoverPassword,onStage:function(stage){
       if(isCurrent()&&["device","authorization","opening","opened"].includes(stage))setDcatsCompanyBackupStatus("business_workspace_backup_setup_"+stage);
     }});
     if(!isCurrent())return;
@@ -56099,7 +56114,8 @@ document.getElementById("dcats-business-workspace-shortcut").addEventListener("c
 document.getElementById("dcats-business-workspace-b2-select").addEventListener("click", configureDcatsB2ExportDirectory);
 document.getElementById("dcats-business-workspace-account-register").addEventListener("click", registerDcatsCompanyAccount);
 document.getElementById("dcats-business-workspace-backup-check").addEventListener("click", checkDcatsCompanyBackupReadiness);
-document.getElementById("dcats-business-workspace-backup-setup").addEventListener("click", openDcatsCompanyBackupSetup);
+document.getElementById("dcats-business-workspace-backup-setup").addEventListener("click", function(){openDcatsCompanyBackupSetup(false);});
+document.getElementById("dcats-business-workspace-backup-recover").addEventListener("click", function(){openDcatsCompanyBackupSetup(true);});
 document.getElementById("dcats-business-workspace-company-connect").addEventListener("click", function(){runDcatsCompanyIntegration("connect");});
 document.getElementById("dcats-business-workspace-company-login").addEventListener("click", function(){runDcatsCompanyIntegration("login");});
 document.querySelectorAll("[data-company-export]").forEach(function(button){button.addEventListener("click",function(){runDcatsCompanyIntegration("export",button.dataset.companyExport);});});
