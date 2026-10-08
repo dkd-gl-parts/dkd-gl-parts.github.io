@@ -45,6 +45,7 @@ jobs:
           node scripts/verify-hanbaioh-backup-enrollment.js
           node scripts/verify-hanbaioh-login-pilot.js
           node scripts/verify-hanbaioh-company-bridge.js
+          node scripts/verify-hanbaioh-preimport-backup.js
           node scripts/verify-hanbaioh-company-enrollment.js
           node scripts/verify-hanbaioh-backup-readiness.js
           node scripts/verify-hanbaioh-backup-setup.js

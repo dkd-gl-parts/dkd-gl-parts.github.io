@@ -114,6 +114,7 @@ const elements = {
   "dcats-business-workspace-b2-permission-hint": { textContent: "" },
   "dcats-business-workspace-b2-select": { textContent: "", disabled: false },
   "dcats-business-workspace-overlay": {
+    querySelectorAll: () => [],
     classList: { add: (value) => visibleClasses.add(value), remove: (value) => visibleClasses.delete(value) }
   }
 };

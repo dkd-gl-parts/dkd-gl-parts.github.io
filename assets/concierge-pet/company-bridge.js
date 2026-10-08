@@ -70,7 +70,7 @@
     return new Promise(function (resolve, reject) {
       var settled = false, opened = false;
       var isReadiness = request.command === "read_hanbaioh_company_backup_readiness";
-      var isBackupSetup = request.command === "open_hanbaioh_company_backup_setup";
+      var isBackupSetup = request.command === "open_hanbaioh_company_backup_setup" || request.command === "open_hanbaioh_preimport_backup";
       var isExport = request.command.startsWith("export_hanbaioh_") || request.command === "read_hanbaioh_company_export" || isReadiness;
       var timer = window.setTimeout(function () { finish(null); }, isBackupSetup ? 20000 : isReadiness ? 20000 : request.command === "login_hanbaioh_company" || isExport ? 210000 : request.command === "read_hanbaioh_company_device" ? 5000 : 30000);
       var watch = window.setInterval(function () { if (!options.isCurrent()) finish(null); }, 250);
@@ -233,14 +233,44 @@
       });
     }finally{window.clearInterval(watch);if(initial)initial.capability="";capability="";active=false;}
   }
-  async function run(options, category) {
+  function validatePreimportResult(data, request, options) {
+    var fail = function () { throw new Error("company_result_unverified"); };
+    var exact = function (value, fields) { return value && !Array.isArray(value) && Object.keys(value).sort().join(",") === fields; };
+    var sha = function (value) { return typeof value === "string" && /^[0-9a-f]{64}$/.test(value); };
+    if (!data || data.category !== request.category) fail();
+    if (["cancelled", "failed", "expired", "outcome_unknown"].includes(data.status)) {
+      if (!exact(data, "category,status")) fail();
+    } else if (data.status === "blocked") {
+      if (!exact(data, "category,readiness,status")) fail();
+      validateBackupReadiness(data.readiness, options.record.actor_id, options.record.device_id, options);
+      if (data.readiness.ready) fail();
+    } else {
+      var r = data.receipt;
+      if (!exact(data, "category,receipt,status") || !r || r.schemaVersion !== 1 || r.prepareRequestId !== request.id) fail();
+      if (data.status === "completed") {
+        if (!exact(r, "backupRequestId,category,jobId,prepareRequestId,schemaVersion,sha256,size,status") || r.status !== "production_preimport_backup_verified" ||
+            r.category !== request.category || !uuid.test(r.backupRequestId) || !sha(r.jobId) || !sha(r.sha256) ||
+            !Number.isSafeInteger(r.size) || r.size < 1 || r.size > 2 * 1024 * 1024 * 1024) fail();
+      } else if (data.status === "stopped") {
+        if (!exact(r, "attemptRecorded,backupMayHaveStarted,category,code,phase,prepareRequestId,schemaVersion,status") || r.status !== "stopped" ||
+            r.category !== null && r.category !== request.category ||
+            !["production_preimport_dispatch_unverified", "production_preimport_dispatch_used", "production_preimport_request_unverified", "production_preimport_backup_unverified", "production_backup_existing_attempt"].includes(r.code) ||
+            !["dispatch", "authorization", "preflight", "ui-policy", "adapter", "recovery", "storage", "lock", "session", "password", "attempt", "mode", "create", "local-file", "completion", "local-record", "sync", "verified-record"].includes(r.phase) ||
+            typeof r.attemptRecorded !== "boolean" || typeof r.backupMayHaveStarted !== "boolean" || r.backupMayHaveStarted && !r.attemptRecorded) fail();
+      } else fail();
+    }
+    return { category: data.category, status: data.status, requestId: request.id,
+      ...(data.status === "blocked" ? { readiness: data.readiness } : {}),
+      ...(data.status === "stopped" ? { attemptRecorded: data.receipt.attemptRecorded, backupMayHaveStarted: data.receipt.backupMayHaveStarted } : {}) };
+  }
+  async function run(options, category, preimport) {
     requireCurrent(options);
     var api = window.DcatsHanbaiohCompanyApi;
-    if (active || !api || typeof api.issue !== "function" || category !== "account" && !Object.hasOwn(commands, category)) throw new Error("company_operation_unavailable");
+    if (active || !api || typeof api.issue !== "function" || preimport && category === "account" || category !== "account" && !Object.hasOwn(commands, category)) throw new Error("company_operation_unavailable");
     var isLogin = category === "account", key = actorKey(options.record);
     if (isLogin && loginAttempts.has(key)) throw new Error("company_login_already_attempted");
     active = true;
-    var request, body, bytes;
+    var request, body, bytes, capability, backupMarker;
     try {
       body = { command: isLogin ? "login_hanbaioh_company" : commands[category], request_id: window.crypto.randomUUID(), device_id: options.record.device_id };
       if (!isLogin) {
@@ -254,15 +284,33 @@
         bytes.fill(0); bytes = null;
       }
       requireCurrent(options);
+      if (preimport) {
+        backupMarker = "dcats-company-preimport:" + actorKey(options.record) + ":" + category + ":" + body.source_sha256;
+        try { if (window.sessionStorage.getItem(backupMarker)) throw new Error("company_backup_already_attempted"); }
+        catch (error) { throw new Error(error.message === "company_backup_already_attempted" ? error.message : "company_operation_unavailable"); }
+      }
       // Mark before native submission. An uncertain result must never cause an
       // automatic second sign-in, including after the settings panel reopens.
-      var capability = issuedTicket(await api.issue(options.record, body), body);
+      capability = issuedTicket(await (preimport ? boundedIssue(api, options.record, body, options) : api.issue(options.record, body)), body);
       requireCurrent(options);
       request = { id: body.request_id, command: body.command, deviceId: body.device_id, capability: capability };
       if (!isLogin) request.fileName = body.file_name;
+      if (preimport) {
+        request.command = "open_hanbaioh_preimport_backup"; request.category = category; request.confirmStartup = true;
+        // Persist only the request ID, keyed by owner, device, category and CSV
+        // hash. Reload or a lost response must not submit the same source again.
+        try { window.sessionStorage.setItem(backupMarker, request.id); }
+        catch { throw new Error("company_operation_unavailable"); }
+      }
       if (isLogin) loginAttempts.add(key);
       var data = await nativeRequest(request, options);
       requireCurrent(options);
+      if (preimport) {
+        var result = validatePreimportResult(data, request, options);
+        if (["blocked", "cancelled", "failed", "expired"].includes(result.status) || result.status === "stopped" && !result.attemptRecorded && !result.backupMayHaveStarted)
+          window.sessionStorage.removeItem(backupMarker);
+        return result;
+      }
       if (isLogin) {
         if (!data || data.status !== "ui_login_verified" || data.code !== "HANBAIOH_CONTROLLED_UI_LOGIN_VERIFIED" || data.sessionRecorded !== true) throw new Error("company_result_unverified");
         verifiedLogins.add(key);
@@ -272,7 +320,7 @@
       if (!job || job.status !== "validated_waiting_for_backup" || job.actorId !== options.record.actor_id || job.deviceId !== body.device_id || job.category !== category ||
           job.direction !== "import" || job.sourceSha256 !== body.source_sha256 || job.fileName !== body.file_name || !/^[0-9a-f]{64}$/.test(job.jobId)) throw new Error("company_result_unverified");
       return { status: "prepared", category: category, reused: data.reused === true };
-    } finally { bytes && bytes.fill(0); if (request) request.capability = ""; active = false; }
+    } finally { bytes && bytes.fill(0); if (request) request.capability = ""; capability = ""; active = false; }
   }
   function verifiedExport(data, category, requestId) {
       var artifact = data && data.artifact;
@@ -332,6 +380,7 @@
   window.DcatsHanbaiohCompanyBridge = Object.freeze({
     loginOnce: function (options) { return run(options, "account"); },
     prepareCsv: function (options) { return run(options, options.category); },
+    backupBeforePrepare: function (options) { return run(options, options.category, true); },
     enrollAccountFromPc: enrollAccountFromPc,
     readDeviceFromPc: readDeviceFromPc,
     readBackupReadinessFromPc: readBackupReadinessFromPc,
