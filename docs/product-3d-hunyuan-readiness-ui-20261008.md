@@ -1,6 +1,6 @@
 # Tencent query-only readiness UI
 
-## Safe diagnostic extension — v1.1.1136 (local candidate, not released)
+## Safe diagnostic extension — v1.1.1137 (local candidate, not released)
 
 The approved admin-only query control can append an exact allowlisted public
 error code and a validated 36-character UUID RequestId using textContent only.
@@ -19,8 +19,15 @@ while permitting the documented error enum, without relaxing network/auth rules.
 
 Hidden synthetic browser QA was blocked by a denied localhost browser permission.
 No ordinary browser, credential/session copy or indirect browser workaround was
-used. Desktop/mobile visual and keyboard QA, source CI and publication remain
-pending. v1.1.1136 is a local candidate only; production remains v1.1.1135.
+used. Desktop/mobile visual and keyboard QA and publication remain pending.
+On October 8 at14:21JST, the human's screenshot confirmed the exact local
+origin's Browse permission was saved as Always allow. A same-origin hidden
+attempt still returned a saved-policy denial before producing a tab or UI.
+The effective blocking source is unknown; no permission bypass was attempted.
+Source CI can run on draft PRs, independently of the blocked visual QA. The
+draft must not merge or deploy until the required QA actually passes. Concurrent
+upstream PR257 was preserved by a normal merge; cache versions were advanced to
+v1.1.1137 rather than reuse its v1.1.1136. This diagnostic candidate is not live.
 The prior verified release below is retained as historical evidence, not proof
 that this new diagnostic UI has passed visual QA or been deployed.
 
