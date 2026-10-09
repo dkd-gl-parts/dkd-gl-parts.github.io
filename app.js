@@ -7847,6 +7847,12 @@ var componentParallelReturnScreen = "search";
 var componentAlternativeRows = [];
 var componentAlternativeMap = {};
 var componentAlternativeBaseRow = null;
+var componentAlternativeSnapshotState = null;
+var componentAlternativeFormSeq = 0;
+var componentAlternativeLookupSeq = 0;
+var componentAlternativeSaving = false;
+var componentAlternativeLoadSeq = 0;
+var componentAlternativeHydrateSeq = 0;
 var componentChildRowsMap = {};
 var componentChildLoadingMap = {};
 var componentExpandedChildMap = {};
@@ -43830,7 +43836,7 @@ function readComponentMutationPending() {
     var raw = window.sessionStorage.getItem(componentMutationStorageKey());
     if (!raw) return null;
     var pending = JSON.parse(raw);
-    if (!pending || ["add", "delete", "compatibility", "compatibility_apply", "compatibility_unlink"].indexOf(pending.operation) < 0 || !pending.requestId ||
+    if (!pending || ["add", "delete", "compatibility", "compatibility_apply", "compatibility_unlink", "compatibility_alternative_add", "compatibility_alternative_disable"].indexOf(pending.operation) < 0 || !pending.requestId ||
         !pending.payload || typeof pending.payload !== "object") throw new Error("invalid receipt");
     return pending;
   } catch (error) {
@@ -43863,7 +43869,9 @@ async function performComponentMutation(operation, payload) {
     }) : await sb.rpc(pending.operation === "add" ? "add_manual_component_safely" :
       pending.operation === "delete" ? "delete_manual_component_safely" :
       pending.operation === "compatibility_apply" ? "apply_component_compatibility_safely" :
-      pending.operation === "compatibility_unlink" ? "unlink_component_compatibility_safely" : "save_component_compatibility_safely",
+      pending.operation === "compatibility_unlink" ? "unlink_component_compatibility_safely" :
+      pending.operation === "compatibility_alternative_add" ? "save_variant_component_alternative_safely" :
+      pending.operation === "compatibility_alternative_disable" ? "disable_variant_component_alternative_safely" : "save_component_compatibility_safely",
       Object.assign({ target_request_id: pending.requestId }, pending.payload));
   } catch (error) {
     throw new Error(t("component_mutation_result_unknown"));
@@ -43881,7 +43889,14 @@ async function performComponentMutation(operation, payload) {
   }
   var result = response.data;
   var actionFields = pending.payload.target_fields || {};
-  var validResult = result && (pending.operation === "compatibility_apply" ?
+  var validResult = result && (pending.operation === "compatibility_alternative_add" ?
+    /^[1-9]\d*$/.test(String(result.alternative_id)) && /^[1-9]\d*$/.test(String(result.internal_part_id)) &&
+      String(result.product_id) === String(actionFields.product_id) && String(result.variant_id) === String(actionFields.variant_id) &&
+      String(result.catalog_component_id) === String(actionFields.catalog_component_id) &&
+      (actionFields.reference_price == null ? result.supplier_id === null : /^[1-9]\d*$/.test(String(result.supplier_id))) :
+    pending.operation === "compatibility_alternative_disable" ?
+      String(result.alternative_id) === String(actionFields.link_id) && result.disabled_count === 1 :
+    pending.operation === "compatibility_apply" ?
     String(result.link_id) === String(actionFields.link_id) && Array.isArray(result.variant_ids) &&
       JSON.stringify(result.variant_ids.map(String)) === JSON.stringify((actionFields.variant_ids || []).map(String).sort(function(a, b) { return Number(a) - Number(b); })) &&
       Number.isInteger(result.target_count) && result.target_count === result.variant_ids.length &&
@@ -47862,12 +47877,14 @@ function validateComponentAlternativePartNumberInputs(manufacturerPartNumber, ge
 
 async function reconcileComponentAlternativePartNumbers() {
   var seq = ++componentAlternativePartNumberLookupSeq;
+  var state = componentAlternativeSnapshotState;
   if (!isCurrentCategoryAssyComponentName(componentAddValue("component-alt-name"))) return null;
   var mfrPn = componentAddValue("component-alt-pn");
   var genuinePn = componentAddValue("component-alt-genuine-pn");
   if (!mfrPn && !genuinePn) return null;
   var row = await lookupComponentPartNumberPair(mfrPn, genuinePn);
-  if (seq !== componentAlternativePartNumberLookupSeq || !row) return row;
+  if (seq !== componentAlternativePartNumberLookupSeq || !row || !componentAlternativeFormCurrent(state) ||
+      mfrPn !== componentAddValue("component-alt-pn") || genuinePn !== componentAddValue("component-alt-genuine-pn")) return row;
   setComponentAddValue("component-alt-mfr", componentLookupAutofillValue(componentAddValue("component-alt-mfr"), row.manufacturer));
   setComponentAddValue("component-alt-pn", componentLookupAutofillValue(componentAddValue("component-alt-pn"), row.manufacturer_part_number));
   setComponentAddValue("component-alt-genuine-pn", componentLookupAutofillValue(componentAddValue("component-alt-genuine-pn"), row.genuine_part_number));
@@ -47875,6 +47892,7 @@ async function reconcileComponentAlternativePartNumbers() {
   if (!currentName && row.part_name) setComponentAlternativeNameValue(row.part_name);
   renderComponentAlternativeNameOptions(componentAddValue("component-alt-name"));
   updateComponentAlternativePartNumberInputState();
+  await captureComponentAlternativeSnapshot();
   return row;
 }
 
@@ -47965,12 +47983,68 @@ function renderComponentAlternatives(row, colspan) {
 }
 
 function closeComponentAlternativeForm() {
+  componentAlternativeFormSeq++;
+  componentAlternativeLookupSeq++;
+  componentAlternativePartNumberLookupSeq++;
+  componentAlternativeSnapshotState = null;
   var overlay = document.getElementById("component-alternative-overlay");
   if (overlay) overlay.classList.remove("show");
   componentAlternativeBaseRow = null;
 }
 
-function openComponentAlternativeForm(usageId) {
+function componentAlternativeFormCurrent(state) {
+  return state && state === componentAlternativeSnapshotState && state.seq === componentAlternativeFormSeq &&
+    state.product === currentProduct && state.userId === (currentUser && currentUser.id) &&
+    state.kind === selectedProductKind() && state.variant === selectedComponentVariantId();
+}
+
+function componentAlternativeSnapshotFields() {
+  var state = componentAlternativeSnapshotState;
+  return { action: "add", product_id: state && state.productId, variant_id: state && state.variant,
+    product_kind: state && state.kind,
+    catalog_component_id: state && state.row.dkd_component_id,
+    manufacturer: normalizeComponentManufacturerInput(componentAddValue("component-alt-mfr")) || "UNKNOWN",
+    part_number: normalizeComponentPartNumberInput(componentAddValue("component-alt-pn")),
+    position: String(componentAddValue("component-alt-position") || state && state.row.component_position || "").trim() };
+}
+
+function componentAlternativeSnapshotKey(fields) {
+  return JSON.stringify([fields.manufacturer, fields.part_number.replace(/[-\s\u3000]/g, ""), fields.position]);
+}
+
+function updateComponentAlternativeSaveState() {
+  var button = document.getElementById("btn-component-alt-save"), state = componentAlternativeSnapshotState;
+  if (!button) return;
+  var pending;
+  try { pending = readComponentMutationPending(); } catch (error) { pending = true; }
+  button.textContent = componentAlternativeSaving ? t("component_save_loading") : pending ? t("component_mutation_result_check") : t("component_save");
+  button.disabled = componentAlternativeSaving || (!pending && (!componentAlternativeFormCurrent(state) || state.loading ||
+    !state.anchorToken || !state.snapshots[componentAlternativeSnapshotKey(componentAlternativeSnapshotFields())]));
+}
+
+async function captureComponentAlternativeSnapshot() {
+  var state = componentAlternativeSnapshotState;
+  if (!componentAlternativeFormCurrent(state) || !state.anchorToken) return;
+  var fields = componentAlternativeSnapshotFields(), key = componentAlternativeSnapshotKey(fields), seq = ++componentAlternativeLookupSeq;
+  if (state.snapshots[key]) { state.loading = false; updateComponentAlternativeSaveState(); return; }
+  state.loading = true; updateComponentAlternativeSaveState();
+  try {
+    var response = await sb.rpc("get_variant_component_alternative_snapshot", { target_fields: fields });
+    if (!componentAlternativeFormCurrent(state) || seq !== componentAlternativeLookupSeq ||
+        key !== componentAlternativeSnapshotKey(componentAlternativeSnapshotFields())) return;
+    if (response.error) throw response.error;
+    if (!response.data || !response.data.token || response.data.anchor_token !== state.anchorToken) throw new Error(t("component_compat_conflict"));
+    state.snapshots[key] = response.data;
+    document.getElementById("component-alt-error").textContent = "";
+  } catch (error) {
+    if (componentAlternativeFormCurrent(state) && seq === componentAlternativeLookupSeq)
+      document.getElementById("component-alt-error").textContent = componentCompatErrorMessage(error);
+  } finally {
+    if (componentAlternativeFormCurrent(state) && seq === componentAlternativeLookupSeq) { state.loading = false; updateComponentAlternativeSaveState(); }
+  }
+}
+
+async function openComponentAlternativeForm(usageId) {
   if (!canManageComponentsInCurrentContext()) { alert(t("err_perm")); return; }
   if (selectedProductKind() === "catalog_spec") { alert(t("component_catalog_locked_save")); return; }
   var row = assemblyComponentRows.find(function(r) {
@@ -47989,6 +48063,10 @@ function openComponentAlternativeForm(usageId) {
     return;
   }
   componentAlternativeBaseRow = row;
+  var state = { product: currentProduct, userId: currentUser && currentUser.id, kind: selectedProductKind(),
+    variant: selectedComponentVariantId(), row: row, seq: ++componentAlternativeFormSeq,
+    snapshots: {}, anchorToken: "", loading: true };
+  componentAlternativeSnapshotState = state;
   var productKeyAtOpen = productDkdId(currentProduct) + "|" + componentCatalogCategoryCode(currentProduct) + "|" + selectedProductKind();
   componentCatalogNameCandidates = [];
   componentCatalogNameCandidateLabelMap = {};
@@ -48006,226 +48084,151 @@ function openComponentAlternativeForm(usageId) {
   bindComponentAlternativeNameControls();
   setComponentAlternativeNameValue(initialName);
   if (overlay) overlay.classList.add("show");
+  updateComponentAlternativeSaveState();
   var name = document.getElementById("component-alt-name");
   if (name) name.focus();
   loadComponentCatalogNameCandidatesForCurrent().then(function() {
     var overlayNow = document.getElementById("component-alternative-overlay");
-    if (!overlayNow || !overlayNow.classList.contains("show")) return;
+    if (!overlayNow || !overlayNow.classList.contains("show") || !componentAlternativeFormCurrent(state)) return;
     if (!currentProduct || productKeyAtOpen !== productDkdId(currentProduct) + "|" + componentCatalogCategoryCode(currentProduct) + "|" + selectedProductKind()) return;
     renderComponentAlternativeNameOptions(componentAddValue("component-alt-name"));
   }).catch(function(err) {
     console.warn("component alternative name candidates load failed", err);
   });
+  try {
+    state.productId = await resolveCurrentCoreDkdShohinId();
+    if (!componentAlternativeFormCurrent(state)) return;
+    var fields = componentAlternativeSnapshotFields(), initialKey = componentAlternativeSnapshotKey(fields);
+    var response = await sb.rpc("get_variant_component_alternative_snapshot", { target_fields: fields });
+    if (!componentAlternativeFormCurrent(state)) return;
+    if (response.error) throw response.error;
+    var image = response.data;
+    if (!image || !image.token || !image.anchor_token || !image.anchor ||
+        initialKey !== componentAlternativeSnapshotKey(componentAlternativeSnapshotFields())) throw new Error(t("component_edit_snapshot_required"));
+    var loaded = image.anchor.base;
+    if (base) base.textContent = t("component_alternative_base") + ": " + componentAlternativeBaseText({
+      component_manufacturer_part_number: loaded.manufacturer_part_number,
+      component_genuine_part_number: loaded.genuine_part_number, component_part_name: loaded.part_name });
+    state.anchorToken = image.anchor_token;
+    state.snapshots[initialKey] = image;
+  } catch (error) {
+    if (componentAlternativeFormCurrent(state) && err) err.textContent = componentCompatErrorMessage(error);
+  } finally {
+    if (componentAlternativeFormCurrent(state)) { state.loading = false; updateComponentAlternativeSaveState(); }
+  }
 }
 
 async function saveComponentAlternativeForm() {
+  if (componentAlternativeSaving) return;
   if (!canManageComponentsInCurrentContext()) { alert(t("err_perm")); return; }
-  var row = componentAlternativeBaseRow;
-  var err = document.getElementById("component-alt-error");
-  var saveBtn = document.getElementById("btn-component-alt-save");
+  var state = componentAlternativeSnapshotState;
+  if (!componentAlternativeFormCurrent(state)) return;
+  var row = state.row, err = document.getElementById("component-alt-error"), listAtSave = componentAlternativeRows;
   if (err) err.textContent = "";
-  if (!row || !row.dkd_component_id) {
-    if (err) err.textContent = t("component_base_missing_save");
-    return;
-  }
-  normalizeComponentPartNumberElement(document.getElementById("component-alt-pn"));
-  normalizeComponentPartNumberElement(document.getElementById("component-alt-genuine-pn"));
-  var preAltMfrCheck = componentPartNumberValidation(componentAddValue("component-alt-pn"), "manufacturer");
-  var preAltGenuineCheck = componentPartNumberValidation(componentAddValue("component-alt-genuine-pn"), "genuine");
-  var preAltErrors = preAltMfrCheck.errors.concat(preAltGenuineCheck.errors).filter(function(msg) {
-    return msg !== t("component_mfr_pn_required");
-  });
-  if (preAltErrors.length) {
+  componentAlternativeSaving = true; updateComponentAlternativeSaveState();
+  try {
+    if (readComponentMutationPending()) {
+      await performComponentMutation("compatibility_alternative_add", null);
+      listAtSave.forEach(function(item) { delete item._disable_snapshot; });
+      if (componentAlternativeFormCurrent(state)) { state.anchorToken = ""; alert(t("component_mutation_result_recovered")); }
+      return;
+    }
+    normalizeComponentPartNumberElement(document.getElementById("component-alt-pn"));
+    normalizeComponentPartNumberElement(document.getElementById("component-alt-genuine-pn"));
+    var preAltMfrCheck = componentPartNumberValidation(componentAddValue("component-alt-pn"), "manufacturer");
+    var preAltGenuineCheck = componentPartNumberValidation(componentAddValue("component-alt-genuine-pn"), "genuine");
+    var preAltErrors = preAltMfrCheck.errors.concat(preAltGenuineCheck.errors).filter(function(msg) {
+      return msg !== t("component_mfr_pn_required");
+    });
+    if (preAltErrors.length) {
+      updateComponentAlternativePartNumberInputState();
+      if (err) err.textContent = uniqueTextValues(preAltErrors).join("\n");
+      return;
+    }
+    normalizeComponentPartNumberElement(document.getElementById("component-alt-pn"));
+    normalizeComponentPartNumberElement(document.getElementById("component-alt-genuine-pn"));
+    var manufacturer = normalizeComponentManufacturerInput(componentAddValue("component-alt-mfr")) || "UNKNOWN";
+    setComponentAddValue("component-alt-mfr", manufacturer);
+    var altPartCheck = validateComponentAlternativePartNumberInputs(
+      componentAddValue("component-alt-pn"),
+      componentAddValue("component-alt-genuine-pn"),
+      manufacturer
+    );
+    setComponentAddValue("component-alt-pn", altPartCheck.manufacturerPartNumber);
+    setComponentAddValue("component-alt-genuine-pn", altPartCheck.genuinePartNumber);
     updateComponentAlternativePartNumberInputState();
-    if (err) err.textContent = uniqueTextValues(preAltErrors).join("\n");
-    return;
-  }
-  await reconcileComponentAlternativePartNumbers();
-  normalizeComponentPartNumberElement(document.getElementById("component-alt-pn"));
-  normalizeComponentPartNumberElement(document.getElementById("component-alt-genuine-pn"));
-  var manufacturer = normalizeComponentManufacturerInput(componentAddValue("component-alt-mfr")) || "UNKNOWN";
-  setComponentAddValue("component-alt-mfr", manufacturer);
-  var altPartCheck = validateComponentAlternativePartNumberInputs(
-    componentAddValue("component-alt-pn"),
-    componentAddValue("component-alt-genuine-pn"),
-    manufacturer
-  );
-  setComponentAddValue("component-alt-pn", altPartCheck.manufacturerPartNumber);
-  setComponentAddValue("component-alt-genuine-pn", altPartCheck.genuinePartNumber);
-  updateComponentAlternativePartNumberInputState();
-  if (altPartCheck.errors.length) {
-    if (err) err.textContent = uniqueTextValues(altPartCheck.errors).join("\n");
-    return;
-  }
-  if (!confirmComponentPartNumberWarnings(altPartCheck.warnings)) return;
-  var partName = canonicalComponentNameForStorage(syncComponentAlternativeNameValue());
-  setComponentAlternativeNameValue(partName);
-  var altNameError = componentNameMasterValidationMessage(partName);
-  if (altNameError) {
-    if (err) err.textContent = altNameError;
-    return;
-  }
-  var partNumber = altPartCheck.manufacturerPartNumber;
-  if (!partNumber) {
-    if (err) err.textContent = t("component_mfr_pn_required");
-    return;
-  }
-  applyComponentAlternativeProcurementRateDefault();
-  var replacementRate = normalizeComponentAlternativeReplacementRateElement(false);
-  if (isNaN(replacementRate)) {
-    if (err) err.textContent = t("component_replacement_rate_digits");
-    return;
-  }
-  if (replacementRate != null && (replacementRate < 0 || replacementRate > 100)) {
-    if (err) err.textContent = t("component_replacement_rate_range");
-    return;
-  }
-  var price = nullableIntFromInput("component-alt-price");
-  var quantity = componentAddValue("component-alt-qty") || "1";
-  var position = componentAddValue("component-alt-position") || row.component_position || null;
-  var supplierName = "";
-  var note = componentAlternativeStructuredNote({
-    memo: componentAddValue("component-alt-note"),
-    genuinePartNumber: altPartCheck.genuinePartNumber || null,
-    quantity: quantity,
-    unitPrice: price,
-    procurementCategory: componentAddValue("component-alt-procurement-category") || null,
-    replacementRate: replacementRate,
-    interchange: componentAddValue("component-alt-interchange") || null,
-    position: position,
-    start: componentAddValue("component-alt-start") || null,
-    end: componentAddValue("component-alt-end") || null
-  });
-  var targetVariantId = selectedComponentVariantId();
-  if (!targetVariantId) {
-    if (err) err.textContent = t("component_variant_required_for_alternative");
-    return;
-  }
-  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = t("component_save_loading"); }
-  var rpcAlt = await sb.rpc("add_variant_component_alternative", {
-    target_catalog_component_id: row.dkd_component_id,
-    target_product_variant_id: targetVariantId,
-    alternative_manufacturer: manufacturer,
-    alternative_part_number: partNumber,
-    alternative_part_name: partName || null,
-    target_component_position: position,
-    target_relation_type: "alternative",
-    target_priority: 100,
-    target_note: note || null
-  });
-  if (!rpcAlt.error) {
-    var rpcRow = Array.isArray(rpcAlt.data) ? (rpcAlt.data[0] || null) : rpcAlt.data;
-    var rpcPartId = rpcRow && rpcRow.internal_component_part_id;
-    if (rpcPartId && (supplierName || price !== null)) {
-      var rpcSup = await sb.from("internal_component_suppliers").insert({
-        internal_component_part_id: rpcPartId,
-        supplier_name: supplierName || null,
-        reference_price: price,
-        price_note: note || null,
-        is_preferred: true,
-        created_by: currentUser ? currentUser.id : null,
-        updated_by: currentUser ? currentUser.id : null
-      });
-      if (rpcSup.error) console.warn("internal component supplier insert failed", rpcSup.error);
+    if (altPartCheck.errors.length) {
+      if (err) err.textContent = uniqueTextValues(altPartCheck.errors).join("\n");
+      return;
     }
-    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = t("component_save"); }
-    await writeLog("insert", "component_part_alternatives", row.dkd_component_id, partNumber, null, {
-      product_variant_id: targetVariantId,
-      base: componentAlternativeBaseText(row),
-      manufacturer: manufacturer,
-      genuine_part_number: altPartCheck.genuinePartNumber || null,
+    if (!confirmComponentPartNumberWarnings(altPartCheck.warnings)) return;
+    var partName = canonicalComponentNameForStorage(syncComponentAlternativeNameValue());
+    setComponentAlternativeNameValue(partName);
+    var altNameError = componentNameMasterValidationMessage(partName);
+    if (altNameError) {
+      if (err) err.textContent = altNameError;
+      return;
+    }
+    var partNumber = altPartCheck.manufacturerPartNumber;
+    if (!partNumber) {
+      if (err) err.textContent = t("component_mfr_pn_required");
+      return;
+    }
+    applyComponentAlternativeProcurementRateDefault();
+    var replacementRate = normalizeComponentAlternativeReplacementRateElement(false);
+    if (isNaN(replacementRate)) {
+      if (err) err.textContent = t("component_replacement_rate_digits");
+      return;
+    }
+    if (replacementRate != null && (replacementRate < 0 || replacementRate > 100)) {
+      if (err) err.textContent = t("component_replacement_rate_range");
+      return;
+    }
+    var price = nullableIntFromInput("component-alt-price");
+    var quantity = componentAddValue("component-alt-qty") || "1";
+    var position = componentAddValue("component-alt-position") || row.component_position || null;
+    var note = componentAlternativeStructuredNote({
+      memo: componentAddValue("component-alt-note"),
+      genuinePartNumber: altPartCheck.genuinePartNumber || null,
       quantity: quantity,
-      unit_price_jpy: price,
-      procurement_category: componentAddValue("component-alt-procurement-category") || null,
-      replacement_rate: replacementRate,
-      interchange_code: componentAddValue("component-alt-interchange") || null,
-      component_position: position,
-      effective_start: componentAddValue("component-alt-start") || null,
-      effective_end: componentAddValue("component-alt-end") || null
+      unitPrice: price,
+      procurementCategory: componentAddValue("component-alt-procurement-category") || null,
+      replacementRate: replacementRate,
+      interchange: componentAddValue("component-alt-interchange") || null,
+      position: position,
+      start: componentAddValue("component-alt-start") || null,
+      end: componentAddValue("component-alt-end") || null
     });
-    closeComponentAlternativeForm();
-    await loadAssemblyComponentsForCurrent();
-    return;
-  }
-  if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = t("component_save"); }
-  if (err) err.textContent = t("msg_save_err") + ": " + rpcAlt.error.message;
-  return;
-
-  var normalized = normalizedPartKey(partNumber);
-  var partId = null;
-  var existing = await sb.from("internal_component_parts")
-    .select("id")
-    .eq("normalized_part_number", normalized)
-    .eq("manufacturer", manufacturer)
-    .eq("status", "active")
-    .limit(1)
-    .maybeSingle();
-  if (!existing.error && existing.data) {
-    partId = existing.data.id;
-  } else {
-    var insPart = await sb.from("internal_component_parts").insert({
-      manufacturer: manufacturer,
-      part_number: partNumber,
-      part_name: partName || null,
-      note: note || null,
-      created_by: currentUser ? currentUser.id : null,
-      updated_by: currentUser ? currentUser.id : null
-    }).select("id").single();
-    if (insPart.error) {
-      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = t("component_save"); }
-      if (err) err.textContent = t("msg_save_err") + ": " + insPart.error.message;
+    var targetVariantId = selectedComponentVariantId();
+    if (!targetVariantId) {
+      if (err) err.textContent = t("component_variant_required_for_alternative");
       return;
     }
-    partId = insPart.data.id;
-  }
 
-  var position = row.component_position || null;
-  var existingAlt = await sb.from("component_part_alternatives")
-    .select("id,component_position")
-    .eq("catalog_component_id", row.dkd_component_id)
-    .eq("internal_component_part_id", partId)
-    .eq("relation_type", "alternative")
-    .limit(1);
-  var hasSameAlt = !existingAlt.error && (existingAlt.data || []).some(function(alt) {
-    return String(alt.component_position || "") === String(position || "");
-  });
-  if (!hasSameAlt) {
-    var insAlt = await sb.from("component_part_alternatives").insert({
-      catalog_component_id: row.dkd_component_id,
-      internal_component_part_id: partId,
-      component_position: position,
-      relation_type: "alternative",
-      priority: 100,
-      note: note || null,
-      created_by: currentUser ? currentUser.id : null,
-      updated_by: currentUser ? currentUser.id : null
-    }).select("id").single();
-    if (insAlt.error) {
-      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = t("component_save"); }
-      if (err) err.textContent = t("msg_save_err") + ": " + insAlt.error.message;
-      return;
-    }
-  }
-
-  if (supplierName || price !== null) {
-    var sup = await sb.from("internal_component_suppliers").insert({
-      internal_component_part_id: partId,
-      supplier_name: supplierName || null,
-      reference_price: price,
-      price_note: note || null,
-      is_preferred: true,
-      created_by: currentUser ? currentUser.id : null,
-      updated_by: currentUser ? currentUser.id : null
+    var fields = componentAlternativeSnapshotFields(), image = state.snapshots[componentAlternativeSnapshotKey(fields)];
+    if (state.loading || !state.anchorToken || !image || !image.token) throw new Error(t("component_edit_snapshot_required"));
+    if (price != null && (!Number.isSafeInteger(price) || price < 0)) throw new Error(t("component_compat_fields_invalid"));
+    fields.part_name = partName || null; fields.note = note || null; fields.reference_price = price;
+    var mutation = await performComponentMutation("compatibility_alternative_add", { target_snapshot_token: image.token, target_fields: fields });
+    listAtSave.forEach(function(item) { delete item._disable_snapshot; });
+    if (!componentAlternativeFormCurrent(state)) return;
+    state.anchorToken = "";
+    await writeLog("insert", "component_part_alternatives", mutation.result.alternative_id, partNumber, null, {
+      product_variant_id: targetVariantId, base: componentAlternativeBaseText(row), manufacturer: manufacturer,
+      genuine_part_number: altPartCheck.genuinePartNumber || null, quantity: quantity, unit_price_jpy: price,
+      internal_component_part_id: mutation.result.internal_part_id, supplier_id: mutation.result.supplier_id
     });
-    if (sup.error) console.warn("internal component supplier insert failed", sup.error);
+    if (componentAlternativeFormCurrent(state)) { closeComponentAlternativeForm(); await loadAssemblyComponentsForCurrent(); }
+  } catch (error) {
+    if (componentAlternativeFormCurrent(state) && err) err.textContent = componentCompatErrorMessage(error);
+  } finally {
+    componentAlternativeSaving = false; updateComponentAlternativeSaveState();
   }
-  if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = t("component_save"); }
-  await writeLog("insert", "component_part_alternatives", row.dkd_component_id, partNumber, null, { internal_component_part_id: partId, base: componentAlternativeBaseText(row) });
-  closeComponentAlternativeForm();
-  await loadAssemblyComponentsForCurrent();
 }
 
 async function loadComponentAlternativesForRows(rows) {
+  var productAtLoad = currentProduct, kindAtLoad = selectedProductKind(), variantAtLoad = selectedComponentVariantId(), userAtLoad = currentUser && currentUser.id, loadSeq = ++componentAlternativeLoadSeq;
+  function current() { return loadSeq === componentAlternativeLoadSeq && productAtLoad === currentProduct && kindAtLoad === selectedProductKind() && variantAtLoad === selectedComponentVariantId() && userAtLoad === (currentUser && currentUser.id); }
   componentAlternativeRows = [];
   componentAlternativeMap = {};
   if (!canViewInternalComponents()) return;
@@ -48246,6 +48249,7 @@ async function loadComponentAlternativesForRows(rows) {
   var r = await rQuery
     .order("priority", { ascending: true })
     .order("id", { ascending: true });
+  if (!current()) return;
   if (r.error) {
     console.warn("component alternatives lookup failed", r.error);
     return;
@@ -48262,6 +48266,7 @@ async function loadComponentAlternativesForRows(rows) {
       .eq("status", "active")
       .order("is_preferred", { ascending: false })
       .order("id", { ascending: true });
+    if (!current()) return;
     if (!sr.error) {
       (sr.data || []).forEach(function(row) {
         var key = String(row.internal_component_part_id);
@@ -48278,23 +48283,65 @@ async function loadComponentAlternativesForRows(rows) {
     if (!componentAlternativeMap[key]) componentAlternativeMap[key] = [];
     componentAlternativeMap[key].push(row);
   });
+  await hydrateComponentAlternativeSnapshots(rows);
+}
+
+async function hydrateComponentAlternativeSnapshots(rows) {
+  var product = currentProduct, kind = selectedProductKind(), variant = selectedComponentVariantId(), userId = currentUser && currentUser.id, seq = ++componentAlternativeHydrateSeq;
+  var productId = await resolveCurrentCoreDkdShohinId();
+  function current() { return seq === componentAlternativeHydrateSeq && product === currentProduct && kind === selectedProductKind() && variant === selectedComponentVariantId() && userId === (currentUser && currentUser.id); }
+  if (!current() || !variant || kind === "catalog_spec" || !canManageComponentsInCurrentContext()) return;
+  var alternatives = [];
+  (rows || []).forEach(function(row) { alternativesForComponent(row).forEach(function(alt) { if (alternatives.indexOf(alt) < 0) alternatives.push(alt); }); });
+  for (var i = 0; i < alternatives.length; i++) {
+    var alt = alternatives[i]; delete alt._disable_snapshot;
+    var fields = { action: "disable", product_id: productId, variant_id: variant, product_kind: kind, catalog_component_id: alt.catalog_component_id, link_id: alt.id };
+    var response;
+    try { response = await sb.rpc("get_variant_component_alternative_snapshot", { target_fields: fields }); }
+    catch (error) { continue; }
+    if (!current()) return;
+    var image = response && !response.error && response.data;
+    if (!image || !image.token || !image.anchor || !image.anchor.link || !image.matches || image.matches.length !== 1) continue;
+    Object.assign(alt, image.anchor.link);
+    alt.internal_component_parts = image.matches[0];
+    alt.internal_component_suppliers = image.suppliers.filter(function(supplier) { return supplier.status === "active"; });
+    alt._disable_snapshot = { fields: fields, image: image, product: product, variant: variant, kind: kind, userId: userId };
+    if (componentAlternativeRows.indexOf(alt) < 0) componentAlternativeRows.push(alt);
+  }
 }
 
 async function disableComponentAlternative(altId) {
   if (!canManageComponentsInCurrentContext()) { alert(t("err_perm")); return; }
-  if (!confirm(t("component_alt_disable_confirm"))) return;
+  if (componentAlternativeSaving) return;
   var before = componentAlternativeRows.find(function(row) { return String(row.id) === String(altId); }) || null;
-  var r = await sb.from("component_part_alternatives").update({
-    status: "inactive",
-    updated_by: currentUser ? currentUser.id : null,
-    updated_at: new Date().toISOString()
-  }).eq("id", altId);
-  if (r.error) {
-    alert(t("component_alt_disable_failed") + ": " + r.error.message);
-    return;
+  var snapshot = before && before._disable_snapshot, listAtStart = componentAlternativeRows, stateAtStart = componentAlternativeSnapshotState;
+  function contextCurrent() {
+    return snapshot && snapshot.product === currentProduct && snapshot.variant === selectedComponentVariantId() &&
+      snapshot.kind === selectedProductKind() && snapshot.userId === (currentUser && currentUser.id) &&
+      stateAtStart === componentAlternativeSnapshotState;
   }
-  await writeLog("update", "component_part_alternatives", altId, "disable alternative", before, { status: "inactive" });
-  await loadAssemblyComponentsForCurrent();
+  componentAlternativeSaving = true; updateComponentAlternativeSaveState();
+  try {
+    if (readComponentMutationPending()) {
+      await performComponentMutation("compatibility_alternative_disable", null);
+      listAtStart.forEach(function(item) { delete item._disable_snapshot; });
+      if (componentAlternativeFormCurrent(stateAtStart)) stateAtStart.anchorToken = "";
+      alert(t("component_mutation_result_recovered")); return;
+    }
+    if (!snapshot || snapshot.product !== currentProduct || snapshot.variant !== selectedComponentVariantId() ||
+      snapshot.kind !== selectedProductKind() || snapshot.userId !== (currentUser && currentUser.id)) throw new Error(t("component_edit_snapshot_required"));
+    if (!confirm(t("component_alt_disable_confirm"))) return;
+    await performComponentMutation("compatibility_alternative_disable", { target_snapshot_token: snapshot.image.token, target_fields: snapshot.fields });
+    listAtStart.forEach(function(item) { delete item._disable_snapshot; });
+    if (!contextCurrent()) return;
+    if (componentAlternativeFormCurrent(stateAtStart)) stateAtStart.anchorToken = "";
+    await writeLog("update", "component_part_alternatives", altId, "disable alternative", snapshot.image.anchor.link, { status: "inactive" });
+    if (contextCurrent()) await loadAssemblyComponentsForCurrent();
+  } catch (error) {
+    alert(componentCompatErrorMessage(error));
+  } finally {
+    componentAlternativeSaving = false; updateComponentAlternativeSaveState();
+  }
 }
 
 function renderAssemblyComponentRows() {
@@ -48716,6 +48763,7 @@ async function loadAssemblyComponentsForCurrent() {
       if (rpcRows.length || selectedKind === "catalog_spec") {
         if (!snapshotLoadCurrent()) return;
         await hydrateManualComponentListSnapshots(rpcRows, dkdId);
+        await hydrateComponentAlternativeSnapshots(rpcRows);
         if (!snapshotLoadCurrent()) return;
         assemblyComponentRows = rpcRows;
         updateComponentTargetSummary(rpcRows.length);
@@ -48750,6 +48798,7 @@ async function loadAssemblyComponentsForCurrent() {
     if (treeFallbackRows.length || selectedKind === "catalog_spec") {
       if (!snapshotLoadCurrent()) return;
       await hydrateManualComponentListSnapshots(treeFallbackRows, dkdId);
+      await hydrateComponentAlternativeSnapshots(treeFallbackRows);
       if (!snapshotLoadCurrent()) return;
       assemblyComponentRows = treeFallbackRows;
       updateComponentTargetSummary(treeFallbackRows.length);
@@ -56906,6 +56955,10 @@ document.getElementById("btn-component-alt-name-request").addEventListener("clic
   var el = document.getElementById(id);
   if (!el) return;
   bindComponentPartNumberInputEvents(el, updateComponentAlternativePartNumberInputState, reconcileComponentAlternativePartNumbers);
+});
+["component-alt-mfr", "component-alt-pn", "component-alt-position"].forEach(function(id) {
+  var el = document.getElementById(id);
+  if (el) el.addEventListener("input", function(event) { if (!event.isComposing) captureComponentAlternativeSnapshot(); });
 });
 var componentAltReplacementRateEl = document.getElementById("component-alt-replacement-rate");
 if (componentAltReplacementRateEl) {
