@@ -43872,7 +43872,7 @@ async function performComponentMutation(operation, payload) {
   if (!response) throw new Error(t("component_mutation_result_unknown"));
   if (response.error) {
     // Connection/system failures cannot prove rollback; retain their pending receipt.
-    var knownRollback = /^(?:(?:22|23|25|40|42|P0)[0-9A-Z]{3}|PGRST(?:100|102|106|202))$/.test(response.error.code || "");
+    var knownRollback = /^(?:(?:22|23|25|42|P0)[0-9A-Z]{3}|4000[012]|40P01|PGRST(?:100|102|106|202))$/.test(response.error.code || "");
     if (!recovering && knownRollback) {
       window.sessionStorage.removeItem(key);
       throw response.error;

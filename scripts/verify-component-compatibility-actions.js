@@ -106,6 +106,11 @@ function fixture() {
   await double.c.disableComponentCompatLink(1); assert.equal(double.calls.length, 1);
   double.c.saveWait.resolve({ data: { link_id: 1, variant_ids: [4201, 4301], target_count: 2, inserted_count: 2, skipped_count: 0 } });await saving;
   for (const operation of ["apply", "unlink"]) {
+    const unknown = fixture();unknown.c.response = { error: { code: "40003", message: "statement completion unknown" } };
+    const invokeUnknown = () => operation === "apply" ? unknown.c.runComponentCompatBulkApply([4201, 4301]) : unknown.c.disableComponentCompatLink(1);
+    await invokeUnknown();assert.equal(unknown.store.size, 1);await invokeUnknown();
+    assert.equal(unknown.calls.at(-1).name, "get_component_mutation_receipt");
+    assert.equal(unknown.calls.filter(call => call.name === `${operation}_component_compatibility_safely`).length, 1);
     const f = fixture(), invoke = () => operation === "apply" ? f.c.runComponentCompatBulkApply([4201, 4301]) : f.c.disableComponentCompatLink(1);
     f.c.loseResponse = true; await invoke(); assert.equal(f.store.size, 1);
     vm.runInContext(functions, f.c); f.c.loadComponentCompatLinks = async () => { f.c.reloads++; };

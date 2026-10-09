@@ -118,7 +118,7 @@ function ready(f) {
   assert.equal(unknown.calls.filter(call=>call.name==="add_manual_component_safely").length,1);
   const rejected=fixture(); rejected.c.response={ error:{ code:"40001",message:"conflict" } };
   await assert.rejects(()=>rejected.c.performComponentMutation("add",payload),e=>e.code==="40001"); assert.equal(rejected.store.size,0);
-  for(const code of ["08006","XX000","PGRST000","PGRST003"]) {
+  for(const code of ["08006","40003","XX000","PGRST000","PGRST003"]) {
     const ambiguous=fixture(); ambiguous.c.response={ error:{ code,message:"outcome cannot be established" } };
     await assert.rejects(()=>ambiguous.c.performComponentMutation("add",payload),/再送は行いません/);
     assert.equal(ambiguous.store.size,1);

@@ -127,6 +127,12 @@ function fixture() {
   await uncertain.c.saveComponentCompatForm();
   assert.equal(uncertain.calls.at(-1).name, "get_component_mutation_receipt");
   assert.equal(uncertain.calls.filter(call => call.name === "save_component_compatibility_safely").length, 1);
+  const completionUnknown = fixture(); await completionUnknown.c.openComponentCompatForm(1);
+  completionUnknown.c.response = { error: { code: "40003", message: "statement completion unknown" } };
+  await completionUnknown.c.saveComponentCompatForm(); assert.equal(completionUnknown.store.size, 1);
+  await completionUnknown.c.saveComponentCompatForm();
+  assert.equal(completionUnknown.calls.at(-1).name, "get_component_mutation_receipt");
+  assert.equal(completionUnknown.calls.filter(call => call.name === "save_component_compatibility_safely").length, 1);
   sourcePart.c.componentCompatExistingRows = [{ dkd_component_id: 3, manufacturer: "OTHER", manufacturer_part_number: "B110", part_name: "Existing" }];
   sourcePart.c.selectComponentCompatExistingPart(3); await new Promise(resolve => setImmediate(resolve));
   assert.equal(sourcePart.calls.at(-1).args.target_fields.source_component_id, 3);
