@@ -7727,6 +7727,7 @@ var currentParallelTargetProduct = null;
 var parallelCandidateMap = {};
 var assemblyComponentRows = [];
 var editingComponentUsageId = null;
+var componentEditSnapshotSeq = 0;
 var currentImages     = [];
 var productionImages  = { rebuilt: [], aftermarket_new: [] };
 var imageEditRows = [];
@@ -43450,14 +43451,16 @@ function isCoreSourceComponentPartNumber(value) {
   return /^CORED[0-9A-Z]+$/.test(normalizedComponentPartKey(value));
 }
 
-async function lookupSharedComponentUnitPrice(manufacturer, manufacturerPartNumber, componentPartName) {
+async function lookupSharedComponentUnitPrice(manufacturer, manufacturerPartNumber, componentPartName, withSnapshot) {
   var partNumber = normalizeComponentPartNumberInput(manufacturerPartNumber);
   if (!partNumber) return null;
-  var r = await sb.rpc("get_component_shared_unit_price_by_name", {
+  var args = {
     component_manufacturer: normalizeComponentManufacturerInput(manufacturer) || "UNKNOWN",
     component_manufacturer_part_number: partNumber,
     component_part_name: String(componentPartName || "").trim() || null
-  });
+  };
+  var r = withSnapshot ? await sb.rpc("get_component_shared_price_snapshot", args) :
+    await sb.rpc("get_component_shared_unit_price_by_name", args);
   if (r.error) {
     console.warn("shared component unit price lookup failed", r.error);
     return null;
@@ -43465,12 +43468,21 @@ async function lookupSharedComponentUnitPrice(manufacturer, manufacturerPartNumb
   var result = Array.isArray(r.data) ? r.data[0] : r.data;
   if (!result) return null;
   var unitPrice = result.unit_price_jpy;
-  return {
+  var price = {
     unitPrice: unitPrice == null ? null : parseInt(unitPrice, 10),
     matchingUsageCount: parseInt(result.matching_usage_count, 10) || 0,
     pricedUsageCount: parseInt(result.priced_usage_count, 10) || 0,
     distinctPriceCount: parseInt(result.distinct_price_count, 10) || 0
   };
+  if (withSnapshot) price.token = result.token || "";
+  return price;
+}
+
+function componentPriceSnapshotKey(payload) {
+  var partKey = normalizedComponentPartKey(payload.component_manufacturer_part_number);
+  return JSON.stringify(isCoreSourceComponentPartNumber(partKey) ?
+    ["CORE", partKey, normalizeComponentPriceNameInput(payload.component_part_name)] :
+    ["PART", normalizeComponentManufacturerInput(payload.component_manufacturer) || "UNKNOWN", partKey]);
 }
 
 async function reconcileComponentAddPartNumbers() {
@@ -43725,21 +43737,65 @@ function isCatalogComponentRow(row) {
   return sourceCode.indexOf("catalog") === 0 || sourceTable.indexOf("catalog") >= 0;
 }
 
-function startComponentEdit(usageId) {
+async function startComponentEdit(usageId) {
   if (!canManageComponentsInCurrentContext()) { alert(t("err_perm")); return; }
   var row = assemblyComponentRows.find(function(r) { return String(r.id) === String(usageId); });
+  if (!row) return;
   if (isCatalogComponentRow(row)) {
     alert(t("component_catalog_locked_edit"));
     return;
   }
-  editingComponentUsageId = String(usageId);
+  var seq = ++componentEditSnapshotSeq;
+  var rowsAtStart = assemblyComponentRows;
+  var productAtStart = currentProduct;
+  var kindAtStart = selectedProductKind();
+  var variantAtStart = selectedComponentVariantId();
+  var resolvedUsageId, result;
+  try {
+    resolvedUsageId = await resolveManualComponentUsageId(row, usageId);
+    if (!resolvedUsageId) { alert("構成部品の使用レコードIDを確認できませんでした。"); return; }
+    result = await sb.rpc("get_manual_component_edit_snapshot", { target_usage_id: parseInt(resolvedUsageId, 10) });
+  } catch (error) {
+    if (seq === componentEditSnapshotSeq && rowsAtStart === assemblyComponentRows && productAtStart === currentProduct) {
+      alert("構成部品の編集情報を取得できませんでした。入力画面は変更していません。");
+    }
+    return;
+  }
+  if (seq !== componentEditSnapshotSeq || rowsAtStart !== assemblyComponentRows || productAtStart !== currentProduct ||
+      kindAtStart !== selectedProductKind() || variantAtStart !== selectedComponentVariantId()) return;
+  var snapshot = result.data;
+  if (result.error || !snapshot || !snapshot.token || !snapshot.price || !snapshot.price.token ||
+      !snapshot.usage || !snapshot.part || String(snapshot.usage.id) !== String(resolvedUsageId)) {
+    alert("構成部品の編集情報を取得できませんでした。画面を更新して再度お試しください。");
+    return;
+  }
+  Object.assign(row, snapshot.usage, {
+    dkd_component_id: snapshot.part.dkd_component_id,
+    component_manufacturer: snapshot.part.manufacturer,
+    component_manufacturer_part_number: snapshot.part.manufacturer_part_number,
+    component_genuine_part_number: snapshot.part.genuine_part_number,
+    component_part_name: snapshot.part.part_name
+  });
+  row._editSnapshotToken = snapshot.token;
+  row._priceSnapshots = {};
+  row._priceSnapshots[componentPriceSnapshotKey({
+    component_manufacturer: row.component_manufacturer,
+    component_manufacturer_part_number: row.component_manufacturer_part_number,
+    component_part_name: row.component_name || row.component_part_name
+  })] = snapshot.price;
+  row._priceSnapshotKey = componentPriceSnapshotKey({
+    component_manufacturer: row.component_manufacturer,
+    component_manufacturer_part_number: row.component_manufacturer_part_number,
+    component_part_name: row.component_name || row.component_part_name
+  });
+  editingComponentUsageId = String(row.id);
   componentCatalogNameCandidates = [];
   componentCatalogNameCandidateLabelMap = {};
   componentCatalogNameCandidateKindMap = {};
   componentCatalogNameCandidateMetaMap = {};
   componentCatalogNameCandidateMasterMap = {};
   renderAssemblyComponentRows();
-  refreshComponentEditNameCandidates(String(usageId));
+  refreshComponentEditNameCandidates(String(row.id));
 }
 
 async function refreshComponentEditNameCandidates(usageId) {
@@ -43756,6 +43812,8 @@ async function refreshComponentEditNameCandidates(usageId) {
 }
 
 function cancelComponentEdit() {
+  componentEditSnapshotSeq++;
+  componentEditPartNumberLookupSeq++;
   editingComponentUsageId = null;
   renderAssemblyComponentRows();
 }
@@ -43797,7 +43855,7 @@ function setComponentEditFieldValue(tr, field, value) {
   if (el) el.value = value || "";
 }
 
-async function reconcileComponentEditPartNumbers(usageId) {
+async function reconcileComponentEditPartNumbers(usageId, capturePriceSnapshot) {
   var seq = ++componentEditPartNumberLookupSeq;
   var tr = document.querySelector("[data-component-edit-row='" + String(usageId) + "']");
   if (!tr) return null;
@@ -43815,24 +43873,25 @@ async function reconcileComponentEditPartNumbers(usageId) {
     }
   }
   payload = componentEditPayloadFromRow(tr);
-  var nextPartKey = normalizedComponentPartKey(payload.component_manufacturer_part_number);
-  var originalPartKey = originalRow ? normalizedComponentPartKey(originalRow.component_manufacturer_part_number) : "";
-  var coreSourceIdentity = isCoreSourceComponentPartNumber(nextPartKey) || isCoreSourceComponentPartNumber(originalPartKey);
-  var identityChanged = !!originalRow && (
-    normalizeComponentManufacturerInput(payload.component_manufacturer || "UNKNOWN") !== normalizeComponentManufacturerInput(originalRow.component_manufacturer || "UNKNOWN") ||
-    nextPartKey !== originalPartKey ||
-    (coreSourceIdentity && normalizeComponentPriceNameInput(payload.component_part_name) !== normalizeComponentPriceNameInput(originalRow.component_name || originalRow.component_part_name))
-  );
-  if (identityChanged) {
+  var priceKey = componentPriceSnapshotKey(payload);
+  // Keep the first observed token for each identity throughout this edit.
+  if (capturePriceSnapshot !== false && originalRow && originalRow._priceSnapshots && originalRow._priceSnapshotKey !== priceKey) {
     var unitPriceInput = tr.querySelector("[data-component-edit-field='unit_price_jpy']");
     var unitPriceBeforeLookup = unitPriceInput ? String(unitPriceInput.value || "") : "";
-    var sharedPrice = await lookupSharedComponentUnitPrice(
+    var cachedPrice = originalRow._priceSnapshots[priceKey];
+    var sharedPrice = cachedPrice ? { token: cachedPrice.token, unitPrice: cachedPrice.unit_price_jpy } : await lookupSharedComponentUnitPrice(
       payload.component_manufacturer || "UNKNOWN",
       payload.component_manufacturer_part_number,
-      payload.component_part_name
+      payload.component_part_name,
+      true
     );
-    if (seq !== componentEditPartNumberLookupSeq) return row;
-    if (unitPriceInput && String(unitPriceInput.value || "") === unitPriceBeforeLookup) {
+    if (seq !== componentEditPartNumberLookupSeq || String(editingComponentUsageId) !== String(usageId) ||
+        priceKey !== componentPriceSnapshotKey(componentEditPayloadFromRow(tr))) return row;
+    if (sharedPrice && sharedPrice.token) {
+      if (!cachedPrice) originalRow._priceSnapshots[priceKey] = { token: sharedPrice.token, unit_price_jpy: sharedPrice.unitPrice };
+      originalRow._priceSnapshotKey = priceKey;
+    }
+    if (sharedPrice && sharedPrice.token && unitPriceInput && String(unitPriceInput.value || "") === unitPriceBeforeLookup) {
       unitPriceInput.value = sharedPrice && sharedPrice.unitPrice != null ? String(sharedPrice.unitPrice) : "";
     }
   }
@@ -43863,6 +43922,10 @@ async function saveComponentEdit(usageId) {
   if (!canManageComponentsInCurrentContext()) { alert(t("err_perm")); return; }
   var row = assemblyComponentRows.find(function(r) { return String(r.id) === String(usageId); });
   if (!row) return;
+  if (!row._editSnapshotToken || !row._priceSnapshots) {
+    alert("構成部品の編集情報がありません。修正を開き直してください。入力内容は保存していません。");
+    return;
+  }
   if (isCatalogComponentRow(row)) {
     alert(t("component_catalog_locked_save"));
     editingComponentUsageId = null;
@@ -43903,7 +43966,8 @@ async function saveComponentEdit(usageId) {
     alert(uniqueTextValues(preEditErrors).join("\n"));
     return;
   }
-  await reconcileComponentEditPartNumbers(usageId);
+  await reconcileComponentEditPartNumbers(usageId, false);
+  if (String(editingComponentUsageId) !== String(usageId) || assemblyComponentRows.indexOf(row) < 0) return;
   normalizeComponentPartNumberElement(tr.querySelector("[data-component-edit-field='component_manufacturer_part_number']"));
   normalizeComponentPartNumberElement(tr.querySelector("[data-component-edit-field='component_genuine_part_number']"));
   var payload = componentEditPayloadFromRow(tr);
@@ -43935,27 +43999,47 @@ async function saveComponentEdit(usageId) {
     return;
   }
   var btn = tr.querySelector("[data-component-save]");
+  if (btn && btn.disabled) return;
+  var priceSnapshot = row._priceSnapshots[componentPriceSnapshotKey(payload)];
+  var priceSnapshotToken = priceSnapshot ? priceSnapshot.token : "";
+  if (!priceSnapshotToken) {
+    alert("構成部品の共通単価を確認できませんでした。型番と部品名を確認してください。入力内容は残しています。");
+    return;
+  }
   if (btn) { btn.disabled = true; btn.textContent = t("component_save_loading"); }
 
-  var usageR = await sb.rpc("update_manual_assembly_component", {
-    target_usage_id: parseInt(resolvedUsageId, 10),
-    target_component_manufacturer: normalizeComponentManufacturerInput(payload.component_manufacturer) || "UNKNOWN",
-    target_component_manufacturer_part_number: payload.component_manufacturer_part_number,
-    target_component_genuine_part_number: payload.component_genuine_part_number || null,
-    target_component_part_name: payload.component_part_name || null,
-    target_component_position: payload.component_position || null,
-    target_component_quantity: payload.quantity || "1",
-    target_component_unit_price_jpy: nullableIntFromValue(payload.unit_price_jpy),
-    target_component_replacement_rate: editReplacementRate ? parseInt(editReplacementRate, 10) : null,
-    target_component_manufacturing_memo: payload.manufacturing_memo || null,
-    target_component_procurement_category: payload.procurement_category || null,
-    target_component_interchange_code: payload.component_interchange_code || null,
-    target_component_effective_start: payload.effective_start || null,
-    target_component_effective_end: payload.effective_end || null
-  });
-  if (btn) { btn.disabled = false; btn.textContent = t("component_save"); }
+  var usageR;
+  try {
+    usageR = await sb.rpc("save_manual_component_edit", {
+      target_usage_id: parseInt(resolvedUsageId, 10),
+      target_snapshot_token: row._editSnapshotToken,
+      target_price_snapshot_token: priceSnapshotToken,
+      target_fields: {
+        component_manufacturer: normalizeComponentManufacturerInput(payload.component_manufacturer) || "UNKNOWN",
+        component_manufacturer_part_number: payload.component_manufacturer_part_number,
+        component_genuine_part_number: payload.component_genuine_part_number || null,
+        component_part_name: payload.component_part_name || null,
+        component_position: payload.component_position === undefined ? row.component_position : payload.component_position || null,
+        quantity: payload.quantity || "1",
+        unit_price_jpy: nullableIntFromValue(payload.unit_price_jpy),
+        replacement_rate: editReplacementRate ? parseInt(editReplacementRate, 10) : null,
+        manufacturing_memo: payload.manufacturing_memo || null,
+        procurement_category: payload.procurement_category || null,
+        component_interchange_code: payload.component_interchange_code || null,
+        effective_start: payload.effective_start === undefined ? row.effective_start : payload.effective_start || null,
+        effective_end: payload.effective_end === undefined ? row.effective_end : payload.effective_end || null
+      }
+    });
+  } catch (error) {
+    alert("構成部品の保存結果を確認できませんでした。自動再送は行いません。入力内容は残しています。");
+    return;
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = t("component_save"); }
+  }
   if (usageR.error) {
-    alert("構成部品の更新に失敗しました: " + usageR.error.message);
+    alert(usageR.error.code === "40001" ?
+      "構成部品または共通単価が別の画面で変更されています。入力内容は残しています。最新情報を確認してから修正を開き直してください。" :
+      "構成部品の更新に失敗しました: " + usageR.error.message);
     return;
   }
   var updateResult = usageR.data || {};
@@ -47930,10 +48014,10 @@ function renderAssemblyComponentRows() {
       html += "<td>" + componentEditInput(row, "component_genuine_part_number", row.component_genuine_part_number || "") + "</td>";
       html += "<td>" + componentEditNameInput(row) + "</td>";
       html += "<td class='component-cell-qty'>" + componentEditInput(row, "quantity", row.quantity || "1") + "</td>";
-      html += "<td class='component-cell-money'>" + componentEditInput(row, "unit_price_jpy", row.unit_price_jpy || "") + "</td>";
+      html += "<td class='component-cell-money'>" + componentEditInput(row, "unit_price_jpy", row.unit_price_jpy == null ? "" : row.unit_price_jpy) + "</td>";
       html += "<td>" + componentEditInput(row, "component_interchange_code", row.interchange_code || row.component_interchange_code || "") + "</td>";
       html += "<td>" + componentEditProcurementSelect(row.procurement_category || "") + "</td>";
-      html += "<td class='component-cell-rate'>" + componentEditInput(row, "replacement_rate", row.replacement_rate || "") + "</td>";
+      html += "<td class='component-cell-rate'>" + componentEditInput(row, "replacement_rate", row.replacement_rate == null ? "" : row.replacement_rate) + "</td>";
       html += "<td>" + componentEditInput(row, "manufacturing_memo", row.manufacturing_memo || "") + "</td>";
       html += "<td class='component-action-col'><div class='component-edit-actions'><button class='btn-sm-edit' data-component-save='" + esc(String(row.id)) + "'>" + t("component_save") + "</button><button class='btn-sm-edit production-action-secondary' data-component-cancel='1'>" + t("component_cancel") + "</button><button class='btn-sm-edit production-action-secondary' data-component-delete='" + esc(String(row.id)) + "'>" + t("component_delete") + "</button></div></td>";
     } else {
@@ -48051,10 +48135,10 @@ function renderAssemblyComponentRows() {
       html += "<td>" + componentEditInput(row, "component_genuine_part_number", row.component_genuine_part_number || "") + "</td>";
       html += "<td>" + componentEditNameInput(row) + "</td>";
       html += "<td class='component-cell-qty'>" + componentEditInput(row, "quantity", row.quantity || "1") + "</td>";
-      html += "<td class='component-cell-money'>" + componentEditInput(row, "unit_price_jpy", row.unit_price_jpy || "") + "</td>";
+      html += "<td class='component-cell-money'>" + componentEditInput(row, "unit_price_jpy", row.unit_price_jpy == null ? "" : row.unit_price_jpy) + "</td>";
       html += "<td>" + componentEditInput(row, "component_interchange_code", row.interchange_code || row.component_interchange_code || "") + "</td>";
       html += "<td>" + componentEditProcurementSelect(row.procurement_category || "") + "</td>";
-      html += "<td class='component-cell-rate'>" + componentEditInput(row, "replacement_rate", row.replacement_rate || "") + "</td>";
+      html += "<td class='component-cell-rate'>" + componentEditInput(row, "replacement_rate", row.replacement_rate == null ? "" : row.replacement_rate) + "</td>";
       html += "<td>" + componentEditInput(row, "manufacturing_memo", row.manufacturing_memo || "") + "</td>";
       html += "<td>" + componentAlternativeCountHtml(row) + "</td>";
       html += "<td class='component-action-col'><div class='component-edit-actions'><button class='btn-sm-edit' data-component-save='" + esc(String(row.id)) + "'>" + t("component_save") + "</button><button class='btn-sm-edit production-action-secondary' data-component-cancel='1'>" + t("component_cancel") + "</button><button class='btn-sm-edit production-action-secondary' data-component-delete='" + esc(String(row.id)) + "'>" + t("component_delete") + "</button></div></td>";
