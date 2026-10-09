@@ -70,7 +70,7 @@
     return new Promise(function (resolve, reject) {
       var settled = false, opened = false;
       var isReadiness = request.command === "read_hanbaioh_company_backup_readiness";
-      var isBackupSetup = request.command === "open_hanbaioh_company_backup_setup" || request.command === "open_hanbaioh_preimport_backup" || request.command === "open_hanbaioh_preimport_backup_result";
+      var isBackupSetup = request.command === "open_hanbaioh_company_backup_setup" || request.command === "open_hanbaioh_preimport_backup" || request.command === "open_hanbaioh_preimport_backup_result" || request.command === "open_hanbaioh_company_import_result";
       var isExport = request.command.startsWith("export_hanbaioh_") || request.command === "read_hanbaioh_company_export" || isReadiness;
       var timer = window.setTimeout(function () { finish(null); }, isBackupSetup ? 20000 : isReadiness ? 20000 : request.command === "login_hanbaioh_company" || isExport ? 210000 : request.command === "read_hanbaioh_company_device" ? 5000 : 30000);
       var watch = window.setInterval(function () { if (!options.isCurrent()) finish(null); }, 250);
@@ -238,6 +238,26 @@
     var exact = function (value, fields) { return value && !Array.isArray(value) && Object.keys(value).sort().join(",") === fields; };
     var sha = function (value) { return typeof value === "string" && /^[0-9a-f]{64}$/.test(value); };
     if (!data || data.category !== request.category) fail();
+    if (request.command === "open_hanbaioh_company_import_result") {
+      if (["cancelled","failed","expired"].includes(data.status)) {
+        if (!exact(data,"category,status")) fail();
+        return {category:data.category,status:data.status,requestId:request.id};
+      }
+      var j=data.checkpoint,stages=["no_reservation_record","reservation_incomplete","reservation_recorded","completion_observation_unknown","completion_observed"],time=Date.now();
+      if (!exact(data,"category,checkpoint,importVerified,retryPermitted,status") || data.status!=="checkpoint" ||
+          data.retryPermitted!==false || data.importVerified!==false || !exact(j,"observedCompletedAt,observedStartedAt,requestId,reservedAt,stage") || !stages.includes(j.stage)) fail();
+      if (["no_reservation_record","reservation_incomplete"].includes(j.stage)) {
+        if ([j.requestId,j.reservedAt,j.observedStartedAt,j.observedCompletedAt].some(function(v){return v!==null;})) fail();
+      } else {
+        if (typeof j.requestId!=="string" || !uuid.test(j.requestId) || !Number.isSafeInteger(j.reservedAt) || j.reservedAt<=0 || j.reservedAt>time) fail();
+        if (j.stage==="completion_observed") {
+          if (!Number.isSafeInteger(j.observedStartedAt) || j.observedStartedAt<j.reservedAt ||
+              !Number.isSafeInteger(j.observedCompletedAt) || j.observedCompletedAt<j.observedStartedAt ||
+              j.observedCompletedAt>time || j.observedCompletedAt>=j.reservedAt+600000) fail();
+        } else if (j.observedStartedAt!==null || j.observedCompletedAt!==null) fail();
+      }
+      return {category:data.category,status:"checkpoint",requestId:request.id,checkpoint:{...j},retryPermitted:false,importVerified:false};
+    }
     if (request.command === "open_hanbaioh_preimport_backup_result") {
       if (["cancelled", "failed", "expired", "outcome_unknown"].includes(data.status)) {
         if (!exact(data, "category,status")) fail();
@@ -278,7 +298,7 @@
       ...(data.status === "blocked" ? { readiness: data.readiness } : {}),
       ...(data.status === "stopped" ? { attemptRecorded: data.receipt.attemptRecorded, backupMayHaveStarted: data.receipt.backupMayHaveStarted } : {}) };
   }
-  async function run(options, category, preimport, inspectResult) {
+  async function run(options, category, preimport, inspectResult, inspectImport) {
     requireCurrent(options);
     var api = window.DcatsHanbaiohCompanyApi;
     if (active || !api || typeof api.issue !== "function" || preimport && category === "account" || category !== "account" && !Object.hasOwn(commands, category)) throw new Error("company_operation_unavailable");
@@ -311,7 +331,7 @@
       request = { id: body.request_id, command: body.command, deviceId: body.device_id, capability: capability };
       if (!isLogin) request.fileName = body.file_name;
       if (preimport) {
-        request.command = inspectResult ? "open_hanbaioh_preimport_backup_result" : "open_hanbaioh_preimport_backup"; request.category = category; request.confirmStartup = true;
+        request.command = inspectImport ? "open_hanbaioh_company_import_result" : inspectResult ? "open_hanbaioh_preimport_backup_result" : "open_hanbaioh_preimport_backup"; request.category = category; request.confirmStartup = true;
         // Persist only the request ID, keyed by owner, device, category and CSV
         // hash. Reload or a lost response must not submit the same source again.
         try { if (!inspectResult) window.sessionStorage.setItem(backupMarker, request.id); }
@@ -397,6 +417,7 @@
     prepareCsv: function (options) { return run(options, options.category); },
     backupBeforePrepare: function (options) { return run(options, options.category, true); },
     readBackupCheckpointFromPc: function (options) { return run(options, options.category, true, true); },
+    readImportCheckpointFromPc: function (options) { return run(options, options.category, true, true, true); },
     enrollAccountFromPc: enrollAccountFromPc,
     readDeviceFromPc: readDeviceFromPc,
     readBackupReadinessFromPc: readBackupReadinessFromPc,
