@@ -2541,6 +2541,13 @@ var TRANSLATIONS = {
     component_save: "保存",
     component_save_loading: "保存中...",
     component_add_loading: "追加中...",
+    component_edit_usage_missing: "構成部品の使用レコードIDを確認できませんでした。",
+    component_edit_load_failed: "構成部品の編集情報を取得できませんでした。入力画面は変更していません。",
+    component_edit_snapshot_missing: "構成部品の編集情報を取得できませんでした。画面を更新して再度お試しください。",
+    component_edit_snapshot_required: "構成部品の編集情報がありません。修正を開き直してください。入力内容は保存していません。",
+    component_edit_price_required: "構成部品の共通単価を確認できませんでした。型番と部品名を確認してください。入力内容は残しています。",
+    component_edit_result_unknown: "構成部品の保存結果を確認できませんでした。自動再送は行いません。入力内容は残しています。",
+    component_edit_conflict: "構成部品または共通単価が別の画面で変更されています。入力内容は残しています。最新情報を確認してから修正を開き直してください。",
     component_alternative_add: "代替品追加",
     component_alternative_title: "外品代替品",
     component_alternative_modal_title: "外品代替品を追加",
@@ -5079,6 +5086,13 @@ var TRANSLATIONS = {
     component_save: "Save",
     component_save_loading: "Saving...",
     component_add_loading: "Adding...",
+    component_edit_usage_missing: "Could not identify the component usage record.",
+    component_edit_load_failed: "Could not load the component edit information. The input view has not been changed.",
+    component_edit_snapshot_missing: "Could not load the component edit information. Refresh the page and try again.",
+    component_edit_snapshot_required: "The component edit information is missing. Reopen Edit. Your changes have not been saved.",
+    component_edit_price_required: "Could not verify the shared component price. Check the part number and name. Your input has been retained.",
+    component_edit_result_unknown: "Could not confirm the save result. No automatic resend will be made. Your input has been retained.",
+    component_edit_conflict: "The component or shared price was changed in another window. Your input has been retained. Check the latest information before reopening Edit.",
     component_alternative_add: "Add Alternative",
     component_alternative_title: "Alternative Parts",
     component_alternative_modal_title: "Add Alternative Part",
@@ -7614,6 +7628,13 @@ var TRANSLATIONS = {
     component_save: "保存",
     component_save_loading: "保存中...",
     component_add_loading: "添加中...",
+    component_edit_usage_missing: "无法确认构成部件使用记录ID。",
+    component_edit_load_failed: "无法读取构成部件的编辑信息。输入画面未更改。",
+    component_edit_snapshot_missing: "无法读取构成部件的编辑信息。请刷新页面后重试。",
+    component_edit_snapshot_required: "缺少构成部件的编辑信息。请重新打开修改。输入内容尚未保存。",
+    component_edit_price_required: "无法确认构成部件的共用单价。请确认型号和部件名称。输入内容已保留。",
+    component_edit_result_unknown: "无法确认保存结果。不会自动重新发送。输入内容已保留。",
+    component_edit_conflict: "其他画面已更改此部件或共用单价。输入内容已保留。请确认最新信息后重新打开修改。",
     component_alternative_add: "添加替代品",
     component_alternative_title: "替代部件",
     component_alternative_modal_title: "添加替代部件",
@@ -43753,11 +43774,11 @@ async function startComponentEdit(usageId) {
   var resolvedUsageId, result;
   try {
     resolvedUsageId = await resolveManualComponentUsageId(row, usageId);
-    if (!resolvedUsageId) { alert("構成部品の使用レコードIDを確認できませんでした。"); return; }
+    if (!resolvedUsageId) { alert(t("component_edit_usage_missing")); return; }
     result = await sb.rpc("get_manual_component_edit_snapshot", { target_usage_id: parseInt(resolvedUsageId, 10) });
   } catch (error) {
     if (seq === componentEditSnapshotSeq && rowsAtStart === assemblyComponentRows && productAtStart === currentProduct) {
-      alert("構成部品の編集情報を取得できませんでした。入力画面は変更していません。");
+      alert(t("component_edit_load_failed"));
     }
     return;
   }
@@ -43765,8 +43786,11 @@ async function startComponentEdit(usageId) {
       kindAtStart !== selectedProductKind() || variantAtStart !== selectedComponentVariantId()) return;
   var snapshot = result.data;
   if (result.error || !snapshot || !snapshot.token || !snapshot.price || !snapshot.price.token ||
-      !snapshot.usage || !snapshot.part || String(snapshot.usage.id) !== String(resolvedUsageId)) {
-    alert("構成部品の編集情報を取得できませんでした。画面を更新して再度お試しください。");
+      !snapshot.usage || !snapshot.part || String(snapshot.usage.id) !== String(resolvedUsageId) ||
+      (row.dkd_shohin_id != null && String(row.dkd_shohin_id) !== String(snapshot.usage.dkd_shohin_id)) ||
+      (row.product_kind && row.product_kind !== snapshot.usage.product_kind) ||
+      (row.product_variant_id != null && String(row.product_variant_id) !== String(snapshot.usage.product_variant_id))) {
+    alert(t("component_edit_snapshot_missing"));
     return;
   }
   Object.assign(row, snapshot.usage, {
@@ -43923,7 +43947,7 @@ async function saveComponentEdit(usageId) {
   var row = assemblyComponentRows.find(function(r) { return String(r.id) === String(usageId); });
   if (!row) return;
   if (!row._editSnapshotToken || !row._priceSnapshots) {
-    alert("構成部品の編集情報がありません。修正を開き直してください。入力内容は保存していません。");
+    alert(t("component_edit_snapshot_required"));
     return;
   }
   if (isCatalogComponentRow(row)) {
@@ -43935,20 +43959,6 @@ async function saveComponentEdit(usageId) {
   var resolvedUsageId = await resolveManualComponentUsageId(row, usageId);
   if (!resolvedUsageId) {
     alert("構成部品の使用レコードIDを確認できませんでした。画面を更新して再度お試しください。");
-    return;
-  }
-  var guardR = await sb.from("assembly_component_usages")
-    .select("id,is_catalog_evidence")
-    .eq("id", resolvedUsageId)
-    .maybeSingle();
-  if (guardR.error) {
-    alert("構成部品の確認に失敗しました: " + guardR.error.message);
-    return;
-  }
-  if (!guardR.data || guardR.data.is_catalog_evidence === true) {
-    alert(t("component_catalog_locked_save"));
-    editingComponentUsageId = null;
-    await loadAssemblyComponentsForCurrent();
     return;
   }
   var tr = document.querySelector("[data-component-edit-row='" + String(usageId) + "']");
@@ -44003,12 +44013,13 @@ async function saveComponentEdit(usageId) {
   var priceSnapshot = row._priceSnapshots[componentPriceSnapshotKey(payload)];
   var priceSnapshotToken = priceSnapshot ? priceSnapshot.token : "";
   if (!priceSnapshotToken) {
-    alert("構成部品の共通単価を確認できませんでした。型番と部品名を確認してください。入力内容は残しています。");
+    alert(t("component_edit_price_required"));
     return;
   }
   if (btn) { btn.disabled = true; btn.textContent = t("component_save_loading"); }
 
   var usageR;
+  var saveSeq = componentEditSnapshotSeq;
   try {
     usageR = await sb.rpc("save_manual_component_edit", {
       target_usage_id: parseInt(resolvedUsageId, 10),
@@ -44031,14 +44042,14 @@ async function saveComponentEdit(usageId) {
       }
     });
   } catch (error) {
-    alert("構成部品の保存結果を確認できませんでした。自動再送は行いません。入力内容は残しています。");
+    alert(t("component_edit_result_unknown"));
     return;
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = t("component_save"); }
   }
   if (usageR.error) {
     alert(usageR.error.code === "40001" ?
-      "構成部品または共通単価が別の画面で変更されています。入力内容は残しています。最新情報を確認してから修正を開き直してください。" :
+      t("component_edit_conflict") :
       "構成部品の更新に失敗しました: " + usageR.error.message);
     return;
   }
@@ -44047,6 +44058,8 @@ async function saveComponentEdit(usageId) {
     shared_price_updated_count: parseInt(updateResult.shared_price_updated_count, 10) || 0
   }));
   recordComponentNameCandidateUsageForCurrent(payload.component_part_name);
+  if (saveSeq !== componentEditSnapshotSeq || String(editingComponentUsageId) !== String(usageId) ||
+      assemblyComponentRows.indexOf(row) < 0) return;
   editingComponentUsageId = null;
   await loadAssemblyComponentsForCurrent();
 }

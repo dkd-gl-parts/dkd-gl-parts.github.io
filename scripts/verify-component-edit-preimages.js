@@ -5,6 +5,8 @@ const path = require("node:path");
 const vm = require("node:vm");
 
 const source = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+const translations = {};
+vm.runInNewContext(source.slice(source.indexOf("var TRANSLATIONS = "), source.indexOf("\nvar currentLang")), translations);
 assert.equal((source.match(/componentEditInput\(row, "unit_price_jpy", row.unit_price_jpy == null \? "" : row.unit_price_jpy\)/g) || []).length, 2);
 assert.equal((source.match(/componentEditInput\(row, "replacement_rate", row.replacement_rate == null \? "" : row.replacement_rate\)/g) || []).length, 2);
 function extract(name) {
@@ -56,7 +58,7 @@ function fixture() {
     confirmComponentPartNumberWarnings: () => true, canonicalComponentNameForStorage: value => value,
     componentNameMasterValidationMessage: () => "", nullableIntFromValue: value => value === "" ? null : parseInt(value, 10),
     recordComponentNameCandidateUsageForCurrent() {}, refreshComponentEditNameCandidates() {},
-    t: value => value, alert: value => alerts.push(value),
+    t: value => translations.TRANSLATIONS.ja[value] || value, alert: value => alerts.push(value),
     document: { querySelector: () => tr },
     renderAssemblyComponentRows() {
       renders++;
