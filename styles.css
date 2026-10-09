@@ -7425,7 +7425,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .dcats-business-workspace-company-row h5 { grid-column: 1 / -1; margin: 0; font-size: 13px; }
 .dcats-company-csv-label { grid-column: 1 / -1; display: grid; gap: 6px; font-size: 12px; }
 .dcats-company-csv-label input { width: 100%; min-width: 0; font-size: 12px; }
-.dcats-business-workspace-company-row [data-company-backup], [data-company-backup-result] { grid-column: 1 / -1; }
+.dcats-business-workspace-company-row [data-company-backup], [data-company-backup-result], [data-company-import-result] { grid-column: 1 / -1; }
 .dcats-business-workspace-company-row [role="status"], #dcats-business-workspace-company-status { grid-column: 1 / -1; margin-top: 6px; font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
 .dcats-business-workspace-company .error { color: #b42318; }
 .dcats-business-workspace-company .ready { color: #176b43; }

@@ -25,7 +25,11 @@ function harness(config = {}) {
         const send = data => { for (const fn of messages) fn({ source: win, origin, data }); };
         let data = { category: req.category, status: config.status || 'completed' };
         if (data.status === 'completed') data.receipt = { schemaVersion: 1, prepareRequestId: req.id, category: req.category, status: 'production_preimport_backup_verified', backupRequestId: webcrypto.randomUUID(), jobId: 'a'.repeat(64), sha256: 'b'.repeat(64), size: 100 };
-        if (data.status === 'checkpoint') {
+        if (data.status === 'checkpoint' && req.command === 'open_hanbaioh_company_import_result') {
+          const stage=config.checkpointStage||'completion_observed',time=Date.now()-5000,empty=['no_reservation_record','reservation_incomplete'].includes(stage);
+          data.retryPermitted=false;data.importVerified=false;data.checkpoint={stage,requestId:empty?null:webcrypto.randomUUID(),reservedAt:empty?null:time,
+            observedStartedAt:stage==='completion_observed'?time+1000:null,observedCompletedAt:stage==='completion_observed'?time+2000:null};
+        } else if (data.status === 'checkpoint') {
           const stage=config.checkpointStage||'delivery_recorded',startedAt=Date.now()-5000;
           data.checkpoint={stage,backupRequestId:stage==='not_started'?null:webcrypto.randomUUID(),startedAt:stage==='not_started'?null:startedAt,finishedAt:['not_started','attempt_recorded'].includes(stage)?null:startedAt+1000};
         }
@@ -52,6 +56,26 @@ function harness(config = {}) {
 }
 async function scenario(name, action) { await action(); checks++; }
 (async () => {
+  for(const category of ['products','customers','sales'])for(const checkpointStage of ['no_reservation_record','reservation_incomplete','reservation_recorded','completion_observation_unknown','completion_observed'])await scenario('import record '+category+' '+checkpointStage,async()=>{
+    const storage=new Map([['existing-operation','original-request']]),h=harness({storage,status:'checkpoint',checkpointStage});let opened=0;
+    const r=await h.bridge.readImportCheckpointFromPc({...h.options,category,onStage:()=>opened++});
+    assert.equal(r.checkpoint.stage,checkpointStage);assert.equal(r.category,category);assert.equal(r.retryPermitted,false);assert.equal(r.importVerified,false);assert.equal(opened,1);
+    assert.equal(h.posts[0].command,'open_hanbaioh_company_import_result');assert.equal(h.issued[0].command,'prepare_hanbaioh_'+category);
+    assert.deepEqual([...storage],[['existing-operation','original-request']]);assert.equal(h.messages.size,0);assert.equal(h.page.size,0);
+    assert.doesNotMatch(JSON.stringify(r),/token|password|capability|filePath|SYNTHETIC/);
+    await h.bridge.readImportCheckpointFromPc({...h.options,category});assert.equal(h.posts.length,2);assert.equal(storage.size,1);
+  });
+  for(const config of [{status:'completed'},{status:'blocked'},{status:'outcome_unknown'},{status:'checkpoint',noOpened:true},{status:'checkpoint',repeatOpened:true},{status:'checkpoint',leave:true},
+    {status:'checkpoint',patch:r=>({...r,retryPermitted:true})},{status:'checkpoint',patch:r=>({...r,importVerified:true})},
+    {status:'checkpoint',patch:r=>({...r,password:'PRIVATE'})},{status:'checkpoint',patch:r=>({...r,category:'sales'})},
+    {status:'checkpoint',patch:r=>({...r,checkpoint:{...r.checkpoint,observedCompletedAt:Date.now()+10000}})},
+    {status:'checkpoint',patch:r=>({...r,checkpoint:{...r.checkpoint,stage:'no_reservation_record'}})}])await scenario('import record refuses forged result',async()=>{
+    const h=harness(config);await assert.rejects(h.bridge.readImportCheckpointFromPc(h.options),e=>!e.message.includes('PRIVATE'));assert.equal(h.storage.size,0);assert.equal(h.posts.length,1);assert.equal(h.messages.size,0);assert.equal(h.page.size,0);
+  });
+  for(const status of ['failed','expired','cancelled'])await scenario('readonly terminal '+status,async()=>{const h=harness({status});assert.equal((await h.bridge.readImportCheckpointFromPc(h.options)).status,status);assert.equal(h.storage.size,0);});
+  for(const category of ['products','customers','sales'])assert(html.includes('data-company-import-result="'+category+'"'));
+  for(const key of ['hint','working','opened','no_reservation_record','reservation_incomplete','reservation_recorded','completion_observation_unknown','completion_observed','failed','cancelled'])
+    assert.equal((app.match(new RegExp('business_workspace_company_import_result_'+key+':','g'))||[]).length,3);
   for (const category of ['products', 'customers', 'sales']) await scenario(category, async () => {
     const h = harness(); let opened = 0; const result = await h.bridge.backupBeforePrepare({ ...h.options, category, onStage: () => opened++ });
     assert.equal(result.status, 'completed'); assert.equal(result.category, category); assert.equal(opened, 1);
@@ -97,7 +121,7 @@ async function scenario(name, action) { await action(); checks++; }
   }
   assert(html.indexOf('data-company-backup="products"') < html.indexOf('id="dcats-business-workspace-settings-overlay"'));
   for (const key of ['hint', 'csv', 'working', 'opened', 'completed', 'blocked', 'cancelled', 'stopped', 'unknown', 'csv_invalid']) assert.equal((app.match(new RegExp('business_workspace_company_backup_' + key + ':', 'g')) || []).length, 3);
-  assert(app.includes('else if(button.dataset.companyBackup||button.dataset.companyBackupResult)')); assert(app.includes('!["connect","login","export","result","backup","backup_result"].includes(action)'));
+  assert(app.includes('else if(button.dataset.companyBackup||button.dataset.companyBackupResult||button.dataset.companyImportResult)')); assert(app.includes('!["connect","login","export","result","backup","backup_result","import_result"].includes(action)'));
   assert(app.includes('!currentUser||!isSystemAdmin()')); assert(!source.includes('refreshToken'));
   for(const category of ['products','customers','sales'])for(const checkpointStage of ['not_started','attempt_recorded','local_backup_verified','delivery_recorded'])await scenario('read-only '+category+' '+checkpointStage,async()=>{
     const started=harness();await started.bridge.backupBeforePrepare({...started.options,category});const original=[...started.storage];
