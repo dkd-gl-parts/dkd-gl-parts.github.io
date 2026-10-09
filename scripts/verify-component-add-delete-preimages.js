@@ -118,6 +118,17 @@ function ready(f) {
   assert.equal(unknown.calls.filter(call=>call.name==="add_manual_component_safely").length,1);
   const rejected=fixture(); rejected.c.response={ error:{ code:"40001",message:"conflict" } };
   await assert.rejects(()=>rejected.c.performComponentMutation("add",payload),e=>e.code==="40001"); assert.equal(rejected.store.size,0);
+  for(const code of ["08006","XX000","PGRST000","PGRST003"]) {
+    const ambiguous=fixture(); ambiguous.c.response={ error:{ code,message:"outcome cannot be established" } };
+    await assert.rejects(()=>ambiguous.c.performComponentMutation("add",payload),/再送は行いません/);
+    assert.equal(ambiguous.store.size,1);
+    await assert.rejects(()=>ambiguous.c.performComponentMutation("add",payload),/再送は行いません/);
+    assert.deepEqual(ambiguous.calls.map(call=>call.name),["add_manual_component_safely","get_component_mutation_receipt"]);
+  }
+  for(const code of ["22023","23505","25001","40P01","42501","P0001","PGRST102","PGRST202"]) {
+    const known=fixture(); known.c.response={ error:{ code,message:"known rejection" } };
+    await assert.rejects(()=>known.c.performComponentMutation("add",payload),e=>e.code===code); assert.equal(known.store.size,0);
+  }
   const denied=fixture(); denied.c.window.sessionStorage.setItem=()=>{ throw new Error("storage blocked"); };
   await assert.rejects(()=>denied.c.performComponentMutation("add",payload),/実行していません/); assert.equal(denied.calls.length,0);
   const corrupt=fixture(); corrupt.store.set("dcats:component-pending:fixture-user","corrupt");

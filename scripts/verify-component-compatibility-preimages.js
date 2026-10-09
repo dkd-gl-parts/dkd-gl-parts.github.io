@@ -25,7 +25,7 @@ function extract(name) {
 }
 const names = ["componentMutationStorageKey", "readComponentMutationPending", "performComponentMutation",
   "selectComponentCompatExistingPart", "openComponentCompatForm", "componentCompatFormCurrent", "componentCompatSnapshotFields",
-  "componentCompatSnapshotKey", "updateComponentCompatSaveState", "captureComponentCompatSnapshot", "closeComponentCompatForm", "saveComponentCompatForm"];
+  "componentCompatSnapshotKey", "componentCompatErrorMessage", "updateComponentCompatSaveState", "captureComponentCompatSnapshot", "closeComponentCompatForm", "saveComponentCompatForm"];
 const functions = names.map(extract).join("\n");
 assert(!extract("saveComponentCompatForm").includes("sb.from"));
 assert(!extract("saveComponentCompatForm").includes("get_component_compatibility_snapshot"));
@@ -121,6 +121,12 @@ function fixture() {
   assert.equal(lost.store.size, 0); assert.equal(lost.c.componentCompatSnapshotState.anchorToken, "");
   await lost.c.saveComponentCompatForm(); assert.equal(lost.calls.filter(call => call.name === "save_component_compatibility_safely").length, 1);
   const sourcePart = fixture(); await sourcePart.c.openComponentCompatForm(1);
+  const uncertain = fixture(); await uncertain.c.openComponentCompatForm(1);
+  uncertain.c.response = { error: { code: "08006", message: "connection lost at commit" } };
+  await uncertain.c.saveComponentCompatForm(); assert.equal(uncertain.store.size, 1);
+  await uncertain.c.saveComponentCompatForm();
+  assert.equal(uncertain.calls.at(-1).name, "get_component_mutation_receipt");
+  assert.equal(uncertain.calls.filter(call => call.name === "save_component_compatibility_safely").length, 1);
   sourcePart.c.componentCompatExistingRows = [{ dkd_component_id: 3, manufacturer: "OTHER", manufacturer_part_number: "B110", part_name: "Existing" }];
   sourcePart.c.selectComponentCompatExistingPart(3); await new Promise(resolve => setImmediate(resolve));
   assert.equal(sourcePart.calls.at(-1).args.target_fields.source_component_id, 3);
@@ -133,5 +139,21 @@ function fixture() {
   const logging = fixture(); await logging.c.openComponentCompatForm(1); logging.c.writeLog = async () => { throw new Error("audit unavailable"); };
   await logging.c.saveComponentCompatForm(); await logging.c.saveComponentCompatForm();
   assert.equal(logging.calls.length, 2); assert.equal(logging.c.componentCompatSnapshotState.anchorToken, "");
+  for (const [message, key] of Object.entries({
+    DCATS_COMPONENT_COMPATIBILITY_SELF_REFERENCE: "component_compat_self",
+    DCATS_COMPONENT_COMPATIBILITY_SOURCE_MISMATCH: "component_compat_source_mismatch",
+    DCATS_COMPONENT_COMPATIBILITY_DUPLICATE: "component_compat_duplicate",
+    DCATS_COMPONENT_COMPATIBILITY_AMBIGUOUS: "component_compat_ambiguous",
+    DCATS_COMPONENT_COMPATIBILITY_LINK_AMBIGUOUS: "component_compat_ambiguous",
+    DCATS_COMPONENT_COMPATIBILITY_FIELDS_INVALID: "component_compat_fields_invalid"
+  })) {
+    for (const language of ["ja", "en", "zh"]) {
+      assert(translations.TRANSLATIONS[language][key]);
+      logging.c.t = requested => translations.TRANSLATIONS[language][requested];
+      assert.equal(logging.c.componentCompatErrorMessage({ code: "22023", message }), translations.TRANSLATIONS[language][key]);
+      assert.equal(logging.c.componentCompatErrorMessage({ code: "42501" }), translations.TRANSLATIONS[language].component_compat_permission);
+      assert.equal(logging.c.componentCompatErrorMessage({ code: "40001" }), translations.TRANSLATIONS[language].component_compat_conflict);
+    }
+  }
   console.log("Component compatibility aggregate preimages, retained input and read-only receipt recovery verified.");
 })().catch(error => { console.error(error); process.exitCode = 1; });

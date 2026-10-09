@@ -2548,6 +2548,13 @@ var TRANSLATIONS = {
     component_edit_price_required: "構成部品の共通単価を確認できませんでした。型番と部品名を確認してください。入力内容は残しています。",
     component_edit_result_unknown: "構成部品の保存結果を確認できませんでした。自動再送は行いません。入力内容は残しています。",
     component_edit_conflict: "構成部品または共通単価が別の画面で変更されています。入力内容は残しています。最新情報を確認してから修正を開き直してください。",
+    component_compat_conflict: "互換マスターまたは関連する構成部品が別の画面で変更されています。入力内容は残しています。最新情報を確認してから開き直してください。",
+    component_compat_self: "基準部品と同じメーカー・品番は互換として登録できません。",
+    component_compat_source_mismatch: "選択した登録済み部品とメーカー・品番が一致しません。登録済み部品を選び直してください。",
+    component_compat_duplicate: "同じメーカー・品番の互換マスターが既にあります。その品番を選択して追加してください。",
+    component_compat_ambiguous: "同じメーカー・品番の候補または互換関係が複数あります。既存の登録を確認してください。",
+    component_compat_permission: "保存に必要な更新権限がありません。入力内容は残しています。権限とログイン状態を確認してください。",
+    component_compat_fields_invalid: "メーカー品番・互換区分の入力内容を確認してください。入力内容は残しています。",
     component_mutation_result_check: "前回の処理結果を確認",
     component_mutation_result_unknown: "処理結果をまだ確認できません。再送は行いません。もう一度操作すると前回の処理結果だけを確認します。入力内容は残しています。",
     component_mutation_result_recovered: "前回の処理が完了していることを確認しました。今回の入力は送信していません。",
@@ -5097,6 +5104,13 @@ var TRANSLATIONS = {
     component_edit_price_required: "Could not verify the shared component price. Check the part number and name. Your input has been retained.",
     component_edit_result_unknown: "Could not confirm the save result. No automatic resend will be made. Your input has been retained.",
     component_edit_conflict: "The component or shared price was changed in another window. Your input has been retained. Check the latest information before reopening Edit.",
+    component_compat_conflict: "The compatibility master or related components changed in another window. Your input has been retained. Check the latest information before reopening the form.",
+    component_compat_self: "The base component cannot be registered as its own compatible part with the same manufacturer and part number.",
+    component_compat_source_mismatch: "The selected registered component does not match the manufacturer and part number. Select the registered component again.",
+    component_compat_duplicate: "A compatibility master with this manufacturer and part number already exists. Select that part number to add it.",
+    component_compat_ambiguous: "Multiple matching components or compatibility links exist. Check the existing registrations.",
+    component_compat_permission: "You do not have the update permissions required to save. Your input has been retained. Check your permissions and login status.",
+    component_compat_fields_invalid: "Check the manufacturer part number and compatibility type. Your input has been retained.",
     component_mutation_result_check: "Check Previous Result",
     component_mutation_result_unknown: "The result is still unconfirmed. No resend will be made. Repeat the action to check only the previous result. Your input has been retained.",
     component_mutation_result_recovered: "The previous operation completed. Your current input has not been submitted.",
@@ -7643,6 +7657,13 @@ var TRANSLATIONS = {
     component_edit_price_required: "无法确认构成部件的共用单价。请确认型号和部件名称。输入内容已保留。",
     component_edit_result_unknown: "无法确认保存结果。不会自动重新发送。输入内容已保留。",
     component_edit_conflict: "其他画面已更改此部件或共用单价。输入内容已保留。请确认最新信息后重新打开修改。",
+    component_compat_conflict: "其他画面已更改互换主数据或相关部件。输入内容已保留。请确认最新信息后重新打开表单。",
+    component_compat_self: "相同制造商和品号的基准部件不能注册为自身的互换部件。",
+    component_compat_source_mismatch: "所选已注册部件与制造商和品号不一致。请重新选择已注册部件。",
+    component_compat_duplicate: "此制造商和品号的互换主数据已存在。请选择该品号进行添加。",
+    component_compat_ambiguous: "存在多个匹配部件或互换关系。请检查现有注册内容。",
+    component_compat_permission: "没有保存所需的更新权限。输入内容已保留。请确认权限和登录状态。",
+    component_compat_fields_invalid: "请确认制造商品号和互换类型。输入内容已保留。",
     component_mutation_result_check: "确认上次处理结果",
     component_mutation_result_unknown: "尚无法确认处理结果。不会重新发送。再次操作只确认上次结果。输入内容已保留。",
     component_mutation_result_recovered: "已确认上次处理完成。本次输入尚未发送。",
@@ -43846,8 +43867,9 @@ async function performComponentMutation(operation, payload) {
   if (!currentUser || currentUser.id !== userAtStart) throw new Error(t("component_mutation_result_unknown"));
   if (!response) throw new Error(t("component_mutation_result_unknown"));
   if (response.error) {
-    // A returned SQL/PostgREST rejection is a known rollback, unlike a lost response.
-    if (!recovering && /^(?:[0-9A-Z]{5}|PGRST\d{3})$/.test(response.error.code || "")) {
+    // Connection/system failures cannot prove rollback; retain their pending receipt.
+    var knownRollback = /^(?:(?:22|23|25|40|42|P0)[0-9A-Z]{3}|PGRST(?:100|102|106|202))$/.test(response.error.code || "");
+    if (!recovering && knownRollback) {
       window.sessionStorage.removeItem(key);
       throw response.error;
     }
@@ -47327,7 +47349,7 @@ async function openComponentCompatForm(linkId) {
     if (JSON.stringify(initialValues) !== JSON.stringify(["manufacturer", "part-number", "part-name", "relation", "note"].map(function(field) {
       return document.getElementById("component-compat-form-" + field).value;
     })) || componentCompatSnapshotKey(initialFields) !== componentCompatSnapshotKey(componentCompatSnapshotFields())) {
-      throw new Error(t("component_edit_conflict"));
+      throw new Error(t("component_compat_conflict"));
     }
     document.getElementById("component-compat-form-base").textContent = "基準: " + componentCompatBaseLabel(image.anchor.base);
     if (link) {
@@ -47345,8 +47367,7 @@ async function openComponentCompatForm(linkId) {
     state.loading = false;
     await captureComponentCompatSnapshot();
   } catch (error) {
-    if (componentCompatFormCurrent(state)) document.getElementById("component-compat-form-error").textContent =
-      error.code === "40001" ? t("component_edit_conflict") : (error.message || t("msg_save_err"));
+    if (componentCompatFormCurrent(state)) document.getElementById("component-compat-form-error").textContent = componentCompatErrorMessage(error);
   } finally {
     if (componentCompatFormCurrent(state)) { state.loading = false; updateComponentCompatSaveState(); }
   }
@@ -47354,6 +47375,20 @@ async function openComponentCompatForm(linkId) {
 
 function componentCompatFormCurrent(state) {
   return state && componentCompatSnapshotState === state && componentCompatSelected === state.selected && state.seq === componentCompatFormSeq;
+}
+
+function componentCompatErrorMessage(error) {
+  if (error && error.code === "40001") return t("component_compat_conflict");
+  if (error && error.code === "42501") return t("component_compat_permission");
+  var messages = {
+    DCATS_COMPONENT_COMPATIBILITY_SELF_REFERENCE: "component_compat_self",
+    DCATS_COMPONENT_COMPATIBILITY_SOURCE_MISMATCH: "component_compat_source_mismatch",
+    DCATS_COMPONENT_COMPATIBILITY_DUPLICATE: "component_compat_duplicate",
+    DCATS_COMPONENT_COMPATIBILITY_AMBIGUOUS: "component_compat_ambiguous",
+    DCATS_COMPONENT_COMPATIBILITY_LINK_AMBIGUOUS: "component_compat_ambiguous",
+    DCATS_COMPONENT_COMPATIBILITY_FIELDS_INVALID: "component_compat_fields_invalid"
+  };
+  return error && messages[error.message] ? t(messages[error.message]) : (error && error.message || t("msg_save_err"));
 }
 
 function componentCompatSnapshotFields() {
@@ -47374,7 +47409,7 @@ function updateComponentCompatSaveState() {
   if (!button) return;
   var pending;
   try { pending = readComponentMutationPending(); } catch (error) { pending = true; }
-  button.textContent = pending ? t("component_mutation_result_check") : t("component_save");
+  button.textContent = componentCompatSaving ? t("component_save_loading") : pending ? t("component_mutation_result_check") : t("component_save");
   button.disabled = componentCompatSaving || (!pending && (!componentCompatFormCurrent(state) || state.loading ||
     !state.anchorToken || !state.snapshots[componentCompatSnapshotKey(componentCompatSnapshotFields())]));
 }
@@ -47390,11 +47425,11 @@ async function captureComponentCompatSnapshot() {
     if (!componentCompatFormCurrent(state) || seq !== componentCompatLookupSeq || key !== componentCompatSnapshotKey(componentCompatSnapshotFields())) return;
     if (response.error) throw response.error;
     var image = response.data;
-    if (!image || !image.token || image.anchor_token !== state.anchorToken) throw new Error(t("component_edit_conflict"));
+    if (!image || !image.token || image.anchor_token !== state.anchorToken) throw new Error(t("component_compat_conflict"));
     state.snapshots[key] = image;
     document.getElementById("component-compat-form-error").textContent = "";
   } catch (error) {
-    if (componentCompatFormCurrent(state) && seq === componentCompatLookupSeq) document.getElementById("component-compat-form-error").textContent = error.message || t("msg_save_err");
+    if (componentCompatFormCurrent(state) && seq === componentCompatLookupSeq) document.getElementById("component-compat-form-error").textContent = componentCompatErrorMessage(error);
   } finally {
     if (componentCompatFormCurrent(state) && seq === componentCompatLookupSeq) { state.loading = false; updateComponentCompatSaveState(); }
   }
@@ -47444,7 +47479,7 @@ async function saveComponentCompatForm() {
       closeComponentCompatForm(); await loadComponentCompatLinks(); renderComponentCompatLinks(); await loadComponentCompatAssist();
     }
   } catch (e) {
-    if (componentCompatFormCurrent(state) && error) error.textContent = e.code === "40001" ? t("component_edit_conflict") : (e.message || t("msg_save_err"));
+    if (componentCompatFormCurrent(state) && error) error.textContent = componentCompatErrorMessage(e);
   } finally {
     componentCompatSaving = false; updateComponentCompatSaveState();
   }
