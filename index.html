@@ -21,7 +21,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon-v4.png">
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="vendor/supabase-js-2.115.0.js" integrity="sha384-CLZeq1dk8+Uzrs7TVvBUdlFoV5F0DMqgRoeHa8g5wJcuPe5SkVfEvdxB0ZuzlnBQ" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="styles.css?v=1.1.1144&amp;ranking=7&amp;brand=4">
+<link rel="stylesheet" href="styles.css?v=1.1.1144&amp;ranking=8&amp;brand=4">
 <link rel="stylesheet" href="manufacturing-cost-workspace.css?v=1.1.1144">
 <link rel="stylesheet" href="product-data-research.css?v=1.1.1144">
 <link rel="stylesheet" href="partsfan-research.css?v=1.1.1144">
@@ -4495,7 +4495,7 @@
         <div class="ranking-report-section-head">
           <div>
             <span class="ranking-report-step">01</span>
-            <h3>対象カテゴリ</h3>
+            <h3>対象シート</h3>
           </div>
           <div class="ranking-report-inline-actions">
             <button type="button" class="ranking-report-link-button" id="manufacturing-ranking-category-all">すべて</button>
@@ -4505,6 +4505,13 @@
         <div class="ranking-report-category-list" id="manufacturing-ranking-categories">
           <div class="ranking-report-placeholder">データ読込中</div>
         </div>
+        <label class="ranking-report-field ranking-report-product-category">
+          <span>商品カテゴリで絞り込み</span>
+          <select id="manufacturing-ranking-product-category" aria-describedby="manufacturing-ranking-product-category-help">
+            <option value="all">すべての商品カテゴリ</option>
+          </select>
+        </label>
+        <p class="ranking-report-filter-help" id="manufacturing-ranking-product-category-help">選択したシート内の商品を絞り込み、対象商品の順位を再計算します。全体集計からも絞り込めます。</p>
 
         <div class="ranking-report-divider"></div>
 
@@ -5657,7 +5664,7 @@
 <script src="assets/concierge-pet/test-sales-bridge.js?v=1.1.1144"></script>
 <script src="assets/concierge-pet/company-bridge.js?v=1.1.1144"></script>
 <script src="assets/concierge-pet/concierge-pet.js?v=1.1.1144"></script>
-<script src="manufacturing-ranking-report.js?v=1.1.1144&amp;ranking=18"></script>
+<script src="manufacturing-ranking-report.js?v=1.1.1144&amp;ranking=19"></script>
 <script src="customer-price-report.js?v=1.1.1144"></script>
 </body>
 </html>

@@ -161,6 +161,7 @@
       var item = {
         id: sheetName + "::" + String(i + 1),
         sheet: sheetName,
+        isAggregate: /集計|総合|全体/.test(sheetName),
         sourceRow: i + 1,
         productName: normalizeManufacturingProductName(cellValue(row, columns.productName)),
         productCode: cellValue(row, columns.productCode),
@@ -290,6 +291,7 @@
     return {
       id: String(row.dataset_id) + "::" + String(row.id),
       sheet: normalizeText(row.category_name),
+      isAggregate: !!row.is_aggregate,
       sourceRow: Number(row.source_row_number || 0),
       productName: normalizeManufacturingProductName(row.product_name),
       productCode: normalizeText(row.product_code),
@@ -720,6 +722,16 @@
         "<input type='checkbox' value='" + escapeHtml(sheet.name) + "'>" +
         "<span><strong>" + escapeHtml(sheet.name) + "</strong>" + aggregate + "</span></label>";
     }).join("");
+    var productCategory = byId("manufacturing-ranking-product-category");
+    if (productCategory) {
+      var previous = productCategory.value;
+      productCategory.innerHTML = "<option value='all'>すべての商品カテゴリ</option>" + state.sheets.filter(function(sheet) {
+        return !sheet.isAggregate;
+      }).map(function(sheet) {
+        return "<option value='" + escapeHtml(sheet.name) + "'>" + escapeHtml(sheet.name) + "</option>";
+      }).join("");
+      if (state.sheets.some(function(sheet) { return !sheet.isAggregate && sheet.name === previous; })) productCategory.value = previous;
+    }
   }
 
   function selectedCategories() {
@@ -750,6 +762,7 @@
     var reportType = byId("manufacturing-ranking-report-type").value;
     return {
       categories: selectedCategories(),
+      productCategory: byId("manufacturing-ranking-product-category").value,
       reportType: reportType,
       metric: byId("manufacturing-ranking-metric").value,
       rankScope: byId("manufacturing-ranking-scope").value,
@@ -884,11 +897,50 @@
     });
   }
 
+  function isAggregateRow(row) {
+    return row.isAggregate === true || (row.isAggregate == null && /集計|総合|全体/.test(row.sheet));
+  }
+
+  function productCategoryIdentity(row) {
+    if (!row.genuine && !row.maker && !row.daiko) return "";
+    return JSON.stringify([row.productName, row.genuine, row.genuine2, row.maker, row.body, row.clutch, row.type, row.daiko].map(normalizePart));
+  }
+
+  function indexProductCategories(rows) {
+    var index = { codes: Object.create(null), identities: Object.create(null) };
+    function add(target, key, category) {
+      if (!key) return;
+      if (!Object.prototype.hasOwnProperty.call(target, key)) target[key] = category;
+      else if (target[key] !== category) target[key] = "";
+    }
+    rows.forEach(function(row) {
+      if (isAggregateRow(row)) return;
+      add(index.codes, normalizePart(row.productCode), row.sheet);
+      add(index.identities, productCategoryIdentity(row), row.sheet);
+    });
+    return index;
+  }
+
+  function productCategoryForRow(row, index) {
+    if (!isAggregateRow(row)) return row.sheet;
+    var code = normalizePart(row.productCode);
+    if (code && Object.prototype.hasOwnProperty.call(index.codes, code)) return index.codes[code];
+    return index.identities[productCategoryIdentity(row)] || "";
+  }
+
   function buildRanking(rows, options) {
     var categorySet = Object.create(null);
     options.categories.forEach(function(category) { categorySet[category] = true; });
+    var productCategory = options.productCategory || "all";
+    var productCategories = productCategory !== "all" ? indexProductCategories(rows) : null;
+    var unclassifiedRowCount = 0;
     var sourceRows = rows.filter(function(row) {
       if (!categorySet[row.sheet]) return false;
+      if (productCategory !== "all") {
+        var resolvedCategory = productCategoryForRow(row, productCategories);
+        if (!resolvedCategory) unclassifiedRowCount++;
+        if (resolvedCategory !== productCategory) return false;
+      }
       return options.reportType !== "supplier_availability" || !isDaikoManufacturerPart(row.maker);
     });
     var groups = createCompatibilityGroups(sourceRows, options.compatibilityBasis);
@@ -930,6 +982,7 @@
       sourceRowCount: sourceRows.length,
       candidateCount: candidates.length,
       compatibleGroupCount: compatibleGroupCount,
+      unclassifiedRowCount: unclassifiedRowCount,
       omittedRows: omittedRows
     };
   }
@@ -955,7 +1008,7 @@
     return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate());
   }
 
-  function printFileTitle(categories, startRank, endRank, date, reportType) {
+  function printFileTitle(categories, startRank, endRank, date, reportType, productCategory) {
     var categoryNames = (categories || []).map(function(category) {
       return normalizeText(category)
         .replace(/[<>:"/\\|?*\u0000-\u001f]/g, "・")
@@ -966,7 +1019,8 @@
     var lastRank = Math.max(firstRank, parseInt(endRank, 10) || firstRank);
     var rankRange = firstRank === lastRank ? String(firstRank) : firstRank + "-" + lastRank;
     var reportName = reportType === "supplier_availability" ? "仕入先商品照合" : "製造ランキング";
-    return (categoryNames.join("・") || "カテゴリ") + "＆" + reportName + rankRange + "位＆" + printFileDate(date);
+    var productCategoryText = productCategory && productCategory !== "all" ? "（" + normalizeText(productCategory).replace(/[\\/:*?"<>|]/g, "_") + "）" : "";
+    return (categoryNames.join("・") || "カテゴリ") + productCategoryText + "＆" + reportName + rankRange + "位＆" + printFileDate(date);
   }
 
   function rowPartNumberEntries(row) {
@@ -1317,6 +1371,7 @@
     var hasAggregate = selectedSheets.some(function(sheet) { return sheet.isAggregate; });
     var hasDetail = selectedSheets.some(function(sheet) { return !sheet.isAggregate; });
     var messages = [];
+    if (summary.unclassifiedRowCount) messages.push("選択シートの " + formatNumber(summary.unclassifiedRowCount) + "件は商品カテゴリを確認できないため、絞り込み対象から除外しています。");
     if (options.reportType === "supplier_availability") {
       if (!state.supplierDataReady) messages.push(state.supplierDataError || state.masterDataError ? "仕入先商品の照合に失敗しました。再読み込みしてください。" : "仕入先商品を照合しています。完了後に自動更新します。");
       else if (!supplierAvailabilitySummary(summary.results, options).availableCount) messages.push("選択した条件で紐づく仕入先商品はありません。");
@@ -1549,7 +1604,7 @@
     var url = URL.createObjectURL(blob);
     var anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = printFileTitle(state.options.categories, state.options.startRank, state.options.endRank, new Date(), state.options.reportType) + ".csv";
+    anchor.download = printFileTitle(state.options.categories, state.options.startRank, state.options.endRank, new Date(), state.options.reportType, state.options.productCategory) + ".csv";
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
@@ -1601,8 +1656,9 @@
     var generatedDate = new Date();
     var generatedAt = generatedDate.toLocaleString("ja-JP");
     var categoryText = options.categories.join(" / ");
+    if (options.productCategory && options.productCategory !== "all") categoryText += " / 商品カテゴリ: " + options.productCategory;
     var supplierReport = options.reportType === "supplier_availability";
-    var title = printFileTitle(options.categories, options.startRank, options.endRank, generatedDate, options.reportType);
+    var title = printFileTitle(options.categories, options.startRank, options.endRank, generatedDate, options.reportType, options.productCategory);
     var coreStockSummary = rankingCoreStockSummary(results);
     var supplierSummary = supplierAvailabilitySummary(results, options);
     var header;
@@ -1709,6 +1765,8 @@
     });
     byId("manufacturing-ranking-supplier").addEventListener("change", updatePreview);
     byId("manufacturing-ranking-supplier-status").addEventListener("change", updatePreview);
+    byId("manufacturing-ranking-product-category").addEventListener("change", updatePreview);
+    byId("manufacturing-ranking-categories").addEventListener("change", updatePreview);
     byId("btn-logout-manufacturing-ranking-report").addEventListener("click", function() {
       if (typeof doLogout === "function") doLogout();
     });

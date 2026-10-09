@@ -2,6 +2,13 @@
 // Runtime translation is local; this file makes no external requests.
 var DCATS_LEGACY_UI_TRANSLATIONS = {
   "en": {
+    "対象シート": "Source sheets",
+    "選択シートの": "In the selected sheets, ",
+    "件は商品カテゴリを確認できないため、絞り込み対象から除外しています。": " items are excluded because their product category could not be determined.",
+    "/ 商品カテゴリ:": "/ Product category:",
+    "商品カテゴリで絞り込み": "Filter by product category",
+    "すべての商品カテゴリ": "All product categories",
+    "選択したシート内の商品を絞り込み、対象商品の順位を再計算します。全体集計からも絞り込めます。": "Filter products within the selected sheets and recalculate their ranks. You can also filter the overall shipment summary.",
     "この4枚のTripo送信と推定30クレジットの一回生成に同意する": "I agree to send these four photos to Tripo and generate once for an estimated 30 credits",
     "整列済み4枚で一回だけ生成（有料）": "Generate once from the four aligned photos (paid)",
     "再生成の状態を確認": "Check regeneration status",
@@ -3792,6 +3799,13 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "に指定": "Assign to"
   },
   "zh": {
+    "対象シート": "来源工作表",
+    "選択シートの": "所选工作表中的",
+    "件は商品カテゴリを確認できないため、絞り込み対象から除外しています。": "件商品因类别无法确定而从筛选结果中排除。",
+    "/ 商品カテゴリ:": "/ 商品类别：",
+    "商品カテゴリで絞り込み": "按商品类别筛选",
+    "すべての商品カテゴリ": "所有商品类别",
+    "選択したシート内の商品を絞り込み、対象商品の順位を再計算します。全体集計からも絞り込めます。": "筛选所选工作表内的商品并重新计算排名，也可筛选总体出货汇总。",
     "この4枚のTripo送信と推定30クレジットの一回生成に同意する": "同意向Tripo发送这四张图片，并以预计30点数生成一次",
     "整列済み4枚で一回だけ生成（有料）": "使用四张对齐图片生成一次（付费）",
     "再生成の状態を確認": "检查重新生成状态",

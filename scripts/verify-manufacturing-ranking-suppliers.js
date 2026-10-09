@@ -184,4 +184,87 @@ if (!printHtml.includes("is-available'>あり") || !printHtml.includes("is-unava
   throw new Error("supplier report must show both availability states");
 }
 
-console.log("manufacturing ranking supplier report guard passed");
+// Whole-sheet shipment totals must be filtered using detail-sheet membership,
+// before compatibility grouping or rank slicing, without replacing their totals.
+const aggregateSheet = "商品別出荷実績集計";
+const detailRows = [
+  { ...linkedRow, id: "D1", sheet: "オルタ", productCode: "1", shipment: 3 },
+  { ...linkedRow, id: "D2", sheet: "オルタ", productCode: "2", maker: "ALT-002", shipment: 2 },
+  { ...linkedRow, id: "D3", sheet: "セル", productCode: "3", productName: "スタータ", shipment: 9 },
+  { ...linkedRow, id: "D4", sheet: "部品", productCode: "4", productName: "オルタネータ用部品", maker: "PART-004", shipment: 4 },
+  { ...linkedRow, id: "D5", sheet: "オルタ", productCode: "5", maker: "ALT-005", shipment: 1 },
+  { ...linkedRow, id: "D6", sheet: "セル", productCode: "5", maker: "ST-005", shipment: 1 }
+];
+const aggregateRows = detailRows.slice(0, 4).map((row, i) => ({
+  ...row, id: "A" + (i + 1), sheet: aggregateSheet, isAggregate: true, shipment: [100, 80, 300, 200][i]
+}));
+const unknownRow = { ...aggregateRows[0], id: "A-unknown", productCode: "99", maker: "UNKNOWN-099" };
+const ambiguousRow = { ...aggregateRows[0], id: "A-ambiguous", productCode: "5", maker: "ALT-005" };
+const categoryRows = [...aggregateRows, unknownRow, ambiguousRow, ...detailRows];
+const categoryOptions = {
+  ...supplierRankingOptions, categories: [aggregateSheet], reportType: "manufacturing",
+  productCategory: "オルタ", startRank: 1, endRank: 100, compatibilityBasis: "maker_genuine"
+};
+const alternatorRanking = api.buildRanking(categoryRows, categoryOptions);
+if (alternatorRanking.results.length !== 2 || alternatorRanking.sourceRowCount !== 2 ||
+    alternatorRanking.results[0].row.id !== "A1" || alternatorRanking.results[0].shipment !== 100 ||
+    alternatorRanking.results[1].row.id !== "A2" || alternatorRanking.results[1].shipment !== 80 ||
+    alternatorRanking.results[0].rank !== 1 || alternatorRanking.results[1].rank !== 2) {
+  throw new Error("aggregate alternator filtering must keep aggregate totals and recompute ranks");
+}
+if (alternatorRanking.unclassifiedRowCount !== 2) {
+  throw new Error("unknown and ambiguous category membership must be excluded and counted");
+}
+const starterRanking = api.buildRanking(categoryRows, { ...categoryOptions, productCategory: "セル" });
+if (starterRanking.results.length !== 1 || starterRanking.results[0].row.id !== "A3" || starterRanking.results[0].rank !== 1) {
+  throw new Error("aggregate starter filtering must exclude alternators and parts");
+}
+const rangeRanking = api.buildRanking(categoryRows, { ...categoryOptions, startRank: 2, endRank: 2 });
+if (rangeRanking.results.length !== 1 || rangeRanking.results[0].row.id !== "A2") {
+  throw new Error("rank slicing must run after product-category filtering");
+}
+const consolidated = api.buildRanking(categoryRows, { ...categoryOptions, compatibilityMode: "consolidated" });
+if (consolidated.results.length !== 1 || consolidated.results[0].shipment !== 180 ||
+    consolidated.results[0].group.some((row) => row.productCode === "3")) {
+  throw new Error("excluded categories must not enter compatibility-group totals");
+}
+const detailRanking = api.buildRanking(categoryRows, { ...categoryOptions, categories: ["オルタ"] });
+if (detailRanking.results.length !== 3 || detailRanking.results[0].shipment !== 3) {
+  throw new Error("detail-sheet filtering must continue to use that sheet's totals");
+}
+const noCodeRanking = api.buildRanking([
+  { ...aggregateRows[0], productCode: "" }, detailRows[0]
+], categoryOptions);
+if (noCodeRanking.results.length !== 1) {
+  throw new Error("missing product codes may resolve through an exact matching item identity");
+}
+const allRanking = api.buildRanking(categoryRows, { ...categoryOptions, productCategory: "all" });
+const legacyRanking = api.buildRanking(categoryRows, { ...categoryOptions, productCategory: undefined });
+if (allRanking.results.length !== 6 || JSON.stringify(allRanking) !== JSON.stringify(legacyRanking)) {
+  throw new Error("all categories must preserve the previous ranking behavior including unknown rows");
+}
+if (api.buildRanking(categoryRows, { ...categoryOptions, productCategory: "存在しないカテゴリ" }).results.length) {
+  throw new Error("an unmatched category must return an empty ranking");
+}
+const categoryCsv = api.buildExcelCsv(alternatorRanking.results, categoryOptions);
+const categoryPrint = api.buildPrintHtml(alternatorRanking.results, categoryOptions);
+if (categoryCsv.includes("スタータ") || categoryCsv.includes("オルタネータ用部品") || !categoryCsv.includes(",100,")) {
+  throw new Error("Excel output must include only filtered aggregate totals");
+}
+if (!categoryPrint.includes("商品カテゴリ: オルタ") || categoryPrint.includes("スタータ") || categoryPrint.includes("オルタネータ用部品")) {
+  throw new Error("PDF output must state the filter and include only the filtered rows");
+}
+if (!api.printFileTitle([aggregateSheet], 1, 100, new Date(2026, 9, 9), "manufacturing", "オルタ").includes("（オルタ）")) {
+  throw new Error("filtered report filenames must identify the product category");
+}
+const mappedAggregate = api.mapDatabaseRow({ category_name: aggregateSheet, is_aggregate: true });
+if (mappedAggregate.isAggregate !== true || !html.includes('id="manufacturing-ranking-product-category"') ||
+    !source.includes('byId("manufacturing-ranking-product-category").addEventListener("change", updatePreview)')) {
+  throw new Error("database aggregate flags and the automatic product-category filter must be wired");
+}
+const escapedCategoryPrint = api.buildPrintHtml([], { ...categoryOptions, productCategory: "<script>" });
+if (escapedCategoryPrint.includes("商品カテゴリ: <script>")) {
+  throw new Error("category names must be escaped in PDF output");
+}
+
+console.log("manufacturing ranking supplier and product-category report guards passed");
