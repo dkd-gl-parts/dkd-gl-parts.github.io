@@ -213,10 +213,12 @@
     render(coordinator.getState());
   }
   api.fetch = async function(input, init) {
-    var url = new URL(typeof input === "string" ? input : input.url, root.location.href);
+    var url = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url, root.location.href);
     var requestInit = Object.assign({}, init);
     var operation = operationFunction(url.pathname);
-    if (url.origin === baseOrigin && (url.pathname.startsWith("/rest/v1/") || url.pathname.startsWith("/storage/v1/") || operation)) {
+    var method = String(init && init.method || input && input.method || "GET").toUpperCase();
+    var storageWrite = url.pathname.startsWith("/storage/v1/") && !["GET", "HEAD", "OPTIONS"].includes(method);
+    if (url.origin === baseOrigin && (url.pathname.startsWith("/rest/v1/") || storageWrite || operation)) {
       var headers = new Headers(input && input.headers ? input.headers : undefined);
       new Headers(init && init.headers).forEach(function(value, key) { headers.set(key, value); });
       Object.entries(coordinator.requestHeaders()).forEach(function(pair) { headers.set(pair[0], pair[1]); });
@@ -287,5 +289,8 @@
   root.addEventListener("pagehide", function(event) {
     if (!event.persisted) { coordinator.close().catch(function() {}); identityLock.release(); }
   });
+  // Direct 3D/provider fetch calls need the same fence as the Supabase SDK.
+  // Requests outside the exact project/boundaries keep their original headers.
+  root.fetch = api.fetch;
   root.DcatsWorkspace = api;
 })(typeof window === "object" ? window : globalThis);

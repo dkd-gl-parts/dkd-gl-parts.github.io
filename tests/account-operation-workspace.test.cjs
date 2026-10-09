@@ -144,3 +144,34 @@ test('restore cannot apply another user draft and logout clears the snapshot', a
   assert.match(app, /userId: currentUser \? currentUser\.id : null/);
   assert.match(app, /function resetAuthenticatedAppState\(\) \{\s*stopFinishedLabelPrintStation\(\);\s*clearAppRestoreState\(\);/);
 });
+
+test('direct browser fetch is fenced but read-only Edge and native requests are unchanged', async () => {
+  const calls = [], storage = new Map();
+  const root = {
+    document: { querySelectorAll: () => [], addEventListener() {}, documentElement: { dataset: {} } },
+    crypto: require('node:crypto').webcrypto,
+    location: { href: 'https://fixture.invalid/', origin: 'https://fixture.invalid', pathname: '/', search: '' },
+    history: { replaceState() {}, state: null }, navigator: {}, addEventListener() {},
+    sessionStorage: { getItem: key => storage.get(key), setItem: (key, value) => storage.set(key, value) },
+    fetch: async (url, init) => { calls.push({ url, headers: new Headers(init.headers) }); return new Response('{}'); }
+  };
+  const context = vm.createContext({ window: root, URL, URLSearchParams, Headers, Request, Response, TextEncoder,
+    module: { exports: {} }, setTimeout });
+  vm.runInContext(fs.readFileSync(require('node:path').join(__dirname, '../account-operation-workspace.js'), 'utf8'), context);
+  assert.equal(root.fetch, root.DcatsWorkspace.fetch);
+  const base = 'https://jqoeqximtwfpqwzngutj.supabase.co';
+  await root.fetch(base + '/functions/v1/product-3d-glb', { method: 'POST', headers: { authorization: 'synthetic' }, body: '{}' });
+  assert.ok(calls[0].headers.get('x-dcats-window-id'));
+  assert.ok(calls[0].headers.get('x-dcats-request-id'));
+  assert.equal(calls[0].headers.get('authorization'), 'synthetic');
+  await root.fetch(base + '/functions/v1/rakuten-search', { method: 'POST', headers: { 'fixture-header': 'unchanged' } });
+  assert.equal(calls[1].headers.get('x-dcats-window-id'), null);
+  assert.equal(calls[1].headers.get('fixture-header'), 'unchanged');
+  await root.fetch(new URL('http://127.0.0.1:37644/native'), { method: 'POST', headers: { 'fixture-header': 'native' } });
+  assert.equal(calls[2].headers.get('x-dcats-window-id'), null);
+  assert.equal(calls[2].headers.get('fixture-header'), 'native');
+  await root.fetch(base + '/storage/v1/object/public/images/fixture.jpg', { method: 'GET' });
+  assert.equal(calls[3].headers.get('x-dcats-window-id'), null);
+  await root.fetch(base + '/storage/v1/object/images/fixture.jpg', { method: 'POST', body: 'synthetic' });
+  assert.ok(calls[4].headers.get('x-dcats-window-id'));
+});
