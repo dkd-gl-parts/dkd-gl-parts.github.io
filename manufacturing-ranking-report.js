@@ -12,6 +12,9 @@
     "1": "Stronghold",
     "3": "STAL / Santian"
   };
+  var VEHICLE_WORK_TAGS = ["トラック", "バス", "建設機械", "タクシー・教習車", "タクシー・営業車仕様", "営業車・商用バン", "軽トラック", "軽商用バン", "フォークリフト", "農業機械", "産業機械・エンジン", "特装車"];
+  var VEHICLE_KEI_KINDS = ["軽トラック", "軽商用バン", "軽乗用車", "軽四（仕様未区別）"];
+  var VEHICLE_KEI_COMMON = ["確認資料では軽四のみ", "軽四以外にも適合", "機械等にも適合", "他の適合先は未判定"];
   var MASTER_PART_FIELDS = [
     { normalized: "normalized_genuine_part_number", value: "genuine_part_number", label: "純正" },
     { normalized: "normalized_genuine_part_number_2", value: "genuine_part_number_2", label: "純正2" },
@@ -307,7 +310,8 @@
       missingMasterParts: Array.isArray(row.missing_master_part_numbers) ? row.missing_master_part_numbers.map(function(entry) {
         return { label: normalizeText(entry && entry.label), value: normalizeText(entry && entry.value) };
       }).filter(function(entry) { return entry.value; }) : [],
-      masterCacheReady: !!row.master_checked_at
+      masterCacheReady: !!row.master_checked_at,
+      vehicleClassification: vehicleClassification(row.vehicle_classification)
     };
   }
 
@@ -323,7 +327,7 @@
 
   function fetchDatasetRowPage(datasetId, offset) {
     return sb.from("manufacturing_report_rows")
-        .select("id,dataset_id,category_name,category_order,source_row_number,is_aggregate,product_name,product_code,genuine_part_number,manufacturer_part_number,genuine_part_number_2,genuine_body_part_number,genuine_clutch_part_number,product_type,shipment_count,substitute_count,master_product_ids,missing_master_part_numbers,master_checked_at")
+        .select("id,dataset_id,category_name,category_order,source_row_number,is_aggregate,product_name,product_code,genuine_part_number,manufacturer_part_number,genuine_part_number_2,genuine_body_part_number,genuine_clutch_part_number,product_type,shipment_count,substitute_count,master_product_ids,missing_master_part_numbers,master_checked_at,vehicle_classification")
         .eq("dataset_id", datasetId)
         .order("category_order", { ascending: true })
         .order("source_row_number", { ascending: true })
@@ -763,6 +767,10 @@
     return {
       categories: selectedCategories(),
       productCategory: byId("manufacturing-ranking-product-category").value,
+      vehicleWork: byId("manufacturing-ranking-vehicle-work").value,
+      vehicleKei: byId("manufacturing-ranking-vehicle-kei").value,
+      vehicleCommon: byId("manufacturing-ranking-vehicle-common").value,
+      showVehicleClassification: byId("manufacturing-ranking-show-vehicle").checked,
       reportType: reportType,
       metric: byId("manufacturing-ranking-metric").value,
       rankScope: byId("manufacturing-ranking-scope").value,
@@ -928,12 +936,65 @@
     return index.identities[productCategoryIdentity(row)] || "";
   }
 
+  function vehicleClassification(value) {
+    if (!value || value.version !== "business-kei-20261009" || !Array.isArray(value.work_tags) || !Array.isArray(value.kei_kinds)) return null;
+    if (value.work_tags.some(function(tag) { return VEHICLE_WORK_TAGS.indexOf(tag) < 0; }) || value.kei_kinds.some(function(kind) { return VEHICLE_KEI_KINDS.indexOf(kind) < 0; })) return null;
+    if (VEHICLE_KEI_COMMON.concat(["未確認"]).indexOf(value.kei_common) < 0 || typeof value.other_fitment_unknown !== "boolean") return null;
+    return value;
+  }
+
+  function matchesVehicleFilters(row, options) {
+    var profile = vehicleClassification(row.vehicleClassification);
+    var work = profile ? profile.work_tags : [];
+    var kei = profile ? profile.kei_kinds : [];
+    var workFilter = options.vehicleWork || "all";
+    var keiFilter = options.vehicleKei || "all";
+    var commonFilter = options.vehicleCommon || "all";
+    if (workFilter === "confirmed" && !work.length) return false;
+    if (workFilter === "business_or_kei" && !work.length && !kei.length) return false;
+    if (workFilter === "unconfirmed" && work.length) return false;
+    if (["all", "confirmed", "unconfirmed", "business_or_kei"].indexOf(workFilter) < 0 && work.indexOf(workFilter) < 0) return false;
+    if (keiFilter === "confirmed" && !kei.length) return false;
+    if (keiFilter === "unconfirmed" && kei.length) return false;
+    if (keiFilter !== "all" && keiFilter !== "confirmed" && keiFilter !== "unconfirmed" && kei.indexOf(keiFilter) < 0) return false;
+    if (commonFilter === "other_unknown") return !!(kei.length && profile.other_fitment_unknown);
+    return commonFilter === "all" || !!(kei.length && profile.kei_common === commonFilter);
+  }
+
+  function vehicleFilterText(options) {
+    var labels = [];
+    if (options.vehicleWork && options.vehicleWork !== "all") labels.push("用途: " + (options.vehicleWork === "confirmed" ? "業務用途の適合あり" : options.vehicleWork === "unconfirmed" ? "業務適合未確認" : options.vehicleWork === "business_or_kei" ? "業務用途・軽四の適合あり" : options.vehicleWork));
+    if (options.vehicleKei && options.vehicleKei !== "all") labels.push("軽四: " + (options.vehicleKei === "confirmed" ? "適合あり" : options.vehicleKei === "unconfirmed" ? "適合未確認" : options.vehicleKei));
+    if (options.vehicleCommon && options.vehicleCommon !== "all") labels.push("共用: " + (options.vehicleCommon === "other_unknown" ? "未判定の適合先あり" : options.vehicleCommon));
+    return labels.join(" / ");
+  }
+
+  function vehicleClassificationText(row) {
+    var profile = vehicleClassification(row.vehicleClassification);
+    return [profile && profile.work_tags.length ? profile.work_tags.join("、") : "業務適合未確認", profile && profile.kei_kinds.length ? profile.kei_kinds.join("、") : "軽四適合未確認", profile && profile.kei_kinds.length ? profile.kei_common + (profile.other_fitment_unknown && profile.kei_common !== "他の適合先は未判定" ? "（未判定あり）" : "") : ""];
+  }
+
+  function vehicleClassificationHtml(result, options) {
+    if (!options.showVehicleClassification) return "";
+    var texts = [];
+    (options.compatibilityMode === "consolidated" ? result.group || [result.row] : [result.row]).forEach(function(row) {
+      vehicleClassificationText(row).forEach(function(value) { if (value && texts.indexOf(value) < 0) texts.push(value); });
+    });
+    return "<small class='ranking-report-vehicle-detail'>" + texts.map(escapeHtml).join(" / ") + "</small>";
+  }
+
+  function vehicleClassificationColumns(result, options) {
+    var profiles = (options.compatibilityMode === "consolidated" ? result.group || [result.row] : [result.row]).map(vehicleClassificationText);
+    return [0, 1, 2].map(function(column) { return uniqueIds(profiles.map(function(profile) { return profile[column]; })).join(" / "); });
+  }
+
   function buildRanking(rows, options) {
     var categorySet = Object.create(null);
     options.categories.forEach(function(category) { categorySet[category] = true; });
     var productCategory = options.productCategory || "all";
     var productCategories = productCategory !== "all" ? indexProductCategories(rows) : null;
     var unclassifiedRowCount = 0;
+    var excludedDksRowCount = 0;
     var sourceRows = rows.filter(function(row) {
       if (!categorySet[row.sheet]) return false;
       if (productCategory !== "all") {
@@ -941,6 +1002,8 @@
         if (!resolvedCategory) unclassifiedRowCount++;
         if (resolvedCategory !== productCategory) return false;
       }
+      if (normalizeText(row.maker).toUpperCase().indexOf("ALDK") >= 0) { excludedDksRowCount++; return false; }
+      if (!matchesVehicleFilters(row, options)) return false;
       return options.reportType !== "supplier_availability" || !isDaikoManufacturerPart(row.maker);
     });
     var groups = createCompatibilityGroups(sourceRows, options.compatibilityBasis);
@@ -983,6 +1046,7 @@
       candidateCount: candidates.length,
       compatibleGroupCount: compatibleGroupCount,
       unclassifiedRowCount: unclassifiedRowCount,
+      excludedDksRowCount: excludedDksRowCount,
       omittedRows: omittedRows
     };
   }
@@ -1008,7 +1072,7 @@
     return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate());
   }
 
-  function printFileTitle(categories, startRank, endRank, date, reportType, productCategory) {
+  function printFileTitle(categories, startRank, endRank, date, reportType, productCategory, options) {
     var categoryNames = (categories || []).map(function(category) {
       return normalizeText(category)
         .replace(/[<>:"/\\|?*\u0000-\u001f]/g, "・")
@@ -1020,7 +1084,8 @@
     var rankRange = firstRank === lastRank ? String(firstRank) : firstRank + "-" + lastRank;
     var reportName = reportType === "supplier_availability" ? "仕入先商品照合" : "製造ランキング";
     var productCategoryText = productCategory && productCategory !== "all" ? "（" + normalizeText(productCategory).replace(/[\\/:*?"<>|]/g, "_") + "）" : "";
-    return (categoryNames.join("・") || "カテゴリ") + productCategoryText + "＆" + reportName + rankRange + "位＆" + printFileDate(date);
+    var vehicleText = options && vehicleFilterText(options);
+    return (categoryNames.join("・") || "カテゴリ") + productCategoryText + (vehicleText ? "（" + vehicleText.replace(/[\\/:*?"<>|]/g, "_") + "）" : "") + "＆" + reportName + rankRange + "位＆" + printFileDate(date);
   }
 
   function rowPartNumberEntries(row) {
@@ -1371,6 +1436,8 @@
     var hasAggregate = selectedSheets.some(function(sheet) { return sheet.isAggregate; });
     var hasDetail = selectedSheets.some(function(sheet) { return !sheet.isAggregate; });
     var messages = [];
+    if (summary.excludedDksRowCount) messages.push("メーカー品番にALDKを含むDKSオリジナル商品 " + formatNumber(summary.excludedDksRowCount) + "行を除外しています。");
+    if (vehicleFilterText(options)) messages.push(vehicleFilterText(options) + "。出荷の実際の用途や専用品を示すものではありません。");
     if (summary.unclassifiedRowCount) messages.push("選択シートの " + formatNumber(summary.unclassifiedRowCount) + "件は商品カテゴリを確認できないため、絞り込み対象から除外しています。");
     if (options.reportType === "supplier_availability") {
       if (!state.supplierDataReady) messages.push(state.supplierDataError || state.masterDataError ? "仕入先商品の照合に失敗しました。再読み込みしてください。" : "仕入先商品を照合しています。完了後に自動更新します。");
@@ -1426,7 +1493,7 @@
           supplierHtml += "<tr" + (itemIndex ? " class='ranking-report-supplier-continuation'" : "") + ">";
           if (itemIndex === 0) {
             supplierHtml += "<td class='ranking-report-rank-cell' rowspan='" + rowSpan + "'>" + formatNumber(result.rank) + "</td>" +
-              "<td rowspan='" + rowSpan + "'><strong>" + escapeHtml(row.productName || "-") + "</strong><small>商品CD " + escapeHtml(row.productCode || "-") + "</small></td>" +
+              "<td rowspan='" + rowSpan + "'><strong>" + escapeHtml(row.productName || "-") + "</strong><small>商品CD " + escapeHtml(row.productCode || "-") + "</small>" + vehicleClassificationHtml(result, options) + "</td>" +
               "<td class='ranking-report-part-cell' rowspan='" + rowSpan + "'>" + escapeHtml(row.genuine || "-") + "</td>" +
               "<td class='ranking-report-part-cell' rowspan='" + rowSpan + "'>" + escapeHtml(row.maker || "-") + "</td>" +
               "<td rowspan='" + rowSpan + "'>" + status + "</td>";
@@ -1459,7 +1526,7 @@
       var row = result.row;
       var missing = missingMasterPartNumbers(result, options.compatibilityMode);
       html += "<tr><td class='ranking-report-rank-cell'>" + formatNumber(result.rank) + "</td>" +
-        "<td><strong>" + escapeHtml(row.productName || "-") + "</strong><small>商品CD " + escapeHtml(row.productCode || "-") + "</small></td>" +
+        "<td><strong>" + escapeHtml(row.productName || "-") + "</strong><small>商品CD " + escapeHtml(row.productCode || "-") + "</small>" + vehicleClassificationHtml(result, options) + "</td>" +
         "<td class='ranking-report-part-cell'>" + escapeHtml(row.genuine || "-") + "</td>" +
         "<td class='ranking-report-part-cell'>" + escapeHtml(row.maker || "-") + "</td>" +
         "<td class='ranking-report-number-cell'>" + formatNumber(result.shipment) + "</td>";
@@ -1518,11 +1585,12 @@
         "順位", "カテゴリ", "商品名", "商品CD", "純正品番", "純正品番2", "メーカー品番",
         "仕入先商品", "仕入先名称", "仕入先品番", "仕入先メーカー", "仕入先純正品番", "仕入先メーカー品番"
       ]];
+      if (options.showVehicleClassification) supplierRows[0].push("業務用途の適合", "軽四適合", "軽四の共用区分");
       exportResults.forEach(function(result) {
         var row = result.row;
         var items = supplierItemsForResult(result, options);
         (items.length ? items : [null]).forEach(function(item) {
-          supplierRows.push([
+          var supplierValues = [
             result.rank,
             row.sheet || "",
             row.productName || "",
@@ -1536,7 +1604,9 @@
             item ? normalizeText(item.manufacturer) : "",
             item ? normalizeText(item.genuine_part_number) : "",
             item ? normalizeText(item.manufacturer_part_number) : ""
-          ]);
+          ];
+          if (options.showVehicleClassification) supplierValues = supplierValues.concat(vehicleClassificationColumns(result, options));
+          supplierRows.push(supplierValues);
         });
       });
       return supplierRows;
@@ -1545,6 +1615,7 @@
     var headers = ["順位", "カテゴリ", "商品名", "商品CD", "純正品番", "純正品番2", "メーカー品番", "出荷数", "代替台数", "順位値"];
     if (options.showCoreStock) headers.push("現在コア在庫", "互換コア在庫", "コア在庫合計");
     if (options.showMissingMaster) headers.push("マスタ未登録品番");
+    if (options.showVehicleClassification) headers.push("業務用途の適合", "軽四適合", "軽四の共用区分");
     var rows = [headers];
     exportResults.forEach(function(result) {
       var row = result.row;
@@ -1570,6 +1641,9 @@
         }).join(" / "));
       }
       rows.push(values);
+      if (options.showVehicleClassification) {
+        Array.prototype.push.apply(values, vehicleClassificationColumns(result, options));
+      }
     });
     return rows;
   }
@@ -1604,7 +1678,7 @@
     var url = URL.createObjectURL(blob);
     var anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = printFileTitle(state.options.categories, state.options.startRank, state.options.endRank, new Date(), state.options.reportType, state.options.productCategory) + ".csv";
+    anchor.download = printFileTitle(state.options.categories, state.options.startRank, state.options.endRank, new Date(), state.options.reportType, state.options.productCategory, state.options) + ".csv";
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
@@ -1625,7 +1699,7 @@
           var html = "<tr>";
           if (itemIndex === 0) {
             html += "<td class='rank' rowspan='" + supplierRowSpan + "'>" + formatNumber(result.rank) + "</td>" +
-              "<td class='product' rowspan='" + supplierRowSpan + "'><b>" + escapeHtml(row.productName || "-") + "</b><small>商品CD " + escapeHtml(row.productCode || "-") + "</small></td>" +
+              "<td class='product' rowspan='" + supplierRowSpan + "'><b>" + escapeHtml(row.productName || "-") + "</b><small>商品CD " + escapeHtml(row.productCode || "-") + "</small>" + vehicleClassificationHtml(result, options) + "</td>" +
               "<td class='part genuine-part' rowspan='" + supplierRowSpan + "'>" + escapeHtml(row.genuine || "-") + "</td>" +
               "<td class='part maker-part' rowspan='" + supplierRowSpan + "'>" + escapeHtml(row.maker || "-") + "</td>" +
               "<td class='supplier-status-cell' rowspan='" + supplierRowSpan + "'>" + supplierStatus + "</td>";
@@ -1638,7 +1712,7 @@
       }
       var missing = missingMasterPartNumbers(result, options.compatibilityMode);
       var html = "<tr><td class='rank'>" + formatNumber(result.rank) + "</td>" +
-        "<td class='product'><b>" + escapeHtml(row.productName || "-") + "</b><small>商品CD " + escapeHtml(row.productCode || "-") + "</small></td>" +
+        "<td class='product'><b>" + escapeHtml(row.productName || "-") + "</b><small>商品CD " + escapeHtml(row.productCode || "-") + "</small>" + vehicleClassificationHtml(result, options) + "</td>" +
         "<td class='part genuine-part'>" + escapeHtml(row.genuine || "-") + "</td>" +
         "<td class='part maker-part'>" + escapeHtml(row.maker || "-") + "</td>" +
         "<td class='number shipment'>" + formatNumber(result.shipment) + "</td>";
@@ -1657,8 +1731,9 @@
     var generatedAt = generatedDate.toLocaleString("ja-JP");
     var categoryText = options.categories.join(" / ");
     if (options.productCategory && options.productCategory !== "all") categoryText += " / 商品カテゴリ: " + options.productCategory;
+    categoryText += " / ALDK除外" + (vehicleFilterText(options) ? " / " + vehicleFilterText(options) : "");
     var supplierReport = options.reportType === "supplier_availability";
-    var title = printFileTitle(options.categories, options.startRank, options.endRank, generatedDate, options.reportType, options.productCategory);
+    var title = printFileTitle(options.categories, options.startRank, options.endRank, generatedDate, options.reportType, options.productCategory, options);
     var coreStockSummary = rankingCoreStockSummary(results);
     var supplierSummary = supplierAvailabilitySummary(results, options);
     var header;
@@ -1766,6 +1841,7 @@
     byId("manufacturing-ranking-supplier").addEventListener("change", updatePreview);
     byId("manufacturing-ranking-supplier-status").addEventListener("change", updatePreview);
     byId("manufacturing-ranking-product-category").addEventListener("change", updatePreview);
+    ["manufacturing-ranking-vehicle-work", "manufacturing-ranking-vehicle-kei", "manufacturing-ranking-vehicle-common", "manufacturing-ranking-show-vehicle"].forEach(function(id) { byId(id).addEventListener("change", updatePreview); });
     byId("manufacturing-ranking-categories").addEventListener("change", updatePreview);
     byId("btn-logout-manufacturing-ranking-report").addEventListener("click", function() {
       if (typeof doLogout === "function") doLogout();
@@ -1779,6 +1855,9 @@
   window.enterManufacturingRankingReport = enterManufacturingRankingReport;
   window.DCatsManufacturingRankingReport = {
     buildRanking: buildRanking,
+    matchesVehicleFilters: matchesVehicleFilters,
+    vehicleClassificationText: vehicleClassificationText,
+    vehicleFilterText: vehicleFilterText,
     normalizePart: normalizePart,
     mapDatabaseRow: mapDatabaseRow,
     buildPrintHtml: buildPrintHtml,
