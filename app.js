@@ -2548,6 +2548,10 @@ var TRANSLATIONS = {
     component_edit_price_required: "構成部品の共通単価を確認できませんでした。型番と部品名を確認してください。入力内容は残しています。",
     component_edit_result_unknown: "構成部品の保存結果を確認できませんでした。自動再送は行いません。入力内容は残しています。",
     component_edit_conflict: "構成部品または共通単価が別の画面で変更されています。入力内容は残しています。最新情報を確認してから修正を開き直してください。",
+    component_mutation_result_check: "前回の処理結果を確認",
+    component_mutation_result_unknown: "処理結果をまだ確認できません。再送は行いません。もう一度操作すると前回の処理結果だけを確認します。入力内容は残しています。",
+    component_mutation_result_recovered: "前回の処理が完了していることを確認しました。今回の入力は送信していません。",
+    component_mutation_storage_required: "処理結果を確認するための情報を保存できません。登録・削除は実行していません。",
     component_alternative_add: "代替品追加",
     component_alternative_title: "外品代替品",
     component_alternative_modal_title: "外品代替品を追加",
@@ -5093,6 +5097,10 @@ var TRANSLATIONS = {
     component_edit_price_required: "Could not verify the shared component price. Check the part number and name. Your input has been retained.",
     component_edit_result_unknown: "Could not confirm the save result. No automatic resend will be made. Your input has been retained.",
     component_edit_conflict: "The component or shared price was changed in another window. Your input has been retained. Check the latest information before reopening Edit.",
+    component_mutation_result_check: "Check Previous Result",
+    component_mutation_result_unknown: "The result is still unconfirmed. No resend will be made. Repeat the action to check only the previous result. Your input has been retained.",
+    component_mutation_result_recovered: "The previous operation completed. Your current input has not been submitted.",
+    component_mutation_storage_required: "Could not store the operation receipt details. No addition or deletion has been submitted.",
     component_alternative_add: "Add Alternative",
     component_alternative_title: "Alternative Parts",
     component_alternative_modal_title: "Add Alternative Part",
@@ -7635,6 +7643,10 @@ var TRANSLATIONS = {
     component_edit_price_required: "无法确认构成部件的共用单价。请确认型号和部件名称。输入内容已保留。",
     component_edit_result_unknown: "无法确认保存结果。不会自动重新发送。输入内容已保留。",
     component_edit_conflict: "其他画面已更改此部件或共用单价。输入内容已保留。请确认最新信息后重新打开修改。",
+    component_mutation_result_check: "确认上次处理结果",
+    component_mutation_result_unknown: "尚无法确认处理结果。不会重新发送。再次操作只确认上次结果。输入内容已保留。",
+    component_mutation_result_recovered: "已确认上次处理完成。本次输入尚未发送。",
+    component_mutation_storage_required: "无法保存处理结果的确认信息。尚未执行注册或删除。",
     component_alternative_add: "添加替代品",
     component_alternative_title: "替代部件",
     component_alternative_modal_title: "添加替代部件",
@@ -7853,6 +7865,10 @@ var componentCompatSourceComponentMap = {};
 var componentCompatLoadSeq = 0;
 var componentCompatAssistSeq = 0;
 var componentAddPartNumberLookupSeq = 0;
+var componentAddSnapshotState = null;
+var componentAddFormSeq = 0;
+var componentListSnapshotSeq = 0;
+var componentDeleteSaving = false;
 var componentAddSaving = false;
 var componentEditPartNumberLookupSeq = 0;
 var componentAlternativePartNumberLookupSeq = 0;
@@ -43135,6 +43151,9 @@ function renderComponentAddPanel() {
 }
 
 function closeComponentAddForm() {
+  componentAddFormSeq++;
+  componentAddPartNumberLookupSeq++;
+  componentAddSnapshotState = null;
   var overlay = document.getElementById("component-add-overlay");
   if (overlay) overlay.classList.remove("show");
 }
@@ -43154,6 +43173,12 @@ async function openComponentAddForm() {
   componentCatalogNameCandidateMetaMap = {};
   componentCatalogNameCandidateMasterMap = {};
   clearComponentAddForm();
+  var formSeq = ++componentAddFormSeq;
+  var productAtOpen = currentProduct;
+  var kindAtOpen = selectedProductKind();
+  var variantAtOpen = selectedComponentVariantId();
+  componentAddSnapshotState = { product: productAtOpen, kind: kindAtOpen, variant: variantAtOpen, prices: {} };
+  var stateAtOpen = componentAddSnapshotState;
   var manufacturer = document.getElementById("component-add-mfr");
   if (manufacturer) manufacturer.value = "";
   renderComponentAddNameOptions();
@@ -43164,11 +43189,37 @@ async function openComponentAddForm() {
   var err = document.getElementById("component-add-error");
   if (err) err.textContent = "";
   var btn = document.getElementById("btn-component-add");
-  if (btn) { btn.disabled = false; btn.textContent = t("component_add"); }
+  if (btn) { btn.disabled = true; btn.textContent = t("loading"); }
   var overlay = document.getElementById("component-add-overlay");
   if (overlay) overlay.classList.add("show");
   var name = document.getElementById("component-add-name");
   if (name) name.focus();
+  try {
+    var dkdId = await resolveCurrentCoreDkdShohinId();
+    if (formSeq !== componentAddFormSeq || productAtOpen !== currentProduct ||
+        kindAtOpen !== selectedProductKind() || variantAtOpen !== selectedComponentVariantId()) return;
+    var targetFields = {
+      target_dkd_shohin_id: dkdId || null,
+      target_manufacturer: normalizeComponentManufacturerInput(productAtOpen.manufacturer) || "UNKNOWN",
+      target_manufacturer_part_number: normalizeComponentPartNumberInput(productAtOpen.manufacturer_part_number || "") || null,
+      target_genuine_part_number: normalizeComponentPartNumberInput(productAtOpen.genuine_part_number || "") || null,
+      target_product_kind: kindAtOpen, target_product_variant_id: variantAtOpen
+    };
+    var targetResult = await sb.rpc("get_manual_component_add_target_snapshot", { target_fields: targetFields });
+    if (formSeq !== componentAddFormSeq || stateAtOpen !== componentAddSnapshotState || productAtOpen !== currentProduct ||
+        kindAtOpen !== selectedProductKind() || variantAtOpen !== selectedComponentVariantId()) return;
+    if (targetResult.error || !targetResult.data || !targetResult.data.token) throw new Error(t("component_edit_snapshot_missing"));
+    stateAtOpen.targetFields = targetFields;
+    stateAtOpen.targetToken = targetResult.data.token;
+  } catch (error) {
+    if (formSeq !== componentAddFormSeq || productAtOpen !== currentProduct) return;
+    if (err) err.textContent = error.message || t("component_edit_load_failed");
+  } finally {
+    if (formSeq === componentAddFormSeq && btn) {
+      btn.disabled = componentAddSaving;
+      btn.textContent = componentMutationButtonText();
+    }
+  }
   loadComponentCatalogNameCandidatesForCurrent().then(function() {
     var overlayNow = document.getElementById("component-add-overlay");
     if (!overlayNow || !overlayNow.classList.contains("show")) return;
@@ -43506,15 +43557,16 @@ function componentPriceSnapshotKey(payload) {
     ["PART", normalizeComponentManufacturerInput(payload.component_manufacturer) || "UNKNOWN", partKey]);
 }
 
-async function reconcileComponentAddPartNumbers() {
+async function reconcileComponentAddPartNumbers(capturePriceSnapshot) {
   var seq = ++componentAddPartNumberLookupSeq;
+  var state = componentAddSnapshotState;
   var mfrPn = componentAddValue("component-add-mfr-pn");
   var genuinePn = componentAddValue("component-add-genuine-pn");
   if (!mfrPn && !genuinePn) return null;
   var row = null;
   if (isCurrentCategoryAssyComponentName(componentAddValue("component-add-name"))) {
     row = await lookupComponentPartNumberPair(mfrPn, genuinePn);
-    if (seq !== componentAddPartNumberLookupSeq) return row;
+    if (seq !== componentAddPartNumberLookupSeq || state !== componentAddSnapshotState) return row;
     if (row) {
       setComponentAddValue("component-add-mfr", componentLookupAutofillValue(componentAddValue("component-add-mfr"), row.manufacturer));
       setComponentAddValue("component-add-mfr-pn", componentLookupAutofillValue(componentAddValue("component-add-mfr-pn"), row.manufacturer_part_number));
@@ -43523,14 +43575,25 @@ async function reconcileComponentAddPartNumbers() {
       if (!currentName && row.part_name) setComponentAddValue("component-add-name", row.part_name);
     }
   }
-  var sharedPrice = await lookupSharedComponentUnitPrice(
-    componentAddValue("component-add-mfr") || "UNKNOWN",
-    componentAddValue("component-add-mfr-pn"),
-    componentAddValue("component-add-name")
-  );
-  if (seq !== componentAddPartNumberLookupSeq) return row;
+  var identity = {
+    component_manufacturer: componentAddValue("component-add-mfr") || "UNKNOWN",
+    component_manufacturer_part_number: componentAddValue("component-add-mfr-pn"),
+    component_part_name: componentAddValue("component-add-name")
+  };
+  var key = componentPriceSnapshotKey(identity);
+  var sharedPrice = state && state.prices[key];
+  var priceAtLookup = componentAddValue("component-add-unit-price");
+  if (!sharedPrice && capturePriceSnapshot !== false) {
+    sharedPrice = await lookupSharedComponentUnitPrice(identity.component_manufacturer,
+      identity.component_manufacturer_part_number, identity.component_part_name, true);
+    if (seq !== componentAddPartNumberLookupSeq || state !== componentAddSnapshotState || key !== componentPriceSnapshotKey({
+      component_manufacturer: componentAddValue("component-add-mfr") || "UNKNOWN",
+      component_manufacturer_part_number: componentAddValue("component-add-mfr-pn"), component_part_name: componentAddValue("component-add-name")
+    })) return row;
+    if (state && sharedPrice && sharedPrice.token) state.prices[key] = sharedPrice;
+  }
   var unitPriceInput = document.getElementById("component-add-unit-price");
-  if (unitPriceInput && !String(unitPriceInput.value || "").trim() && sharedPrice && sharedPrice.unitPrice != null) {
+  if (unitPriceInput && !priceAtLookup && !String(unitPriceInput.value || "").trim() && sharedPrice && sharedPrice.unitPrice != null) {
     unitPriceInput.value = String(sharedPrice.unitPrice);
   }
   renderComponentAddNameOptions(componentAddValue("component-add-name"));
@@ -43539,6 +43602,8 @@ async function reconcileComponentAddPartNumbers() {
 }
 
 function clearComponentAddForm() {
+  componentAddPartNumberLookupSeq++;
+  componentAddSnapshotState = null;
   ["component-add-mfr","component-add-mfr-pn","component-add-genuine-pn","component-add-name","component-add-position","component-add-unit-price","component-add-replacement-rate","component-add-interchange","component-add-procurement-category","component-add-start","component-add-end","component-add-manufacturing-memo"].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) {
@@ -43596,11 +43661,24 @@ async function addAssemblyComponentForCurrent() {
   if (addBtn) { addBtn.disabled = true; addBtn.textContent = t("component_add_loading"); }
   var err = document.getElementById("component-add-error");
   if (err) err.textContent = "";
+  var productAtSave = currentProduct;
+  var state = componentAddSnapshotState;
   try {
-    var dkdId = await resolveCurrentCoreDkdShohinId();
-    var targetManufacturer = normalizeComponentManufacturerInput(currentProduct.manufacturer) || "UNKNOWN";
-    var targetManufacturerPartNumber = normalizeComponentPartNumberInput(currentProduct.manufacturer_part_number || "");
-    var targetGenuinePartNumber = normalizeComponentPartNumberInput(currentProduct.genuine_part_number || "");
+    if (readComponentMutationPending()) {
+      await performComponentMutation("add", null);
+      if (state === componentAddSnapshotState && state) state.targetToken = "";
+      alert(t("component_mutation_result_recovered"));
+      if (productAtSave === currentProduct) await loadAssemblyComponentsForCurrent();
+      return;
+    }
+    if (!state || !state.targetToken || !state.targetFields || state.product !== currentProduct ||
+        state.kind !== selectedProductKind() || state.variant !== selectedComponentVariantId()) {
+      throw new Error(t("component_edit_snapshot_required"));
+    }
+    var dkdId = state.targetFields.target_dkd_shohin_id;
+    var targetManufacturer = state.targetFields.target_manufacturer;
+    var targetManufacturerPartNumber = state.targetFields.target_manufacturer_part_number;
+    var targetGenuinePartNumber = state.targetFields.target_genuine_part_number;
     if (!targetManufacturerPartNumber && !targetGenuinePartNumber) {
       if (err) err.textContent = t("component_assy_part_number_required");
       else alert(t("component_assy_part_number_required"));
@@ -43619,7 +43697,9 @@ async function addAssemblyComponentForCurrent() {
       else alert(uniqueTextValues(preAddErrors).join("\n"));
       return;
     }
-    await reconcileComponentAddPartNumbers();
+    await reconcileComponentAddPartNumbers(false);
+    if (state !== componentAddSnapshotState || productAtSave !== currentProduct ||
+        state.kind !== selectedProductKind() || state.variant !== selectedComponentVariantId()) return;
     normalizeComponentPartNumberElement(document.getElementById("component-add-mfr-pn"));
     normalizeComponentPartNumberElement(document.getElementById("component-add-genuine-pn"));
     var componentMfr = normalizeComponentManufacturerInput(componentAddValue("component-add-mfr")) || "UNKNOWN";
@@ -43670,8 +43750,8 @@ async function addAssemblyComponentForCurrent() {
       target_manufacturer: targetManufacturer,
       target_manufacturer_part_number: targetManufacturerPartNumber || null,
       target_genuine_part_number: targetGenuinePartNumber || null,
-      target_product_kind: selectedProductKind(),
-      target_product_variant_id: selectedComponentVariantId(),
+      target_product_kind: state.kind,
+      target_product_variant_id: state.variant,
       component_manufacturer: componentMfr,
       component_manufacturer_part_number: componentMfrPn,
       component_genuine_part_number: addPartCheck.genuinePartNumber || null,
@@ -43686,24 +43766,122 @@ async function addAssemblyComponentForCurrent() {
       component_effective_start: componentAddValue("component-add-start") || null,
       component_effective_end: componentAddValue("component-add-end") || null
     };
-    var r = await sb.rpc("add_manual_assembly_component", payload);
-    if (r.error) {
-      if (err) err.textContent = t("component_add_failed") + ": " + r.error.message;
-      else alert(t("component_add_failed") + ": " + r.error.message);
-      return;
-    }
-    await writeLog("insert", "assembly_component_usages", r.data || dkdId, componentMfrPn, null, payload);
+    var priceSnapshot = state.prices[componentPriceSnapshotKey(payload)];
+    if (!priceSnapshot || !priceSnapshot.token) throw new Error(t("component_edit_price_required"));
+    var mutation = await performComponentMutation("add", {
+      target_target_snapshot_token: state.targetToken, target_price_snapshot_token: priceSnapshot.token, target_fields: payload
+    });
+    var usageId = mutation.result.usage_id;
+    await writeLog("insert", "assembly_component_usages", usageId, componentMfrPn, null, payload);
+    if (state !== componentAddSnapshotState || productAtSave !== currentProduct ||
+        state.kind !== selectedProductKind() || state.variant !== selectedComponentVariantId()) return;
     recordComponentNameCandidateUsageForCurrent(componentPartName);
     clearComponentAddForm();
     closeComponentAddForm();
     if (typeof componentReturnScreen !== "undefined" && componentReturnScreen === "finished-label-mgmt") {
-      await loadFinishedLabelComponentCandidates({ includeUsageId: r.data });
+      await loadFinishedLabelComponentCandidates({ includeUsageId: usageId });
       return;
     }
     await loadAssemblyComponentsForCurrent();
+  } catch (error) {
+    var message = error.code === "40001" ? t("component_edit_conflict") : (error.message || t("component_mutation_result_unknown"));
+    if (err && productAtSave === currentProduct) err.textContent = message;
+    else alert(message);
   } finally {
     componentAddSaving = false;
-    if (addBtn) { addBtn.disabled = false; addBtn.textContent = t("component_add"); }
+    if (addBtn) { addBtn.disabled = false; addBtn.textContent = componentMutationButtonText(); }
+  }
+}
+
+function componentMutationStorageKey() {
+  if (!currentUser || !currentUser.id) throw new Error(t("component_mutation_storage_required"));
+  return "dcats:component-pending:" + currentUser.id;
+}
+
+function readComponentMutationPending() {
+  try {
+    var raw = window.sessionStorage.getItem(componentMutationStorageKey());
+    if (!raw) return null;
+    var pending = JSON.parse(raw);
+    if (!pending || ["add", "delete"].indexOf(pending.operation) < 0 || !pending.requestId ||
+        !pending.payload || typeof pending.payload !== "object") throw new Error("invalid receipt");
+    return pending;
+  } catch (error) {
+    throw new Error(t("component_mutation_storage_required"));
+  }
+}
+
+function componentMutationButtonText() {
+  try { return t(readComponentMutationPending() ? "component_mutation_result_check" : "component_add"); }
+  catch (error) { return t("component_mutation_result_check"); }
+}
+
+async function performComponentMutation(operation, payload) {
+  var key = componentMutationStorageKey();
+  var pending = readComponentMutationPending();
+  var recovering = !!pending;
+  var userAtStart = currentUser.id;
+  if (!pending) {
+    if (!payload || !window.crypto || typeof window.crypto.randomUUID !== "function") {
+      throw new Error(t("component_mutation_storage_required"));
+    }
+    pending = { operation: operation, payload: payload, requestId: window.crypto.randomUUID() };
+    try { window.sessionStorage.setItem(key, JSON.stringify(pending)); }
+    catch (error) { throw new Error(t("component_mutation_storage_required")); }
+  }
+  var response;
+  try {
+    response = recovering ? await sb.rpc("get_component_mutation_receipt", {
+      target_request_id: pending.requestId, target_operation: pending.operation, target_payload: pending.payload
+    }) : await sb.rpc(pending.operation === "add" ? "add_manual_component_safely" : "delete_manual_component_safely",
+      Object.assign({ target_request_id: pending.requestId }, pending.payload));
+  } catch (error) {
+    throw new Error(t("component_mutation_result_unknown"));
+  }
+  if (!currentUser || currentUser.id !== userAtStart) throw new Error(t("component_mutation_result_unknown"));
+  if (!response) throw new Error(t("component_mutation_result_unknown"));
+  if (response.error) {
+    // A returned SQL/PostgREST rejection is a known rollback, unlike a lost response.
+    if (!recovering && /^(?:[0-9A-Z]{5}|PGRST\d{3})$/.test(response.error.code || "")) {
+      window.sessionStorage.removeItem(key);
+      throw response.error;
+    }
+    throw new Error(t("component_mutation_result_unknown"));
+  }
+  var result = response.data;
+  if (!result || !/^[1-9]\d*$/.test(String(result.usage_id)) ||
+      (pending.operation === "delete" && (result.deleted_count !== 1 || String(result.usage_id) !== String(pending.payload.target_usage_id)))) {
+    throw new Error(t("component_mutation_result_unknown"));
+  }
+  window.sessionStorage.removeItem(key);
+  return { operation: pending.operation, recovered: recovering, result: result };
+}
+
+async function hydrateManualComponentListSnapshots(rows) {
+  var product = currentProduct, kind = selectedProductKind(), variant = selectedComponentVariantId();
+  var ids = rows.filter(function(row) { return !isCatalogComponentRow(row) && /^[1-9]\d*$/.test(String(row.id)); })
+    .map(function(row) { return parseInt(row.id, 10); });
+  for (var i = 0; i < ids.length; i += 1000) {
+    var response;
+    try { response = await sb.rpc("get_manual_component_list_snapshots", { target_usage_ids: ids.slice(i, i + 1000) }); }
+    catch (error) { console.warn("component list snapshot unavailable"); return; }
+    if (product !== currentProduct || kind !== selectedProductKind() || variant !== selectedComponentVariantId()) return;
+    if (response.error || !Array.isArray(response.data)) { console.warn("component list snapshot unavailable"); return; }
+    response.data.forEach(function(snapshot) {
+      if (!snapshot || !snapshot.usage || !snapshot.part || !snapshot.token) return;
+      var row = rows.find(function(item) { return String(item.id) === String(snapshot.usage.id); });
+      if (!row || isCatalogComponentRow(row) || snapshot.usage.is_catalog_evidence !== false ||
+          (row.dkd_shohin_id != null && String(row.dkd_shohin_id) !== String(snapshot.usage.dkd_shohin_id)) ||
+          (row.product_kind && row.product_kind !== snapshot.usage.product_kind) ||
+          (row.product_variant_id != null && String(row.product_variant_id) !== String(snapshot.usage.product_variant_id))) return;
+      Object.assign(row, snapshot.usage, {
+        dkd_component_id: snapshot.part.dkd_component_id, component_manufacturer: snapshot.part.manufacturer,
+        component_manufacturer_part_number: snapshot.part.manufacturer_part_number,
+        component_genuine_part_number: snapshot.part.genuine_part_number, component_part_name: snapshot.part.part_name
+      });
+      row._deleteSnapshotToken = snapshot.token;
+      row._deleteSnapshot = snapshot;
+    });
   }
 }
 
@@ -43801,6 +43979,8 @@ async function startComponentEdit(usageId) {
     component_part_name: snapshot.part.part_name
   });
   row._editSnapshotToken = snapshot.token;
+  row._deleteSnapshotToken = snapshot.token;
+  row._deleteSnapshot = snapshot;
   row._priceSnapshots = {};
   row._priceSnapshots[componentPriceSnapshotKey({
     component_manufacturer: row.component_manufacturer,
@@ -44066,6 +44246,7 @@ async function saveComponentEdit(usageId) {
 
 async function deleteComponentUsage(usageId) {
   if (!canManageComponentsInCurrentContext()) { alert(t("err_perm")); return; }
+  if (componentDeleteSaving) return;
   var row = assemblyComponentRows.find(function(r) { return String(r.id) === String(usageId); });
   if (!row) return;
   if (isCatalogComponentRow(row)) {
@@ -44074,37 +44255,24 @@ async function deleteComponentUsage(usageId) {
     renderAssemblyComponentRows();
     return;
   }
-  if (!confirm(t("component_delete_confirm"))) return;
-  var resolvedUsageId = await resolveManualComponentUsageId(row, usageId);
-  if (!resolvedUsageId) {
-    alert(t("component_delete_failed") + ": 構成部品の使用レコードIDを確認できませんでした。画面を更新して再度お試しください。");
-    return;
-  }
-  var guardR = await sb.from("assembly_component_usages")
-    .select("*")
-    .eq("id", resolvedUsageId)
-    .maybeSingle();
-  if (guardR.error) {
-    alert(t("component_delete_failed") + ": " + guardR.error.message);
-    return;
-  }
-  if (!guardR.data || guardR.data.is_catalog_evidence === true) {
-    alert(t("component_catalog_locked_save"));
+  var product = currentProduct, kind = selectedProductKind(), variant = selectedComponentVariantId(), rows = assemblyComponentRows;
+  componentDeleteSaving = true;
+  try {
+    if (readComponentMutationPending()) {
+      await performComponentMutation("delete", null);
+      alert(t("component_mutation_result_recovered"));
+    } else {
+      if (!row._deleteSnapshotToken || !/^[1-9]\d*$/.test(String(row.id))) throw new Error(t("component_edit_snapshot_missing"));
+      if (!confirm(t("component_delete_confirm"))) return;
+      await performComponentMutation("delete", { target_usage_id: parseInt(row.id, 10), target_snapshot_token: row._deleteSnapshotToken });
+      await writeLog("delete", "assembly_component_usages", row.id, componentActivityDesc(row), row._deleteSnapshot.usage, null);
+    }
+    if (product !== currentProduct || kind !== selectedProductKind() || variant !== selectedComponentVariantId() || rows !== assemblyComponentRows) return;
     editingComponentUsageId = null;
     await loadAssemblyComponentsForCurrent();
-    return;
-  }
-  var delR = await sb.from("assembly_component_usages")
-    .delete()
-    .eq("id", resolvedUsageId)
-    .eq("is_catalog_evidence", false);
-  if (delR.error) {
-    alert(t("component_delete_failed") + ": " + delR.error.message);
-    return;
-  }
-  await writeLog("delete", "assembly_component_usages", resolvedUsageId, componentActivityDesc(guardR.data || row), guardR.data, null);
-  editingComponentUsageId = null;
-  await loadAssemblyComponentsForCurrent();
+  } catch (error) {
+    alert(error.code === "40001" ? t("component_edit_conflict") : (error.message || t("component_mutation_result_unknown")));
+  } finally { componentDeleteSaving = false; }
 }
 
 function componentAlternativeBaseText(row) {
@@ -48372,6 +48540,13 @@ async function loadAssemblyComponentsForCurrent() {
   componentIllustrationRequestId += 1;
   editingComponentUsageId = null;
   var selectedKind = selectedProductKind();
+  var snapshotLoadSeq = ++componentListSnapshotSeq;
+  var productAtLoad = currentProduct;
+  var variantAtLoad = selectedComponentVariantId();
+  function snapshotLoadCurrent() {
+    return snapshotLoadSeq === componentListSnapshotSeq && productAtLoad === currentProduct &&
+      selectedKind === selectedProductKind() && variantAtLoad === selectedComponentVariantId();
+  }
   var translationPromise = loadComponentDisplayNameTranslations(componentCatalogCategoryCode(currentProduct));
   wrap.innerHTML = "<div class='component-empty'>" + t("loading") + "</div>";
   renderComponentIllustrationSlot();
@@ -48406,6 +48581,9 @@ async function loadAssemblyComponentsForCurrent() {
         }
       }
       if (rpcRows.length || selectedKind === "catalog_spec") {
+        if (!snapshotLoadCurrent()) return;
+        await hydrateManualComponentListSnapshots(rpcRows);
+        if (!snapshotLoadCurrent()) return;
         assemblyComponentRows = rpcRows;
         updateComponentTargetSummary(rpcRows.length);
         await translationPromise;
@@ -48437,6 +48615,9 @@ async function loadAssemblyComponentsForCurrent() {
       });
     }
     if (treeFallbackRows.length || selectedKind === "catalog_spec") {
+      if (!snapshotLoadCurrent()) return;
+      await hydrateManualComponentListSnapshots(treeFallbackRows);
+      if (!snapshotLoadCurrent()) return;
       assemblyComponentRows = treeFallbackRows;
       updateComponentTargetSummary(treeFallbackRows.length);
       await translationPromise;
@@ -48497,6 +48678,9 @@ async function loadAssemblyComponentsForCurrent() {
     if (ap !== bp) return ap.localeCompare(bp, "ja", { numeric: true });
     return String(a.component_manufacturer_part_number || "").localeCompare(String(b.component_manufacturer_part_number || ""), "ja", { numeric: true });
   });
+  if (!snapshotLoadCurrent()) return;
+  await hydrateManualComponentListSnapshots(rows);
+  if (!snapshotLoadCurrent()) return;
   assemblyComponentRows = rows;
   updateComponentTargetSummary(rows.length);
   await loadComponentAlternativesForRows(rows);

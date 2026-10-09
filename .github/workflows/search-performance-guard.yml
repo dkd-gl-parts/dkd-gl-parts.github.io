@@ -41,6 +41,8 @@ jobs:
         run: node scripts/verify-account-operation-workspace.js
       - name: Verify component edit and shared-price preimages
         run: node scripts/verify-component-edit-preimages.js
+      - name: Verify component add/delete preimages and receipt recovery
+        run: node scripts/verify-component-add-delete-preimages.js
       - name: Verify animated concierge pets
         run: |
           node scripts/verify-concierge-pet.js
