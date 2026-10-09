@@ -43857,23 +43857,54 @@ async function performComponentMutation(operation, payload) {
   return { operation: pending.operation, recovered: recovering, result: result };
 }
 
-async function hydrateManualComponentListSnapshots(rows) {
+async function hydrateManualComponentListSnapshots(rows, targetDkdId) {
   var product = currentProduct, kind = selectedProductKind(), variant = selectedComponentVariantId();
+  if (!/^[1-9]\d*$/.test(String(targetDkdId))) return;
+  function contextCurrent() {
+    return product === currentProduct && kind === selectedProductKind() && variant === selectedComponentVariantId();
+  }
+  // Legacy tree rows omit usage IDs; resolve only unique visible matches while loading.
+  for (var rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+    var legacyRow = rows[rowIndex];
+    if (isCatalogComponentRow(legacyRow) || /^[1-9]\d*$/.test(String(legacyRow.id)) ||
+        !/^[1-9]\d*$/.test(String(legacyRow.dkd_component_id)) ||
+        (legacyRow.product_kind && legacyRow.product_kind !== kind) ||
+        (legacyRow.product_variant_id != null && String(legacyRow.product_variant_id) !== String(variant))) continue;
+    var query = sb.from("assembly_component_usages").select("id")
+      .eq("dkd_shohin_id", targetDkdId).eq("component_id", legacyRow.dkd_component_id)
+      .eq("is_catalog_evidence", false).eq("product_kind", kind).limit(2);
+    if (variant != null) {
+      if (!/^[1-9]\d*$/.test(String(variant))) return;
+      query = query.or("product_variant_id.is.null,product_variant_id.eq." + String(variant));
+    }
+    var usageResponse;
+    try { usageResponse = await query; }
+    catch (error) { console.warn("component list usage unavailable"); continue; }
+    if (!contextCurrent()) return;
+    if (!usageResponse.error && Array.isArray(usageResponse.data) && usageResponse.data.length === 1 &&
+        /^[1-9]\d*$/.test(String(usageResponse.data[0].id))) legacyRow.id = usageResponse.data[0].id;
+  }
   var ids = rows.filter(function(row) { return !isCatalogComponentRow(row) && /^[1-9]\d*$/.test(String(row.id)); })
     .map(function(row) { return parseInt(row.id, 10); });
   for (var i = 0; i < ids.length; i += 1000) {
     var response;
     try { response = await sb.rpc("get_manual_component_list_snapshots", { target_usage_ids: ids.slice(i, i + 1000) }); }
     catch (error) { console.warn("component list snapshot unavailable"); return; }
-    if (product !== currentProduct || kind !== selectedProductKind() || variant !== selectedComponentVariantId()) return;
+    if (!contextCurrent()) return;
     if (response.error || !Array.isArray(response.data)) { console.warn("component list snapshot unavailable"); return; }
     response.data.forEach(function(snapshot) {
       if (!snapshot || !snapshot.usage || !snapshot.part || !snapshot.token) return;
       var row = rows.find(function(item) { return String(item.id) === String(snapshot.usage.id); });
       if (!row || isCatalogComponentRow(row) || snapshot.usage.is_catalog_evidence !== false ||
+          String(snapshot.usage.dkd_shohin_id) !== String(targetDkdId) ||
+          String(snapshot.usage.component_id) !== String(snapshot.part.dkd_component_id) ||
+          (row.dkd_component_id != null && String(row.dkd_component_id) !== String(snapshot.usage.component_id)) ||
           (row.dkd_shohin_id != null && String(row.dkd_shohin_id) !== String(snapshot.usage.dkd_shohin_id)) ||
-          (row.product_kind && row.product_kind !== snapshot.usage.product_kind) ||
-          (row.product_variant_id != null && String(row.product_variant_id) !== String(snapshot.usage.product_variant_id))) return;
+          (snapshot.usage.product_kind || "rebuilt") !== kind ||
+          (row.product_kind && row.product_kind !== kind) ||
+          (snapshot.usage.product_variant_id != null && variant != null && String(snapshot.usage.product_variant_id) !== String(variant)) ||
+          (row.product_variant_id != null && String(row.product_variant_id) !== String(snapshot.usage.product_variant_id) &&
+            !(snapshot.usage.product_variant_id == null && variant != null && String(row.product_variant_id) === String(variant)))) return;
       Object.assign(row, snapshot.usage, {
         dkd_component_id: snapshot.part.dkd_component_id, component_manufacturer: snapshot.part.manufacturer,
         component_manufacturer_part_number: snapshot.part.manufacturer_part_number,
@@ -48582,7 +48613,7 @@ async function loadAssemblyComponentsForCurrent() {
       }
       if (rpcRows.length || selectedKind === "catalog_spec") {
         if (!snapshotLoadCurrent()) return;
-        await hydrateManualComponentListSnapshots(rpcRows);
+        await hydrateManualComponentListSnapshots(rpcRows, dkdId);
         if (!snapshotLoadCurrent()) return;
         assemblyComponentRows = rpcRows;
         updateComponentTargetSummary(rpcRows.length);
@@ -48616,7 +48647,7 @@ async function loadAssemblyComponentsForCurrent() {
     }
     if (treeFallbackRows.length || selectedKind === "catalog_spec") {
       if (!snapshotLoadCurrent()) return;
-      await hydrateManualComponentListSnapshots(treeFallbackRows);
+      await hydrateManualComponentListSnapshots(treeFallbackRows, dkdId);
       if (!snapshotLoadCurrent()) return;
       assemblyComponentRows = treeFallbackRows;
       updateComponentTargetSummary(treeFallbackRows.length);
@@ -48679,7 +48710,7 @@ async function loadAssemblyComponentsForCurrent() {
     return String(a.component_manufacturer_part_number || "").localeCompare(String(b.component_manufacturer_part_number || ""), "ja", { numeric: true });
   });
   if (!snapshotLoadCurrent()) return;
-  await hydrateManualComponentListSnapshots(rows);
+  await hydrateManualComponentListSnapshots(rows, dkdId);
   if (!snapshotLoadCurrent()) return;
   assemblyComponentRows = rows;
   updateComponentTargetSummary(rows.length);
