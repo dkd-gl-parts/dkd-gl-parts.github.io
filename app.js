@@ -7864,6 +7864,10 @@ var componentCompatExistingProductKind = "rebuilt";
 var componentCompatSourceComponentMap = {};
 var componentCompatLoadSeq = 0;
 var componentCompatAssistSeq = 0;
+var componentCompatFormSeq = 0;
+var componentCompatLookupSeq = 0;
+var componentCompatSnapshotState = null;
+var componentCompatSaving = false;
 var componentAddPartNumberLookupSeq = 0;
 var componentAddSnapshotState = null;
 var componentAddFormSeq = 0;
@@ -43803,7 +43807,7 @@ function readComponentMutationPending() {
     var raw = window.sessionStorage.getItem(componentMutationStorageKey());
     if (!raw) return null;
     var pending = JSON.parse(raw);
-    if (!pending || ["add", "delete"].indexOf(pending.operation) < 0 || !pending.requestId ||
+    if (!pending || ["add", "delete", "compatibility"].indexOf(pending.operation) < 0 || !pending.requestId ||
         !pending.payload || typeof pending.payload !== "object") throw new Error("invalid receipt");
     return pending;
   } catch (error) {
@@ -43833,7 +43837,8 @@ async function performComponentMutation(operation, payload) {
   try {
     response = recovering ? await sb.rpc("get_component_mutation_receipt", {
       target_request_id: pending.requestId, target_operation: pending.operation, target_payload: pending.payload
-    }) : await sb.rpc(pending.operation === "add" ? "add_manual_component_safely" : "delete_manual_component_safely",
+    }) : await sb.rpc(pending.operation === "add" ? "add_manual_component_safely" :
+      pending.operation === "delete" ? "delete_manual_component_safely" : "save_component_compatibility_safely",
       Object.assign({ target_request_id: pending.requestId }, pending.payload));
   } catch (error) {
     throw new Error(t("component_mutation_result_unknown"));
@@ -43849,7 +43854,10 @@ async function performComponentMutation(operation, payload) {
     throw new Error(t("component_mutation_result_unknown"));
   }
   var result = response.data;
-  if (!result || !/^[1-9]\d*$/.test(String(result.usage_id)) ||
+  var validResult = result && (pending.operation === "compatibility" ?
+    /^[1-9]\d*$/.test(String(result.internal_part_id)) && /^[1-9]\d*$/.test(String(result.link_id)) :
+    /^[1-9]\d*$/.test(String(result.usage_id)));
+  if (!validResult ||
       (pending.operation === "delete" && (result.deleted_count !== 1 || String(result.usage_id) !== String(pending.payload.target_usage_id)))) {
     throw new Error(t("component_mutation_result_unknown"));
   }
@@ -47270,9 +47278,10 @@ function selectComponentCompatExistingPart(id) {
   document.getElementById("component-compat-form-part-number").value = row.manufacturer_part_number || "";
   document.getElementById("component-compat-form-part-name").value = row.part_name || componentCompatSelected.part_name || "";
   renderComponentCompatExistingRows(row.dkd_component_id);
+  captureComponentCompatSnapshot();
 }
 
-function openComponentCompatForm(linkId) {
+async function openComponentCompatForm(linkId) {
   if (!componentCompatSelected) return;
   var link = componentCompatLinks.find(function(item) { return String(item.id) === String(linkId); }) || null;
   if (link && link.product_variant_id) return;
@@ -47300,172 +47309,144 @@ function openComponentCompatForm(linkId) {
   if (syncWrap) syncWrap.hidden = !link;
   document.getElementById("component-compat-sync-label").textContent = "同じ品番の手入力部品へ修正内容を反映する";
   document.getElementById("component-compat-form-error").textContent = "";
+  var state = { selected: componentCompatSelected, linkId: link ? link.id : null,
+    seq: ++componentCompatFormSeq, anchorToken: "", snapshots: {}, loading: true };
+  componentCompatSnapshotState = state;
   if (overlay) overlay.classList.add("show");
-  if (link) updateComponentCompatSyncCount(part);
-  else document.getElementById("component-compat-form-part-number").focus();
+  updateComponentCompatSaveState();
+  var initialFields = componentCompatSnapshotFields();
+  var initialValues = ["manufacturer", "part-number", "part-name", "relation", "note"].map(function(field) {
+    return document.getElementById("component-compat-form-" + field).value;
+  });
+  try {
+    var response = await sb.rpc("get_component_compatibility_snapshot", { target_fields: initialFields });
+    if (!componentCompatFormCurrent(state)) return;
+    if (response.error) throw response.error;
+    var image = response.data;
+    if (!image || !image.token || !image.anchor_token || !image.anchor) throw new Error(t("component_edit_snapshot_required"));
+    if (JSON.stringify(initialValues) !== JSON.stringify(["manufacturer", "part-number", "part-name", "relation", "note"].map(function(field) {
+      return document.getElementById("component-compat-form-" + field).value;
+    })) || componentCompatSnapshotKey(initialFields) !== componentCompatSnapshotKey(componentCompatSnapshotFields())) {
+      throw new Error(t("component_edit_conflict"));
+    }
+    document.getElementById("component-compat-form-base").textContent = "基準: " + componentCompatBaseLabel(image.anchor.base);
+    if (link) {
+      var loadedPart = image.anchor.old_part, loadedLink = image.anchor.link;
+      if (!loadedPart || !loadedLink) throw new Error(t("component_edit_snapshot_required"));
+      document.getElementById("component-compat-form-manufacturer").value = loadedPart.manufacturer || "";
+      document.getElementById("component-compat-form-part-number").value = loadedPart.part_number || "";
+      document.getElementById("component-compat-form-part-name").value = loadedPart.part_name || "";
+      document.getElementById("component-compat-form-relation").value = loadedLink.relation_type || "compatible";
+      document.getElementById("component-compat-form-note").value = loadedLink.note || "";
+      document.getElementById("component-compat-sync-label").textContent = "同じ品番の手入力部品 " + String(image.anchor.manual_parts.length) + "件へ修正内容を反映する";
+    }
+    state.anchorToken = image.anchor_token;
+    state.snapshots[componentCompatSnapshotKey(initialFields)] = image;
+    state.loading = false;
+    await captureComponentCompatSnapshot();
+  } catch (error) {
+    if (componentCompatFormCurrent(state)) document.getElementById("component-compat-form-error").textContent =
+      error.code === "40001" ? t("component_edit_conflict") : (error.message || t("msg_save_err"));
+  } finally {
+    if (componentCompatFormCurrent(state)) { state.loading = false; updateComponentCompatSaveState(); }
+  }
 }
 
-async function updateComponentCompatSyncCount(part) {
-  if (!part || !part.normalized_part_number) return;
-  var r = await sb.from("component_parts").select("dkd_component_id", { count: "exact", head: true })
-    .eq("has_catalog_source", false)
-    .ilike("manufacturer", String(part.manufacturer || "UNKNOWN"))
-    .eq("normalized_manufacturer_part_number", part.normalized_part_number);
-  var label = document.getElementById("component-compat-sync-label");
-  if (label && !r.error) label.textContent = "同じ品番の手入力部品 " + String(r.count || 0) + "件へ修正内容を反映する";
+function componentCompatFormCurrent(state) {
+  return state && componentCompatSnapshotState === state && componentCompatSelected === state.selected && state.seq === componentCompatFormSeq;
+}
+
+function componentCompatSnapshotFields() {
+  var state = componentCompatSnapshotState;
+  var source = document.getElementById("component-compat-form-source-component-id").value;
+  return { catalog_component_id: state ? state.selected.dkd_component_id : null, link_id: state ? state.linkId : null,
+    source_component_id: /^[1-9]\d*$/.test(String(source)) ? parseInt(source, 10) : null,
+    manufacturer: normalizeComponentManufacturerInput(document.getElementById("component-compat-form-manufacturer").value) || "UNKNOWN",
+    part_number: normalizeComponentPartNumberInput(document.getElementById("component-compat-form-part-number").value) };
+}
+
+function componentCompatSnapshotKey(fields) {
+  return JSON.stringify([fields.manufacturer, normalizedPartKey(fields.part_number), fields.source_component_id]);
+}
+
+function updateComponentCompatSaveState() {
+  var button = document.getElementById("btn-component-compat-form-save"), state = componentCompatSnapshotState;
+  if (!button) return;
+  var pending;
+  try { pending = readComponentMutationPending(); } catch (error) { pending = true; }
+  button.textContent = pending ? t("component_mutation_result_check") : t("component_save");
+  button.disabled = componentCompatSaving || (!pending && (!componentCompatFormCurrent(state) || state.loading ||
+    !state.anchorToken || !state.snapshots[componentCompatSnapshotKey(componentCompatSnapshotFields())]));
+}
+
+async function captureComponentCompatSnapshot() {
+  var state = componentCompatSnapshotState;
+  if (!componentCompatFormCurrent(state) || !state.anchorToken) return;
+  var fields = componentCompatSnapshotFields(), key = componentCompatSnapshotKey(fields), seq = ++componentCompatLookupSeq;
+  if (state.snapshots[key]) { state.loading = false; updateComponentCompatSaveState(); return; }
+  state.loading = true; updateComponentCompatSaveState();
+  try {
+    var response = await sb.rpc("get_component_compatibility_snapshot", { target_fields: fields });
+    if (!componentCompatFormCurrent(state) || seq !== componentCompatLookupSeq || key !== componentCompatSnapshotKey(componentCompatSnapshotFields())) return;
+    if (response.error) throw response.error;
+    var image = response.data;
+    if (!image || !image.token || image.anchor_token !== state.anchorToken) throw new Error(t("component_edit_conflict"));
+    state.snapshots[key] = image;
+    document.getElementById("component-compat-form-error").textContent = "";
+  } catch (error) {
+    if (componentCompatFormCurrent(state) && seq === componentCompatLookupSeq) document.getElementById("component-compat-form-error").textContent = error.message || t("msg_save_err");
+  } finally {
+    if (componentCompatFormCurrent(state) && seq === componentCompatLookupSeq) { state.loading = false; updateComponentCompatSaveState(); }
+  }
 }
 
 function closeComponentCompatForm() {
+  componentCompatFormSeq++;
+  componentCompatLookupSeq++;
+  componentCompatSnapshotState = null;
   var overlay = document.getElementById("component-compat-form-overlay");
   if (overlay) overlay.classList.remove("show");
 }
 
-async function syncComponentCompatManualParts(oldPart, values) {
-  var oldNormalized = normalizedPartKey(oldPart && (oldPart.normalized_part_number || oldPart.part_number));
-  if (!oldNormalized) return 0;
-  var find = await sb.from("component_parts")
-    .select("dkd_component_id")
-    .eq("has_catalog_source", false)
-    .ilike("manufacturer", String(oldPart.manufacturer || "UNKNOWN"))
-    .eq("normalized_manufacturer_part_number", oldNormalized)
-    .limit(5000);
-  if (find.error) throw new Error(find.error.message);
-  var ids = (find.data || []).map(function(row) { return row.dkd_component_id; });
-  if (!ids.length) return 0;
-  var update = await sb.from("component_parts").update({
-    manufacturer: values.manufacturer,
-    manufacturer_part_number: values.partNumber,
-    part_name: values.partName || null,
-    updated_by: currentUser ? currentUser.id : null,
-    updated_at: new Date().toISOString()
-  }).in("dkd_component_id", ids).eq("has_catalog_source", false);
-  if (update.error) throw new Error(update.error.message);
-  for (var i = 0; i < ids.length; i += 150) {
-    var usageUpdate = await sb.from("assembly_component_usages").update({
-      component_name: values.partName || null,
-      updated_at: new Date().toISOString()
-    }).in("component_id", ids.slice(i, i + 150)).eq("is_catalog_evidence", false);
-    if (usageUpdate.error) throw new Error(usageUpdate.error.message);
-  }
-  return ids.length;
-}
-
 async function saveComponentCompatForm() {
-  if (!componentCompatSelected || !canManageComponentCompatibility()) return;
+  if (componentCompatSaving || !componentCompatSelected || !canManageComponentCompatibility()) return;
+  var state = componentCompatSnapshotState;
+  if (!componentCompatFormCurrent(state)) return;
   var error = document.getElementById("component-compat-form-error");
-  var save = document.getElementById("btn-component-compat-form-save");
-  var linkId = document.getElementById("component-compat-form-id").value;
-  var partId = document.getElementById("component-compat-form-part-id").value;
-  var sourceComponentId = document.getElementById("component-compat-form-source-component-id").value;
-  var manufacturer = normalizeComponentManufacturerInput(document.getElementById("component-compat-form-manufacturer").value) || "UNKNOWN";
-  var partNumber = String(document.getElementById("component-compat-form-part-number").value || "").trim();
-  var partName = canonicalComponentNameForStorage(document.getElementById("component-compat-form-part-name").value) || String(document.getElementById("component-compat-form-part-name").value || "").trim();
-  var relation = document.getElementById("component-compat-form-relation").value || "compatible";
-  var note = String(document.getElementById("component-compat-form-note").value || "").trim();
-  var normalized = normalizedPartKey(partNumber);
   if (error) error.textContent = "";
-  if (componentCompatIsAssySelfRow(componentCompatSelected)) {
-    if (error) error.textContent = "製品のASSY品番は基準部品に登録できません。構成部品を選択してください";
-    return;
-  }
-  if (!partNumber || !normalized) { if (error) error.textContent = "メーカー品番を入力してください"; return; }
-  if (
-    normalized === normalizedPartKey(componentCompatSelected.manufacturer_part_number) &&
-    manufacturer === normalizeComponentManufacturerInput(componentCompatSelected.manufacturer || "UNKNOWN")
-  ) {
-    if (error) error.textContent = "基準部品と同じメーカー・品番は互換として登録できません";
-    return;
-  }
-  var currentLink = componentCompatLinks.find(function(item) { return String(item.id) === String(linkId); }) || null;
-  var oldPart = currentLink ? (currentLink.internal_component_parts || {}) : null;
-  if (save) { save.disabled = true; save.textContent = "保存中..."; }
+  componentCompatSaving = true; updateComponentCompatSaveState();
   try {
-    var selectedSourcePart = null;
-    if (sourceComponentId) {
-      var sourceResult = await sb.from("component_parts")
-        .select("dkd_component_id,manufacturer,manufacturer_part_number,genuine_part_number,part_name,normalized_manufacturer_part_number,has_catalog_source")
-        .eq("dkd_component_id", parseInt(sourceComponentId, 10))
-        .eq("has_catalog_source", false)
-        .maybeSingle();
-      if (sourceResult.error) throw new Error(sourceResult.error.message);
-      selectedSourcePart = sourceResult.data || null;
-      if (!selectedSourcePart || normalizedPartKey(selectedSourcePart.manufacturer_part_number) !== normalized || normalizeComponentManufacturerInput(selectedSourcePart.manufacturer || "UNKNOWN") !== manufacturer) {
-        throw new Error("選択した登録済み部品とメーカー・品番が一致しません。登録済み部品を選び直してください。");
-      }
+    if (readComponentMutationPending()) {
+      await performComponentMutation("compatibility", null);
+      if (componentCompatFormCurrent(state)) { state.anchorToken = ""; alert(t("component_mutation_result_recovered")); }
+      return;
     }
-    var duplicate = await sb.from("internal_component_parts").select("id,manufacturer,part_number,normalized_part_number,part_name,status")
-      .ilike("manufacturer", manufacturer).eq("normalized_part_number", normalized).limit(2);
-    if (duplicate.error) throw new Error(duplicate.error.message);
-    var matched = (duplicate.data || [])[0] || null;
-    if (partId && matched && String(matched.id) !== String(partId)) throw new Error("同じメーカー・品番の互換マスタが既にあります。重複せず、その品番を追加してください。");
-    if (partId) {
-      var updated = await sb.from("internal_component_parts").update({
-        manufacturer: manufacturer,
-        part_number: partNumber,
-        part_name: partName || null,
-        status: "active",
-        updated_by: currentUser ? currentUser.id : null,
-        updated_at: new Date().toISOString()
-      }).eq("id", partId);
-      if (updated.error) throw new Error(updated.error.message);
-    } else if (matched) {
-      partId = matched.id;
-      var revived = await sb.from("internal_component_parts").update({ status: "active", part_name: partName || matched.part_name || null, updated_by: currentUser ? currentUser.id : null, updated_at: new Date().toISOString() }).eq("id", partId);
-      if (revived.error) throw new Error(revived.error.message);
-    } else {
-      var inserted = await sb.from("internal_component_parts").insert({
-        manufacturer: manufacturer,
-        part_number: partNumber,
-        part_name: partName || null,
-        status: "active",
-        note: "created from component compatibility management",
-        created_by: currentUser ? currentUser.id : null,
-        updated_by: currentUser ? currentUser.id : null
-      }).select("id").single();
-      if (inserted.error) throw new Error(inserted.error.message);
-      partId = inserted.data.id;
+    var fields = componentCompatSnapshotFields(), image = state.snapshots[componentCompatSnapshotKey(fields)];
+    if (state.loading || !state.anchorToken || !image || !image.token) throw new Error(t("component_edit_snapshot_required"));
+    if (componentCompatIsAssySelfRow(state.selected)) {
+      throw new Error("製品のASSY品番は基準部品に登録できません。構成部品を選択してください");
     }
-    var linkPayload = { relation_type: relation, priority: 100, status: "active", note: note || null, updated_by: currentUser ? currentUser.id : null, updated_at: new Date().toISOString() };
-    if (linkId) {
-      var linkUpdate = await sb.from("component_part_alternatives").update(linkPayload).eq("id", linkId).is("product_variant_id", null);
-      if (linkUpdate.error) throw new Error(linkUpdate.error.message);
-    } else {
-      var existing = await sb.from("component_part_alternatives").select("id")
-        .in("catalog_component_id", componentCompatBaseIds.length ? componentCompatBaseIds : [componentCompatSelected.dkd_component_id])
-        .eq("internal_component_part_id", partId)
-        .is("product_variant_id", null)
-        .limit(1).maybeSingle();
-      if (existing.error) throw new Error(existing.error.message);
-      if (existing.data) {
-        var existingUpdate = await sb.from("component_part_alternatives").update(linkPayload).eq("id", existing.data.id);
-        if (existingUpdate.error) throw new Error(existingUpdate.error.message);
-        linkId = existing.data.id;
-      } else {
-        var linkInsert = await sb.from("component_part_alternatives").insert(Object.assign({}, linkPayload, {
-          catalog_component_id: componentCompatSelected.dkd_component_id,
-          internal_component_part_id: partId,
-          product_variant_id: null,
-          component_position: null,
-          created_by: currentUser ? currentUser.id : null
-        })).select("id").single();
-        if (linkInsert.error) throw new Error(linkInsert.error.message);
-        linkId = linkInsert.data.id;
-      }
+    if (!normalizedPartKey(fields.part_number)) throw new Error("メーカー品番を入力してください");
+    fields.part_name = canonicalComponentNameForStorage(document.getElementById("component-compat-form-part-name").value) ||
+      String(document.getElementById("component-compat-form-part-name").value || "").trim();
+    fields.relation_type = document.getElementById("component-compat-form-relation").value || "compatible";
+    fields.note = String(document.getElementById("component-compat-form-note").value || "").trim();
+    fields.sync_manual = document.getElementById("component-compat-form-sync").checked;
+    var mutation = await performComponentMutation("compatibility", { target_snapshot_token: image.token, target_fields: fields });
+    if (!componentCompatFormCurrent(state)) return;
+    state.anchorToken = "";
+    var result = mutation.result;
+    if (image.source_part) componentCompatSourceComponentMap[String(result.internal_part_id)] = image.source_part;
+    await writeLog(state.linkId ? "update" : "insert", "component_part_alternatives", result.link_id, fields.part_number,
+      image.anchor.link, { catalog_component_id: fields.catalog_component_id, internal_component_part_id: result.internal_part_id,
+        relation_type: fields.relation_type, synced_manual_parts: result.synced_manual_parts });
+    if (componentCompatFormCurrent(state)) {
+      closeComponentCompatForm(); await loadComponentCompatLinks(); renderComponentCompatLinks(); await loadComponentCompatAssist();
     }
-    if (selectedSourcePart) componentCompatSourceComponentMap[String(partId)] = selectedSourcePart;
-    var synced = 0;
-    if (oldPart && document.getElementById("component-compat-form-sync").checked) {
-      synced = await syncComponentCompatManualParts(oldPart, { manufacturer: manufacturer, partNumber: partNumber, normalizedPartNumber: normalized, partName: partName });
-    }
-    await writeLog(currentLink ? "update" : "insert", "component_part_alternatives", linkId, partNumber, currentLink, { catalog_component_id: componentCompatSelected.dkd_component_id, internal_component_part_id: partId, relation_type: relation, synced_manual_parts: synced });
-    closeComponentCompatForm();
-    await loadComponentCompatLinks();
-    renderComponentCompatLinks();
-    await loadComponentCompatAssist();
   } catch (e) {
-    if (error) error.textContent = e.message || t("msg_save_err");
+    if (componentCompatFormCurrent(state) && error) error.textContent = e.code === "40001" ? t("component_edit_conflict") : (e.message || t("msg_save_err"));
   } finally {
-    if (save) { save.disabled = false; save.textContent = "保存"; }
+    componentCompatSaving = false; updateComponentCompatSaveState();
   }
 }
 
@@ -56893,6 +56874,7 @@ document.getElementById("component-compat-existing-search").addEventListener("ke
 document.getElementById("component-compat-existing-kind").addEventListener("change", function() {
   componentCompatExistingProductKind = this.value;
   document.getElementById("component-compat-form-source-component-id").value = "";
+  captureComponentCompatSnapshot();
   componentCompatExistingRows = [];
   var input = document.getElementById("component-compat-existing-search");
   if (input && input.value.trim()) searchComponentCompatExistingParts();
@@ -56905,7 +56887,10 @@ document.getElementById("component-compat-existing-results").addEventListener("c
 document.getElementById("btn-component-compat-form-cancel").addEventListener("click", closeComponentCompatForm);
 document.getElementById("btn-component-compat-form-save").addEventListener("click", saveComponentCompatForm);
 document.getElementById("component-compat-form-overlay").addEventListener("click", function(e){ if (e.target === this) closeComponentCompatForm(); });
-document.getElementById("component-compat-form-part-number").addEventListener("blur", function(){ normalizeComponentPartNumberElement(this); });
+document.getElementById("component-compat-form-part-number").addEventListener("blur", function(){ normalizeComponentPartNumberElement(this); captureComponentCompatSnapshot(); });
+["component-compat-form-manufacturer", "component-compat-form-part-number"].forEach(function(id) {
+  document.getElementById(id).addEventListener("input", captureComponentCompatSnapshot);
+});
 document.getElementById("btn-back-product-kind-stock-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-manufacturing-cost-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-finished-label-mgmt").addEventListener("click", returnFromFinishedLabelMgmtToMenu);

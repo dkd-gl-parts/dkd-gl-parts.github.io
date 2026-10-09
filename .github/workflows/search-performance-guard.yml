@@ -43,6 +43,8 @@ jobs:
         run: node scripts/verify-component-edit-preimages.js
       - name: Verify component add/delete preimages and receipt recovery
         run: node scripts/verify-component-add-delete-preimages.js
+      - name: Verify component compatibility aggregate preimages
+        run: node scripts/verify-component-compatibility-preimages.js
       - name: Verify animated concierge pets
         run: |
           node scripts/verify-concierge-pet.js
