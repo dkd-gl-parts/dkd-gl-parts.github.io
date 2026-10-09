@@ -1,11 +1,24 @@
 {
-  "enabled": false,
+  "enabled": true,
   "supabaseUrl": "https://jqoeqximtwfpqwzngutj.supabase.co",
   "publishableKey": "sb_publishable_TXdCwBQOD_s3N0TqFCDOAw_8B44a0kv",
   "apiUrl": "https://jqoeqximtwfpqwzngutj.supabase.co/functions/v1/scanflow-api",
   "fixture": false,
-  "mfaEnrollmentEnabled": true,
+  "mfaEnrollmentEnabled": false,
   "adminOperationsEnabled": false,
   "chatEnabled": false,
-  "mfaSetupOnly": true
+  "mfaSetupOnly": false,
+  "ownerReview": {
+    "version": "scanflow-owner-review/1",
+    "owner_id": "4baba302-8aed-4ac0-a35f-bc99100cb760",
+    "workspace_id": "b42f3f3e-9a3e-434d-880c-93e851938835",
+    "document_id": "3bc91089-9c64-4fee-8da6-76f86ad2264a",
+    "generation": "beecbe0d-74f5-4edc-836a-9e62cdef1a67",
+    "source_hash": "2d21eec44fac2ad60fe651aa780e3e665bd9bd1fac2cfa092b62e7b0807876e0",
+    "page_count": 7,
+    "OCR_lines": 354,
+    "budget_id": "96c332b5-a2fa-49f2-9513-cd79752b941d",
+    "starts_at": "2026-10-09T03:05:00Z",
+    "expires_at": "2026-10-09T03:50:00Z"
+  }
 }
