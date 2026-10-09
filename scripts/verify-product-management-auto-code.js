@@ -104,7 +104,7 @@ if (!source.includes('document.getElementById("btn-add-part").addEventListener("
 }
 
 const coreSave = sourceBetween("async function saveCoreProductForm", "async function deletePart");
-if (!coreSave.includes('sb.from("core_products").insert(payload).select("dkd_shohin_id").single()')) {
+if (!coreSave.includes('sb.from("core_products").insert(payload).select("dkd_shohin_id,edit_version").single()')) {
   throw new Error("new products must return the database-generated product code");
 }
 if (!coreSave.includes('currentProduct = Object.assign({}, payload, { dkd_shohin_id: dkd, id: dkd })')) {

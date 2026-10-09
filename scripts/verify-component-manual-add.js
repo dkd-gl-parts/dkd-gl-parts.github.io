@@ -120,10 +120,11 @@ if (!source.includes("bindComponentPartNumberInputEvents(el, updateComponentAddP
   throw new Error("manual component add inputs must use the IME-safe part-number binding");
 }
 
-const addSource = functionSource("addAssemblyComponentForCurrent", "function componentEditInput");
-if (!addSource.includes('normalizeComponentManufacturerInput(currentProduct.manufacturer) || "UNKNOWN"') ||
+const addSource = functionSource("addAssemblyComponentForCurrent", "function componentMutationStorageKey");
+const openSource = functionSource("openComponentAddForm", "function componentAddValue");
+if (!openSource.includes('normalizeComponentManufacturerInput(productAtOpen.manufacturer) || "UNKNOWN"') ||
     !addSource.includes('t("component_assy_part_number_required")') ||
-    !addSource.includes("var targetGenuinePartNumber = normalizeComponentPartNumberInput(currentProduct.genuine_part_number || \"\")") ||
+    !openSource.includes('normalizeComponentPartNumberInput(productAtOpen.genuine_part_number || "") || null') ||
     !addSource.includes("if (!targetManufacturerPartNumber && !targetGenuinePartNumber)") ||
     addSource.includes("if (!targetManufacturer || !targetManufacturerPartNumber)")) {
   throw new Error("manual component add must allow a missing ASSY manufacturer and accept either target part-number field");
@@ -236,6 +237,7 @@ let dkdLookupGate = null;
 
 const sandbox = {
   componentAddSaving: false,
+  componentAddSnapshotState: null,
   currentProduct: {
     dkd_shohin_id: 36628,
     manufacturer: null,
@@ -265,6 +267,14 @@ const sandbox = {
     warnings: []
   }),
   reconcileComponentAddPartNumbers: async () => null,
+  readComponentMutationPending: () => null,
+  componentMutationButtonText: () => "add",
+  componentPriceSnapshotKey: () => "price-key",
+  performComponentMutation: async (operation, payload) => {
+    if (dkdLookupGate) await dkdLookupGate;
+    const result = await sandbox.sb.rpc("add_manual_component_safely", payload);
+    return { result: result.data };
+  },
   validateComponentPartNumberInputs: (manufacturerPartNumber, genuinePartNumber) => ({
     manufacturerPartNumber: String(manufacturerPartNumber || "").trim().toUpperCase(),
     genuinePartNumber: String(genuinePartNumber || "").trim().toUpperCase(),
@@ -288,7 +298,7 @@ const sandbox = {
     rpc: async (name, payload) => {
       rpcCallCount += 1;
       rpcCall = { name, payload };
-      return { data: 999, error: null };
+      return { data: { usage_id: 999 }, error: null };
     }
   },
   writeLog: async () => {},
@@ -311,10 +321,22 @@ const sandbox = {
 };
 
 vm.runInNewContext(`${addSource}; result = addAssemblyComponentForCurrent;`, sandbox);
+function loadedSnapshot() {
+  sandbox.componentAddSnapshotState = {
+    product: sandbox.currentProduct, kind: "rebuilt", variant: 101, targetToken: "loaded-target",
+    prices: { "price-key": { token: "loaded-price" } },
+    targetFields: {
+      target_dkd_shohin_id: 36628, target_manufacturer: "UNKNOWN",
+      target_manufacturer_part_number: sandbox.currentProduct.manufacturer_part_number || null,
+      target_genuine_part_number: sandbox.currentProduct.genuine_part_number || null
+    }
+  };
+}
 
 (async () => {
   let releaseDkdLookup;
   dkdLookupGate = new Promise((resolve) => { releaseDkdLookup = resolve; });
+  loadedSnapshot();
   const firstAdd = sandbox.result();
   const repeatedAdd = sandbox.result();
   if (!elements["btn-component-add"].disabled || !sandbox.componentAddSaving) {
@@ -326,13 +348,13 @@ vm.runInNewContext(`${addSource}; result = addAssemblyComponentForCurrent;`, san
   if (rpcCallCount !== 1 || sandbox.componentAddSaving || elements["btn-component-add"].disabled) {
     throw new Error("repeated component add clicks must produce one RPC and release the lock afterward");
   }
-  if (!rpcCall || rpcCall.name !== "add_manual_assembly_component") {
+  if (!rpcCall || rpcCall.name !== "add_manual_component_safely") {
     throw new Error("manual component add must reach the RPC when only the ASSY manufacturer is missing");
   }
-  if (rpcCall.payload.target_manufacturer !== "UNKNOWN" ||
-      rpcCall.payload.target_manufacturer_part_number !== "SM-760-04" ||
-      rpcCall.payload.component_manufacturer_part_number !== "4×5" ||
-      rpcCall.payload.component_replacement_rate !== 60) {
+  if (rpcCall.payload.target_fields.target_manufacturer !== "UNKNOWN" ||
+      rpcCall.payload.target_fields.target_manufacturer_part_number !== "SM-760-04" ||
+      rpcCall.payload.target_fields.component_manufacturer_part_number !== "4×5" ||
+      rpcCall.payload.target_fields.component_replacement_rate !== 60) {
     throw new Error("manual component add must preserve ASSY, component part number, and the manually entered replacement rate");
   }
   if (elements["component-add-error"].textContent || alertMessage) {
@@ -342,10 +364,11 @@ vm.runInNewContext(`${addSource}; result = addAssemblyComponentForCurrent;`, san
   rpcCall = null;
   sandbox.currentProduct.manufacturer_part_number = "";
   sandbox.currentProduct.genuine_part_number = "A6711540202";
+  loadedSnapshot();
   await sandbox.result();
-  if (!rpcCall || rpcCall.payload.target_manufacturer_part_number !== null ||
-      rpcCall.payload.target_genuine_part_number !== "A6711540202" ||
-      rpcCall.payload.target_dkd_shohin_id !== 36628) {
+  if (!rpcCall || rpcCall.payload.target_fields.target_manufacturer_part_number !== null ||
+      rpcCall.payload.target_fields.target_genuine_part_number !== "A6711540202" ||
+      rpcCall.payload.target_fields.target_dkd_shohin_id !== 36628) {
     throw new Error("a genuine-only ASSY must register by durable product id without copying the genuine number into the manufacturer-part field");
   }
   if (elements["component-add-error"].textContent || alertMessage) {
@@ -354,6 +377,7 @@ vm.runInNewContext(`${addSource}; result = addAssemblyComponentForCurrent;`, san
 
   rpcCall = null;
   sandbox.currentProduct.genuine_part_number = "";
+  loadedSnapshot();
   await sandbox.result();
   if (rpcCall || elements["component-add-error"].textContent !== "target ASSY part required") {
     throw new Error("an ASSY missing both part-number fields must show the dedicated master-data error");

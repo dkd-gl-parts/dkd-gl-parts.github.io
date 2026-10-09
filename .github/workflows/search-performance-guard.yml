@@ -37,6 +37,18 @@ jobs:
           node --check assets/concierge-pet/concierge-pet.js
       - name: Verify sales order revision workflow
         run: node scripts/verify-sales-order-revision.js
+      - name: Verify four-window coordination and isolated state
+        run: node scripts/verify-account-operation-workspace.js
+      - name: Verify component edit and shared-price preimages
+        run: node scripts/verify-component-edit-preimages.js
+      - name: Verify component add/delete preimages and receipt recovery
+        run: node scripts/verify-component-add-delete-preimages.js
+      - name: Verify component compatibility aggregate preimages
+        run: node scripts/verify-component-compatibility-preimages.js
+      - name: Verify compatibility apply and unlink safeguards
+        run: node scripts/verify-component-compatibility-actions.js
+      - name: Verify variant alternative preimages and receipts
+        run: node scripts/verify-component-alternative-preimages.js
       - name: Verify animated concierge pets
         run: |
           node scripts/verify-concierge-pet.js

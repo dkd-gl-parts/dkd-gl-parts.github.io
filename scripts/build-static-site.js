@@ -6,6 +6,8 @@ const output = path.join(root, "dist");
 const files = [
   "_headers",
   "app.js",
+  "account-operation-workspace.js",
+  "account-operation-workspace.css",
   "sales-order-revision.js",
   "install-app.js",
   "apple-touch-icon.png",
