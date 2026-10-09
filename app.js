@@ -38,7 +38,9 @@ function ecPriceHistoryColorClass(type, provider) {
 
 var SUPABASE_URL = "https://jqoeqximtwfpqwzngutj.supabase.co";
 var SUPABASE_KEY = "sb_publishable_TXdCwBQOD_s3N0TqFCDOAw_8B44a0kv";
-var sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+var sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  global: { fetch: window.DcatsWorkspace ? window.DcatsWorkspace.fetch : undefined }
+});
 var EC_MALL_EDGE_FUNCTION_NAME = "ec-mall-search";
 var RAKUTEN_EDGE_FUNCTION_NAME = EC_MALL_EDGE_FUNCTION_NAME;
 var RAKUTEN_USE_EDGE_FUNCTION = true;
@@ -1832,6 +1834,8 @@ var TRANSLATIONS = {
     msg_part_saved: "保存しました",
     msg_part_deleted: "削除しました",
     msg_part_err: "エラーが発生しました",
+    workspace_product_reload: "最新の商品情報を読み込み直してから保存してください。",
+    workspace_product_changed: "他の画面で商品が更新されています。最新情報を読み込み直してください。",
     ph_search_parts: "品番・メーカーで検索",
     core_list_search_ph: "DKD商品ID・コア品番・品番・置き場で検索",
     core_list_product_search: "対象商品検索",
@@ -4357,6 +4361,8 @@ var TRANSLATIONS = {
     msg_part_saved: "Saved",
     msg_part_deleted: "Deleted",
     msg_part_err: "An error occurred",
+    workspace_product_reload: "Reload the latest product information before saving.",
+    workspace_product_changed: "This product was updated in another window. Reload the latest information.",
     ph_search_parts: "Search by part number or manufacturer",
     core_list_search_ph: "Search by DKD ID, CORE part, part number, or location",
     core_list_product_search: "Target product search",
@@ -6883,6 +6889,8 @@ var TRANSLATIONS = {
     msg_part_saved: "已保存",
     msg_part_deleted: "已删除",
     msg_part_err: "发生错误",
+    workspace_product_reload: "请重新加载最新商品信息后保存。",
+    workspace_product_changed: "商品已在其他窗口更新，请重新加载最新信息。",
     ph_search_parts: "按零件编号或制造商搜索",
     core_list_search_ph: "按DKD ID、CORE编号、零件编号或位置搜索",
     core_list_product_search: "目标商品搜索",
@@ -8155,6 +8163,7 @@ var customerAccountUsers = [];
 var customerAccountRequestSeq = 0;
 var CORE_PRODUCT_FAST_SELECT = [
   "dkd_shohin_id",
+  "edit_version",
   "legacy_part_id",
   "category_code",
   "category",
@@ -9660,6 +9669,7 @@ function applyI18n() {
   if (finishedLabelPrintDestinations.length) renderFinishedLabelPrintDestinations();
   applyLegacyUiI18n(document.body);
   startLegacyUiI18nObserver();
+  if (window.DcatsWorkspace) window.DcatsWorkspace.updateLabels();
 }
 
 // 全ての言語切り替えボタンのactiveクラスを更新する
@@ -9835,6 +9845,7 @@ function captureAppRestoreState(reason) {
   var screen = activeAppScreenName();
   var state = {
     reason: reason || "refresh",
+    userId: currentUser ? currentUser.id : null,
     version: APP_VERSION,
     ts: Date.now(),
     screen: screen,
@@ -9920,12 +9931,12 @@ function captureAppRestoreState(reason) {
 function saveAppRestoreState(reason) {
   if (appDiscardRestoreStateOnExit) return;
   try {
-    localStorage.setItem(APP_RESTORE_STATE_KEY, JSON.stringify(captureAppRestoreState(reason)));
+    sessionStorage.setItem(window.DcatsWorkspace ? window.DcatsWorkspace.snapshotKey() : APP_RESTORE_STATE_KEY, JSON.stringify(captureAppRestoreState(reason)));
   } catch(e) {}
 }
 
 function clearAppRestoreState() {
-  try { localStorage.removeItem(APP_RESTORE_STATE_KEY); } catch(e) {}
+  try { sessionStorage.removeItem(window.DcatsWorkspace ? window.DcatsWorkspace.snapshotKey() : APP_RESTORE_STATE_KEY); } catch(e) {}
 }
 
 function returnToMenuFresh() {
@@ -9980,14 +9991,15 @@ function openRequestedPrintStationAfterAuth() {
 
 function consumeAppRestoreState() {
   try {
-    var raw = localStorage.getItem(APP_RESTORE_STATE_KEY);
+    var restoreKey = window.DcatsWorkspace ? window.DcatsWorkspace.snapshotKey() : APP_RESTORE_STATE_KEY;
+    var raw = sessionStorage.getItem(restoreKey);
     if (!raw) return null;
-    localStorage.removeItem(APP_RESTORE_STATE_KEY);
+    sessionStorage.removeItem(restoreKey);
     var state = JSON.parse(raw);
     if (!state || !state.ts || Date.now() - state.ts > 15 * 60 * 1000) return null;
     return state;
   } catch(e) {
-    try { localStorage.removeItem(APP_RESTORE_STATE_KEY); } catch(ignore) {}
+    try { sessionStorage.removeItem(window.DcatsWorkspace ? window.DcatsWorkspace.snapshotKey() : APP_RESTORE_STATE_KEY); } catch(ignore) {}
     return null;
   }
 }
@@ -9995,7 +10007,7 @@ function consumeAppRestoreState() {
 async function restoreAppStateAfterRefresh() {
   if (appRestoreInProgress || !currentUser) return;
   var state = consumeAppRestoreState();
-  if (!state || !state.screen) return;
+  if (!state || !state.screen || state.userId !== currentUser.id) return;
   appRestoreInProgress = true;
   try {
     if (state.screen === "production-search") {
@@ -10307,9 +10319,10 @@ function startAppUpdateWatcher() {
 var AUTO_LOGOUT_MS = 8 * 60 * 60 * 1000; // 8時間（ミリ秒）
 var autoLogoutTimer = null;
 
-function resetAutoLogoutTimer() {
+function resetAutoLogoutTimer(fromOtherWindow) {
   clearTimeout(autoLogoutTimer);
   if (!currentUser || isFinishedLabelDedicatedPrintStationActive()) return;
+  if (window.DcatsWorkspace && !fromOtherWindow) window.DcatsWorkspace.activity();
   autoLogoutTimer = setTimeout(function() {
     doLogout();
     // ログアウト後にメッセージを表示する
@@ -10536,6 +10549,7 @@ async function loadProfile() {
     if (el) { setCspStyle(el, "color", "#c0392b"); el.textContent = t("suspended_msg"); }
     return false;
   }
+  if (window.DcatsWorkspace && !requestedFinishedLabelPrintStationTarget()) await window.DcatsWorkspace.start(sb);
   await loadCustomerViewerContext();
   await refreshCustomerOrderFeatureStatus();
   restoreCustomerOrderCart();
@@ -10827,6 +10841,7 @@ async function doLogin() {
 async function signOutCurrentDevice() {
   // Supabase defaults to global sign-out, which would also revoke the
   // independently stored Windows print-agent session for this user.
+  if (window.DcatsWorkspace) window.DcatsWorkspace.stop();
   return sb.auth.signOut({ scope: "local" });
 }
 
@@ -10842,6 +10857,14 @@ async function doLogout() {
   autoLogoutTimer = null;
   await recordAuthEvent("logout");
   await signOutCurrentDevice();
+  resetAuthenticatedAppState();
+}
+
+function resetAuthenticatedAppState() {
+  stopFinishedLabelPrintStation();
+  clearAppRestoreState();
+  clearTimeout(autoLogoutTimer);
+  autoLogoutTimer = null;
   clearPersistedCustomerOrderCart();
   currentUser = null; userProfile = null;
   customerViewerContext = null;
@@ -12961,7 +12984,9 @@ function customerOrderCartKey(dkdId, productKind) {
 function customerOrderCartStorageKey() {
   var context = activeCustomerPortalContext() || {};
   var previewSuffix = canPreviewCustomerPortal() ? ":development-preview" : "";
-  return CUSTOMER_ORDER_CART_STORAGE_KEY + ":" + String(context.sales_customer_id || "none") + previewSuffix;
+  var name = CUSTOMER_ORDER_CART_STORAGE_KEY + ":" + String(context.sales_customer_id || "none") + previewSuffix;
+  var userId = currentUser ? currentUser.id : "none";
+  return window.DcatsWorkspace ? window.DcatsWorkspace.storageKey(name, userId) : name + ":" + userId;
 }
 
 function persistCustomerOrderCart() {
@@ -21514,7 +21539,7 @@ async function fetchCoreProductShippingProfile(dkdId) {
   var id = parseInt(dkdId, 10);
   if (isNaN(id)) return null;
   var result = await sb.from("core_products")
-    .select("dkd_shohin_id,shipping_weight_kg,shipping_size_cm,shipping_package_size_label")
+    .select("dkd_shohin_id,edit_version,shipping_weight_kg,shipping_size_cm,shipping_package_size_label")
     .eq("dkd_shohin_id", id)
     .maybeSingle();
   if (result.error) throw result.error;
@@ -28429,6 +28454,10 @@ async function savePartForm() {
 
   var shippingFormValue = null;
   if (partFormMode === "edit" && partFormShippingProfileState === "available") {
+    if (!partFormShippingProfile || !Number.isSafeInteger(partFormShippingProfile.edit_version)) {
+      errEl.textContent = t("workspace_product_reload");
+      return;
+    }
     shippingFormValue = productShippingFormValue();
     if (shippingFormValue.error) { errEl.textContent = t("product_shipping_invalid"); return; }
   }
@@ -28462,6 +28491,7 @@ async function savePartForm() {
       return;
     }
     var shippingPayload = {
+      edit_version: partFormShippingProfile.edit_version,
       shipping_weight_kg: shippingFormValue.shipping_weight_kg,
       shipping_size_cm: shippingFormValue.shipping_size_cm,
       shipping_package_size_label: shippingFormValue.shipping_package_size_label,
@@ -28471,14 +28501,18 @@ async function savePartForm() {
     var shippingResult = await sb.from("core_products")
       .update(shippingPayload)
       .eq("dkd_shohin_id", dkdId)
-      .select("dkd_shohin_id")
+      .eq("edit_version", partFormShippingProfile.edit_version)
+      .select("dkd_shohin_id,edit_version")
       .maybeSingle();
     if (shippingResult.error || !shippingResult.data) {
-      errEl.textContent = t("product_shipping_save_failed") + (shippingResult.error ? ": " + shippingResult.error.message : "");
+      errEl.textContent = shippingResult.error
+        ? t("product_shipping_save_failed") + ": " + shippingResult.error.message
+        : t("workspace_product_changed");
       return;
     }
     await writeLog("update", "core_products", dkdId, gpn || mfrPart || String(dkdId), partFormShippingProfile, shippingPayload);
     partFormShippingProfile = Object.assign({}, partFormShippingProfile, shippingPayload);
+    partFormShippingProfile.edit_version = shippingResult.data.edit_version;
   }
   document.getElementById("part-form-overlay").classList.remove("show");
   await loadPartsMgmt();
@@ -37918,7 +37952,7 @@ async function saveCoreProductForm() {
       payload.has_catalog_source = false;
       payload.part_manufacturer_type = "external";
       payload.created_by = currentUser ? currentUser.id : null;
-      r = await sb.from("core_products").insert(payload).select("dkd_shohin_id").single();
+      r = await sb.from("core_products").insert(payload).select("dkd_shohin_id,edit_version").single();
     }
     if (!r.error) {
       var addResult = isGltekAdd ? gltekResult : (r.data || {});
@@ -37927,6 +37961,11 @@ async function saveCoreProductForm() {
       document.getElementById("part-form-id").value = dkd || "";
       partFormMode = "edit";
       currentProduct = Object.assign({}, payload, { dkd_shohin_id: dkd, id: dkd });
+      if (Number.isSafeInteger(addResult.edit_version)) currentProduct.edit_version = addResult.edit_version;
+      else if (isGltekAdd) {
+        var createdVersion = await sb.from("core_products").select("edit_version").eq("dkd_shohin_id", dkd).maybeSingle();
+        if (!createdVersion.error && createdVersion.data) currentProduct.edit_version = createdVersion.data.edit_version;
+      }
       if (isGltekAdd) {
         logUserActivity("insert", {
           action: "create_gltek_core_product",
@@ -37942,7 +37981,15 @@ async function saveCoreProductForm() {
     }
   } else {
     var before = currentProduct ? JSON.parse(JSON.stringify(currentProduct)) : null;
-    r = await sb.from("core_products").update(payload).eq("dkd_shohin_id", dkd);
+    if (!before || !Number.isSafeInteger(before.edit_version)) {
+      errEl.textContent = t("workspace_product_reload");
+      return;
+    }
+    payload.edit_version = before.edit_version;
+    r = await sb.from("core_products").update(payload).eq("dkd_shohin_id", dkd)
+      .eq("edit_version", before.edit_version).select("edit_version").maybeSingle();
+    if (!r.error && !r.data) r.error = { message: t("workspace_product_changed") };
+    if (!r.error) currentProduct.edit_version = r.data.edit_version;
     if (!r.error) await writeLog("update", "core_products", dkd, genuine || mfrPart || String(dkd), before, payload);
   }
   if (r.error) {

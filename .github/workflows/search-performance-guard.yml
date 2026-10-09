@@ -37,6 +37,8 @@ jobs:
           node --check assets/concierge-pet/concierge-pet.js
       - name: Verify sales order revision workflow
         run: node scripts/verify-sales-order-revision.js
+      - name: Verify four-window coordination and isolated state
+        run: node scripts/verify-account-operation-workspace.js
       - name: Verify animated concierge pets
         run: |
           node scripts/verify-concierge-pet.js
