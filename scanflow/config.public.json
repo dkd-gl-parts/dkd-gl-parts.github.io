@@ -4,7 +4,7 @@
   "publishableKey": "sb_publishable_TXdCwBQOD_s3N0TqFCDOAw_8B44a0kv",
   "apiUrl": "https://jqoeqximtwfpqwzngutj.supabase.co/functions/v1/scanflow-api",
   "fixture": false,
-  "mfaEnrollmentEnabled": true,
+  "mfaEnrollmentEnabled": false,
   "adminOperationsEnabled": false,
   "chatEnabled": false,
   "mfaSetupOnly": true
