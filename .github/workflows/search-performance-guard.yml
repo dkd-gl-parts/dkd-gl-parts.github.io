@@ -45,6 +45,8 @@ jobs:
         run: node scripts/verify-component-add-delete-preimages.js
       - name: Verify component compatibility aggregate preimages
         run: node scripts/verify-component-compatibility-preimages.js
+      - name: Verify compatibility apply and unlink safeguards
+        run: node scripts/verify-component-compatibility-actions.js
       - name: Verify animated concierge pets
         run: |
           node scripts/verify-concierge-pet.js

@@ -7889,6 +7889,8 @@ var componentCompatFormSeq = 0;
 var componentCompatLookupSeq = 0;
 var componentCompatSnapshotState = null;
 var componentCompatSaving = false;
+var componentCompatActionSaving = false;
+var componentCompatLinkLoadSeq = 0;
 var componentAddPartNumberLookupSeq = 0;
 var componentAddSnapshotState = null;
 var componentAddFormSeq = 0;
@@ -43828,7 +43830,7 @@ function readComponentMutationPending() {
     var raw = window.sessionStorage.getItem(componentMutationStorageKey());
     if (!raw) return null;
     var pending = JSON.parse(raw);
-    if (!pending || ["add", "delete", "compatibility"].indexOf(pending.operation) < 0 || !pending.requestId ||
+    if (!pending || ["add", "delete", "compatibility", "compatibility_apply", "compatibility_unlink"].indexOf(pending.operation) < 0 || !pending.requestId ||
         !pending.payload || typeof pending.payload !== "object") throw new Error("invalid receipt");
     return pending;
   } catch (error) {
@@ -43857,9 +43859,11 @@ async function performComponentMutation(operation, payload) {
   var response;
   try {
     response = recovering ? await sb.rpc("get_component_mutation_receipt", {
-      target_request_id: pending.requestId, target_operation: pending.operation, target_payload: pending.payload
+      target_request_id: pending.requestId, target_operation: pending.operation.indexOf("compatibility_") === 0 ? "compatibility" : pending.operation, target_payload: pending.payload
     }) : await sb.rpc(pending.operation === "add" ? "add_manual_component_safely" :
-      pending.operation === "delete" ? "delete_manual_component_safely" : "save_component_compatibility_safely",
+      pending.operation === "delete" ? "delete_manual_component_safely" :
+      pending.operation === "compatibility_apply" ? "apply_component_compatibility_safely" :
+      pending.operation === "compatibility_unlink" ? "unlink_component_compatibility_safely" : "save_component_compatibility_safely",
       Object.assign({ target_request_id: pending.requestId }, pending.payload));
   } catch (error) {
     throw new Error(t("component_mutation_result_unknown"));
@@ -43876,7 +43880,17 @@ async function performComponentMutation(operation, payload) {
     throw new Error(t("component_mutation_result_unknown"));
   }
   var result = response.data;
-  var validResult = result && (pending.operation === "compatibility" ?
+  var actionFields = pending.payload.target_fields || {};
+  var validResult = result && (pending.operation === "compatibility_apply" ?
+    String(result.link_id) === String(actionFields.link_id) && Array.isArray(result.variant_ids) &&
+      JSON.stringify(result.variant_ids.map(String)) === JSON.stringify((actionFields.variant_ids || []).map(String).sort(function(a, b) { return Number(a) - Number(b); })) &&
+      Number.isInteger(result.target_count) && result.target_count === result.variant_ids.length &&
+      Number.isInteger(result.inserted_count) && result.inserted_count >= 0 &&
+      Number.isInteger(result.skipped_count) && result.skipped_count >= 0 &&
+      result.inserted_count + result.skipped_count === result.target_count :
+    pending.operation === "compatibility_unlink" ? String(result.link_id) === String(actionFields.link_id) &&
+      Number.isInteger(result.unlinked_count) && result.unlinked_count > 0 :
+    pending.operation === "compatibility" ?
     /^[1-9]\d*$/.test(String(result.internal_part_id)) && /^[1-9]\d*$/.test(String(result.link_id)) :
     /^[1-9]\d*$/.test(String(result.usage_id)));
   if (!validResult ||
@@ -47123,6 +47137,7 @@ async function loadComponentCompatBaseGroup(row) {
 async function loadComponentCompatLinks() {
   componentCompatLinks = [];
   if (!componentCompatSelected) return;
+  var selected = componentCompatSelected, seq = ++componentCompatLinkLoadSeq;
   var r = await sb.from("component_part_alternatives")
     .select("id,catalog_component_id,internal_component_part_id,product_variant_id,component_position,relation_type,priority,status,note,internal_component_parts(id,manufacturer,part_number,normalized_part_number,part_name,note,status)")
     .in("catalog_component_id", componentCompatBaseIds.length ? componentCompatBaseIds : [componentCompatSelected.dkd_component_id])
@@ -47130,6 +47145,7 @@ async function loadComponentCompatLinks() {
     .order("product_variant_id", { ascending: true, nullsFirst: true })
     .order("priority", { ascending: true })
     .limit(500);
+  if (selected !== componentCompatSelected || seq !== componentCompatLinkLoadSeq) return;
   if (r.error) {
     var links = document.getElementById("component-compat-links");
     if (links) links.innerHTML = "<div class='component-empty'>" + esc(r.error.message || t("msg_kikan_err")) + "</div>";
@@ -47149,6 +47165,21 @@ async function loadComponentCompatLinks() {
     grouped[key] = link;
     componentCompatLinks.push(link);
   });
+  for (var i = 0; i < componentCompatLinks.length; i++) {
+    var item = componentCompatLinks[i];
+    if (item.product_variant_id) continue;
+    var fields = { action: "unlink", catalog_component_id: selected.dkd_component_id, link_id: item.id };
+    var snapshot;
+    try { snapshot = await sb.rpc("get_component_compatibility_action_snapshot", { target_fields: fields }); }
+    catch (error) { continue; }
+    if (selected !== componentCompatSelected || seq !== componentCompatLinkLoadSeq) return;
+    var image = snapshot && !snapshot.error && snapshot.data;
+    if (!image || !image.token || !image.compatibility || !image.group_links || !image.group_links.length) continue;
+    item.internal_component_parts = image.compatibility.anchor.old_part;
+    Object.assign(item, image.compatibility.anchor.link);
+    item._group_link_ids = image.group_links.map(function(row) { return row.id; });
+    item._unlink_snapshot = { fields: fields, image: image, selected: selected };
+  }
 }
 
 function renderComponentCompatLinks() {
@@ -47444,7 +47475,7 @@ function closeComponentCompatForm() {
 }
 
 async function saveComponentCompatForm() {
-  if (componentCompatSaving || !componentCompatSelected || !canManageComponentCompatibility()) return;
+  if (componentCompatSaving || componentCompatActionSaving || !componentCompatSelected || !canManageComponentCompatibility()) return;
   var state = componentCompatSnapshotState;
   if (!componentCompatFormCurrent(state)) return;
   var error = document.getElementById("component-compat-form-error");
@@ -47486,15 +47517,33 @@ async function saveComponentCompatForm() {
 }
 
 async function disableComponentCompatLink(id) {
+  if (componentCompatActionSaving || componentCompatSaving) return;
   var link = componentCompatLinks.find(function(item) { return String(item.id) === String(id); });
-  if (!link || link.product_variant_id || !confirm("この共通互換を解除しますか？")) return;
-  var linkIds = (link._group_link_ids || [id]).map(function(value) { return parseInt(value, 10); });
-  var r = await sb.from("component_part_alternatives").update({ status: "inactive", updated_by: currentUser ? currentUser.id : null, updated_at: new Date().toISOString() }).in("id", linkIds).is("product_variant_id", null);
-  if (r.error) { alert(r.error.message || t("msg_save_err")); return; }
-  await writeLog("update", "component_part_alternatives", id, "disable compatibility", link, { status: "inactive" });
-  await loadComponentCompatLinks();
-  renderComponentCompatLinks();
-  await loadComponentCompatAssist();
+  var selected = componentCompatSelected;
+  var linksAtStart = componentCompatLinks;
+  componentCompatActionSaving = true;
+  try {
+    var pending = readComponentMutationPending(), state = link && link._unlink_snapshot;
+    if (!pending && (!link || link.product_variant_id || !state || state.selected !== selected)) throw new Error(t("component_compat_conflict"));
+    if (!pending && !confirm("この共通互換を解除しますか？")) return;
+    var result = await performComponentMutation("compatibility_unlink", pending ? null : {
+      target_snapshot_token: state.image.token, target_fields: state.fields
+    });
+    invalidateComponentCompatActionSnapshots(linksAtStart, selected);
+    if (result.recovered || result.operation !== "compatibility_unlink") { alert(t("component_mutation_result_recovered")); return; }
+    await writeLog("update", "component_part_alternatives", id, "disable compatibility", link, result.result);
+    if (selected !== componentCompatSelected) return;
+    await loadComponentCompatLinks(); renderComponentCompatLinks(); await loadComponentCompatAssist();
+  } catch (error) { alert(componentCompatErrorMessage(error)); }
+  finally { componentCompatActionSaving = false; }
+}
+
+function invalidateComponentCompatActionSnapshots(links, selected) {
+  if (links === componentCompatLinks && selected === componentCompatSelected) {
+    componentCompatLinkLoadSeq++;
+    componentCompatAssistSeq++;
+  }
+  links.forEach(function(link) { link._apply_snapshot = null; link._unlink_snapshot = null; });
 }
 
 async function componentCompatFetchByChunks(table, select, column, ids, configure) {
@@ -47510,6 +47559,7 @@ async function componentCompatFetchByChunks(table, select, column, ids, configur
 }
 
 async function loadComponentCompatAssist() {
+  componentCompatLinks.forEach(function(link) { link._apply_snapshot = null; });
   componentCompatAssistRows = [];
   componentCompatAssistSummary = { targetCount: 0, existingCount: 0 };
   var wrap = document.getElementById("component-compat-assist");
@@ -47517,6 +47567,7 @@ async function loadComponentCompatAssist() {
   var summary = document.getElementById("component-compat-assist-summary");
   var bulkSelect = document.getElementById("component-compat-bulk-link");
   if (!componentCompatSelected) return;
+  var selected = componentCompatSelected;
   var selectedId = String(componentCompatSelected.dkd_component_id);
   var assistSeq = ++componentCompatAssistSeq;
   var globalLinks = componentCompatLinks.filter(function(link) { return !link.product_variant_id && link.status === "active" && link.internal_component_parts; });
@@ -47603,8 +47654,22 @@ async function loadComponentCompatAssist() {
     componentCompatAssistRows = variants.filter(function(variant) { return !existingMap[String(variant.product_variant_id)]; }).map(function(variant) {
       return { variant: variant, product: productMap[String(variant.dkd_shohin_id)] || {}, evidence: evidenceByProduct[String(variant.dkd_shohin_id)] || {}, alternatives: globalLinks };
     }).slice(0, 1000);
+    for (var i = 0; i < globalLinks.length; i++) {
+      var link = globalLinks[i];
+      if (!link._source_component_id) continue;
+      var fields = { action: "apply", catalog_component_id: selected.dkd_component_id, link_id: link.id,
+        source_component_id: link._source_component_id, product_kind: targetKind };
+      var snapshot = await sb.rpc("get_component_compatibility_action_snapshot", { target_fields: fields });
+      if (assistSeq !== componentCompatAssistSeq || selected !== componentCompatSelected) return;
+      var image = snapshot && !snapshot.error && snapshot.data;
+      if (!image || !image.token || !image.compatibility || !Array.isArray(image.targets)) continue;
+      link.internal_component_parts = image.compatibility.anchor.old_part;
+      link._apply_snapshot = { fields: fields, image: image, selected: selected, seq: assistSeq };
+    }
+    if (assistSeq !== componentCompatAssistSeq || selected !== componentCompatSelected) return;
     renderComponentCompatAssist();
   } catch (e) {
+    if (assistSeq !== componentCompatAssistSeq || selected !== componentCompatSelected) return;
     if (wrap) wrap.innerHTML = "<div class='component-empty'>" + esc(e.message || t("msg_kikan_err")) + "</div>";
     if (count) count.textContent = "";
     if (summary) summary.textContent = "";
@@ -47619,15 +47684,18 @@ function renderComponentCompatAssist() {
   var selectAll = document.getElementById("component-compat-assist-select-all");
   var globalLinks = componentCompatLinks.filter(function(link) { return !link.product_variant_id && link.status === "active" && link.internal_component_parts; });
   var availableLinks = globalLinks.filter(function(link) { return !!link._source_component_id; });
-  if (count) count.textContent = componentCompatAssistRows.length ? "(" + componentCompatAssistRows.length + ")" : "";
-  if (summary) summary.textContent = "対象 " + componentCompatAssistSummary.targetCount + "件 / 登録済み " + componentCompatAssistSummary.existingCount + "件 / 未登録 " + componentCompatAssistRows.length + "件";
   if (selectAll) selectAll.checked = true;
   if (bulkSelect) {
+    var selectedLinkId = bulkSelect.value;
     bulkSelect.innerHTML = availableLinks.length ? availableLinks.map(function(link) {
       var part = link.internal_component_parts || {};
       return "<option value='" + esc(String(link.id)) + "'>" + esc([part.part_number || "-", part.manufacturer || "UNKNOWN", part.part_name || ""].filter(Boolean).join(" / ")) + "</option>";
     }).join("") : "<option value=''>登録済み部品を選択してください</option>";
+    if (availableLinks.some(function(link) { return String(link.id) === selectedLinkId; })) bulkSelect.value = selectedLinkId;
   }
+  setComponentCompatAssistSnapshotRows();
+  if (count) count.textContent = componentCompatAssistRows.length ? "(" + componentCompatAssistRows.length + ")" : "";
+  if (summary) summary.textContent = "対象 " + componentCompatAssistSummary.targetCount + "件 / 登録済み " + componentCompatAssistSummary.existingCount + "件 / 未登録 " + componentCompatAssistRows.length + "件";
   if (!wrap) return;
   if (!componentCompatAssistRows.length) {
     wrap.innerHTML = "<div class='component-empty'>未登録候補はありません</div>";
@@ -47646,36 +47714,54 @@ function selectedComponentCompatAssistLink() {
   return componentCompatLinks.find(function(link) { return String(link.id) === String(select ? select.value : ""); }) || null;
 }
 
+function setComponentCompatAssistSnapshotRows() {
+  var link = selectedComponentCompatAssistLink(), state = link && link._apply_snapshot;
+  var kindEl = document.getElementById("component-compat-assist-kind");
+  var kind = kindEl && kindEl.value === "aftermarket_new" ? "aftermarket_new" : "rebuilt";
+  componentCompatAssistRows = [];
+  componentCompatAssistSummary = { targetCount: 0, existingCount: 0 };
+  if (!state || state.selected !== componentCompatSelected || state.seq !== componentCompatAssistSeq || state.fields.product_kind !== kind) return;
+  componentCompatAssistSummary.targetCount = state.image.targets.length;
+  componentCompatAssistSummary.existingCount = state.image.targets.filter(function(row) { return row.existing; }).length;
+  componentCompatAssistRows = state.image.targets.filter(function(row) { return !row.existing; }).slice(0, 1000);
+}
+
 async function runComponentCompatBulkApply(variantIds, button) {
+  if (componentCompatActionSaving || componentCompatSaving) return;
   var link = selectedComponentCompatAssistLink();
-  if (!link || !link._source_component_id) { alert("反映する互換品に、登録済みの構成部品が紐づいていません"); return; }
   variantIds = uniqueTextValues((variantIds || []).map(String)).map(function(value) { return parseInt(value, 10); }).filter(function(value) { return !isNaN(value); });
-  if (!variantIds.length) { alert("反映対象を選択してください"); return; }
-  var part = link.internal_component_parts || {};
+  var selected = componentCompatSelected, part = link && link.internal_component_parts || {};
+  var linksAtStart = componentCompatLinks;
   var kindEl = document.getElementById("component-compat-assist-kind");
   var targetKind = kindEl && kindEl.value === "aftermarket_new" ? "aftermarket_new" : "rebuilt";
-  if (!confirm(part.part_number + " を選択した" + variantIds.length + "件の" + productKindLabel(targetKind) + "へ構成部品登録しますか？")) return;
   var oldText = button ? button.textContent : "";
-  if (button) { button.disabled = true; button.textContent = "反映中..."; }
-  var r = await sb.rpc("bulk_apply_component_compatibility", {
-    target_catalog_component_id: componentCompatSelected.dkd_component_id,
-    target_source_component_id: link._source_component_id,
-    target_product_kind: targetKind,
-    target_variant_ids: variantIds
-  });
-  if (button) { button.disabled = false; button.textContent = oldText; }
-  if (r.error) { alert(t("component_add_failed") + ": " + r.error.message); return; }
-  var result = Array.isArray(r.data) ? (r.data[0] || {}) : (r.data || {});
-  await writeLog("insert", "assembly_component_usages", componentCompatSelected.dkd_component_id, part.part_number, null, {
-    source: "component_compat_bulk",
-    compatibility_id: link.id,
-    source_component_id: link._source_component_id,
-    product_kind: targetKind,
-    requested_variant_ids: variantIds,
-    result: result
-  });
-  alert("構成部品を " + String(result.inserted_count || 0) + "件登録しました。登録済み等によるスキップ: " + String(result.skipped_count || 0) + "件");
-  await loadComponentCompatAssist();
+  componentCompatActionSaving = true;
+  try {
+    var pending = readComponentMutationPending(), state = link && link._apply_snapshot;
+    if (!pending && (!state || state.selected !== selected || state.seq !== componentCompatAssistSeq ||
+        state.fields.product_kind !== targetKind || !variantIds.length || variantIds.length > 1000 ||
+        !variantIds.every(function(id) { return componentCompatAssistRows.some(function(row) { return String(row.variant.product_variant_id) === String(id); }); }))) {
+      throw new Error(t("component_compat_conflict"));
+    }
+    if (!pending && !confirm(part.part_number + " を選択した" + variantIds.length + "件の" + productKindLabel(targetKind) + "へ構成部品登録しますか？")) return;
+    if (button) { button.disabled = true; button.textContent = t("component_save_loading"); }
+    var receipt = await performComponentMutation("compatibility_apply", pending ? null : {
+      target_snapshot_token: state.image.token, target_fields: Object.assign({}, state.fields, { variant_ids: variantIds })
+    });
+    invalidateComponentCompatActionSnapshots(linksAtStart, selected);
+    if (receipt.recovered || receipt.operation !== "compatibility_apply") { alert(t("component_mutation_result_recovered")); return; }
+    var result = receipt.result;
+    await writeLog("insert", "assembly_component_usages", selected.dkd_component_id, part.part_number, null, {
+      source: "component_compat_bulk", compatibility_id: link.id, source_component_id: state.fields.source_component_id,
+      product_kind: targetKind, requested_variant_ids: variantIds, result: result
+    });
+    alert("構成部品を " + String(result.inserted_count) + "件登録しました。登録済み等によるスキップ: " + String(result.skipped_count) + "件");
+    if (selected === componentCompatSelected) await loadComponentCompatAssist();
+  } catch (error) { alert(componentCompatErrorMessage(error)); }
+  finally {
+    componentCompatActionSaving = false;
+    if (button) { button.disabled = false; button.textContent = oldText; }
+  }
 }
 
 async function applyComponentCompatAssist(variantId) {
@@ -56895,6 +56981,7 @@ document.querySelectorAll("[data-compat-tab]").forEach(function(btn){ btn.addEve
 document.getElementById("btn-component-compat-add").addEventListener("click", function(){ openComponentCompatForm(""); });
 document.getElementById("btn-component-compat-assist-refresh").addEventListener("click", loadComponentCompatAssist);
 document.getElementById("component-compat-assist-kind").addEventListener("change", loadComponentCompatAssist);
+document.getElementById("component-compat-bulk-link").addEventListener("change", renderComponentCompatAssist);
 document.getElementById("btn-component-compat-assist-bulk").addEventListener("click", bulkApplyComponentCompatAssist);
 document.getElementById("component-compat-assist-select-all").addEventListener("change", function(){
   var checked = this.checked;

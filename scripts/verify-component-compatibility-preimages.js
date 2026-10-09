@@ -47,7 +47,7 @@ function fixture() {
     console, currentUser: { id: "fixture-user" }, componentCompatSelected: { dkd_component_id: 10, part_name: "Cached base" },
     componentCompatLinks: [{ id: 1, internal_component_parts: { id: 1, manufacturer: "DENSO", part_number: "A220", part_name: "Cached name" } }],
     componentCompatExistingRows: [], componentCompatSourceComponentMap: {}, componentCompatExistingProductKind: "rebuilt",
-    componentCompatFormSeq: 0, componentCompatLookupSeq: 0, componentCompatSnapshotState: null, componentCompatSaving: false,
+    componentCompatFormSeq: 0, componentCompatLookupSeq: 0, componentCompatSnapshotState: null, componentCompatSaving: false, componentCompatActionSaving: false,
     componentCompatSourceMapKey: link => String(link.internal_component_parts.id), componentCompatBaseLabel: base => base.part_name,
     renderComponentCompatExistingRows() {}, canManageComponentCompatibility: () => true, componentCompatIsAssySelfRow: () => false,
     normalizeComponentManufacturerInput: value => String(value || "").trim().toUpperCase(),
