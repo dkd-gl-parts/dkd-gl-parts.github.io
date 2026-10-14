@@ -49,7 +49,8 @@ const printed=api.buildPrintHtml(result,{...options,vehicleKei:'confirmed',orien
 assert(printed.includes('ALDK除外')&&printed.includes('軽四: 適合あり')&&printed.includes('軽四以外にも適合'));
 assert(api.printFileTitle(options.categories,1,100,new Date(),'manufacturing','all',{...options,vehicleKei:'confirmed'}).includes('軽四'));
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
-for(const id of ['vehicle-work','vehicle-kei','vehicle-common','show-vehicle'])assert(html.includes('id="manufacturing-ranking-'+id+'"'));
+for(const id of ['vehicle-target','vehicle-target-options','show-vehicle'])assert(html.includes('id="manufacturing-ranking-'+id+'"'));
+for(const kind of ['work','kei','common'])assert(!html.includes('id="manufacturing-ranking-vehicle-'+kind+'"'),'three old filter controls are replaced by one');
 assert(!source.includes('vehicle-classification-2025-20261009.json'),'private classification data stays outside public assets');
 const codes=extra=>rank(extra).results.map(result=>result.row.productCode).join(',');
 assert.equal(codes({vehicleWork:[],vehicleKei:[],vehicleCommon:[]}),'1,2,3,4,6','unchecked means all, including unknown classifications');
@@ -75,10 +76,55 @@ assert(api.printFileTitle(options.categories,1,100,new Date(),'manufacturing',[]
 assert.equal(api.vehicleFilterText({...options,vehicleWork:[],vehicleKei:[],vehicleCommon:[]}),'','default all adds no filter condition');
 assert.equal(api.defaultSourceCategories([{name:'商品別出荷実績集計',isAggregate:true},{name:'オルタ',isAggregate:false}]).join(','),'商品別出荷実績集計','default all uses aggregate without also selecting the details');
 assert.equal(api.defaultSourceCategories([{name:'オルタ',isAggregate:false},{name:'セル',isAggregate:false}]).join(','),'オルタ,セル','without an aggregate, all source categories are initially selected');
-for(const kind of ['work','kei','common']){
- const picker=html.match(new RegExp('<details id="manufacturing-ranking-vehicle-'+kind+'"[\\s\\S]*?</details>'));
- assert(picker&&picker[0].includes('type="checkbox"')&&!picker[0].includes(' checked'),'vehicle choices start unchecked');
-}
+const picker=html.match(/<details id="manufacturing-ranking-vehicle-target"[\s\S]*?<\/details>/);
+assert(picker&&picker[0].includes('type="checkbox"')&&!picker[0].includes(' checked'),'unified vehicle choices start unchecked');
+for(const value of ['kei','other','taxi','truck','van','driving_school','machine','forklift','special','bus'])assert(picker[0].includes('value="'+value+'"'),'requested vehicle choice exists: '+value);
+const unifiedRows=rows.concat([
+ row('7','MAKER7',35,profile(['軽商用バン'],['軽商用バン'],'確認資料では軽四のみ',false)),
+ row('8','MAKER8',30,profile(['タクシー・教習車'],[],'未確認',false)),
+ row('9','MAKER9',29,profile(['タクシー・営業車仕様'],[],'未確認',false)),
+ row('10','MAKER10',28,profile(['建設機械'],[],'未確認',false)),
+ row('11','MAKER11',27,profile(['農業機械'],[],'未確認',false)),
+ row('12','MAKER12',26,profile(['産業機械・エンジン'],[],'未確認',false)),
+ row('13','MAKER13',25,profile(['フォークリフト'],[],'未確認',false)),
+ row('14','MAKER14',24,profile(['特装車'],[],'未確認',false)),
+ row('15','MAKER15',23,profile(['バス'],[],'未確認',false)),
+ row('16','MAKER16',22,profile(['トラック'],['軽乗用車'],'軽四以外にも適合',false))
+]);
+const unifiedRank=(targets,extra={})=>api.buildRanking(unifiedRows,{...options,vehicleTargets:targets,...extra});
+const unifiedCodes=targets=>unifiedRank(targets).results.map(result=>result.row.productCode).join(',');
+assert.equal(unifiedCodes([]),'1,2,3,4,6,7,8,9,10,11,12,13,14,15,16','default includes unknowns and excludes ALDK');
+assert.equal(unifiedCodes(['truck']),'1,2,16','truck alone includes both regular and kei trucks');
+assert.equal(unifiedCodes(['kei','truck']),'2','kei + truck is specifically a kei-truck fitment');
+assert.equal(unifiedCodes(['other','truck']),'1,16','other + truck selects confirmed regular-truck fitments');
+assert.equal(unifiedCodes(['kei','other','truck']),'1,2,16','sizes are ORed');
+assert.equal(unifiedCodes(['van']),'6,7','van includes regular and kei commercial vans');
+assert.equal(unifiedCodes(['kei','van']),'7');
+assert.equal(unifiedCodes(['other','van']),'6');
+assert.equal(unifiedCodes(['kei']),'2,3,7,16','kei alone includes kei passenger vehicles');
+assert.equal(unifiedCodes(['other']),'1,3,6,8,9,10,11,12,13,14,15,16','unknown and confirmed-kei-only do not imply non-kei fitment');
+assert.equal(unifiedCodes(['taxi']),'8,9');
+assert.equal(unifiedCodes(['driving_school']),'8','shared taxi/driving-school fitment belongs in both');
+assert.equal(unifiedCodes(['machine']),'10,11,12','machinery includes construction, farm and industrial tags');
+assert.equal(unifiedCodes(['forklift']),'13');
+assert.equal(unifiedCodes(['special']),'14');
+assert.equal(unifiedCodes(['bus']),'15','existing bus choice is preserved');
+assert.equal(unifiedCodes(['taxi','truck']),'1,2,8,9,16','vehicle uses are ORed');
+assert.equal(unifiedCodes(['kei','truck','van']),'2,7','size and vehicle uses intersect');
+assert.equal(unifiedCodes(['kei','truck','truck','van']),'2,7','overlapping selections do not duplicate products');
+assert.equal(unifiedCodes(['kei','taxi']),'','a kei passenger fitment does not imply a kei taxi fitment');
+assert.equal(unifiedCodes(['__proto__']),'','unknown selections fail closed');
+assert.equal(unifiedRank(['kei','truck']).results[0].rank,1,'unified selection precedes ranking');
+assert.equal(api.buildRanking(compatible,{...options,vehicleTargets:['truck'],compatibilityMode:'consolidated'}).results[0].shipment,10,'unmatched compatibility member is excluded');
+assert.equal(api.buildRanking([...unifiedRows,category],{...options,vehicleTargets:['kei'],productCategories:['オルタ']}).results.length,1,'product categories intersect with unified vehicle choices');
+const unifiedOptions={...options,vehicleTargets:['kei','truck'],orientation:'portrait'};
+const unifiedResult=unifiedRank(unifiedOptions.vehicleTargets).results;
+assert.equal(api.vehicleFilterText(unifiedOptions),'車両区分: 軽四 × トラック');
+assert.equal(api.vehicleFilterText({...unifiedOptions,vehicleTargets:[]}),'','no selection adds no condition');
+assert(api.buildPrintHtml(unifiedResult,unifiedOptions).includes('車両区分: 軽四 × トラック'),'PDF shows the actual combined condition');
+assert.equal(api.buildExcelRows(unifiedResult,unifiedOptions).length,2,'CSV has the same single kei truck');
+assert.equal(api.buildExcelRows(unifiedResult,{...unifiedOptions,reportType:'supplier_availability',supplierId:'all',supplierStatus:'all'}).length,2,'supplier CSV has the same single kei truck');
+assert(api.printFileTitle(options.categories,1,100,new Date(),'manufacturing',[],unifiedOptions).includes('軽四 × トラック'),'filename includes unified condition');
 elements['manufacturing-ranking-table']={innerHTML:''};
 elements['manufacturing-ranking-preview-note']={textContent:''};
 const largeRows=Array.from({length:6000},(_,i)=>row(String(i+1),'PREVIEW-'+(i+1),6000-i,null));
@@ -98,6 +144,10 @@ checkPreview(1,300);
 checkPreview(301,600);
 checkPreview(1,300,'supplier_availability');
 checkPreview(1,6000);
+elements['manufacturing-ranking-excel']={disabled:false};
+elements['manufacturing-ranking-pdf']={disabled:false};
 api.testRenderPreview([],previewOptions);
 assert.equal(elements['manufacturing-ranking-preview-note'].textContent,'全0行を表示','empty range must not keep a stale preview count');
-console.log('manufacturing vehicle filters: ALDK, business/kei/common, unknowns, category intersection, rank, compatibility, CSV/PDF passed');
+assert.equal(elements['manufacturing-ranking-excel'].disabled,true,'no matches disable Excel output');
+assert.equal(elements['manufacturing-ranking-pdf'].disabled,true,'no matches disable PDF output');
+console.log('manufacturing vehicle filters: unified size/use, exact kei-truck/van, OR/AND, unknowns, ALDK, rank, compatibility, complete preview and CSV/PDF passed');
