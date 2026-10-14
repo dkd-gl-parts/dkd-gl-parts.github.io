@@ -267,4 +267,52 @@ if (escapedCategoryPrint.includes("商品カテゴリ: <script>")) {
   throw new Error("category names must be escaped in PDF output");
 }
 
+// Product-category choices are ORed within the source sheets, then ranked once.
+const multiOptions = { ...categoryOptions, productCategories: ["オルタ", "セル"] };
+const multiRanking = api.buildRanking(categoryRows, multiOptions);
+if (multiRanking.results.map(result => result.row.id).join(",") !== "A3,A1,A2" ||
+    multiRanking.results.map(result => result.shipment).join(",") !== "300,100,80" ||
+    multiRanking.results.map(result => result.rank).join(",") !== "1,2,3" ||
+    multiRanking.unclassifiedRowCount !== 2) {
+  throw new Error("multiple categories must keep aggregate totals, exclude unresolved rows, and recompute combined ranks");
+}
+const multiRange = api.buildRanking(categoryRows, { ...multiOptions, startRank: 2, endRank: 2 });
+if (multiRange.results.length !== 1 || multiRange.results[0].row.id !== "A1") {
+  throw new Error("rank range must apply after combining selected product categories");
+}
+const duplicateSelection = api.buildRanking(categoryRows, { ...multiOptions, productCategories: ["オルタ", "セル", "オルタ"] });
+if (JSON.stringify(multiRanking) !== JSON.stringify(duplicateSelection)) {
+  throw new Error("repeated category choices must not duplicate shipment rows");
+}
+if (JSON.stringify(api.buildRanking(categoryRows, { ...multiOptions, productCategories: [] })) !== JSON.stringify(allRanking)) {
+  throw new Error("no selected product category must restore all products, including unresolved rows");
+}
+if (api.buildRanking(categoryRows, { ...multiOptions, categories: ["オルタ"], productCategories: ["セル", "部品"] }).results.length) {
+  throw new Error("product-category choices must intersect the selected source sheets");
+}
+const multiConsolidated = api.buildRanking(categoryRows, { ...multiOptions, compatibilityMode: "consolidated" });
+if (multiConsolidated.results.reduce((total, result) => total + result.shipment, 0) !== 480 ||
+    multiConsolidated.results.some(result => result.group.some(row => row.productCode === "4"))) {
+  throw new Error("other categories must not enter multiple-category compatibility totals");
+}
+const keiRows = categoryRows.map(row => row.id === "A1" ? { ...row, vehicleClassification: {
+  version: "business-kei-20261009", work_tags: ["軽商用バン"], kei_kinds: ["軽商用バン"], kei_common: "確認資料では軽四のみ", other_fitment_unknown: false
+} } : row);
+if (api.buildRanking(keiRows, { ...multiOptions, vehicleKei: "confirmed" }).results.map(result => result.row.id).join(",") !== "A1") {
+  throw new Error("multiple categories must intersect existing vehicle filters");
+}
+const multiCsv = api.buildExcelCsv(multiRanking.results, multiOptions);
+const multiPrint = api.buildPrintHtml(multiRanking.results, multiOptions);
+if (multiCsv.trim().split(/\r?\n/).length !== 4 || multiCsv.includes("オルタネータ用部品") ||
+    !multiPrint.includes("商品カテゴリ: オルタ・セル") || multiPrint.includes("オルタネータ用部品")) {
+  throw new Error("CSV and PDF must contain only the combined category results and show the selected conditions");
+}
+if (!api.printFileTitle([aggregateSheet], 1, 100, new Date(2026, 9, 14), "manufacturing", ["オルタ", "セル"]).includes("（オルタ・セル）")) {
+  throw new Error("multiple selected categories must be reflected in export filenames");
+}
+const escapedMultiPrint = api.buildPrintHtml([], { ...multiOptions, productCategories: ["<script>", "<img>"] });
+if (escapedMultiPrint.includes("商品カテゴリ: <script>") || escapedMultiPrint.includes("・<img>")) {
+  throw new Error("all category names must be escaped in combined PDF conditions");
+}
+
 console.log("manufacturing ranking supplier and product-category report guards passed");

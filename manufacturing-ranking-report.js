@@ -726,16 +726,39 @@
         "<input type='checkbox' value='" + escapeHtml(sheet.name) + "'>" +
         "<span><strong>" + escapeHtml(sheet.name) + "</strong>" + aggregate + "</span></label>";
     }).join("");
-    var productCategory = byId("manufacturing-ranking-product-category");
+    var productCategory = byId("manufacturing-ranking-product-category-options");
     if (productCategory) {
-      var previous = productCategory.value;
-      productCategory.innerHTML = "<option value='all'>すべての商品カテゴリ</option>" + state.sheets.filter(function(sheet) {
+      var previous = selectedProductCategories();
+      productCategory.innerHTML = state.sheets.filter(function(sheet) {
         return !sheet.isAggregate;
       }).map(function(sheet) {
-        return "<option value='" + escapeHtml(sheet.name) + "'>" + escapeHtml(sheet.name) + "</option>";
+        return "<label class='ranking-report-category-option'><input type='checkbox' value='" + escapeHtml(sheet.name) + "'" +
+          (previous.indexOf(sheet.name) >= 0 ? " checked" : "") + "><span>" + escapeHtml(sheet.name) + "</span></label>";
       }).join("");
-      if (state.sheets.some(function(sheet) { return !sheet.isAggregate && sheet.name === previous; })) productCategory.value = previous;
+      syncProductCategorySummary();
     }
+  }
+
+  function selectedProductCategories() {
+    return Array.prototype.map.call(
+      document.querySelectorAll("#manufacturing-ranking-product-category-options input[type='checkbox']:checked"),
+      function(input) { return input.value; }
+    );
+  }
+
+  function syncProductCategorySummary() {
+    var summary = byId("manufacturing-ranking-product-category-summary");
+    if (summary) summary.textContent = selectedProductCategories().join("・") || "すべての商品カテゴリ";
+  }
+
+  function productCategorySelection(value) {
+    var categories = Array.isArray(value) ? value : value ? [value] : [];
+    if (categories.indexOf("all") >= 0) return [];
+    return uniqueIds(categories.map(normalizeText).filter(Boolean));
+  }
+
+  function productCategoryFilters(options) {
+    return productCategorySelection(Array.isArray(options.productCategories) ? options.productCategories : options.productCategory);
   }
 
   function selectedCategories() {
@@ -766,7 +789,7 @@
     var reportType = byId("manufacturing-ranking-report-type").value;
     return {
       categories: selectedCategories(),
-      productCategory: byId("manufacturing-ranking-product-category").value,
+      productCategories: selectedProductCategories(),
       vehicleWork: byId("manufacturing-ranking-vehicle-work").value,
       vehicleKei: byId("manufacturing-ranking-vehicle-kei").value,
       vehicleCommon: byId("manufacturing-ranking-vehicle-common").value,
@@ -991,16 +1014,18 @@
   function buildRanking(rows, options) {
     var categorySet = Object.create(null);
     options.categories.forEach(function(category) { categorySet[category] = true; });
-    var productCategory = options.productCategory || "all";
-    var productCategories = productCategory !== "all" ? indexProductCategories(rows) : null;
+    var productCategoryNames = productCategoryFilters(options);
+    var productCategorySet = Object.create(null);
+    productCategoryNames.forEach(function(category) { productCategorySet[category] = true; });
+    var productCategories = productCategoryNames.length ? indexProductCategories(rows) : null;
     var unclassifiedRowCount = 0;
     var excludedDksRowCount = 0;
     var sourceRows = rows.filter(function(row) {
       if (!categorySet[row.sheet]) return false;
-      if (productCategory !== "all") {
+      if (productCategoryNames.length) {
         var resolvedCategory = productCategoryForRow(row, productCategories);
         if (!resolvedCategory) unclassifiedRowCount++;
-        if (resolvedCategory !== productCategory) return false;
+        if (!productCategorySet[resolvedCategory]) return false;
       }
       if (normalizeText(row.maker).toUpperCase().indexOf("ALDK") >= 0) { excludedDksRowCount++; return false; }
       if (!matchesVehicleFilters(row, options)) return false;
@@ -1083,7 +1108,8 @@
     var lastRank = Math.max(firstRank, parseInt(endRank, 10) || firstRank);
     var rankRange = firstRank === lastRank ? String(firstRank) : firstRank + "-" + lastRank;
     var reportName = reportType === "supplier_availability" ? "仕入先商品照合" : "製造ランキング";
-    var productCategoryText = productCategory && productCategory !== "all" ? "（" + normalizeText(productCategory).replace(/[\\/:*?"<>|]/g, "_") + "）" : "";
+    var productCategoryNames = productCategorySelection(productCategory);
+    var productCategoryText = productCategoryNames.length ? "（" + productCategoryNames.join("・").replace(/[\\/:*?"<>|]/g, "_") + "）" : "";
     var vehicleText = options && vehicleFilterText(options);
     return (categoryNames.join("・") || "カテゴリ") + productCategoryText + (vehicleText ? "（" + vehicleText.replace(/[\\/:*?"<>|]/g, "_") + "）" : "") + "＆" + reportName + rankRange + "位＆" + printFileDate(date);
   }
@@ -1678,7 +1704,7 @@
     var url = URL.createObjectURL(blob);
     var anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = printFileTitle(state.options.categories, state.options.startRank, state.options.endRank, new Date(), state.options.reportType, state.options.productCategory, state.options) + ".csv";
+    anchor.download = printFileTitle(state.options.categories, state.options.startRank, state.options.endRank, new Date(), state.options.reportType, productCategoryFilters(state.options), state.options) + ".csv";
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
@@ -1730,10 +1756,11 @@
     var generatedDate = new Date();
     var generatedAt = generatedDate.toLocaleString("ja-JP");
     var categoryText = options.categories.join(" / ");
-    if (options.productCategory && options.productCategory !== "all") categoryText += " / 商品カテゴリ: " + options.productCategory;
+    var productCategoryNames = productCategoryFilters(options);
+    if (productCategoryNames.length) categoryText += " / 商品カテゴリ: " + productCategoryNames.join("・");
     categoryText += " / ALDK除外" + (vehicleFilterText(options) ? " / " + vehicleFilterText(options) : "");
     var supplierReport = options.reportType === "supplier_availability";
-    var title = printFileTitle(options.categories, options.startRank, options.endRank, generatedDate, options.reportType, options.productCategory, options);
+    var title = printFileTitle(options.categories, options.startRank, options.endRank, generatedDate, options.reportType, productCategoryNames, options);
     var coreStockSummary = rankingCoreStockSummary(results);
     var supplierSummary = supplierAvailabilitySummary(results, options);
     var header;
@@ -1840,7 +1867,13 @@
     });
     byId("manufacturing-ranking-supplier").addEventListener("change", updatePreview);
     byId("manufacturing-ranking-supplier-status").addEventListener("change", updatePreview);
+    byId("manufacturing-ranking-product-category").addEventListener("change", syncProductCategorySummary);
     byId("manufacturing-ranking-product-category").addEventListener("change", updatePreview);
+    byId("manufacturing-ranking-product-category-reset").addEventListener("click", function() {
+      document.querySelectorAll("#manufacturing-ranking-product-category-options input[type='checkbox']").forEach(function(input) { input.checked = false; });
+      syncProductCategorySummary();
+      updatePreview();
+    });
     ["manufacturing-ranking-vehicle-work", "manufacturing-ranking-vehicle-kei", "manufacturing-ranking-vehicle-common", "manufacturing-ranking-show-vehicle"].forEach(function(id) { byId(id).addEventListener("change", updatePreview); });
     byId("manufacturing-ranking-categories").addEventListener("change", updatePreview);
     byId("btn-logout-manufacturing-ranking-report").addEventListener("click", function() {
