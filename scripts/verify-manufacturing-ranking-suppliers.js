@@ -304,10 +304,10 @@ if (api.buildRanking(keiRows, { ...multiOptions, vehicleKei: "confirmed" }).resu
 const multiCsv = api.buildExcelCsv(multiRanking.results, multiOptions);
 const multiPrint = api.buildPrintHtml(multiRanking.results, multiOptions);
 if (multiCsv.trim().split(/\r?\n/).length !== 4 || multiCsv.includes("オルタネータ用部品") ||
-    !multiPrint.includes("商品カテゴリ: オルタ・セル") || multiPrint.includes("オルタネータ用部品")) {
+    !multiPrint.includes("商品カテゴリ: オルタ・スターター") || multiPrint.includes("オルタネータ用部品")) {
   throw new Error("CSV and PDF must contain only the combined category results and show the selected conditions");
 }
-if (!api.printFileTitle([aggregateSheet], 1, 100, new Date(2026, 9, 14), "manufacturing", ["オルタ", "セル"]).includes("（オルタ・セル）")) {
+if (!api.printFileTitle([aggregateSheet], 1, 100, new Date(2026, 9, 14), "manufacturing", ["オルタ", "セル"]).includes("（オルタ・スターター）")) {
   throw new Error("multiple selected categories must be reflected in export filenames");
 }
 const escapedMultiPrint = api.buildPrintHtml([], { ...multiOptions, productCategories: ["<script>", "<img>"] });
