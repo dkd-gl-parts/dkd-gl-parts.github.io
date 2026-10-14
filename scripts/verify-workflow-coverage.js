@@ -87,6 +87,7 @@ const securityHeaderPaths = [
   "index.html",
   "install-app.js",
   "product-3d-prepared-inputs.js",
+  "product-3d-fal-selection.js",
   "product-3d-input-worker.mjs",
   "site.webmanifest",
   "vendor/**",

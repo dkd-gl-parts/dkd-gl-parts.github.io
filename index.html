@@ -5475,6 +5475,20 @@
         <div class="product-3d-tripo-photo-directions" id="product-3d-tripo-image-directions" aria-label="拡大写真の方向を指定"></div>
       </div>
       <p class="product-3d-tripo-note">画像の確認・方向選択だけでは、Tripoへの送信やクレジット消費はありません。選択内容はこの画面を閉じると解除されます。</p>
+      <section class="product-3d-fal-selection" id="product-3d-fal-selection" aria-labelledby="product-3d-fal-selection-title" hidden>
+        <h3 id="product-3d-fal-selection-title">fal試験用：社外新品SLの6方向を指定</h3>
+        <p>27060-30220の同じ社外新品SLの写真から、正面・背面・左側・右側・真上・底面を1枚ずつ選んでください。上のTripo用4方向とは別の選択です。同じ写真を別の方向に指定すると、元の選択は解除されます。</p>
+        <div class="product-3d-fal-selected" data-fal-preview aria-label="選択済み6方向"></div>
+        <p class="product-3d-fal-status" data-fal-status role="status" aria-live="polite"></p>
+        <button type="button" class="btn-sm-edit" data-fal-export disabled>選んだ6枚と向きをZIPに保存（生成なし）</button>
+        <p>保存時のみ6枚を端末へ取得し、向き情報とまとめます。最大8MB/枚・合計32MB。写真の撮影情報を取り除き、JPEGに変換します。原本変更・fal送信・生成・課金・商品登録はしません。閉じると選択は解除されます。</p>
+        <div class="product-3d-fal-gallery" data-fal-gallery aria-label="社外新品SLの候補写真"></div>
+        <div class="product-3d-fal-large" data-fal-large hidden>
+          <div><strong data-fal-large-label></strong><button type="button" data-fal-large-close>拡大表示を閉じる</button></div>
+          <img data-fal-large-image alt="">
+          <div class="product-3d-fal-photo-directions" data-fal-large-directions aria-label="拡大写真の方向を指定"></div>
+        </div>
+      </section>
       <section class="product-3d-prepared-inputs" id="product-3d-prepared-inputs" aria-label="整列済み端面入力候補" hidden>
         <h3>端面を含む整列済み4方向</h3>
         <p>正面171・左175・背面179・右172。EXIFを正規化し、左を反時計90°・右を時計90°に整列した候補です。形状の改善は保証されません。再生成は別の入力・費用確認まで無効です。</p>
@@ -5685,6 +5699,7 @@
 <script src="container-stock-import.js?v=1.1.1151"></script>
 <script src="product-3d-local-glb.js?v=1.1.1151"></script>
 <script src="product-3d-prepared-inputs.js?v=1.1.1151"></script>
+<script src="product-3d-fal-selection.js?v=1.1.1151"></script>
 <script src="product-3d.js?v=1.1.1151"></script>
 <script src="assets/concierge-pet/test-sales-bridge.js?v=1.1.1151"></script>
 <script src="assets/concierge-pet/company-bridge.js?v=1.1.1151"></script>

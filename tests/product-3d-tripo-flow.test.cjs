@@ -24,7 +24,7 @@ function harness({ balance = 100, confirmed = true, failStart = false, quoteKey,
     tripoTarget: { context: "sales", productId: 101, kind: "rebuilt" },
     tripoJob: null, tripoBusy: false, tripoHistoryReady: true, tripoRequestId: 1, tripoReturnFocus: null,
     tripoImageRows: { "11": { id: 11 }, "12": { id: 12 } }, tripoImagePreviewRequestId: 0,
-    preparedInputsController: null,
+    preparedInputsController: null, falSelectionController: null,
     sessionModelsEnabled: true, crypto: { randomUUID: () => "00000000-0000-4000-8000-000000000001" },
     elements: {
       ...controls,
@@ -111,6 +111,21 @@ test("explicit disabled generation keeps the image preparation screen usable wit
   await qa.api.publishTripo();
   assert.deepEqual(qa.events, ["latest"]);
   assert.deepEqual(qa.prompts, []);
+});
+
+test("fal six-view helper receives bound photos and authenticated read-only download while Tripo stays four-view", async () => {
+  const row={id:19,storage_path:"sl_42/photo.jpg",product_variant_id:15825};
+  const qa=preparationHarness({rows:[row]});qa.context.selectedTarget=()=>({product:{id:2639},kind:"aftermarket_new"});
+  let binding,selected,preview;
+  qa.context.falSelectionController={open(value){binding=value;},setRows(rows){selected=rows;},updatePreview(id,url){preview={id,url};},fail(){throw Error("Should not fail");}};
+  qa.context.window.DcatsFalPhotoSelection={validRow(value){return value.id===19&&value.product_variant_id===15825;}};
+  qa.context.sb.storage={from(bucket){assert.equal(bucket,"product-images");return {async download(storagePath){assert.equal(storagePath,row.storage_path);qa.events.push("storage-read");return {data:"synthetic-photo"};}};}};
+  await qa.api.openTripo("sales");await Promise.resolve();
+  assert.equal(binding.target.productId,2639);assert.equal(binding.target.kind,"aftermarket_new");assert.equal(binding.isCurrent(),true);
+  assert.equal(selected.length,1);assert.equal(preview.id,19);assert.equal(qa.selections.length,4);assert.equal(await binding.readPhoto(row),"synthetic-photo");
+  await assert.rejects(binding.readPhoto({...row,product_variant_id:8708}),/Stale photo target/);
+  qa.context.sessionModelsEnabled=false;await assert.rejects(binding.readPhoto(row),/Stale photo target/);
+  assert.deepEqual(qa.events,["latest","storage-read"]);
 });
 
 test("server pilot quote key is used once and malformed keys stop before confirmation", async () => {

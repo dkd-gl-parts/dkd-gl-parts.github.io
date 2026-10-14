@@ -51,6 +51,7 @@
   var tripoImageRows = Object.create(null);
   var tripoImagePreviewRequestId = 0;
   var preparedInputsController = null;
+  var falSelectionController = null;
   var mediaAvailabilityRequest = { sales: 0, production: 0, customer: 0 };
   var mediaPaneRequest = { sales: 0, production: 0, customer: 0 };
 
@@ -124,6 +125,9 @@
   }
 
   function cacheElements() {
+    if (window.DcatsFalPhotoSelection && el("product-3d-fal-selection")) {
+      falSelectionController = window.DcatsFalPhotoSelection.create(el("product-3d-fal-selection"));
+    }
     if (window.DcatsPreparedInputs && el("product-3d-prepared-inputs")) {
       preparedInputsController = window.DcatsPreparedInputs.create(el("product-3d-prepared-inputs"));
     }
@@ -1486,6 +1490,17 @@
           preparedViewerRequest, function () { return sameTripoTarget(requestId) && preparedViewerRequest === viewerRequestId; }, trigger);
       }
     });
+    if (falSelectionController) falSelectionController.open({
+      target: { productId: tripoTarget.productId, kind: tripoTarget.kind },
+      isCurrent: function () { return sameTripoTarget(requestId); },
+      readPhoto: async function (row) {
+        if (!sameTripoTarget(requestId) || !window.DcatsFalPhotoSelection.validRow(row)) throw new Error("Stale photo target");
+        var result = await sb.storage.from("product-images").download(row.storage_path);
+        if (!sameTripoTarget(requestId)) throw new Error("Stale photo target");
+        if (result.error || !result.data) throw new Error("Photo unavailable");
+        return result.data;
+      }
+    });
     elements["product-3d-tripo-overlay"].classList.add("show");
     elements["product-3d-tripo-overlay"].setAttribute("aria-hidden", "false");
     elements["product-3d-tripo-kind"].value = tripoTarget.kind;
@@ -1499,13 +1514,14 @@
     var imagesLoaded = false;
     try {
       var rows = await sb.from("core_product_images")
-        .select("id,storage_path,sort_order,created_at").eq("dkd_shohin_id", tripoTarget.productId)
+        .select("id,storage_path,product_variant_id,sort_order,created_at").eq("dkd_shohin_id", tripoTarget.productId)
         .eq("product_kind", tripoTarget.kind).not("storage_path", "is", null)
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: false }).order("id", { ascending: false }).limit(80);
       if (rows.error) throw rows.error;
       if (!sameTripoTarget(requestId)) return;
       var images = (rows.data || []).filter(function (row) { return row.storage_path; });
+      if (falSelectionController) falSelectionController.setRows(images);
       images.forEach(function (row, index) { row.selectionIndex = index; row.selectionLabel = tripoImageLabel(row, index); tripoImageRows[String(row.id)] = row; });
       elements["product-3d-tripo-images"].innerHTML = images.length ? images.map(function (row, index) {
         var label = tripoImageLabel(row, index);
@@ -1521,6 +1537,7 @@
           if (node) node.src = signed;
           if (signed) {
             row.previewUrl = signed;
+            if (falSelectionController) falSelectionController.updatePreview(row.id, signed);
             renderTripoPreset();
             Array.from(elements["product-3d-tripo-images"].querySelectorAll("[data-tripo-image-id='" + row.id + "']")).forEach(function (button) { button.disabled = false; });
             if (Array.from(elements["product-3d-tripo-views"].querySelectorAll("select")).some(function (control) { return control.value === String(row.id); })) renderTripoSelection();
@@ -1536,6 +1553,7 @@
     } catch (error) {
       if (!sameTripoTarget(requestId)) return;
       if (!imagesLoaded) {
+        if (falSelectionController) falSelectionController.fail();
         renderTripoImageChoices([], "画像を読み込めませんでした");
         elements["product-3d-tripo-images"].textContent = "画像を読み込めませんでした。対象商品・区分とログイン状態を確認してください。";
       }
@@ -1549,6 +1567,7 @@
   function closeTripo() {
     clearViewerComparison();
     if (preparedInputsController) preparedInputsController.close();
+    if (falSelectionController) falSelectionController.close();
     var previous = tripoTarget;
     var wasOpen = elements["product-3d-tripo-overlay"].classList.contains("show");
     tripoRequestId += 1;
