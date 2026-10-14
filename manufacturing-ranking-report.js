@@ -38,6 +38,7 @@
     supplierDataError: false,
     rows: [],
     sheets: [],
+    sourceCategorySelection: null,
     masterPartNumbers: Object.create(null),
     masterProductsById: Object.create(null),
     masterProductsByPart: Object.create(null),
@@ -720,10 +721,13 @@
   function renderCategoryOptions() {
     var host = byId("manufacturing-ranking-categories");
     if (!host) return;
+    if (document.querySelectorAll("#manufacturing-ranking-categories input[type='checkbox']").length) state.sourceCategorySelection = selectedCategories();
+    if (state.sourceCategorySelection === null && state.sheets.length) state.sourceCategorySelection = defaultSourceCategories(state.sheets);
+    var previousCategories = state.sourceCategorySelection || [];
     host.innerHTML = state.sheets.map(function(sheet) {
       var aggregate = sheet.isAggregate ? "<small>全体集計 - カテゴリ別シートとの重複に注意</small>" : "<small>" + formatNumber(sheet.count) + "件</small>";
       return "<label class='ranking-report-category-option'>" +
-        "<input type='checkbox' value='" + escapeHtml(sheet.name) + "'>" +
+        "<input type='checkbox' value='" + escapeHtml(sheet.name) + "'" + (previousCategories.indexOf(sheet.name) >= 0 ? " checked" : "") + ">" +
         "<span><strong>" + escapeHtml(sheet.name) + "</strong>" + aggregate + "</span></label>";
     }).join("");
     var productCategory = byId("manufacturing-ranking-product-category-options");
@@ -768,6 +772,27 @@
     );
   }
 
+  function defaultSourceCategories(sheets) {
+    var aggregate = sheets.filter(function(sheet) { return sheet.isAggregate; });
+    return (aggregate.length ? aggregate.slice(0, 1) : sheets).map(function(sheet) { return sheet.name; });
+  }
+
+  function selectedVehicleFilters(kind) {
+    return Array.prototype.map.call(
+      document.querySelectorAll("#manufacturing-ranking-vehicle-" + kind + "-options input[type='checkbox']:checked"),
+      function(input) { return input.value; }
+    );
+  }
+
+  function syncVehicleFilterSummaries() {
+    var defaults = { work: "すべての用途", kei: "すべて（軽四の絞り込みなし）", common: "すべての共用区分" };
+    Object.keys(defaults).forEach(function(kind) {
+      var summary = byId("manufacturing-ranking-vehicle-" + kind + "-summary");
+      var labels = Array.prototype.map.call(document.querySelectorAll("#manufacturing-ranking-vehicle-" + kind + "-options input[type='checkbox']:checked"), function(input) { return input.nextElementSibling.textContent; });
+      if (summary) summary.textContent = labels.join("・") || defaults[kind];
+    });
+  }
+
   function positiveInteger(id, fallback) {
     var parsed = parseInt(byId(id).value, 10);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
@@ -790,9 +815,9 @@
     return {
       categories: selectedCategories(),
       productCategories: selectedProductCategories(),
-      vehicleWork: byId("manufacturing-ranking-vehicle-work").value,
-      vehicleKei: byId("manufacturing-ranking-vehicle-kei").value,
-      vehicleCommon: byId("manufacturing-ranking-vehicle-common").value,
+      vehicleWork: selectedVehicleFilters("work"),
+      vehicleKei: selectedVehicleFilters("kei"),
+      vehicleCommon: selectedVehicleFilters("common"),
       showVehicleClassification: byId("manufacturing-ranking-show-vehicle").checked,
       reportType: reportType,
       metric: byId("manufacturing-ranking-metric").value,
@@ -970,25 +995,41 @@
     var profile = vehicleClassification(row.vehicleClassification);
     var work = profile ? profile.work_tags : [];
     var kei = profile ? profile.kei_kinds : [];
-    var workFilter = options.vehicleWork || "all";
-    var keiFilter = options.vehicleKei || "all";
-    var commonFilter = options.vehicleCommon || "all";
-    if (workFilter === "confirmed" && !work.length) return false;
-    if (workFilter === "business_or_kei" && !work.length && !kei.length) return false;
-    if (workFilter === "unconfirmed" && work.length) return false;
-    if (["all", "confirmed", "unconfirmed", "business_or_kei"].indexOf(workFilter) < 0 && work.indexOf(workFilter) < 0) return false;
-    if (keiFilter === "confirmed" && !kei.length) return false;
-    if (keiFilter === "unconfirmed" && kei.length) return false;
-    if (keiFilter !== "all" && keiFilter !== "confirmed" && keiFilter !== "unconfirmed" && kei.indexOf(keiFilter) < 0) return false;
-    if (commonFilter === "other_unknown") return !!(kei.length && profile.other_fitment_unknown);
-    return commonFilter === "all" || !!(kei.length && profile.kei_common === commonFilter);
+    var workFilters = vehicleFilterSelection(options.vehicleWork);
+    var keiFilters = vehicleFilterSelection(options.vehicleKei);
+    var commonFilters = vehicleFilterSelection(options.vehicleCommon);
+    return (!workFilters.length || workFilters.some(function(filter) {
+      if (filter === "confirmed") return work.length > 0;
+      if (filter === "business_or_kei") return work.length > 0 || kei.length > 0;
+      if (filter === "unconfirmed") return work.length === 0;
+      return work.indexOf(filter) >= 0;
+    })) && (!keiFilters.length || keiFilters.some(function(filter) {
+      if (filter === "confirmed") return kei.length > 0;
+      if (filter === "unconfirmed") return kei.length === 0;
+      return kei.indexOf(filter) >= 0;
+    })) && (!commonFilters.length || commonFilters.some(function(filter) {
+      if (!kei.length) return false;
+      if (filter === "other_unknown") return profile.other_fitment_unknown;
+      return profile.kei_common === filter;
+    }));
+  }
+
+  function vehicleFilterSelection(value) {
+    var filters = Array.isArray(value) ? value : value ? [value] : [];
+    if (filters.indexOf("all") >= 0) return [];
+    return uniqueIds(filters.map(normalizeText).filter(Boolean));
   }
 
   function vehicleFilterText(options) {
     var labels = [];
-    if (options.vehicleWork && options.vehicleWork !== "all") labels.push("用途: " + (options.vehicleWork === "confirmed" ? "業務用途の適合あり" : options.vehicleWork === "unconfirmed" ? "業務適合未確認" : options.vehicleWork === "business_or_kei" ? "業務用途・軽四の適合あり" : options.vehicleWork));
-    if (options.vehicleKei && options.vehicleKei !== "all") labels.push("軽四: " + (options.vehicleKei === "confirmed" ? "適合あり" : options.vehicleKei === "unconfirmed" ? "適合未確認" : options.vehicleKei));
-    if (options.vehicleCommon && options.vehicleCommon !== "all") labels.push("共用: " + (options.vehicleCommon === "other_unknown" ? "未判定の適合先あり" : options.vehicleCommon));
+    [
+      ["vehicleWork", "用途", { confirmed: "業務用途の適合あり", unconfirmed: "業務適合未確認", business_or_kei: "業務用途・軽四の適合あり" }],
+      ["vehicleKei", "軽四", { confirmed: "適合あり", unconfirmed: "適合未確認" }],
+      ["vehicleCommon", "共用", { other_unknown: "未判定の適合先あり" }]
+    ].forEach(function(group) {
+      var filters = vehicleFilterSelection(options[group[0]]);
+      if (filters.length) labels.push(group[1] + ": " + filters.map(function(filter) { return group[2][filter] || filter; }).join("・"));
+    });
     return labels.join(" / ");
   }
 
@@ -1874,7 +1915,17 @@
       syncProductCategorySummary();
       updatePreview();
     });
-    ["manufacturing-ranking-vehicle-work", "manufacturing-ranking-vehicle-kei", "manufacturing-ranking-vehicle-common", "manufacturing-ranking-show-vehicle"].forEach(function(id) { byId(id).addEventListener("change", updatePreview); });
+    ["work", "kei", "common"].forEach(function(kind) {
+      byId("manufacturing-ranking-vehicle-" + kind).addEventListener("change", function() { syncVehicleFilterSummaries(); updatePreview(); });
+    });
+    document.querySelectorAll("[data-ranking-vehicle-reset]").forEach(function(button) {
+      button.addEventListener("click", function() {
+        document.querySelectorAll("#" + button.dataset.rankingVehicleReset + " input[type='checkbox']").forEach(function(input) { input.checked = false; });
+        syncVehicleFilterSummaries();
+        updatePreview();
+      });
+    });
+    byId("manufacturing-ranking-show-vehicle").addEventListener("change", updatePreview);
     byId("manufacturing-ranking-categories").addEventListener("change", updatePreview);
     byId("btn-logout-manufacturing-ranking-report").addEventListener("click", function() {
       if (typeof doLogout === "function") doLogout();
@@ -1883,12 +1934,14 @@
       if (event.key === "Enter") updatePreview();
     });
     syncReportTypeControls();
+    syncVehicleFilterSummaries();
   }
 
   window.enterManufacturingRankingReport = enterManufacturingRankingReport;
   window.DCatsManufacturingRankingReport = {
     buildRanking: buildRanking,
     matchesVehicleFilters: matchesVehicleFilters,
+    defaultSourceCategories: defaultSourceCategories,
     vehicleClassificationText: vehicleClassificationText,
     vehicleFilterText: vehicleFilterText,
     normalizePart: normalizePart,

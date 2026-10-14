@@ -48,4 +48,32 @@ assert(api.printFileTitle(options.categories,1,100,new Date(),'manufacturing','a
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 for(const id of ['vehicle-work','vehicle-kei','vehicle-common','show-vehicle'])assert(html.includes('id="manufacturing-ranking-'+id+'"'));
 assert(!source.includes('vehicle-classification-2025-20261009.json'),'private classification data stays outside public assets');
+const codes=extra=>rank(extra).results.map(result=>result.row.productCode).join(',');
+assert.equal(codes({vehicleWork:[],vehicleKei:[],vehicleCommon:[]}),'1,2,3,4,6','unchecked means all, including unknown classifications');
+assert.equal(codes({vehicleWork:['トラック','営業車・商用バン']}),'1,6','multiple work choices are ORed');
+assert.equal(codes({vehicleWork:['business_or_kei','トラック']}),'1,2,3,6','overlapping choices do not duplicate a product');
+assert.equal(codes({vehicleWork:['confirmed','unconfirmed']}),'1,2,3,4,6','confirmed and unconfirmed together include all');
+assert.equal(codes({vehicleKei:['軽トラック','軽乗用車']}),'2,3','multiple kei types are ORed');
+assert.equal(codes({vehicleKei:['unconfirmed','軽トラック']}),'1,2,4,6','unknown remains selectable with a confirmed kei type');
+assert.equal(codes({vehicleCommon:['確認資料では軽四のみ','軽四以外にも適合']}),'2,3','multiple common classifications are ORed');
+assert.equal(codes({vehicleCommon:['other_unknown','確認資料では軽四のみ']}),'2,3','unknown fitment flag ORs with another common class');
+const combinedOptions={vehicleWork:['軽トラック','トラック'],vehicleKei:['軽トラック','軽乗用車'],vehicleCommon:['確認資料では軽四のみ','other_unknown']};
+assert.equal(codes(combinedOptions),'2','groups intersect');
+assert.equal(rank(combinedOptions).results[0].rank,1,'rank recalculated after combined choices');
+assert.equal(codes({vehicleWork:['トラック'],vehicleKei:['軽乗用車']}),'','incompatible choices return no rows');
+assert.equal(codes({vehicleWork:['トラック','トラック','営業車・商用バン']}),'1,6','duplicate filter values do not duplicate quantities');
+assert.equal(api.buildRanking(compatible,{...options,vehicleWork:['トラック','バス'],compatibilityMode:'consolidated'}).results[0].shipment,10,'unmatched compatibility quantities remain excluded');
+const multiResult=rank({vehicleKei:['軽トラック','軽乗用車']}).results;
+const multiOptions={...options,vehicleWork:[],vehicleKei:['軽トラック','軽乗用車'],vehicleCommon:['確認資料では軽四のみ','軽四以外にも適合']};
+const multiPrint=api.buildPrintHtml(multiResult,multiOptions);
+assert(multiPrint.includes('軽四: 軽トラック・軽乗用車')&&multiPrint.includes('共用: 確認資料では軽四のみ・軽四以外にも適合'),'PDF states every selected item');
+assert.equal(api.buildExcelRows(multiResult,multiOptions).length,3,'CSV has header and exactly the filtered two products');
+assert(api.printFileTitle(options.categories,1,100,new Date(),'manufacturing',[],multiOptions).includes('軽トラック・軽乗用車'),'filenames identify all selected filter values');
+assert.equal(api.vehicleFilterText({...options,vehicleWork:[],vehicleKei:[],vehicleCommon:[]}),'','default all adds no filter condition');
+assert.equal(api.defaultSourceCategories([{name:'商品別出荷実績集計',isAggregate:true},{name:'オルタ',isAggregate:false}]).join(','),'商品別出荷実績集計','default all uses aggregate without also selecting the details');
+assert.equal(api.defaultSourceCategories([{name:'オルタ',isAggregate:false},{name:'セル',isAggregate:false}]).join(','),'オルタ,セル','without an aggregate, all source categories are initially selected');
+for(const kind of ['work','kei','common']){
+ const picker=html.match(new RegExp('<details id="manufacturing-ranking-vehicle-'+kind+'"[\\s\\S]*?</details>'));
+ assert(picker&&picker[0].includes('type="checkbox"')&&!picker[0].includes(' checked'),'vehicle choices start unchecked');
+}
 console.log('manufacturing vehicle filters: ALDK, business/kei/common, unknowns, category intersection, rank, compatibility, CSV/PDF passed');
