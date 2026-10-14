@@ -95,7 +95,7 @@ test('failure, duplicate bytes, invalid MIME/dimensions and stalled read never d
   }
 });
 test('target/session invalidation and closing discard pending work without download or next read',async()=>{
-  for(const close of [false,true]) { const f=fixture({deferred:true});f.selectAll();const pending=f.controller.exportPhotos();assert.equal(f.reads.length,1);if(close)f.controller.close();else f.setCurrent(false);f.resolve();await pending;assert.equal(f.reads.length,1);assert.equal(f.packages.length,0); }
+  for(const close of [false,true]) { const f=fixture({deferred:true});f.selectAll();const pending=f.controller.exportPhotos();assert.equal(f.reads.length,1);if(close)f.controller.close();else f.setCurrent(false);f.resolve();await pending;assert.equal(f.reads.length,1);assert.equal(f.packages.length,0);assert.equal(f.root.hidden,true);assert.equal(f.nodes.gallery.children.length,0); }
 });
 test('expanded photo directions share selection, and load errors stay safe',()=>{
   const f=fixture();f.click(f.root.querySelector('[data-fal-expand]'));assert.equal(f.nodes.large.hidden,false);assert.match(f.nodes.large.querySelector('[data-fal-large-label]').textContent,/19/);
@@ -103,7 +103,7 @@ test('expanded photo directions share selection, and load errors stay safe',()=>
 });
 test('Japanese, English and Chinese have the same complete copy keys and localized direction actions',()=>{
   for(const [lang,label] of [['ja','正面'],['en','Front'],['zh-CN','正面']]){const f=fixture({lang});assert.equal(f.api.copy('front'),label);assert.equal(f.nodes.gallery.querySelector('[data-fal-assign]').textContent,label);f.selectAll();assert.equal(f.nodes.export.disabled,false);}
-  const copySource=source.slice(source.indexOf('var COPY = ')+11,source.indexOf(';\n  function copy'));
+  const copySource=source.match(/var COPY = ([\s\S]*?);\s+function copy/)[1];
   const dictionaries=vm.runInNewContext('('+copySource+')');assert.deepEqual(Object.keys(dictionaries.ja).sort(),Object.keys(dictionaries.en).sort());assert.deepEqual(Object.keys(dictionaries.ja).sort(),Object.keys(dictionaries.zh).sort());
 });
 test('CRC and ZIP whitelist, duplicates, missing files, and size bounds are enforced',()=>{

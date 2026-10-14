@@ -161,7 +161,10 @@
         var link = node("a"); link.href = url; link.download = "D-CATS_27060-30220_6views.zip"; root.appendChild(link); link.click(); link.remove();
         resultMessage = copy("success");
       } catch (_) { resultMessage = copy("failure"); }
-      finally { if (current(revision)) { busy = false; render(); if (resultMessage) message(resultMessage); } }
+      finally {
+        if (revision === epoch && context === owner && !current(revision)) close();
+        else if (current(revision)) { busy = false; render(); if (resultMessage) message(resultMessage); }
+      }
     }
     root.addEventListener("click", function (event) {
       var button = event.target.closest("button"); if (!button || !root.contains(button) || busy || !current(epoch)) return;
