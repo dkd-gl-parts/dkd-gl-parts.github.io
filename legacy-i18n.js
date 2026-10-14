@@ -2,6 +2,8 @@
 // Runtime translation is local; this file makes no external requests.
 var DCATS_LEGACY_UI_TRANSLATIONS = {
   "en": {
+    "選択した分類を明細に表示": "Show selected classifications in details",
+    "未選択はすべて対象です。「軽四」は軽トラック・軽商用バン・軽乗用車など、軽と付く分類を選びます。軽四＋トラックは軽トラック、トラックのみはトラック分類の全品番です。軽四＋それ以外は両方の分類を対象にします。共用品番は選択分類に適合すれば含め、明細には選択に一致した分類だけを表示します。タクシー・教習車の共用適合は両方に含みます。機械は建機・農機・産業機械を含みます。メーカー品番にALDKを含むDKSオリジナル商品は除外します。": "No selection includes all products. Kei selects classifications such as kei trucks, kei commercial vans and kei passenger cars. Kei + Truck selects kei trucks; Truck alone selects all products classified as trucks. Kei + Other includes both classification groups. Shared products remain when they fit a selected classification, and details show only matching classifications. Shared taxi/driving-school fitments appear in both. Machinery includes construction, agricultural and industrial machinery. DKS original products with ALDK in the manufacturer part number are excluded.",
     "商用バン": "Commercial van",
     "車両区分の絞り込み": "Vehicle fitment filter",
     "車両区分で絞り込み（複数選択）": "Filter by vehicle fitment (multiple selections)",
@@ -3868,6 +3870,8 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "/ ALDK除外": "/ ALDK excluded"
   },
   "zh": {
+    "選択した分類を明細に表示": "在明细中显示所选分类",
+    "未選択はすべて対象です。「軽四」は軽トラック・軽商用バン・軽乗用車など、軽と付く分類を選びます。軽四＋トラックは軽トラック、トラックのみはトラック分類の全品番です。軽四＋それ以外は両方の分類を対象にします。共用品番は選択分類に適合すれば含め、明細には選択に一致した分類だけを表示します。タクシー・教習車の共用適合は両方に含みます。機械は建機・農機・産業機械を含みます。メーカー品番にALDKを含むDKSオリジナル商品は除外します。": "未选择时包含所有商品。“轻型车”选择轻型卡车、轻型商用厢式车和轻型乘用车等分类。“轻型车＋卡车”筛选轻型卡车；仅选“卡车”包含卡车分类的所有商品。“轻型车＋其他”包含两类。共用商品只要适配所选分类就保留，明细仅显示匹配分类。出租车与教练车共用适配同时包含在两类中。机械包含工程、农业及工业机械。排除厂家零件号中包含ALDK的DKS原创商品。",
     "商用バン": "商用厢式车",
     "車両区分の絞り込み": "车辆适配筛选",
     "車両区分で絞り込み（複数選択）": "按车辆适配筛选（可多选）",
