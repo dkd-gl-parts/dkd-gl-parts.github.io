@@ -1025,13 +1025,22 @@
     return uniqueIds(filters.map(normalizeText).filter(Boolean));
   }
 
+  function hasKeiFitment(profile) {
+    return profile.kei_kinds.length > 0 || profile.work_tags.indexOf("軽トラック") >= 0 || profile.work_tags.indexOf("軽商用バン") >= 0;
+  }
+
+  function vehicleFilterModes(filters) {
+    var kei = filters.indexOf("kei") >= 0;
+    return { kei: kei, other: !kei || filters.indexOf("other") >= 0 };
+  }
+
   function matchesUnifiedVehicleFilters(profile, filters) {
     if (!filters.length) return true;
     if (!profile || filters.some(function(filter) { return !Object.prototype.hasOwnProperty.call(VEHICLE_TARGET_LABELS, filter); })) return false;
-    var sizes = filters.filter(function(filter) { return filter === "kei" || filter === "other"; });
+    var modes = vehicleFilterModes(filters);
     var types = filters.filter(function(filter) { return Object.prototype.hasOwnProperty.call(VEHICLE_TARGET_TYPES, filter); });
     function matchesSize(keiFitment, otherFitment) {
-      return !sizes.length || (sizes.indexOf("kei") >= 0 && keiFitment) || (sizes.indexOf("other") >= 0 && otherFitment);
+      return (modes.kei && keiFitment) || (modes.other && otherFitment);
     }
     if (types.length) return types.some(function(type) {
       var definition = VEHICLE_TARGET_TYPES[type];
@@ -1040,7 +1049,7 @@
       return (keiFitment || otherFitment) && matchesSize(keiFitment, otherFitment);
     });
     var otherFitment = profile.work_tags.some(function(tag) { return tag !== "軽トラック" && tag !== "軽商用バン"; }) || ["軽四以外にも適合", "機械等にも適合"].indexOf(profile.kei_common) >= 0;
-    return matchesSize(profile.kei_kinds.length > 0, otherFitment);
+    return matchesSize(hasKeiFitment(profile), otherFitment);
   }
 
   function unifiedVehicleSelectionText(filters) {
@@ -1069,8 +1078,35 @@
     return labels.join(" / ");
   }
 
-  function vehicleClassificationText(row) {
+  function selectedVehicleClassificationText(profile, filters) {
+    var modes = vehicleFilterModes(filters);
+    var types = filters.filter(function(filter) { return Object.prototype.hasOwnProperty.call(VEHICLE_TARGET_TYPES, filter); });
+    var allowedWork = [], allowedKei = [];
+    types.forEach(function(type) {
+      var definition = VEHICLE_TARGET_TYPES[type];
+      if (modes.other) allowedWork = allowedWork.concat(definition.other);
+      if (modes.kei) {
+        allowedWork = allowedWork.concat(definition.kei);
+        allowedKei = allowedKei.concat(definition.kei);
+      }
+    });
+    var work = profile.work_tags.filter(function(tag) {
+      if (types.length) return allowedWork.indexOf(tag) >= 0;
+      var isKei = tag === "軽トラック" || tag === "軽商用バン";
+      return isKei ? modes.kei : modes.other;
+    });
+    var kei = modes.kei ? profile.kei_kinds.filter(function(kind) { return !types.length || allowedKei.indexOf(kind) >= 0; }) : [];
+    var common = kei.length || work.some(function(tag) { return tag === "軽トラック" || tag === "軽商用バン"; })
+      ? profile.kei_common + (profile.other_fitment_unknown && profile.kei_common !== "他の適合先は未判定" ? "（未判定あり）" : "") : "";
+    var workText = work.join("、");
+    if (!workText && modes.other && !types.length && ["軽四以外にも適合", "機械等にも適合"].indexOf(profile.kei_common) >= 0) workText = "それ以外";
+    return [workText, kei.join("、"), common];
+  }
+
+  function vehicleClassificationText(row, options) {
     var profile = vehicleClassification(row.vehicleClassification);
+    var filters = options && Object.prototype.hasOwnProperty.call(options, "vehicleTargets") ? vehicleFilterSelection(options.vehicleTargets) : [];
+    if (profile && filters.length) return selectedVehicleClassificationText(profile, filters);
     return [profile && profile.work_tags.length ? profile.work_tags.join("、") : "業務適合未確認", profile && profile.kei_kinds.length ? profile.kei_kinds.join("、") : "軽四適合未確認", profile && profile.kei_kinds.length ? profile.kei_common + (profile.other_fitment_unknown && profile.kei_common !== "他の適合先は未判定" ? "（未判定あり）" : "") : ""];
   }
 
@@ -1078,13 +1114,13 @@
     if (!options.showVehicleClassification) return "";
     var texts = [];
     (options.compatibilityMode === "consolidated" ? result.group || [result.row] : [result.row]).forEach(function(row) {
-      vehicleClassificationText(row).forEach(function(value) { if (value && texts.indexOf(value) < 0) texts.push(value); });
+      vehicleClassificationText(row, options).forEach(function(value) { if (value && texts.indexOf(value) < 0) texts.push(value); });
     });
     return "<small class='ranking-report-vehicle-detail'>" + texts.map(escapeHtml).join(" / ") + "</small>";
   }
 
   function vehicleClassificationColumns(result, options) {
-    var profiles = (options.compatibilityMode === "consolidated" ? result.group || [result.row] : [result.row]).map(vehicleClassificationText);
+    var profiles = (options.compatibilityMode === "consolidated" ? result.group || [result.row] : [result.row]).map(function(row) { return vehicleClassificationText(row, options); });
     return [0, 1, 2].map(function(column) { return uniqueIds(profiles.map(function(profile) { return profile[column]; })).join(" / "); });
   }
 

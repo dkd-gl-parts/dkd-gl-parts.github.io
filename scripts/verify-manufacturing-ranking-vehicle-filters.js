@@ -94,11 +94,11 @@ const unifiedRows=rows.concat([
 const unifiedRank=(targets,extra={})=>api.buildRanking(unifiedRows,{...options,vehicleTargets:targets,...extra});
 const unifiedCodes=targets=>unifiedRank(targets).results.map(result=>result.row.productCode).join(',');
 assert.equal(unifiedCodes([]),'1,2,3,4,6,7,8,9,10,11,12,13,14,15,16','default includes unknowns and excludes ALDK');
-assert.equal(unifiedCodes(['truck']),'1,2,16','truck alone includes both regular and kei trucks');
+assert.equal(unifiedCodes(['truck']),'1,16','truck alone selects the truck classification, including shared products');
 assert.equal(unifiedCodes(['kei','truck']),'2','kei + truck is specifically a kei-truck fitment');
 assert.equal(unifiedCodes(['other','truck']),'1,16','other + truck selects confirmed regular-truck fitments');
 assert.equal(unifiedCodes(['kei','other','truck']),'1,2,16','sizes are ORed');
-assert.equal(unifiedCodes(['van']),'6,7','van includes regular and kei commercial vans');
+assert.equal(unifiedCodes(['van']),'6','van alone selects the regular commercial-van classification');
 assert.equal(unifiedCodes(['kei','van']),'7');
 assert.equal(unifiedCodes(['other','van']),'6');
 assert.equal(unifiedCodes(['kei']),'2,3,7,16','kei alone includes kei passenger vehicles');
@@ -109,7 +109,7 @@ assert.equal(unifiedCodes(['machine']),'10,11,12','machinery includes constructi
 assert.equal(unifiedCodes(['forklift']),'13');
 assert.equal(unifiedCodes(['special']),'14');
 assert.equal(unifiedCodes(['bus']),'15','existing bus choice is preserved');
-assert.equal(unifiedCodes(['taxi','truck']),'1,2,8,9,16','vehicle uses are ORed');
+assert.equal(unifiedCodes(['taxi','truck']),'1,8,9,16','regular vehicle uses are ORed when kei is unchecked');
 assert.equal(unifiedCodes(['kei','truck','van']),'2,7','size and vehicle uses intersect');
 assert.equal(unifiedCodes(['kei','truck','truck','van']),'2,7','overlapping selections do not duplicate products');
 assert.equal(unifiedCodes(['kei','taxi']),'','a kei passenger fitment does not imply a kei taxi fitment');
@@ -125,8 +125,33 @@ assert(api.buildPrintHtml(unifiedResult,unifiedOptions).includes('車両区分: 
 assert.equal(api.buildExcelRows(unifiedResult,unifiedOptions).length,2,'CSV has the same single kei truck');
 assert.equal(api.buildExcelRows(unifiedResult,{...unifiedOptions,reportType:'supplier_availability',supplierId:'all',supplierStatus:'all'}).length,2,'supplier CSV has the same single kei truck');
 assert(api.printFileTitle(options.categories,1,100,new Date(),'manufacturing',[],unifiedOptions).includes('軽四 × トラック'),'filename includes unified condition');
+const allUses=['taxi','truck','van','driving_school','machine','forklift','special','bus'];
+const normalOptions={...options,vehicleTargets:allUses,orientation:'portrait'};
+const normalResults=unifiedRank(allUses).results;
+assert.equal(unifiedCodes(allUses),'1,6,8,9,10,11,12,13,14,15,16','screenshot combination excludes kei-only classifications and retains regular fitments');
+assert.equal(unifiedCodes(['kei',...allUses]),'2,7','kei with all uses selects the light truck and light van classifications');
+const mixed=row('17','SAME',7,profile(['トラック','軽トラック','軽商用バン'],['軽トラック','軽商用バン'],'軽四以外にも適合',false));
+const originalMixed=JSON.stringify(mixed);
+assert.equal(api.matchesVehicleFilters(mixed,{vehicleTargets:['truck']}),true,'a normal-truck fitment retains a shared product');
+assert.equal(api.vehicleClassificationText(mixed,{vehicleTargets:['truck']}).join('|'),'トラック||','kei-off details show only the selected normal classification');
+assert.equal(api.vehicleClassificationText(mixed,{vehicleTargets:['kei','truck']}).slice(0,2).join('|'),'軽トラック|軽トラック','kei-on details omit other light uses');
+assert.equal(api.vehicleClassificationText(mixed,{vehicleTargets:['kei','other','truck']}).slice(0,2).join('|'),'トラック、軽トラック|軽トラック','both size groups include both selected truck classifications');
+assert.equal(api.vehicleClassificationText(mixed).slice(0,2).join('|'),'トラック、軽トラック、軽商用バン|軽トラック、軽商用バン','without a selection the complete classification is preserved');
+assert.equal(JSON.stringify(mixed),originalMixed,'classification display never mutates the original profile');
+const groupedRows=[...compatible,mixed,{...rows[1],shipment:100}].map(item=>({...item,maker:'123456-001'}));
+const normalGrouped=api.buildRanking(groupedRows,{...options,vehicleTargets:['truck'],compatibilityBasis:'maker',compatibilityMode:'consolidated'}).results;
+assert.equal(normalGrouped[0].shipment,17,'shared normal-truck quantity remains while kei-only quantity is excluded');
+for(const type of ['manufacturing','supplier_availability']){
+ const exported=api.buildExcelRows(normalResults,{...normalOptions,reportType:type,supplierId:'all',supplierStatus:'all'});
+ assert.equal(exported.length,normalResults.length+1);
+ assert(!exported.slice(1).flat().some(value=>/軽トラック|軽商用バン|軽乗用車/.test(String(value))),'CSV shows no unselected light classification');
+ const print=api.buildPrintHtml(normalResults,{...normalOptions,reportType:type,supplierId:'all',supplierStatus:'all'});
+ assert(!/軽トラック|軽商用バン|軽乗用車/.test(print),'PDF shows no unselected light classification');
+}
 elements['manufacturing-ranking-table']={innerHTML:''};
 elements['manufacturing-ranking-preview-note']={textContent:''};
+api.testRenderPreview(normalResults,normalOptions);
+assert(!/軽トラック|軽商用バン|軽乗用車/.test(elements['manufacturing-ranking-table'].innerHTML),'preview shows only matching classifications');
 const largeRows=Array.from({length:6000},(_,i)=>row(String(i+1),'PREVIEW-'+(i+1),6000-i,null));
 const previewOptions={...options,vehicleWork:[],vehicleKei:[],vehicleCommon:[],compatibilityBasis:'none',showVehicleClassification:false};
 const previewBody=()=>elements['manufacturing-ranking-table'].innerHTML.match(/<tbody>([\s\S]*?)<\/tbody>/)?.[1]||'';
