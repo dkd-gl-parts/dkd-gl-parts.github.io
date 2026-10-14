@@ -2,6 +2,7 @@
 // Runtime translation is local; this file makes no external requests.
 var DCATS_LEGACY_UI_TRANSLATIONS = {
   "en": {
+    "指定した順位範囲を画面表示": "Display the selected ranking range",
     "用途": "Business use",
     "軽四": "Kei",
     "共用": "Shared fitment",
@@ -3855,6 +3856,7 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "/ ALDK除外": "/ ALDK excluded"
   },
   "zh": {
+    "指定した順位範囲を画面表示": "显示所选排名范围",
     "用途": "用途",
     "軽四": "轻型车",
     "共用": "共用适配",

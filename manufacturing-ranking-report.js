@@ -3,7 +3,6 @@
 
   var MAX_FILE_BYTES = 50 * 1024 * 1024;
   var MAX_SOURCE_ROWS = 150000;
-  var PREVIEW_LIMIT = 200;
   var DATA_PAGE_SIZE = 1000;
   var DATA_PAGE_CONCURRENCY = 4;
   var REFERENCE_QUERY_CHUNK_SIZE = 400;
@@ -1539,16 +1538,17 @@
   }
 
   function renderPreviewTable(results, options) {
+    var note = byId("manufacturing-ranking-preview-note");
+    if (note) note.textContent = "全" + formatNumber(results.length) + "行を表示";
     if (!results.length) {
       renderEmptyPreview("条件に一致する明細がありません", options.reportType === "supplier_availability" ? "ランキング条件・対象仕入先・仕入先商品の有無を見直してください。" : "カテゴリ・順位範囲・最小出荷数を見直してください。");
       return;
     }
-    var visible = results.slice(0, PREVIEW_LIMIT);
     if (options.reportType === "supplier_availability") {
       var supplierHtml = "<table class='ranking-report-table is-supplier-report'><thead><tr>" +
         "<th>順位</th><th>商品名</th><th>純正品番</th><th>メーカー品番</th><th class='ranking-report-supplier-status-column'>仕入先商品</th><th class='ranking-report-supplier-name-column'>仕入先名称</th><th class='ranking-report-supplier-part-column'>仕入先品番</th><th class='ranking-report-supplier-detail-column'>品番情報</th>" +
         "</tr></thead><tbody>";
-      visible.forEach(function(result) {
+      results.forEach(function(result) {
         var row = result.row;
         var items = state.supplierDataReady ? supplierItemsForResult(result, options) : [];
         var rowSpan = Math.max(1, items.length);
@@ -1578,8 +1578,6 @@
       });
       supplierHtml += "</tbody></table>";
       byId("manufacturing-ranking-table").innerHTML = supplierHtml;
-      var supplierNote = byId("manufacturing-ranking-preview-note");
-      if (supplierNote) supplierNote.textContent = results.length > PREVIEW_LIMIT ? "全" + formatNumber(results.length) + "行中、上位" + formatNumber(PREVIEW_LIMIT) + "行を画面表示" : "全" + formatNumber(results.length) + "行を表示";
       setLoading(state.isLoading);
       return;
     }
@@ -1589,7 +1587,7 @@
     if (options.showCoreStock) html += "<th class='ranking-report-stock-column'>コア在庫</th>";
     if (options.showMissingMaster) html += "<th class='ranking-report-compat-column'>マスタ未登録品番</th>";
     html += "</tr></thead><tbody>";
-    visible.forEach(function(result) {
+    results.forEach(function(result) {
       var row = result.row;
       var missing = missingMasterPartNumbers(result, options.compatibilityMode);
       html += "<tr><td class='ranking-report-rank-cell'>" + formatNumber(result.rank) + "</td>" +
@@ -1614,8 +1612,6 @@
     });
     html += "</tbody></table>";
     byId("manufacturing-ranking-table").innerHTML = html;
-    var note = byId("manufacturing-ranking-preview-note");
-    if (note) note.textContent = results.length > PREVIEW_LIMIT ? "全" + formatNumber(results.length) + "行中、上位" + formatNumber(PREVIEW_LIMIT) + "行を画面表示" : "全" + formatNumber(results.length) + "行を表示";
     setLoading(state.isLoading);
   }
 
