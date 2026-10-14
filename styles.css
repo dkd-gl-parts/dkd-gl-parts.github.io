@@ -576,6 +576,32 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 
 .ranking-report-field-wide { grid-column: 1 / -1; }
 .ranking-report-product-category { margin-top: 14px; }
+.ranking-report-product-category-picker summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 40px;
+  padding: 10px 12px;
+  border: 1px solid #d4ddeb;
+  border-radius: 8px;
+  background: #fff;
+  color: #2b374b;
+  font-size: 12px;
+  line-height: 1.5;
+  list-style: none;
+  cursor: pointer;
+}
+.ranking-report-product-category-picker summary::-webkit-details-marker { display: none; }
+.ranking-report-product-category-picker summary::after { content: "▾"; flex-shrink: 0; }
+.ranking-report-product-category-picker[open] summary::after { transform: rotate(180deg); }
+.ranking-report-product-category-picker summary:focus-visible { outline: 2px solid #436ee8; outline-offset: 2px; }
+.ranking-report-product-category-picker summary span { min-width: 0; overflow-wrap: anywhere; }
+.ranking-report-product-category-actions { display: flex; justify-content: flex-end; padding-top: 8px; }
+.ranking-report-product-category-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; max-height: 250px; overflow-y: auto; margin-top: 6px; }
+.ranking-report-product-category-options .ranking-report-category-option { padding: 8px 6px; }
+.ranking-report-product-category-options span { overflow-wrap: anywhere; }
+.ranking-report-product-category-options input[type="checkbox"] { width: 16px; height: 16px; min-height: 0; padding: 0; flex-shrink: 0; accent-color: #436ee8; }
 .ranking-report-filter-help { margin: 8px 0 0; color: #68758a; font-size: 11px; line-height: 1.6; }
 .ranking-report-vehicle-filters { display: grid; gap: 12px; margin-top: 14px; padding-top: 14px; border-top: 1px solid #e2e8f0; }
 .ranking-report-vehicle-detail { max-width: 260px; white-space: normal; line-height: 1.5; color: #58677d; }
