@@ -2,6 +2,16 @@
 // Runtime translation is local; this file makes no external requests.
 var DCATS_LEGACY_UI_TRANSLATIONS = {
   "en": {
+    "用途": "Business use",
+    "軽四": "Kei",
+    "共用": "Shared fitment",
+    "業務用途で絞り込み（複数選択）": "Filter by business use (multiple selection)",
+    "軽四で絞り込み（複数選択）": "Filter by kei type (multiple selection)",
+    "軽四の共用区分（複数選択）": "Kei shared fitment (multiple selection)",
+    "業務用途を複数選択": "Select multiple business uses",
+    "軽四を複数選択": "Select multiple kei types",
+    "共用区分を複数選択": "Select multiple shared fitment classes",
+    "未選択はすべて対象です。各欄ではチェックしたいずれかに該当する商品を対象にし、用途・軽四・共用区分は組み合わせて絞り込みます。メーカー品番にALDKを含むDKSオリジナル商品は除外します。適合未確認は普通車や乗用専用の判定ではありません。「確認資料では軽四のみ」は専用品の保証ではありません。": "With nothing selected, all products are included. Choices within each field are combined with OR, and the fields narrow the results together. Manufacturer numbers containing ALDK are excluded as DKS original products. Unconfirmed fitment does not establish a regular passenger car or exclusive use. Kei-only in the checked sources is not proof of exclusive fitment.",
     "対象シート": "Source sheets",
     "選択シートの": "In the selected sheets, ",
     "件は商品カテゴリを確認できないため、絞り込み対象から除外しています。": " items are excluded because their product category could not be determined.",
@@ -3845,6 +3855,16 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "/ ALDK除外": "/ ALDK excluded"
   },
   "zh": {
+    "用途": "用途",
+    "軽四": "轻型车",
+    "共用": "共用适配",
+    "業務用途で絞り込み（複数選択）": "按业务用途筛选（可多选）",
+    "軽四で絞り込み（複数選択）": "按轻型车类别筛选（可多选）",
+    "軽四の共用区分（複数選択）": "轻型车共用适配分类（可多选）",
+    "業務用途を複数選択": "选择多个业务用途",
+    "軽四を複数選択": "选择多个轻型车类别",
+    "共用区分を複数選択": "选择多个共用适配分类",
+    "未選択はすべて対象です。各欄ではチェックしたいずれかに該当する商品を対象にし、用途・軽四・共用区分は組み合わせて絞り込みます。メーカー品番にALDKを含むDKSオリジナル商品は除外します。適合未確認は普通車や乗用専用の判定ではありません。「確認資料では軽四のみ」は専用品の保証ではありません。": "未勾选时包含所有商品。每栏包含符合任一已选项的商品，各栏的条件组合筛选。排除制造商品号含ALDK的DKS原创商品。适配未确认不表示普通乘用车或专用商品，资料中仅适配轻型车也不能证明专用性。",
     "対象シート": "来源工作表",
     "選択シートの": "所选工作表中的",
     "件は商品カテゴリを確認できないため、絞り込み対象から除外しています。": "件商品因类别无法确定而从筛选结果中排除。",
