@@ -2,6 +2,16 @@
 // Runtime translation is local; this file makes no external requests.
 var DCATS_LEGACY_UI_TRANSLATIONS = {
   "en": {
+    "全体集計を含む選択シートの指定順位範囲": "Specified source rank range for the selected sheets including aggregate totals",
+    "件から条件で絞り込み、元の順位を保持しています。": "items are filtered by the conditions, preserving their source ranks.",
+    "/ 指定順位範囲内で絞り込み・元順位を保持": "/ Filter within the specified source rank range; preserve source ranks",
+    "順位は連番で重複なし": "Ranks are consecutive and unique",
+    "/ 出荷数・コア在庫は非表示 / 仕入先商品はD-CATS照合時点": "/ Shipment and core stock are hidden / Supplier items reflect D-CATS lookup time",
+    "/ コア在庫・互換・未登録品番はD-CATS照合時点": "/ Core stock, compatibility and unregistered part numbers reflect D-CATS lookup time",
+    "同数でも重複なし": "No duplicate ranks for ties",
+    "指定順位範囲内で絞り込み・元順位を保持": "Filter within the selected source rank range; preserve source ranks",
+    "元順位を保持（絞り込みによる欠番あり）": "Preserve source ranks (gaps after filtering)",
+    "カテゴリを複数チェックすると、いずれかに該当する商品を対象にします。未選択はすべて対象です。全体集計を選んだ場合は、指定順位範囲を先に確定し、その範囲内でカテゴリや車両区分を絞り込みます。元順位を保持するため欠番が出ます。カテゴリ別シートだけの場合は、絞り込み後に順位を計算します。": "Multiple categories include products matching any selected category. No selection includes all products. With an aggregate sheet, first fix the specified rank range, then filter categories and vehicle classifications within it. Source ranks are preserved, so gaps can occur. With detail sheets only, products are filtered before ranks are calculated.",
     "選択した分類を明細に表示": "Show selected classifications in details",
     "未選択はすべて対象です。「軽四」は軽トラック・軽商用バン・軽乗用車など、軽と付く分類を選びます。軽四＋トラックは軽トラック、トラックのみはトラック分類の全品番です。軽四＋それ以外は両方の分類を対象にします。共用品番は選択分類に適合すれば含め、明細には選択に一致した分類だけを表示します。タクシー・教習車の共用適合は両方に含みます。機械は建機・農機・産業機械を含みます。メーカー品番にALDKを含むDKSオリジナル商品は除外します。": "No selection includes all products. Kei selects classifications such as kei trucks, kei commercial vans and kei passenger cars. Kei + Truck selects kei trucks; Truck alone selects all products classified as trucks. Kei + Other includes both classification groups. Shared products remain when they fit a selected classification, and details show only matching classifications. Shared taxi/driving-school fitments appear in both. Machinery includes construction, agricultural and industrial machinery. DKS original products with ALDK in the manufacturer part number are excluded.",
     "fal試験用：社外新品SLの6方向を指定": "fal trial: assign six views for new aftermarket SL",
@@ -3876,6 +3886,16 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "/ ALDK除外": "/ ALDK excluded"
   },
   "zh": {
+    "全体集計を含む選択シートの指定順位範囲": "包含汇总表的所选工作表指定原始排名范围",
+    "件から条件で絞り込み、元の順位を保持しています。": "件内按条件筛选并保留原排名。",
+    "/ 指定順位範囲内で絞り込み・元順位を保持": "/ 在指定原始排名范围内筛选并保留原排名",
+    "順位は連番で重複なし": "排名连续且不重复",
+    "/ 出荷数・コア在庫は非表示 / 仕入先商品はD-CATS照合時点": "/ 隐藏出货量和旧件库存 / 供应商商品以D-CATS查询时点为准",
+    "/ コア在庫・互換・未登録品番はD-CATS照合時点": "/ 旧件库存、兼容关系和未登记零件号以D-CATS查询时点为准",
+    "同数でも重複なし": "并列数值也不重复排名",
+    "指定順位範囲内で絞り込み・元順位を保持": "在指定原始排名范围内筛选并保留原排名",
+    "元順位を保持（絞り込みによる欠番あり）": "保留原排名（筛选后可能出现间隔）",
+    "カテゴリを複数チェックすると、いずれかに該当する商品を対象にします。未選択はすべて対象です。全体集計を選んだ場合は、指定順位範囲を先に確定し、その範囲内でカテゴリや車両区分を絞り込みます。元順位を保持するため欠番が出ます。カテゴリ別シートだけの場合は、絞り込み後に順位を計算します。": "多选类别包含符合任一所选类别的商品。未选择时包含全部商品。选择汇总表时，先确定指定排名范围，再在范围内按商品类别和车辆分类筛选。保留原排名，因此可能出现间隔。仅选择类别明细表时，先筛选再计算排名。",
     "選択した分類を明細に表示": "在明细中显示所选分类",
     "未選択はすべて対象です。「軽四」は軽トラック・軽商用バン・軽乗用車など、軽と付く分類を選びます。軽四＋トラックは軽トラック、トラックのみはトラック分類の全品番です。軽四＋それ以外は両方の分類を対象にします。共用品番は選択分類に適合すれば含め、明細には選択に一致した分類だけを表示します。タクシー・教習車の共用適合は両方に含みます。機械は建機・農機・産業機械を含みます。メーカー品番にALDKを含むDKSオリジナル商品は除外します。": "未选择时包含所有商品。“轻型车”选择轻型卡车、轻型商用厢式车和轻型乘用车等分类。“轻型车＋卡车”筛选轻型卡车；仅选“卡车”包含卡车分类的所有商品。“轻型车＋其他”包含两类。共用商品只要适配所选分类就保留，明细仅显示匹配分类。出租车与教练车共用适配同时包含在两类中。机械包含工程、农业及工业机械。排除厂家零件号中包含ALDK的DKS原创商品。",
     "fal試験用：社外新品SLの6方向を指定": "fal试验：指定全新副厂SL的六个方向",

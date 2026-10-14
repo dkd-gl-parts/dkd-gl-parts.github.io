@@ -1127,23 +1127,33 @@
   function buildRanking(rows, options) {
     var categorySet = Object.create(null);
     options.categories.forEach(function(category) { categorySet[category] = true; });
+    var rangeBeforeFilters = rows.some(function(row) { return categorySet[row.sheet] && isAggregateRow(row); });
     var productCategoryNames = productCategoryFilters(options);
     var productCategorySet = Object.create(null);
     productCategoryNames.forEach(function(category) { productCategorySet[category] = true; });
     var productCategories = productCategoryNames.length ? indexProductCategories(rows) : null;
     var unclassifiedRowCount = 0;
     var excludedDksRowCount = 0;
-    var sourceRows = rows.filter(function(row) {
-      if (!categorySet[row.sheet]) return false;
+    function matchesConditions(row) {
       if (productCategoryNames.length) {
         var resolvedCategory = productCategoryForRow(row, productCategories);
         if (!resolvedCategory) unclassifiedRowCount++;
         if (!productCategorySet[resolvedCategory]) return false;
       }
+      return matchesVehicleFilters(row, options);
+    }
+    var sourceRows = rows.filter(function(row) {
+      if (!categorySet[row.sheet]) return false;
+      if (!rangeBeforeFilters && !matchesConditions(row)) return false;
       if (normalizeText(row.maker).toUpperCase().indexOf("ALDK") >= 0) { excludedDksRowCount++; return false; }
-      if (!matchesVehicleFilters(row, options)) return false;
       return options.reportType !== "supplier_availability" || !isDaikoManufacturerPart(row.maker);
     });
+    if (rangeBeforeFilters) {
+      var baseRangeSummary = buildBaseRangeRanking(sourceRows, options, matchesConditions);
+      baseRangeSummary.unclassifiedRowCount = unclassifiedRowCount;
+      baseRangeSummary.excludedDksRowCount = excludedDksRowCount;
+      return baseRangeSummary;
+    }
     var groups = createCompatibilityGroups(sourceRows, options.compatibilityBasis);
     var compatibleGroupCount = groups.filter(function(group) { return group.length > 1; }).length;
     var candidates = [];
@@ -1161,6 +1171,20 @@
     });
 
     candidates = candidates.filter(function(result) { return result.shipment >= options.minShipment; });
+    var ranked = rankCandidates(candidates, options);
+    return {
+      results: ranked,
+      sourceRowCount: sourceRows.length,
+      candidateCount: candidates.length,
+      compatibleGroupCount: compatibleGroupCount,
+      unclassifiedRowCount: unclassifiedRowCount,
+      excludedDksRowCount: excludedDksRowCount,
+      omittedRows: omittedRows,
+      rangeBeforeFilters: false
+    };
+  }
+
+  function rankCandidates(candidates, options) {
     var ranked = [];
     if (options.rankScope === "per_category") {
       options.categories.forEach(function(category) {
@@ -1178,15 +1202,54 @@
         return result.rank >= options.startRank && result.rank <= options.endRank;
       });
     }
-    return {
-      results: ranked,
-      sourceRowCount: sourceRows.length,
-      candidateCount: candidates.length,
-      compatibleGroupCount: compatibleGroupCount,
-      unclassifiedRowCount: unclassifiedRowCount,
-      excludedDksRowCount: excludedDksRowCount,
-      omittedRows: omittedRows
-    };
+    return ranked;
+  }
+
+  function buildBaseRangeRanking(sourceRows, options, matchesConditions) {
+    var groups = createCompatibilityGroups(sourceRows, options.compatibilityBasis);
+    var candidates = [];
+    groups.forEach(function(group) {
+      if (options.compatibilityMode === "all") {
+        group.forEach(function(row) { candidates.push(resultFromRow(row, group, options.metric, false)); });
+      } else {
+        candidates.push(resultFromRow(representativeFor(group, options.metric), group, options.metric, options.compatibilityMode === "consolidated"));
+      }
+    });
+    var baseRange = rankCandidates(candidates, options);
+    var allowedRows = new Set();
+    baseRange.forEach(function(result) {
+      (options.compatibilityMode === "all" ? [result.row] : result.group).forEach(function(row) { allowedRows.add(row); });
+    });
+    var conditionCache = new Map();
+    var groupCache = new Map();
+    var matchedRows = new Set();
+    function matchingGroup(group) {
+      if (groupCache.has(group)) return groupCache.get(group);
+      var matching = group.filter(function(row) {
+        if (!allowedRows.has(row)) return false;
+        if (!conditionCache.has(row)) conditionCache.set(row, matchesConditions(row));
+        if (!conditionCache.get(row)) return false;
+        matchedRows.add(row);
+        return true;
+      });
+      groupCache.set(group, matching);
+      return matching;
+    }
+    var results = [], omittedRows = 0;
+    baseRange.forEach(function(baseResult) {
+      var matching = matchingGroup(baseResult.group);
+      if (!matching.length || (options.compatibilityMode === "all" && matching.indexOf(baseResult.row) < 0)) return;
+      if (options.query && !matching.some(function(row) { return rowSearchText(row).indexOf(options.query) >= 0; })) return;
+      var row = options.compatibilityMode === "all" ? baseResult.row : representativeFor(matching, options.metric);
+      var result = resultFromRow(row, matching, options.metric, options.compatibilityMode === "consolidated");
+      result.rank = baseResult.rank;
+      result.rankFromSourceRange = true;
+      if (options.compatibilityMode !== "all") omittedRows += Math.max(0, matching.length - 1);
+      if (result.shipment >= options.minShipment) results.push(result);
+    });
+    var compatibleGroupCount = 0;
+    groupCache.forEach(function(group) { if (group.length > 1) compatibleGroupCount++; });
+    return { results: results, sourceRowCount: matchedRows.size, candidateCount: results.length, compatibleGroupCount: compatibleGroupCount, omittedRows: omittedRows, rangeBeforeFilters: true, baseRangeCount: baseRange.length };
   }
 
   function metricLabel(metric) {
@@ -1575,6 +1638,7 @@
     var hasAggregate = selectedSheets.some(function(sheet) { return sheet.isAggregate; });
     var hasDetail = selectedSheets.some(function(sheet) { return !sheet.isAggregate; });
     var messages = [];
+    if (summary.rangeBeforeFilters) messages.push("全体集計を含む選択シートの指定順位範囲 " + formatNumber(summary.baseRangeCount) + "件から条件で絞り込み、元の順位を保持しています。");
     if (summary.excludedDksRowCount) messages.push("メーカー品番にALDKを含むDKSオリジナル商品 " + formatNumber(summary.excludedDksRowCount) + "行を除外しています。");
     if (vehicleFilterText(options)) messages.push(vehicleFilterText(options) + "。出荷の実際の用途や専用品を示すものではありません。");
     if (summary.unclassifiedRowCount) messages.push("選択シートの " + formatNumber(summary.unclassifiedRowCount) + "件は商品カテゴリを確認できないため、絞り込み対象から除外しています。");
@@ -1704,6 +1768,7 @@
       return false;
     }
     var summary = buildRanking(state.rows, options);
+    options.rangeBeforeFilters = summary.rangeBeforeFilters;
     summary.results = filterSupplierResults(summary.results, options);
     state.results = summary.results;
     state.summary = summary;
@@ -1871,6 +1936,9 @@
     var productCategoryNames = productCategoryFilters(options);
     if (productCategoryNames.length) categoryText += " / 商品カテゴリ: " + productCategoryNames.join("・");
     categoryText += " / ALDK除外" + (vehicleFilterText(options) ? " / " + vehicleFilterText(options) : "");
+    var sourceRangeRanks = options.rangeBeforeFilters || results.some(function(result) { return result.rankFromSourceRange; });
+    if (sourceRangeRanks) categoryText += " / 指定順位範囲内で絞り込み・元順位を保持";
+    var rankNote = sourceRangeRanks ? "元順位を保持（絞り込みによる欠番あり）" : "順位は連番で重複なし";
     var supplierReport = options.reportType === "supplier_availability";
     var title = printFileTitle(options.categories, options.startRank, options.endRank, generatedDate, options.reportType, productCategoryNames, options);
     var coreStockSummary = rankingCoreStockSummary(results);
@@ -1906,7 +1974,7 @@
       "<div class='report-meta'><b>順位 " + formatNumber(options.startRank) + " - " + formatNumber(options.endRank) + "</b><span>" + escapeHtml(generatedAt) + " 作成</span></div></header>" +
       conditions +
       "<table><thead>" + header + "</thead>" + buildPrintRows(results, options) + "</table>" +
-      "<footer><span>D-CATS / " + (supplierReport ? "仕入先商品照合" : "製造ランキング") + "</span><span>" + (supplierReport ? "順位はD-CATS出荷実績に基づく / 出荷数・コア在庫は非表示 / 仕入先商品はD-CATS照合時点" : "順位は連番で重複なし / コア在庫・互換・未登録品番はD-CATS照合時点") + "</span></footer></main></body></html>";
+      "<footer><span>D-CATS / " + (supplierReport ? "仕入先商品照合" : "製造ランキング") + "</span><span>" + rankNote + (supplierReport ? " / 出荷数・コア在庫は非表示 / 仕入先商品はD-CATS照合時点" : " / コア在庫・互換・未登録品番はD-CATS照合時点") + "</span></footer></main></body></html>";
   }
 
   function openPdfPreview() {
