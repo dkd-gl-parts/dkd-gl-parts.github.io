@@ -185,7 +185,7 @@ if (!printHtml.includes("is-available'>あり") || !printHtml.includes("is-unava
 }
 
 // Whole-sheet shipment totals must be filtered using detail-sheet membership,
-// before compatibility grouping or rank slicing, without replacing their totals.
+// inside the original aggregate rank range, without replacing their totals.
 const aggregateSheet = "商品別出荷実績集計";
 const detailRows = [
   { ...linkedRow, id: "D1", sheet: "オルタ", productCode: "1", shipment: 3 },
@@ -209,8 +209,8 @@ const alternatorRanking = api.buildRanking(categoryRows, categoryOptions);
 if (alternatorRanking.results.length !== 2 || alternatorRanking.sourceRowCount !== 2 ||
     alternatorRanking.results[0].row.id !== "A1" || alternatorRanking.results[0].shipment !== 100 ||
     alternatorRanking.results[1].row.id !== "A2" || alternatorRanking.results[1].shipment !== 80 ||
-    alternatorRanking.results[0].rank !== 1 || alternatorRanking.results[1].rank !== 2) {
-  throw new Error("aggregate alternator filtering must keep aggregate totals and recompute ranks");
+    alternatorRanking.results[0].rank !== 4 || alternatorRanking.results[1].rank !== 6) {
+  throw new Error("aggregate alternator filtering must keep aggregate totals and source ranks");
 }
 if (alternatorRanking.unclassifiedRowCount !== 2) {
   throw new Error("unknown and ambiguous category membership must be excluded and counted");
@@ -220,8 +220,8 @@ if (starterRanking.results.length !== 1 || starterRanking.results[0].row.id !== 
   throw new Error("aggregate starter filtering must exclude alternators and parts");
 }
 const rangeRanking = api.buildRanking(categoryRows, { ...categoryOptions, startRank: 2, endRank: 2 });
-if (rangeRanking.results.length !== 1 || rangeRanking.results[0].row.id !== "A2") {
-  throw new Error("rank slicing must run after product-category filtering");
+if (rangeRanking.results.length !== 0) {
+  throw new Error("rank 2 belongs to another category and must not be replaced by a lower matching row");
 }
 const consolidated = api.buildRanking(categoryRows, { ...categoryOptions, compatibilityMode: "consolidated" });
 if (consolidated.results.length !== 1 || consolidated.results[0].shipment !== 180 ||
@@ -267,18 +267,18 @@ if (escapedCategoryPrint.includes("商品カテゴリ: <script>")) {
   throw new Error("category names must be escaped in PDF output");
 }
 
-// Product-category choices are ORed within the source sheets, then ranked once.
+// Product-category choices are ORed inside the already fixed aggregate range.
 const multiOptions = { ...categoryOptions, productCategories: ["オルタ", "セル"] };
 const multiRanking = api.buildRanking(categoryRows, multiOptions);
 if (multiRanking.results.map(result => result.row.id).join(",") !== "A3,A1,A2" ||
     multiRanking.results.map(result => result.shipment).join(",") !== "300,100,80" ||
-    multiRanking.results.map(result => result.rank).join(",") !== "1,2,3" ||
+    multiRanking.results.map(result => result.rank).join(",") !== "1,4,6" ||
     multiRanking.unclassifiedRowCount !== 2) {
-  throw new Error("multiple categories must keep aggregate totals, exclude unresolved rows, and recompute combined ranks");
+  throw new Error("multiple categories must keep aggregate totals and original ranks while excluding unresolved rows");
 }
 const multiRange = api.buildRanking(categoryRows, { ...multiOptions, startRank: 2, endRank: 2 });
-if (multiRange.results.length !== 1 || multiRange.results[0].row.id !== "A1") {
-  throw new Error("rank range must apply after combining selected product categories");
+if (multiRange.results.length !== 0 || api.buildRanking(categoryRows,{...multiOptions,startRank:4,endRank:4}).results[0].row.id !== "A1") {
+  throw new Error("rank range must apply before combining selected product categories");
 }
 const duplicateSelection = api.buildRanking(categoryRows, { ...multiOptions, productCategories: ["オルタ", "セル", "オルタ"] });
 if (JSON.stringify(multiRanking) !== JSON.stringify(duplicateSelection)) {
