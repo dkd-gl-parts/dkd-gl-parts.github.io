@@ -2,6 +2,18 @@
 // Runtime translation is local; this file makes no external requests.
 var DCATS_LEGACY_UI_TRANSLATIONS = {
   "en": {
+    "商用バン": "Commercial van",
+    "車両区分の絞り込み": "Vehicle fitment filter",
+    "車両区分で絞り込み（複数選択）": "Filter by vehicle fitment (multiple selections)",
+    "すべての車両区分": "All vehicle fitments",
+    "車両区分を複数選択": "Select multiple vehicle fitments",
+    "車両の分類を明細に表示": "Show vehicle classifications in details",
+    "車両区分:": "Vehicle fitment:",
+    "それ以外": "Other than kei",
+    "タクシー": "Taxi",
+    "教習車": "Driving school vehicle",
+    "機械": "Machinery",
+    "未選択はすべて対象です。「軽四＋トラック」は軽トラック、「トラック」のみは軽を含む全トラックです。軽四・それ以外は選んだいずれか、車両用途も選んだいずれかを対象にし、両者を組み合わせます。「それ以外」は軽四以外の適合確認済みです。タクシー・教習車の共用適合は両方に含みます。機械は建機・農機・産業機械を含みます。メーカー品番にALDKを含むDKSオリジナル商品は除外します。": "No selection includes all products. Kei + Truck selects kei trucks; Truck alone includes trucks of all sizes. Selections within size or use are combined with OR; size and use are combined with AND. Other than kei includes confirmed non-kei fitments. Shared taxi/driving-school fitments appear in both. Machinery includes construction, agricultural and industrial machinery. DKS original products with ALDK in the manufacturer part number are excluded.",
     "指定した順位範囲を画面表示": "Display the selected ranking range",
     "用途": "Business use",
     "軽四": "Kei",
@@ -3856,6 +3868,18 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "/ ALDK除外": "/ ALDK excluded"
   },
   "zh": {
+    "商用バン": "商用厢式车",
+    "車両区分の絞り込み": "车辆适配筛选",
+    "車両区分で絞り込み（複数選択）": "按车辆适配筛选（可多选）",
+    "すべての車両区分": "所有车辆适配",
+    "車両区分を複数選択": "选择多个车辆适配类别",
+    "車両の分類を明細に表示": "在明细中显示车辆分类",
+    "車両区分:": "车辆适配：",
+    "それ以外": "轻型车以外",
+    "タクシー": "出租车",
+    "教習車": "教练车",
+    "機械": "机械",
+    "未選択はすべて対象です。「軽四＋トラック」は軽トラック、「トラック」のみは軽を含む全トラックです。軽四・それ以外は選んだいずれか、車両用途も選んだいずれかを対象にし、両者を組み合わせます。「それ以外」は軽四以外の適合確認済みです。タクシー・教習車の共用適合は両方に含みます。機械は建機・農機・産業機械を含みます。メーカー品番にALDKを含むDKSオリジナル商品は除外します。": "未选择时包含所有商品。“轻型车＋卡车”筛选轻型卡车；仅选“卡车”包含所有尺寸的卡车。尺寸选项之间、用途选项之间分别为或，尺寸与用途之间为且。“轻型车以外”仅包含已确认的非轻型车适配。出租车与教练车共用适配同时包含在两类中。机械包含工程、农业及工业机械。排除厂家零件号中包含ALDK的DKS原创商品。",
     "指定した順位範囲を画面表示": "显示所选排名范围",
     "用途": "用途",
     "軽四": "轻型车",

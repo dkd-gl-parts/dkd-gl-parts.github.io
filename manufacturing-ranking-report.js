@@ -14,6 +14,17 @@
   var VEHICLE_WORK_TAGS = ["トラック", "バス", "建設機械", "タクシー・教習車", "タクシー・営業車仕様", "営業車・商用バン", "軽トラック", "軽商用バン", "フォークリフト", "農業機械", "産業機械・エンジン", "特装車"];
   var VEHICLE_KEI_KINDS = ["軽トラック", "軽商用バン", "軽乗用車", "軽四（仕様未区別）"];
   var VEHICLE_KEI_COMMON = ["確認資料では軽四のみ", "軽四以外にも適合", "機械等にも適合", "他の適合先は未判定"];
+  var VEHICLE_TARGET_LABELS = { kei: "軽四", other: "それ以外", taxi: "タクシー", truck: "トラック", van: "商用バン", driving_school: "教習車", machine: "機械", forklift: "フォークリフト", special: "特装車", bus: "バス" };
+  var VEHICLE_TARGET_TYPES = {
+    taxi: { kei: [], other: ["タクシー・教習車", "タクシー・営業車仕様"] },
+    truck: { kei: ["軽トラック"], other: ["トラック"] },
+    van: { kei: ["軽商用バン"], other: ["営業車・商用バン"] },
+    driving_school: { kei: [], other: ["タクシー・教習車"] },
+    machine: { kei: [], other: ["建設機械", "農業機械", "産業機械・エンジン"] },
+    forklift: { kei: [], other: ["フォークリフト"] },
+    special: { kei: [], other: ["特装車"] },
+    bus: { kei: [], other: ["バス"] }
+  };
   var MASTER_PART_FIELDS = [
     { normalized: "normalized_genuine_part_number", value: "genuine_part_number", label: "純正" },
     { normalized: "normalized_genuine_part_number_2", value: "genuine_part_number_2", label: "純正2" },
@@ -776,20 +787,16 @@
     return (aggregate.length ? aggregate.slice(0, 1) : sheets).map(function(sheet) { return sheet.name; });
   }
 
-  function selectedVehicleFilters(kind) {
+  function selectedVehicleFilters() {
     return Array.prototype.map.call(
-      document.querySelectorAll("#manufacturing-ranking-vehicle-" + kind + "-options input[type='checkbox']:checked"),
+      document.querySelectorAll("#manufacturing-ranking-vehicle-target-options input[type='checkbox']:checked"),
       function(input) { return input.value; }
     );
   }
 
   function syncVehicleFilterSummaries() {
-    var defaults = { work: "すべての用途", kei: "すべて（軽四の絞り込みなし）", common: "すべての共用区分" };
-    Object.keys(defaults).forEach(function(kind) {
-      var summary = byId("manufacturing-ranking-vehicle-" + kind + "-summary");
-      var labels = Array.prototype.map.call(document.querySelectorAll("#manufacturing-ranking-vehicle-" + kind + "-options input[type='checkbox']:checked"), function(input) { return input.nextElementSibling.textContent; });
-      if (summary) summary.textContent = labels.join("・") || defaults[kind];
-    });
+    var summary = byId("manufacturing-ranking-vehicle-target-summary");
+    if (summary) summary.textContent = unifiedVehicleSelectionText(selectedVehicleFilters()) || "すべての車両区分";
   }
 
   function positiveInteger(id, fallback) {
@@ -814,9 +821,7 @@
     return {
       categories: selectedCategories(),
       productCategories: selectedProductCategories(),
-      vehicleWork: selectedVehicleFilters("work"),
-      vehicleKei: selectedVehicleFilters("kei"),
-      vehicleCommon: selectedVehicleFilters("common"),
+      vehicleTargets: selectedVehicleFilters(),
       showVehicleClassification: byId("manufacturing-ranking-show-vehicle").checked,
       reportType: reportType,
       metric: byId("manufacturing-ranking-metric").value,
@@ -992,6 +997,7 @@
 
   function matchesVehicleFilters(row, options) {
     var profile = vehicleClassification(row.vehicleClassification);
+    if (Object.prototype.hasOwnProperty.call(options, "vehicleTargets")) return matchesUnifiedVehicleFilters(profile, vehicleFilterSelection(options.vehicleTargets));
     var work = profile ? profile.work_tags : [];
     var kei = profile ? profile.kei_kinds : [];
     var workFilters = vehicleFilterSelection(options.vehicleWork);
@@ -1019,7 +1025,38 @@
     return uniqueIds(filters.map(normalizeText).filter(Boolean));
   }
 
+  function matchesUnifiedVehicleFilters(profile, filters) {
+    if (!filters.length) return true;
+    if (!profile || filters.some(function(filter) { return !Object.prototype.hasOwnProperty.call(VEHICLE_TARGET_LABELS, filter); })) return false;
+    var sizes = filters.filter(function(filter) { return filter === "kei" || filter === "other"; });
+    var types = filters.filter(function(filter) { return Object.prototype.hasOwnProperty.call(VEHICLE_TARGET_TYPES, filter); });
+    function matchesSize(keiFitment, otherFitment) {
+      return !sizes.length || (sizes.indexOf("kei") >= 0 && keiFitment) || (sizes.indexOf("other") >= 0 && otherFitment);
+    }
+    if (types.length) return types.some(function(type) {
+      var definition = VEHICLE_TARGET_TYPES[type];
+      var keiFitment = definition.kei.some(function(tag) { return profile.kei_kinds.indexOf(tag) >= 0 || profile.work_tags.indexOf(tag) >= 0; });
+      var otherFitment = definition.other.some(function(tag) { return profile.work_tags.indexOf(tag) >= 0; });
+      return (keiFitment || otherFitment) && matchesSize(keiFitment, otherFitment);
+    });
+    var otherFitment = profile.work_tags.some(function(tag) { return tag !== "軽トラック" && tag !== "軽商用バン"; }) || ["軽四以外にも適合", "機械等にも適合"].indexOf(profile.kei_common) >= 0;
+    return matchesSize(profile.kei_kinds.length > 0, otherFitment);
+  }
+
+  function unifiedVehicleSelectionText(filters) {
+    var sizes = [], types = [];
+    filters.forEach(function(filter) {
+      if (!Object.prototype.hasOwnProperty.call(VEHICLE_TARGET_LABELS, filter)) return;
+      (filter === "kei" || filter === "other" ? sizes : types).push(VEHICLE_TARGET_LABELS[filter]);
+    });
+    return [sizes.join("・"), types.join("・")].filter(Boolean).join(" × ");
+  }
+
   function vehicleFilterText(options) {
+    if (Object.prototype.hasOwnProperty.call(options, "vehicleTargets")) {
+      var targetText = unifiedVehicleSelectionText(vehicleFilterSelection(options.vehicleTargets));
+      return targetText ? "車両区分: " + targetText : "";
+    }
     var labels = [];
     [
       ["vehicleWork", "用途", { confirmed: "業務用途の適合あり", unconfirmed: "業務適合未確認", business_or_kei: "業務用途・軽四の適合あり" }],
@@ -1535,6 +1572,8 @@
     table.innerHTML = "<div class='ranking-report-empty'><span aria-hidden='true'>▤</span><strong>" + escapeHtml(title) + "</strong><p>" + escapeHtml(description) + "</p></div>";
     var pdf = byId("manufacturing-ranking-pdf");
     if (pdf) pdf.disabled = true;
+    var excel = byId("manufacturing-ranking-excel");
+    if (excel) excel.disabled = true;
   }
 
   function renderPreviewTable(results, options) {
@@ -1911,9 +1950,7 @@
       syncProductCategorySummary();
       updatePreview();
     });
-    ["work", "kei", "common"].forEach(function(kind) {
-      byId("manufacturing-ranking-vehicle-" + kind).addEventListener("change", function() { syncVehicleFilterSummaries(); updatePreview(); });
-    });
+    byId("manufacturing-ranking-vehicle-target").addEventListener("change", function() { syncVehicleFilterSummaries(); updatePreview(); });
     document.querySelectorAll("[data-ranking-vehicle-reset]").forEach(function(button) {
       button.addEventListener("click", function() {
         document.querySelectorAll("#" + button.dataset.rankingVehicleReset + " input[type='checkbox']").forEach(function(input) { input.checked = false; });
