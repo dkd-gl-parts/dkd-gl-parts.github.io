@@ -2,7 +2,7 @@
   "use strict";
   var channel="dcats-integration-status-v1";
   var fields=["extension","pc","identity","syncFolder","driveConfiguration","driveAuthorization","backupPassword","recovery","backupAdapter"];
-  var features=["startup","overview","setup","connect","login","prepare","export","result","backup","backup_result","import_result"];
+  var features=["startup","automatic","overview","setup","connect","login","prepare","export","result","backup","backup_result","import_result"];
   function supportedVersion(version){
     var match=typeof version==="string"&&/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(version);
     return !!match&&(Number(match[1])>0||Number(match[2])>5||Number(match[2])===5&&Number(match[3])>=16);
@@ -30,7 +30,10 @@
     });
   }
   function create(adapters){
-    var owner="",generation=0,sequence=0,running=false,started=false,observedDevice="",state;
+    var owner="",generation=0,sequence=0,running=false,started=false,observedDevice="",state,automaticPromise=null,lastAutomaticAt=-Infinity,automaticTimer=null;
+    function clearAutomaticTimer(){if(automaticTimer!==null){(adapters.clearTimeout||window.clearTimeout)(automaticTimer);automaticTimer=null;}}
+    function time(){return typeof adapters.now==="function"?adapters.now():Date.now();}
+    function idle(){return typeof adapters.isIdle!=="function"||adapters.isIdle();}
     function initial(){var checks={};fields.forEach(function(key){checks[key]="unverified";});return checks;}
     function firstUse(){try{return adapters.storage.getItem("dcats-integration-guide-v1:"+owner)!=="1";}catch{return true;}}
     function snapshot(){return Object.freeze({owner:owner,phase:state.phase,reason:state.reason,feature:state.feature,firstUse:state.firstUse,checks:Object.freeze(Object.assign({},state.checks))});}
@@ -38,7 +41,8 @@
     function setOwner(value){
       value=typeof value==="string"?value:"";
       if(value===owner&&state)return;
-      owner=value;generation++;sequence++;running=false;started=false;observedDevice="";
+      clearAutomaticTimer();
+      owner=value;generation++;sequence++;running=false;started=false;observedDevice="";lastAutomaticAt=-Infinity;
       state={phase:"unverified",reason:"",feature:"startup",firstUse:!!owner&&firstUse(),checks:initial()};emit();
     }
     function acknowledgeGuide(){if(!owner||!adapters.isAllowed(owner))return;try{adapters.storage.setItem("dcats-integration-guide-v1:"+owner,"1");}catch{}
@@ -60,6 +64,9 @@
     }
     async function check(feature,options){
       options=options||{};
+      // A foreground action waits for our read-only inspection, then checks
+      // afresh. Automatic results never replace its execution authorization.
+      if(feature!=="automatic"&&automaticPromise)await automaticPromise;
       if(!features.includes(feature)||!owner||!adapters.isAllowed(owner)||typeof options.isCurrent!=="function"||!options.isCurrent())return {ok:false,reason:"session_changed"};
       if(running&&state.feature!=="startup")return {ok:false,reason:"busy"};
       var actor=owner,epoch=generation,request=++sequence;
@@ -97,9 +104,37 @@
         }
       }
     }
-    function start(){if(started||!owner)return Promise.resolve();started=true;return check("startup",{isCurrent:function(){return true;}});}
+    function refresh(options){
+      options=options||{};
+      if(automaticPromise)return automaticPromise;
+      if(!owner||!adapters.isAllowed(owner)||!idle()||running)return Promise.resolve();
+      var elapsed=time()-lastAutomaticAt;
+      if(options.force!==true&&elapsed>=0&&elapsed<30000){
+        if(automaticTimer===null)automaticTimer=(adapters.setTimeout||window.setTimeout)(function(){automaticTimer=null;refresh();},30000-elapsed);
+        return Promise.resolve();
+      }
+      clearAutomaticTimer();
+      var actor=owner,epoch=generation;
+      started=true;lastAutomaticAt=time();
+      function current(){return actor===owner&&epoch===generation&&adapters.isAllowed(actor)&&
+        (typeof adapters.canContinueAutomatic!=="function"||adapters.canContinueAutomatic());}
+      automaticPromise=check("automatic",{isCurrent:current,expectedDevice:typeof adapters.expectedDevice==="function"?adapters.expectedDevice():null})
+        .then(function(result){
+          if(actor===owner&&epoch===generation){
+            if(result.reason==="session_changed"){lastAutomaticAt=-Infinity;started=false;}
+            if(current()&&typeof adapters.onAutomaticResult==="function")adapters.onAutomaticResult(result);
+          }
+          return result;
+        }).finally(function(){automaticPromise=null;});
+      return automaticPromise;
+    }
+    function start(){
+      if(started||!owner)return automaticPromise||Promise.resolve();
+      if(automaticPromise)return automaticPromise.then(start);
+      return refresh();
+    }
     setOwner("");
-    return Object.freeze({setOwner:setOwner,start:start,check:check,snapshot:snapshot,acknowledgeGuide:acknowledgeGuide,observeReadiness:observeReadiness});
+    return Object.freeze({setOwner:setOwner,start:start,refresh:refresh,check:check,snapshot:snapshot,acknowledgeGuide:acknowledgeGuide,observeReadiness:observeReadiness});
   }
   window.DcatsIntegrationReadiness=Object.freeze({create:create,probeExtension:probeExtension});
 })();
