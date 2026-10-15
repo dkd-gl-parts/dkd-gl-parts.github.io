@@ -134,7 +134,7 @@ class FakeElement {
     if (selector === "[data-request-copy]") return this.descendants().filter(element => element.dataset.requestCopy);
     if (selector.includes("[role='button']") && selector.includes("[data-production-index]")) {
       return this.descendants().filter((element) => (
-        element.getAttribute("role") === "button" ||
+        element.getAttribute("role") === "button" || element.getAttribute("role") === "dialog" || (element.classList.contains("panel") && element.classList.contains("show")) ||
         element.getAttribute("role") === "link" ||
         element.hasAttribute("data-production-index") ||
         (element.hasAttribute("tabindex") && element.getAttribute("tabindex") !== "-1")
@@ -144,6 +144,10 @@ class FakeElement {
   }
   getBoundingClientRect() {
     if (!isRendered(this)) return { left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 };
+    if (this.classList.contains("dcats-concierge-sales-dock")) {
+      const rect = this.parentElement.getBoundingClientRect();
+      return { left: rect.left, right: rect.right, top: rect.bottom - 148, bottom: rect.bottom, width: rect.width, height: 148 };
+    }
     if (this.customRect) return { ...this.customRect };
     const ownerWindow = this.ownerDocument && this.ownerDocument.defaultView || windowObject;
     const mobile = ownerWindow.innerWidth <= 700;
@@ -173,6 +177,7 @@ function isRendered(element) {
   }
   return true;
 }
+let salesHost = null, salesResults = null, salesDetail = null, salesModal = null;
 
 const documentObject = {
   readyState: "complete",
@@ -188,10 +193,16 @@ const documentObject = {
   },
   querySelector(selector) {
     if (selector === ".screen.active") return activeScreen;
+    if (activeScreen.id === "screen-search") {
+      if (selector === "#screen-search .left-col") return salesHost;
+      if (selector === "#screen-search .list-area") return salesResults;
+      if (selector === "#screen-search .right-col > #panel") return salesDetail;
+    }
     return null;
   },
   querySelectorAll(selector) {
     if (selector === ".screen") return [activeScreen];
+    if (selector.includes(".panel.show") && activeScreen.id === "screen-search") return [salesDetail, salesModal].filter(Boolean);
     return [];
   }
 };
@@ -1199,6 +1210,73 @@ assert(root.classList.contains("has-no-safe-target") && !liveInfiniteAnimations(
 blockingCard.hidden = true;
 api.setMode("fixed");
 assert(!root.classList.contains("has-no-safe-target"), "Safe-target failure state did not clear after parking");
+
+// PC sales results get a real reserved strip; product details are never a walking lane.
+salesHost = new FakeElement("div", documentObject);
+salesHost.className = "left-col";
+salesHost.customRect = { left: 0, top: 60, right: 320, bottom: 800, width: 320, height: 740 };
+salesResults = new FakeElement("div", documentObject);
+salesResults.className = "list-area";
+salesResults.customRect = { left: 0, top: 210, right: 320, bottom: 652, width: 320, height: 442 };
+const clippedResult = new FakeElement("div", documentObject);
+clippedResult.setAttribute("role", "button");
+clippedResult.customRect = { left: 8, top: 630, right: 312, bottom: 780, width: 304, height: 150 };
+salesResults.appendChild(clippedResult); salesHost.appendChild(salesResults); activeScreen.appendChild(salesHost);
+salesDetail = new FakeElement("div", documentObject);
+salesDetail.id = "panel"; salesDetail.className = "panel show";
+salesDetail.customRect = { left: 320, top: 60, right: 1200, bottom: 800, width: 880, height: 740 };
+activeScreen.appendChild(salesDetail);
+activeScreen.id = "screen-search"; notifyObservers();
+function assertSalesPosition(label) {
+  const rect = mover.getBoundingClientRect();
+  assert(rect.left >= 8 && rect.right <= 294 && rect.top >= 660 && rect.bottom <= 792, label + ": concierge escaped the left reserved area");
+}
+assertSalesPosition("sales entry");
+assert(root.classList.contains("is-sales-docked") && salesHost.children.some(n => n.classList.contains("dcats-concierge-sales-dock")), "Sales page did not reserve a non-interactive area");
+for (const mode of ["active", "horizontal", "vertical", "fixed"]) {
+  sandboxMath.random = () => .5;
+  api.setMode(mode); await new Promise(resolve => setImmediate(resolve));
+  assertSalesPosition(mode);
+  assert(!root.classList.contains("has-no-safe-target") && !root.classList.contains("is-blocked"), "Inline detail or clipped result card incorrectly hid the sales concierge");
+}
+dispatch(hitTarget.listeners, "pointerdown", { target: hitTarget, pointerId: 73, button: 0, clientX: 220, clientY: 700, preventDefault() {}, stopPropagation() {} });
+dispatch(documentObject.listeners, "pointermove", { pointerId: 73, clientX: 1100, clientY: 100, preventDefault() {}, stopPropagation() {} });
+dispatch(documentObject.listeners, "pointerup", { pointerId: 73 });
+assertSalesPosition("drag toward product details");
+const salesMovement = lastAnimationFor(mover);
+dispatch(windowListeners, "scroll");
+assert(lastAnimationFor(mover) === salesMovement && !pendingFrames.size, "Result scrolling moved the reserved sales concierge");
+salesModal = new FakeElement("div", documentObject); salesModal.setAttribute("role", "dialog");
+salesModal.customRect = { left: 0, top: 0, right: 1200, bottom: 800, width: 1200, height: 800 };
+activeScreen.appendChild(salesModal); api.setMode("active");
+assert(root.classList.contains("is-blocked"), "A real modal was mistaken for the inline sales detail");
+salesModal.remove(); salesModal = null; api.setMode("active");
+api.setMode("off");
+assert(!salesHost.children.some(n => n.classList.contains("dcats-concierge-sales-dock")) && root.classList.contains("is-sales-context"), "Off mode left dead space or lost accessible left-side settings");
+api.setMode("fixed");
+await api.toggleFloating();
+assert(api.isFloating() && !root.classList.contains("is-sales-docked") && !salesHost.children.some(n => n.classList.contains("dcats-concierge-sales-dock")), "Floating mode left a reserved sales gap");
+await api.toggleFloating(); assertSalesPosition("return from floating");
+windowObject.innerHeight = 240;
+dispatch(windowListeners, "resize"); flushAnimationFrames();
+assert(root.classList.contains("has-no-safe-target"), "An unusably short sales dock fell back to walking over product details");
+windowObject.innerHeight = 800;
+dispatch(windowListeners, "resize"); flushAnimationFrames();
+assertSalesPosition("restored sales height");
+windowObject.innerWidth = 390;
+salesDetail.customRect = { left: 0, top: 160, right: 390, bottom: 800, width: 390, height: 640 };
+dispatch(windowListeners, "resize"); flushAnimationFrames(); api.setMode("active");
+assert(!root.classList.contains("is-sales-docked") && root.classList.contains("is-blocked"), "Mobile product detail must retain normal overlay blocking");
+windowObject.innerWidth = 1200;
+salesDetail.customRect = { left: 320, top: 60, right: 1200, bottom: 800, width: 880, height: 740 };
+dispatch(windowListeners, "resize"); flushAnimationFrames(); api.setMode("fixed"); assertSalesPosition("desktop resize");
+windowObject.userProfile = { role: "staff" }; notifyObservers();
+assert(!salesHost.children.some(n => n.classList.contains("dcats-concierge-sales-dock")) && root.hidden, "Nonadmin retained a sales pet area");
+windowObject.userProfile = { role: "system_admin" }; notifyObservers();
+activeScreen.id = "screen-menu"; notifyObservers();
+assert(!root.classList.contains("is-sales-context") && !root.classList.contains("is-sales-docked"), "Leaving sales retained a layout restriction");
+salesHost.remove(); salesDetail.remove(); salesHost = salesResults = salesDetail = null;
+api.setMode("fixed");
 
 sandboxMath.random = () => 0;
 api.setMode("horizontal");

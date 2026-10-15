@@ -13,6 +13,35 @@
   display: none !important;
 }
 
+#screen-search .dcats-concierge-sales-dock {
+  box-sizing: border-box;
+  flex: 0 0 148px;
+  height: 148px;
+  pointer-events: none;
+}
+
+.dcats-concierge.is-sales-context .dcats-concierge-panel,
+.dcats-concierge.is-sales-context .dcats-concierge-panel.is-question-view {
+  left: 8px;
+  right: auto;
+  width: 304px;
+}
+
+.dcats-concierge.is-sales-docked .dcats-concierge-panel,
+.dcats-concierge.is-sales-docked .dcats-concierge-panel.is-question-view {
+  bottom: 156px;
+  max-height: calc(100dvh - 172px);
+}
+
+.dcats-concierge.is-sales-docked .dcats-concierge-bubble,
+.dcats-concierge.is-sales-docked .dcats-concierge-mover.has-left-bubble .dcats-concierge-bubble {
+  left: 0;
+  right: auto;
+  min-width: 0;
+  max-width: 104px;
+  overflow-wrap: anywhere;
+}
+
 .dcats-concierge-mover {
   position: absolute;
   z-index: 1;
