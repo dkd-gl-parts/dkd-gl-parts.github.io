@@ -7880,7 +7880,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1169";
+var APP_VERSION       = "v1.1.1170";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -21813,7 +21813,7 @@ function shippingUniqueValues(fieldName) {
     if (!name || seen[name]) return false;
     seen[name] = true;
     return true;
-  }).sort(function(a, b) { return a.localeCompare(b, "ja"); });
+  }).sort(function(a, b) { return a.localeCompare(b, "ja", { numeric: fieldName === "package_size_label" }); });
 }
 
 function populateShippingCarrierSelects() {
