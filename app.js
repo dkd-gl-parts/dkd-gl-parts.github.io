@@ -7880,7 +7880,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1166";
+var APP_VERSION       = "v1.1.1167";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -8690,12 +8690,18 @@ async function askConciergeAi(request) {
   var question = request && typeof request.question === "string" ? request.question.trim() : "";
   var language = request && ["ja", "en", "zh"].indexOf(request.language) >= 0 ? request.language : "";
   var screenId = request && typeof request.screenId === "string" ? request.screenId : "";
+  var image = request && request.image;
   if (!question || question.length > 800 || !language || !CONCIERGE_AI_SCREEN_IDS[screenId]) {
     return { data: null, error: new Error("invalid_concierge_ai_request") };
   }
-  var result = await sb.functions.invoke("concierge-ai-assist", {
-    body: { question: question, language: language, screen_id: screenId }
-  });
+  if (image !== undefined && (typeof image !== "string" || !image || image.length > Math.ceil(2097152 / 3) * 4 || image.length % 4 || !/^[A-Za-z0-9+/]*={0,2}$/.test(image))) {
+    return { data: null, error: new Error("invalid_image") };
+  }
+  var owner = currentUser.id;
+  var body = { question: question, language: language, screen_id: screenId };
+  if (image) body.image = image;
+  var result = await sb.functions.invoke("concierge-ai-assist", { body: body });
+  if (!currentUser || currentUser.id !== owner || !isSystemAdmin()) return { data: null, error: new Error("system_admin_required") };
   if (result && result.error) {
     var code = String(result.error.message || "ai_request_failed");
     try {

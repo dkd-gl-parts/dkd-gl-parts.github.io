@@ -20,7 +20,8 @@ function requireFragment(source, fragment, message) {
   "window.DcatsConciergeAiApi = Object.freeze",
   "if (!currentUser || !isSystemAdmin())",
   'sb.functions.invoke("concierge-ai-assist"',
-  "body: { question: question, language: language, screen_id: screenId }",
+  "var body = { question: question, language: language, screen_id: screenId }",
+  "if (image) body.image = image",
   "question.length > 800",
   "CONCIERGE_AI_SCREEN_IDS[screenId]"
 ].forEach((fragment) => requireFragment(app, fragment));
@@ -31,7 +32,7 @@ function requireFragment(source, fragment, message) {
   'aiQuestionInput.focus()',
   'aiQuestionInput.maxLength = 800',
   'aiAskButton.addEventListener("click", runAiRequest)',
-  'if (aiRequestPending || !isSystemAdminSession()) return;',
+  'if (aiRequestPending || aiImagePending || !isSystemAdminSession()) return;',
   'if (aiCard.parentElement) aiCard.parentElement.removeChild(aiCard);',
   "question: question",
   "language: activeLanguage()",
@@ -41,8 +42,11 @@ function requireFragment(source, fragment, message) {
   'aiAskButton.textContent = copy(aiRequestPending ? "aiWorking" : "aiAsk")',
   'aiAskButton.setAttribute("aria-busy", String(aiRequestPending))',
   'revealAiFeedback()',
-  'API料金：GPT-5.6 Luna 入力 US$0.20／100万トークン、出力 US$1.20／100万トークン（ChatGPTサブスクリプションとは別料金）。D-CATS追加料金：0円。',
-  '送信するのは質問文・表示言語・現在の画面名だけです。',
+  'トークンメーター（直近の質問）',
+  '送信時にOpenAIへ送ります。',
+  'aiCard.addEventListener("paste"',
+  'aiImagePending',
+  'aiImagePreview.removeAttribute("src")',
   '画面移動やデータの入力・更新・削除は自動実行しません。'
 ].forEach((fragment) => requireFragment(runtime, fragment));
 
@@ -84,7 +88,8 @@ assert(feedbackBody.scrollTop === 0, "A response must not disrupt another form t
 
 assert(!/OPENAI_API_KEY|api\.openai\.com/.test(app), "The public application must not contain the OpenAI API key name or call OpenAI directly");
 assert(!/OPENAI_API_KEY|api\.openai\.com/.test(runtime), "The concierge browser runtime must not contain OpenAI credentials or call OpenAI directly");
-assert(!/screenshot|html2canvas|getDisplayMedia|captureStream/i.test(runtime), "The admin AI pilot must not capture or transmit the screen");
+assert(!/screenshot|html2canvas|getDisplayMedia|captureStream/i.test(runtime), "The AI pilot must not capture a screen automatically");
+assert(!/aiCost:|推定API料金|estimated API cost|今回の使用量/.test(runtime), "Cost prose must be replaced by the token meter");
 assert(!/navigateToScreen|showScreen|window\.location\s*=/.test(runtime), "The admin AI pilot must not navigate automatically");
 assert(!runtime.includes("innerHTML"), "AI responses must be rendered as text, not HTML");
 

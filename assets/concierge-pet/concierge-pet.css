@@ -38,11 +38,11 @@
 }
 
 .dcats-concierge-sprite.is-suzuto {
-  background-image: url("./suzuto/spritesheet.webp?v=1.1.1166");
+  background-image: url("./suzuto/spritesheet.webp?v=1.1.1167");
 }
 
 .dcats-concierge-sprite.is-rinna {
-  background-image: url("./rinna/spritesheet.webp?v=1.1.1166");
+  background-image: url("./rinna/spritesheet.webp?v=1.1.1167");
 }
 
 .dcats-concierge-hit-target {
@@ -420,7 +420,6 @@
 .dcats-concierge-floating-status,
 .dcats-concierge-ai-help,
 .dcats-concierge-ai-privacy,
-.dcats-concierge-ai-cost,
 .dcats-concierge-ai-status,
 .dcats-concierge-ai-answer,
 .dcats-concierge-ai-guide,
@@ -474,11 +473,24 @@
   font-weight: 700;
 }
 
-.dcats-concierge-ai-cost,
 .dcats-concierge-ai-usage {
   color: #34717a;
   font-weight: 800;
 }
+
+.dcats-concierge-ai-usage { display: grid; gap: 5px; }
+.dcats-token-total { font-size: 15px; }
+.dcats-token-bar { display: block; width: 100%; height: 14px; }
+.dcats-token-bar::-webkit-meter-bar { background: #bd7b45; border: none; border-radius: 5px; }
+.dcats-token-bar::-webkit-meter-optimum-value { background: #34717a; }
+.dcats-token-bar::-moz-meter-bar { background: #34717a; }
+.dcats-token-bar.is-empty::-webkit-meter-bar { background: #e7e9ed; }
+.dcats-token-parts { font-weight: 500; }
+.dcats-concierge-image-paste { margin: 0; padding: 9px; border: 1px dashed #927569; border-radius: 8px; font-size: 11px; line-height: 1.5; color: #5d473f; }
+.dcats-concierge-image-paste:focus-visible { outline: 3px solid #a75543; outline-offset: 2px; }
+.dcats-concierge-image-preview { display: block; max-width: 100%; max-height: 160px; object-fit: contain; margin: 0 auto; border: 1px solid #ddd; }
+.dcats-concierge-ai-image-file { width: 100%; min-width: 0; font-size: 11px; }
+.dcats-concierge-image-remove { justify-self: start; }
 
 .dcats-concierge-ai-status {
   color: #42506b;
