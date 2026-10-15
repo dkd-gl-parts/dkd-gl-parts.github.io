@@ -70,6 +70,8 @@ jobs:
         run: node scripts/verify-yen-currency-display.js
       - name: Verify Edge-compatible automatic updates
         run: node scripts/verify-edge-auto-update.js
+      - name: Verify extension management access
+        run: node scripts/verify-extension-manager.js
       - name: Verify install experience
         run: node scripts/verify-install-app.js
       - name: Verify shared customer, internal, and manufacturing UI components
