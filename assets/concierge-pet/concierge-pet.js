@@ -922,17 +922,19 @@
     aiGuide.hidden = true;
     aiUsage = createElement("p", "dcats-concierge-ai-usage");
     aiUsage.hidden = true;
+    var aiFeedback = createElement("div", "dcats-concierge-ai-feedback");
+    aiFeedback.appendChild(aiStatus);
+    aiFeedback.appendChild(aiAnswer);
+    aiFeedback.appendChild(aiGuide);
+    aiFeedback.appendChild(aiUsage);
     aiCard.appendChild(aiTitle);
     aiCard.appendChild(aiHelp);
     aiCard.appendChild(aiQuestionLabel);
     aiCard.appendChild(aiQuestionInput);
     aiCard.appendChild(aiAskButton);
+    aiCard.appendChild(aiFeedback);
     aiCard.appendChild(aiPrivacy);
     aiCard.appendChild(aiCost);
-    aiCard.appendChild(aiStatus);
-    aiCard.appendChild(aiAnswer);
-    aiCard.appendChild(aiGuide);
-    aiCard.appendChild(aiUsage);
 
     bridgeCard = createElement("section", "dcats-concierge-bridge-card");
     bridgeCard.setAttribute("aria-labelledby", "dcats-concierge-bridge-title");
@@ -1307,11 +1309,25 @@
   function updateAiStatus() {
     if (!aiAskButton || !aiQuestionInput || !aiStatus) return;
     aiAskButton.disabled = aiRequestPending;
+    aiAskButton.textContent = copy(aiRequestPending ? "aiWorking" : "aiAsk");
+    aiAskButton.setAttribute("aria-busy", String(aiRequestPending));
     aiQuestionInput.disabled = aiRequestPending;
     aiQuestionInput.placeholder = copy("aiPlaceholder");
     aiStatus.textContent = copy(aiStatusState);
     aiStatus.classList.toggle("is-success", aiStatusState === "aiDone");
     aiStatus.classList.toggle("is-error", ["aiInvalidQuestion", "aiNotConfigured", "aiConfigurationInvalid", "aiForbidden", "aiRateLimited", "aiProviderFailed", "aiFailed"].indexOf(aiStatusState) >= 0);
+  }
+
+  function revealAiFeedback() {
+    if (!panelOpen || !panelBody || !aiStatus) return;
+    var focused = presentationDocument().activeElement;
+    if (focused && panel.contains(focused) && !aiCard.contains(focused)) return;
+    var bounds = panelBody.getBoundingClientRect();
+    var feedback = aiStatus.getBoundingClientRect();
+    // Scroll only this panel, never its host page or the user's other window.
+    if (bounds.height > 0) {
+      panelBody.scrollTop = Math.max(0, (Number(panelBody.scrollTop) || 0) + feedback.top - bounds.top - 8);
+    }
   }
 
   function syncAiControls(systemAdmin) {
@@ -1341,10 +1357,11 @@
 
   function aiFailureStatus(error) {
     var code = String(error && error.message || "");
+    if (Number(error && error.status) === 401 || Number(error && error.status) === 403) return "aiForbidden";
+    if (code.indexOf("forbidden") >= 0 || code.indexOf("authorization") >= 0 || code.indexOf("system_admin_required") >= 0) return "aiForbidden";
     if (code.indexOf("invalid_") >= 0) return "aiInvalidQuestion";
     if (code.indexOf("ai_not_configured") >= 0 || code.indexOf("missing_env") >= 0) return "aiNotConfigured";
     if (code.indexOf("configuration_invalid") >= 0 || code.indexOf("service_not_configured") >= 0) return "aiConfigurationInvalid";
-    if (code.indexOf("forbidden") >= 0 || code.indexOf("authorization") >= 0 || code.indexOf("system_admin_required") >= 0) return "aiForbidden";
     if (code.indexOf("rate_limited") >= 0) return "aiRateLimited";
     if (code.indexOf("provider_failed") >= 0) return "aiProviderFailed";
     return "aiFailed";
@@ -1363,6 +1380,7 @@
       aiStatusState = "aiInvalidQuestion";
       clearAiResult();
       updateAiStatus();
+      revealAiFeedback();
       return;
     }
     var api = window.DcatsConciergeAiApi;
@@ -1370,12 +1388,14 @@
       aiStatusState = "aiNotConfigured";
       clearAiResult();
       updateAiStatus();
+      revealAiFeedback();
       return;
     }
     aiRequestPending = true;
     aiStatusState = "aiWorking";
     clearAiResult();
     updateAiStatus();
+    revealAiFeedback();
     var requestToken = ++aiRequestToken;
     try {
       var result = await api.ask({
@@ -1410,6 +1430,7 @@
       if (requestToken === aiRequestToken) {
         aiRequestPending = false;
         updateAiStatus();
+        revealAiFeedback();
       }
     }
   }

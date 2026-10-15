@@ -38,11 +38,11 @@
 }
 
 .dcats-concierge-sprite.is-suzuto {
-  background-image: url("./suzuto/spritesheet.webp?v=1.1.1162");
+  background-image: url("./suzuto/spritesheet.webp?v=1.1.1163");
 }
 
 .dcats-concierge-sprite.is-rinna {
-  background-image: url("./rinna/spritesheet.webp?v=1.1.1162");
+  background-image: url("./rinna/spritesheet.webp?v=1.1.1163");
 }
 
 .dcats-concierge-hit-target {
@@ -493,6 +493,17 @@
   color: #8e2e2b;
 }
 
+.dcats-concierge-ai-feedback {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #e6dcda;
+  border-radius: 10px;
+  background: #fff8f5;
+  overflow-wrap: anywhere;
+}
+
 .dcats-concierge-ai-answer,
 .dcats-concierge-ai-guide {
   padding: 9px 10px;
@@ -627,6 +638,16 @@ body.dcats-concierge-floating-body .dcats-concierge {
 
 body.dcats-concierge-floating-body .dcats-concierge-mover {
   aspect-ratio: 12 / 13;
+}
+
+body.dcats-concierge-floating-body .dcats-concierge-panel.is-question-view {
+  top: 8px;
+  bottom: 8px;
+  max-height: calc(100dvh - 16px);
+}
+
+body.dcats-concierge-floating-body .dcats-concierge-panel.is-question-view .dcats-concierge-panel-body {
+  max-height: none;
 }
 
 .dcats-concierge.is-off .dcats-concierge-mover {

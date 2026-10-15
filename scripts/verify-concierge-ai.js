@@ -38,6 +38,9 @@ function requireFragment(source, fragment, message) {
   "screenId: currentAiScreenId(api)",
   'data.performed_action !== false',
   'aiAnswer.textContent = data.answer.trim()',
+  'aiAskButton.textContent = copy(aiRequestPending ? "aiWorking" : "aiAsk")',
+  'aiAskButton.setAttribute("aria-busy", String(aiRequestPending))',
+  'revealAiFeedback()',
   'API料金：GPT-5.6 Luna 入力 US$0.20／100万トークン、出力 US$1.20／100万トークン（ChatGPTサブスクリプションとは別料金）。D-CATS追加料金：0円。',
   '送信するのは質問文・表示言語・現在の画面名だけです。',
   '画面移動やデータの入力・更新・削除は自動実行しません。'
@@ -49,8 +52,35 @@ function requireFragment(source, fragment, message) {
   ".dcats-concierge-panel.is-question-view",
   ".dcats-concierge-panel.is-question-view .dcats-concierge-ai-button",
   ".dcats-concierge-ai-status.is-success",
-  ".dcats-concierge-ai-status.is-error"
+  ".dcats-concierge-ai-status.is-error",
+  ".dcats-concierge-ai-feedback",
+  "body.dcats-concierge-floating-body .dcats-concierge-panel.is-question-view .dcats-concierge-panel-body"
 ].forEach((fragment) => requireFragment(css, fragment));
+
+assert(runtime.indexOf("aiCard.appendChild(aiFeedback)") < runtime.indexOf("aiCard.appendChild(aiPrivacy)"),
+  "AI status and answer must precede the long privacy/cost disclosures after submission");
+const revealStart = runtime.indexOf("  function revealAiFeedback() {");
+const revealEnd = runtime.indexOf("\n  function ", revealStart + 5);
+assert(revealStart >= 0 && revealEnd > revealStart, "Scoped feedback reveal helper missing");
+const feedbackBody = { scrollTop: 120, getBoundingClientRect: () => ({ top: 20, height: 180 }) };
+const feedbackContext = {
+  panelOpen: true, panelBody: feedbackBody,
+  aiStatus: { getBoundingClientRect: () => ({ top: 320 }) },
+  panel: { contains: () => false }, aiCard: { contains: () => false },
+  presentationDocument: () => ({ activeElement: null }),
+};
+vm.createContext(feedbackContext);
+vm.runInContext(runtime.slice(revealStart, revealEnd) + "\nrevealAiFeedback();", feedbackContext);
+assert(feedbackBody.scrollTop === 412, "Feedback outside a small floating panel must scroll into view");
+feedbackContext.panelOpen = false;
+feedbackBody.scrollTop = 0;
+vm.runInContext("revealAiFeedback();", feedbackContext);
+assert(feedbackBody.scrollTop === 0, "Closed question panels must not scroll");
+feedbackContext.panelOpen = true;
+feedbackContext.panel.contains = () => true;
+feedbackContext.presentationDocument = () => ({ activeElement: {} });
+vm.runInContext("revealAiFeedback();", feedbackContext);
+assert(feedbackBody.scrollTop === 0, "A response must not disrupt another form the user is editing");
 
 assert(!/OPENAI_API_KEY|api\.openai\.com/.test(app), "The public application must not contain the OpenAI API key name or call OpenAI directly");
 assert(!/OPENAI_API_KEY|api\.openai\.com/.test(runtime), "The concierge browser runtime must not contain OpenAI credentials or call OpenAI directly");
