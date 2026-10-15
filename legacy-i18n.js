@@ -2,6 +2,8 @@
 // Runtime translation is local; this file makes no external requests.
 var DCATS_LEGACY_UI_TRANSLATIONS = {
   "en": {
+    "出荷指示書を確認できません。": "The shipment instruction could not be verified.",
+    "ピッキング後の受注取消（現物確認済み）": "Cancellation after picking (physical goods verified)",
     "全体集計を含む選択シートの指定順位範囲": "Specified source rank range for the selected sheets including aggregate totals",
     "件から条件で絞り込み、元の順位を保持しています。": "items are filtered by the conditions, preserving their source ranks.",
     "/ 指定順位範囲内で絞り込み・元順位を保持": "/ Filter within the specified source rank range; preserve source ranks",
@@ -3886,6 +3888,8 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "/ ALDK除外": "/ ALDK excluded"
   },
   "zh": {
+    "出荷指示書を確認できません。": "无法确认出货指示书。",
+    "ピッキング後の受注取消（現物確認済み）": "拣货后取消订单（已核对实物）",
     "全体集計を含む選択シートの指定順位範囲": "包含汇总表的所选工作表指定原始排名范围",
     "件から条件で絞り込み、元の順位を保持しています。": "件内按条件筛选并保留原排名。",
     "/ 指定順位範囲内で絞り込み・元順位を保持": "/ 在指定原始排名范围内筛选并保留原排名",

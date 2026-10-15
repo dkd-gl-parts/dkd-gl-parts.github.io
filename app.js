@@ -312,7 +312,7 @@ var TRANSLATIONS = {
     customer_order_preview_disabled: "価格・在庫確認は無効",
     customer_order_submit_disabled: "注文確定は無効",
     customer_order_internal_submit: "得意先注文として登録",
-    customer_order_internal_confirm: "この得意先の注文として登録します。価格と在庫を確定し、在庫を予約します。よろしいですか？",
+    customer_order_internal_confirm: "この得意先の注文を受付済みで登録し、在庫を予約します。受注書（出荷指示書）は保証書などと一緒に出荷帳票発行で印刷します。よろしいですか？",
     customer_order_internal_registering: "得意先注文を登録しています。",
     customer_order_internal_source: "社内登録",
     customer_order_preview_history_disabled: "社内登録画面の注文履歴は、受注管理権限がある場合だけ表示します。",
@@ -424,6 +424,11 @@ var TRANSLATIONS = {
     customer_order_total: "合計",
     sales_order_id_label: "受注ID",
     sales_order_mgmt_title: "受注・出荷管理",
+    sales_order_internal_print_timing: "受注書（出荷指示書）は、保証書などと一緒に印刷時に発行します。",
+    sales_order_documents_queued: "受注書を含む{n}件の帳票を印刷待ちに登録しました。",
+    sales_order_cancel_after_picking: "ピッキング後の受注取消",
+    sales_order_cancel_picking_warning: "ピッキングが記録されています。対象商品と照合済みシリアルを現物と確認してください。出荷確定済みの場合は取消後、在庫とシリアルを戻します。運送会社へ渡した後は、受注取消ではなく返品処理を行ってください。",
+    sales_order_cancel_picking_confirm: "対象商品・シリアルを確認し、商品がまだ社内にあることを確認しました",
     sales_order_internal_entry: "FAX・メール注文入力",
     sales_order_mgmt_desc: "得意先注文の受付、B2発送データ取込、製造シリアル照合を管理します。",
     sales_order_mgmt_note: "注文受付、B2発送データ取込、現場の製造シリアル照合を管理します。",
@@ -2890,7 +2895,7 @@ var TRANSLATIONS = {
     customer_order_preview_disabled: "Price / Stock Disabled",
     customer_order_submit_disabled: "Order Disabled",
     customer_order_internal_submit: "Register Customer Order",
-    customer_order_internal_confirm: "Register this order for the selected customer? Price and stock will be finalized and inventory will be reserved.",
+    customer_order_internal_confirm: "Register this order as accepted and reserve stock? Print its order / shipment instruction with the warranty and other shipping documents.",
     customer_order_internal_registering: "Registering the customer order.",
     customer_order_internal_source: "Internal Entry",
     customer_order_preview_history_disabled: "Order history is shown here only to staff with sales-order management access.",
@@ -3002,6 +3007,11 @@ var TRANSLATIONS = {
     customer_order_total: "Total",
     sales_order_id_label: "Order ID",
     sales_order_mgmt_title: "Orders / Shipping",
+    sales_order_internal_print_timing: "The order / shipment instruction is issued with the warranty and other documents when printing.",
+    sales_order_documents_queued: "Queued {n} documents, including the order / shipment instruction, for printing.",
+    sales_order_cancel_after_picking: "Cancel after picking",
+    sales_order_cancel_picking_warning: "Picking is recorded. Check the physical products and verified serials. If shipment was confirmed, cancellation restores stock and serials. Use returns after carrier handover.",
+    sales_order_cancel_picking_confirm: "I checked the products and serials and confirmed the goods are still on site.",
     sales_order_internal_entry: "FAX / Email Order Entry",
     sales_order_mgmt_desc: "Manage customer orders, B2 shipping-data imports, and manufacturing-serial verification.",
     sales_order_mgmt_note: "Manage order acceptance, B2 shipping-data imports, and shop-floor serial verification.",
@@ -5412,7 +5422,7 @@ var TRANSLATIONS = {
     customer_order_preview_disabled: "价格・库存确认已禁用",
     customer_order_submit_disabled: "订单提交已禁用",
     customer_order_internal_submit: "登记客户订单",
-    customer_order_internal_confirm: "要为所选客户登记此订单吗？价格和库存将被确认并预留库存。",
+    customer_order_internal_confirm: "将此客户订单登记为已受理并预留库存吗？订单（出货指示书）将在出货单据中与保修书等一起打印。",
     customer_order_internal_registering: "正在登记客户订单。",
     customer_order_internal_source: "内部登记",
     customer_order_preview_history_disabled: "此处仅向具有订单管理权限的员工显示订单记录。",
@@ -5524,6 +5534,11 @@ var TRANSLATIONS = {
     customer_order_total: "合计",
     sales_order_id_label: "订单ID",
     sales_order_mgmt_title: "订单・出货管理",
+    sales_order_internal_print_timing: "订单（出货指示书）将在打印时与保修书等一起签发。",
+    sales_order_documents_queued: "已将包含订单在内的{n}份单据加入打印队列。",
+    sales_order_cancel_after_picking: "拣货后取消订单",
+    sales_order_cancel_picking_warning: "已有拣货记录。请核对实物和已核对的序列号。若已确认出货，取消时将恢复库存和序列号。已交承运商的商品请办理退货。",
+    sales_order_cancel_picking_confirm: "已核对商品和序列号，确认商品仍在公司内。",
     sales_order_internal_entry: "传真・邮件订单录入",
     sales_order_mgmt_desc: "管理客户订单、B2发货数据导入和制造序列号核对。",
     sales_order_mgmt_note: "管理订单受理、B2发货数据导入和现场序列号核对。",
@@ -7862,7 +7877,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1161";
+var APP_VERSION       = "v1.1.1162";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -18726,7 +18741,8 @@ function shippingDocumentReturnWaybillCopyCount(order) {
 function shippingDocumentShipmentDocumentsHtml(order) {
   var dispatch = salesOrderDispatch(order);
   var warrantyRequired = salesOrderWarrantyDocumentRequired(order);
-  var warrantyReady = !!dispatch && warrantyRequired;
+  var canIssueDispatch = !!dispatch || (["accepted", "shipping_ready"].indexOf(order.status) >= 0 && order.order_source === "internal_entry");
+  var warrantyReady = canIssueDispatch && warrantyRequired;
   var coreReturnReady = !!dispatch && !!order.core_return_required;
   var dispatchJob = shippingDocumentPrintJob(order, "dispatch");
   var warrantyJob = shippingDocumentPrintJob(order, "warranty");
@@ -18756,7 +18772,8 @@ function shippingDocumentShipmentDocumentsHtml(order) {
   var documentsPrinted = pendingDocumentCount === 0;
   var canCreateB2 = shippingDocumentCanIssueB2(order);
   var b2Action = "<button type='button' class='" + (outboundMethod === "b2_cloud" ? "primary" : "") + "' id='shipping-document-b2-issue'" + ((canCreateB2 || b2Issued) && !salesOrderSaving && !shippingDocumentSaving ? "" : " disabled") + ">" + (canCreateB2 ? (b2Issued ? "B2 CSV再発行" : "B2 CSV発行") : "B2 CSV発行履歴") + "</button>";
-  var dispatchStandard = salesOrderAutoPrintIsEnabled() ? "受付時に自動発行" : "出荷帳票発行で印刷";
+  var dispatchStandard = order.order_source === "internal_entry" ? "出荷帳票発行で印刷"
+    : salesOrderAutoPrintIsEnabled() ? "受付時に自動発行" : "出荷帳票発行で印刷";
   var outboundCarrierLabel = shippingCarrierBrandKey(outboundWaybill.carrier_code || "yamato_prepaid") === "sagawa" ? "佐川急便 元払い" : "ヤマト宅急便 元払い";
   var outboundState = outboundMethod === "b2_cloud"
     ? { label: b2NeedsReissue ? "再発行が必要" : b2Issued ? "CSV発行済み" : "CSV未発行", tone: b2Issued && !b2NeedsReissue ? "success" : "warning", note: b2NeedsReissue ? "受注変更あり" : "" }
@@ -18767,7 +18784,8 @@ function shippingDocumentShipmentDocumentsHtml(order) {
     : returnMethod === "handwritten"
       ? { label: returnHandwrittenComplete ? "手書き完了" : "手書き待ち", tone: returnHandwrittenComplete ? "success" : "warning", note: "" }
       : shippingDocumentPrintStateView(returnJob, shippingDocumentWaybillNumberIsValid(waybill.tracking_number) ? "未印刷" : "番号未登録");
-  var reason = !dispatch ? "出荷指示書が未発行です。"
+  var reason = !dispatch && canIssueDispatch ? t("sales_order_internal_print_timing")
+    : !dispatch ? "出荷指示書が未発行です。"
     : dispatch.status !== "shipped" ? (documentsPrinted
       ? "帳票の印刷は完了しています。次は商品と製造シリアルを照合してください。"
       : "保証書・コア返却シートは発行できます。出荷完了には商品と製造シリアルの照合が必要です。")
@@ -18777,9 +18795,9 @@ function shippingDocumentShipmentDocumentsHtml(order) {
   var rows = [
     {
       key: "dispatch", name: "出荷指示書", standard: "A4縦 / モノクロ", detail: dispatchStandard,
-      state: shippingDocumentPrintStateView(dispatchJob, dispatch ? "発行済み" : "未発行", dispatch ? "processing" : "warning"), ready: !!dispatch,
+      state: shippingDocumentPrintStateView(dispatchJob, dispatch ? "発行済み" : "未発行", dispatch ? "processing" : "warning"), ready: canIssueDispatch,
       temporary: shippingDocumentHasTemporaryOutput(order, "dispatch") ? "今回のみ: " + shippingDocumentOutputModeLabel(shippingDocumentTemporaryOutputMode(order, "dispatch")) : "",
-      actions: shippingDocumentManualOutputActions(order, "dispatch", !!dispatch)
+      actions: shippingDocumentManualOutputActions(order, "dispatch", canIssueDispatch)
     },
     {
       key: "outbound_waybill", name: "商品発送送り状", standard: outboundModeLabel, detail: outboundCarrierLabel,
@@ -19115,8 +19133,10 @@ async function queueCurrentShippingDocument(documentType) {
   }
   var data = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
   await loadShippingDocumentDetail(order.id);
-  setShippingDocumentMessage((parseInt(data.queued_count, 10) || 0) > 0
-    ? salesOrderDocumentTypeLabel(documentType) + "を印刷待ちに登録しました。"
+  var queuedCount = parseInt(data.queued_count, 10) || 0;
+  setShippingDocumentMessage(queuedCount > 0
+    ? queuedCount > 1 ? tf("sales_order_documents_queued", { n: queuedCount })
+      : salesOrderDocumentTypeLabel(documentType) + "を印刷待ちに登録しました。"
     : "同じ帳票はすでに印刷待ち、印刷中、または対象外です。", false);
 }
 
@@ -20289,14 +20309,16 @@ function renderSalesOrderDetail() {
     accept: "受付して出荷指示書を発行",
     prepare_shipping: "出荷準備へ",
     ship: "出荷済みにする",
-    cancel: "受注取消"
+    cancel: "受注取消",
+    cancel_after_picking: t("sales_order_cancel_after_picking")
   };
-  var actions = allowed.filter(function(action) { return action !== "cancel"; }).map(function(action) {
+  var actions = allowed.filter(function(action) { return action !== "cancel" && action !== "cancel_after_picking"; }).map(function(action) {
     return "<button type='button' class='sales-order-action " + esc(action) + "' data-sales-order-action='" + esc(action) + "'>" + esc(actionLabels[action] || action) + "</button>";
   }).join("");
   var purgeStatus = order.development_test_order_purge || {};
-  var secondaryButtons = allowed.indexOf("cancel") >= 0
-    ? "<button type='button' class='sales-order-action cancel' data-sales-order-action='cancel'>受注取消</button>"
+  var cancellationAction = salesOrderCancellationAction(order);
+  var secondaryButtons = cancellationAction
+    ? "<button type='button' class='sales-order-action cancel' data-sales-order-action='" + cancellationAction + "'>" + esc(actionLabels[cancellationAction]) + "</button>"
     : "";
   if (isSystemAdmin() && purgeStatus.is_development_test_order) {
     var purgeUnavailableTitle = "取消済み・未出荷・販売管理未登録のテスト受注だけ削除できます。";
@@ -20794,7 +20816,10 @@ function buildSalesOrderDocumentHtml(order, type) {
 async function printSalesOrderDocument(type, targetOrder) {
   var order = targetOrder || salesOrderDetail;
   var dispatch = salesOrderDispatch(order);
-  if (!order || !dispatch) return;
+  var issueOnOutput = !!order && !dispatch && order.order_source === "internal_entry"
+    && ["accepted", "shipping_ready"].indexOf(order.status) >= 0;
+  var printActorId = currentUser && currentUser.id;
+  if (!order || (!dispatch && !issueOnOutput) || salesOrderSaving || shippingDocumentSaving) return;
   if (type === "core_return" && !order.core_return_required) {
     alert("この注文はコア返却不要のため、コア返却シートを発行しません。");
     return;
@@ -20810,6 +20835,26 @@ async function printSalesOrderDocument(type, targetOrder) {
   }
   try {
     popup.opener = null;
+    if (issueOnOutput) {
+      if (!canManageSalesOrders()) throw new Error(t("permission_denied"));
+      shippingDocumentSaving = true;
+      var issued = await sb.rpc("issue_sales_order_dispatch", {
+        target_order_id: order.id, target_expected_version: order.version
+      });
+      if (issued.error) throw issued.error;
+      if (!canManageSalesOrders() || !currentUser || currentUser.id !== printActorId) throw new Error(t("permission_denied"));
+      order = Array.isArray(issued.data) ? issued.data[0] : issued.data;
+      dispatch = salesOrderDispatch(order);
+      if (!dispatch) throw new Error("出荷指示書を確認できません。");
+      if (shippingDocumentDetail && String(shippingDocumentDetail.id) === String(order.id)) {
+        shippingDocumentDetail = order;
+        renderShippingDocumentDetail();
+      }
+      if (salesOrderDetail && String(salesOrderDetail.id) === String(order.id)) {
+        salesOrderDetail = order;
+        renderSalesOrderDetail();
+      }
+    }
     if (type === "warranty") {
       popup.document.open();
       popup.document.write("<!doctype html><html lang='ja'><head><meta charset='utf-8'><title>製品保証書を準備中</title></head><body><p>製品保証書を準備しています。</p></body></html>");
@@ -20824,6 +20869,11 @@ async function printSalesOrderDocument(type, targetOrder) {
   } catch (error) {
     popup.close();
     alert(error && error.message ? error.message : "帳票を作成できませんでした。");
+  } finally {
+    if (issueOnOutput) {
+      shippingDocumentSaving = false;
+      renderShippingDocumentDetail();
+    }
   }
 }
 
@@ -20875,6 +20925,14 @@ function setSalesOrderDetailMessage(message, isError) {
   host.className = "sales-order-detail-message" + (isError ? " error" : "");
 }
 
+function salesOrderCancellationAction(order) {
+  if (!order) return "";
+  var allowed = Array.isArray(order.allowed_actions) ? order.allowed_actions : [];
+  if (allowed.indexOf("cancel_after_picking") >= 0) return "cancel_after_picking";
+  if (order.status === "shipped" || order.status === "completed" || order.cancellation_flow === "after_picking") return "";
+  return allowed.indexOf("cancel") >= 0 ? "cancel" : "";
+}
+
 function updateSalesOrderInHouseCancelButton() {
   var checkbox = document.getElementById("sales-order-in-house-cancel-confirm");
   var button = document.getElementById("sales-order-in-house-cancel-submit");
@@ -20883,10 +20941,11 @@ function updateSalesOrderInHouseCancelButton() {
   button.textContent = salesOrderSaving ? "取消処理中..." : "この受注を取り消す";
 }
 
-function openSalesOrderInHouseCancelDialog() {
+function openSalesOrderInHouseCancelDialog(action) {
   var order = salesOrderDetail;
   var allowed = Array.isArray(order && order.allowed_actions) ? order.allowed_actions : [];
-  if (!order || allowed.indexOf("cancel") < 0) return;
+  action = action || salesOrderCancellationAction(order);
+  if (!action || action !== salesOrderCancellationAction(order) || salesOrderSaving || !canManageSalesOrders()) return;
   var overlay = document.getElementById("sales-order-in-house-cancel-overlay");
   var orderLabel = document.getElementById("sales-order-in-house-cancel-order");
   var orderNumber = document.getElementById("sales-order-in-house-cancel-number");
@@ -20898,6 +20957,9 @@ function openSalesOrderInHouseCancelDialog() {
   var checkbox = document.getElementById("sales-order-in-house-cancel-confirm");
   var result = document.getElementById("sales-order-in-house-cancel-result");
   if (!overlay || !checkbox || !result) return;
+  var title = document.getElementById("sales-order-in-house-cancel-title");
+  if (title) title.textContent = action === "cancel_after_picking" ? t("sales_order_cancel_after_picking") : t("受注を取り消す");
+  overlay.dataset.cancellationAction = action;
   overlay.dataset.orderId = String(order.id);
   overlay.dataset.orderVersion = order.version == null ? "" : String(order.version);
   var displayOrderNumber = order.order_number || ("注文 " + order.id);
@@ -20906,11 +20968,11 @@ function openSalesOrderInHouseCancelDialog() {
   if (customer) customer.textContent = order.customer_name || "-";
   if (status) status.textContent = customerOrderStatusLabel(order.status);
   if (total) total.textContent = customerOrderCurrency(order.total_jpy);
-  if (warning) warning.textContent = order.status === "shipped"
-    ? "この受注は出荷済みです。商品がまだ社内にあることを確認してください。取消後、在庫とシリアルを戻します。運送会社へ渡した後は、受注取消ではなく返品処理を行ってください。"
+  if (warning) warning.textContent = action === "cancel_after_picking"
+    ? t("sales_order_cancel_picking_warning")
     : "取消後は在庫引当を解除し、処理履歴へ記録します。元に戻す場合は再受注が必要です。";
-  if (confirmText) confirmText.textContent = order.status === "shipped"
-    ? "商品がまだ社内にあることを確認しました"
+  if (confirmText) confirmText.textContent = action === "cancel_after_picking"
+    ? t("sales_order_cancel_picking_confirm")
     : "表示中の受注を取り消すことを確認しました";
   checkbox.checked = false;
   result.textContent = "";
@@ -20925,6 +20987,7 @@ function closeSalesOrderInHouseCancelDialog(force) {
   var overlay = document.getElementById("sales-order-in-house-cancel-overlay");
   if (!overlay) return;
   overlay.classList.remove("show");
+  delete overlay.dataset.cancellationAction;
   delete overlay.dataset.orderId;
   delete overlay.dataset.orderVersion;
 }
@@ -20937,7 +21000,11 @@ async function submitSalesOrderInHouseCancellation() {
   if (!overlay || !checkbox || !resultHost) return;
   var orderId = parseInt(overlay.dataset.orderId, 10);
   var expectedVersion = parseInt(overlay.dataset.orderVersion, 10);
-  if (isNaN(orderId) || !checkbox.checked) {
+  var action = overlay.dataset.cancellationAction;
+  if (isNaN(orderId) || isNaN(expectedVersion) || !checkbox.checked
+      || !salesOrderDetail || String(salesOrderDetail.id) !== String(orderId)
+      || String(salesOrderDetail.version) !== String(expectedVersion)
+      || action !== salesOrderCancellationAction(salesOrderDetail)) {
     resultHost.textContent = "対象受注を確認してから実行してください。";
     resultHost.className = "sales-order-in-house-cancel-result error";
     return;
@@ -20949,8 +21016,8 @@ async function submitSalesOrderInHouseCancellation() {
   updateSalesOrderInHouseCancelButton();
   var rpcResult = await sb.rpc("update_sales_order_status", {
     target_order_id: orderId,
-    target_action: "cancel",
-    target_note: "受注取消",
+    target_action: action,
+    target_note: action === "cancel_after_picking" ? "ピッキング後の受注取消（現物確認済み）" : "受注取消",
     target_expected_version: isNaN(expectedVersion) ? null : expectedVersion
   });
   salesOrderSaving = false;
@@ -21053,8 +21120,8 @@ async function submitDevelopmentTestOrderPurge() {
 
 async function updateSalesOrderStatus(action) {
   if (!canManageSalesOrders() || salesOrderSaving || !salesOrderDetail || !action) return;
-  if (action === "cancel") {
-    openSalesOrderInHouseCancelDialog();
+  if (action === "cancel" || action === "cancel_after_picking") {
+    openSalesOrderInHouseCancelDialog(action);
     return;
   }
   if (action === "accept" && !confirm("在庫を再確認して受付し、出荷指示書を発行します。よろしいですか？")) return;
