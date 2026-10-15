@@ -16,6 +16,21 @@ function requireFragment(source, fragment, message) {
   assert(source.includes(fragment), message || `Missing fragment: ${fragment}`);
 }
 
+function rule(selector) {
+  const start = css.indexOf(selector + " {");
+  assert(start >= 0, `Missing presentation rule: ${selector}`);
+  return css.slice(start, css.indexOf("}", start));
+}
+const questionStyle = rule(".dcats-concierge-ai-question");
+const answerStyle = rule(".dcats-concierge-ai-answer");
+const meterStyle = rule(".dcats-concierge-ai-usage");
+const questionSize = Number(questionStyle.match(/font:\s*(\d+)px/)[1]);
+const answerSize = Number(answerStyle.match(/font-size:\s*(\d+)px/)[1]);
+assert(questionSize >= 16 && answerSize >= questionSize && answerStyle.includes("line-height: 1.8"), "Answer must be at least as readable as the question, with comfortable line spacing");
+assert(Number(meterStyle.match(/font-size:\s*(\d+)px/)[1]) <= 10 && meterStyle.includes("justify-content: flex-end") && rule(".dcats-token-bar").includes("height: 3px"), "Token telemetry must remain a tiny, right-aligned secondary indicator");
+assert(!runtime.includes('aiUsage.appendChild(createElement("strong"') && !runtime.includes('createElement("span", "dcats-token-parts"'), "Token heading and breakdown must not dominate the answer");
+assert(!runtime.includes("回答しました。操作は実行していません。") && runtime.includes('aiDone: "回答"') && runtime.includes('aiDone: "Answer"'), "Success heading must be concise and localized");
+
 [
   "window.DcatsConciergeAiApi = Object.freeze",
   "if (!currentUser || !isSystemAdmin())",
