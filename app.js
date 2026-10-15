@@ -419,6 +419,7 @@ var TRANSLATIONS = {
     sales_order_id_label: "受注ID",
     sales_order_mgmt_title: "受注・出荷管理",
     sales_order_internal_print_timing: "受注書（出荷指示書）は、保証書などと一緒に印刷時に発行します。",
+    sales_order_documents_queued: "受注書を含む{n}件の帳票を印刷待ちに登録しました。",
     sales_order_cancel_after_picking: "ピッキング後の受注取消",
     sales_order_cancel_picking_warning: "ピッキングが記録されています。対象商品と照合済みシリアルを現物と確認してください。出荷確定済みの場合は取消後、在庫とシリアルを戻します。運送会社へ渡した後は、受注取消ではなく返品処理を行ってください。",
     sales_order_cancel_picking_confirm: "対象商品・シリアルを確認し、商品がまだ社内にあることを確認しました",
@@ -2970,6 +2971,7 @@ var TRANSLATIONS = {
     sales_order_id_label: "Order ID",
     sales_order_mgmt_title: "Orders / Shipping",
     sales_order_internal_print_timing: "The order / shipment instruction is issued with the warranty and other documents when printing.",
+    sales_order_documents_queued: "Queued {n} documents, including the order / shipment instruction, for printing.",
     sales_order_cancel_after_picking: "Cancel after picking",
     sales_order_cancel_picking_warning: "Picking is recorded. Check the physical products and verified serials. If shipment was confirmed, cancellation restores stock and serials. Use returns after carrier handover.",
     sales_order_cancel_picking_confirm: "I checked the products and serials and confirmed the goods are still on site.",
@@ -5465,6 +5467,7 @@ var TRANSLATIONS = {
     sales_order_id_label: "订单ID",
     sales_order_mgmt_title: "订单・出货管理",
     sales_order_internal_print_timing: "订单（出货指示书）将在打印时与保修书等一起签发。",
+    sales_order_documents_queued: "已将包含订单在内的{n}份单据加入打印队列。",
     sales_order_cancel_after_picking: "拣货后取消订单",
     sales_order_cancel_picking_warning: "已有拣货记录。请核对实物和已核对的序列号。若已确认出货，取消时将恢复库存和序列号。已交承运商的商品请办理退货。",
     sales_order_cancel_picking_confirm: "已核对商品和序列号，确认商品仍在公司内。",
@@ -18528,7 +18531,8 @@ function shippingDocumentShipmentDocumentsHtml(order) {
   var pendingDocumentCount = shippingDocumentPendingCount(order);
   var documentsPrinted = pendingDocumentCount === 0;
   var canCreateB2 = ["accepted", "shipping_ready", "shipped"].indexOf(order.status) >= 0 && outboundMethod === "b2_cloud";
-  var dispatchStandard = salesOrderAutoPrintIsEnabled() ? "受付時に自動発行" : "出荷帳票発行で印刷";
+  var dispatchStandard = order.order_source === "internal_entry" ? "出荷帳票発行で印刷"
+    : salesOrderAutoPrintIsEnabled() ? "受付時に自動発行" : "出荷帳票発行で印刷";
   var outboundCarrierLabel = shippingCarrierBrandKey(outboundWaybill.carrier_code || "yamato_prepaid") === "sagawa" ? "佐川急便 元払い" : "ヤマト宅急便 元払い";
   var outboundState = outboundMethod === "b2_cloud"
     ? { label: b2NeedsReissue ? "再発行が必要" : b2Issued ? "CSV発行済み" : "CSV未発行", tone: b2Issued && !b2NeedsReissue ? "success" : "warning", note: b2NeedsReissue ? "受注変更あり" : "" }
@@ -18897,8 +18901,10 @@ async function queueCurrentShippingDocument(documentType) {
   }
   var data = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
   await loadShippingDocumentDetail(order.id);
-  setShippingDocumentMessage((parseInt(data.queued_count, 10) || 0) > 0
-    ? salesOrderDocumentTypeLabel(documentType) + "を印刷待ちに登録しました。"
+  var queuedCount = parseInt(data.queued_count, 10) || 0;
+  setShippingDocumentMessage(queuedCount > 0
+    ? queuedCount > 1 ? tf("sales_order_documents_queued", { n: queuedCount })
+      : salesOrderDocumentTypeLabel(documentType) + "を印刷待ちに登録しました。"
     : "同じ帳票はすでに印刷待ち、印刷中、または対象外です。", false);
 }
 
@@ -20530,6 +20536,7 @@ async function printSalesOrderDocument(type, targetOrder) {
   var dispatch = salesOrderDispatch(order);
   var issueOnOutput = !!order && !dispatch && order.order_source === "internal_entry"
     && ["accepted", "shipping_ready"].indexOf(order.status) >= 0;
+  var printActorId = currentUser && currentUser.id;
   if (!order || (!dispatch && !issueOnOutput) || salesOrderSaving || shippingDocumentSaving) return;
   if (type === "core_return" && !order.core_return_required) {
     alert("この注文はコア返却不要のため、コア返却シートを発行しません。");
@@ -20553,6 +20560,7 @@ async function printSalesOrderDocument(type, targetOrder) {
         target_order_id: order.id, target_expected_version: order.version
       });
       if (issued.error) throw issued.error;
+      if (!canManageSalesOrders() || !currentUser || currentUser.id !== printActorId) throw new Error(t("permission_denied"));
       order = Array.isArray(issued.data) ? issued.data[0] : issued.data;
       dispatch = salesOrderDispatch(order);
       if (!dispatch) throw new Error("出荷指示書を確認できません。");

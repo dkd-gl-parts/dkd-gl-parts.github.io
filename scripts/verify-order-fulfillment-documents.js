@@ -1077,3 +1077,34 @@ if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
 }
 
 console.log("Order fulfillment document UI verification passed.");
+
+// First PDF output for an accepted internal order issues its dispatch exactly
+// once, keeps WEB orders pending, and discards responses after account changes.
+async function verifyInternalFirstOutput() {
+  const assert = require('node:assert/strict');
+  const calls=[], alerts=[],popups=[];let resolveIssue;
+  const fixture={id:99,version:1,status:'accepted',order_source:'internal_entry'};
+  const ctx=vm.createContext({salesOrderDetail:fixture,shippingDocumentDetail:fixture,salesOrderSaving:false,shippingDocumentSaving:false,
+    currentUser:{id:'qa-user'},canManageSalesOrders:()=>true,t:k=>k,
+    salesOrderDispatch:o=>o&&o.dispatch&&o.dispatch.id?o.dispatch:null,
+    salesOrderWarrantyDocumentRequired:()=>true,hydrateSalesOrderWarrantyPrintData:async()=>{},
+    renderSalesOrderDetail(){},renderShippingDocumentDetail(){},buildSalesOrderDocumentHtml:()=>'<html>synthetic</html>',
+    alert:s=>alerts.push(s),window:{open(){const p={closed:false,close(){this.closed=true;},document:{open(){},write(){},close(){},getElementById(){return null;}}};popups.push(p);return p;}},
+    sb:{rpc:(name,args)=>{calls.push({name,args});return new Promise(resolve=>{resolveIssue=resolve;});}}
+  });
+  vm.runInContext(salesOrderDocumentPrint,ctx);
+  const pending=ctx.printSalesOrderDocument('dispatch',fixture);
+  await ctx.printSalesOrderDocument('dispatch',fixture);assert.equal(calls.length,1);
+  assert.equal(calls[0].name,'issue_sales_order_dispatch');assert.equal(calls[0].args.target_expected_version,1);
+  resolveIssue({data:{...fixture,status:'shipping_ready',dispatch:{id:1}}});await pending;
+  assert.equal(ctx.shippingDocumentSaving,false);assert.equal(ctx.salesOrderDetail.dispatch.id,1);
+  await ctx.printSalesOrderDocument('dispatch',{...fixture,order_source:'customer_portal',status:'submitted'});assert.equal(calls.length,1);
+  const stale=ctx.printSalesOrderDocument('dispatch',fixture);ctx.currentUser={id:'other-user'};
+  resolveIssue({data:{...fixture,status:'shipping_ready',dispatch:{id:2}}});await stale;
+  assert.equal(popups[1].closed,true);assert.equal(ctx.salesOrderDetail.dispatch.id,1);assert.equal(ctx.shippingDocumentSaving,false);
+  ctx.currentUser={id:'qa-user'};const failed=ctx.printSalesOrderDocument('dispatch',fixture);
+  resolveIssue({error:{message:'synthetic failure'}});await failed;
+  assert.equal(popups[2].closed,true);assert.equal(ctx.shippingDocumentSaving,false);assert.equal(alerts.length,2);
+  console.log('Accepted internal order first-PDF output: issuance, duplicate, WEB, account change and error checks passed.');
+}
+verifyInternalFirstOutput().catch(error=>{console.error(error);process.exitCode=1;});
