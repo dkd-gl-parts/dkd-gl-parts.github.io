@@ -21816,7 +21816,7 @@ function shippingUniqueValues(fieldName) {
     if (!name || seen[name]) return false;
     seen[name] = true;
     return true;
-  }).sort(function(a, b) { return a.localeCompare(b, "ja"); });
+  }).sort(function(a, b) { return a.localeCompare(b, "ja", { numeric: fieldName === "package_size_label" }); });
 }
 
 function populateShippingCarrierSelects() {
