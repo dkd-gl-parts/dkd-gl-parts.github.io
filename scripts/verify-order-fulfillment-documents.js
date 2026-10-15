@@ -260,8 +260,11 @@ for (const fragment of [
   "shippingDocumentDeliveryHtml(order)",
   "shippingDocumentOrderContentsHtml(order)"
 ]) requireFragment(shippingDocumentDetailSource, fragment, `Shipping document detail order ID label is missing: ${fragment}`);
-if (shippingDocumentDetailSource.indexOf("shippingDocumentDeliveryHtml(order)") > shippingDocumentDetailSource.indexOf("shippingDocumentOrderContentsHtml(order)")) {
-  throw new Error("The shipping destination must appear before shipment items");
+if (shippingDocumentDetailSource.indexOf("shippingDocumentOrderContentsHtml(order)") > shippingDocumentDetailSource.indexOf("shippingDocumentShipmentDocumentsHtml(order)")) {
+  throw new Error("Shipment items must be visible in the selected order detail above issuance actions");
+}
+if (html.includes('id="shipping-document-product-preview"') || source.includes('renderShippingDocumentProductPreview')) {
+  throw new Error("Shipment items must not be rendered a second time in the order list pane");
 }
 
 const shippingDocumentDelivery = sourceBetween("function shippingDocumentDeliveryHtml", "function updateCustomerOrderCoreReturnServiceVisibility");
@@ -580,8 +583,7 @@ for (const fragment of [
   "shippingDocumentOrderContentsHtml(order)",
   "shippingDocumentShipmentDocumentsHtml(order)",
   "scheduleShippingDocumentPrintStatusRefresh()",
-  'salesOrderWorkspaceNavigationHtml("shipping-document")',
-  "renderShippingDocumentProductPreview(order)"
+  'salesOrderWorkspaceNavigationHtml("shipping-document")'
 ]) requireFragment(detailSource, fragment);
 for (const forbidden of ["salesOrderItemRowsHtml(order.items)", "shippingDocumentOutboundWaybillHtml(order)", "shippingDocumentReturnWaybillHtml(order)", "shipping-document-open-history", "salesOrderStatusSummaryHtml(order)"]) {
   if (detailSource.includes(forbidden)) throw new Error(`Shipping document initial detail must not include the sales screen row renderer or inline waybill settings: ${forbidden}`);
@@ -1078,11 +1080,11 @@ for (const fragment of [
 ]) requireFragment(i18n, fragment, `B2 reissue translation is missing: ${fragment}`);
 
 for (const fragment of [
-  'content="v1.1.1163"',
-  'styles.css?v=1.1.1163',
-  'app.js?v=1.1.1163'
+  'content="v1.1.1164"',
+  'styles.css?v=1.1.1164',
+  'app.js?v=1.1.1164'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.1163"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.1164"');
 requireFragment(source, 'sales_management_registered: "売上登録済"');
 requireFragment(source, 'sales_management_unknown: "売上確認不可"');
 

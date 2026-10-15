@@ -7877,7 +7877,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1163";
+var APP_VERSION       = "v1.1.1164";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -18500,7 +18500,6 @@ async function loadShippingDocumentDetail(orderId) {
   if (!canManageSalesOrders() || !orderId) return null;
   shippingDocumentSelectedId = orderId;
   renderShippingDocumentList();
-  renderShippingDocumentProductPreview(null);
   var requestSeq = ++shippingDocumentDetailSeq;
   var host = document.getElementById("shipping-document-detail");
   if (host) host.innerHTML = "<div class='sales-order-empty'>" + esc(t("loading")) + "</div>";
@@ -18886,7 +18885,7 @@ function shippingDocumentOrderContentsHtml(order) {
       "<span class='shipping-document-order-core " + esc(coreStatusClass) + "'>" + esc(coreStatusLabel) + "</span></div>";
   }).join("");
   return "<section class='shipping-document-order-contents'><div class='shipping-document-order-contents-head'><h3>" + esc(t("shipping_document_shipment_items")) + "</h3><span>" + esc(tf("customer_catalog_count", { n: items.length }) + " / " + t("customer_order_quantity") + " " + totalQuantity) + "</span></div>" +
-    (rows ? "<div class='shipping-document-order-items'>" + rows + "</div>" : "<p class='shipping-document-order-empty'>" + esc(t("shipping_document_no_shipment_items")) + "</p>") + "</section>";
+    (rows ? "<div class='shipping-document-order-items'" + (items.length > 1 ? " tabindex='0' role='region' aria-label='" + esc(t("shipping_document_shipment_items")) + "'" : "") + ">" + rows + "</div>" : "<p class='shipping-document-order-empty'>" + esc(t("shipping_document_no_shipment_items")) + "</p>") + "</section>";
 }
 
 function salesOrderWorkspaceNavigationHtml(activeWorkspace) {
@@ -18903,30 +18902,22 @@ function salesOrderWorkspaceNavigationHtml(activeWorkspace) {
   "</nav>";
 }
 
-function renderShippingDocumentProductPreview(order) {
-  var preview = document.getElementById("shipping-document-product-preview");
-  if (!preview) return;
-  preview.setAttribute("aria-label", t("shipping_document_shipment_items"));
-  preview.innerHTML = order ? shippingDocumentOrderContentsHtml(order) : "";
-}
-
 function renderShippingDocumentDetail() {
   var host = document.getElementById("shipping-document-detail");
   var order = shippingDocumentDetail;
-  renderShippingDocumentProductPreview(order);
   if (!host) return;
   if (!order) {
     stopShippingDocumentPrintStatusPolling();
     host.innerHTML = shippingDocumentDefaultStateHtml();
     return;
   }
-  host.innerHTML = "<div class='shipping-document-detail-head'><div><span class='shipping-document-order-id-label'>" + esc(t("sales_order_id_label")) + "</span><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><small class='shipping-document-detail-target'>帳票発行対象 / " + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small><strong>" + esc(order.customer_name || "-") + "</strong></div></div>" +
-    salesOrderWorkspaceNavigationHtml("shipping-document") +
+  host.innerHTML = "<div class='shipping-document-detail-head'><div><span class='shipping-document-order-id-label'>" + esc(t("sales_order_id_label")) + "</span><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><small class='shipping-document-detail-target'>帳票発行対象 / " + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small><strong>" + esc(order.customer_name || "-") + "</strong></div>" +
+    salesOrderWorkspaceNavigationHtml("shipping-document") + "</div>" +
     "<div id='shipping-document-message' class='sales-order-detail-message' aria-live='polite'></div>" +
     shippingDocumentStageHtml(order) +
+    shippingDocumentOrderContentsHtml(order) +
     shippingDocumentShipmentDocumentsHtml(order) +
-    shippingDocumentDeliveryHtml(order) +
-    shippingDocumentOrderContentsHtml(order);
+    shippingDocumentDeliveryHtml(order);
   bindShippingDocumentDetailActions();
   scheduleShippingDocumentPrintStatusRefresh();
 }
