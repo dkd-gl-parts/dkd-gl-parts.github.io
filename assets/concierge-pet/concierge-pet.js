@@ -1548,6 +1548,7 @@
     }
     aiRequestPending = true;
     aiStatusState = "aiWorking";
+    if (requestUi) requestUi.beginMessage();
     clearAiResult();
     updateAiStatus();
     revealAiFeedback();

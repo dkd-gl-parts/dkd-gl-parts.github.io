@@ -896,6 +896,7 @@
     return {
       sync: sync, destroy: destroy, prepare: prepare,
       pending: function () { return !!(draft || sending || pendingImage); },
+      beginMessage: function () { if (!draft && !sending && !pendingImage) message.textContent = ""; },
       previewElement: function () { return !form.hidden ? form : null; },
       resetDraft: function () { if (draft && !sending && !attempted) clearDraft(); }
     };
