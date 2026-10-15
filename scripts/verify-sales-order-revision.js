@@ -76,13 +76,13 @@ assert.equal(context.salesOrderRevisionEffectiveUnitPrice(coreRequired),12500);
 assert(context.salesOrderRevisionCoreChoiceHtml(coreRequired,0).includes('請求済み・返却不要'));
 const noCharge={product_core_return_required:true,core_return_required:true,core_return_handling:'standard',configured_core_charge_jpy:null,revision_unit_price_jpy:7500};
 assert(context.salesOrderRevisionCoreChoiceHtml(noCharge,1).includes('コア代金が未設定（選択不可）'));
-context.salesOrderDispatch=()=>null;
-context.shippingDocumentPendingCount=()=>0;
-vm.runInNewContext(app.slice(app.indexOf('function shippingDocumentStageHtml('),app.indexOf('function shippingDocumentOrderB2HistoryHtml(')),context);
+vm.runInNewContext(app.slice(app.indexOf('function shippingDocumentB2NeedsReissue('),app.indexOf('function shippingDocumentStageHtml(')),context);
 const changed={b2_exports:[{created_at:'2026-09-01T00:00:00Z'}],revision_history:[{created_at:'2026-09-02T00:00:00Z',waybills_need_reissue:true}]};
-assert(context.shippingDocumentStageHtml(changed).includes('再発行が必要'));
+assert.equal(context.shippingDocumentB2NeedsReissue(changed),true);
+const documentRows=app.slice(app.indexOf('function shippingDocumentShipmentDocumentsHtml('),app.indexOf('function shippingDocumentReturnWaybillHtml('));
+assert(documentRows.includes('shippingDocumentB2NeedsReissue(order)')&&documentRows.includes('再発行が必要'));
 changed.b2_exports.push({created_at:'2026-09-03T00:00:00Z'});
-assert(!context.shippingDocumentStageHtml(changed).includes('再発行が必要'));
+assert.equal(context.shippingDocumentB2NeedsReissue(changed),false);
 
 (async function verifyRevisionDeliveryQuoteRuntime() {
   const fields = {
