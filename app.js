@@ -15279,13 +15279,14 @@ function renderDcatsIntegrationReadiness(state) {
   }
   document.querySelectorAll("[data-integration-check-recheck]").forEach(function(button){button.disabled=state.phase==="checking"||dcatsCompanyAccountBusy||dcatsCompanyIntegrationBusy||dcatsCompanyBackupBusy;});
 }
-async function ensureDcatsIntegrationBeforeAction(feature,isCurrent) {
+async function ensureDcatsIntegrationBeforeAction(feature,isCurrent,expectedRecord) {
   syncDcatsIntegrationReadinessContext();
   if(!dcatsIntegrationReadinessController)return {ok:false,reason:"check_unavailable"};
   if(feature!=="setup")resetDcatsCompanyBackupReadiness();
-  var expected=!["overview","setup","connect"].includes(feature)&&dcatsCompanyIntegrationRecord?dcatsCompanyIntegrationRecord.device_id:null;
+  var record=expectedRecord||dcatsCompanyIntegrationRecord;
+  var expected=!["overview","setup","connect"].includes(feature)&&record?record.device_id:null;
   var result=await dcatsIntegrationReadinessController.check(feature,{isCurrent:isCurrent,expectedDevice:expected});
-  if(result.reason==="device_changed")dcatsCompanyIntegrationRecord=null;
+  if(result.reason==="device_changed"&&record===dcatsCompanyIntegrationRecord)dcatsCompanyIntegrationRecord=null;
   if(result.readiness&&isCurrent()){
     applyDcatsCompanyBackupReadiness(result.readiness);
   }

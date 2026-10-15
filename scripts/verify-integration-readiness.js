@@ -2,6 +2,9 @@
 const assert=require('assert/strict'),fs=require('fs'),path=require('path'),vm=require('vm'),acorn=require('acorn');
 const root=path.resolve(__dirname,'..'),source=fs.readFileSync(path.join(root,'app.js'),'utf8'),html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const runtime=fs.readFileSync(path.join(root,'assets/concierge-pet/integration-readiness.js'),'utf8');
+const concierge=fs.readFileSync(path.join(root,'assets/concierge-pet/concierge-pet.js'),'utf8');
+const conciergeTree=acorn.parse(concierge,{ecmaVersion:'latest'});
+const conciergePick=name=>{let found;function visit(node){if(!node||typeof node!=='object')return;if(node.type==='FunctionDeclaration'&&node.id.name===name)found=node;for(const value of Object.values(node)){if(Array.isArray(value))value.forEach(visit);else if(value&&typeof value==='object')visit(value);}}visit(conciergeTree);assert(found,name);return concierge.slice(found.start,found.end);};
 const actor='00000000-0000-4000-8000-000000000001',device='00000000-0000-4000-8000-000000000002';
 const record={actor_id:actor,device_id:device,public_key_sha256:'a'.repeat(64),public_key_spki:'-----BEGIN PUBLIC KEY-----\n'+'A'.repeat(300)};
 const fullChecks={identity:'available',syncFolder:'available',driveConfiguration:'available',driveAuthorization:'available',backupPassword:'available',recovery:'available',backupAdapter:'available'};
@@ -37,7 +40,7 @@ function uiHarness(options={}){
   assert.equal(harness({storage:h.storage}).engine.snapshot().firstUse,false);
   assert.equal(harness({storage:new Map()}).engine.snapshot().firstUse,true);
   await h.engine.check('login',h.options);await h.engine.check('login',h.options);assert.deepEqual(h.calls,['extension','extension','device','readiness','extension','device','readiness']);
-  for(const feature of ['connect','login','export','result','backup_result','import_result']){
+  for(const feature of ['connect','login','prepare','export','result','backup_result','import_result']){
     const f=harness({checks:{backupPassword:'registration_required',backupAdapter:'unavailable'}});
     assert.equal((await f.engine.check(feature,f.options)).ok,true,feature+' must not require unrelated backup setup');
   }
@@ -61,6 +64,20 @@ function uiHarness(options={}){
   }
   const b=uiHarness({checks:{backupPassword:'registration_required'}});await b.ctx.runDcatsCompanyIntegration('backup','sales');assert.deepEqual(b.business,[]);
   const c=uiHarness();c.ctx.dcatsCompanyIntegrationRecord={...record,device_id:actor};await c.ctx.runDcatsCompanyIntegration('login');assert.deepEqual(c.business,[]);assert.equal(c.ctx.dcatsCompanyIntegrationRecord,null);
+  const separate=uiHarness();assert.equal((await separate.ctx.ensureDcatsIntegrationBeforeAction('login',()=>true,{...record,device_id:actor})).ok,false);assert.equal(separate.ctx.dcatsCompanyIntegrationRecord,record,'Concierge record mismatch must not clear another view record');
+  for(const category of ['account','products','customers','sales'])for(const outcome of ['allowed','blocked','missing','stale']){
+    const calls=[];let current=true;
+    const ctx={companyToken:0,companyPending:false,bridgeRequestPending:false,companyStatusKey:'',reviewPreviewRecord:record,
+      isSystemAdminSession:()=>current,currentSettingsOwner:()=>actor,updateBridgeStatus(){},
+      window:{DcatsHanbaiohCompanyBridge:{loginOnce:async()=>{calls.push('login');return {status:'login_verified'};},prepareCsv:async()=>{calls.push('prepare');return {status:'prepared'};}}}};
+    if(outcome!=='missing')ctx.window.ensureDcatsIntegrationBeforeAction=async(feature,isCurrent,expected)=>{
+      assert.equal(feature,category==='account'?'login':'prepare');assert.equal(expected,record);assert.equal(isCurrent(),true);calls.push('check');if(outcome==='stale')current=false;return {ok:outcome!=='blocked'};
+    };
+    vm.runInNewContext(conciergePick('checkIntegrationBeforeOperation')+'\n'+conciergePick('runCompanyOperation'),ctx);
+    await ctx.runCompanyOperation(category,{name:category+'.csv'});
+    assert.deepEqual(calls,outcome==='allowed'?['check',category==='account'?'login':'prepare']:outcome==='missing'?[]:['check']);assert.equal(ctx.bridgeRequestPending,false);
+  }
+  for(const name of ['issueBackupEnrollment','runWindowsBridgeRequest','runPilotTestSale','runPilotLogin'])assert(conciergePick(name).includes('await checkIntegrationBeforeOperation("setup"'),name+' requires fresh connectivity before its existing signed pilot checks');
   for(const name of ['registerDcatsCompanyAccount','openDcatsCompanyBackupSetup','checkDcatsCompanyBackupReadiness'])assert(pick(name).includes('ensureDcatsIntegrationBeforeAction("setup",isCurrent)'),name);
   assert(pick('renderMenu').includes('syncDcatsIntegrationReadinessContext()'));
   assert(html.indexOf('integration-readiness.js?')<html.indexOf('src="app.js?'));

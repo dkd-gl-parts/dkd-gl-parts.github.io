@@ -1726,6 +1726,9 @@
     backupStatusKey = "backupWorking";
     updateBackupEnrollment();
     try {
+      if (!await checkIntegrationBeforeOperation("setup", function () {
+        return token === backupToken && isSystemAdminSession() && actor === currentSettingsOwner() && record === reviewPreviewRecord;
+      }, record)) { if (token === backupToken) backupStatusKey = "backupUnavailable"; return; }
       var result = await api.issue(record);
       if (token !== backupToken || !isSystemAdminSession() || currentSettingsOwner() !== actor) return;
       if (result && result.error) {
@@ -1775,6 +1778,12 @@
     updateBackupEnrollment();
   }
 
+  async function checkIntegrationBeforeOperation(feature, isCurrent, record) {
+    if (typeof window.ensureDcatsIntegrationBeforeAction !== "function" || !isCurrent()) return false;
+    var result = await window.ensureDcatsIntegrationBeforeAction(feature, isCurrent, record);
+    return isCurrent() && result && result.ok === true;
+  }
+
   async function runWindowsBridgeRequest(command, args, workingKey) {
     if (!isSystemAdminSession() || bridgeRequestPending) return;
     var bridgeApi = window.DcatsBridgeApi;
@@ -1784,11 +1793,14 @@
       return;
     }
 
-    var token = ++bridgeRequestToken;
+    var token = ++bridgeRequestToken, actor = currentSettingsOwner();
     bridgeRequestPending = true;
     setBridgeStatus(workingKey);
     playExternalState("working", 10000);
     try {
+      if (!await checkIntegrationBeforeOperation("setup", function () {
+        return token === bridgeRequestToken && isSystemAdminSession() && actor === currentSettingsOwner();
+      })) { if (token === bridgeRequestToken) setBridgeStatus("bridgeFailed"); return; }
       var request = { id: bridgeRequestId(), command: command };
       if (args) request.args = args;
       var issued = await bridgeApi.issueCapability(request);
@@ -1889,6 +1901,10 @@
     salesStatusState = { key: "salesWorking", values: null };
     updateBridgeStatus(); updatePilotLogin(); updatePilotTestSale();
     try {
+      if (!await checkIntegrationBeforeOperation("setup", function () { return token === salesToken && isSystemAdminSession() &&
+          record.actor_id === currentSettingsOwner() && record === reviewPreviewRecord; }, record)) {
+        if (token === salesToken) salesStatusState = { key: "salesStopped", values: { code: "INTEGRATION_SETUP_REQUIRED" } }; return;
+      }
       var data = await window.DcatsHanbaiohTestSalesBridge.importOnce({
         record: record, fileName: fileName,
         isCurrent: function () { return token === salesToken && isSystemAdminSession() &&
@@ -1917,7 +1933,6 @@
     if (!api || typeof api.issue !== "function") { loginStatusKey = "loginUnavailable"; updatePilotLogin(); return; }
     var record = reviewPreviewRecord;
     var token = ++loginToken;
-    loginAttempted = true;
     loginPending = true;
     bridgeRequestPending = true;
     loginStatusKey = "loginWorking";
@@ -1925,6 +1940,10 @@
     updatePilotLogin();
     var request;
     try {
+      if (!await checkIntegrationBeforeOperation("setup", function () {
+        return token === loginToken && isSystemAdminSession() && record.actor_id === currentSettingsOwner() && record === reviewPreviewRecord;
+      }, record)) { if (token === loginToken) loginStatusKey = "loginUnavailable"; return; }
+      loginAttempted = true;
       var id = bridgeRequestId();
       var issued = await api.issue(record, id);
       if (token !== loginToken || !isSystemAdminSession() || record.actor_id !== currentSettingsOwner()) return;
@@ -2007,6 +2026,9 @@
     try {
       var options = { record: record, category: category, file: file,
         isCurrent: function () { return token === companyToken && isSystemAdminSession() && actor === currentSettingsOwner() && record === reviewPreviewRecord; } };
+      if (!await checkIntegrationBeforeOperation(category === "account" ? "login" : "prepare", options.isCurrent, record)) {
+        if (options.isCurrent()) companyStatusKey = "companyUnverified"; return;
+      }
       var result = category === "account" ? await bridge.loginOnce(options) : await bridge.prepareCsv(options);
       if (!options.isCurrent()) return;
       companyStatusKey = result.status === "login_verified" ? "companyLoginVerified" : result.status === "prepared" ? "companyPrepared" : "companyUnverified";

@@ -2,7 +2,7 @@
   "use strict";
   var channel="dcats-integration-status-v1";
   var fields=["extension","pc","identity","syncFolder","driveConfiguration","driveAuthorization","backupPassword","recovery","backupAdapter"];
-  var features=["startup","overview","setup","connect","login","export","result","backup","backup_result","import_result"];
+  var features=["startup","overview","setup","connect","login","prepare","export","result","backup","backup_result","import_result"];
   function supportedVersion(version){
     var match=typeof version==="string"&&/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(version);
     return !!match&&(Number(match[1])>0||Number(match[2])>5||Number(match[2])===5&&Number(match[3])>=16);
