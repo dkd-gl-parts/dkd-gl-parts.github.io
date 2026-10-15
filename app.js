@@ -494,7 +494,7 @@ var TRANSLATIONS = {
     business_workspace_backup_title: "取込前バックアップの準備",
     business_workspace_backup_hint: "商品・得意先・売上の取込前に、パスワードで保護したバックアップをD-CATS業務連携の共有フォルダへ保存します。",
     business_workspace_backup_separate: "バックアップ用パスワードは、上の販売王ログイン用とは別に登録します。",
-    business_workspace_backup_check: "D-CATS本人確認でバックアップ準備を確認",
+    business_workspace_backup_check: "D-CATS本人確認で設定を続ける",
     business_workspace_backup_setup: "Google接続・バックアップ用パスワードを設定",
     business_workspace_backup_recover: "保存したバックアップ用パスワードを確認",
     business_workspace_backup_recover_hint: "忘れた場合は、登録時と同じD-CATSアカウントで本人確認して、このPCに保存したパスワードを確認できます。PC故障・交換時の共有復旧設定は別途準備が必要です。",
@@ -549,25 +549,25 @@ var TRANSLATIONS = {
     business_workspace_backup_recovery_help: "接続試験は指定のテスト担当者で進めます。実運用開始前に、復旧担当者とバックアップを復元できることを確認します。",
     business_workspace_backup_note: "準備の確認・初回設定では、販売王の起動やバックアップ作成、データ取込は開始しません。",
     integration_check_title: "このPCの連携設定",
-    integration_check_first_hint: "初めて使うPC・ブラウザでは設定を確認してください。起動時は拡張の応答を確認し、各機能を使う直前に必要な設定を再確認します。",
-    integration_check_review: "設定を確認する",
+    integration_check_first_hint: "連携設定は自動で確認します。未設定・本人確認が必要な項目だけ案内し、設定後と各機能の実行前にも自動で確認します。",
+    integration_check_review: "必要な設定を開く",
     integration_check_dismiss: "初回案内を閉じる",
-    integration_check_scope: "この確認では設定状況を読み取ります。販売王やパスワード入力画面は開きません。必要な設定は機能ごとに異なり、実行直前にも確認します。",
-    integration_check_recheck: "設定状況を再確認する",
+    integration_check_scope: "起動時・この画面を開いたとき・設定後に自動確認します。確認だけで販売王やパスワード入力画面を開くことはありません。",
+    integration_check_recheck: "今すぐ再確認する",
     integration_check_details: "項目ごとの状態と設定",
     integration_check_password_note: "販売王ログイン用パスワードは、実行時にPC連携アプリが確認します。未登録・変更時は下の「販売王ログイン設定」から登録してください。",
     integration_check_checking: "連携設定を確認しています…",
     integration_check_ready: "連携設定を確認できました。機能の実行直前にも再確認します。",
     integration_check_connected: "拡張機能の応答を確認しました。PC連携・本人・端末と必要設定は実行前に確認します。",
-    integration_check_unverified: "設定状況は未確認です。使用前に確認してください。",
+    integration_check_unverified: "設定状況は自動確認待ちです。",
     integration_check_extension: "拡張機能が未接続・旧版の可能性があります。「拡張機能の管理」で有効化・再読み込みを確認してください。",
     integration_check_pc: "PC連携アプリに接続できません。導入・更新・修復が必要です。",
     integration_check_device: "現在の本人・端末の対応を確認できないか、端末が変わりました。端末登録を担当者へ確認し、接続を確認し直してください。",
     integration_check_identity: "本人・会社・このPCの対応を確認できません。D-CATSのログイン状態と端末登録を確認してください。",
-    integration_check_settings: "未設定または未確認の項目があります。不足項目の設定を確認し、設定後に再確認してください。",
+    integration_check_settings: "自動確認で未設定・未確認の項目が見つかりました。必要な項目だけ設定してください。設定後は自動で再確認します。",
     integration_check_busy: "別の連携処理を実行中です。完了後に確認してください。",
-    integration_check_failed: "設定の確認を完了できませんでした。接続を確認し、再確認してください。",
-    integration_check_blocked: "必要な設定を確認できなかったため、処理を開始していません。「設定を確認する」から不足項目を確認してください。",
+    integration_check_failed: "設定の自動確認を完了できませんでした。接続を確認してください。画面への復帰時にも自動で再確認します。",
+    integration_check_blocked: "自動確認で必要な設定を確認できず、処理を開始していません。「必要な設定を開く」から不足項目を設定してください。",
     integration_check_extension_label: "ブラウザ拡張機能",
     integration_check_pc_label: "PC連携アプリ・端末登録",
     integration_check_available: "確認済み",
@@ -3072,7 +3072,7 @@ var TRANSLATIONS = {
     business_workspace_backup_title: "Backup preparation before import",
     business_workspace_backup_hint: "Before importing products, customers or sales, save a password-protected backup to the shared D-CATS workspace folder.",
     business_workspace_backup_separate: "Register a separate backup password from the Sales King sign-in password above.",
-    business_workspace_backup_check: "Verify backup preparation with D-CATS sign-in",
+    business_workspace_backup_check: "Continue setup with D-CATS sign-in",
     business_workspace_backup_setup: "Set up Google connection and backup password",
     business_workspace_backup_recover: "View saved backup password",
     business_workspace_backup_recover_hint: "If forgotten, sign in with the same D-CATS account to view the password protected on this PC. Shared recovery for PC failure or replacement requires separate setup.",
@@ -3127,25 +3127,25 @@ var TRANSLATIONS = {
     business_workspace_backup_recovery_help: "Connection tests use the designated test operator. Before production use, confirm the recovery operators and a successful backup restore.",
     business_workspace_backup_note: "Preparation checks and initial setup do not start Sales King, create a backup or import data.",
     integration_check_title: "PC integration setup",
-    integration_check_first_hint: "Check setup when using a new PC or browser. Startup checks the extension response; each feature checks its prerequisites again immediately before use.",
-    integration_check_review: "Review setup",
+    integration_check_first_hint: "Integration setup is checked automatically. Only missing setup or required sign-in is shown. Checks run again after setup and before each operation.",
+    integration_check_review: "Open required settings",
     integration_check_dismiss: "Dismiss first-use guide",
-    integration_check_scope: "This check reads setup status. It does not open Sales King or password entry windows. Required settings depend on the feature and are checked again before use.",
-    integration_check_recheck: "Check setup again",
+    integration_check_scope: "Setup is checked automatically at startup, when this screen opens and after setup changes. Checks do not open Sales King or password entry windows.",
+    integration_check_recheck: "Check again now",
     integration_check_details: "Status and settings by item",
     integration_check_password_note: "The PC integration checks the Sales King sign-in password when the operation runs. Register it below if it is missing or has changed.",
     integration_check_checking: "Checking integration setup…",
     integration_check_ready: "Integration prerequisites checked. They will be checked again immediately before use.",
     integration_check_connected: "The extension responded. PC integration, identity, device binding and required settings are checked before use.",
-    integration_check_unverified: "Setup has not been checked. Check it before use.",
+    integration_check_unverified: "Waiting for an automatic setup check.",
     integration_check_extension: "The extension may be disconnected or outdated. Check that it is enabled and reload it in Manage extensions.",
     integration_check_pc: "Cannot connect to the PC integration app. Installation, update or repair is required.",
     integration_check_device: "The current user/device binding could not be verified or the device changed. Ask your administrator to check registration, then reconnect.",
     integration_check_identity: "The user, company and PC binding could not be verified. Check D-CATS sign-in and device registration.",
-    integration_check_settings: "Some settings are missing or unverified. Review the required setup, then check again.",
+    integration_check_settings: "The automatic check found missing or unverified settings. Complete the required setup; it will be checked again automatically.",
     integration_check_busy: "Another integration operation is running. Check again when it finishes.",
-    integration_check_failed: "The setup check could not complete. Check the connection and try the check again.",
-    integration_check_blocked: "The operation did not start because its prerequisites could not be verified. Choose Review setup to see what needs attention.",
+    integration_check_failed: "The automatic setup check could not complete. Check the connection. It will be checked again when you return to the app.",
+    integration_check_blocked: "The automatic check could not verify required setup, so the operation did not start. Choose Open required settings to complete it.",
     integration_check_extension_label: "Browser extension",
     integration_check_pc_label: "PC integration and device registration",
     integration_check_available: "Verified",
@@ -5594,7 +5594,7 @@ var TRANSLATIONS = {
     business_workspace_backup_title: "导入前的备份准备",
     business_workspace_backup_hint: "导入商品、客户或销售数据前，将受密码保护的备份保存到D-CATS业务联动共享文件夹。",
     business_workspace_backup_separate: "备份密码与上方的销售王登录密码分别登记。",
-    business_workspace_backup_check: "通过D-CATS身份验证确认备份准备",
+    business_workspace_backup_check: "通过D-CATS本人验证继续设置",
     business_workspace_backup_setup: "设置Google连接及备份密码",
     business_workspace_backup_recover: "查看已保存的备份密码",
     business_workspace_backup_recover_hint: "忘记密码时，使用登记时的D-CATS账号验证身份，即可查看此电脑保护保存的密码。电脑故障或更换时的共享恢复需要另外设置。",
@@ -5649,25 +5649,25 @@ var TRANSLATIONS = {
     business_workspace_backup_recovery_help: "连接测试由指定测试负责人进行。正式运行前需确认恢复负责人及备份可成功恢复。",
     business_workspace_backup_note: "准备确认和首次设置不会启动销售王、创建备份或导入数据。",
     integration_check_title: "此电脑的联动设置",
-    integration_check_first_hint: "首次使用电脑或浏览器时请确认设置。启动时仅确认扩展响应，每次使用相关功能前重新确认所需设置。",
-    integration_check_review: "确认设置",
+    integration_check_first_hint: "系统会自动检查联动设置，仅提示未设置或需要本人验证的项目。设置后及每次执行前会自动复查。",
+    integration_check_review: "打开所需设置",
     integration_check_dismiss: "关闭首次使用说明",
-    integration_check_scope: "此检查只读取设置状态，不会打开销售王或密码输入窗口。不同功能所需设置不同，执行前会再次确认。",
-    integration_check_recheck: "重新确认设置状态",
+    integration_check_scope: "启动、打开此页面及完成设置后会自动检查。检查不会打开销售王或密码输入窗口。",
+    integration_check_recheck: "立即重新检查",
     integration_check_details: "各项目的状态及设置",
     integration_check_password_note: "执行时由电脑联动程序确认销售王登录密码。未登记或修改后，请在下方销售王登录设置中登记。",
     integration_check_checking: "正在确认联动设置…",
     integration_check_ready: "已确认联动所需设置。功能执行前还会再次确认。",
     integration_check_connected: "已收到扩展响应。执行前将确认电脑联动、本人、设备对应及所需设置。",
-    integration_check_unverified: "尚未确认设置。使用前请先确认。",
+    integration_check_unverified: "正在等待自动检查设置。",
     integration_check_extension: "扩展可能未连接或版本过旧。请在扩展管理中确认启用并重新加载。",
     integration_check_pc: "无法连接电脑联动程序。需要安装、更新或修复。",
     integration_check_device: "无法确认当前用户与设备对应，或设备已更改。请联系负责人确认设备登记后重新连接。",
     integration_check_identity: "无法确认本人、公司与此电脑的对应。请确认D-CATS登录状态及设备登记。",
-    integration_check_settings: "存在未设置或未确认项目。请确认缺少的设置，完成后重新检查。",
+    integration_check_settings: "自动检查发现未设置或未验证的项目。请完成所需设置，之后会自动复查。",
     integration_check_busy: "其他联动操作正在运行。请在完成后确认。",
-    integration_check_failed: "设置确认未能完成。请确认连接后再次检查。",
-    integration_check_blocked: "无法确认所需设置，操作尚未开始。请点击确认设置查看缺少的项目。",
+    integration_check_failed: "自动检查未能完成，请确认连接。返回应用时也会自动复查。",
+    integration_check_blocked: "自动检查未能确认所需设置，操作尚未开始。请点击打开所需设置完成相关项目。",
     integration_check_extension_label: "浏览器扩展",
     integration_check_pc_label: "电脑联动程序与设备登记",
     integration_check_available: "已确认",
@@ -7862,7 +7862,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1160";
+var APP_VERSION       = "v1.1.1161";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -15204,6 +15204,7 @@ function openDcatsBusinessWorkspace(event) {
   setDcatsBusinessWorkspaceMessage("", false);
   overlay.classList.add("show");
   if (typeof syncDcatsCompanyAccountControls === "function") syncDcatsCompanyAccountControls();
+  refreshDcatsIntegrationReadinessAutomatically(true);
   refreshDcatsB2ExportDirectoryState().catch(function() {
     setDcatsB2ExportDirectoryState("error", "");
   });
@@ -15232,6 +15233,7 @@ function openDcatsBusinessWorkspaceSettings(event) {
   syncDcatsCompanyAccountControls();
   overlay.classList.add("show");
   refreshDcatsB2ExportDirectoryState().catch(function() { setDcatsB2ExportDirectoryState("error", ""); });
+  refreshDcatsIntegrationReadinessAutomatically(true);
   document.getElementById("dcats-business-workspace-shortcut").focus();
 }
 
@@ -15283,6 +15285,15 @@ function syncDcatsIntegrationReadinessContext() {
     dcatsIntegrationReadinessController=api.create({
       storage:{getItem:function(key){return window.localStorage.getItem(key);},setItem:function(key,value){window.localStorage.setItem(key,value);}},
       isAllowed:function(actor){return !!currentUser&&currentUser.id===actor&&typeof isSystemAdmin==="function"&&isSystemAdmin();},
+      isIdle:function(){var bridge=window.DcatsHanbaiohCompanyBridge;return !!bridge&&!bridge.isBusy?.()&&canContinueDcatsAutomaticReadiness();},
+      canContinueAutomatic:canContinueDcatsAutomaticReadiness,
+      expectedDevice:function(){return dcatsCompanyIntegrationRecord?dcatsCompanyIntegrationRecord.device_id:null;},
+      onAutomaticResult:function(result){
+        if(result.reason==="device_changed")dcatsCompanyIntegrationRecord=null;
+        if(result.ok&&result.record)dcatsCompanyIntegrationRecord=result.record;
+        if(result.readiness)applyDcatsCompanyBackupReadiness(result.readiness);
+        updateDcatsCompanyIntegrationControls();
+      },
       probe:api.probeExtension,
       readDevice:function(options){var bridge=window.DcatsHanbaiohCompanyBridge;if(!bridge)throw new Error("company_bridge_unavailable");return bridge.readDeviceFromPc(options);},
       readReadiness:function(options){var bridge=window.DcatsHanbaiohCompanyBridge;if(!bridge||typeof bridge.readBackupReadinessFromPc!=="function")throw new Error("company_extension_update_required");return bridge.readBackupReadinessFromPc(options);},
@@ -15300,7 +15311,7 @@ function renderDcatsIntegrationReadiness(state) {
     identity_unverified:"identity",authentication_required:"identity",not_authorized:"identity",settings_required:"settings",busy:"busy",check_unavailable:"failed"};
   var key="integration_check_"+(state.phase==="checking"?"checking":state.phase==="ready"?"ready":state.phase==="checked"?"connected":attention?(reasons[state.reason]||"failed"):"unverified");
   document.querySelectorAll("[data-integration-check-status]").forEach(function(node){node.dataset.i18n=key;node.textContent=t(key);});
-  document.querySelectorAll("[data-integration-check-banner]").forEach(function(node){node.hidden=!allowed||!state.firstUse&&!attention;});
+  document.querySelectorAll("[data-integration-check-banner]").forEach(function(node){node.hidden=!allowed||!attention;});
   document.querySelectorAll("[data-integration-check-notice]").forEach(function(node){node.hidden=!allowed||!attention;});
   var panel=document.getElementById("dcats-integration-check");if(panel)panel.hidden=!allowed;
   var details=document.getElementById("dcats-integration-check-details");if(details&&state.feature!=="startup"&&attention)details.open=true;
@@ -15321,6 +15332,15 @@ function renderDcatsIntegrationReadiness(state) {
     });
   }
   document.querySelectorAll("[data-integration-check-recheck]").forEach(function(button){button.disabled=state.phase==="checking"||dcatsCompanyAccountBusy||dcatsCompanyIntegrationBusy||dcatsCompanyBackupBusy;});
+}
+function canContinueDcatsAutomaticReadiness() {
+  return !document.hidden&&!dcatsCompanyAccountBusy&&!dcatsCompanyIntegrationBusy&&!dcatsCompanyBackupBusy&&
+    !(window.DcatsConcierge&&typeof window.DcatsConcierge.isIntegrationBusy==="function"&&window.DcatsConcierge.isIntegrationBusy());
+}
+function refreshDcatsIntegrationReadinessAutomatically(force) {
+  syncDcatsIntegrationReadinessContext();
+  if(!dcatsIntegrationReadinessController)return Promise.resolve();
+  return dcatsIntegrationReadinessController.refresh({force:force===true}).catch(function(){});
 }
 async function ensureDcatsIntegrationBeforeAction(feature,isCurrent,expectedRecord) {
   syncDcatsIntegrationReadinessContext();
@@ -15451,7 +15471,7 @@ async function registerDcatsCompanyAccount() {
       var key=allowed.includes(reason)?"business_workspace_account_"+reason.slice("company_".length):"business_workspace_account_failed";
       status.className="error";status.textContent=t(key);
     }
-  }finally{dcatsCompanyAccountBusy=false;button.disabled=false;button.removeAttribute("aria-busy");syncDcatsCompanyAccountControls();}
+  }finally{dcatsCompanyAccountBusy=false;button.disabled=false;button.removeAttribute("aria-busy");syncDcatsCompanyAccountControls();if(isCurrent())refreshDcatsIntegrationReadinessAutomatically(true);}
 }
 
 function updateDcatsCompanyIntegrationControls() {
@@ -15560,7 +15580,7 @@ async function openDcatsCompanyBackupSetup(recoverPassword) {
       var reason=error&&error.message,known=["company_bridge_unavailable","company_extension_reload_required","company_extension_update_required","company_native_host_unavailable","company_device_unavailable","company_authentication_required","company_not_authorized","company_binding_unavailable","company_issuer_unavailable","company_ticket_unavailable"];
       setDcatsCompanyBackupStatus(reason==="company_backup_window_unavailable"?"business_workspace_backup_setup_window_unavailable":known.includes(reason)?"business_workspace_account_"+reason.slice(8):"business_workspace_backup_setup_outcome_unknown","error");
     }
-  } finally {dcatsCompanyBackupBusy=false;button.removeAttribute("aria-busy");updateDcatsCompanyIntegrationControls();}
+  } finally {dcatsCompanyBackupBusy=false;button.removeAttribute("aria-busy");updateDcatsCompanyIntegrationControls();if(isCurrent())refreshDcatsIntegrationReadinessAutomatically(true);}
 }
 
 function renderDcatsCompanyBackupNextSteps(result) {
@@ -56588,6 +56608,11 @@ document.getElementById("sales-order-pricing-save").addEventListener("click", sa
 document.getElementById("sales-order-pricing-overlay").addEventListener("click", function(e) {
   if (e.target === this) closeSalesOrderPricingEditor(false);
 });
+window.addEventListener("load", function(){refreshDcatsIntegrationReadinessAutomatically();});
+window.addEventListener("focus", function(){refreshDcatsIntegrationReadinessAutomatically();});
+window.addEventListener("online", function(){refreshDcatsIntegrationReadinessAutomatically();});
+document.addEventListener("visibilitychange", function(){if(!document.hidden)refreshDcatsIntegrationReadinessAutomatically();});
+window.addEventListener("pagehide", function(){if(dcatsIntegrationReadinessController)dcatsIntegrationReadinessController.setOwner("");});
 window.addEventListener("focus", function() {
   var overlay = document.getElementById("sales-order-print-settings-overlay");
   if (!overlay || !overlay.classList.contains("show")) return;
