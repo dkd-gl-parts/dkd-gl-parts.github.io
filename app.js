@@ -272,6 +272,7 @@ var TRANSLATIONS = {
     shipping_document_outbound_service: "商品発送便",
     shipping_document_delivery_preference: "お届け希望",
     shipping_document_shipment_items: "出荷商品",
+    shipping_document_progress_summary: "進捗",
     shipping_document_order_progress: "出荷状況",
     shipping_document_sales_progress: "売上登録",
     shipping_document_b2_redownloading: "再ダウンロードしています...",
@@ -2855,6 +2856,7 @@ var TRANSLATIONS = {
     shipping_document_outbound_service: "Outbound Shipping",
     shipping_document_delivery_preference: "Delivery Request",
     shipping_document_shipment_items: "Shipment Items",
+    shipping_document_progress_summary: "Progress",
     shipping_document_order_progress: "Shipping Status",
     shipping_document_sales_progress: "Sales Registration",
     shipping_document_b2_redownloading: "Downloading again...",
@@ -5382,6 +5384,7 @@ var TRANSLATIONS = {
     shipping_document_outbound_service: "商品发货方式",
     shipping_document_delivery_preference: "送货要求",
     shipping_document_shipment_items: "发货商品",
+    shipping_document_progress_summary: "进度",
     shipping_document_order_progress: "出货状态",
     shipping_document_sales_progress: "销售登记",
     shipping_document_b2_redownloading: "正在重新下载...",
@@ -7877,7 +7880,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1165";
+var APP_VERSION       = "v1.1.1166";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -18920,8 +18923,8 @@ function renderShippingDocumentDetail() {
   host.innerHTML = "<div class='shipping-document-detail-head'><div><span class='shipping-document-order-id-label'>" + esc(t("sales_order_id_label")) + "</span><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><small class='shipping-document-detail-target'>帳票発行対象 / " + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small><strong>" + esc(order.customer_name || "-") + "</strong></div>" +
     salesOrderWorkspaceNavigationHtml("shipping-document") + "</div>" +
     "<div id='shipping-document-message' class='sales-order-detail-message' aria-live='polite'></div>" +
-    shippingDocumentStageHtml(order) +
-    shippingDocumentOrderContentsHtml(order) +
+    "<div class='shipping-document-order-summary'>" + shippingDocumentOrderContentsHtml(order) +
+    "<aside class='shipping-document-progress-panel' aria-label='" + esc(t("shipping_document_progress_summary")) + "'><h3>" + esc(t("shipping_document_progress_summary")) + "</h3>" + shippingDocumentStageHtml(order) + "</aside></div>" +
     shippingDocumentShipmentDocumentsHtml(order) +
     shippingDocumentDeliveryHtml(order);
   bindShippingDocumentDetailActions();
