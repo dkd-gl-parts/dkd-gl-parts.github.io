@@ -584,6 +584,75 @@ assert(aiPreview.hidden && aiQuestionInput.value === "", "An old owner's image o
 windowObject.currentUser = imageOwner;
 notifyObservers();
 dispatch(panelClose.listeners, "click", { target: panelClose });
+// Dismissed questions are ephemeral, including in-flight image and AI results.
+const questionBody = byClass("dcats-concierge-panel-body")[0];
+const imageFile = aiCard.descendants().find(element => element.type === "file");
+function assertBlankQuestion(label) {
+  assert(aiQuestionInput.value === "" && aiPreview.hidden && !aiPreview.getAttribute("src") && imageFile.value === "", label + ": input or image survived");
+  assert(aiAnswer.hidden && aiAnswer.textContent === "" && aiGuide.hidden && aiGuide.textContent === "" && aiUsage.hidden, label + ": old results survived");
+  assert(aiStatus.textContent === "まだ質問していません。" && !aiStatus.classList.contains("is-error") && !aiStatus.classList.contains("is-success"), label + ": old status survived");
+  assert(!aiAskButton.disabled && !aiQuestionInput.disabled && aiAskButton.getAttribute("aria-busy") === "false", label + ": new question disabled");
+}
+api.openSettings("question");
+windowObject.DcatsConciergeImages.prepare = async () => "aGVsbG8=";
+dispatch(aiCard.listeners, "paste", { syntheticFile: { type: "image/png" } });
+await new Promise(resolve => setImmediate(resolve));
+aiQuestionInput.value = "閉じる前の質問";
+dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
+await new Promise(resolve => setImmediate(resolve));
+assert(!aiAnswer.hidden && !aiPreview.hidden && !aiUsage.hidden, "Reset fixture lacks a completed question/image/meter");
+questionBody.scrollTop = 400;
+const settingsBeforeQuestionClose = JSON.stringify(api.getSettings());
+const callsBeforeQuestionClose = aiRequests.length;
+dispatch(panelClose.listeners, "click", { target: panelClose });
+assertBlankQuestion("close button");
+api.openSettings("question");
+assertBlankQuestion("reopened question");
+assert(documentObject.activeElement === aiQuestionInput && questionBody.scrollTop === 0, "New question must open at top with input focus");
+assert(aiRequests.length === callsBeforeQuestionClose && JSON.stringify(api.getSettings()) === settingsBeforeQuestionClose, "Reset sent a request or changed character settings");
+for (const dismiss of [
+  () => dispatch(documentObject.listeners, "keydown", { key: "Escape" }),
+  () => dispatch(documentObject.listeners, "pointerdown", { target: activeScreen }),
+  () => api.openSettings("settings"),
+]) {
+  aiQuestionInput.value = "破棄する下書き";
+  dismiss();
+  api.openSettings("question");
+  assertBlankQuestion("alternate dismissal");
+}
+let finishDismissedImage;
+windowObject.DcatsConciergeImages.prepare = () => new Promise(resolve => { finishDismissedImage = resolve; });
+dispatch(aiCard.listeners, "paste", { syntheticFile: { type: "image/png" } });
+assert(aiAskButton.disabled, "Pending-image close fixture did not start");
+dispatch(panelClose.listeners, "click", { target: panelClose });
+api.openSettings("question");
+aiQuestionInput.value = "新しい画像なし質問";
+finishDismissedImage("aGVsbG8=");
+await new Promise(resolve => setImmediate(resolve));
+assert(aiPreview.hidden && !aiAskButton.disabled && aiQuestionInput.value === "新しい画像なし質問", "Late image overwrote the new question");
+dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
+await new Promise(resolve => setImmediate(resolve));
+assert(aiRequests.at(-1).image === undefined, "Dismissed image was sent with a new question");
+for (const oldFailed of [false, true]) {
+  const completions = [];
+  aiResponseFactory = () => new Promise(resolve => completions.push(resolve));
+  aiQuestionInput.value = "閉じた旧要求";
+  dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
+  dispatch(panelClose.listeners, "click", { target: panelClose });
+  api.openSettings("question");
+  assertBlankQuestion("close while awaiting AI");
+  aiQuestionInput.value = "独立した新要求";
+  dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
+  assert(completions.length === 2, "New request was blocked by a dismissed request");
+  completions[0](oldFailed ? { data: null, error: new Error("ai_provider_failed") } : { data: { ...originalAiResponseFactory().data, answer: "表示してはいけない旧回答" } });
+  await new Promise(resolve => setImmediate(resolve));
+  assert(aiAnswer.hidden && aiAskButton.disabled && aiQuestionInput.value === "独立した新要求" && !aiStatus.classList.contains("is-error"), "Late old response/error interfered with new pending question");
+  completions[1]({ data: { ...originalAiResponseFactory().data, answer: "新しい回答だけ" } });
+  await new Promise(resolve => setImmediate(resolve));
+  assert(aiAnswer.textContent === "新しい回答だけ" && !aiAskButton.disabled, "New response failed after old completion");
+}
+aiResponseFactory = originalAiResponseFactory;
+dispatch(panelClose.listeners, "click", { target: panelClose });
 const bridgeCard = byClass("dcats-concierge-bridge-card")[0];
 const bridgeButton = byClass("dcats-concierge-bridge-button")[0];
 const bridgeButtons = byClass("dcats-concierge-bridge-button");
@@ -836,9 +905,23 @@ notifyObservers();
 assert(api.isFloating() && !root.hidden, "Floating concierge disappeared during a D-CATS feature transition");
 activeScreen.id = "screen-menu";
 notifyObservers();
+api.openSettings("question");
+aiQuestionInput.value = "小窓で閉じる質問";
+dispatch(firstFloatingWindow.document.listeners, "keydown", { key: "Escape" });
+assertBlankQuestion("floating Escape");
+api.openSettings("question");
+aiQuestionInput.value = "小窓から戻す質問";
 await api.toggleFloating();
 assert(!api.isFloating() && root.ownerDocument === documentObject, "Concierge did not return to the D-CATS document");
 assert(firstFloatingWindow.closed && !root.classList.contains("is-floating"), "Floating window did not close cleanly");
+assertBlankQuestion("return from floating");
+assert(panel.hidden, "Returning from floating left the previous question panel open");
+await api.toggleFloating();
+api.openSettings("question");
+aiQuestionInput.value = "小窓自体を閉じる質問";
+floatingWindows.at(-1).close();
+assert(!api.isFloating() && panel.hidden && root.ownerDocument === documentObject, "Native-like floating close did not restore the main document");
+assertBlankQuestion("floating pagehide");
 
 api.setMode("fixed");
 const dragStart = mover.getBoundingClientRect();
