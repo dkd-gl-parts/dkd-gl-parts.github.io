@@ -619,6 +619,30 @@ var TRANSLATIONS = {
     business_workspace_downloaded: "フォルダ用ショートカット（.lnk）のダウンロードを開始しました。",
     business_workspace_failed: "ショートカットを取得できませんでした。「Google Drive（Web）」から共有フォルダを利用できます。",
     business_workspace_shortcut_hint: "PC版Google Driveがない場合も「Google Drive（Web）」からブラウザで利用できます。フォルダ用ショートカットは、このPCのG:ドライブを参照します。",
+    workspace_support_title: "フォルダが開かないときの診断",
+    workspace_support_checking: "このPCのGoogle Driveと共有フォルダを確認しています…",
+    workspace_support_starting: "Google Driveの起動を依頼しています…",
+    workspace_support_waiting: "起動を依頼しました。共有フォルダが使えるか自動で再確認します。",
+    workspace_support_ready: "PC上の共有フォルダを確認しました。",
+    workspace_support_not_installed: "このPCの標準の導入先にGoogle Driveが見つかりません。",
+    workspace_support_stopped: "Google Driveが停止しています。",
+    workspace_support_drive_missing: "Google Driveは起動していますが、このショートカットのG:ドライブが見つかりません。",
+    workspace_support_folder_missing: "G:ドライブはありますが、D-CATS業務連携フォルダが見つかりません。",
+    workspace_support_unverified: "このPCの共有フォルダはまだ確認できていません。",
+    workspace_support_unavailable: "このPCの診断に接続できません。連携アプリと拡張機能を確認してください。",
+    workspace_support_update_required: "フォルダ診断に対応した拡張機能への更新・再読み込みが必要です。",
+    workspace_support_inspect: "もう一度確認",
+    workspace_support_start: "Google Driveを起動して再確認",
+    workspace_support_web: "Google Drive（Web）でフォルダを開く",
+    workspace_support_extension: "連携アプリ・拡張機能の案内",
+    workspace_support_steps_not_installed: "「業務連携設定」のGoogle公式の導入手順からPC版Google Driveを導入し、共有先の業務用アカウントでログインしてください。導入済みで保存先が異なる場合は、WindowsのスタートからGoogle Driveを開いてください。",
+    workspace_support_steps_stopped: "「Google Driveを起動して再確認」を押してください。ボタンが使えない場合は、WindowsのスタートからGoogle Driveを起動します。ログインや同期エラーの表示がある場合は、Drive側の案内を確認してください。",
+    workspace_support_steps_drive_missing: "PC版Google Driveでログイン・同期エラーとドライブ文字を確認してください。このショートカットはG:を参照します。別の文字を使うPCでは、エクスプローラーの実際の同期先からフォルダを開いてください。",
+    workspace_support_steps_folder_missing: "Web版で共有先のGoogleアカウントとフォルダのアクセスを確認し、PC版Driveにも同じアカウントを追加してください。必要に応じて共有フォルダのショートカットをマイドライブへ追加します。",
+    workspace_support_steps_unverified: "下のWeb版から共有フォルダへアクセスできるか確認し、PC版Driveの状態を確認してください。確認だけで設定は変更しません。",
+    workspace_support_steps_unavailable: "拡張機能の管理で「D-CATS 管理者用 Windows 連携」を有効にし、再読み込み後にD-CATSを更新してください。診断アプリの更新が必要な場合はPCの管理者へ確認してください。",
+    workspace_support_steps_update_required: "拡張機能の管理で「D-CATS 管理者用 Windows 連携」を再読み込みし、その後D-CATS上部の「更新」を押してください。",
+    workspace_support_scope: "確認は読み取り専用です。Driveの起動はボタンを押したときだけ行います。同期完了・共有権限・CSV保存の許可は別に確認します。",
     business_workspace_drive_support: "PC版Google Driveの設定・困ったとき",
     business_workspace_drive_intro: "同期フォルダへ自動保存するには、PC版Google Driveを導入し、共有フォルダの保存先を設定します。",
     business_workspace_drive_install_title: "PC版Google Driveを導入する",
@@ -3204,6 +3228,30 @@ var TRANSLATIONS = {
     business_workspace_downloaded: "The folder shortcut (.lnk) download has started.",
     business_workspace_failed: "The shortcut could not be downloaded. Use Google Drive (Web) to access the shared folder.",
     business_workspace_shortcut_hint: "Without Google Drive for desktop, use Google Drive (Web) in your browser. The folder shortcut targets this PC's G: drive.",
+    workspace_support_title: "Help when the folder will not open",
+    workspace_support_checking: "Checking Google Drive and the shared folder on this PC…",
+    workspace_support_starting: "Requesting Google Drive startup…",
+    workspace_support_waiting: "Startup requested. The shared folder will be checked again automatically.",
+    workspace_support_ready: "The shared folder is available on this PC.",
+    workspace_support_not_installed: "Google Drive was not found in the standard installation locations.",
+    workspace_support_stopped: "Google Drive is not running.",
+    workspace_support_drive_missing: "Google Drive is running, but the G: drive used by this shortcut is missing.",
+    workspace_support_folder_missing: "G: is available, but the D-CATS shared folder was not found.",
+    workspace_support_unverified: "The shared folder on this PC has not been verified.",
+    workspace_support_unavailable: "Cannot connect to the PC diagnostic helper. Check the app and browser extension.",
+    workspace_support_update_required: "The folder diagnostic extension needs an update or reload.",
+    workspace_support_inspect: "Check again",
+    workspace_support_start: "Start Google Drive and recheck",
+    workspace_support_web: "Open folder in Google Drive (Web)",
+    workspace_support_extension: "App and extension help",
+    workspace_support_steps_not_installed: "Install Google Drive for desktop using the official guide in Business integration settings, then sign in with the work account that has folder access. If it is installed elsewhere, open Google Drive from Windows Start.",
+    workspace_support_steps_stopped: "Select “Start Google Drive and recheck”. If unavailable, open Google Drive from Windows Start. Follow Drive’s instructions for any sign-in or sync errors.",
+    workspace_support_steps_drive_missing: "Check sign-in, sync errors and the drive letter in Google Drive for desktop. This shortcut uses G:. If your PC uses a different letter, open the actual synced folder in File Explorer.",
+    workspace_support_steps_folder_missing: "Open the Web folder to check the account and access. Use the same account in Drive for desktop. Add a shortcut to the shared folder in My Drive if needed.",
+    workspace_support_steps_unverified: "Check access using the Web folder below and review Drive for desktop. Inspection does not change settings.",
+    workspace_support_steps_unavailable: "Enable and reload “D-CATS 管理者用 Windows 連携” in extension management, then update D-CATS. Ask your PC administrator if the diagnostic app needs updating.",
+    workspace_support_steps_update_required: "Reload “D-CATS 管理者用 Windows 連携” in extension management, then select Update at the top of D-CATS.",
+    workspace_support_scope: "Inspection is read-only. Drive starts only when you select the button. Sync completion, sharing access and CSV save permission are checked separately.",
     business_workspace_drive_support: "Google Drive for desktop setup and help",
     business_workspace_drive_intro: "To save automatically to a synced folder, install Google Drive for desktop and configure the shared save folder.",
     business_workspace_drive_install_title: "Install Google Drive for desktop",
@@ -5733,6 +5781,30 @@ var TRANSLATIONS = {
     business_workspace_downloaded: "已开始下载文件夹快捷方式（.lnk）。",
     business_workspace_failed: "无法下载快捷方式。请使用“Google Drive（网页）”访问共享文件夹。",
     business_workspace_shortcut_hint: "未安装Google Drive桌面版时，可通过“Google Drive（网页）”在浏览器中使用。文件夹快捷方式指向此电脑的G:盘。",
+    workspace_support_title: "文件夹无法打开时的诊断",
+    workspace_support_checking: "正在检查本机的Google Drive和共享文件夹…",
+    workspace_support_starting: "正在请求启动Google Drive…",
+    workspace_support_waiting: "已请求启动。将自动重新检查共享文件夹。",
+    workspace_support_ready: "已确认本机上的共享文件夹可用。",
+    workspace_support_not_installed: "在本机的标准安装位置未找到Google Drive。",
+    workspace_support_stopped: "Google Drive尚未运行。",
+    workspace_support_drive_missing: "Google Drive正在运行，但未找到此快捷方式使用的G:驱动器。",
+    workspace_support_folder_missing: "G:驱动器存在，但未找到D-CATS共享文件夹。",
+    workspace_support_unverified: "尚未确认本机的共享文件夹。",
+    workspace_support_unavailable: "无法连接本机诊断程序。请检查应用及扩展程序。",
+    workspace_support_update_required: "文件夹诊断需要更新或重新加载扩展程序。",
+    workspace_support_inspect: "重新检查",
+    workspace_support_start: "启动Google Drive并重新检查",
+    workspace_support_web: "在Google Drive（网页版）中打开文件夹",
+    workspace_support_extension: "应用及扩展程序帮助",
+    workspace_support_steps_not_installed: "请根据业务连接设置中的Google官方指南安装桌面版Drive，并使用具有共享文件夹权限的工作账号登录。如安装在其他位置，请从Windows开始菜单打开Google Drive。",
+    workspace_support_steps_stopped: "点击“启动Google Drive并重新检查”。如果按钮不可用，请从Windows开始菜单启动Google Drive。若出现登录或同步错误，请按照Drive提示操作。",
+    workspace_support_steps_drive_missing: "请检查桌面版Drive中的登录状态、同步错误和驱动器盘符。此快捷方式使用G:。如果本机使用其他盘符，请在文件资源管理器中打开实际同步文件夹。",
+    workspace_support_steps_folder_missing: "请在网页版确认账号和文件夹访问权限，并在桌面版Drive中使用同一账号。必要时，将共享文件夹的快捷方式添加到“我的云端硬盘”。",
+    workspace_support_steps_unverified: "请使用下方网页版检查共享文件夹访问权限，并确认桌面版Drive状态。诊断不会更改设置。",
+    workspace_support_steps_unavailable: "请在扩展程序管理中启用并重新加载“D-CATS 管理者用 Windows 連携”，然后更新D-CATS。若诊断程序需要更新，请联系本机管理员。",
+    workspace_support_steps_update_required: "请在扩展程序管理中重新加载“D-CATS 管理者用 Windows 連携”，然后点击D-CATS顶部的“更新”。",
+    workspace_support_scope: "诊断只读取状态。仅在点击按钮时启动Drive。同步完成、共享权限及CSV保存权限需要分别确认。",
     business_workspace_drive_support: "Google Drive桌面版设置与帮助",
     business_workspace_drive_intro: "要自动保存到同步文件夹，请安装Google Drive桌面版并设置共享保存位置。",
     business_workspace_drive_install_title: "安装Google Drive桌面版",
@@ -7883,7 +7955,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1171";
+var APP_VERSION       = "v1.1.1172";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -15217,6 +15289,34 @@ async function resetDcatsHanbaiouExportDirectoryAfterWriteFailure() {
   setDcatsHanbaiouExportDirectoryState("writeError", "");
 }
 
+var dcatsWorkspaceSupportController = null;
+function renderDcatsWorkspaceSupport(state) {
+  var allowed=!!currentUser&&canManageSalesOrders();
+  document.querySelectorAll('[data-workspace-support]').forEach(function(root){
+    root.hidden=!allowed;if(!allowed)return;
+    var status=root.querySelector('[data-workspace-state]'),steps=root.querySelector('[data-workspace-steps]');
+    status.textContent=t('workspace_support_'+state.phase);status.setAttribute('data-i18n','workspace_support_'+state.phase);
+    root.setAttribute('data-phase',state.phase);root.setAttribute('aria-busy',state.busy?'true':'false');
+    var guidance=['not_installed','stopped','drive_missing','folder_missing','unavailable','update_required'].includes(state.phase)?state.phase:'unverified';
+    steps.textContent=t('workspace_support_steps_'+guidance);steps.setAttribute('data-i18n','workspace_support_steps_'+guidance);steps.hidden=state.phase==='ready'||state.busy||state.phase==='waiting';
+    root.querySelector('[data-workspace-inspect]').disabled=state.busy;
+    var start=root.querySelector('[data-workspace-start]');start.hidden=!state.canStart||state.phase==='ready';start.disabled=state.busy;
+    root.querySelector('[data-workspace-extension]').hidden=!isSystemAdmin()||!['unavailable','update_required'].includes(state.phase);
+  });
+}
+function getDcatsWorkspaceSupport() {
+  if(!dcatsWorkspaceSupportController&&window.DcatsWorkspaceSupport)dcatsWorkspaceSupportController=window.DcatsWorkspaceSupport.create({
+    isAllowed:function(actor){return !!currentUser&&currentUser.id===actor&&canManageSalesOrders();},
+    isVisible:function(){return !document.hidden&&['dcats-business-workspace-overlay','dcats-business-workspace-settings-overlay'].some(function(id){var node=document.getElementById(id);return !!node&&node.classList.contains('show');});},
+    probe:window.DcatsIntegrationReadiness&&window.DcatsIntegrationReadiness.probeExtension,
+    onChange:renderDcatsWorkspaceSupport
+  });
+  if(dcatsWorkspaceSupportController)dcatsWorkspaceSupportController.setOwner(currentUser&&canManageSalesOrders()?currentUser.id:'');
+  return dcatsWorkspaceSupportController;
+}
+function refreshDcatsWorkspaceSupport(force){var controller=getDcatsWorkspaceSupport();if(controller)controller.check('inspect',!!force);}
+function startDcatsWorkspaceDrive(){var controller=getDcatsWorkspaceSupport();if(controller)controller.check('start',true);}
+
 function setDcatsBusinessWorkspaceMessage(message, isError) {
   var host = document.getElementById("dcats-business-workspace-message");
   if (!host) return;
@@ -15235,6 +15335,7 @@ function openDcatsBusinessWorkspace(event) {
   refreshDcatsB2ExportDirectoryState().catch(function() {
     setDcatsB2ExportDirectoryState("error", "");
   });
+  refreshDcatsWorkspaceSupport(false);
   var folderLink = document.getElementById("dcats-business-workspace-folder-open");
   if (folderLink) folderLink.focus();
 }
@@ -15261,6 +15362,7 @@ function openDcatsBusinessWorkspaceSettings(event) {
   overlay.classList.add("show");
   refreshDcatsB2ExportDirectoryState().catch(function() { setDcatsB2ExportDirectoryState("error", ""); });
   refreshDcatsIntegrationReadinessAutomatically(true);
+  refreshDcatsWorkspaceSupport(false);
   document.getElementById("dcats-business-workspace-shortcut").focus();
 }
 
@@ -15286,6 +15388,7 @@ function handleDcatsBusinessWorkspaceKeys(event) {
 }
 
 function closeDcatsBusinessWorkspace(restoreFocus) {
+  if(dcatsWorkspaceSupportController)dcatsWorkspaceSupportController.cancel();
   dcatsCompanyIntegrationEpoch++;
   if(dcatsCompanyBackupBusy) window.DcatsHanbaiohCompanyBridge?.cancelCurrent();
   resetDcatsCompanyBackupReadiness();
@@ -15445,6 +15548,7 @@ var dcatsCompanyIntegrationRecord = null;
 var dcatsCompanyBackupBusy = false;
 var dcatsCompanyBackupResult = null;
 function syncDcatsCompanyAccountControls() {
+  if(dcatsWorkspaceSupportController)dcatsWorkspaceSupportController.setOwner(currentUser&&canManageSalesOrders()?currentUser.id:"");
   syncDcatsIntegrationReadinessContext();
   var section=document.getElementById("dcats-business-workspace-account");
   var user=typeof currentUser!=="undefined"?currentUser:null;
@@ -58014,3 +58118,9 @@ document.addEventListener("keydown", function(e){
 relocateRakutenSections();
 startAppUpdateWatcher();
 handleAuthState();
+
+document.querySelectorAll('[data-workspace-inspect]').forEach(function(button){button.addEventListener('click',function(){refreshDcatsWorkspaceSupport(true);});});
+document.querySelectorAll('[data-workspace-start]').forEach(function(button){button.addEventListener('click',startDcatsWorkspaceDrive);});
+document.querySelectorAll('[data-workspace-extension]').forEach(function(button){button.addEventListener('click',function(event){openDcatsIntegrationCheckSettings(event,'extension');});});
+window.addEventListener('focus',function(){refreshDcatsWorkspaceSupport(false);});
+document.addEventListener('visibilitychange',function(){if(document.hidden){if(dcatsWorkspaceSupportController)dcatsWorkspaceSupportController.cancel();}else refreshDcatsWorkspaceSupport(false);});
