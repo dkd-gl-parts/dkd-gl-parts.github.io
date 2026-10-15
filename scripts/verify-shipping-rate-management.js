@@ -283,4 +283,100 @@ if (!source.includes('document.getElementById("btn-back-report-hub").addEventLis
   throw new Error("report screens must return through the report hub and menu");
 }
 
-console.log("shipping rate management guard passed");
+// Exercise the real change listeners with an Event. Calling render directly
+// would miss an Event being mistaken for its optional load-error flag.
+const assert = require("node:assert/strict");
+const vm = require("node:vm");
+const acorn = require("acorn");
+const ast = acorn.parse(source, { ecmaVersion: "latest" });
+const filterCases = [
+  ["shipping-rate-prefecture-filter", "13", 2],
+  ["shipping-rate-carrier-filter", "ヤマト運輸", 3],
+  ["shipping-rate-service-filter", "宅急便", 3],
+  ["shipping-rate-size-filter", "60", 2],
+  ["shipping-rate-status-filter", "inactive", 1],
+  ["customer-shipping-prefecture", "13", 2],
+  ["customer-shipping-carrier", "ヤマト運輸", 2],
+  ["customer-shipping-service", "宅急便", 2],
+  ["customer-shipping-size", "60", 2]
+];
+class ShippingElement extends EventTarget {
+  constructor() {
+    super();
+    this.value = "all";
+    this.innerHTML = "";
+    this.textContent = "";
+  }
+  querySelectorAll() { return []; }
+}
+const elements = new Map([
+  ...filterCases.map(([id]) => [id, new ShippingElement()]),
+  ...["shipping-rate-list", "shipping-rate-count", "shipping-service-visibility-list",
+    "shipping-service-visibility-count", "customer-shipping-list", "customer-shipping-count"]
+    .map(id => [id, new ShippingElement()])
+]);
+const fixtureRows = [
+  { shipping_rate_id: 1, carrier_name: "ヤマト運輸", service_name: "宅急便", package_size_label: "60", prefecture_code: 13, standard_fee_jpy: 600, is_active: true },
+  { shipping_rate_id: 2, carrier_name: "ヤマト運輸", service_name: "宅急便", package_size_label: "80", prefecture_code: 27, standard_fee_jpy: 800, is_active: true },
+  { shipping_rate_id: 3, carrier_name: "ヤマト運輸", service_name: "宅急便", package_size_label: "80", prefecture_code: 1, standard_fee_jpy: 900, is_active: false },
+  { shipping_rate_id: 4, carrier_name: "佐川急便", service_name: "飛脚宅配便", package_size_label: "60", prefecture_code: 13, standard_fee_jpy: 500, is_active: true }
+];
+const fixtureSnapshot = JSON.stringify(fixtureRows);
+const context = vm.createContext({
+  document: { getElementById: id => elements.get(id) || null },
+  currentLang: "ja",
+  shippingRateRows: fixtureRows,
+  shippingServiceVisibilitySavingKey: "",
+  t: key => key,
+  tf: (key, values) => `${key}:${values.n ?? values.active}`,
+  esc: value => String(value).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]),
+  sb: { from() { throw new Error("Filtering must not request or mutate shipping data"); } }
+});
+const shippingRuntime = sourceBetween("function shippingPrefectureLabel", "async function enterProductionSearch");
+const prefectures = ast.body.find(node => node.type === "VariableDeclaration" && node.declarations.some(d => d.id.name === "SHIPPING_PREFECTURES"));
+vm.runInContext(source.slice(prefectures.start, prefectures.end) + "\n" + shippingRuntime, context);
+for (const [id] of filterCases) {
+  const listener = ast.body.find(node => node.type === "ExpressionStatement" &&
+    source.slice(node.start, node.end).startsWith(`document.getElementById("${id}").addEventListener("change",`));
+  assert.ok(listener, `Missing real change listener for ${id}`);
+  vm.runInContext(source.slice(listener.start, listener.end), context);
+}
+context.renderShippingRateMgmt();
+assert.equal(elements.get("shipping-rate-count").textContent, "customer_catalog_count:4");
+const visibilityBefore = elements.get("shipping-service-visibility-list").innerHTML;
+for (const [id, value, expectedCount] of filterCases) {
+  for (const [filterId] of filterCases) elements.get(filterId).value = "all";
+  const select = elements.get(id);
+  select.value = value;
+  select.dispatchEvent(new Event("change"));
+  const isManagement = id.startsWith("shipping-rate-");
+  const listId = isManagement ? "shipping-rate-list" : "customer-shipping-list";
+  const countId = isManagement ? "shipping-rate-count" : "customer-shipping-count";
+  const markup = elements.get(listId).innerHTML;
+  assert.ok(!markup.includes("shipping_load_error"), `${id}: a change Event must not become a load error`);
+  assert.equal(elements.get(countId).textContent, `customer_catalog_count:${expectedCount}`, id);
+  if (id.includes("carrier")) assert.ok(!markup.includes("佐川急便"), `${id}: filter the selected carrier`);
+  assert.equal(elements.get("shipping-service-visibility-list").innerHTML, visibilityBefore, `${id}: keep visibility controls`);
+  select.value = "all";
+  select.dispatchEvent(new Event("change"));
+  assert.equal(elements.get(countId).textContent, `customer_catalog_count:${isManagement ? 4 : 3}`, `${id}: clear filter`);
+}
+elements.get("shipping-rate-carrier-filter").value = "ヤマト運輸";
+elements.get("shipping-rate-prefecture-filter").value = "13";
+elements.get("shipping-rate-size-filter").value = "60";
+elements.get("shipping-rate-status-filter").value = "active";
+elements.get("shipping-rate-size-filter").dispatchEvent(new Event("change"));
+assert.equal(elements.get("shipping-rate-count").textContent, "customer_catalog_count:1", "combined filters");
+elements.get("shipping-rate-prefecture-filter").value = "47";
+elements.get("shipping-rate-prefecture-filter").dispatchEvent(new Event("change"));
+assert.ok(elements.get("shipping-rate-list").innerHTML.includes("shipping_no_rates"), "empty results are not load errors");
+context.renderShippingRateMgmt(true);
+for (const id of ["shipping-rate-list", "shipping-service-visibility-list"]) {
+  assert.ok(elements.get(id).innerHTML.includes("shipping_load_error"), `${id}: retain genuine load error`);
+}
+context.renderCustomerShippingRates(true);
+assert.ok(elements.get("customer-shipping-list").innerHTML.includes("shipping_load_error"), "retain preview load error");
+assert.ok(elements.get("customer-shipping-list").innerHTML.includes("customer-shipping-retry"), "retain retry action");
+assert.equal(JSON.stringify(context.shippingRateRows), fixtureSnapshot, "filtering must not change rate data");
+
+console.log("shipping rate management guard passed (9 real change listeners, combined/empty/error states)");
