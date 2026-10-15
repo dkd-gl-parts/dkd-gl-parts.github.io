@@ -7736,7 +7736,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1154";
+var APP_VERSION       = "v1.1.1155";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -18577,9 +18577,9 @@ function renderShippingDocumentDetail() {
     salesOrderWorkspaceNavigationHtml("shipping-document") +
     "<div id='shipping-document-message' class='sales-order-detail-message' aria-live='polite'></div>" +
     shippingDocumentStageHtml(order) +
+    shippingDocumentShipmentDocumentsHtml(order) +
     shippingDocumentDeliveryHtml(order) +
-    shippingDocumentOrderContentsHtml(order) +
-    shippingDocumentShipmentDocumentsHtml(order);
+    shippingDocumentOrderContentsHtml(order);
   bindShippingDocumentDetailActions();
   scheduleShippingDocumentPrintStatusRefresh();
 }
