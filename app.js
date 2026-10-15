@@ -542,6 +542,17 @@ var TRANSLATIONS = {
     business_workspace_backup_password_help: "登録は専用画面で行います。復旧用には共有フォルダ内の暗号ファイル、このPCでは保護されたファイルで保管します。パスワードを通常の文書に書いて共有しないでください。保存の確認後、専用画面は自動で閉じます。",
     business_workspace_backup_recovery_help: "接続試験は指定のテスト担当者で進めます。実運用開始前に、復旧担当者とバックアップを復元できることを確認します。",
     business_workspace_backup_note: "準備の確認・初回設定では、販売王の起動やバックアップ作成、データ取込は開始しません。",
+    extension_manager_title: "拡張機能の管理",
+    extension_manager_hint: "PC版Chrome／Edgeの拡張機能を、アドレス欄のないD-CATSアプリから確認できます。",
+    extension_manager_open: "拡張機能の管理を開く",
+    extension_manager_help: "開けない場合・連携がつながらない場合",
+    extension_manager_step_browser: "D-CATSウィンドウ右上の［⋮］から［Chromeで開く］または［Microsoft Edgeで開く］を選びます。",
+    extension_manager_step_address: "開いたブラウザのアドレス欄に、使用中のブラウザに合う次のアドレスを入力してEnterを押します。",
+    extension_manager_step_reload: "「D-CATS 管理者用 Windows 連携」を有効にし、カードの丸い矢印で再読み込みします。その後D-CATSに戻り、設定パネルを閉じて画面上部の［更新］を押します。",
+    extension_manager_same_browser: "D-CATSから開いた同じブラウザを使ってください。別のブラウザやプロファイルの拡張設定は共有されません。",
+    extension_manager_opening: "拡張機能の管理画面を開いています…",
+    extension_manager_opened: "管理画面を別ウィンドウで開きました。連携拡張を確認したら、D-CATSに戻ってください。",
+    extension_manager_unavailable: "自動で開けませんでした。下の手順で管理画面を開けます。連携拡張が無効・旧版の場合も、この手順を使えます。",
     business_workspace_account_title: "販売王ログイン設定",
     business_workspace_account_hint: "初回だけ、販売王のパスワードを登録します。このPCからの連動では、以降の入力は不要です。",
     business_workspace_account_update_hint: "販売王側でパスワードを変更した場合は、同じボタンから再登録してください。",
@@ -553,7 +564,7 @@ var TRANSLATIONS = {
     business_workspace_account_cancelled: "登録をキャンセルしました。",
     business_workspace_account_expired: "入力の有効期限（3分）が切れました。ボタンを押して登録画面を開き直してください。",
     business_workspace_account_failed: "登録の完了を確認できませんでした。入力画面に保存完了が表示された場合は、再登録せず担当者へ確認してください。（確認コード HBR-09）",
-    business_workspace_account_bridge_unavailable: "PCの連携機能へ接続できません。① 拡張機能の管理で「D-CATS 管理者用 Windows 連携」を有効にし、そのカードの丸い矢印で再読み込みします。② D-CATSに戻り、設定パネルを閉じて画面上部の［更新］を押します。この順に行ってからもう一度お試しください。（確認コード HBR-01）",
+    business_workspace_account_bridge_unavailable: "PCの連携機能へ接続できません。メニューの［設定］→［D-CATS業務連携設定］→［拡張機能の管理］から管理画面を開けます。①「D-CATS 管理者用 Windows 連携」を有効にし、そのカードの丸い矢印で再読み込みします。② D-CATSに戻り、設定パネルを閉じて画面上部の［更新］を押します。この順に行ってからもう一度お試しください。（確認コード HBR-01）",
     business_workspace_account_extension_reload_required: "このD-CATS画面と拡張機能の接続が切れています。設定パネルを閉じ、画面上部の［更新］を押してください。再読み込み後、設定を開いてもう一度お試しください。（確認コード HBR-11）",
     business_workspace_account_extension_update_required: "ブラウザに旧版の連携機能が残っています。「拡張機能の管理」で「D-CATS 管理者用 Windows 連携」を再読み込みし、0.5.3以上になったことを確認後、D-CATSのページを再読み込みしてください。続く場合は連携アプリの更新も必要です。（確認コード HBR-02）",
     business_workspace_account_native_host_unavailable: "PCの連携アプリを起動できません。連携アプリの導入・修復が必要です。（確認コード HBR-03）",
@@ -3078,6 +3089,17 @@ var TRANSLATIONS = {
     business_workspace_backup_password_help: "Register in the dedicated window. Recovery uses an encrypted file in the shared folder; this PC stores a protected file. Do not share the password in a regular document. The window closes automatically after saving is confirmed.",
     business_workspace_backup_recovery_help: "Connection tests use the designated test operator. Before production use, confirm the recovery operators and a successful backup restore.",
     business_workspace_backup_note: "Preparation checks and initial setup do not start Sales King, create a backup or import data.",
+    extension_manager_title: "Manage extensions",
+    extension_manager_hint: "Check extensions in desktop Chrome or Edge from the D-CATS app, even without an address bar.",
+    extension_manager_open: "Open extension manager",
+    extension_manager_help: "If it does not open or the integration is disconnected",
+    extension_manager_step_browser: "In the top-right ⋮ menu of the D-CATS window, choose Open in Chrome or Open in Microsoft Edge.",
+    extension_manager_step_address: "In the browser that opens, enter the matching address below in its address bar and press Enter.",
+    extension_manager_step_reload: "Enable D-CATS Windows integration and reload it using the round arrow on its card. Return to D-CATS, close Settings, then press Update at the top of the page.",
+    extension_manager_same_browser: "Use the same browser opened from D-CATS. Extension settings are separate for each browser and profile.",
+    extension_manager_opening: "Opening the extension manager…",
+    extension_manager_opened: "The extension manager opened in a separate window. Check the integration extension, then return to D-CATS.",
+    extension_manager_unavailable: "It could not open automatically. Follow the steps below, including when the integration extension is disabled or outdated.",
     business_workspace_account_title: "Sales King sign-in settings",
     business_workspace_account_hint: "Register your Sales King password once. Integration on this PC will not ask for it again.",
     business_workspace_account_update_hint: "If you change the password in Sales King, use this button to register the new password.",
@@ -3089,7 +3111,7 @@ var TRANSLATIONS = {
     business_workspace_account_cancelled: "Registration cancelled.",
     business_workspace_account_expired: "The 3-minute input period expired. Press the button to reopen the registration window.",
     business_workspace_account_failed: "Registration completion could not be confirmed. If the input window showed a saved result, contact support before registering again. (Code HBR-09)",
-    business_workspace_account_bridge_unavailable: "Cannot connect to the PC integration. 1. Enable D-CATS Windows integration in the extension manager and reload it using the round arrow on its card. 2. Return to D-CATS, close the settings panel, and press Update at the top of the page. Follow this order, then try again. (Code HBR-01)",
+    business_workspace_account_bridge_unavailable: "Cannot connect to the PC integration. Open Settings → D-CATS business integration settings → Manage extensions. 1. Enable D-CATS Windows integration and reload it using the round arrow on its card. 2. Return to D-CATS, close the settings panel, and press Update at the top of the page. Follow this order, then try again. (Code HBR-01)",
     business_workspace_account_extension_reload_required: "This D-CATS page is disconnected from the extension. Close the settings panel and press Update at the top of the page. After reloading, open settings and try again. (Code HBR-11)",
     business_workspace_account_extension_update_required: "An older PC integration remains loaded. Reload D-CATS Windows integration in the extension manager, confirm version 0.5.3 or later, then reload the D-CATS page. If this continues, update the PC app too. (Code HBR-02)",
     business_workspace_account_native_host_unavailable: "The PC integration app could not start. Install or repair it. (Code HBR-03)",
@@ -5558,6 +5580,17 @@ var TRANSLATIONS = {
     business_workspace_backup_password_help: "请在专用窗口登记。恢复用密码保存在共享文件夹的加密文件中，此电脑则以受保护文件保存。请勿以普通文档共享密码。确认保存后，专用窗口会自动关闭。",
     business_workspace_backup_recovery_help: "连接测试由指定测试负责人进行。正式运行前需确认恢复负责人及备份可成功恢复。",
     business_workspace_backup_note: "准备确认和首次设置不会启动销售王、创建备份或导入数据。",
+    extension_manager_title: "扩展管理",
+    extension_manager_hint: "即使D-CATS应用没有地址栏，也可以查看电脑版Chrome或Edge的扩展。",
+    extension_manager_open: "打开扩展管理",
+    extension_manager_help: "无法打开或联动未连接时",
+    extension_manager_step_browser: "点击D-CATS窗口右上角的［⋮］，选择［在Chrome中打开］或［在Microsoft Edge中打开］。",
+    extension_manager_step_address: "在打开的浏览器地址栏中输入下方对应地址，然后按Enter。",
+    extension_manager_step_reload: "启用D-CATS Windows联动扩展，点击卡片上的圆形箭头重新加载。然后返回D-CATS，关闭设置面板，点击页面顶部的［更新］。",
+    extension_manager_same_browser: "请使用从D-CATS打开的同一浏览器。不同浏览器和个人资料不共享扩展设置。",
+    extension_manager_opening: "正在打开扩展管理…",
+    extension_manager_opened: "已在单独窗口中打开扩展管理。确认联动扩展后，请返回D-CATS。",
+    extension_manager_unavailable: "无法自动打开。请按下方步骤打开管理页面。扩展被禁用或版本较旧时也可使用此方法。",
     business_workspace_account_title: "销售王登录设置",
     business_workspace_account_hint: "首次登记销售王密码。此电脑后续联动无需再次输入。",
     business_workspace_account_update_hint: "在销售王中修改密码后，请使用同一按钮重新登记。",
@@ -5569,7 +5602,7 @@ var TRANSLATIONS = {
     business_workspace_account_cancelled: "已取消登记。",
     business_workspace_account_expired: "3分钟输入期限已过。请点击按钮重新打开登记窗口。",
     business_workspace_account_failed: "无法确认登记完成。若输入窗口已显示保存成功，请先联系负责人，不要再次登记。（确认代码 HBR-09）",
-    business_workspace_account_bridge_unavailable: "无法连接电脑联动功能。① 在扩展管理中启用D-CATS Windows联动扩展，并点击该卡片的圆形箭头重新加载。② 返回D-CATS，关闭设置面板，点击页面顶部的［更新］。请按此顺序操作后重试。（确认代码 HBR-01）",
+    business_workspace_account_bridge_unavailable: "无法连接电脑联动功能。请从［设置］→［D-CATS业务联动设置］→［扩展管理］打开管理页面。① 启用D-CATS Windows联动扩展，并点击该卡片的圆形箭头重新加载。② 返回D-CATS，关闭设置面板，点击页面顶部的［更新］。请按此顺序操作后重试。（确认代码 HBR-01）",
     business_workspace_account_extension_reload_required: "此D-CATS页面与扩展的连接已断开。请关闭设置面板，点击页面顶部的［更新］。重新加载后打开设置并重试。（确认代码 HBR-11）",
     business_workspace_account_extension_update_required: "浏览器仍加载旧版联动功能。请在扩展管理中重新加载D-CATS Windows联动扩展，确认版本为0.5.3或以上后重新加载D-CATS页面。若仍失败，也需要更新电脑应用。（确认代码 HBR-02）",
     business_workspace_account_native_host_unavailable: "无法启动电脑联动应用。请安装或修复应用。（确认代码 HBR-03）",
@@ -7736,7 +7769,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1155";
+var APP_VERSION       = "v1.1.1156";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -15074,6 +15107,8 @@ function openDcatsBusinessWorkspaceSettings(event) {
   dcatsBusinessWorkspaceSettingsReturn = fromDaily;
   var overlay = document.getElementById("dcats-business-workspace-settings-overlay");
   if (!overlay) return;
+  var managerStatus=document.getElementById("dcats-extension-manager-status");
+  if(managerStatus){managerStatus.textContent="";managerStatus.removeAttribute("data-i18n");}
   setDcatsBusinessWorkspaceMessage("", false);
   syncDcatsCompanyAccountControls();
   overlay.classList.add("show");
@@ -15121,6 +15156,46 @@ function closeDcatsBusinessWorkspace(restoreFocus) {
 }
 
 var dcatsCompanyAccountBusy = false;
+var dcatsExtensionManagerBusy = false;
+async function openDcatsExtensionManager() {
+  if(dcatsExtensionManagerBusy||!currentUser||!isSystemAdmin())return;
+  var overlay=document.getElementById("dcats-business-workspace-settings-overlay");
+  if(!overlay||!overlay.classList.contains("show"))return;
+  var button=document.getElementById("dcats-extension-manager-open");
+  var status=document.getElementById("dcats-extension-manager-status");
+  var help=document.getElementById("dcats-extension-manager-help");
+  var actor=currentUser.id,epoch=dcatsCompanyIntegrationEpoch;
+  dcatsExtensionManagerBusy=true;
+  button.disabled=true;button.setAttribute("aria-busy","true");
+  status.setAttribute("data-i18n","extension_manager_opening");status.textContent=t("extension_manager_opening");
+  var opened=false;
+  try {
+    opened=await new Promise(function(resolve){
+      var id=crypto.randomUUID(),channel="dcats-extension-manager-v1";
+      var timer;
+      function finish(value){window.clearTimeout(timer);window.removeEventListener("message",receive);resolve(value);}
+      function receive(event){
+        var data=event.data;
+        if(event.source!==window||event.origin!==window.location.origin||!data||
+          Object.keys(data).sort().join(",")!=="channel,id,status,type"||data.channel!==channel||
+          data.type!=="result"||data.id!==id||!["opened","unavailable"].includes(data.status))return;
+        finish(data.status==="opened");
+      }
+      window.addEventListener("message",receive);
+      timer=window.setTimeout(function(){finish(false);},5000);
+      try {window.postMessage({channel:channel,type:"open",id:id,expiresAt:Date.now()+4000},window.location.origin);}
+      catch {finish(false);}
+    });
+  } catch {opened=false;}
+  finally {
+    dcatsExtensionManagerBusy=false;button.disabled=false;button.removeAttribute("aria-busy");
+    if(currentUser&&currentUser.id===actor&&isSystemAdmin()&&epoch===dcatsCompanyIntegrationEpoch&&overlay.classList.contains("show")){
+      var statusKey=opened?"extension_manager_opened":"extension_manager_unavailable";
+      status.setAttribute("data-i18n",statusKey);status.textContent=t(statusKey);
+      if(!opened)help.open=true;
+    } else {status.textContent="";status.removeAttribute("data-i18n");}
+  }
+}
 var dcatsCompanyAccountOwner = "";
 var dcatsCompanyIntegrationBusy = false;
 var dcatsCompanyIntegrationEpoch = 0;
@@ -15131,6 +15206,8 @@ function syncDcatsCompanyAccountControls() {
   var section=document.getElementById("dcats-business-workspace-account");
   var user=typeof currentUser!=="undefined"?currentUser:null;
   var allowed=!!user&&typeof isSystemAdmin==="function"&&isSystemAdmin();
+  var manager=document.getElementById("dcats-extension-manager");
+  if(manager)manager.hidden=!allowed;
   if(section) section.hidden=!allowed;
   var integration=document.getElementById("dcats-business-workspace-company");
   if(integration)integration.hidden=!allowed;
@@ -15138,6 +15215,8 @@ function syncDcatsCompanyAccountControls() {
   if(backup)backup.hidden=!allowed;
   var owner=allowed?user.id:"";
   if(owner!==dcatsCompanyAccountOwner){
+    var managerStatus=document.getElementById("dcats-extension-manager-status");
+    if(managerStatus){managerStatus.textContent="";managerStatus.removeAttribute("data-i18n");}
     dcatsCompanyIntegrationEpoch++;
     if(dcatsCompanyAccountBusy||dcatsCompanyIntegrationBusy||dcatsCompanyBackupBusy)window.DcatsHanbaiohCompanyBridge?.cancelCurrent();
     resetDcatsCompanyBackupReadiness();
@@ -56302,6 +56381,7 @@ document.getElementById("dcats-business-workspace-cancel").addEventListener("cli
 document.getElementById("dcats-business-workspace-shortcut").addEventListener("click", createDcatsBusinessWorkspaceShortcut);
 document.getElementById("dcats-business-workspace-b2-select").addEventListener("click", configureDcatsB2ExportDirectory);
 document.getElementById("dcats-business-workspace-account-register").addEventListener("click", registerDcatsCompanyAccount);
+document.getElementById("dcats-extension-manager-open").addEventListener("click", openDcatsExtensionManager);
 document.getElementById("dcats-business-workspace-backup-check").addEventListener("click", checkDcatsCompanyBackupReadiness);
 document.getElementById("dcats-business-workspace-backup-setup").addEventListener("click", function(){openDcatsCompanyBackupSetup(false);});
 document.getElementById("dcats-business-workspace-backup-recover").addEventListener("click", function(){openDcatsCompanyBackupSetup(true);});
