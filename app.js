@@ -177,6 +177,11 @@ var TRANSLATIONS = {
     shipping_service_visibility_updated: "配送サービスの表示を更新しました。",
     shipping_b2_contract_settings: "B2契約設定",
     shipping_add: "送料を登録",
+    shipping_print: "送料一覧を印刷",
+    shipping_print_scope: "有効な送料を全都道府県・全サイズでA4一枚に印刷します。",
+    shipping_print_unavailable: "送料の読込完了後、有効な送料がある状態で印刷してください。",
+    shipping_print_invalid: "送料一覧を作成できませんでした。料金・都道府県・サイズの登録内容を確認してください。",
+    shipping_print_popup_blocked: "印刷画面を開けませんでした。ポップアップを許可してください。",
     shipping_edit: "送料を編集",
     shipping_carrier_required: "運送業者 *",
     shipping_service_required: "配送サービス *",
@@ -2786,6 +2791,11 @@ var TRANSLATIONS = {
     shipping_service_visibility_updated: "Delivery service visibility was updated.",
     shipping_b2_contract_settings: "B2 Contract Settings",
     shipping_add: "Add Shipping Rate",
+    shipping_print: "Print Shipping Rates",
+    shipping_print_scope: "Print active rates for all prefectures and sizes on one A4 page.",
+    shipping_print_unavailable: "Wait for rates to load and ensure there are active rates before printing.",
+    shipping_print_invalid: "Could not build the shipping list. Review rates, prefectures and package sizes.",
+    shipping_print_popup_blocked: "Could not open the print window. Allow pop-ups and try again.",
     shipping_edit: "Edit Shipping Rate",
     shipping_carrier_required: "Carrier *",
     shipping_service_required: "Delivery Service *",
@@ -5339,6 +5349,11 @@ var TRANSLATIONS = {
     shipping_service_visibility_updated: "配送服务显示设置已更新。",
     shipping_b2_contract_settings: "B2合同设置",
     shipping_add: "登记运费",
+    shipping_print: "打印运费一览",
+    shipping_print_scope: "将全部都道府县和尺寸的有效运费打印在一张A4纸上。",
+    shipping_print_unavailable: "请等待运费读取完成，并确认有有效运费后再打印。",
+    shipping_print_invalid: "无法生成运费一览。请检查运费、都道府县和尺寸的登记内容。",
+    shipping_print_popup_blocked: "无法打开打印画面。请允许弹出窗口后重试。",
     shipping_edit: "编辑运费",
     shipping_carrier_required: "承运公司 *",
     shipping_service_required: "配送服务 *",
@@ -7955,7 +7970,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1173";
+var APP_VERSION       = "v1.1.1174";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -8484,6 +8499,7 @@ var SHIPPING_PREFECTURES = [
   [46,"鹿児島県","Kagoshima","鹿儿岛县"], [47,"沖縄県","Okinawa","冲绳县"]
 ];
 var shippingRateRows = [];
+var shippingRatePrintReady = false;
 var shippingRateLoadSeq = 0;
 var shippingRateFormSaving = false;
 var shippingServiceVisibilitySavingKey = "";
@@ -11223,6 +11239,7 @@ async function doLogout() {
   customerManagedUsers = [];
   customerManagedUsersRequestSeq += 1;
   shippingRateRows = [];
+  shippingRatePrintReady = false;
   shippingRateLoadSeq += 1;
   shippingServiceVisibilitySavingKey = "";
   salesShippingRateRows = [];
@@ -22502,6 +22519,9 @@ async function enterShippingRateMgmt() {
 
 async function loadShippingRateMgmt() {
   if (!canManageShippingRates()) return;
+  shippingRatePrintReady = false;
+  var printButton = document.getElementById("shipping-rate-print");
+  if (printButton) printButton.disabled = true;
   var requestSeq = ++shippingRateLoadSeq;
   var host = document.getElementById("shipping-rate-list");
   if (host) host.innerHTML = "<div class='empty'>" + esc(t("loading")) + "</div>";
@@ -22517,6 +22537,7 @@ async function loadShippingRateMgmt() {
     return;
   }
   shippingRateRows = result.data || [];
+  shippingRatePrintReady = true;
   populateShippingCarrierSelects();
   populateShippingDetailSelects();
   renderShippingRateMgmt();
@@ -22526,6 +22547,9 @@ function renderShippingRateMgmt(loadError) {
   var host = document.getElementById("shipping-rate-list");
   var count = document.getElementById("shipping-rate-count");
   if (!host) return;
+  var printButton = document.getElementById("shipping-rate-print");
+  if (printButton) printButton.disabled = !!loadError || !shippingRatePrintReady || !canManageShippingRates() ||
+    !shippingRateRows.some(function(row) { return row.is_active === true; });
   renderShippingServiceVisibilityControls(loadError);
   if (loadError) {
     if (count) count.textContent = "-";
@@ -22555,6 +22579,33 @@ function renderShippingRateMgmt(loadError) {
     html += "</div>";
   });
   host.innerHTML = html;
+}
+
+function printShippingRateList() {
+  if (!canManageShippingRates()) {
+    showPermissionDenied("print_shipping_rate_list", "customer_shipping_rates");
+    return;
+  }
+  if (!shippingRatePrintReady || !shippingRateRows.some(function(row) { return row.is_active === true; })) {
+    alert(t("shipping_print_unavailable"));
+    return;
+  }
+  var popup = null;
+  try {
+    var prefectures = {};
+    SHIPPING_PREFECTURES.forEach(function(prefecture) { prefectures[prefecture[0]] = shippingPrefectureLabel(prefecture[0]); });
+    var model = window.DcatsShippingRatePrint.buildModel(shippingRateRows, prefectures);
+    var html = window.DcatsShippingRatePrint.documentHtml(model, { lang: currentLang, baseUrl: window.location.href, version: APP_VERSION });
+    popup = window.open("", "_blank");
+    if (!popup) { alert(t("shipping_print_popup_blocked")); return; }
+    popup.opener = null;
+    popup.document.open();
+    popup.document.write(html);
+    popup.document.close();
+  } catch (error) {
+    if (popup) popup.close();
+    alert(t("shipping_print_invalid"));
+  }
 }
 
 function shippingServiceVisibilityKey(carrierName, serviceName) {
@@ -57684,6 +57735,7 @@ document.getElementById("shipping-service-visibility-list").addEventListener("ch
   if (group) setShippingServiceVisibility(group, input.checked);
 });
 document.getElementById("shipping-rate-b2-settings-open").addEventListener("click", openSalesOrderB2Settings);
+document.getElementById("shipping-rate-print").addEventListener("click", printShippingRateList);
 document.getElementById("btn-new-shipping-rate").addEventListener("click", function() { openShippingRateForm(null); });
 document.getElementById("btn-shipping-rate-cancel").addEventListener("click", closeShippingRateForm);
 document.getElementById("btn-shipping-rate-save").addEventListener("click", saveShippingRate);
