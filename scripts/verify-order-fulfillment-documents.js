@@ -449,29 +449,43 @@ for (const fragment of [
 
 const stageSource = sourceBetween("function shippingDocumentStageHtml", "function shippingDocumentOrderB2HistoryHtml");
 for (const fragment of [
-  "shippingDocumentPendingCount(order)",
-  'label: "帳票"',
-  'documentsPrinted ? "印刷済み" : "未印刷 " + pendingDocumentCount + "件"'
+  't("shipping_document_order_progress")',
+  't("shipping_document_sales_progress")',
+  "customerOrderStatusLabel(status)",
+  "salesOrderAccountingStatusLabel(accountingStatus)",
+  'label: "商品・シリアル照合"'
 ]) requireFragment(stageSource, fragment);
-if (stageSource.includes('label: "同梱帳票"')) {
-  throw new Error("Document printing progress must not depend on serial matching or waybill import");
+for (const duplicate of ['label: "帳票"', 'label: "B2 CSV"', 'outbound_tracking_number']) {
+  if (stageSource.includes(duplicate)) throw new Error(`Progress repeats information owned by document rows or delivery: ${duplicate}`);
 }
 const stageContext = {
   salesOrderDispatch: (order) => order.dispatch || null,
-  shippingDocumentPendingCount: () => 0,
+  salesOrderStatusDetailLabel: () => "",
+  customerOrderStatusLabel: (status) => ({accepted:"受付済み",shipped:"出荷済み"})[status] || status,
+  t: (key) => ({shipping_document_order_progress:"出荷状況",shipping_document_sales_progress:"売上登録",sales_management_registered:"売上登録済",sales_management_unknown:"売上未確認"})[key] || key,
   esc: String
 };
+vm.runInNewContext(sourceBetween("function salesOrderAccountingApplies", "function salesOrderAccountingStatusHtml"), stageContext);
 vm.runInNewContext(stageSource, stageContext);
 const printedButUnshippedStage = stageContext.shippingDocumentStageHtml({
+  status: "accepted",
   dispatch: { status: "preparing" },
   b2_exports: [{ created_at: "2026-09-10T00:00:00Z" }],
   revision_history: [],
   outbound_tracking_number: null
 });
-for (const expected of ["帳票</span><strong>印刷済み", "商品・シリアル照合</span><strong>未完了", "商品発送送り状</span><strong>未取込"]) {
+for (const expected of ["出荷状況</span><strong>受付済み", "商品・シリアル照合</span><strong>未完了"]) {
   if (!printedButUnshippedStage.includes(expected)) {
     throw new Error(`Printed documents must remain distinct from unfinished shipment work: ${expected}`);
   }
+}
+if (printedButUnshippedStage.includes("売上登録")) throw new Error("Pre-shipment orders must not display a sales registration result");
+for (const status of ["registered", "unknown", "registration_pending", "not_exported"]) {
+  const progress = stageContext.shippingDocumentStageHtml({status:"shipped",sales_management_status:status,dispatch:{status:"shipped"}});
+  requireFragment(progress, `data-status='${status}'`);
+  requireFragment(progress, "出荷状況</span><strong>出荷済み");
+  requireFragment(progress, "商品・シリアル照合</span><strong>完了");
+  if (status !== "registered" && progress.includes("売上登録済")) throw new Error("Unknown or pending sales registration cannot display success");
 }
 
 const requiredDocuments = sourceBetween("function shippingDocumentShipmentDocumentsHtml", "function shippingDocumentReturnWaybillHtml");
@@ -494,7 +508,7 @@ for (const fragment of [
   'esc(row.state.note)',
   'standard: outboundModeLabel, detail: outboundCarrierLabel',
   'shippingCarrierBrandKey(waybill.carrier_code || "sagawa_collect")',
-  "標準設定",
+  't("shipping_document_issuance_guidance")',
   "現在の状態",
   "発行操作",
   "data-shipping-document-open-settings='outbound'",
@@ -566,11 +580,10 @@ for (const fragment of [
   "shippingDocumentOrderContentsHtml(order)",
   "shippingDocumentShipmentDocumentsHtml(order)",
   "scheduleShippingDocumentPrintStatusRefresh()",
-  "B2発行履歴",
   'salesOrderWorkspaceNavigationHtml("shipping-document")',
-  "salesOrderStatusSummaryHtml(order)"
+  "renderShippingDocumentProductPreview(order)"
 ]) requireFragment(detailSource, fragment);
-for (const forbidden of ["salesOrderItemRowsHtml(order.items)", "shippingDocumentOutboundWaybillHtml(order)", "shippingDocumentReturnWaybillHtml(order)"]) {
+for (const forbidden of ["salesOrderItemRowsHtml(order.items)", "shippingDocumentOutboundWaybillHtml(order)", "shippingDocumentReturnWaybillHtml(order)", "shipping-document-open-history", "salesOrderStatusSummaryHtml(order)"]) {
   if (detailSource.includes(forbidden)) throw new Error(`Shipping document initial detail must not include the sales screen row renderer or inline waybill settings: ${forbidden}`);
 }
 
@@ -584,10 +597,9 @@ for (const fragment of [
   "applyShippingDocumentTemporaryOutput",
   "resetShippingDocumentTemporaryOutput",
   "shippingDocumentOutboundWaybillHtml(order)",
-  "shippingDocumentReturnWaybillHtml(order)",
-  "shippingDocumentOrderB2HistoryHtml(order)"
+  "shippingDocumentReturnWaybillHtml(order)"
 ]) requireFragment(overlaySource, fragment);
-requireFragment(source, 'openShippingDocumentSettings("history")');
+if (source.includes('openShippingDocumentSettings("history")')) throw new Error("B2 history must stay inside the reissue dialog");
 
 const outboundWaybill = sourceBetween("function shippingDocumentOutboundWaybillHtml", "function shippingDocumentShipmentDocumentsHtml");
 for (const fragment of [
@@ -817,7 +829,9 @@ for (const fragment of [
   "SHIPPING_DOCUMENT_B2_REISSUE_REASONS",
   'key === "other" && note.length < 5',
   'issueSalesOrderB2Export([order.id], true, reasonResult.reason)',
-  'openShippingDocumentSettings("history")',
+  'historyList.innerHTML = shippingDocumentOrderB2HistoryHtml(order)',
+  'panel.hidden = !panel.hidden',
+  'downloadSalesOrderB2Batch(batchId, setShippingDocumentB2ReissueMessage)',
   '発行履歴に理由を保存しました'
 ]) requireFragment(b2ReissueSource, fragment, `B2 reissue behavior is incomplete: ${fragment}`);
 const b2IssueAction = sourceBetween("async function issueShippingDocumentB2", "async function saveShippingDocumentReturnWaybill");
@@ -1064,11 +1078,11 @@ for (const fragment of [
 ]) requireFragment(i18n, fragment, `B2 reissue translation is missing: ${fragment}`);
 
 for (const fragment of [
-  'content="v1.1.1159"',
-  'styles.css?v=1.1.1159',
-  'app.js?v=1.1.1159'
+  'content="v1.1.1161"',
+  'styles.css?v=1.1.1161',
+  'app.js?v=1.1.1161'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.1159"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.1161"');
 requireFragment(source, 'sales_management_registered: "売上登録済"');
 requireFragment(source, 'sales_management_unknown: "売上確認不可"');
 
@@ -1076,4 +1090,55 @@ if (/service[_-]?role|postgres(?:ql)?:\/\//i.test(source)) {
   throw new Error("Browser fulfillment document code must not contain server credentials");
 }
 
-console.log("Order fulfillment document UI verification passed.");
+async function verifyIntegratedB2History() {
+  const panel = {hidden:true};
+  const toggle = {setAttribute(name,value){this[name]=value;}};
+  const note = {value:"入力した再発行理由"};
+  const messages = [], globalMessages = [], rpcCalls = [];
+  let releaseDirectory;
+  const directory = new Promise(resolve => {releaseDirectory=resolve;});
+  const context = {
+    shippingDocumentB2ReissueBusy:false,shippingDocumentSaving:false,salesOrderSaving:false,
+    shippingDocumentB2ReissueReasonKey:"other",
+    shippingDocumentDetail:{id:77,status:"shipped",outbound_waybill:{handling_method:"b2_cloud"}},
+    document:{getElementById(id){return id.endsWith("history-panel")?panel:id.endsWith("history")?toggle:note;}},
+    canManageSalesOrders:()=>true,updateShippingDocumentB2ReissueControls(){},
+    setShippingDocumentB2ReissueMessage:(message,error)=>messages.push({message,error}),
+    setShippingDocumentMessage:(message,error)=>globalMessages.push({message,error}),
+    prepareDcatsB2ExportDirectory:()=>directory,renderShippingDocumentDetail(){},
+    salesOrderB2RpcWithTimeout:promise=>promise,
+    sb:{rpc:async (name,args)=>{rpcCalls.push({name,args});return {data:{file_name:"existing.csv"}};}},
+    downloadSalesOrderB2Payload:async()=>true,t:key=>key
+  };
+  vm.createContext(context);
+  vm.runInContext(sourceBetween("function shippingDocumentCanIssueB2", "function shippingDocumentLatestB2Export"),context);
+  vm.runInContext(sourceBetween("function openShippingDocumentB2ReissueHistory", "async function confirmShippingDocumentB2Reissue"),context);
+  const downloadStart=source.indexOf("async function downloadSalesOrderB2Batch");
+  const downloadEnd=source.indexOf("\nfunction ",downloadStart);
+  vm.runInContext(source.slice(downloadStart,downloadEnd),context);
+  context.openShippingDocumentB2ReissueHistory();
+  if(panel.hidden||toggle["aria-expanded"]!=="true"||note.value!=="入力した再発行理由"||context.shippingDocumentB2ReissueReasonKey!=="other")throw new Error("Inline history must preserve reissue input");
+  const pending=context.downloadShippingDocumentB2History(101);
+  await context.downloadShippingDocumentB2History(101);
+  if(!context.shippingDocumentB2ReissueBusy)throw new Error("History downloads must block duplicate actions while choosing a directory");
+  releaseDirectory({synthetic:true});
+  await pending;
+  if(rpcCalls.length!==1||rpcCalls[0].name!=="get_sales_order_b2_export_batch"||rpcCalls[0].args.target_batch_id!==101)throw new Error("History redownload must read the existing batch without issuing a new export");
+  if(context.shippingDocumentB2ReissueBusy||context.shippingDocumentSaving||globalMessages.length||!messages.some(x=>x.message==="business_workspace_b2_saved"))throw new Error("Integrated download feedback and busy cleanup failed");
+  if(note.value!=="入力した再発行理由"||context.shippingDocumentB2ReissueReasonKey!=="other")throw new Error("Download must preserve reissue reason");
+  context.prepareDcatsB2ExportDirectory=async()=>({synthetic:true});
+  context.sb.rpc=async()=>({error:{message:"synthetic network failure"}});
+  await context.downloadShippingDocumentB2History(101);
+  if(!messages.some(x=>x.error&&x.message==="synthetic network failure")||context.shippingDocumentB2ReissueBusy)throw new Error("Download errors must stay visible in the dialog and restore controls");
+  context.prepareDcatsB2ExportDirectory=async()=>{const error=new Error("cancel");error.name="AbortError";throw error;};
+  await context.downloadShippingDocumentB2History(101);
+  if(!messages.some(x=>x.message==="business_workspace_b2_cancelled"&&!x.error))throw new Error("Directory cancellation must remain cancellable without reissuing");
+  for(const order of [{status:"cancelled"},{status:"completed"},{status:"shipped",outbound_waybill:{handling_method:"dot_matrix"}}]) {
+    if(context.shippingDocumentCanIssueB2(order))throw new Error("History-only orders must not gain permission to reissue");
+  }
+  if(!context.shippingDocumentCanIssueB2({status:"shipped",outbound_waybill:{handling_method:"b2_cloud"}}))throw new Error("Eligible B2 orders must retain issuance");
+  vm.runInContext(sourceBetween("async function confirmShippingDocumentB2Reissue", "async function issueShippingDocumentB2"),context);
+  context.shippingDocumentDetail={id:77,status:"cancelled"};
+  await context.confirmShippingDocumentB2Reissue();
+}
+verifyIntegratedB2History().then(()=>console.log("Order fulfillment document UI verification passed.")).catch(error=>{console.error(error);process.exitCode=1;});
