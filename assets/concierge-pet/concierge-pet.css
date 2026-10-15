@@ -20,15 +20,19 @@
   pointer-events: none;
 }
 
-.dcats-concierge.is-sales-context .dcats-concierge-panel,
-.dcats-concierge.is-sales-context .dcats-concierge-panel.is-question-view {
+/* The desktop consultation can cover the inline detail (300), not real modals (400+).
+   The character itself remains constrained to the left reserved movement bounds. */
+.dcats-concierge.is-sales-context.is-question-open {
+  z-index: 310;
+}
+
+.dcats-concierge.is-sales-context .dcats-concierge-panel:not(.is-question-view) {
   left: 8px;
   right: auto;
   width: 304px;
 }
 
-.dcats-concierge.is-sales-docked .dcats-concierge-panel,
-.dcats-concierge.is-sales-docked .dcats-concierge-panel.is-question-view {
+.dcats-concierge.is-sales-docked .dcats-concierge-panel:not(.is-question-view) {
   bottom: 156px;
   max-height: calc(100dvh - 172px);
 }
@@ -67,11 +71,11 @@
 }
 
 .dcats-concierge-sprite.is-suzuto {
-  background-image: url("./suzuto/spritesheet.webp?v=1.1.1177");
+  background-image: url("./suzuto/spritesheet.webp?v=1.1.1178");
 }
 
 .dcats-concierge-sprite.is-rinna {
-  background-image: url("./rinna/spritesheet.webp?v=1.1.1177");
+  background-image: url("./rinna/spritesheet.webp?v=1.1.1178");
 }
 
 .dcats-concierge-hit-target {

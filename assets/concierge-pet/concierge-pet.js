@@ -2424,6 +2424,7 @@
   function syncPanelPresentation() {
     if (!panel || !panelTitle || !panelClose || !hitTarget || !launcher) return;
     var questionView = panelOpen && panelView === "question";
+    root.classList.toggle("is-question-open", questionView);
     panel.classList.toggle("is-question-view", questionView);
     panelTitle.textContent = questionView
       ? copy("questionTitle", { name: petName(settings.character) })
