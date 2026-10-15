@@ -1,0 +1,11 @@
+# Shared folder diagnosis and recovery
+
+The separate workspace host reads only the fixed G: shortcut target, Drive process presence and standard Program Files install metadata. It never loads D-CATS account/password/device data, reads folder contents, changes sync settings, grants Google access or starts Sales King. The folder being present is not proof of synchronization, sharing access, backup readiness or CSV save permission.
+
+The extension is 0.5.17 with the same key, exact D-CATS origin and nativeMessaging permission. The new channel has an exact schema, top frame/sender/origin/expiry checks, throttling, a bounded native request, fixed output and an active user gesture for startup. Startup accepts no path or executable arguments and checks a plain Program Files path and a valid Google LLC Authenticode signature twice. No shell, elevation or retry of startup. Automatic inspections never start Drive.
+
+Build from this tool directory with npm ci --ignore-scripts and node build-workspace-support.cjs. Install on the administrator pilot PC with install-workspace-support.ps1 -VerifyOnly, then the same command without VerifyOnly. The installer requires the exact 0.5.16 extension base, adds a separate Chrome native host, preserves the business bridge and all existing files except extension manifest, and records before/after SHA256 plus a recovery copy. Reloading the extension and D-CATS is a separate user operation. Installation does not reload any browser or start Drive. Native code is a local administrator-pilot artifact, not a signed public Windows distribution.
+
+Before rollback, stop using the diagnostic helper and preserve its receipt. Restore only the saved extension manifest and remove only the new jp.co.daiko_denki.dcats_workspace registration and six task-owned additions after checking no process references them; do not delete user files or the business host. Rollback has not been executed on the PC.
+
+Verification: workspace-support.test.mjs and existing native protocol, extension manager and startup status tests; production package read-only inspect on this PC; frontend verifier and non-visible desktop/mobile synthetic QA. Google Drive launch and authenticated folder access require a separately recorded real result and are not claimed from synthetic QA.
