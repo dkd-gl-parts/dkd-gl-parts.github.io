@@ -1422,6 +1422,17 @@
     }
   }
 
+  function resetAiQuestion() {
+    // Invalidate local completions; an already submitted provider request is not cancelled.
+    aiRequestToken += 1;
+    aiRequestPending = false;
+    aiStatusState = "aiIdle";
+    if (aiQuestionInput) aiQuestionInput.value = "";
+    clearAiImage();
+    clearAiResult();
+    updateAiStatus();
+  }
+
   function updateAiStatus() {
     if (!aiAskButton || !aiQuestionInput || !aiStatus) return;
     aiAskButton.disabled = aiRequestPending || aiImagePending;
@@ -2282,6 +2293,7 @@
     floatingWindow = null;
     floatingRequestPending = false;
     if (root.ownerDocument !== document) document.body.appendChild(root);
+    if (panelOpen) closePanel(false);
     root.classList.remove("is-floating");
     dockLauncher();
     updateFloatingControls();
@@ -2444,6 +2456,10 @@
   function openPanel(view) {
     if (!isSystemAdminSession()) return;
     var nextView = view === "question" ? "question" : "settings";
+    if (panelOpen && panelView === "question" && nextView !== "question") {
+      resetAiQuestion();
+      panelBody.scrollTop = 0;
+    }
     if (!panelOpen) panelReturnFocus = presentationDocument().activeElement;
     panelOpen = true;
     panelView = nextView;
@@ -2458,6 +2474,8 @@
 
   function closePanel(restoreFocus) {
     if (!panelOpen) return;
+    resetAiQuestion();
+    panelBody.scrollTop = 0;
     clearBackupEnrollment();
     var focusTarget = panelReturnFocus;
     panelReturnFocus = null;
