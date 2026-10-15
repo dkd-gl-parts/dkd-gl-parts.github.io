@@ -182,7 +182,9 @@ jobs:
       - name: Verify Sales King customer billing settings
         run: node scripts/verify-hanbaiou-billing-settings.js
       - name: Verify shared business workspace shortcut
-        run: node scripts/verify-business-workspace-shortcut.js
+        run: |
+          node scripts/verify-business-workspace-shortcut.js
+          node scripts/verify-workspace-support.js
       - name: Verify business workspace Settings navigation
         run: node scripts/verify-business-workspace-settings.js
       - name: Verify offline postal data
