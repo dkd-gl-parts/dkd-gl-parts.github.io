@@ -10364,7 +10364,6 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-shipping-document-mgmt .shipping-document-detail-head h2 { grid-area: number; margin: 0; }
   #screen-shipping-document-mgmt .shipping-document-detail-head strong { grid-area: customer; margin: 0; }
   #screen-shipping-document-mgmt .shipping-document-detail-target { grid-area: target; margin: 0; }
-  #screen-shipping-document-mgmt #shipping-document-message:empty { display: none; }
   #screen-shipping-document-mgmt .shipping-document-stages > div { padding: 6px 10px; }
   #screen-shipping-document-mgmt .shipping-document-delivery { padding: 7px 0; }
   #screen-shipping-document-mgmt .shipping-document-delivery-head { margin-bottom: 5px; }
@@ -10469,6 +10468,33 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-shipping-document-mgmt .shipping-document-required-documents { display: flex; flex-direction: column; }
   #screen-shipping-document-mgmt .shipping-document-required-documents .shipping-document-required-list { order: 1; }
   #screen-shipping-document-mgmt .shipping-document-required-documents .shipping-document-guidance { order: 2; }
+}
+
+/* Keep order facts together; progress is a separate summary beside them. */
+@media screen {
+  #screen-shipping-document-mgmt #shipping-document-message:empty { display: none; }
+  #screen-shipping-document-mgmt .shipping-document-order-summary { display: grid; grid-template-columns: minmax(0, 1fr) 224px; align-items: start; gap: 14px; padding-top: 10px; }
+  #screen-shipping-document-mgmt .shipping-document-order-summary .shipping-document-order-contents { display: block; min-width: 0; padding: 8px 10px; border: 1px solid #dbe1e6; border-radius: 5px; background: #f7f9fb; }
+  #screen-shipping-document-mgmt .shipping-document-order-summary .shipping-document-order-contents-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 5px; }
+  #screen-shipping-document-mgmt .shipping-document-order-summary .shipping-document-order-contents-head > span { margin: 0; white-space: nowrap; }
+  #screen-shipping-document-mgmt .shipping-document-progress-panel { min-width: 0; border: 1px solid #dbe1e6; border-radius: 5px; padding: 6px 10px; background: #fff; }
+  #screen-shipping-document-mgmt .shipping-document-progress-panel h3 { color: #52606d; font-size: 14px; line-height: 1.5; margin: 0 0 2px; }
+  #screen-shipping-document-mgmt .shipping-document-progress-panel .shipping-document-stages { display: grid; grid-template-columns: minmax(0, 1fr); border-bottom: 0; }
+  #screen-shipping-document-mgmt .shipping-document-progress-panel .shipping-document-stages > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 2px 8px; padding: 1px 0; border: 0; border-bottom: 1px solid #e8edf0; background: transparent; }
+  #screen-shipping-document-mgmt .shipping-document-progress-panel .shipping-document-stages > div:last-child { border-bottom: 0; }
+  #screen-shipping-document-mgmt .shipping-document-progress-panel .shipping-document-stages span { font-size: 12px; line-height: 1.5; }
+  #screen-shipping-document-mgmt .shipping-document-progress-panel .shipping-document-stages strong { margin: 0; max-width: 110px; font-size: 14px; line-height: 1.5; text-align: right; }
+  #screen-shipping-document-mgmt .shipping-document-progress-panel .shipping-document-stages small { grid-column: 1 / -1; margin: 0; font-size: 12px; line-height: 1.5; }
+}
+@media screen and (min-width: 1121px) {
+  #screen-shipping-document-mgmt .shipping-document-order-summary .shipping-document-order-item { grid-template-columns: minmax(135px, 1fr) minmax(90px, .6fr) 52px 150px; }
+}
+@media screen and (max-width: 1120px) {
+  #screen-shipping-document-mgmt .shipping-document-order-summary { display: flex; flex-direction: column; align-items: stretch; gap: 12px; padding-top: 12px; }
+  #screen-shipping-document-mgmt .shipping-document-progress-panel .shipping-document-stages { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  #screen-shipping-document-mgmt .shipping-document-progress-panel .shipping-document-stages[data-stage-count="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #screen-shipping-document-mgmt .shipping-document-progress-panel .shipping-document-stages > div { display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; gap: 6px; border-bottom: 0; padding: 4px 0; }
+  #screen-shipping-document-mgmt .shipping-document-progress-panel .shipping-document-stages strong { max-width: 100%; text-align: left; }
 }
 
 /* Match order operations to the readable type scale used by shipping documents. */
