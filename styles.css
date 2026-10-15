@@ -2723,6 +2723,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .shipping-rate-mgmt-intro-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 .shipping-rate-b2-settings-button { min-height: 36px; border: 1px solid #287356; border-radius: 8px; padding: 8px 16px; background: #fff; color: #1f6248; font-size: 14px; font-weight: 700; white-space: nowrap; cursor: pointer; }
 .shipping-rate-b2-settings-button:hover { background: #eef8f3; }
+.shipping-rate-b2-settings-button:disabled { opacity: .5; cursor: default; }
 .shipping-service-visibility { margin-bottom: 18px; border-top: 1px solid #dfe4eb; border-bottom: 1px solid #dfe4eb; background: #fff; }
 .shipping-service-visibility-header { min-height: 42px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px; border-bottom: 1px solid #e7ebf0; }
 .shipping-service-visibility-header h2 { color: #1d2939; font-size: 14px; letter-spacing: 0; }

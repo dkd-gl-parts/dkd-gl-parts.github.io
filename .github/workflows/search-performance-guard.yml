@@ -251,6 +251,8 @@ jobs:
         run: node scripts/verify-production-component-summary.js
       - name: Verify shipping-rate management
         run: node scripts/verify-shipping-rate-management.js
+      - name: Verify A4 shipping-rate print
+        run: node scripts/verify-shipping-rate-print.js
       - name: Verify compatible core stock in production
         run: node scripts/verify-production-compatible-core-stock.js
       - name: Verify production F/R stamp-pair management
