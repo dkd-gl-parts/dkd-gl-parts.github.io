@@ -2942,7 +2942,8 @@
       openSettings: openPanel,
       toggleFloating: toggleFloatingWindow,
       getSettings: function () { return { character: settings.character, mode: settings.mode }; },
-      isFloating: isFloatingWindowOpen
+      isFloating: isFloatingWindowOpen,
+      isIntegrationBusy: function () { return bridgeRequestPending || enrollmentPending || reviewPending || backupPending; }
     });
   }
 

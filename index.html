@@ -207,8 +207,8 @@
       <p data-i18n="menu_welcome_sub">ご利用になる機能を選択してください</p>
     </div>
     <section class="dcats-integration-banner" data-integration-check-banner hidden aria-labelledby="dcats-integration-banner-title">
-      <div><h3 id="dcats-integration-banner-title" data-i18n="integration_check_title">このPCの連携設定</h3><p data-i18n="integration_check_first_hint">初めて使うPC・ブラウザでは設定を確認してください。起動時は拡張の応答を確認し、各機能を使う直前に必要な設定を再確認します。</p><p data-integration-check-status role="status" aria-live="polite"></p></div>
-      <div class="dcats-integration-actions"><button type="button" data-integration-check-settings data-i18n="integration_check_review">設定を確認する</button><button type="button" data-integration-check-dismiss data-i18n="integration_check_dismiss">初回案内を閉じる</button></div>
+      <div><h3 id="dcats-integration-banner-title" data-i18n="integration_check_title">このPCの連携設定</h3><p data-i18n="integration_check_first_hint">連携設定は自動で確認します。未設定・本人確認が必要な項目だけ案内し、設定後と各機能の実行前にも自動で確認します。</p><p data-integration-check-status role="status" aria-live="polite"></p></div>
+      <div class="dcats-integration-actions"><button type="button" data-integration-check-settings data-i18n="integration_check_review">必要な設定を開く</button></div>
     </section>
     <div class="menu-grid" id="menu-grid"></div>
   </div>
@@ -1217,7 +1217,7 @@
     </section>
     <div class="dcats-integration-notice" data-integration-check-notice hidden>
       <p data-integration-check-status role="status" aria-live="polite"></p>
-      <button type="button" data-integration-check-settings data-i18n="integration_check_review">設定を確認する</button>
+      <button type="button" data-integration-check-settings data-i18n="integration_check_review">必要な設定を開く</button>
     </div>
     <div class="dcats-business-workspace-settings-link">
       <p data-i18n="business_workspace_settings_location">初回登録・接続・保存先の設定は、メニューの「設定」→「D-CATS業務連携設定」から行います。</p>
@@ -1236,10 +1236,9 @@
     <p id="dcats-business-workspace-settings-description" class="dcats-business-workspace-settings-description" data-i18n="business_workspace_settings_hint">初回の準備や、パスワード・接続・保存先を変更するときに使います。設定画面を開くだけでは、販売王の起動やデータ取込は行いません。</p>
     <section class="dcats-business-workspace-backup dcats-integration-check" id="dcats-integration-check" aria-labelledby="dcats-integration-check-title" hidden>
       <h4 id="dcats-integration-check-title" data-i18n="integration_check_title">このPCの連携設定</h4>
-      <p data-i18n="integration_check_scope">この確認では設定状況を読み取ります。販売王やパスワード入力画面は開きません。必要な設定は機能ごとに異なり、実行直前にも確認します。</p>
+      <p data-i18n="integration_check_scope">起動時・この画面を開いたとき・設定後に自動確認します。確認だけで販売王やパスワード入力画面を開くことはありません。</p>
       <p data-integration-check-status role="status" aria-live="polite"></p>
-      <button type="button" data-integration-check-recheck data-i18n="integration_check_recheck">設定状況を再確認する</button>
-      <details class="dcats-business-workspace-backup-help" id="dcats-integration-check-details"><summary data-i18n="integration_check_details">項目ごとの状態と設定</summary><dl class="dcats-integration-check-list" id="dcats-integration-check-list"></dl></details>
+      <details class="dcats-business-workspace-backup-help" id="dcats-integration-check-details"><summary data-i18n="integration_check_details">項目ごとの状態と設定</summary><dl class="dcats-integration-check-list" id="dcats-integration-check-list"></dl><button type="button" data-integration-check-recheck data-i18n="integration_check_recheck">今すぐ再確認する</button></details>
       <p class="dcats-business-workspace-backup-note" data-i18n="integration_check_password_note">販売王ログイン用パスワードは、実行時にPC連携アプリが確認します。未登録・変更時は下の「販売王ログイン設定」から登録してください。</p>
     </section>
     <section class="dcats-business-workspace-backup dcats-extension-manager" id="dcats-extension-manager" aria-labelledby="dcats-extension-manager-title" hidden>
@@ -1293,7 +1292,7 @@
       <h4 id="dcats-business-workspace-backup-title" data-i18n="business_workspace_backup_title">取込前バックアップの準備</h4>
       <p data-i18n="business_workspace_backup_hint">商品・得意先・売上の取込前に、パスワードで保護したバックアップをD-CATS業務連携の共有フォルダへ保存します。</p>
       <p class="dcats-business-workspace-backup-note" data-i18n="business_workspace_backup_separate">バックアップ用パスワードは、上の販売王ログイン用とは別に登録します。</p>
-      <button type="button" id="dcats-business-workspace-backup-check" data-i18n="business_workspace_backup_check">D-CATS本人確認でバックアップ準備を確認</button>
+      <button type="button" id="dcats-business-workspace-backup-check" data-i18n="business_workspace_backup_check">D-CATS本人確認で設定を続ける</button>
       <button type="button" id="dcats-business-workspace-backup-setup" data-i18n="business_workspace_backup_setup">Google接続・バックアップ用パスワードを設定</button>
       <p class="dcats-business-workspace-backup-note" data-i18n="business_workspace_backup_setup_hint">このPCの専用設定画面が開きます。初回はD-CATSの本人確認とGoogleの読取許可を行い、登録準備が整ってからバックアップ用パスワードを入力します。</p>
       <button type="button" id="dcats-business-workspace-backup-recover" data-i18n="business_workspace_backup_recover">保存したバックアップ用パスワードを確認</button>

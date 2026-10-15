@@ -428,6 +428,7 @@
     wasExportAttempted: function (record, category) { return !!previousExport(record, category); },
     wasLoginVerified: function (record) { return validRecord(record) && verifiedLogins.has(actorKey(record)); },
     wasLoginAttempted: function (record) { return validRecord(record) && loginAttempts.has(actorKey(record)); },
+    isBusy: function () { return active; },
     cancelCurrent: function () { if (cancel) cancel(); }
   });
 })();

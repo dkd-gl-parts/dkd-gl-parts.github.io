@@ -10,14 +10,17 @@ const record={actor_id:actor,device_id:device,public_key_sha256:'a'.repeat(64),p
 const fullChecks={identity:'available',syncFolder:'available',driveConfiguration:'available',driveAuthorization:'available',backupPassword:'available',recovery:'available',backupAdapter:'available'};
 function readiness(checks={}){const all={...fullChecks,...checks};return {status:'production_backup_prerequisites',actorId:actor,deviceId:device,ready:Object.values(all).every(v=>v==='available'),checks:all};}
 function harness(options={}){
-  const window={},calls=[],storage=options.storage||new Map();let current=true,allowed=true;
+  const window={},calls=[],storage=options.storage||new Map(),automaticResults=[],timers=new Map();let current=true,allowed=true,nextTimer=0;
   vm.runInNewContext(runtime,{window,Object,Array,Number,Promise,Error,Date});
   const engine=window.DcatsIntegrationReadiness.create({storage:{getItem:key=>storage.get(key),setItem:(key,value)=>storage.set(key,value)},isAllowed:id=>allowed&&id===actor,
+    isIdle:()=>options.idle!==false,canContinueAutomatic:()=>options.continue!==false,now:()=>options.clock||0,
+    setTimeout:(fn,delay)=>{const id=++nextTimer;timers.set(id,{fn,delay});return id;},clearTimeout:id=>timers.delete(id),
+    onAutomaticResult:result=>automaticResults.push(result),expectedDevice:()=>options.expectedDevice,
     probe:async()=>{calls.push('extension');return {version:options.version||'0.5.16'};},
     readDevice:async()=>{calls.push('device');if(options.failDevice)throw Error(options.failDevice);return {...record,...options.device};},
-    readReadiness:async()=>{calls.push('readiness');if(options.leaveDuringRead)current=false;return options.readiness||readiness(options.checks);},onChange:()=>{}});
+    readReadiness:async()=>{calls.push('readiness');if(options.wait)await options.wait;if(options.leaveDuringRead)current=false;return options.readiness||readiness(options.checks);},onChange:()=>{}});
   engine.setOwner(actor);
-  return {engine,calls,storage,options:{isCurrent:()=>current},leave:()=>{current=false;},deny:()=>{allowed=false;}};
+  return {engine,calls,storage,automaticResults,timers,options:{isCurrent:()=>current},leave:()=>{current=false;},deny:()=>{allowed=false;}};
 }
 const tree=acorn.parse(source,{ecmaVersion:'latest'}),pick=name=>{const node=tree.body.find(n=>n.type==='FunctionDeclaration'&&n.id.name===name);assert(node,name);return source.slice(node.start,node.end);};
 function uiHarness(options={}){
@@ -35,11 +38,24 @@ function uiHarness(options={}){
   return {...h,ctx,business,status};
 }
 (async()=>{
-  const h=harness();assert.equal(h.engine.snapshot().firstUse,true);await h.engine.start();await h.engine.start();assert.deepEqual(h.calls,['extension']);assert.equal(h.engine.snapshot().phase,'checked');
+  const h=harness();assert.equal(h.engine.snapshot().firstUse,true);await h.engine.start();await h.engine.start();assert.deepEqual(h.calls,['extension','device','readiness']);assert.equal(h.engine.snapshot().phase,'ready');assert.equal(h.automaticResults.length,1);
   h.engine.acknowledgeGuide();assert.equal(h.engine.snapshot().firstUse,false);assert.equal(h.storage.get('dcats-integration-guide-v1:'+actor),'1');
   assert.equal(harness({storage:h.storage}).engine.snapshot().firstUse,false);
   assert.equal(harness({storage:new Map()}).engine.snapshot().firstUse,true);
-  await h.engine.check('login',h.options);await h.engine.check('login',h.options);assert.deepEqual(h.calls,['extension','extension','device','readiness','extension','device','readiness']);
+  await h.engine.check('login',h.options);await h.engine.check('login',h.options);assert.deepEqual(h.calls,Array(3).fill(['extension','device','readiness']).flat());
+  const clock={clock:100,idle:false},automatic=harness(clock);await automatic.engine.start();assert.equal(automatic.calls.length,0);
+  clock.idle=true;await automatic.engine.start();assert.equal(automatic.calls.length,3);
+  await automatic.engine.refresh();await automatic.engine.refresh();assert.equal(automatic.calls.length,3);assert.equal(automatic.timers.size,1);
+  assert.equal([...automatic.timers.values()][0].delay,30000);clock.clock+=30000;const timer=[...automatic.timers.values()][0];automatic.timers.clear();timer.fn();await automatic.engine.start();assert.equal(automatic.calls.length,6);
+  await automatic.engine.refresh({force:true});assert.equal(automatic.calls.length,9);
+  await automatic.engine.refresh();assert.equal(automatic.timers.size,1);automatic.engine.setOwner('');assert.equal(automatic.timers.size,0);
+  let resume;const wait=new Promise(resolve=>{resume=resolve;}),during=harness({wait});
+  const initial=during.engine.start();assert.equal(during.engine.refresh(),initial,'Concurrent automatic triggers coalesce');
+  await new Promise(resolve=>setImmediate(resolve));const foreground=during.engine.check('login',during.options);assert.equal(during.calls.length,3);
+  resume();await initial;await foreground;assert.equal(during.calls.length,6,'Foreground must freshly verify after automatic check');
+  let finishStale;const staleAutomatic=harness({wait:new Promise(resolve=>{finishStale=resolve;})});const staleStart=staleAutomatic.engine.start();await new Promise(resolve=>setImmediate(resolve));staleAutomatic.engine.setOwner('');finishStale();await staleStart;assert.equal(staleAutomatic.automaticResults.length,0);assert.equal(staleAutomatic.engine.snapshot().owner,'');
+  const pausedOptions={continue:false},paused=harness(pausedOptions);await paused.engine.start();assert.equal(paused.automaticResults.length,0);pausedOptions.continue=true;await paused.engine.start();assert.equal(paused.automaticResults.length,1,'Interrupted checks can restart without manual recheck');
+  const autoMismatch=harness({expectedDevice:actor});await autoMismatch.engine.start();assert.equal(autoMismatch.engine.snapshot().reason,'device_changed');
   for(const feature of ['connect','login','prepare','export','result','backup_result','import_result']){
     const f=harness({checks:{backupPassword:'registration_required',backupAdapter:'unavailable'}});
     assert.equal((await f.engine.check(feature,f.options)).ok,true,feature+' must not require unrelated backup setup');
@@ -80,7 +96,10 @@ function uiHarness(options={}){
   for(const name of ['issueBackupEnrollment','runWindowsBridgeRequest','runPilotTestSale','runPilotLogin'])assert(conciergePick(name).includes('await checkIntegrationBeforeOperation("setup"'),name+' requires fresh connectivity before its existing signed pilot checks');
   for(const name of ['registerDcatsCompanyAccount','openDcatsCompanyBackupSetup','checkDcatsCompanyBackupReadiness'])assert(pick(name).includes('ensureDcatsIntegrationBeforeAction("setup",isCurrent)'),name);
   assert(pick('renderMenu').includes('syncDcatsIntegrationReadinessContext()'));
+  for(const name of ['openDcatsBusinessWorkspace','openDcatsBusinessWorkspaceSettings','registerDcatsCompanyAccount','openDcatsCompanyBackupSetup'])assert(pick(name).includes('refreshDcatsIntegrationReadinessAutomatically('),name+' triggers automatic inspection');
+  assert(!html.includes('data-integration-check-dismiss'),'No mandatory first-use dismissal');
+  assert(html.indexOf('data-integration-check-recheck')>html.indexOf('id="dcats-integration-check-details"'),'Manual retry is optional under details');
   assert(html.indexOf('integration-readiness.js?')<html.indexOf('src="app.js?'));
   for(const key of ['title','first_hint','review','dismiss','scope','recheck','details','password_note','checking','ready','connected','unverified','extension','pc','device','identity','settings','busy','failed','blocked','extension_label','pc_label','available','required','open_settings'])assert.equal((source.match(new RegExp('^    integration_check_'+key+':','gm'))||[]).length,3,key);
-  console.log('Integration readiness: startup Native0, per-use freshness, first-use storage isolation, feature-specific gates, setup recovery, identity/device changes, stale owner, all action entrances and translations passed');
+  console.log('Integration readiness: automatic startup/settings/return checks, coalescing/throttle/trailing retry, idle/owner guards, fresh action checks, setup recovery, identity/device changes, all entrances and translations passed');
 })().catch(error=>{console.error(error);process.exitCode=1;});
