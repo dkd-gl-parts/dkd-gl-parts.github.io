@@ -93,7 +93,7 @@
       }catch(error){
         if(!current())return {ok:false,reason:"session_changed"};
         var reasons={company_extension_reload_required:"extension_reload",company_extension_update_required:"extension_outdated",company_bridge_unavailable:"extension_unavailable",
-          company_native_host_unavailable:"native_unavailable",company_device_unavailable:"device_unavailable",company_authentication_required:"authentication_required",
+          company_native_host_unavailable:"native_unavailable",company_device_read_timeout:"discovery_timeout",company_device_unavailable:"device_unavailable",company_authentication_required:"authentication_required",
           company_not_authorized:"not_authorized",company_binding_unavailable:"identity_unverified",company_operation_unavailable:"busy",extension_unavailable:"extension_unavailable"};
         return fail(reasons[error&&error.message]||"check_unavailable");
       }finally{

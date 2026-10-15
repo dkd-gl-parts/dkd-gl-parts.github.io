@@ -6,7 +6,7 @@ const record={actor_id:actor,device_id:device,public_key_sha256:"a".repeat(64),p
 function fixture(mode={}){
   const listeners=new Map(),posts=[],issues=[];let current=true;
   const emit=m=>queueMicrotask(()=>{for(const fn of listeners.get("message")||[])fn({source:win,origin:win.location.origin,data:{channel:"dcats-hanbaioh25-bridge-v1",...m}});});
-  const win={location:{origin:"https://dcats.daiko-denki.co.jp"},crypto:webcrypto,setTimeout:(fn,ms)=>setTimeout(fn,mode.noReply&&ms===5000?5:ms),clearTimeout,setInterval,clearInterval,
+  const win={location:{origin:"https://dcats.daiko-denki.co.jp"},crypto:webcrypto,setTimeout:(fn,ms)=>setTimeout(fn,mode.noReply&&ms===20000?5:ms),clearTimeout,setInterval,clearInterval,
     addEventListener(n,f){if(!listeners.has(n))listeners.set(n,new Set());listeners.get(n).add(f);},removeEventListener(n,f){listeners.get(n)?.delete(f);},
     postMessage(m){posts.push(structuredClone(m));const q=m.request;
       if(q?.command==="read_hanbaioh_company_device"){
@@ -41,7 +41,7 @@ function fixture(mode={}){
   for(const key of ["cancelled","expired"]){const f=fixture({[key]:true});assert.equal((await f.run()).status,key);assert.equal(f.issues.length,1);}
   for(const [mode,code] of [
     [{oldExtension:true},"company_extension_update_required"],
-    [{noReply:true},"company_bridge_unavailable"],
+    [{noReply:true},"company_device_read_timeout"],
     [{nativeFailure:"EXTENSION_CONTEXT_INVALIDATED"},"company_extension_reload_required"],
     [{nativeFailure:"NATIVE_HOST_UNAVAILABLE"},"company_native_host_unavailable"],
     [{nativeFailure:"REQUEST_REJECTED",deviceMissing:true},"company_device_unavailable"],
