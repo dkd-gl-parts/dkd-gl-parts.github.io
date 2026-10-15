@@ -18170,6 +18170,7 @@ async function loadShippingDocumentDetail(orderId) {
   if (!canManageSalesOrders() || !orderId) return null;
   shippingDocumentSelectedId = orderId;
   renderShippingDocumentList();
+  renderShippingDocumentProductPreview(null);
   var requestSeq = ++shippingDocumentDetailSeq;
   var host = document.getElementById("shipping-document-detail");
   if (host) host.innerHTML = "<div class='sales-order-empty'>" + esc(t("loading")) + "</div>";
@@ -18564,9 +18565,17 @@ function salesOrderWorkspaceNavigationHtml(activeWorkspace) {
   "</nav>";
 }
 
+function renderShippingDocumentProductPreview(order) {
+  var preview = document.getElementById("shipping-document-product-preview");
+  if (!preview) return;
+  preview.setAttribute("aria-label", t("shipping_document_shipment_items"));
+  preview.innerHTML = order ? shippingDocumentOrderContentsHtml(order) : "";
+}
+
 function renderShippingDocumentDetail() {
   var host = document.getElementById("shipping-document-detail");
   var order = shippingDocumentDetail;
+  renderShippingDocumentProductPreview(order);
   if (!host) return;
   if (!order) {
     stopShippingDocumentPrintStatusPolling();
