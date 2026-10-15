@@ -49,7 +49,8 @@ function fixture(mode={}){
   assert(card.includes(' hidden>'));assert(!card.includes('<input'));assert(card.includes('id="dcats-business-workspace-backup-setup"'));assert(card.includes('id="dcats-business-workspace-backup-recover"'));
   for(const key of ['recover','recover_hint'])assert.equal((app.match(new RegExp('business_workspace_backup_'+key+':','g'))||[]).length,3);
   for(const name of ['setup','setup_hint','setup_device','setup_authorization','setup_opening','setup_opened','setup_window_unavailable','setup_saved','setup_pending_recovery','setup_password_recovery_closed','setup_password_not_saved','setup_cancelled','setup_failed','setup_outcome_unknown','setup_expired'])assert.equal((app.match(new RegExp('business_workspace_backup_'+name+':','g'))||[]).length,3,name);
-  const handler=app.slice(app.indexOf('async function openDcatsCompanyBackupSetup('),app.indexOf('function resetDcatsCompanyBackupReadiness()'));
+  const handlerNode=require('acorn').parse(app,{ecmaVersion:'latest'}).body.find(node=>node.type==='FunctionDeclaration'&&node.id.name==='openDcatsCompanyBackupSetup');
+  assert(handlerNode);const handler=app.slice(handlerNode.start,handlerNode.end);
   assert(handler.includes('isSystemAdmin()'));assert(handler.includes('resetDcatsCompanyBackupReadiness()'));assert(handler.includes('if(!isCurrent())return'));
   assert(!handler.includes('dcatsCompanyBackupResult=result'));assert(!handler.includes('loginOnce'));assert(!handler.includes('exportCsvOnce'));
   console.log('Backup setup: same-owner view permit, fixed statuses, independent native authentication, cancellation, stale owner, old extension, no browser password inputs: OK');

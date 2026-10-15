@@ -548,6 +548,31 @@ var TRANSLATIONS = {
     business_workspace_backup_password_help: "登録は専用画面で行います。復旧用には共有フォルダ内の暗号ファイル、このPCでは保護されたファイルで保管します。パスワードを通常の文書に書いて共有しないでください。保存の確認後、専用画面は自動で閉じます。",
     business_workspace_backup_recovery_help: "接続試験は指定のテスト担当者で進めます。実運用開始前に、復旧担当者とバックアップを復元できることを確認します。",
     business_workspace_backup_note: "準備の確認・初回設定では、販売王の起動やバックアップ作成、データ取込は開始しません。",
+    integration_check_title: "このPCの連携設定",
+    integration_check_first_hint: "初めて使うPC・ブラウザでは設定を確認してください。起動時は拡張の応答を確認し、各機能を使う直前に必要な設定を再確認します。",
+    integration_check_review: "設定を確認する",
+    integration_check_dismiss: "初回案内を閉じる",
+    integration_check_scope: "この確認では設定状況を読み取ります。販売王やパスワード入力画面は開きません。必要な設定は機能ごとに異なり、実行直前にも確認します。",
+    integration_check_recheck: "設定状況を再確認する",
+    integration_check_details: "項目ごとの状態と設定",
+    integration_check_password_note: "販売王ログイン用パスワードは、実行時にPC連携アプリが確認します。未登録・変更時は下の「販売王ログイン設定」から登録してください。",
+    integration_check_checking: "連携設定を確認しています…",
+    integration_check_ready: "連携設定を確認できました。機能の実行直前にも再確認します。",
+    integration_check_connected: "拡張機能の応答を確認しました。PC連携・本人・端末と必要設定は実行前に確認します。",
+    integration_check_unverified: "設定状況は未確認です。使用前に確認してください。",
+    integration_check_extension: "拡張機能が未接続・旧版の可能性があります。「拡張機能の管理」で有効化・再読み込みを確認してください。",
+    integration_check_pc: "PC連携アプリに接続できません。導入・更新・修復が必要です。",
+    integration_check_device: "現在の本人・端末の対応を確認できないか、端末が変わりました。端末登録を担当者へ確認し、接続を確認し直してください。",
+    integration_check_identity: "本人・会社・このPCの対応を確認できません。D-CATSのログイン状態と端末登録を確認してください。",
+    integration_check_settings: "未設定または未確認の項目があります。不足項目の設定を確認し、設定後に再確認してください。",
+    integration_check_busy: "別の連携処理を実行中です。完了後に確認してください。",
+    integration_check_failed: "設定の確認を完了できませんでした。接続を確認し、再確認してください。",
+    integration_check_blocked: "必要な設定を確認できなかったため、処理を開始していません。「設定を確認する」から不足項目を確認してください。",
+    integration_check_extension_label: "ブラウザ拡張機能",
+    integration_check_pc_label: "PC連携アプリ・端末登録",
+    integration_check_available: "確認済み",
+    integration_check_required: "設定・確認が必要",
+    integration_check_open_settings: "設定を開く",
     extension_manager_title: "拡張機能の管理",
     extension_manager_hint: "PC版Chrome／Edgeの拡張機能を、アドレス欄のないD-CATSアプリから確認できます。",
     extension_manager_open: "拡張機能の管理を開く",
@@ -3101,6 +3126,31 @@ var TRANSLATIONS = {
     business_workspace_backup_password_help: "Register in the dedicated window. Recovery uses an encrypted file in the shared folder; this PC stores a protected file. Do not share the password in a regular document. The window closes automatically after saving is confirmed.",
     business_workspace_backup_recovery_help: "Connection tests use the designated test operator. Before production use, confirm the recovery operators and a successful backup restore.",
     business_workspace_backup_note: "Preparation checks and initial setup do not start Sales King, create a backup or import data.",
+    integration_check_title: "PC integration setup",
+    integration_check_first_hint: "Check setup when using a new PC or browser. Startup checks the extension response; each feature checks its prerequisites again immediately before use.",
+    integration_check_review: "Review setup",
+    integration_check_dismiss: "Dismiss first-use guide",
+    integration_check_scope: "This check reads setup status. It does not open Sales King or password entry windows. Required settings depend on the feature and are checked again before use.",
+    integration_check_recheck: "Check setup again",
+    integration_check_details: "Status and settings by item",
+    integration_check_password_note: "The PC integration checks the Sales King sign-in password when the operation runs. Register it below if it is missing or has changed.",
+    integration_check_checking: "Checking integration setup…",
+    integration_check_ready: "Integration prerequisites checked. They will be checked again immediately before use.",
+    integration_check_connected: "The extension responded. PC integration, identity, device binding and required settings are checked before use.",
+    integration_check_unverified: "Setup has not been checked. Check it before use.",
+    integration_check_extension: "The extension may be disconnected or outdated. Check that it is enabled and reload it in Manage extensions.",
+    integration_check_pc: "Cannot connect to the PC integration app. Installation, update or repair is required.",
+    integration_check_device: "The current user/device binding could not be verified or the device changed. Ask your administrator to check registration, then reconnect.",
+    integration_check_identity: "The user, company and PC binding could not be verified. Check D-CATS sign-in and device registration.",
+    integration_check_settings: "Some settings are missing or unverified. Review the required setup, then check again.",
+    integration_check_busy: "Another integration operation is running. Check again when it finishes.",
+    integration_check_failed: "The setup check could not complete. Check the connection and try the check again.",
+    integration_check_blocked: "The operation did not start because its prerequisites could not be verified. Choose Review setup to see what needs attention.",
+    integration_check_extension_label: "Browser extension",
+    integration_check_pc_label: "PC integration and device registration",
+    integration_check_available: "Verified",
+    integration_check_required: "Setup or verification needed",
+    integration_check_open_settings: "Open settings",
     extension_manager_title: "Manage extensions",
     extension_manager_hint: "Check extensions in desktop Chrome or Edge from the D-CATS app, even without an address bar.",
     extension_manager_open: "Open extension manager",
@@ -5598,6 +5648,31 @@ var TRANSLATIONS = {
     business_workspace_backup_password_help: "请在专用窗口登记。恢复用密码保存在共享文件夹的加密文件中，此电脑则以受保护文件保存。请勿以普通文档共享密码。确认保存后，专用窗口会自动关闭。",
     business_workspace_backup_recovery_help: "连接测试由指定测试负责人进行。正式运行前需确认恢复负责人及备份可成功恢复。",
     business_workspace_backup_note: "准备确认和首次设置不会启动销售王、创建备份或导入数据。",
+    integration_check_title: "此电脑的联动设置",
+    integration_check_first_hint: "首次使用电脑或浏览器时请确认设置。启动时仅确认扩展响应，每次使用相关功能前重新确认所需设置。",
+    integration_check_review: "确认设置",
+    integration_check_dismiss: "关闭首次使用说明",
+    integration_check_scope: "此检查只读取设置状态，不会打开销售王或密码输入窗口。不同功能所需设置不同，执行前会再次确认。",
+    integration_check_recheck: "重新确认设置状态",
+    integration_check_details: "各项目的状态及设置",
+    integration_check_password_note: "执行时由电脑联动程序确认销售王登录密码。未登记或修改后，请在下方销售王登录设置中登记。",
+    integration_check_checking: "正在确认联动设置…",
+    integration_check_ready: "已确认联动所需设置。功能执行前还会再次确认。",
+    integration_check_connected: "已收到扩展响应。执行前将确认电脑联动、本人、设备对应及所需设置。",
+    integration_check_unverified: "尚未确认设置。使用前请先确认。",
+    integration_check_extension: "扩展可能未连接或版本过旧。请在扩展管理中确认启用并重新加载。",
+    integration_check_pc: "无法连接电脑联动程序。需要安装、更新或修复。",
+    integration_check_device: "无法确认当前用户与设备对应，或设备已更改。请联系负责人确认设备登记后重新连接。",
+    integration_check_identity: "无法确认本人、公司与此电脑的对应。请确认D-CATS登录状态及设备登记。",
+    integration_check_settings: "存在未设置或未确认项目。请确认缺少的设置，完成后重新检查。",
+    integration_check_busy: "其他联动操作正在运行。请在完成后确认。",
+    integration_check_failed: "设置确认未能完成。请确认连接后再次检查。",
+    integration_check_blocked: "无法确认所需设置，操作尚未开始。请点击确认设置查看缺少的项目。",
+    integration_check_extension_label: "浏览器扩展",
+    integration_check_pc_label: "电脑联动程序与设备登记",
+    integration_check_available: "已确认",
+    integration_check_required: "需要设置或确认",
+    integration_check_open_settings: "打开设置",
     extension_manager_title: "扩展管理",
     extension_manager_hint: "即使D-CATS应用没有地址栏，也可以查看电脑版Chrome或Edge的扩展。",
     extension_manager_open: "打开扩展管理",
@@ -11082,6 +11157,7 @@ async function doLogout() {
 // メニュー（翻訳辞書のキーを使って生成）
 // =============================================
 function renderMenu() {
+  syncDcatsIntegrationReadinessContext();
   var grid = document.getElementById("menu-grid");
   if (!grid || !userProfile) return;
   var canManageUsers = canUseUserManagement();
@@ -15199,6 +15275,82 @@ function closeDcatsBusinessWorkspace(restoreFocus) {
 }
 
 var dcatsCompanyAccountBusy = false;
+var dcatsIntegrationReadinessController = null;
+function syncDcatsIntegrationReadinessContext() {
+  var api=window.DcatsIntegrationReadiness;
+  if(!api){renderDcatsIntegrationReadiness({owner:currentUser?currentUser.id:"",phase:"attention",reason:"check_unavailable",feature:"startup",firstUse:true,checks:{extension:"unverified",pc:"unverified",identity:"unverified"}});return;}
+  if(!dcatsIntegrationReadinessController){
+    dcatsIntegrationReadinessController=api.create({
+      storage:{getItem:function(key){return window.localStorage.getItem(key);},setItem:function(key,value){window.localStorage.setItem(key,value);}},
+      isAllowed:function(actor){return !!currentUser&&currentUser.id===actor&&typeof isSystemAdmin==="function"&&isSystemAdmin();},
+      probe:api.probeExtension,
+      readDevice:function(options){var bridge=window.DcatsHanbaiohCompanyBridge;if(!bridge)throw new Error("company_bridge_unavailable");return bridge.readDeviceFromPc(options);},
+      readReadiness:function(options){var bridge=window.DcatsHanbaiohCompanyBridge;if(!bridge||typeof bridge.readBackupReadinessFromPc!=="function")throw new Error("company_extension_update_required");return bridge.readBackupReadinessFromPc(options);},
+      onChange:renderDcatsIntegrationReadiness
+    });
+  }
+  dcatsIntegrationReadinessController.setOwner(currentUser&&typeof isSystemAdmin==="function"&&isSystemAdmin()?currentUser.id:"");
+  dcatsIntegrationReadinessController.start().catch(function(){});
+  renderDcatsIntegrationReadiness(dcatsIntegrationReadinessController.snapshot());
+}
+function renderDcatsIntegrationReadiness(state) {
+  var allowed=!!state.owner&&!!currentUser&&state.owner===currentUser.id&&typeof isSystemAdmin==="function"&&isSystemAdmin();
+  var attention=state.phase==="attention";
+  var reasons={extension_unavailable:"extension",extension_outdated:"extension",extension_reload:"extension",native_unavailable:"pc",device_unavailable:"device",device_changed:"device",
+    identity_unverified:"identity",authentication_required:"identity",not_authorized:"identity",settings_required:"settings",busy:"busy",check_unavailable:"failed"};
+  var key="integration_check_"+(state.phase==="checking"?"checking":state.phase==="ready"?"ready":state.phase==="checked"?"connected":attention?(reasons[state.reason]||"failed"):"unverified");
+  document.querySelectorAll("[data-integration-check-status]").forEach(function(node){node.dataset.i18n=key;node.textContent=t(key);});
+  document.querySelectorAll("[data-integration-check-banner]").forEach(function(node){node.hidden=!allowed||!state.firstUse&&!attention;});
+  document.querySelectorAll("[data-integration-check-notice]").forEach(function(node){node.hidden=!allowed||!attention;});
+  var panel=document.getElementById("dcats-integration-check");if(panel)panel.hidden=!allowed;
+  var details=document.getElementById("dcats-integration-check-details");if(details&&state.feature!=="startup"&&attention)details.open=true;
+  var list=document.getElementById("dcats-integration-check-list");
+  if(list){
+    list.replaceChildren();
+    Object.keys(state.checks).forEach(function(name){
+      var row=document.createElement("div"),label=document.createElement("dt"),value=document.createElement("dd"),button=document.createElement("button");
+      label.dataset.i18n=name==="extension"||name==="pc"?"integration_check_"+name+"_label":"business_workspace_backup_"+name;label.textContent=t(label.dataset.i18n);
+      var current=state.checks[name];
+      value.dataset.i18n=current==="unverified"?"business_workspace_backup_unverified":"integration_check_"+(current==="available"?"available":"required");value.textContent=t(value.dataset.i18n);
+      row.append(label,value);
+      if(current!=="available"){
+        button.type="button";button.dataset.integrationCheckRoute=name==="extension"?"extension":name==="pc"||name==="identity"?"account":"backup";
+        button.dataset.i18n="integration_check_open_settings";button.textContent=t(button.dataset.i18n);row.append(button);
+      }
+      list.append(row);
+    });
+  }
+  document.querySelectorAll("[data-integration-check-recheck]").forEach(function(button){button.disabled=state.phase==="checking"||dcatsCompanyAccountBusy||dcatsCompanyIntegrationBusy||dcatsCompanyBackupBusy;});
+}
+async function ensureDcatsIntegrationBeforeAction(feature,isCurrent,expectedRecord) {
+  syncDcatsIntegrationReadinessContext();
+  if(!dcatsIntegrationReadinessController)return {ok:false,reason:"check_unavailable"};
+  if(feature!=="setup")resetDcatsCompanyBackupReadiness();
+  var record=expectedRecord||dcatsCompanyIntegrationRecord;
+  var expected=!["overview","setup","connect"].includes(feature)&&record?record.device_id:null;
+  var result=await dcatsIntegrationReadinessController.check(feature,{isCurrent:isCurrent,expectedDevice:expected});
+  if(result.reason==="device_changed"&&record===dcatsCompanyIntegrationRecord)dcatsCompanyIntegrationRecord=null;
+  if(result.readiness&&isCurrent()){
+    applyDcatsCompanyBackupReadiness(result.readiness);
+  }
+  return result;
+}
+async function recheckDcatsIntegrationReadiness() {
+  if(dcatsCompanyAccountBusy||dcatsCompanyIntegrationBusy||dcatsCompanyBackupBusy||!currentUser||!isSystemAdmin())return;
+  var actor=currentUser.id,epoch=dcatsCompanyIntegrationEpoch;
+  function isCurrent(){return !!currentUser&&currentUser.id===actor&&isSystemAdmin()&&epoch===dcatsCompanyIntegrationEpoch;}
+  dcatsCompanyBackupBusy=true;updateDcatsCompanyIntegrationControls();
+  try{await ensureDcatsIntegrationBeforeAction("overview",isCurrent);}
+  finally{dcatsCompanyBackupBusy=false;updateDcatsCompanyIntegrationControls();if(dcatsIntegrationReadinessController)renderDcatsIntegrationReadiness(dcatsIntegrationReadinessController.snapshot());}
+}
+function openDcatsIntegrationCheckSettings(event,route) {
+  route=route||"check";
+  var overlay=document.getElementById("dcats-business-workspace-settings-overlay");
+  if(!overlay.classList.contains("show"))openDcatsBusinessWorkspaceSettings(event);
+  if(!overlay.classList.contains("show"))return;
+  var target=document.getElementById(route==="extension"?"dcats-extension-manager":route==="account"?"dcats-business-workspace-account":route==="backup"?"dcats-business-workspace-backup":"dcats-integration-check");
+  if(target&&!target.hidden){target.scrollIntoView({block:"start"});var button=target.querySelector("button");if(button)button.focus();}
+}
 var dcatsExtensionManagerBusy = false;
 async function openDcatsExtensionManager() {
   if(dcatsExtensionManagerBusy||!currentUser||!isSystemAdmin())return;
@@ -15246,6 +15398,7 @@ var dcatsCompanyIntegrationRecord = null;
 var dcatsCompanyBackupBusy = false;
 var dcatsCompanyBackupResult = null;
 function syncDcatsCompanyAccountControls() {
+  syncDcatsIntegrationReadinessContext();
   var section=document.getElementById("dcats-business-workspace-account");
   var user=typeof currentUser!=="undefined"?currentUser:null;
   var allowed=!!user&&typeof isSystemAdmin==="function"&&isSystemAdmin();
@@ -15284,6 +15437,9 @@ async function registerDcatsCompanyAccount() {
   try{
     var bridge=window.DcatsHanbaiohCompanyBridge;
     if(!bridge||typeof bridge.enrollAccountFromPc!=="function")throw new Error();
+    var preflight=await ensureDcatsIntegrationBeforeAction("setup",isCurrent);
+    if(!isCurrent())return;
+    if(!preflight.ok){status.className="error";status.textContent=t("integration_check_blocked");return;}
     var result=await bridge.enrollAccountFromPc({actorId:actor,isCurrent:isCurrent});
     if(!isCurrent())return;
     if(result.status==="enrolled"){status.className="ready";status.textContent=t(result.replaced?"business_workspace_account_updated":"business_workspace_account_saved");}
@@ -15320,6 +15476,7 @@ function updateDcatsCompanyIntegrationControls() {
   if(backupSetup)backupSetup.disabled=busy;
   var backupRecover=document.getElementById("dcats-business-workspace-backup-recover");
   if(backupRecover)backupRecover.disabled=busy;
+  if(typeof dcatsIntegrationReadinessController!=="undefined"&&dcatsIntegrationReadinessController)renderDcatsIntegrationReadiness(dcatsIntegrationReadinessController.snapshot());
 }
 
 async function runDcatsCompanyIntegration(action, category) {
@@ -15334,12 +15491,15 @@ async function runDcatsCompanyIntegration(action, category) {
   try {
     var bridge=window.DcatsHanbaiohCompanyBridge;
     if(!bridge)throw new Error("company_bridge_unavailable");
+    var preflight=await ensureDcatsIntegrationBeforeAction(action,isCurrent);
+    if(!isCurrent())return;
+    if(!preflight.ok){status.className="error";status.textContent=t("integration_check_blocked");return;}
     if(action==="connect") {
-      var record=await bridge.readDeviceFromPc({actorId:actor,isCurrent:isCurrent});
+      var record=preflight.record;
       if(!isCurrent())return;dcatsCompanyIntegrationRecord=record;
       status.className="ready";status.textContent=t("business_workspace_company_connected");return;
     }
-    var options={record:dcatsCompanyIntegrationRecord,isCurrent:isCurrent,category:category};
+    var options={record:preflight.record,isCurrent:isCurrent,category:category};
     if(action==="backup"||action==="backup_result"||action==="import_result"){
       var input=document.querySelector('[data-company-backup-file="'+category+'"]');
       if(!input||!input.files||input.files.length!==1)throw new Error("company_csv_unavailable");
@@ -15386,6 +15546,9 @@ async function openDcatsCompanyBackupSetup(recoverPassword) {
   try {
     var bridge=window.DcatsHanbaiohCompanyBridge;
     if(!bridge||typeof bridge.openBackupSetupFromPc!=="function")throw new Error("company_extension_update_required");
+    var preflight=await ensureDcatsIntegrationBeforeAction("setup",isCurrent);
+    if(!isCurrent())return;
+    if(!preflight.ok){setDcatsCompanyBackupStatus("integration_check_blocked","error");return;}
     var result=await bridge.openBackupSetupFromPc({actorId:actor,isCurrent:isCurrent,recoverPassword:recoverPassword,onStage:function(stage){
       if(isCurrent()&&["device","authorization","opening","opened"].includes(stage))setDcatsCompanyBackupStatus("business_workspace_backup_setup_"+stage);
     }});
@@ -15416,6 +15579,17 @@ function renderDcatsCompanyBackupNextSteps(result) {
   section.hidden=list.childElementCount===0;section.open=!section.hidden;
 }
 
+function applyDcatsCompanyBackupReadiness(result) {
+  dcatsCompanyBackupResult=result;
+  var section=document.getElementById("dcats-business-workspace-backup");
+  if(section)section.querySelectorAll("[data-backup-check]").forEach(function(node){
+    var value=result.checks[node.dataset.backupCheck];
+    node.dataset.i18n="business_workspace_backup_"+(node.dataset.backupCheck==="backupAdapter"&&value==="unavailable"?"adapter_pending":value);node.textContent=t(node.dataset.i18n);node.className=value==="available"?"ready":"pending";
+  });
+  renderDcatsCompanyBackupNextSteps(result);
+  setDcatsCompanyBackupStatus(result.ready?"business_workspace_backup_ready":"business_workspace_backup_pending",result.ready?"ready":"pending");
+}
+
 function resetDcatsCompanyBackupReadiness() {
   renderDcatsCompanyBackupNextSteps(null);
   dcatsCompanyBackupResult=null;
@@ -15442,6 +15616,9 @@ async function checkDcatsCompanyBackupReadiness() {
   try {
     var bridge=window.DcatsHanbaiohCompanyBridge;
     if(!bridge||typeof bridge.checkBackupReadinessFromPc!=="function")throw new Error("company_extension_update_required");
+    var preflight=await ensureDcatsIntegrationBeforeAction("setup",isCurrent);
+    if(!isCurrent())return;
+    if(!preflight.ok){setDcatsCompanyBackupStatus("integration_check_blocked","error");return;}
     var result=await bridge.checkBackupReadinessFromPc({actorId:actor,isCurrent:isCurrent,onStage:function(stage){
       if(isCurrent()&&["device","authorization","opening","opened"].includes(stage))setDcatsCompanyBackupStatus("business_workspace_backup_setup_"+stage);
     }});
@@ -15449,13 +15626,8 @@ async function checkDcatsCompanyBackupReadiness() {
     if(result.status!=="production_backup_prerequisites"){
       setDcatsCompanyBackupStatus("business_workspace_backup_setup_"+result.status,["failed","expired"].includes(result.status)?"error":"pending");return;
     }
-    dcatsCompanyBackupResult=result;
-    section.querySelectorAll("[data-backup-check]").forEach(function(node){
-      var value=result.checks[node.dataset.backupCheck];
-      node.dataset.i18n="business_workspace_backup_"+(node.dataset.backupCheck==="backupAdapter"&&value==="unavailable"?"adapter_pending":value);node.textContent=t(node.dataset.i18n);node.className=value==="available"?"ready":"pending";
-    });
-    renderDcatsCompanyBackupNextSteps(result);
-    setDcatsCompanyBackupStatus(result.ready?"business_workspace_backup_ready":"business_workspace_backup_pending",result.ready?"ready":"pending");
+    applyDcatsCompanyBackupReadiness(result);
+    if(dcatsIntegrationReadinessController)dcatsIntegrationReadinessController.observeReadiness(result);
   } catch(error) {
     if(isCurrent()) {
       var reason=error&&error.message;
@@ -56473,6 +56645,10 @@ document.getElementById("dcats-business-workspace-shortcut").addEventListener("c
 document.getElementById("dcats-business-workspace-b2-select").addEventListener("click", configureDcatsB2ExportDirectory);
 document.getElementById("dcats-business-workspace-account-register").addEventListener("click", registerDcatsCompanyAccount);
 document.getElementById("dcats-extension-manager-open").addEventListener("click", openDcatsExtensionManager);
+document.querySelectorAll("[data-integration-check-settings]").forEach(function(button){button.addEventListener("click",function(event){openDcatsIntegrationCheckSettings(event,"check");});});
+document.querySelectorAll("[data-integration-check-recheck]").forEach(function(button){button.addEventListener("click",recheckDcatsIntegrationReadiness);});
+document.getElementById("dcats-integration-check-list").addEventListener("click",function(event){var button=event.target.closest("[data-integration-check-route]");if(button)openDcatsIntegrationCheckSettings(event,button.dataset.integrationCheckRoute);});
+document.querySelectorAll("[data-integration-check-dismiss]").forEach(function(button){button.addEventListener("click",function(){if(dcatsIntegrationReadinessController)dcatsIntegrationReadinessController.acknowledgeGuide();});});
 document.getElementById("dcats-business-workspace-backup-check").addEventListener("click", checkDcatsCompanyBackupReadiness);
 document.getElementById("dcats-business-workspace-backup-setup").addEventListener("click", function(){openDcatsCompanyBackupSetup(false);});
 document.getElementById("dcats-business-workspace-backup-recover").addEventListener("click", function(){openDcatsCompanyBackupSetup(true);});

@@ -206,6 +206,10 @@
       <h2 id="menu-greeting">ようこそ</h2>
       <p data-i18n="menu_welcome_sub">ご利用になる機能を選択してください</p>
     </div>
+    <section class="dcats-integration-banner" data-integration-check-banner hidden aria-labelledby="dcats-integration-banner-title">
+      <div><h3 id="dcats-integration-banner-title" data-i18n="integration_check_title">このPCの連携設定</h3><p data-i18n="integration_check_first_hint">初めて使うPC・ブラウザでは設定を確認してください。起動時は拡張の応答を確認し、各機能を使う直前に必要な設定を再確認します。</p><p data-integration-check-status role="status" aria-live="polite"></p></div>
+      <div class="dcats-integration-actions"><button type="button" data-integration-check-settings data-i18n="integration_check_review">設定を確認する</button><button type="button" data-integration-check-dismiss data-i18n="integration_check_dismiss">初回案内を閉じる</button></div>
+    </section>
     <div class="menu-grid" id="menu-grid"></div>
   </div>
 </div>
@@ -1213,6 +1217,10 @@
         <div data-company-status="sales" role="status" aria-live="polite"></div>
       </div>
     </section>
+    <div class="dcats-integration-notice" data-integration-check-notice hidden>
+      <p data-integration-check-status role="status" aria-live="polite"></p>
+      <button type="button" data-integration-check-settings data-i18n="integration_check_review">設定を確認する</button>
+    </div>
     <div class="dcats-business-workspace-settings-link">
       <p data-i18n="business_workspace_settings_location">初回登録・接続・保存先の設定は、メニューの「設定」→「D-CATS業務連携設定」から行います。</p>
       <button type="button" id="dcats-business-workspace-settings-open" data-i18n="business_workspace_settings_open">業務連携設定を開く</button>
@@ -1228,6 +1236,14 @@
       <button type="button" id="dcats-business-workspace-settings-close" aria-label="閉じる">&#10005;</button>
     </div>
     <p id="dcats-business-workspace-settings-description" class="dcats-business-workspace-settings-description" data-i18n="business_workspace_settings_hint">初回の準備や、パスワード・接続・保存先を変更するときに使います。設定画面を開くだけでは、販売王の起動やデータ取込は行いません。</p>
+    <section class="dcats-business-workspace-backup dcats-integration-check" id="dcats-integration-check" aria-labelledby="dcats-integration-check-title" hidden>
+      <h4 id="dcats-integration-check-title" data-i18n="integration_check_title">このPCの連携設定</h4>
+      <p data-i18n="integration_check_scope">この確認では設定状況を読み取ります。販売王やパスワード入力画面は開きません。必要な設定は機能ごとに異なり、実行直前にも確認します。</p>
+      <p data-integration-check-status role="status" aria-live="polite"></p>
+      <button type="button" data-integration-check-recheck data-i18n="integration_check_recheck">設定状況を再確認する</button>
+      <details class="dcats-business-workspace-backup-help" id="dcats-integration-check-details"><summary data-i18n="integration_check_details">項目ごとの状態と設定</summary><dl class="dcats-integration-check-list" id="dcats-integration-check-list"></dl></details>
+      <p class="dcats-business-workspace-backup-note" data-i18n="integration_check_password_note">販売王ログイン用パスワードは、実行時にPC連携アプリが確認します。未登録・変更時は下の「販売王ログイン設定」から登録してください。</p>
+    </section>
     <section class="dcats-business-workspace-backup dcats-extension-manager" id="dcats-extension-manager" aria-labelledby="dcats-extension-manager-title" hidden>
       <h4 id="dcats-extension-manager-title" data-i18n="extension_manager_title">拡張機能の管理</h4>
       <p data-i18n="extension_manager_hint">PC版Chrome／Edgeの拡張機能を、アドレス欄のないD-CATSアプリから確認できます。</p>
@@ -5709,6 +5725,7 @@
 <script src="vendor/qrcode.min.js?v=1.0.0"></script>
 <script src="install-app.js?v=1.1.1159"></script>
 <script src="legacy-i18n.js?v=1.1.1159"></script>
+<script src="assets/concierge-pet/integration-readiness.js?v=1.1.1159"></script>
 <script src="app.js?v=1.1.1159"></script>
 <script src="sales-order-revision.js?v=1.1.1159"></script>
 <script src="manufacturing-cost-import.js?v=1.1.1159"></script>
