@@ -7880,7 +7880,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1165";
+var APP_VERSION       = "v1.1.1166";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -56456,10 +56456,10 @@ document.getElementById("customer-portal-manage-users").addEventListener("click"
 document.getElementById("customer-portal-shipping").addEventListener("click", enterCustomerShipping);
 document.getElementById("customer-portal-orders").addEventListener("click", function() { enterCustomerOrders({ view: "history" }); });
 document.getElementById("btn-back-customer-shipping").addEventListener("click", returnToCustomerPortalFromShipping);
-document.getElementById("customer-shipping-prefecture").addEventListener("change", renderCustomerShippingRates);
-document.getElementById("customer-shipping-carrier").addEventListener("change", renderCustomerShippingRates);
-document.getElementById("customer-shipping-service").addEventListener("change", renderCustomerShippingRates);
-document.getElementById("customer-shipping-size").addEventListener("change", renderCustomerShippingRates);
+document.getElementById("customer-shipping-prefecture").addEventListener("change", function() { renderCustomerShippingRates(); });
+document.getElementById("customer-shipping-carrier").addEventListener("change", function() { renderCustomerShippingRates(); });
+document.getElementById("customer-shipping-service").addEventListener("change", function() { renderCustomerShippingRates(); });
+document.getElementById("customer-shipping-size").addEventListener("change", function() { renderCustomerShippingRates(); });
 document.getElementById("customer-shipping-reset").addEventListener("click", function() {
   document.getElementById("customer-shipping-prefecture").value = "all";
   document.getElementById("customer-shipping-carrier").value = "all";
@@ -57555,11 +57555,11 @@ document.getElementById("customer-register-overlay").addEventListener("click", f
   if (e.target === this) closeCustomerRegistration();
 });
 document.getElementById("btn-customer-access-save").addEventListener("click", saveCustomerAccessSettings);
-document.getElementById("shipping-rate-prefecture-filter").addEventListener("change", renderShippingRateMgmt);
-document.getElementById("shipping-rate-carrier-filter").addEventListener("change", renderShippingRateMgmt);
-document.getElementById("shipping-rate-service-filter").addEventListener("change", renderShippingRateMgmt);
-document.getElementById("shipping-rate-size-filter").addEventListener("change", renderShippingRateMgmt);
-document.getElementById("shipping-rate-status-filter").addEventListener("change", renderShippingRateMgmt);
+document.getElementById("shipping-rate-prefecture-filter").addEventListener("change", function() { renderShippingRateMgmt(); });
+document.getElementById("shipping-rate-carrier-filter").addEventListener("change", function() { renderShippingRateMgmt(); });
+document.getElementById("shipping-rate-service-filter").addEventListener("change", function() { renderShippingRateMgmt(); });
+document.getElementById("shipping-rate-size-filter").addEventListener("change", function() { renderShippingRateMgmt(); });
+document.getElementById("shipping-rate-status-filter").addEventListener("change", function() { renderShippingRateMgmt(); });
 document.getElementById("shipping-service-visibility-list").addEventListener("change", function(e) {
   var input = e.target.closest("[data-shipping-service-key]");
   if (!input) return;
