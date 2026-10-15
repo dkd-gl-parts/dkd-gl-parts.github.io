@@ -185,6 +185,7 @@ jobs:
         run: |
           node scripts/verify-business-workspace-shortcut.js
           node scripts/verify-workspace-support.js
+          node scripts/verify-extension-auto-update.js
       - name: Verify business workspace Settings navigation
         run: node scripts/verify-business-workspace-settings.js
       - name: Verify offline postal data

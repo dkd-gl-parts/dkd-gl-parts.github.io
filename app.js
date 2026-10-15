@@ -648,6 +648,15 @@ var TRANSLATIONS = {
     workspace_support_steps_unavailable: "拡張機能の管理で「D-CATS 管理者用 Windows 連携」を有効にし、再読み込み後にD-CATSを更新してください。診断アプリの更新が必要な場合はPCの管理者へ確認してください。",
     workspace_support_steps_update_required: "拡張機能の管理で「D-CATS 管理者用 Windows 連携」を再読み込みし、その後D-CATS上部の「更新」を押してください。",
     workspace_support_scope: "確認は読み取り専用です。Driveの起動はボタンを押したときだけ行います。同期完了・共有権限・CSV保存の許可は別に確認します。",
+    extension_auto_current: "",
+    extension_auto_pending: "拡張機能 {target} の更新を確認しました。連携・入力が終わるまで自動反映を待ちます。",
+    extension_auto_waiting: "画面の入力や操作を保護しています。安全な状態になったら自動で反映します。",
+    extension_auto_applying: "拡張機能の更新を反映しています…",
+    extension_auto_updated: "拡張機能 {version} の反映を確認しました。",
+    extension_auto_initial: "自動反映機能は初回の有効化待ちです。拡張機能を一度再読み込みしてD-CATSを更新してください。",
+    extension_auto_unavailable: "更新の反映を確認できません。連携処理は自動で再実行しません。",
+    extension_auto_invalid: "更新ファイルを確認できないため、自動反映を保留しています。PCの管理者に確認してください。",
+    extension_auto_uncertain: "前の連携結果が不明なため、自動反映を保留しています。先に同じ処理の結果を確認してください。",
     business_workspace_drive_support: "PC版Google Driveの設定・困ったとき",
     business_workspace_drive_intro: "同期フォルダへ自動保存するには、PC版Google Driveを導入し、共有フォルダの保存先を設定します。",
     business_workspace_drive_install_title: "PC版Google Driveを導入する",
@@ -3262,6 +3271,15 @@ var TRANSLATIONS = {
     workspace_support_steps_unavailable: "Enable and reload “D-CATS 管理者用 Windows 連携” in extension management, then update D-CATS. Ask your PC administrator if the diagnostic app needs updating.",
     workspace_support_steps_update_required: "Reload “D-CATS 管理者用 Windows 連携” in extension management, then select Update at the top of D-CATS.",
     workspace_support_scope: "Inspection is read-only. Drive starts only when you select the button. Sync completion, sharing access and CSV save permission are checked separately.",
+    extension_auto_current: "",
+    extension_auto_pending: "Extension {target} is ready. Automatic activation waits for work and editing to finish.",
+    extension_auto_waiting: "Your current input is protected. Activation will continue when the page is safe.",
+    extension_auto_applying: "Activating the extension update…",
+    extension_auto_updated: "Extension {version} is active and verified.",
+    extension_auto_initial: "Automatic activation needs one initial setup. Reload the extension once, then update D-CATS.",
+    extension_auto_unavailable: "Activation could not be verified. Business operations will not be retried automatically.",
+    extension_auto_invalid: "The update files could not be verified. Activation is paused; contact your PC administrator.",
+    extension_auto_uncertain: "A previous operation has an unknown result. Verify that operation before the update can activate.",
     business_workspace_drive_support: "Google Drive for desktop setup and help",
     business_workspace_drive_intro: "To save automatically to a synced folder, install Google Drive for desktop and configure the shared save folder.",
     business_workspace_drive_install_title: "Install Google Drive for desktop",
@@ -5820,6 +5838,15 @@ var TRANSLATIONS = {
     workspace_support_steps_unavailable: "请在扩展程序管理中启用并重新加载“D-CATS 管理者用 Windows 連携”，然后更新D-CATS。若诊断程序需要更新，请联系本机管理员。",
     workspace_support_steps_update_required: "请在扩展程序管理中重新加载“D-CATS 管理者用 Windows 連携”，然后点击D-CATS顶部的“更新”。",
     workspace_support_scope: "诊断只读取状态。仅在点击按钮时启动Drive。同步完成、共享权限及CSV保存权限需要分别确认。",
+    extension_auto_current: "",
+    extension_auto_pending: "已检测到扩展程序 {target}。将在业务处理和编辑结束后自动应用。",
+    extension_auto_waiting: "正在保护当前输入。页面安全后将自动应用更新。",
+    extension_auto_applying: "正在应用扩展程序更新…",
+    extension_auto_updated: "已确认扩展程序 {version} 更新生效。",
+    extension_auto_initial: "自动应用功能尚待首次启用。请重新加载扩展程序一次，然后更新D-CATS。",
+    extension_auto_unavailable: "无法确认更新已生效。不会自动重新执行业务操作。",
+    extension_auto_invalid: "无法验证更新文件，已暂停自动应用。请联系本机管理员。",
+    extension_auto_uncertain: "上次业务处理的结果不明，已暂停自动应用。请先确认同一处理的结果。",
     business_workspace_drive_support: "Google Drive桌面版设置与帮助",
     business_workspace_drive_intro: "要自动保存到同步文件夹，请安装Google Drive桌面版并设置共享保存位置。",
     business_workspace_drive_install_title: "安装Google Drive桌面版",
@@ -7970,7 +7997,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1177";
+var APP_VERSION       = "v1.1.1178";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -58183,3 +58210,35 @@ document.querySelectorAll('[data-workspace-start]').forEach(function(button){but
 document.querySelectorAll('[data-workspace-extension]').forEach(function(button){button.addEventListener('click',function(event){openDcatsIntegrationCheckSettings(event,'extension');});});
 window.addEventListener('focus',function(){refreshDcatsWorkspaceSupport(false);});
 document.addEventListener('visibilitychange',function(){if(document.hidden){if(dcatsWorkspaceSupportController)dcatsWorkspaceSupportController.cancel();}else refreshDcatsWorkspaceSupport(false);});
+
+
+var dcatsExtensionUpdateController=null;
+function isDcatsExtensionUpdateSafe(){
+  if(!currentUser||!canManageSalesOrders()||!isScreenActive('menu')||!isAppSafeForAutoReload()||appManualRefreshInProgress||Date.now()-appUpdateLastActivityAt<30000)return false;
+  if(dcatsCompanyAccountBusy||dcatsCompanyIntegrationBusy||dcatsCompanyBackupBusy||dcatsExtensionManagerBusy||window.DcatsHanbaiohCompanyBridge?.isBusy?.())return false;
+  var panel=document.getElementById('dcats-concierge-panel');if(panel&&panel.getClientRects().length)return false;
+  if(dcatsWorkspaceSupportController&&dcatsWorkspaceSupportController.snapshot().busy)return false;
+  return !document.querySelector('[aria-busy="true"]');
+}
+function renderDcatsExtensionUpdate(state){
+  var host=document.getElementById('dcats-extension-auto-update-status');if(!host)return;
+  host.hidden=!currentUser||!canManageSalesOrders()||state.phase==='current';
+  host.textContent=tf('extension_auto_'+state.phase,{version:state.version,target:state.target});host.setAttribute('data-update-phase',state.phase);
+}
+function startDcatsExtensionUpdate(){
+  if(dcatsExtensionUpdateController||!window.DcatsExtensionUpdate)return;
+  var updateStorage;try{updateStorage=window.sessionStorage;}catch{updateStorage=null;}
+  dcatsExtensionUpdateController=window.DcatsExtensionUpdate.create({
+    storage:updateStorage,isAllowed:function(){return !!currentUser&&canManageSalesOrders();},isSafe:isDcatsExtensionUpdateSafe,
+    post:function(value){window.postMessage(value,window.location.origin);},reload:function(){manualRefreshApp();},onChange:renderDcatsExtensionUpdate
+  });
+  window.addEventListener('message',function(event){if(event.source===window&&event.origin===window.location.origin)dcatsExtensionUpdateController.receive(event.data);});
+  document.addEventListener('focusin',function(event){dcatsExtensionUpdateController.remember(event.target);},true);
+  document.addEventListener('beforeinput',function(event){dcatsExtensionUpdateController.remember(event.target);},true);
+  ['input','change'].forEach(function(name){document.addEventListener(name,function(event){dcatsExtensionUpdateController.dirtyInput(event.target);},true);});
+  ['pointerdown','keydown','touchstart'].forEach(function(name){document.addEventListener(name,function(){dcatsExtensionUpdateController.activity();},{capture:true,passive:true});});
+  window.setInterval(function(){dcatsExtensionUpdateController.poll();},20000);
+  window.addEventListener('focus',function(){dcatsExtensionUpdateController.poll();});
+  dcatsExtensionUpdateController.poll();window.setTimeout(function(){dcatsExtensionUpdateController.initialRequired();},5000);
+}
+window.addEventListener('load',startDcatsExtensionUpdate);
