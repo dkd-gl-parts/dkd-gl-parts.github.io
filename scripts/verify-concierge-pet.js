@@ -236,6 +236,11 @@ assert(!css.includes("is-travel-mirrored"), "Corrected Rinna rows must not be mi
 requireFragment(css, "@media (prefers-reduced-motion: reduce)");
 requireFragment(css, "@media print");
 requireFragment(css, "z-index: 190");
+requireFragment(runtime, 'root.classList.toggle("is-question-open", questionView)', "Only the open question view may raise the desktop sales consultation");
+assert(/\.dcats-concierge\.is-sales-context\.is-question-open\s*\{\s*z-index:\s*310;\s*\}/s.test(css), "Question overlay must be desktop-sales-only and below real modals");
+requireFragment(css, ".dcats-concierge.is-sales-context .dcats-concierge-panel:not(.is-question-view)", "Only settings, not the question view, should use the narrow left-side panel");
+requireFragment(css, ".dcats-concierge.is-sales-docked .dcats-concierge-panel:not(.is-question-view)", "Only settings should be parked above the left character strip");
+assert(!/\.is-sales-(?:context|docked)\s+\.dcats-concierge-panel(?:\.is-question-view)?\s*[,\{]/.test(css), "Sales layout must not force the consultation back into the narrow left column");
 requireFragment(css, "max-height: calc(100dvh");
 requireFragment(css, ".page-header .dcats-concierge-launcher.is-header-docked", "The launcher must live in the shared header instead of covering page content");
 requireFragment(css, "position: static;", "The header-docked launcher must participate in header layout");
