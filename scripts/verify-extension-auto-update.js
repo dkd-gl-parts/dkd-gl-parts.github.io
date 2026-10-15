@@ -8,4 +8,12 @@ const race=setup();race.receive('pending');race.setSafe(false);race.receive('app
 const forbidden=setup();forbidden.setAllowed(false);forbidden.receive('pending');assert.equal(forbidden.posts.at(-1).ready,false);forbidden.receive('invalid');assert.equal(forbidden.reloads,0);
 const initial=setup();initial.controller.initialRequired();assert.equal(initial.controller.snapshot().phase,'initial');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8'),app=fs.readFileSync(path.join(root,'app.js'),'utf8');assert(html.includes('dcats-extension-auto-update-status'));assert(html.includes('extension-update.js?v='));assert(app.includes('!isScreenActive(\'menu\')'));assert(app.includes('Date.now()-appUpdateLastActivityAt<30000'));assert(!source.includes('fetch('));assert(!source.includes('chrome.runtime.reload'));
-console.log('Extension auto activation: safe idle handshake, dirty text/check/editable, race deferral, one reload per version, verification and loop prevention passed');
+// Exercise the actual page gate: the boot screen retains aria-busy after hiding.
+const acorn=require('acorn'),gate=acorn.parse(app,{ecmaVersion:'latest'}).body.find(node=>node.type==='FunctionDeclaration'&&node.id.name==='isDcatsExtensionUpdateSafe');
+let busyNodes=[];const context={currentUser:{id:'synthetic-admin'},canManageSalesOrders:()=>true,isScreenActive:name=>name==='menu',isAppSafeForAutoReload:()=>true,appManualRefreshInProgress:false,appUpdateLastActivityAt:0,dcatsCompanyAccountBusy:false,dcatsCompanyIntegrationBusy:false,dcatsCompanyBackupBusy:false,dcatsExtensionManagerBusy:false,dcatsWorkspaceSupportController:null,window:{},document:{getElementById:()=>null,querySelectorAll:()=>busyNodes}};
+vm.createContext(context);vm.runInContext(app.slice(gate.start,gate.end),context);
+busyNodes=[{getClientRects:()=>[]}];assert.equal(context.isDcatsExtensionUpdateSafe(),true,'A hidden aria-busy boot screen must not block idle activation');
+busyNodes.push({getClientRects:()=>[{}]});assert.equal(context.isDcatsExtensionUpdateSafe(),false,'A visible busy screen must still block activation');
+busyNodes.pop();context.dcatsCompanyIntegrationBusy=true;assert.equal(context.isDcatsExtensionUpdateSafe(),false,'Native business work must remain protected even with a hidden boot screen');
+context.dcatsCompanyIntegrationBusy=false;context.currentUser=null;assert.equal(context.isDcatsExtensionUpdateSafe(),false,'Expired authentication must not allow activation');
+console.log('Extension auto activation: idle handshake, dirty fields, race/loop protection, hidden boot recovery, visible busy and Native/session guards passed');

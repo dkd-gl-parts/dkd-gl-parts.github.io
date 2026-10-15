@@ -7997,7 +7997,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1179";
+var APP_VERSION       = "v1.1.1180";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -58218,7 +58218,7 @@ function isDcatsExtensionUpdateSafe(){
   if(dcatsCompanyAccountBusy||dcatsCompanyIntegrationBusy||dcatsCompanyBackupBusy||dcatsExtensionManagerBusy||window.DcatsHanbaiohCompanyBridge?.isBusy?.())return false;
   var panel=document.getElementById('dcats-concierge-panel');if(panel&&panel.getClientRects().length)return false;
   if(dcatsWorkspaceSupportController&&dcatsWorkspaceSupportController.snapshot().busy)return false;
-  return !document.querySelector('[aria-busy="true"]');
+  return !Array.from(document.querySelectorAll('[aria-busy="true"]')).some(function(element){return element.getClientRects().length>0;});
 }
 function renderDcatsExtensionUpdate(state){
   var host=document.getElementById('dcats-extension-auto-update-status');if(!host)return;
