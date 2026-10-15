@@ -22,6 +22,9 @@
       description: "内容・再現手順・期待する動作",
       screen: "対象画面",
       image: "画像を添付（任意）",
+      pasteHint: "内容欄またはここを選び、Ctrl+V／⌘Vで画像を貼り付けられます。画像は1枚、送信前に確認・削除できます。",
+      imageReading: "画像を確認しています…",
+      imageReady: "画像を添付しました。内容を確認してから送信してください。",
       removeImage: "画像を外す",
       privacy:
         "送信前に内容と画像を確認してください。パスワード、個人情報、顧客・受注情報、機密価格は含めないでください。画像は管理者だけで共有し、AIには送信しません。",
@@ -87,6 +90,9 @@
       description: "Details, steps to reproduce, expected result",
       screen: "Screen",
       image: "Attach an image (optional)",
+      pasteHint: "Select the details field or here and paste one image with Ctrl+V / ⌘V. Review or remove it before sending.",
+      imageReading: "Checking the image…",
+      imageReady: "Image attached. Review it before sending.",
       removeImage: "Remove image",
       privacy:
         "Review the text and image before sending. Exclude passwords, personal or customer data, orders and confidential prices. Images are shared only with administrators and are not sent to AI.",
@@ -150,6 +156,9 @@
       description: "详细内容、重现步骤和预期结果",
       screen: "相关页面",
       image: "附加图片（可选）",
+      pasteHint: "选择内容栏或此处，按Ctrl+V／⌘V粘贴1张图片。发送前可以确认或移除。",
+      imageReading: "正在检查图片…",
+      imageReady: "已添加图片。请确认后再发送。",
       removeImage: "移除图片",
       privacy:
         "发送前请确认内容和图片。不要包含密码、个人或客户资料、订单及机密价格。图片仅与管理员共享，不会发送给AI。",
@@ -317,6 +326,7 @@
       disposed = false;
     var tokens = {},
       sending = false,
+      imageReading = false,
       updating = false,
       imageToken = 0;
     var imageData = "",
@@ -418,6 +428,7 @@
     var details = element("details");
     details.appendChild(element("summary", "compose"));
     var fromQuestion = button("fromQuestion", function () {
+      if (sending || !valid()) return;
       var draft = options.draft();
       if (!draft.question.trim()) {
         announce("draftEmpty", true);
@@ -428,6 +439,7 @@
         draft.question.trim() +
         (draft.answer ? "\n\n" + t("aiAnswer") + "\n" + draft.answer : "")
       ).slice(0, 5000);
+      if (draft.image) { clearImage(); showImage(draft.image); }
       details.open = true;
       title.focus();
     });
@@ -461,6 +473,9 @@
     form.appendChild(screen);
     form.appendChild(label("image", file));
     form.appendChild(file);
+    var pasteHint = element("p", "pasteHint", "dcats-concierge-image-paste");
+    pasteHint.tabIndex = 0;
+    form.appendChild(pasteHint);
     var preview = element("img", null, "dcats-request-preview");
     preview.hidden = true;
     preview.alt = t("image");
@@ -541,77 +556,57 @@
         n.disabled = sending;
       });
       submit.textContent = t(sending ? "sending" : "submit");
+      submit.disabled = sending || imageReading;
       if (saveButton) saveButton.disabled = updating;
     }
     function clearImage() {
       imageToken++;
+      imageReading = false;
       imageData = "";
       file.value = "";
       preview.removeAttribute("src");
       preview.hidden = true;
       remove.hidden = true;
+      syncBusy();
     }
-    async function encodeImage(selected) {
-      if (
-        !/^image\/(png|jpeg|webp)$/.test(selected.type) ||
-        selected.size > 10 * 1024 * 1024
-      )
-        throw new Error("invalid_image");
-      var sourceUrl = window.URL.createObjectURL(selected),
-        image = new window.Image();
-      try {
-        await new Promise(function (resolve, reject) {
-          image.onload = resolve;
-          image.onerror = reject;
-          image.src = sourceUrl;
-        });
-        if (
-          !image.naturalWidth ||
-          !image.naturalHeight ||
-          image.naturalWidth * image.naturalHeight > 40000000
-        )
-          throw new Error("invalid_image");
-        var scale = Math.min(
-            1,
-            1600 / image.naturalWidth,
-            1600 / image.naturalHeight,
-          ),
-          canvas = doc.createElement("canvas");
-        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
-        canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
-        canvas
-          .getContext("2d")
-          .drawImage(image, 0, 0, canvas.width, canvas.height);
-        var data = canvas.toDataURL("image/png").split(",")[1];
-        if (!data || data.length > Math.ceil(2097152 / 3) * 4)
-          throw new Error("image_large");
-        return data;
-      } finally {
-        window.URL.revokeObjectURL(sourceUrl);
-        image.src = "";
-      }
+    function showImage(data) {
+      imageData = data;
+      preview.src = "data:image/png;base64," + data;
+      preview.hidden = false;
+      remove.hidden = false;
+      announce("imageReady");
     }
     async function readImage(selected) {
+      if (sending || !valid()) return;
       clearImage();
       if (!selected) return;
       var token = ++imageToken;
+      imageReading = true;
+      syncBusy();
+      announce("imageReading");
       try {
-        var data = await encodeImage(selected);
+        var data = await window.DcatsConciergeImages.prepare(selected, form.ownerDocument);
         if (!valid() || token !== imageToken) return;
-        imageData = data;
-        preview.src = "data:image/png;base64," + data;
-        preview.hidden = false;
-        remove.hidden = false;
+        showImage(data);
       } catch (error) {
         if (valid() && token === imageToken)
           announce(
             error.message === "image_large" ? "imageLarge" : "invalidImage",
             true,
           );
+      } finally {
+        if (valid() && token === imageToken) { imageReading = false; syncBusy(); }
       }
     }
     file.addEventListener("change", function () {
       readImage(file.files && file.files[0]);
+    });
+    form.addEventListener("paste", function (event) {
+      if (sending || !valid()) return;
+      try {
+        var selected = window.DcatsConciergeImages.pastedFile(event);
+        if (selected) readImage(selected);
+      } catch (error) { announce("invalidImage", true); }
     });
     function captureDraftContext() {
       if (!draftContext) {
@@ -626,7 +621,7 @@
     });
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
-      if (sending || !valid()) return;
+      if (sending || imageReading || !valid()) return;
       if (!title.value.trim() || !description.value.trim()) {
         announce("required", true);
         return;

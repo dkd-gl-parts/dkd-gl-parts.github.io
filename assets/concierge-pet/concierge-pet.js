@@ -82,8 +82,18 @@
       aiQuestionLabel: "質問",
       aiPlaceholder: "例：受注データはどの画面で確認しますか？",
       aiAsk: "AIに質問する",
-      aiCost: "API料金：GPT-5.6 Luna 入力 US$0.20／100万トークン、出力 US$1.20／100万トークン（ChatGPTサブスクリプションとは別料金）。D-CATS追加料金：0円。",
-      aiPrivacy: "顧客名・受注内容・価格・個人情報・パスワード・APIキーは入力しないでください。送信するのは質問文・表示言語・現在の画面名だけです。",
+      aiPrivacy: "送信前に文章と画像を確認してください。顧客・受注情報、価格、個人情報、パスワード、APIキーは含めないでください。質問文・表示言語・画面名と選んだ画像だけを、送信時にOpenAIへ送ります。",
+      aiImage: "画像を添付（任意・1枚）",
+      aiImageHint: "質問欄またはここを選び、Ctrl+V／⌘Vで画像を貼り付けられます。PNG・JPEG・WebP、10MB以内。送信前に確認・削除できます。",
+      aiImageRemove: "画像を外す",
+      aiImageReading: "画像を確認しています。",
+      aiImageInvalid: "画像を読み込めません。PNG・JPEG・WebPの画像を1枚、10MB以内で選んでください。",
+      aiImageLarge: "画像が大きすぎます。範囲を絞った画像を選んでください。",
+      aiTokenTitle: "トークンメーター（直近の質問）",
+      aiTokenTotal: "{total} トークン",
+      aiTokenParts: "入力 {input} ／ 出力 {output}",
+      aiTokenHint: "APIから返された直近の質問のトークン内訳です。契約の残量・残高ではありません。",
+      aiTokenUnknown: "トークン数は取得できませんでした。",
       aiIdle: "まだ質問していません。",
       aiWorking: "回答を確認しています。",
       aiDone: "回答しました。操作は実行していません。",
@@ -95,7 +105,6 @@
       aiProviderFailed: "AIから回答を取得できませんでした。時間をおいてもう一度お試しください。",
       aiFailed: "AIに接続できませんでした。時間をおいてもう一度お試しください。",
       aiGuide: "案内先：{screen} — {reason}",
-      aiUsage: "今回の使用量：入力{input}／出力{output}トークン、推定API料金 US${cost}",
       bridgeLegend: "Windows業務連携（管理者テスト）",
       bridgeCheck: "Windows連携を確認",
       bridgeHelp: "連携キューの確認、CSV事前検査、固定フォルダー表示、販売王25の起動を利用できます。承認済み端末の単回ログインは下の管理者テスト欄から行います。端末申請だけではログインやCSV取込は有効になりません。",
@@ -265,8 +274,18 @@
       aiQuestionLabel: "Question",
       aiPlaceholder: "Example: Which screen shows sales orders?",
       aiAsk: "Ask AI",
-      aiCost: "API pricing: GPT-5.6 Luna US$0.20/1M input tokens and US$1.20/1M output tokens (separate from ChatGPT subscriptions). Additional D-CATS charge: \u00a50.",
-      aiPrivacy: "Do not enter customer names, order details, prices, personal data, passwords, or API keys. Only the question, display language, and current screen name are sent.",
+      aiPrivacy: "Review the text and image before sending. Exclude customer or order data, prices, personal data, passwords and API keys. Only your question, language, screen name and selected image are sent to OpenAI when you submit.",
+      aiImage: "Attach an image (optional, one image)",
+      aiImageHint: "Select the question field or here and paste an image with Ctrl+V / ⌘V. PNG, JPEG or WebP up to 10 MB. Review or remove it before sending.",
+      aiImageRemove: "Remove image",
+      aiImageReading: "Checking the image.",
+      aiImageInvalid: "Choose one PNG, JPEG or WebP image up to 10 MB.",
+      aiImageLarge: "The image is too large. Select a smaller area.",
+      aiTokenTitle: "Token meter (latest question)",
+      aiTokenTotal: "{total} tokens",
+      aiTokenParts: "Input {input} / Output {output}",
+      aiTokenHint: "Tokens returned by the API for the latest question, not your account balance or remaining quota.",
+      aiTokenUnknown: "Token count is unavailable.",
       aiIdle: "No question has been asked yet.",
       aiWorking: "Checking the answer.",
       aiDone: "Answered. No action was performed.",
@@ -278,7 +297,6 @@
       aiProviderFailed: "AI could not return an answer. Please try again later.",
       aiFailed: "AI could not be reached. Please try again later.",
       aiGuide: "Suggested screen: {screen} — {reason}",
-      aiUsage: "This request: {input} input / {output} output tokens; estimated API cost US${cost}",
       bridgeLegend: "Windows integration (admin pilot)",
       bridgeCheck: "Check Windows integration",
       bridgeHelp: "Check the queue, validate CSV files, open the fixed folder or launch Sales King 25. Approved devices can use the administrator test sign-in below. Device enrollment alone does not enable sign-in or CSV import.",
@@ -447,8 +465,18 @@
       aiQuestionLabel: "问题",
       aiPlaceholder: "示例：在哪个画面确认订单数据？",
       aiAsk: "向AI提问",
-      aiCost: "API费用：GPT-5.6 Luna输入每100万tokens为US$0.20，输出为US$1.20（与ChatGPT订阅分开计费）。D-CATS额外费用：0日元。",
-      aiPrivacy: "请勿输入客户姓名、订单内容、价格、个人信息、密码或API密钥。仅发送问题、显示语言和当前画面名称。",
+      aiPrivacy: "发送前请检查文字和图片。请勿包含客户或订单信息、价格、个人信息、密码或API密钥。仅在提交时向OpenAI发送问题、语言、页面名称和所选图片。",
+      aiImage: "添加图片（可选，1张）",
+      aiImageHint: "选择问题栏或此处，按Ctrl+V／⌘V粘贴图片。支持PNG、JPEG、WebP，10MB以内。发送前可以确认或移除。",
+      aiImageRemove: "移除图片",
+      aiImageReading: "正在检查图片。",
+      aiImageInvalid: "请选择1张10MB以内的PNG、JPEG或WebP图片。",
+      aiImageLarge: "图片过大，请缩小截图范围。",
+      aiTokenTitle: "Token计量表（最近的问题）",
+      aiTokenTotal: "{total} tokens",
+      aiTokenParts: "输入 {input} ／ 输出 {output}",
+      aiTokenHint: "最近问题的API返回token明细，不代表账户余额或剩余额度。",
+      aiTokenUnknown: "无法取得token数量。",
       aiIdle: "尚未提问。",
       aiWorking: "正在确认回答。",
       aiDone: "回答完成。未执行任何操作。",
@@ -460,7 +488,6 @@
       aiProviderFailed: "无法从AI取得回答，请稍后重试。",
       aiFailed: "无法连接AI，请稍后重试。",
       aiGuide: "建议画面：{screen} — {reason}",
-      aiUsage: "本次用量：输入{input}／输出{output} tokens，预估API费用 US${cost}",
       bridgeLegend: "Windows业务联动（管理员测试）",
       bridgeCheck: "检查Windows联动",
       bridgeHelp: "可检查队列、预检CSV、打开固定文件夹和启动销售王25。已批准设备可使用下方管理员测试登录。设备申请本身不会启用登录或CSV导入。",
@@ -614,6 +641,8 @@
   var aiAnswer;
   var aiGuide;
   var aiUsage;
+  var aiImageFile, aiImagePreview, aiImageRemove;
+  var aiImageData = "", aiImageToken = 0, aiImagePending = false, aiLastUsage = null;
   var requestUi;
   var bridgeCard;
   var bridgeButton;
@@ -769,6 +798,7 @@
     aiRequestPending = false;
     aiStatusState = "aiIdle";
     if (aiQuestionInput) aiQuestionInput.value = "";
+    clearAiImage();
     clearAiResult();
     if (requestUi) { requestUi.destroy(); requestUi = null; }
     settingsOwner = owner;
@@ -904,14 +934,36 @@
     aiQuestionInput.maxLength = 800;
     aiQuestionInput.rows = 4;
     aiQuestionInput.setAttribute("autocomplete", "off");
-    aiQuestionInput.setAttribute("aria-describedby", "dcats-concierge-ai-help dcats-concierge-ai-privacy dcats-concierge-ai-cost");
+    aiQuestionInput.setAttribute("aria-describedby", "dcats-concierge-ai-help dcats-concierge-ai-privacy dcats-concierge-ai-image-hint");
     aiAskButton = createCopyElement("button", "dcats-concierge-ai-button", "aiAsk");
     aiAskButton.type = "button";
-    aiAskButton.setAttribute("aria-describedby", "dcats-concierge-ai-help dcats-concierge-ai-privacy dcats-concierge-ai-cost dcats-concierge-ai-status");
+    aiAskButton.setAttribute("aria-describedby", "dcats-concierge-ai-help dcats-concierge-ai-privacy dcats-concierge-ai-status");
     var aiPrivacy = createCopyElement("p", "dcats-concierge-ai-privacy", "aiPrivacy");
     aiPrivacy.id = "dcats-concierge-ai-privacy";
-    var aiCost = createCopyElement("p", "dcats-concierge-ai-cost", "aiCost");
-    aiCost.id = "dcats-concierge-ai-cost";
+    aiImageFile = createElement("input", "dcats-concierge-ai-image-file");
+    aiImageFile.id = "dcats-concierge-ai-image-file";
+    aiImageFile.type = "file";
+    aiImageFile.accept = "image/png,image/jpeg,image/webp";
+    var aiImageLabel = createCopyElement("label", "dcats-concierge-ai-label", "aiImage");
+    aiImageLabel.setAttribute("for", aiImageFile.id);
+    var aiImageHint = createCopyElement("p", "dcats-concierge-image-paste", "aiImageHint");
+    aiImageHint.id = "dcats-concierge-ai-image-hint";
+    aiImageHint.setAttribute("tabindex", "0");
+    aiImageFile.setAttribute("aria-describedby", aiImageHint.id);
+    aiImagePreview = createElement("img", "dcats-concierge-image-preview");
+    aiImagePreview.hidden = true;
+    aiImageRemove = createCopyElement("button", "dcats-concierge-image-remove", "aiImageRemove");
+    aiImageRemove.type = "button";
+    aiImageRemove.hidden = true;
+    aiImageFile.addEventListener("change", function () { readAiImage(aiImageFile.files && aiImageFile.files[0]); });
+    aiImageRemove.addEventListener("click", function () { clearAiImage(); updateAiStatus(); });
+    aiCard.addEventListener("paste", function (event) {
+      if (aiRequestPending || !isSystemAdminSession()) return;
+      try {
+        var selected = window.DcatsConciergeImages.pastedFile(event);
+        if (selected) readAiImage(selected);
+      } catch (error) { aiStatusState = "aiImageInvalid"; updateAiStatus(); }
+    });
     aiStatus = createElement("p", "dcats-concierge-ai-status");
     aiStatus.id = "dcats-concierge-ai-status";
     aiStatus.setAttribute("role", "status");
@@ -920,7 +972,7 @@
     aiAnswer.hidden = true;
     aiGuide = createElement("p", "dcats-concierge-ai-guide");
     aiGuide.hidden = true;
-    aiUsage = createElement("p", "dcats-concierge-ai-usage");
+    aiUsage = createElement("div", "dcats-concierge-ai-usage");
     aiUsage.hidden = true;
     var aiFeedback = createElement("div", "dcats-concierge-ai-feedback");
     aiFeedback.appendChild(aiStatus);
@@ -931,10 +983,14 @@
     aiCard.appendChild(aiHelp);
     aiCard.appendChild(aiQuestionLabel);
     aiCard.appendChild(aiQuestionInput);
+    aiCard.appendChild(aiImageLabel);
+    aiCard.appendChild(aiImageFile);
+    aiCard.appendChild(aiImageHint);
+    aiCard.appendChild(aiImagePreview);
+    aiCard.appendChild(aiImageRemove);
     aiCard.appendChild(aiAskButton);
     aiCard.appendChild(aiFeedback);
     aiCard.appendChild(aiPrivacy);
-    aiCard.appendChild(aiCost);
 
     bridgeCard = createElement("section", "dcats-concierge-bridge-card");
     bridgeCard.setAttribute("aria-labelledby", "dcats-concierge-bridge-title");
@@ -1291,7 +1347,67 @@
     floatingStatus.hidden = !resolvedStatusKey;
   }
 
+  function clearAiImage() {
+    aiImageToken += 1;
+    aiImagePending = false;
+    aiImageData = "";
+    if (aiImageFile) aiImageFile.value = "";
+    if (aiImagePreview) { aiImagePreview.removeAttribute("src"); aiImagePreview.hidden = true; }
+    if (aiImageRemove) aiImageRemove.hidden = true;
+    if (aiStatusState === "aiImageReading") aiStatusState = "aiIdle";
+  }
+
+  async function readAiImage(selected) {
+    if (aiRequestPending || !isSystemAdminSession()) return;
+    clearAiImage();
+    if (!selected) { updateAiStatus(); return; }
+    var token = ++aiImageToken, owner = currentSettingsOwner();
+    aiImagePending = true;
+    aiStatusState = "aiImageReading";
+    updateAiStatus();
+    try {
+      var data = await window.DcatsConciergeImages.prepare(selected, aiCard.ownerDocument);
+      if (token !== aiImageToken || owner !== currentSettingsOwner() || !isSystemAdminSession()) return;
+      aiImageData = data;
+      aiImagePreview.src = "data:image/png;base64," + data;
+      aiImagePreview.alt = copy("aiImage");
+      aiImagePreview.hidden = false;
+      aiImageRemove.hidden = false;
+      aiStatusState = "aiIdle";
+    } catch (error) {
+      if (token !== aiImageToken || owner !== currentSettingsOwner() || !isSystemAdminSession()) return;
+      aiStatusState = error && error.message === "image_large" ? "aiImageLarge" : "aiImageInvalid";
+    } finally {
+      if (token === aiImageToken) { aiImagePending = false; updateAiStatus(); }
+    }
+  }
+
+  function renderAiUsage(usage) {
+    if (!aiUsage) return;
+    while (aiUsage.children.length) aiUsage.removeChild(aiUsage.children[0]);
+    aiUsage.textContent = "";
+    aiUsage.title = copy("aiTokenHint");
+    aiUsage.appendChild(createElement("strong", "", copy("aiTokenTitle")));
+    if (!usage || !Number.isFinite(usage.input_tokens) || !Number.isFinite(usage.output_tokens) || usage.input_tokens < 0 || usage.output_tokens < 0) {
+      aiUsage.appendChild(createElement("span", "", copy("aiTokenUnknown")));
+    } else {
+      var input = Math.floor(usage.input_tokens), output = Math.floor(usage.output_tokens), total = input + output;
+      aiUsage.appendChild(createElement("span", "dcats-token-total", copy("aiTokenTotal", { total: total })));
+      var bar = createElement("meter", "dcats-token-bar");
+      bar.setAttribute("aria-label", copy("aiTokenParts", { input: input, output: output }));
+      bar.setAttribute("aria-valuetext", copy("aiTokenParts", { input: input, output: output }));
+      bar.min = 0;
+      bar.max = Math.max(1, total);
+      bar.value = input;
+      bar.classList.toggle("is-empty", total === 0);
+      aiUsage.appendChild(bar);
+      aiUsage.appendChild(createElement("span", "dcats-token-parts", copy("aiTokenParts", { input: input, output: output })));
+    }
+    aiUsage.hidden = false;
+  }
+
   function clearAiResult() {
+    aiLastUsage = null;
     if (aiAnswer) {
       aiAnswer.textContent = "";
       aiAnswer.hidden = true;
@@ -1308,14 +1424,17 @@
 
   function updateAiStatus() {
     if (!aiAskButton || !aiQuestionInput || !aiStatus) return;
-    aiAskButton.disabled = aiRequestPending;
+    aiAskButton.disabled = aiRequestPending || aiImagePending;
     aiAskButton.textContent = copy(aiRequestPending ? "aiWorking" : "aiAsk");
     aiAskButton.setAttribute("aria-busy", String(aiRequestPending));
     aiQuestionInput.disabled = aiRequestPending;
+    if (aiImageFile) aiImageFile.disabled = aiRequestPending;
+    if (aiImageRemove) aiImageRemove.disabled = aiRequestPending;
     aiQuestionInput.placeholder = copy("aiPlaceholder");
     aiStatus.textContent = copy(aiStatusState);
     aiStatus.classList.toggle("is-success", aiStatusState === "aiDone");
-    aiStatus.classList.toggle("is-error", ["aiInvalidQuestion", "aiNotConfigured", "aiConfigurationInvalid", "aiForbidden", "aiRateLimited", "aiProviderFailed", "aiFailed"].indexOf(aiStatusState) >= 0);
+    aiStatus.classList.toggle("is-error", ["aiImageInvalid", "aiImageLarge", "aiInvalidQuestion", "aiNotConfigured", "aiConfigurationInvalid", "aiForbidden", "aiRateLimited", "aiProviderFailed", "aiFailed"].indexOf(aiStatusState) >= 0);
+    if (aiLastUsage) renderAiUsage(aiLastUsage);
   }
 
   function revealAiFeedback() {
@@ -1339,7 +1458,7 @@
           before: aiCard.nextSibling,
           context: function () { return { owner: currentSettingsOwner(), admin: isSystemAdminSession(), language: activeLanguage(), screenId: currentAiScreenId(window.DcatsConciergeAiApi) }; },
           api: function () { return window.DcatsConciergeRequestApi; },
-          draft: function () { return { question: aiQuestionInput.value, answer: aiAnswer.hidden ? "" : aiAnswer.textContent }; }
+          draft: function () { return { question: aiQuestionInput.value, answer: aiAnswer.hidden ? "" : aiAnswer.textContent, image: aiImageData }; }
         });
       }
       if (requestUi) requestUi.sync();
@@ -1350,6 +1469,7 @@
     aiRequestPending = false;
     aiStatusState = "aiIdle";
     if (aiQuestionInput) aiQuestionInput.value = "";
+    clearAiImage();
     clearAiResult();
     if (requestUi) { requestUi.destroy(); requestUi = null; }
     if (aiCard.parentElement) aiCard.parentElement.removeChild(aiCard);
@@ -1359,6 +1479,7 @@
     var code = String(error && error.message || "");
     if (Number(error && error.status) === 401 || Number(error && error.status) === 403) return "aiForbidden";
     if (code.indexOf("forbidden") >= 0 || code.indexOf("authorization") >= 0 || code.indexOf("system_admin_required") >= 0) return "aiForbidden";
+    if (code.indexOf("invalid_image") >= 0 || code.indexOf("body_too_large") >= 0) return "aiImageInvalid";
     if (code.indexOf("invalid_") >= 0) return "aiInvalidQuestion";
     if (code.indexOf("ai_not_configured") >= 0 || code.indexOf("missing_env") >= 0) return "aiNotConfigured";
     if (code.indexOf("configuration_invalid") >= 0 || code.indexOf("service_not_configured") >= 0) return "aiConfigurationInvalid";
@@ -1374,7 +1495,7 @@
   }
 
   async function runAiRequest() {
-    if (aiRequestPending || !isSystemAdminSession()) return;
+    if (aiRequestPending || aiImagePending || !isSystemAdminSession()) return;
     var question = String(aiQuestionInput && aiQuestionInput.value || "").trim();
     if (!question || question.length > 800) {
       aiStatusState = "aiInvalidQuestion";
@@ -1396,14 +1517,15 @@
     clearAiResult();
     updateAiStatus();
     revealAiFeedback();
-    var requestToken = ++aiRequestToken;
+    var requestToken = ++aiRequestToken, owner = currentSettingsOwner();
     try {
       var result = await api.ask({
         question: question,
         language: activeLanguage(),
-        screenId: currentAiScreenId(api)
+        screenId: currentAiScreenId(api),
+        image: aiImageData || undefined
       });
-      if (requestToken !== aiRequestToken || !isSystemAdminSession()) return;
+      if (requestToken !== aiRequestToken || owner !== currentSettingsOwner() || !isSystemAdminSession()) return;
       if (!result || result.error) throw result && result.error || new Error("ai_request_failed");
       var data = result.data;
       if (!data || data.ok !== true || data.performed_action !== false || typeof data.answer !== "string" || !data.answer.trim()) {
@@ -1415,12 +1537,8 @@
         aiGuide.textContent = copy("aiGuide", { screen: data.guide.screen_label, reason: data.guide.reason });
         aiGuide.hidden = false;
       }
-      var usage = data.usage || {};
-      var inputTokens = Math.max(0, Number(usage.input_tokens) || 0);
-      var outputTokens = Math.max(0, Number(usage.output_tokens) || 0);
-      var estimatedCost = Math.max(0, Number(data.estimated_cost_usd) || 0).toFixed(8);
-      aiUsage.textContent = copy("aiUsage", { input: inputTokens, output: outputTokens, cost: estimatedCost });
-      aiUsage.hidden = false;
+      aiLastUsage = data.usage || {};
+      renderAiUsage(aiLastUsage);
       aiStatusState = "aiDone";
     } catch (error) {
       if (requestToken !== aiRequestToken) return;

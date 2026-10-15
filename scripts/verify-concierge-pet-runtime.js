@@ -58,6 +58,7 @@ class FakeElement {
     this.dataset = {};
     this.attributes = new Map();
     this.listeners = new Map();
+    this.style = {};
     this.classList = new FakeClassList(this);
     this.hidden = false;
     this.id = "";
@@ -110,6 +111,7 @@ class FakeElement {
   setAttribute(name, value) { this.attributes.set(name, String(value)); }
   getAttribute(name) { return this.attributes.has(name) ? this.attributes.get(name) : null; }
   hasAttribute(name) { return this.attributes.has(name); }
+  removeAttribute(name) { this.attributes.delete(name); }
   addEventListener(type, listener) {
     const list = this.listeners.get(type) || [];
     list.push(listener);
@@ -507,7 +509,9 @@ assert(JSON.stringify(aiRequests[0]) === JSON.stringify({ question: "受注デ�
 assert(aiStatus.textContent === "回答しました。操作は実行していません。" && aiStatus.classList.contains("is-success"), "AI success status did not state that no action was performed");
 assert(aiAnswer.textContent === "受注・出荷管理画面で確認できます。" && !aiAnswer.hidden, "AI answer was not presented as text");
 assert(aiGuide.textContent.includes("案内先：受注・出荷管理") && !aiGuide.hidden, "Fixed-screen guidance was not presented");
-assert(aiUsage.textContent.includes("入力100／出力50トークン") && aiUsage.textContent.includes("US$0.00008000"), "Per-request usage and estimated API cost were not presented");
+assert(aiUsage.children.some(node => node.textContent === "150 トークン") &&
+  aiUsage.children.some(node => node.getAttribute("aria-label") === "入力 100 ／ 出力 50"),
+  "Actual per-question input/output tokens must appear as an accessible meter, not a cost estimate");
 const originalAiResponseFactory = aiResponseFactory;
 let finishPendingAi;
 aiResponseFactory = () => new Promise(resolve => { finishPendingAi = resolve; });
@@ -539,6 +543,46 @@ const beforeEmptyAi = aiRequests.length;
 dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
 assert(aiRequests.length === beforeEmptyAi && aiStatus.classList.contains("is-error"), "Empty question must show feedback without an API request");
 aiResponseFactory = originalAiResponseFactory;
+// Synthetic File/paste boundaries: never read or change the OS clipboard.
+let finishImage;
+windowObject.DcatsConciergeImages = {
+  pastedFile: event => event.syntheticFile || null,
+  prepare: () => new Promise(resolve => { finishImage = resolve; })
+};
+const aiPreview = byClass("dcats-concierge-image-preview")[0];
+const aiImageRemove = byClass("dcats-concierge-image-remove")[0];
+const requestsBeforeImage = aiRequests.length;
+dispatch(aiCard.listeners, "paste", { syntheticFile: { type: "image/png" } });
+assert(aiAskButton.disabled, "Submission must wait until image preparation finishes");
+dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
+assert(aiRequests.length === requestsBeforeImage, "Image preparation must not send an incomplete question");
+finishImage("aGVsbG8=");
+await new Promise(resolve => setImmediate(resolve));
+assert(!aiPreview.hidden && !aiAskButton.disabled && aiRequests.length === requestsBeforeImage,
+  "Paste must preview locally without an API request");
+aiQuestionInput.value = "この表示について教えて";
+dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
+await new Promise(resolve => setImmediate(resolve));
+assert(aiRequests.at(-1).image === "aGVsbG8=", "Explicit question submit lost the selected image");
+dispatch(aiImageRemove.listeners, "click", { target: aiImageRemove });
+assert(aiPreview.hidden, "Remove image did not clear the preview");
+dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
+await new Promise(resolve => setImmediate(resolve));
+assert(aiRequests.at(-1).image === undefined, "Removed image was sent again");
+windowObject.DcatsConciergeImages.prepare = async () => { throw new Error("invalid_image"); };
+dispatch(aiCard.listeners, "paste", { syntheticFile: { type: "image/svg+xml" } });
+await new Promise(resolve => setImmediate(resolve));
+assert(aiStatus.textContent.includes("画像を読み込めません") && !aiAskButton.disabled, "Invalid image must be recoverable");
+windowObject.DcatsConciergeImages.prepare = () => new Promise(resolve => { finishImage = resolve; });
+dispatch(aiCard.listeners, "paste", { syntheticFile: { type: "image/png" } });
+const imageOwner = windowObject.currentUser;
+windowObject.currentUser = { id: "other-admin" };
+notifyObservers();
+finishImage("aGVsbG8=");
+await new Promise(resolve => setImmediate(resolve));
+assert(aiPreview.hidden && aiQuestionInput.value === "", "An old owner's image or question survived account change");
+windowObject.currentUser = imageOwner;
+notifyObservers();
 dispatch(panelClose.listeners, "click", { target: panelClose });
 const bridgeCard = byClass("dcats-concierge-bridge-card")[0];
 const bridgeButton = byClass("dcats-concierge-bridge-button")[0];
@@ -1195,7 +1239,7 @@ activeScreen.id = "screen-login";
 notifyObservers();
 assert(root.hidden, "Concierge must be hidden on the login screen");
 
-console.log("Concierge runtime behavior verification passed (system-admin AI guidance and cost disclosure, system-admin gate, always-on-top floating display, zero-cost disclosure, pointer-captured drag and viewport clamping, 5 movement modes, move-stop cycle, 6 distinct one-shot stop gestures, one sprite, user-scoped preferences, i18n, gaze, card avoidance, scroll-stable viewport revalidation, reduced motion, focus, and inactive cancellation).");
+console.log("Concierge runtime behavior verification passed (system-admin AI guidance, explicit image preview/remove/send and expiry, token meter, system-admin gate, always-on-top floating display, pointer-captured drag and viewport clamping, 5 movement modes, move-stop cycle, 6 distinct one-shot stop gestures, one sprite, user-scoped preferences, i18n, gaze, card avoidance, scroll-stable viewport revalidation, reduced motion, focus, and inactive cancellation).");
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;
