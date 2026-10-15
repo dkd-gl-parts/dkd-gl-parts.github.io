@@ -614,6 +614,7 @@
   var aiAnswer;
   var aiGuide;
   var aiUsage;
+  var requestUi;
   var bridgeCard;
   var bridgeButton;
   var bridgeSalesFileInput;
@@ -764,6 +765,12 @@
     var owner = currentSettingsOwner();
     if (owner === settingsOwner) return;
     clearBackupEnrollment();
+    aiRequestToken += 1;
+    aiRequestPending = false;
+    aiStatusState = "aiIdle";
+    if (aiQuestionInput) aiQuestionInput.value = "";
+    clearAiResult();
+    if (requestUi) { requestUi.destroy(); requestUi = null; }
     settingsOwner = owner;
     settings = readSettings(owner);
     if (root) applySettings();
@@ -1311,6 +1318,15 @@
     if (!aiCard || !panelBody || !conciergeHelp) return;
     if (systemAdmin) {
       if (!aiCard.parentElement) panelBody.insertBefore(aiCard, bridgeCard && bridgeCard.parentElement ? bridgeCard : conciergeHelp);
+      if (!requestUi && window.DcatsConciergeRequestsUi) {
+        requestUi = window.DcatsConciergeRequestsUi.mount(panelBody, {
+          before: aiCard.nextSibling,
+          context: function () { return { owner: currentSettingsOwner(), admin: isSystemAdminSession(), language: activeLanguage(), screenId: currentAiScreenId(window.DcatsConciergeAiApi) }; },
+          api: function () { return window.DcatsConciergeRequestApi; },
+          draft: function () { return { question: aiQuestionInput.value, answer: aiAnswer.hidden ? "" : aiAnswer.textContent }; }
+        });
+      }
+      if (requestUi) requestUi.sync();
       updateAiStatus();
       return;
     }
@@ -1319,6 +1335,7 @@
     aiStatusState = "aiIdle";
     if (aiQuestionInput) aiQuestionInput.value = "";
     clearAiResult();
+    if (requestUi) { requestUi.destroy(); requestUi = null; }
     if (aiCard.parentElement) aiCard.parentElement.removeChild(aiCard);
   }
 
@@ -2189,6 +2206,7 @@
     syncPanelPresentation();
     updateFloatingControls();
     updateAiStatus();
+    if (requestUi) requestUi.sync();
     updateBridgeStatus();
   }
 

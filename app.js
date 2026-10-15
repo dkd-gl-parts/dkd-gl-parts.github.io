@@ -8623,6 +8623,29 @@ window.DcatsConciergeAiApi = Object.freeze({
   ask: askConciergeAi,
   allowedScreens: CONCIERGE_AI_SCREEN_IDS
 });
+async function sendConciergeRequest(command) {
+  if (!currentUser || !isSystemAdmin()) return { data: null, error: new Error("system_admin_required") };
+  var owner = currentUser.id;
+  if (!command || ["create", "list", "detail", "update", "image", "attach"].indexOf(command.action) < 0) {
+    return { data: null, error: new Error("invalid_request") };
+  }
+  var result = await sb.functions.invoke("concierge-requests", { body: command });
+  if (!currentUser || currentUser.id !== owner || !isSystemAdmin()) return { data: null, error: new Error("system_admin_required") };
+  if (result && result.error) {
+    var code = "request_failed";
+    try {
+      var context = result.error.context;
+      if (context && typeof context.clone === "function") context = context.clone();
+      if (context && typeof context.json === "function") {
+        var details = await context.json();
+        if (details && typeof details.error === "string") code = details.error;
+      }
+    } catch (error) {}
+    return { data: null, error: new Error(code) };
+  }
+  return result;
+}
+window.DcatsConciergeRequestApi = Object.freeze({ send: sendConciergeRequest });
 function canUseInstallApp() {
   return !!currentUser && !!userProfile;
 }
