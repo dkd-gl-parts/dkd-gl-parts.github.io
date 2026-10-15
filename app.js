@@ -177,8 +177,8 @@ var TRANSLATIONS = {
     shipping_service_visibility_updated: "配送サービスの表示を更新しました。",
     shipping_b2_contract_settings: "B2契約設定",
     shipping_add: "送料を登録",
-    shipping_print: "送料一覧を印刷",
-    shipping_print_scope: "有効な送料を全都道府県・全サイズでA4一枚に印刷します。",
+    shipping_print: "送料一覧を印刷（社内用）",
+    shipping_print_scope: "社内用の送料一覧として、有効な送料を全都道府県・全サイズでA4一枚に印刷します。",
     shipping_print_unavailable: "送料の読込完了後、有効な送料がある状態で印刷してください。",
     shipping_print_invalid: "送料一覧を作成できませんでした。料金・都道府県・サイズの登録内容を確認してください。",
     shipping_print_popup_blocked: "印刷画面を開けませんでした。ポップアップを許可してください。",
@@ -2800,8 +2800,8 @@ var TRANSLATIONS = {
     shipping_service_visibility_updated: "Delivery service visibility was updated.",
     shipping_b2_contract_settings: "B2 Contract Settings",
     shipping_add: "Add Shipping Rate",
-    shipping_print: "Print Shipping Rates",
-    shipping_print_scope: "Print active rates for all prefectures and sizes on one A4 page.",
+    shipping_print: "Print Shipping Rates (Internal)",
+    shipping_print_scope: "For internal use. Print active rates for all prefectures and sizes on one A4 page.",
     shipping_print_unavailable: "Wait for rates to load and ensure there are active rates before printing.",
     shipping_print_invalid: "Could not build the shipping list. Review rates, prefectures and package sizes.",
     shipping_print_popup_blocked: "Could not open the print window. Allow pop-ups and try again.",
@@ -5367,8 +5367,8 @@ var TRANSLATIONS = {
     shipping_service_visibility_updated: "配送服务显示设置已更新。",
     shipping_b2_contract_settings: "B2合同设置",
     shipping_add: "登记运费",
-    shipping_print: "打印运费一览",
-    shipping_print_scope: "将全部都道府县和尺寸的有效运费打印在一张A4纸上。",
+    shipping_print: "打印运费一览（内部使用）",
+    shipping_print_scope: "内部使用。将全部都道府县和尺寸的有效运费打印在一张A4纸上。",
     shipping_print_unavailable: "请等待运费读取完成，并确认有有效运费后再打印。",
     shipping_print_invalid: "无法生成运费一览。请检查运费、都道府县和尺寸的登记内容。",
     shipping_print_popup_blocked: "无法打开打印画面。请允许弹出窗口后重试。",
@@ -7997,7 +7997,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1178";
+var APP_VERSION       = "v1.1.1179";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
