@@ -21,8 +21,8 @@ function requireText(haystack, needle) {
   '"customer_order_core_charge_refundable_status"'
 ].forEach((needle) => requireText(source, needle));
 
-requireText(html, 'content="v1.1.1157"');
-requireText(source, 'var APP_VERSION       = "v1.1.1157"');
+requireText(html, 'content="v1.1.1158"');
+requireText(source, 'var APP_VERSION       = "v1.1.1158"');
 
 if (source.includes("この返却対象に請求済みのコア代金はありません。")) {
   throw new Error("Unbilled returns must not render a disabled refund workflow.");

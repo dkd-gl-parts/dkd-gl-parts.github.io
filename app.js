@@ -272,6 +272,12 @@ var TRANSLATIONS = {
     shipping_document_outbound_service: "商品発送便",
     shipping_document_delivery_preference: "お届け希望",
     shipping_document_shipment_items: "出荷商品",
+    shipping_document_order_progress: "出荷状況",
+    shipping_document_sales_progress: "売上登録",
+    shipping_document_b2_redownloading: "再ダウンロードしています...",
+    shipping_document_temporary_settings: "今回の設定",
+    shipping_document_return_settings: "返送方法設定",
+    shipping_document_issuance_guidance: "用紙・発行方法と状態を確認し、必要な帳票を発行します。",
     shipping_document_no_shipment_items: "出荷商品がありません。",
     shipping_document_maker_part_unregistered: "メーカー品番未登録",
     shipping_document_genuine_part_number: "純正品番",
@@ -2819,6 +2825,12 @@ var TRANSLATIONS = {
     shipping_document_outbound_service: "Outbound Shipping",
     shipping_document_delivery_preference: "Delivery Request",
     shipping_document_shipment_items: "Shipment Items",
+    shipping_document_order_progress: "Shipping Status",
+    shipping_document_sales_progress: "Sales Registration",
+    shipping_document_b2_redownloading: "Downloading again...",
+    shipping_document_temporary_settings: "This Issuance",
+    shipping_document_return_settings: "Return Method Settings",
+    shipping_document_issuance_guidance: "Check the format, issuance method and status, then issue the required documents.",
     shipping_document_no_shipment_items: "No shipment items are registered.",
     shipping_document_maker_part_unregistered: "Manufacturer part number not registered",
     shipping_document_genuine_part_number: "Genuine Part Number",
@@ -5310,6 +5322,12 @@ var TRANSLATIONS = {
     shipping_document_outbound_service: "商品发货方式",
     shipping_document_delivery_preference: "送货要求",
     shipping_document_shipment_items: "发货商品",
+    shipping_document_order_progress: "出货状态",
+    shipping_document_sales_progress: "销售登记",
+    shipping_document_b2_redownloading: "正在重新下载...",
+    shipping_document_temporary_settings: "本次设置",
+    shipping_document_return_settings: "返送方式设置",
+    shipping_document_issuance_guidance: "确认纸张、发行方式和状态后，发行所需单据。",
     shipping_document_no_shipment_items: "没有已登记的发货商品。",
     shipping_document_maker_part_unregistered: "未登记制造商品号",
     shipping_document_genuine_part_number: "原厂品号",
@@ -7769,7 +7787,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1157";
+var APP_VERSION       = "v1.1.1158";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -8164,6 +8182,7 @@ var shippingDocumentBatchSelectionDirty = false;
 var shippingDocumentTemporaryOutputs = {};
 var shippingDocumentB2ReissueReasonKey = "";
 var shippingDocumentB2ReissueBusy = false;
+var shippingDocumentB2HistoryDownloading = false;
 var shippingDocumentPrintStatusTimer = null;
 var SHIPPING_DOCUMENT_PRINT_STATUS_POLL_MS = 1000;
 var SHIPPING_DOCUMENT_B2_REISSUE_REASONS = {
@@ -10982,6 +11001,7 @@ async function doLogout() {
   shippingDocumentTemporaryOutputs = {};
   shippingDocumentB2ReissueReasonKey = "";
   shippingDocumentB2ReissueBusy = false;
+  shippingDocumentB2HistoryDownloading = false;
   coreReturnManagementRows = [];
   coreReturnManagementSelectedId = null;
   coreReturnManagementDetail = null;
@@ -17857,6 +17877,7 @@ async function enterShippingDocumentMgmt(options) {
   shippingDocumentTemporaryOutputs = {};
   shippingDocumentB2ReissueReasonKey = "";
   shippingDocumentB2ReissueBusy = false;
+  shippingDocumentB2HistoryDownloading = false;
   stopShippingDocumentPrintStatusPolling();
   var settingsOverlay = document.getElementById("shipping-document-settings-overlay");
   if (settingsOverlay) settingsOverlay.classList.remove("show");
@@ -18362,22 +18383,26 @@ async function refreshShippingDocumentPrintStatus() {
   }
 }
 
+function shippingDocumentB2NeedsReissue(order) {
+  var b2Issued = Array.isArray(order && order.b2_exports) && order.b2_exports.length > 0;
+  return b2Issued && (order.revision_history || []).some(function(revision) { return revision.waybills_need_reissue && !order.b2_exports.some(function(entry) { return new Date(entry.created_at) >= new Date(revision.created_at); }); });
+}
+
 function shippingDocumentStageHtml(order) {
   var dispatch = salesOrderDispatch(order);
-  var b2Issued = Array.isArray(order && order.b2_exports) && order.b2_exports.length > 0;
-  var b2NeedsReissue = b2Issued && (order.revision_history || []).some(function(revision) { return revision.waybills_need_reissue && !order.b2_exports.some(function(entry) { return new Date(entry.created_at) >= new Date(revision.created_at); }); });
   var serialConfirmed = !!(dispatch && dispatch.status === "shipped");
-  var trackingRegistered = !!(order && order.outbound_tracking_number);
-  var pendingDocumentCount = shippingDocumentPendingCount(order);
-  var documentsPrinted = pendingDocumentCount === 0;
+  var status = String(order && order.status || "").toLowerCase();
+  var detail = salesOrderStatusDetailLabel(order);
   var stages = [
-    { label: "帳票", ready: documentsPrinted, value: documentsPrinted ? "印刷済み" : "未印刷 " + pendingDocumentCount + "件" },
-    { label: "B2 CSV", ready: b2Issued && !b2NeedsReissue, value: b2NeedsReissue ? "再発行が必要" : b2Issued ? "発行済み" : "未発行" },
-    { label: "商品・シリアル照合", ready: serialConfirmed, value: serialConfirmed ? "完了" : "未完了" },
-    { label: "商品発送送り状", ready: trackingRegistered, value: trackingRegistered ? order.outbound_tracking_number : "未取込" }
+    { label: t("shipping_document_order_progress"), ready: ["shipped", "completed"].indexOf(status) >= 0, status: status, value: customerOrderStatusLabel(status), note: detail },
+    { label: "商品・シリアル照合", ready: serialConfirmed, value: serialConfirmed ? "完了" : "未完了" }
   ];
-  return "<div class='shipping-document-stages'>" + stages.map(function(stage) {
-    return "<div class='" + (stage.ready ? "ready" : "pending") + "'><span>" + esc(stage.label) + "</span><strong>" + esc(stage.value) + "</strong></div>";
+  if (salesOrderAccountingApplies(order)) {
+    var accountingStatus = salesOrderAccountingStatus(order);
+    stages.splice(1, 0, { label: t("shipping_document_sales_progress"), ready: accountingStatus === "registered", status: accountingStatus, value: salesOrderAccountingStatusLabel(accountingStatus) });
+  }
+  return "<div class='shipping-document-stages' data-stage-count='" + stages.length + "'>" + stages.map(function(stage) {
+    return "<div class='" + (stage.ready ? "ready" : "pending") + "' data-status='" + esc(stage.status || "") + "'><span>" + esc(stage.label) + "</span><strong>" + esc(stage.value) + "</strong>" + (stage.note ? "<small>" + esc(stage.note) + "</small>" : "") + "</div>";
   }).join("") + "</div>";
 }
 
@@ -18423,7 +18448,7 @@ function shippingDocumentManualOutputActions(order, type, ready) {
   var action = mode === "browser"
     ? "<button type='button' class='primary' data-shipping-document-print='" + esc(type) + "'" + (ready ? "" : " disabled") + ">表示・PDF</button>"
     : "<button type='button' class='primary' data-shipping-document-queue='" + esc(type) + "'" + (ready ? "" : " disabled") + ">端末印刷</button>";
-  return action + "<button type='button' data-shipping-document-open-settings='" + esc(type) + "'>設定</button>";
+  return action + "<button type='button' data-shipping-document-open-settings='" + esc(type) + "'>" + esc(t("shipping_document_temporary_settings")) + "</button>";
 }
 
 function shippingDocumentDefaultStateHtml() {
@@ -18511,10 +18536,11 @@ function shippingDocumentShipmentDocumentsHtml(order) {
   var returnHandwrittenComplete = returnMethod === "handwritten" && (waybill.status === "printed" || !!waybill.handwritten_completed_at);
   var returnCanHandwrite = !!(dispatch && order.core_return_required && returnWaybillCopyCount > 0 && returnMethod === "handwritten" && !returnHandwrittenComplete && !shippingDocumentSaving);
   var b2Issued = Array.isArray(order.b2_exports) && order.b2_exports.length > 0;
-  var b2NeedsReissue = b2Issued && (order.revision_history || []).some(function(revision) { return revision.waybills_need_reissue && !order.b2_exports.some(function(entry) { return new Date(entry.created_at) >= new Date(revision.created_at); }); });
+  var b2NeedsReissue = shippingDocumentB2NeedsReissue(order);
   var pendingDocumentCount = shippingDocumentPendingCount(order);
   var documentsPrinted = pendingDocumentCount === 0;
-  var canCreateB2 = ["accepted", "shipping_ready", "shipped"].indexOf(order.status) >= 0 && outboundMethod === "b2_cloud";
+  var canCreateB2 = shippingDocumentCanIssueB2(order);
+  var b2Action = "<button type='button' class='" + (outboundMethod === "b2_cloud" ? "primary" : "") + "' id='shipping-document-b2-issue'" + ((canCreateB2 || b2Issued) && !salesOrderSaving && !shippingDocumentSaving ? "" : " disabled") + ">" + (canCreateB2 ? (b2Issued ? "B2 CSV再発行" : "B2 CSV発行") : "B2 CSV発行履歴") + "</button>";
   var dispatchStandard = salesOrderAutoPrintIsEnabled() ? "受付時に自動発行" : "出荷帳票発行で印刷";
   var outboundCarrierLabel = shippingCarrierBrandKey(outboundWaybill.carrier_code || "yamato_prepaid") === "sagawa" ? "佐川急便 元払い" : "ヤマト宅急便 元払い";
   var outboundState = outboundMethod === "b2_cloud"
@@ -18544,7 +18570,7 @@ function shippingDocumentShipmentDocumentsHtml(order) {
       key: "outbound_waybill", name: "商品発送送り状", standard: outboundModeLabel, detail: outboundCarrierLabel,
       carrierCode: outboundWaybill.carrier_code || "yamato_prepaid",
       state: outboundState, ready: !!dispatch,
-      actions: (outboundMethod === "b2_cloud" ? "<button type='button' class='primary' id='shipping-document-b2-issue'" + (canCreateB2 && !salesOrderSaving && !shippingDocumentSaving ? "" : " disabled") + ">" + (b2Issued ? "B2 CSV再発行" : "B2 CSV発行") + "</button>" : outboundMethod === "dot_matrix" ? "<button type='button' class='primary' data-shipping-document-outbound-print" + (outboundCanPrint ? "" : " disabled") + ">端末印刷</button>" : "<button type='button' class='primary' data-shipping-document-handwritten='outbound_waybill'" + (outboundCanHandwrite ? "" : " disabled") + ">手書き内容を表示</button>") + "<button type='button' data-shipping-document-open-settings='outbound'>発送方法設定</button>"
+      actions: (outboundMethod === "b2_cloud" ? b2Action : (outboundMethod === "dot_matrix" ? "<button type='button' class='primary' data-shipping-document-outbound-print" + (outboundCanPrint ? "" : " disabled") + ">端末印刷</button>" : "<button type='button' class='primary' data-shipping-document-handwritten='outbound_waybill'" + (outboundCanHandwrite ? "" : " disabled") + ">手書き内容を表示</button>") + (b2Issued ? b2Action : "")) + "<button type='button' data-shipping-document-open-settings='outbound'>発送方法設定</button>"
     },
     {
       key: "warranty", name: "製品保証書", standard: "A5横 / モノクロ / 端末印刷", detail: "商品数量分",
@@ -18562,10 +18588,10 @@ function shippingDocumentShipmentDocumentsHtml(order) {
       key: "return_waybill", name: "コア返却用複写伝票", standard: (returnMethod === "dot_matrix" ? "ドットプリンタ" : "手書き運用") + " / " + returnWaybillCopyCount + "枚", detail: returnCarrierLabel + " / 1商品1枚",
       carrierCode: waybill.carrier_code || "sagawa_collect",
       state: returnState, ready: !!order.core_return_required,
-      actions: order.core_return_required ? (returnMethod === "dot_matrix" ? "<button type='button' class='primary' data-shipping-document-return-print" + (returnCanPrint ? "" : " disabled") + ">" + esc(returnPrintActionLabel) + "（" + returnWaybillCopyCount + "枚）</button>" : "<button type='button' class='primary' data-shipping-document-handwritten='return_waybill'" + (returnCanHandwrite ? "" : " disabled") + ">手書き内容を表示（" + returnWaybillCopyCount + "枚）</button>") + "<button type='button' data-shipping-document-open-settings='return'>設定</button>" : "<span class='shipping-document-no-action'>発行不要</span>"
+      actions: order.core_return_required ? (returnMethod === "dot_matrix" ? "<button type='button' class='primary' data-shipping-document-return-print" + (returnCanPrint ? "" : " disabled") + ">" + esc(returnPrintActionLabel) + "（" + returnWaybillCopyCount + "枚）</button>" : "<button type='button' class='primary' data-shipping-document-handwritten='return_waybill'" + (returnCanHandwrite ? "" : " disabled") + ">手書き内容を表示（" + returnWaybillCopyCount + "枚）</button>") + "<button type='button' data-shipping-document-open-settings='return'>" + esc(t("shipping_document_return_settings")) + "</button>" : "<span class='shipping-document-no-action'>発行不要</span>"
     }
   ];
-  return "<section class='shipping-document-section shipping-document-required-documents'><div class='shipping-document-section-head'><div><h3>帳票の状態と発行</h3><p>標準設定を確認し、必要な帳票をこの一覧から発行します。設定変更は各行の「設定」から行います。</p></div><span class='shipping-document-ready-state " + (documentsPrinted ? "ready" : "pending") + "'>" + esc(documentsPrinted ? "印刷済み" : "未印刷 " + pendingDocumentCount + "件") + "</span></div>" +
+  return "<section class='shipping-document-section shipping-document-required-documents'><div class='shipping-document-section-head'><div><h3>帳票の状態と発行</h3><p>" + esc(t("shipping_document_issuance_guidance")) + "</p></div><span class='shipping-document-ready-state " + (documentsPrinted ? "ready" : "pending") + "'>" + esc(documentsPrinted ? "印刷済み" : "未印刷 " + pendingDocumentCount + "件") + "</span></div>" +
     (reason ? "<p class='shipping-document-guidance'>" + esc(reason) + "</p>" : "") +
     "<div class='shipping-document-required-list' role='table' aria-label='帳票の状態と発行'><div class='shipping-document-required-head' role='row'><span role='columnheader'>帳票</span><span role='columnheader'>用紙・発行方法</span><span role='columnheader'>現在の状態</span><span role='columnheader'>発行操作</span></div>" + rows.map(function(row) {
       return "<div class='shipping-document-required-row " + (row.ready ? "ready" : "pending") + "' role='row' data-document-type='" + esc(row.key) + "' data-state='" + esc(row.state.tone) + "'><div class='shipping-document-name-cell' role='cell'><strong>" + esc(row.name) + "</strong>" + (row.carrierCode ? shippingCarrierBrandHtml(row.carrierCode, true) : "") + "</div><div class='shipping-document-standard' role='cell'><strong>" + esc(row.standard) + "</strong><small class='shipping-document-standard-detail'>" + esc(row.detail) + "</small>" + (row.temporary ? "<small class='shipping-document-temporary-note'>" + esc(row.temporary) + "</small>" : "") + "</div><div class='shipping-document-state-cell' role='cell'><em class='shipping-document-state-badge'>" + esc(row.state.label) + "</em>" + (row.state.note ? "<small>" + esc(row.state.note) + "</small>" : "") + "</div><div class='shipping-document-row-actions' role='cell'>" + row.actions + "</div></div>";
@@ -18661,7 +18687,7 @@ function renderShippingDocumentDetail() {
     host.innerHTML = shippingDocumentDefaultStateHtml();
     return;
   }
-  host.innerHTML = "<div class='shipping-document-detail-head'><div><span class='shipping-document-order-id-label'>" + esc(t("sales_order_id_label")) + "</span><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><small class='shipping-document-detail-target'>帳票発行対象 / " + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small><strong>" + esc(order.customer_name || "-") + "</strong></div><div>" + salesOrderStatusSummaryHtml(order) + "<button type='button' id='shipping-document-open-history'>B2発行履歴</button></div></div>" +
+  host.innerHTML = "<div class='shipping-document-detail-head'><div><span class='shipping-document-order-id-label'>" + esc(t("sales_order_id_label")) + "</span><h2>" + esc(order.order_number || ("注文 " + order.id)) + "</h2><small class='shipping-document-detail-target'>帳票発行対象 / " + esc(customerOrderDateTimeText(order.ordered_at || order.created_at)) + "</small><strong>" + esc(order.customer_name || "-") + "</strong></div></div>" +
     salesOrderWorkspaceNavigationHtml("shipping-document") +
     "<div id='shipping-document-message' class='sales-order-detail-message' aria-live='polite'></div>" +
     shippingDocumentStageHtml(order) +
@@ -18677,8 +18703,6 @@ function bindShippingDocumentDetailActions() {
   if (issue) issue.addEventListener("click", issueShippingDocumentB2);
   var openOrder = document.getElementById("shipping-document-open-order");
   if (openOrder) openOrder.addEventListener("click", openShippingDocumentOrderInSalesOrderMgmt);
-  var openHistory = document.getElementById("shipping-document-open-history");
-  if (openHistory) openHistory.addEventListener("click", function() { openShippingDocumentSettings("history"); });
   document.querySelectorAll("[data-shipping-document-print]").forEach(function(button) {
     button.addEventListener("click", function() { printSalesOrderDocument(button.dataset.shippingDocumentPrint, shippingDocumentDetail); });
   });
@@ -18702,7 +18726,7 @@ function bindShippingDocumentDetailActions() {
 }
 
 function openShippingDocumentSettings(mode) {
-  if (!shippingDocumentDetail || ["outbound", "return", "history", "dispatch", "warranty", "core_return"].indexOf(mode) < 0) return;
+  if (!shippingDocumentDetail || ["outbound", "return", "dispatch", "warranty", "core_return"].indexOf(mode) < 0) return;
   shippingDocumentOverlayMode = mode;
   var overlay = document.getElementById("shipping-document-settings-overlay");
   if (overlay) overlay.classList.add("show");
@@ -18736,18 +18760,11 @@ function renderShippingDocumentSettingsOverlay() {
     title.textContent = salesOrderDocumentTypeLabel(mode) + "の発行設定";
     description.textContent = "" + (order.order_number || ("注文 " + order.id)) + " / 今回の発行方法だけを一時変更します。";
     content.innerHTML = shippingDocumentTemporaryOutputHtml(order, mode);
-  } else {
-    title.textContent = "B2 CSV発行履歴";
-    description.textContent = "" + (order.order_number || ("注文 " + order.id)) + " / 同じデータは再発行せず、履歴から再ダウンロードします。";
-    content.innerHTML = shippingDocumentOrderB2HistoryHtml(order);
   }
   bindShippingDocumentSettingsActions();
 }
 
 function bindShippingDocumentSettingsActions() {
-  document.querySelectorAll("#shipping-document-settings-content [data-shipping-document-download-batch]").forEach(function(button) {
-    button.addEventListener("click", function() { downloadSalesOrderB2Batch(parseInt(button.dataset.shippingDocumentDownloadBatch, 10)); });
-  });
   var saveWaybill = document.getElementById("shipping-document-return-save");
   if (saveWaybill) saveWaybill.addEventListener("click", saveShippingDocumentReturnWaybill);
   var saveOutbound = document.getElementById("shipping-document-outbound-save");
@@ -18903,6 +18920,11 @@ async function openShippingDocumentOrderInSalesOrderMgmt() {
   await enterSalesOrderMgmt({ order: order });
 }
 
+function shippingDocumentCanIssueB2(order) {
+  var waybill = order && order.outbound_waybill && typeof order.outbound_waybill === "object" ? order.outbound_waybill : {};
+  return !!order && ["accepted", "shipping_ready", "shipped"].indexOf(order.status) >= 0 && (waybill.handling_method || "b2_cloud") === "b2_cloud";
+}
+
 function shippingDocumentLatestB2Export(order) {
   var exports = Array.isArray(order && order.b2_exports) ? order.b2_exports.slice() : [];
   exports.sort(function(left, right) {
@@ -18955,10 +18977,13 @@ function updateShippingDocumentB2ReissueControls() {
   if (cancel) cancel.disabled = shippingDocumentB2ReissueBusy;
   if (close) close.disabled = shippingDocumentB2ReissueBusy;
   if (history) history.disabled = shippingDocumentB2ReissueBusy;
+  document.querySelectorAll("#shipping-document-b2-reissue-history-list [data-shipping-document-download-batch]").forEach(function(button) {
+    button.disabled = shippingDocumentB2ReissueBusy || shippingDocumentSaving || salesOrderSaving;
+  });
   if (confirm) {
     var otherIncomplete = shippingDocumentB2ReissueReasonKey === "other" && noteValue.trim().length < 5;
-    confirm.disabled = shippingDocumentB2ReissueBusy || !shippingDocumentB2ReissueReasonKey || otherIncomplete;
-    confirm.textContent = shippingDocumentB2ReissueBusy ? "再発行しています..." : "再発行してダウンロード";
+    confirm.disabled = !shippingDocumentCanIssueB2(shippingDocumentDetail) || shippingDocumentB2ReissueBusy || shippingDocumentSaving || salesOrderSaving || !shippingDocumentB2ReissueReasonKey || otherIncomplete;
+    confirm.textContent = shippingDocumentB2ReissueBusy ? (shippingDocumentB2HistoryDownloading ? t("shipping_document_b2_redownloading") : "再発行しています...") : "再発行してダウンロード";
   }
 }
 
@@ -18978,9 +19003,23 @@ function openShippingDocumentB2Reissue() {
   var exports = Array.isArray(order && order.b2_exports) ? order.b2_exports : [];
   var overlay = document.getElementById("shipping-document-b2-reissue-overlay");
   if (!order || !exports.length || !overlay) return;
+  var canReissue = shippingDocumentCanIssueB2(order);
+  var title = document.getElementById("shipping-document-b2-reissue-title");
+  var description = document.getElementById("shipping-document-b2-reissue-description");
+  var reasonSection = document.getElementById("shipping-document-b2-reissue-reason-section");
+  var confirm = document.getElementById("shipping-document-b2-reissue-confirm");
+  var cancel = document.getElementById("shipping-document-b2-reissue-cancel");
+  var footerNote = document.getElementById("shipping-document-b2-reissue-footer-note");
+  if (title) title.textContent = canReissue ? "B2 CSVを再発行" : "B2 CSV発行履歴";
+  if (description) description.textContent = canReissue ? "新しいCSVと発行履歴を作成します。監査に残す理由を選択してください。" : "新しく再発行せず、現在の発行履歴から同じCSVを再ダウンロードできます。";
+  if (reasonSection) reasonSection.hidden = !canReissue;
+  if (confirm) confirm.hidden = !canReissue;
+  if (cancel) cancel.textContent = canReissue ? "キャンセル" : "閉じる";
+  if (footerNote) footerNote.hidden = !canReissue;
   var latest = shippingDocumentLatestB2Export(order) || {};
   shippingDocumentB2ReissueReasonKey = "";
   shippingDocumentB2ReissueBusy = false;
+  shippingDocumentB2HistoryDownloading = false;
   var values = {
     "shipping-document-b2-reissue-order-number": order.order_number || ("注文 " + order.id),
     "shipping-document-b2-reissue-customer": order.customer_name || "-",
@@ -18994,12 +19033,23 @@ function openShippingDocumentB2Reissue() {
   });
   var note = document.getElementById("shipping-document-b2-reissue-note");
   if (note) note.value = "";
+  var historyPanel = document.getElementById("shipping-document-b2-reissue-history-panel");
+  var historyToggle = document.getElementById("shipping-document-b2-reissue-history");
+  var historyList = document.getElementById("shipping-document-b2-reissue-history-list");
+  if (historyPanel) historyPanel.hidden = canReissue;
+  if (historyToggle) historyToggle.setAttribute("aria-expanded", canReissue ? "false" : "true");
+  if (historyList) {
+    historyList.innerHTML = shippingDocumentOrderB2HistoryHtml(order);
+    historyList.querySelectorAll("[data-shipping-document-download-batch]").forEach(function(button) {
+      button.addEventListener("click", function() { downloadShippingDocumentB2History(parseInt(button.dataset.shippingDocumentDownloadBatch, 10)); });
+    });
+  }
   setShippingDocumentB2ReissueMessage("", false);
   updateShippingDocumentB2ReissueControls();
   overlay.classList.add("show");
   window.requestAnimationFrame(function() {
-    var firstReason = document.querySelector("[data-shipping-document-b2-reissue-reason]");
-    if (firstReason) firstReason.focus();
+    var firstControl = canReissue ? document.querySelector("[data-shipping-document-b2-reissue-reason]") : historyToggle;
+    if (firstControl) firstControl.focus();
   });
 }
 
@@ -19016,13 +19066,30 @@ function closeShippingDocumentB2Reissue(restoreFocus) {
 
 function openShippingDocumentB2ReissueHistory() {
   if (shippingDocumentB2ReissueBusy) return;
-  closeShippingDocumentB2Reissue(false);
-  openShippingDocumentSettings("history");
+  var panel = document.getElementById("shipping-document-b2-reissue-history-panel");
+  var toggle = document.getElementById("shipping-document-b2-reissue-history");
+  if (!panel) return;
+  panel.hidden = !panel.hidden;
+  if (toggle) toggle.setAttribute("aria-expanded", panel.hidden ? "false" : "true");
+}
+
+async function downloadShippingDocumentB2History(batchId) {
+  if (!canManageSalesOrders() || shippingDocumentB2ReissueBusy || shippingDocumentSaving || salesOrderSaving || !batchId) return;
+  shippingDocumentB2ReissueBusy = true;
+  shippingDocumentB2HistoryDownloading = true;
+  updateShippingDocumentB2ReissueControls();
+  try {
+    await downloadSalesOrderB2Batch(batchId, setShippingDocumentB2ReissueMessage);
+  } finally {
+    shippingDocumentB2ReissueBusy = false;
+    shippingDocumentB2HistoryDownloading = false;
+    updateShippingDocumentB2ReissueControls();
+  }
 }
 
 async function confirmShippingDocumentB2Reissue() {
   var order = shippingDocumentDetail;
-  if (!order || shippingDocumentB2ReissueBusy || shippingDocumentSaving || salesOrderSaving) return;
+  if (!shippingDocumentCanIssueB2(order) || shippingDocumentB2ReissueBusy || shippingDocumentSaving || salesOrderSaving) return;
   var reasonResult = shippingDocumentB2ReissueReason();
   if (reasonResult.error) {
     setShippingDocumentB2ReissueMessage(reasonResult.error, true);
@@ -21020,14 +21087,15 @@ async function issueSalesOrderB2Export(orderIds, isReissue, reason) {
   }
 }
 
-async function downloadSalesOrderB2Batch(batchId) {
+async function downloadSalesOrderB2Batch(batchId, onMessage) {
   if (!canManageSalesOrders() || shippingDocumentSaving || !batchId) return;
+  var setMessage = typeof onMessage === "function" ? onMessage : setShippingDocumentMessage;
   var b2ExportDirectory;
   try {
-    setShippingDocumentMessage(t("business_workspace_b2_selecting"), false);
+    setMessage(t("business_workspace_b2_selecting"), false);
     b2ExportDirectory = await prepareDcatsB2ExportDirectory();
   } catch (directoryError) {
-    setShippingDocumentMessage(directoryError && directoryError.name === "AbortError"
+    setMessage(directoryError && directoryError.name === "AbortError"
       ? t("business_workspace_b2_cancelled")
       : ((directoryError && directoryError.message) || t("business_workspace_b2_required")), directoryError && directoryError.name !== "AbortError");
     return;
@@ -21042,9 +21110,9 @@ async function downloadSalesOrderB2Batch(batchId) {
     );
     if (result.error) throw result.error;
     if (!await downloadSalesOrderB2Payload(result.data || {}, b2ExportDirectory)) throw new Error(t("business_workspace_b2_failed"));
-    setShippingDocumentMessage(t("business_workspace_b2_saved"), false);
+    setMessage(t("business_workspace_b2_saved"), false);
   } catch (error) {
-    setShippingDocumentMessage((error && error.message) || "B2 CSVを再ダウンロードできませんでした。", true);
+    setMessage((error && error.message) || "B2 CSVを再ダウンロードできませんでした。", true);
   } finally {
     shippingDocumentSaving = false;
     renderShippingDocumentDetail();
