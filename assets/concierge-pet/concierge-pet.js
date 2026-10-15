@@ -77,11 +77,11 @@
       floatingOpening: "フローティングウィンドウを開いています。",
       floatingActive: "常に前面の小窓で表示中です。",
       floatingFailed: "フローティングウィンドウを開けませんでした。ブラウザの設定を確認してください。",
-      aiLegend: "AIに質問・画面案内（管理者テスト）",
-      aiHelp: "D-CATSの使い方を質問すると、回答と開く画面の候補を表示します。画面移動やデータの入力・更新・削除は自動実行しません。",
-      aiQuestionLabel: "質問",
-      aiPlaceholder: "例：受注データはどの画面で確認しますか？",
-      aiAsk: "AIに質問する",
+      aiLegend: "コンシェルジュに相談（管理者テスト）",
+      aiHelp: "使い方の質問、困っていること、改善してほしいことをそのまま入力してください。内容から判断し、回答または依頼の確認画面を表示します。画面移動や業務データの変更は自動実行しません。",
+      aiQuestionLabel: "相談内容",
+      aiPlaceholder: "例：受注の確認方法は？／検索ボタンが反応しない／検索条件を保存したい",
+      aiAsk: "送信",
       aiPrivacy: "送信前に文章と画像を確認してください。顧客・受注情報、価格、個人情報、パスワード、APIキーは含めないでください。質問文・表示言語・画面名と選んだ画像だけを、送信時にOpenAIへ送ります。",
       aiImage: "画像を添付（任意・1枚）",
       aiImageHint: "質問欄またはここを選び、Ctrl+V／⌘Vで画像を貼り付けられます。PNG・JPEG・WebP、10MB以内。送信前に確認・削除できます。",
@@ -94,7 +94,7 @@
       aiTokenParts: "入力 {input} ／ 出力 {output}",
       aiTokenHint: "APIから返された直近の質問のトークン内訳です。契約の残量・残高ではありません。",
       aiTokenUnknown: "トークン数は取得できませんでした。",
-      aiIdle: "まだ質問していません。",
+      aiIdle: "内容を入力して送信してください。",
       aiWorking: "回答を確認しています。",
       aiDone: "回答",
       aiInvalidQuestion: "1～800文字で質問を入力してください。",
@@ -269,11 +269,11 @@
       floatingOpening: "Opening the floating window.",
       floatingActive: "Showing in an always-on-top window.",
       floatingFailed: "The floating window could not be opened. Check your browser settings.",
-      aiLegend: "Ask AI and get screen guidance (admin pilot)",
-      aiHelp: "Ask how to use D-CATS to receive an answer and a suggested screen. It never navigates or creates, updates, or deletes data automatically.",
-      aiQuestionLabel: "Question",
-      aiPlaceholder: "Example: Which screen shows sales orders?",
-      aiAsk: "Ask AI",
+      aiLegend: "Talk to the concierge (admin pilot)",
+      aiHelp: "Describe a question, a problem or an improvement in the same field. We will answer or prepare a request for your review. No navigation or business data changes are performed automatically.",
+      aiQuestionLabel: "Message",
+      aiPlaceholder: "Example: How do I view orders? / Search does not respond / I want to save search filters",
+      aiAsk: "Send",
       aiPrivacy: "Review the text and image before sending. Exclude customer or order data, prices, personal data, passwords and API keys. Only your question, language, screen name and selected image are sent to OpenAI when you submit.",
       aiImage: "Attach an image (optional, one image)",
       aiImageHint: "Select the question field or here and paste an image with Ctrl+V / ⌘V. PNG, JPEG or WebP up to 10 MB. Review or remove it before sending.",
@@ -460,11 +460,11 @@
       floatingOpening: "正在打开悬浮窗口。",
       floatingActive: "正在置顶小窗中显示。",
       floatingFailed: "无法打开悬浮窗口。请确认浏览器设置。",
-      aiLegend: "AI问答与画面引导（管理员测试）",
-      aiHelp: "可以询问D-CATS的使用方法，AI会回答并建议应打开的画面。不会自动跳转，也不会自动输入、更新或删除数据。",
-      aiQuestionLabel: "问题",
-      aiPlaceholder: "示例：在哪个画面确认订单数据？",
-      aiAsk: "向AI提问",
+      aiLegend: "咨询礼宾助手（管理员测试）",
+      aiHelp: "在同一栏输入使用问题、遇到的问题或改进建议。系统会回答或准备请求供您确认。不会自动跳转或修改业务数据。",
+      aiQuestionLabel: "咨询内容",
+      aiPlaceholder: "示例：如何确认订单？／搜索按钮无反应／希望保存搜索条件",
+      aiAsk: "发送",
       aiPrivacy: "发送前请检查文字和图片。请勿包含客户或订单信息、价格、个人信息、密码或API密钥。仅在提交时向OpenAI发送问题、语言、页面名称和所选图片。",
       aiImage: "添加图片（可选，1张）",
       aiImageHint: "选择问题栏或此处，按Ctrl+V／⌘V粘贴图片。支持PNG、JPEG、WebP，10MB以内。发送前可以确认或移除。",
@@ -1428,6 +1428,7 @@
     aiRequestToken += 1;
     aiRequestPending = false;
     aiStatusState = "aiIdle";
+    if (requestUi) requestUi.resetDraft();
     if (aiQuestionInput) aiQuestionInput.value = "";
     clearAiImage();
     clearAiResult();
@@ -1436,12 +1437,13 @@
 
   function updateAiStatus() {
     if (!aiAskButton || !aiQuestionInput || !aiStatus) return;
-    aiAskButton.disabled = aiRequestPending || aiImagePending;
+    var reviewing = !!(requestUi && requestUi.pending());
+    aiAskButton.disabled = aiRequestPending || aiImagePending || reviewing;
     aiAskButton.textContent = copy(aiRequestPending ? "aiWorking" : "aiAsk");
     aiAskButton.setAttribute("aria-busy", String(aiRequestPending));
-    aiQuestionInput.disabled = aiRequestPending;
-    if (aiImageFile) aiImageFile.disabled = aiRequestPending;
-    if (aiImageRemove) aiImageRemove.disabled = aiRequestPending;
+    aiQuestionInput.disabled = aiRequestPending || reviewing;
+    if (aiImageFile) aiImageFile.disabled = aiRequestPending || reviewing;
+    if (aiImageRemove) aiImageRemove.disabled = aiRequestPending || reviewing;
     aiQuestionInput.placeholder = copy("aiPlaceholder");
     aiStatus.textContent = copy(aiStatusState);
     aiStatus.classList.toggle("is-success", aiStatusState === "aiDone");
@@ -1454,7 +1456,8 @@
     var focused = presentationDocument().activeElement;
     if (focused && panel.contains(focused) && !aiCard.contains(focused)) return;
     var bounds = panelBody.getBoundingClientRect();
-    var feedback = aiStatus.getBoundingClientRect();
+    var feedbackNode = requestUi && requestUi.previewElement() || aiStatus;
+    var feedback = feedbackNode.getBoundingClientRect();
     // Scroll only this panel, never its host page or the user's other window.
     if (bounds.height > 0) {
       panelBody.scrollTop = Math.max(0, (Number(panelBody.scrollTop) || 0) + feedback.top - bounds.top - 8);
@@ -1470,7 +1473,26 @@
           before: aiCard.nextSibling,
           context: function () { return { owner: currentSettingsOwner(), admin: isSystemAdminSession(), language: activeLanguage(), screenId: currentAiScreenId(window.DcatsConciergeAiApi) }; },
           api: function () { return window.DcatsConciergeRequestApi; },
-          draft: function () { return { question: aiQuestionInput.value, answer: aiAnswer.hidden ? "" : aiAnswer.textContent, image: aiImageData }; }
+          changed: updateAiStatus,
+          accepted: function () {
+            aiQuestionInput.value = "";
+            clearAiImage();
+            updateAiStatus();
+          },
+          edit: function (draft) {
+            aiQuestionInput.value = draft.question;
+            clearAiImage();
+            aiImageData = draft.image;
+            if (draft.image) {
+              aiImagePreview.src = "data:image/png;base64," + draft.image;
+              aiImagePreview.hidden = false;
+              aiImageRemove.hidden = false;
+            }
+            clearAiResult();
+            aiStatusState = "aiIdle";
+            updateAiStatus();
+            aiQuestionInput.focus();
+          }
         });
       }
       if (requestUi) requestUi.sync();
@@ -1507,7 +1529,7 @@
   }
 
   async function runAiRequest() {
-    if (aiRequestPending || aiImagePending || !isSystemAdminSession()) return;
+    if (aiRequestPending || aiImagePending || (requestUi && requestUi.pending()) || !isSystemAdminSession()) return;
     var question = String(aiQuestionInput && aiQuestionInput.value || "").trim();
     if (!question || question.length > 800) {
       aiStatusState = "aiInvalidQuestion";
@@ -1530,19 +1552,18 @@
     updateAiStatus();
     revealAiFeedback();
     var requestToken = ++aiRequestToken, owner = currentSettingsOwner();
+    var submitted = { question: question, language: activeLanguage(), screenId: currentAiScreenId(api), image: aiImageData || undefined, classify: true };
     try {
-      var result = await api.ask({
-        question: question,
-        language: activeLanguage(),
-        screenId: currentAiScreenId(api),
-        image: aiImageData || undefined
-      });
+      var result = await api.ask(submitted);
       if (requestToken !== aiRequestToken || owner !== currentSettingsOwner() || !isSystemAdminSession()) return;
       if (!result || result.error) throw result && result.error || new Error("ai_request_failed");
       var data = result.data;
       if (!data || data.ok !== true || data.performed_action !== false || typeof data.answer !== "string" || !data.answer.trim()) {
         throw new Error("ai_provider_failed");
       }
+      var route = data.routing;
+      if (!route || ["question", "bug", "suggestion"].indexOf(route.kind) < 0 || typeof route.title !== "string" || route.title.length > 120 || (route.kind !== "question" && !route.title.trim())) throw new Error("ai_provider_failed");
+      if (route.kind !== "question" && (!requestUi || !requestUi.prepare({ kind: route.kind, title: route.title, question: submitted.question, image: submitted.image, screenId: submitted.screenId, language: submitted.language }))) throw new Error("ai_provider_failed");
       aiAnswer.textContent = data.answer.trim();
       aiAnswer.hidden = false;
       if (data.guide && typeof data.guide.screen_label === "string" && typeof data.guide.reason === "string") {

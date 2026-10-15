@@ -47,7 +47,7 @@ assert(!runtime.includes("回答しました。操作は実行していません
   'aiQuestionInput.focus()',
   'aiQuestionInput.maxLength = 800',
   'aiAskButton.addEventListener("click", runAiRequest)',
-  'if (aiRequestPending || aiImagePending || !isSystemAdminSession()) return;',
+  'if (aiRequestPending || aiImagePending || (requestUi && requestUi.pending()) || !isSystemAdminSession()) return;',
   'if (aiCard.parentElement) aiCard.parentElement.removeChild(aiCard);',
   "question: question",
   "language: activeLanguage()",
@@ -62,8 +62,12 @@ assert(!runtime.includes("回答しました。操作は実行していません
   'aiCard.addEventListener("paste"',
   'aiImagePending',
   'aiImagePreview.removeAttribute("src")',
-  '画面移動やデータの入力・更新・削除は自動実行しません。'
+  '画面移動や業務データの変更は自動実行しません。',
+  'classify: true',
+  'requestUi.prepare({ kind: route.kind',
+  'requestUi.resetDraft()'
 ].forEach((fragment) => requireFragment(runtime, fragment));
+requireFragment(app, 'body.classify = request.classify');
 
 [
   ".dcats-concierge-ai-card",
@@ -83,6 +87,7 @@ const revealEnd = runtime.indexOf("\n  function ", revealStart + 5);
 assert(revealStart >= 0 && revealEnd > revealStart, "Scoped feedback reveal helper missing");
 const feedbackBody = { scrollTop: 120, getBoundingClientRect: () => ({ top: 20, height: 180 }) };
 const feedbackContext = {
+  requestUi: null,
   panelOpen: true, panelBody: feedbackBody,
   aiStatus: { getBoundingClientRect: () => ({ top: 320 }) },
   panel: { contains: () => false }, aiCard: { contains: () => false },

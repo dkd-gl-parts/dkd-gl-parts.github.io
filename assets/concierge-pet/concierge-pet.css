@@ -38,11 +38,11 @@
 }
 
 .dcats-concierge-sprite.is-suzuto {
-  background-image: url("./suzuto/spritesheet.webp?v=1.1.1171");
+  background-image: url("./suzuto/spritesheet.webp?v=1.1.1172");
 }
 
 .dcats-concierge-sprite.is-rinna {
-  background-image: url("./rinna/spritesheet.webp?v=1.1.1171");
+  background-image: url("./rinna/spritesheet.webp?v=1.1.1172");
 }
 
 .dcats-concierge-hit-target {
@@ -252,6 +252,9 @@
 .dcats-concierge-request-card .dcats-request-list button { width: 100%; text-align: left; background: #fff; }
 .dcats-concierge-request-card .dcats-request-history { padding-left: 20px; }
 .dcats-concierge-request-card .dcats-request-pre { white-space: pre-wrap; }
+.dcats-concierge-request-card .dcats-request-confirm { border-left: 3px solid #b9a19c; padding: 8px 12px; margin-bottom: 12px; background: #fff; border-radius: 8px; }
+.dcats-concierge-request-card .dcats-request-confirm h4 { font-size: 16px; }
+.dcats-concierge-request-card .dcats-request-confirm .dcats-request-pre { font-size: 17px; line-height: 1.8; overflow-wrap: anywhere; color: #26334a; }
 .dcats-concierge-request-card [hidden] { display: none !important; }
 
 .dcats-concierge-panel-head {
