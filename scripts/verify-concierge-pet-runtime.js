@@ -506,12 +506,19 @@ await new Promise((resolve) => setImmediate(resolve));
 await new Promise((resolve) => setImmediate(resolve));
 assert(aiRequests.length === 1, "A pending AI question was submitted more than once");
 assert(JSON.stringify(aiRequests[0]) === JSON.stringify({ question: "受注データはどの画面で確認しますか？", language: "ja", screenId: "menu" }), "AI received data outside the reviewed minimal context");
-assert(aiStatus.textContent === "回答しました。操作は実行していません。" && aiStatus.classList.contains("is-success"), "AI success status did not state that no action was performed");
+assert(aiStatus.textContent === "回答" && aiStatus.classList.contains("is-success"), "AI success heading must be concise");
 assert(aiAnswer.textContent === "受注・出荷管理画面で確認できます。" && !aiAnswer.hidden, "AI answer was not presented as text");
 assert(aiGuide.textContent.includes("案内先：受注・出荷管理") && !aiGuide.hidden, "Fixed-screen guidance was not presented");
 assert(aiUsage.children.some(node => node.textContent === "150 トークン") &&
   aiUsage.children.some(node => node.getAttribute("aria-label") === "入力 100 ／ 出力 50"),
   "Actual per-question input/output tokens must appear as an accessible meter, not a cost estimate");
+assert(aiUsage.children.length === 2 && !aiUsage.children.some(node => node.tagName === "STRONG" || node.classList.contains("dcats-token-parts")), "Token details must not create a prominent multiline block");
+assert(aiUsage.title.includes("入力 100 ／ 出力 50") && aiUsage.title.includes("契約の残量・残高ではありません") && aiUsage.getAttribute("aria-label") === "トークンメーター（直近の質問）", "Quiet token meter lost its accessible breakdown or meaning");
+for (const [language, heading, breakdown] of [["en", "Answer", "Input 100 / Output 50"], ["zh", "回答", "输入 100 ／ 输出 50"], ["ja", "回答", "入力 100 ／ 出力 50"]]) {
+  documentObject.documentElement.lang = language;
+  notifyObservers();
+  assert(aiStatus.textContent === heading && aiUsage.title.includes(breakdown) && aiUsage.children.length === 2, "Localized answer/compact meter did not refresh correctly");
+}
 const originalAiResponseFactory = aiResponseFactory;
 let finishPendingAi;
 aiResponseFactory = () => new Promise(resolve => { finishPendingAi = resolve; });

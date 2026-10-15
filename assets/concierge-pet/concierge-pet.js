@@ -96,7 +96,7 @@
       aiTokenUnknown: "トークン数は取得できませんでした。",
       aiIdle: "まだ質問していません。",
       aiWorking: "回答を確認しています。",
-      aiDone: "回答しました。操作は実行していません。",
+      aiDone: "回答",
       aiInvalidQuestion: "1～800文字で質問を入力してください。",
       aiNotConfigured: "AIの管理者設定が未完了です。システム管理者へ連絡してください。",
       aiConfigurationInvalid: "AIの管理者設定を確認してください。",
@@ -288,7 +288,7 @@
       aiTokenUnknown: "Token count is unavailable.",
       aiIdle: "No question has been asked yet.",
       aiWorking: "Checking the answer.",
-      aiDone: "Answered. No action was performed.",
+      aiDone: "Answer",
       aiInvalidQuestion: "Enter a question between 1 and 800 characters.",
       aiNotConfigured: "AI administrator setup is incomplete. Contact the system administrator.",
       aiConfigurationInvalid: "Check the AI administrator settings.",
@@ -479,7 +479,7 @@
       aiTokenUnknown: "无法取得token数量。",
       aiIdle: "尚未提问。",
       aiWorking: "正在确认回答。",
-      aiDone: "回答完成。未执行任何操作。",
+      aiDone: "回答",
       aiInvalidQuestion: "请输入1至800个字符的问题。",
       aiNotConfigured: "AI管理员设置尚未完成。请联系系统管理员。",
       aiConfigurationInvalid: "请检查AI管理员设置。",
@@ -1386,12 +1386,14 @@
     if (!aiUsage) return;
     while (aiUsage.children.length) aiUsage.removeChild(aiUsage.children[0]);
     aiUsage.textContent = "";
+    aiUsage.setAttribute("role", "group");
+    aiUsage.setAttribute("aria-label", copy("aiTokenTitle"));
     aiUsage.title = copy("aiTokenHint");
-    aiUsage.appendChild(createElement("strong", "", copy("aiTokenTitle")));
     if (!usage || !Number.isFinite(usage.input_tokens) || !Number.isFinite(usage.output_tokens) || usage.input_tokens < 0 || usage.output_tokens < 0) {
       aiUsage.appendChild(createElement("span", "", copy("aiTokenUnknown")));
     } else {
       var input = Math.floor(usage.input_tokens), output = Math.floor(usage.output_tokens), total = input + output;
+      aiUsage.title = copy("aiTokenParts", { input: input, output: output }) + "\n" + copy("aiTokenHint");
       aiUsage.appendChild(createElement("span", "dcats-token-total", copy("aiTokenTotal", { total: total })));
       var bar = createElement("meter", "dcats-token-bar");
       bar.setAttribute("aria-label", copy("aiTokenParts", { input: input, output: output }));
@@ -1401,7 +1403,6 @@
       bar.value = input;
       bar.classList.toggle("is-empty", total === 0);
       aiUsage.appendChild(bar);
-      aiUsage.appendChild(createElement("span", "dcats-token-parts", copy("aiTokenParts", { input: input, output: output })));
     }
     aiUsage.hidden = false;
   }
