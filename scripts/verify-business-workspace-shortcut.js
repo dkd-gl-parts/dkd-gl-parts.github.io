@@ -124,6 +124,7 @@ let downloads = 0;
 let failClick = false;
 let failAppend = false;
 const context = {
+  currentUser: null,
   APP_VERSION: "v-test",
   fetch: () => { throw new Error("Shortcut creation must not make network requests"); },
   t: (key) => ({
@@ -131,6 +132,7 @@ const context = {
     business_workspace_failed: "Download failed"
   })[key] || key,
   document: {
+    querySelectorAll: () => [],
     activeElement: null,
     body: { appendChild: () => { if (failAppend) throw new Error("DOM unavailable"); } },
     createElement: (tag) => {
