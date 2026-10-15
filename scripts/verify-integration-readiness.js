@@ -81,7 +81,19 @@ function uiHarness(options={}){
     const f=uiHarness();await f.ctx.runDcatsCompanyIntegration(action,action==='login'?undefined:'products');assert.deepEqual(f.calls,['extension','device','readiness']);assert.deepEqual(f.business,[action]);
     const failed=uiHarness({version:'0.5.15'});await failed.ctx.runDcatsCompanyIntegration(action,action==='login'?undefined:'products');assert.deepEqual(failed.business,[]);assert.equal(failed.status.textContent,'integration_check_blocked');
   }
-  const b=uiHarness({checks:{backupPassword:'registration_required'}});await b.ctx.runDcatsCompanyIntegration('backup','sales');assert.deepEqual(b.business,[]);
+  // Opening the native preparation window cannot require a live Google/recovery
+  // result that is only available after signing in inside that same window.
+  // This bridge action opens the window; its independent controller owns Start.
+  for(const category of ['products','customers','sales']){
+    const b=uiHarness({checks:{driveConfiguration:'unverified',driveAuthorization:'unverified',backupPassword:'registration_required',recovery:'unverified',backupAdapter:'unavailable'}});
+    await b.ctx.runDcatsCompanyIntegration('backup',category);assert.deepEqual(b.calls,['extension','device','readiness']);assert.deepEqual(b.business,['backup']);
+    assert.equal(b.engine.snapshot().feature,'prepare');assert.equal(b.engine.snapshot().phase,'attention');
+    assert.equal(b.engine.snapshot().checks.driveAuthorization,'unverified');assert.equal(b.status.textContent,'business_workspace_company_backup_cancelled');
+  }
+  for(const invalid of [{...readiness(),actorId:device},{...readiness(),deviceId:actor},readiness({identity:'unverified'})]){
+    const blockedWindow=uiHarness({readiness:invalid});await blockedWindow.ctx.runDcatsCompanyIntegration('backup','customers');
+    assert.deepEqual(blockedWindow.business,[]);assert.equal(blockedWindow.status.textContent,'integration_check_blocked');
+  }
   const c=uiHarness();c.ctx.dcatsCompanyIntegrationRecord={...record,device_id:actor};await c.ctx.runDcatsCompanyIntegration('login');assert.deepEqual(c.business,[]);assert.equal(c.ctx.dcatsCompanyIntegrationRecord,null);
   const separate=uiHarness();assert.equal((await separate.ctx.ensureDcatsIntegrationBeforeAction('login',()=>true,{...record,device_id:actor})).ok,false);assert.equal(separate.ctx.dcatsCompanyIntegrationRecord,record,'Concierge record mismatch must not clear another view record');
   for(const category of ['account','products','customers','sales'])for(const outcome of ['allowed','blocked','missing','stale']){
