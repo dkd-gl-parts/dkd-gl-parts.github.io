@@ -10483,7 +10483,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-shipping-document-mgmt .shipping-document-progress-panel .shipping-document-stages > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 2px 8px; padding: 1px 0; border: 0; border-bottom: 1px solid #e8edf0; background: transparent; }
   #screen-shipping-document-mgmt .shipping-document-progress-panel .shipping-document-stages > div:last-child { border-bottom: 0; }
   #screen-shipping-document-mgmt .shipping-document-progress-panel .shipping-document-stages span { font-size: 12px; line-height: 1.5; }
-  #screen-shipping-document-mgmt .shipping-document-progress-panel .shipping-document-stages strong { margin: 0; font-size: 14px; line-height: 1.5; text-align: right; }
+  #screen-shipping-document-mgmt .shipping-document-progress-panel .shipping-document-stages strong { margin: 0; max-width: 110px; font-size: 14px; line-height: 1.5; text-align: right; }
   #screen-shipping-document-mgmt .shipping-document-progress-panel .shipping-document-stages small { grid-column: 1 / -1; margin: 0; font-size: 12px; line-height: 1.5; }
 }
 @media screen and (min-width: 1121px) {
@@ -10494,7 +10494,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-shipping-document-mgmt .shipping-document-progress-panel .shipping-document-stages { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   #screen-shipping-document-mgmt .shipping-document-progress-panel .shipping-document-stages[data-stage-count="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #screen-shipping-document-mgmt .shipping-document-progress-panel .shipping-document-stages > div { display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; gap: 6px; border-bottom: 0; padding: 4px 0; }
-  #screen-shipping-document-mgmt .shipping-document-progress-panel .shipping-document-stages strong { text-align: left; }
+  #screen-shipping-document-mgmt .shipping-document-progress-panel .shipping-document-stages strong { max-width: 100%; text-align: left; }
 }
 
 /* Match order operations to the readable type scale used by shipping documents. */
