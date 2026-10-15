@@ -7468,6 +7468,18 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .dcats-extension-manager code { display: inline-block; max-width: 100%; color: #173c2a; font-size: 12px; overflow-wrap: anywhere; user-select: all; }
 .dcats-extension-manager ol { padding-left: 24px; font-size: 12px; line-height: 1.8; }
 .dcats-extension-manager li + li { margin-top: 8px; }
+.dcats-integration-banner { display: flex; gap: 20px; justify-content: space-between; margin-bottom: 22px; padding: 16px 20px; border: 1px solid #d5ddce; border-left: 4px solid #91712d; border-radius: 7px; background: #fffaf0; }
+.dcats-integration-banner[hidden], .dcats-integration-notice[hidden], .dcats-integration-check[hidden] { display: none; }
+.dcats-integration-banner h3 { margin: 0 0 8px; font-size: 15px; }
+.dcats-integration-banner p, .dcats-integration-notice p { margin: 6px 0; font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
+.dcats-integration-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex-shrink: 0; }
+.dcats-integration-banner button, .dcats-integration-notice button, .dcats-integration-check-list button { min-height: 36px; padding: 7px 10px; border: 1px solid #287356; border-radius: 4px; color: #176b43; background: #fff; font-size: 12px; cursor: pointer; }
+.dcats-integration-notice { margin: 16px 20px; padding: 12px; border: 1px solid #d5b36c; border-radius: 5px; background: #fffaf0; }
+.dcats-integration-check-list { margin: 10px 0; }
+.dcats-integration-check-list > div { display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid #dce5e0; font-size: 12px; }
+.dcats-integration-check-list dd { margin: 0; }
+.dcats-integration-banner button:focus-visible, .dcats-integration-check-list button:focus-visible, .dcats-integration-notice button:focus-visible { outline: 2px solid #287356; outline-offset: 3px; }
+@media (max-width: 600px) { .dcats-integration-banner { flex-direction: column; gap: 10px; padding: 14px; } .dcats-integration-check-list > div { grid-template-columns: minmax(0,1fr) auto; } .dcats-integration-check-list button { grid-column: 1 / -1; width: 100%; } }
 .dcats-business-workspace-backup p { margin: 6px 0; font-size: 12px; line-height: 1.7; color: #46594d; }
 .dcats-business-workspace-backup > button { width: 100%; min-height: 44px; margin: 10px 0; padding: 10px; border: 1px solid #287356; border-radius: 5px; color: #176b43; background: #fff; font-size: 12px; white-space: normal; }
 .dcats-business-workspace-backup > button:disabled { opacity: .65; cursor: wait; }

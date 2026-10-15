@@ -94,7 +94,7 @@ function fixture(mode = {}) {
     context.resetDcatsCompanyBackupReadiness();assert.equal(next.hidden,true);assert.equal(list.childElementCount,0);assert.equal(context.dcatsCompanyBackupResult,null);
     context.renderDcatsCompanyBackupNextSteps({status:observed.status,checks:{...observed.checks,backupPassword:"<script>PRIVATE</script>",recovery:"PRIVATE",backupAdapter:"PRIVATE"}});assert.equal(next.hidden,true);assert.equal(list.childElementCount,0);
   }
-  assert(card.includes('id="dcats-business-workspace-backup-next" hidden>'));assert(handler.includes("renderDcatsCompanyBackupNextSteps(result)"));
+  assert(card.includes('id="dcats-business-workspace-backup-next" hidden>'));assert(handler.includes("applyDcatsCompanyBackupReadiness(result)"));assert(pick("applyDcatsCompanyBackupReadiness").includes("renderDcatsCompanyBackupNextSteps(result)"));
   for(const key of ["next_identity","next_syncFolder","next_driveConfiguration","next_driveAuthorization","next_backupPassword","next_password_local_only","next_recovery","next_backupAdapter","adapter_pending"])
     assert.equal((app.match(new RegExp("business_workspace_backup_"+key+":","g"))||[]).length,3,key);
   console.log("Backup readiness: signed same-owner read, fixed states, no vendor start/enrollment, errors/cancellation/stale sessions and three-language UI: OK");
