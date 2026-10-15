@@ -10,6 +10,11 @@
   ];
   var COPY = {
     ja: {
+      confirmHeading: "受付内容の確認",
+      confirmPrivacy: "まだ受付は保存されていません。本文・対象画面・画像を確認してください。確定すると管理者だけが閲覧できる依頼として保存します。コードや業務データの自動修正は行いません。",
+      confirmSave: "この内容で受付を確定",
+      confirmRetry: "同じ受付を確認・再送",
+      editMessage: "本文を直す",
       heading: "修正依頼・改善提案",
       intro: "内容を送信すると受付番号が付き、ここで対応状況を確認できます。",
       compose: "依頼・提案を作成",
@@ -77,6 +82,11 @@
       imageFailed: "画像を表示できませんでした。再度お試しください。",
     },
     en: {
+      confirmHeading: "Review request",
+      confirmPrivacy: "Not saved yet. Review the message, screen and image. Confirming saves a request visible only to administrators. No code or business data is changed automatically.",
+      confirmSave: "Confirm and save request",
+      confirmRetry: "Check / retry the same request",
+      editMessage: "Edit message",
       heading: "Fix requests and suggestions",
       intro:
         "Submit a request to receive a reference number and track its progress here.",
@@ -144,6 +154,11 @@
       imageFailed: "Could not display the image. Please retry.",
     },
     zh: {
+      confirmHeading: "确认受理内容",
+      confirmPrivacy: "尚未保存。请确认正文、页面和图片。确认后保存为仅管理员可见的请求。不会自动修改代码或业务数据。",
+      confirmSave: "确认并保存请求",
+      confirmRetry: "确认或重发同一请求",
+      editMessage: "修改正文",
       heading: "修正请求与改进建议",
       intro: "提交后获得受理编号，可在这里查看处理进度。",
       compose: "新建请求或建议",
@@ -326,7 +341,6 @@
       disposed = false;
     var tokens = {},
       sending = false,
-      imageReading = false,
       updating = false,
       imageToken = 0;
     var imageData = "",
@@ -334,6 +348,7 @@
       fingerprint = "",
       draftContext = null,
       pendingImage = null;
+    var draft = null, attempted = false;
     var current = null,
       updateId = "",
       updateFingerprint = "",
@@ -423,70 +438,33 @@
       return result.data;
     }
     var section = element("section", null, "dcats-concierge-request-card");
-    section.appendChild(element("h3", "heading"));
-    section.appendChild(element("p", "intro"));
-    var details = element("details");
-    details.appendChild(element("summary", "compose"));
-    var fromQuestion = button("fromQuestion", function () {
-      if (sending || !valid()) return;
-      var draft = options.draft();
-      if (!draft.question.trim()) {
-        announce("draftEmpty", true);
-        return;
-      }
-      title.value = draft.question.trim().slice(0, 120);
-      description.value = (
-        draft.question.trim() +
-        (draft.answer ? "\n\n" + t("aiAnswer") + "\n" + draft.answer : "")
-      ).slice(0, 5000);
-      if (draft.image) { clearImage(); showImage(draft.image); }
-      details.open = true;
-      title.focus();
-    });
-    details.appendChild(fromQuestion);
     var form = element("form"),
-      kind = element("select"),
-      title = element("input"),
-      description = element("textarea"),
-      file = element("input");
-    ["bug", "suggestion", "question"].forEach(function (key) {
-      var o = element("option", key);
-      o.value = key;
-      kind.appendChild(o);
-    });
-    title.maxLength = 120;
-    title.required = true;
-    description.maxLength = 5000;
-    description.required = true;
-    description.rows = 6;
-    file.type = "file";
-    file.accept = "image/png,image/jpeg,image/webp";
-    [
-      ["kind", kind],
-      ["title", title],
-      ["description", description],
-    ].forEach(function (pair) {
-      form.appendChild(label(pair[0], pair[1]));
-      form.appendChild(pair[1]);
-    });
+      kind = element("p", null, "dcats-request-muted"),
+      title = element("h4"),
+      description = element("p", null, "dcats-request-pre");
+    form.hidden = true;
+    form.className = "dcats-request-confirm";
+    form.appendChild(element("h3", "confirmHeading"));
+    form.appendChild(kind);
+    form.appendChild(title);
+    form.appendChild(description);
     var screen = element("p", null, "dcats-request-muted");
     form.appendChild(screen);
-    form.appendChild(label("image", file));
-    form.appendChild(file);
-    var pasteHint = element("p", "pasteHint", "dcats-concierge-image-paste");
-    pasteHint.tabIndex = 0;
-    form.appendChild(pasteHint);
     var preview = element("img", null, "dcats-request-preview");
     preview.hidden = true;
     preview.alt = t("image");
-    var remove = button("removeImage", clearImage);
-    remove.hidden = true;
     form.appendChild(preview);
-    form.appendChild(remove);
-    form.appendChild(element("p", "privacy", "dcats-request-muted"));
-    var submit = element("button", "submit", "dcats-request-primary");
+    form.appendChild(element("p", "confirmPrivacy", "dcats-request-muted"));
+    var submit = element("button", "confirmSave", "dcats-request-primary");
     submit.type = "submit";
     form.appendChild(submit);
+    var edit = button("editMessage", function () {
+      if (sending || attempted || !draft || !valid()) return;
+      var previous = draft;
+      clearDraft();
+      if (options.edit) options.edit(previous);
+    });
+    form.appendChild(edit);
     var retryImage = button("retryImage", async function () {
       if (sending || !pendingImage) return;
       sending = true;
@@ -508,130 +486,88 @@
       }
     });
     retryImage.hidden = true;
-    details.appendChild(form);
-    section.appendChild(details);
+    section.appendChild(form);
     var message = element("p", null, "dcats-request-message");
     message.setAttribute("role", "status");
     message.setAttribute("aria-live", "polite");
     section.appendChild(message);
     section.appendChild(retryImage);
-    section.appendChild(element("h4", "list"));
+    var history = element("details"), historyBody = element("div");
+    history.appendChild(element("summary", "list"));
+    history.appendChild(historyBody);
+    section.appendChild(history);
     var filter = element("select");
     ["all"].concat(STATUS).forEach(function (key) {
       var o = element("option", key);
       o.value = key;
       filter.appendChild(o);
     });
-    section.appendChild(label("filter", filter));
-    section.appendChild(filter);
+    historyBody.appendChild(label("filter", filter));
+    historyBody.appendChild(filter);
     var refresh = button("refresh", function () {
       loadList(false);
     });
-    section.appendChild(refresh);
+    historyBody.appendChild(refresh);
     var listStatus = element("p", null, "dcats-request-muted"),
       list = element("ul", null, "dcats-request-list");
-    section.appendChild(listStatus);
-    section.appendChild(list);
+    historyBody.appendChild(listStatus);
+    historyBody.appendChild(list);
     var more = button("more", function () {
       loadList(true);
     });
     more.hidden = true;
-    section.appendChild(more);
+    historyBody.appendChild(more);
     var detail = element("section");
     detail.hidden = true;
-    section.appendChild(detail);
+    historyBody.appendChild(detail);
     var statusSelect, noteInput, saveButton;
     parent.insertBefore(section, options.before || null);
     function syncBusy() {
-      [
-        kind,
-        title,
-        description,
-        file,
-        remove,
-        fromQuestion,
-        submit,
-        retryImage,
-      ].forEach(function (n) {
+      [submit, retryImage].forEach(function (n) {
         n.disabled = sending;
       });
-      submit.textContent = t(sending ? "sending" : "submit");
-      submit.disabled = sending || imageReading;
+      edit.disabled = sending || attempted;
+      submit.textContent = t(sending ? "sending" : attempted ? "confirmRetry" : "confirmSave");
       if (saveButton) saveButton.disabled = updating;
+      if (options.changed) options.changed();
     }
     function clearImage() {
       imageToken++;
-      imageReading = false;
       imageData = "";
-      file.value = "";
       preview.removeAttribute("src");
       preview.hidden = true;
-      remove.hidden = true;
-      syncBusy();
     }
-    function showImage(data) {
-      imageData = data;
-      preview.src = "data:image/png;base64," + data;
-      preview.hidden = false;
-      remove.hidden = false;
-      announce("imageReady");
-    }
-    async function readImage(selected) {
-      if (sending || !valid()) return;
+    function clearDraft() {
+      draft = null; attempted = false; draftId = ""; fingerprint = ""; draftContext = null;
+      form.hidden = true;
+      title.textContent = ""; description.textContent = ""; kind.textContent = ""; screen.textContent = "";
       clearImage();
-      if (!selected) return;
-      var token = ++imageToken;
-      imageReading = true;
       syncBusy();
-      announce("imageReading");
-      try {
-        var data = await window.DcatsConciergeImages.prepare(selected, form.ownerDocument);
-        if (!valid() || token !== imageToken) return;
-        showImage(data);
-      } catch (error) {
-        if (valid() && token === imageToken)
-          announce(
-            error.message === "image_large" ? "imageLarge" : "invalidImage",
-            true,
-          );
-      } finally {
-        if (valid() && token === imageToken) { imageReading = false; syncBusy(); }
-      }
     }
-    file.addEventListener("change", function () {
-      readImage(file.files && file.files[0]);
-    });
-    form.addEventListener("paste", function (event) {
-      if (sending || !valid()) return;
-      try {
-        var selected = window.DcatsConciergeImages.pastedFile(event);
-        if (selected) readImage(selected);
-      } catch (error) { announce("invalidImage", true); }
-    });
-    function captureDraftContext() {
-      if (!draftContext) {
-        var c = options.context();
-        draftContext = { screenId: c.screenId, language: c.language };
-      }
-      screen.textContent =
-        t("screen") + ": " + screenLabel(draftContext.screenId);
+    function prepare(value) {
+      if (!valid() || draft || sending || pendingImage || !value || ["bug", "suggestion"].indexOf(value.kind) < 0 || typeof value.title !== "string" || !value.title.trim() || value.title.length > 120 || typeof value.question !== "string" || !value.question.trim() || value.question.length > 800 || !SCREENS[value.screenId] || !COPY[value.language]) return false;
+      draft = { kind: value.kind, title: value.title.trim(), question: value.question.trim(), image: value.image || "", screenId: value.screenId, language: value.language };
+      draftContext = { screenId: draft.screenId, language: draft.language };
+      title.textContent = draft.title;
+      description.textContent = draft.question;
+      kind.textContent = t(draft.kind);
+      screen.textContent = t("screen") + ": " + screenLabel(draft.screenId);
+      imageData = draft.image;
+      if (imageData) { preview.src = "data:image/png;base64," + imageData; preview.hidden = false; }
+      message.textContent = "";
+      form.hidden = false;
+      syncBusy();
+      return true;
     }
-    details.addEventListener("toggle", function () {
-      if (details.open) captureDraftContext();
-    });
+    history.addEventListener("toggle", function () { if (history.open) loadList(false); });
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
-      if (sending || imageReading || !valid()) return;
-      if (!title.value.trim() || !description.value.trim()) {
-        announce("required", true);
-        return;
-      }
-      captureDraftContext();
+      if (sending || !draft || !valid()) return;
       var body = {
         action: "create",
-        kind: kind.value,
-        title: title.value.trim(),
-        description: description.value.trim(),
+        kind: draft.kind,
+        title: draft.title,
+        description: draft.question,
         screen_id: draftContext.screenId,
         language: draftContext.language,
       };
@@ -643,10 +579,13 @@
       body.id = draftId;
       if (imageData) body.image = imageData;
       sending = true;
+      attempted = true;
       syncBusy();
       announce("sending");
       try {
         var result = await send(body, "submit");
+        if (!result.request || result.request.id !== body.id) throw new Error("request_failed");
+        history.open = true;
         renderDetail(result);
         announce("sent", false, { no: ref(result.request) });
         if (result.warning === "attachment_conflict") {
@@ -656,12 +595,9 @@
           announce("imageWarning", true);
           retryImage.hidden = false;
         }
-        title.value = "";
-        description.value = "";
-        fingerprint = "";
-        draftId = "";
-        draftContext = null;
-        clearImage();
+        var acceptedDraft = draft;
+        clearDraft();
+        if (options.accepted) options.accepted(acceptedDraft);
         loadList(false, true);
       } catch (error) {
         announce(apiError(error, true), true);
@@ -816,7 +752,7 @@
           attachPreview.removeAttribute("src");
           if (!selected) return;
           try {
-            var data = await encodeImage(selected);
+            var data = await window.DcatsConciergeImages.prepare(selected, doc);
             if (
               !valid() ||
               !current ||
@@ -938,6 +874,7 @@
       if (draftContext)
         screen.textContent =
           t("screen") + ": " + screenLabel(draftContext.screenId);
+      if (draft) kind.textContent = t(draft.kind);
       syncBusy();
     }
     function destroy() {
@@ -947,15 +884,22 @@
       clearImage();
       imageData = "";
       pendingImage = null;
-      title.value = "";
-      description.value = "";
+      draft = null;
+      title.textContent = "";
+      description.textContent = "";
       if (noteInput) noteInput.value = "";
       current = null;
       items = [];
       section.remove();
     }
     sync();
-    return { sync: sync, destroy: destroy };
+    return {
+      sync: sync, destroy: destroy, prepare: prepare,
+      pending: function () { return !!(draft || sending || pendingImage); },
+      beginMessage: function () { if (!draft && !sending && !pendingImage) message.textContent = ""; },
+      previewElement: function () { return !form.hidden ? form : null; },
+      resetDraft: function () { if (draft && !sending && !attempted) clearDraft(); }
+    };
   }
   window.DcatsConciergeRequestsUi = Object.freeze({ mount: mount });
 })();

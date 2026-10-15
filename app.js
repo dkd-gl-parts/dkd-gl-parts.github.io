@@ -7955,7 +7955,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1172";
+var APP_VERSION       = "v1.1.1173";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -8774,6 +8774,10 @@ async function askConciergeAi(request) {
   }
   var owner = currentUser.id;
   var body = { question: question, language: language, screen_id: screenId };
+  if (request.classify !== undefined) {
+    if (typeof request.classify !== "boolean") return { data: null, error: new Error("invalid_concierge_ai_request") };
+    body.classify = request.classify;
+  }
   if (image) body.image = image;
   var result = await sb.functions.invoke("concierge-ai-assist", { body: body });
   if (!currentUser || currentUser.id !== owner || !isSystemAdmin()) return { data: null, error: new Error("system_admin_required") };

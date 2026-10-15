@@ -100,6 +100,9 @@ class FakeElement {
     child.setConnected(false);
     return child;
   }
+  remove() { if (this.parentElement) this.parentElement.removeChild(this); }
+  replaceChildren(...children) { this.children.slice().forEach(child => this.removeChild(child)); children.forEach(child => this.appendChild(child)); }
+  after(child) { this.parentElement.insertBefore(child, this.parentElement.children[this.parentElement.children.indexOf(this) + 1] || null); }
   setOwnerDocument(documentRef) {
     this.ownerDocument = documentRef;
     this.children.forEach((child) => child.setOwnerDocument(documentRef));
@@ -128,6 +131,7 @@ class FakeElement {
     if (selector === "[data-concierge-copy]") {
       return this.descendants().filter((element) => element.dataset.conciergeCopy);
     }
+    if (selector === "[data-request-copy]") return this.descendants().filter(element => element.dataset.requestCopy);
     if (selector.includes("[role='button']") && selector.includes("[data-production-index]")) {
       return this.descendants().filter((element) => (
         element.getAttribute("role") === "button" ||
@@ -176,6 +180,7 @@ const documentObject = {
   activeElement: null,
   listeners: new Map(),
   createElement(tag) { return new FakeElement(tag, this); },
+  createTextNode(text) { const node = new FakeElement("text", this); node.textContent = text; return node; },
   addEventListener(type, listener) {
     const list = this.listeners.get(type) || [];
     list.push(listener);
@@ -237,6 +242,7 @@ let aiResponseFactory = () => ({
     usage: { input_tokens: 100, output_tokens: 50, total_tokens: 150 },
     estimated_cost_usd: 0.00008,
     performed_action: false
+    , routing: { kind: "question", title: "" }
   },
   error: null
 });
@@ -329,7 +335,7 @@ const windowObject = {
     });
   },
   crypto: {
-    randomUUID() { return `00000000-0000-4000-8000-${String(capabilityRequests.length + 1).padStart(12, "0")}`; }
+    randomUUID() { return require("node:crypto").randomUUID(); }
   },
   DcatsBridgeApi: {
     async issueCapability(request) {
@@ -388,6 +394,7 @@ windowObject.setTimeout = context.setTimeout;
 windowObject.clearTimeout = context.clearTimeout;
 
 vm.createContext(context);
+vm.runInContext(fs.readFileSync(path.join(rootDir, "assets/concierge-pet/concierge-requests.js"), "utf8"), context, { filename: "concierge-requests.js" });
 vm.runInContext(runtime, context, { filename: "concierge-pet.js" });
 
 function allElements() { return [documentObject.body, ...documentObject.body.descendants()]; }
@@ -505,7 +512,7 @@ dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
 await new Promise((resolve) => setImmediate(resolve));
 await new Promise((resolve) => setImmediate(resolve));
 assert(aiRequests.length === 1, "A pending AI question was submitted more than once");
-assert(JSON.stringify(aiRequests[0]) === JSON.stringify({ question: "受注データはどの画面で確認しますか？", language: "ja", screenId: "menu" }), "AI received data outside the reviewed minimal context");
+assert(aiRequests[0].question === "受注データはどの画面で確認しますか？" && aiRequests[0].language === "ja" && aiRequests[0].screenId === "menu" && aiRequests[0].classify === true && Object.keys(aiRequests[0]).every(key => ["question", "language", "screenId", "image", "classify"].includes(key)), "AI received data outside the reviewed unified context");
 assert(aiStatus.textContent === "回答" && aiStatus.classList.contains("is-success"), "AI success heading must be concise");
 assert(aiAnswer.textContent === "受注・出荷管理画面で確認できます。" && !aiAnswer.hidden, "AI answer was not presented as text");
 assert(aiGuide.textContent.includes("案内先：受注・出荷管理") && !aiGuide.hidden, "Fixed-screen guidance was not presented");
@@ -532,7 +539,7 @@ assert(aiRequests.length === beforePendingAi + 1 && aiAskButton.disabled &&
   "Pending AI request must visibly change its button and remain single-submit");
 finishPendingAi({ data: null, error: new Error("invalid_authorization") });
 await new Promise(resolve => setImmediate(resolve));
-assert(!aiAskButton.disabled && aiAskButton.textContent === "AIに質問する" && aiAskButton.getAttribute("aria-busy") === "false",
+assert(!aiAskButton.disabled && aiAskButton.textContent === "送信" && aiAskButton.getAttribute("aria-busy") === "false",
   "AI failure must restore the question button");
 assert(aiStatus.textContent.includes("再ログイン") && aiStatus.classList.contains("is-error") && aiAnswer.hidden,
   "Expired/invalid authorization must show sign-in guidance, not an invalid-question message");
@@ -597,7 +604,7 @@ const imageFile = aiCard.descendants().find(element => element.type === "file");
 function assertBlankQuestion(label) {
   assert(aiQuestionInput.value === "" && aiPreview.hidden && !aiPreview.getAttribute("src") && imageFile.value === "", label + ": input or image survived");
   assert(aiAnswer.hidden && aiAnswer.textContent === "" && aiGuide.hidden && aiGuide.textContent === "" && aiUsage.hidden, label + ": old results survived");
-  assert(aiStatus.textContent === "まだ質問していません。" && !aiStatus.classList.contains("is-error") && !aiStatus.classList.contains("is-success"), label + ": old status survived");
+  assert(aiStatus.textContent === "内容を入力して送信してください。" && !aiStatus.classList.contains("is-error") && !aiStatus.classList.contains("is-success"), label + ": old status survived");
   assert(!aiAskButton.disabled && !aiQuestionInput.disabled && aiAskButton.getAttribute("aria-busy") === "false", label + ": new question disabled");
 }
 api.openSettings("question");
@@ -658,6 +665,79 @@ for (const oldFailed of [false, true]) {
   await new Promise(resolve => setImmediate(resolve));
   assert(aiAnswer.textContent === "新しい回答だけ" && !aiAskButton.disabled, "New response failed after old completion");
 }
+aiResponseFactory = originalAiResponseFactory;
+dispatch(panelClose.listeners, "click", { target: panelClose });
+// Actual intake renderer: classification only prepares an immutable confirmation.
+const intakeCalls = [];
+let intakeFactory = command => ({ data: { ok: true, items: [], events: [], request: { ...command, request_no: 1, status: "new", version: 1, created_at: "2026-10-15T00:00:00Z" } } });
+windowObject.DcatsConciergeRequestApi = { async send(command) { intakeCalls.push({ ...command }); return intakeFactory(command); } };
+const confirmForm = () => byClass("dcats-request-confirm")[0];
+const findCopy = key => allElements().find(node => node.dataset.requestCopy === key);
+const tick = () => new Promise(resolve => setImmediate(resolve));
+for (const routeKind of ["bug", "suggestion"]) {
+  api.openSettings("question");
+  aiQuestionInput.value = routeKind === "bug" ? "検索が反応しない <img src=x>" : "検索条件を保存したい";
+  const source = aiQuestionInput.value;
+  aiResponseFactory = () => ({ data: { ...originalAiResponseFactory().data, routing: { kind: routeKind, title: "検索について" } } });
+  const before = intakeCalls.length;
+  dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
+  await tick();
+  assert(!confirmForm().hidden && aiAskButton.disabled && aiQuestionInput.disabled && intakeCalls.length === before, "Classification must preview, not persist");
+  assert(!confirmForm().descendants().some(n => ["SELECT", "TEXTAREA", "INPUT"].includes(n.tagName)), "Unified intake must not introduce a second composer or type choice");
+  assert(confirmForm().descendants().some(n => n.textContent === source), "Preview must retain original text, not an AI rewrite");
+  dispatch(findCopy("editMessage").listeners, "click");
+  assert(confirmForm().hidden && aiQuestionInput.value === source && !aiAskButton.disabled && documentObject.activeElement === aiQuestionInput, "Edit must return to the one input without saving");
+  dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
+  await tick();
+  let finish;
+  intakeFactory = () => new Promise(resolve => { finish = resolve; });
+  dispatch(confirmForm().listeners, "submit", { preventDefault() {} });
+  dispatch(confirmForm().listeners, "submit", { preventDefault() {} });
+  assert(intakeCalls.length === before + 1 && findCopy("editMessage").disabled, "Confirm double-submit or edit during write");
+  const submitted = intakeCalls.at(-1);
+  assert(submitted.kind === routeKind && submitted.description === source && submitted.screen_id === "menu" && submitted.language === "ja", "Confirmed payload lost original intent/context");
+  finish({ data: null, error: new Error("network_unknown") });
+  await tick();
+  dispatch(panelClose.listeners, "click", { target: panelClose });
+  api.openSettings("question");
+  assert(!confirmForm().hidden && aiAskButton.disabled && findCopy("editMessage").disabled, "Unknown write receipt must survive close without creating duplicates");
+  intakeFactory = command => ({ data: { ok: true, items: [], events: [], request: { ...command, request_no: 2, status: "new", version: 1, created_at: "2026-10-15T00:00:00Z" } } });
+  dispatch(confirmForm().listeners, "submit", { preventDefault() {} });
+  await tick();
+  const retries = intakeCalls.filter(command => command.action === "create" && command.id === submitted.id);
+  assert(retries.length === 2 && JSON.stringify(retries[0]) === JSON.stringify(retries[1]), "Unknown write must retry the exact same ID and content");
+  assert(confirmForm().hidden && !aiAskButton.disabled && aiQuestionInput.value === "" && byClass("dcats-request-message")[0].textContent.includes("DC-"), "Confirmed request must show a receipt and clear the composer without deleting history");
+}
+aiQuestionInput.value = "未確定の依頼";
+dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
+await tick();
+dispatch(panelClose.listeners, "click", { target: panelClose });
+api.openSettings("question");
+assert(confirmForm().hidden && !aiAskButton.disabled && aiQuestionInput.value === "", "Closing an unconfirmed preview must reset the new-question flow");
+aiResponseFactory = () => ({ data: { ...originalAiResponseFactory().data, routing: { kind: "run", title: "not allowed" } } });
+aiQuestionInput.value = "invalid route";
+dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
+await tick();
+assert(aiAnswer.hidden && confirmForm().hidden && aiStatus.classList.contains("is-error"), "Unreviewed AI route must not enter intake");
+aiResponseFactory = originalAiResponseFactory;
+dispatch(panelClose.listeners, "click", { target: panelClose });
+// A partially saved image keeps its accepted request ID, and only attachment is retried.
+api.openSettings("question");
+windowObject.DcatsConciergeImages.prepare = async () => "aGVsbG8=";
+dispatch(aiCard.listeners, "paste", { syntheticFile: { type: "image/png" } });
+await tick();
+aiQuestionInput.value = "画像の表示が崩れています";
+aiResponseFactory = () => ({ data: { ...originalAiResponseFactory().data, routing: { kind: "bug", title: "表示の崩れ" } } });
+dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
+await tick();
+intakeFactory = command => ({ data: { ok: true, warning: command.action === "create" ? "attachment_failed" : undefined, request: { ...command, request_no: 3, status: "new", version: 1, created_at: "2026-10-15T00:00:00Z" }, events: [], items: [] } });
+dispatch(confirmForm().listeners, "submit", { preventDefault() {} });
+await tick();
+const partial = intakeCalls.filter(command => command.action === "create").at(-1);
+assert(partial.image === "aGVsbG8=" && confirmForm().hidden && aiAskButton.disabled && !findCopy("retryImage").hidden, "Partial image save lost the accepted receipt or enabled a duplicate create");
+dispatch(findCopy("retryImage").listeners, "click");
+await tick();
+assert(intakeCalls.at(-1).action === "attach" && intakeCalls.at(-1).id === partial.id && intakeCalls.at(-1).image === partial.image && !aiAskButton.disabled, "Image retry must attach to the same accepted request only");
 aiResponseFactory = originalAiResponseFactory;
 dispatch(panelClose.listeners, "click", { target: panelClose });
 const bridgeCard = byClass("dcats-concierge-bridge-card")[0];
