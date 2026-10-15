@@ -13,7 +13,9 @@ vm.runInContext(source.slice(source.indexOf("async function issueConciergeCompan
 function harness(options = {}) {
   const listeners = new Set(), posts = [], issued = []; let current = true;
   const storage=options.storage||new Map();
-  const win = { location: { origin: "https://dcats.daiko-denki.co.jp" }, crypto: webcrypto, setTimeout, clearTimeout, setInterval, clearInterval,
+  const win = { location: { origin: "https://dcats.daiko-denki.co.jp" }, crypto: webcrypto,
+    setTimeout:options.clock?options.clock.setTimeout:setTimeout,clearTimeout:options.clock?options.clock.clear:clearTimeout,
+    setInterval:options.clock?options.clock.setInterval:setInterval,clearInterval:options.clock?options.clock.clear:clearInterval,
     sessionStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>{if(options.storageFailure)throw new Error();storage.set(key,value);},removeItem:key=>storage.delete(key)},
     addEventListener: (name, cb) => { if (name === "message") listeners.add(cb); }, removeEventListener: (name, cb) => listeners.delete(cb),
     postMessage(message, origin) {
@@ -42,9 +44,40 @@ function harness(options = {}) {
   };
   const ctx = { window: win, Uint8Array, Object, Date, Set, Array, Number, Promise, Error };
   vm.createContext(ctx); vm.runInContext(client, ctx);
-  return { bridge: win.DcatsHanbaiohCompanyBridge, posts, issued, listeners, storage, options: { record, isCurrent: () => current }, leave: () => { current = false; } };
+  return { bridge: win.DcatsHanbaiohCompanyBridge, posts, issued, listeners, storage, options: { record, isCurrent: () => current }, leave: () => { current = false; },
+    respond:response=>{for(const cb of listeners)cb({source:win,origin:win.location.origin,data:{channel:"dcats-hanbaioh25-bridge-v1",type:"response",response}});} };
+}
+function discoveryClock(){
+  let now=0,nextId=0;const timers=new Map();
+  function add(fn,delay,repeat){const id=++nextId;timers.set(id,{fn,at:now+delay,delay,repeat});return id;}
+  return {setTimeout:(fn,delay)=>add(fn,delay,false),setInterval:(fn,delay)=>add(fn,delay,true),clear:id=>timers.delete(id),timers,
+    advance(ms){const target=now+ms;for(;;){const pending=[...timers].filter(([,value])=>value.at<=target).sort((a,b)=>a[1].at-b[1].at);if(!pending.length)break;
+      const [id,value]=pending[0];now=value.at;if(value.repeat)value.at+=value.delay;else timers.delete(id);value.fn();}now=target;}};
 }
 (async () => {
+  // A real isolated packaged-host probe took ~7s for cold startup + DPAPI.
+  // Discovery must wait for that response without issuing login or a ticket.
+  const slowClock=discoveryClock(),slow=harness({noReply:true,clock:slowClock});
+  const slowRead=slow.bridge.readDeviceFromPc({actorId:actor,isCurrent:()=>true});
+  slowClock.advance(7000);assert.equal(slow.listeners.size,1);assert.equal(slow.posts.length,1);
+  slow.respond({id:slow.posts[0].id,command:slow.posts[0].command,ok:true,data:record});
+  assert.equal((await slowRead).device_id,device);assert.equal(slow.issued.length,0);assert.equal(slowClock.timers.size,0);assert.equal(slow.listeners.size,0);
+  assert(!slow.bridge.wasLoginAttempted(record));
+  const expiredClock=discoveryClock(),expired=harness({noReply:true,clock:expiredClock});
+  const expiredRead=expired.bridge.readDeviceFromPc({actorId:actor,isCurrent:()=>true});
+  const expiredCheck=assert.rejects(expiredRead,error=>error.message==="company_device_read_timeout");
+  expiredClock.advance(19999);assert.equal(expired.listeners.size,1);expiredClock.advance(1);await expiredCheck;
+  expired.respond({id:expired.posts[0].id,command:expired.posts[0].command,ok:true,data:record});
+  assert.equal(expired.posts.length,1);assert.equal(expired.issued.length,0);assert.equal(expired.listeners.size,0);assert.equal(expiredClock.timers.size,0);assert(!expired.bridge.wasLoginAttempted(record));
+  const leftClock=discoveryClock(),left=harness({noReply:true,clock:leftClock});let ownerCurrent=true;
+  const leftRead=left.bridge.readDeviceFromPc({actorId:actor,isCurrent:()=>ownerCurrent});const leftCheck=assert.rejects(leftRead);
+  ownerCurrent=false;leftClock.advance(250);await leftCheck;
+  left.respond({id:left.posts[0].id,command:left.posts[0].command,ok:true,data:record});
+  assert.equal(left.listeners.size,0);assert.equal(leftClock.timers.size,0);assert.equal(left.posts.length,1);assert.equal(left.issued.length,0);
+  const cancelledClock=discoveryClock(),cancelledRead=harness({noReply:true,clock:cancelledClock});
+  const cancelledPromise=cancelledRead.bridge.readDeviceFromPc({actorId:actor,isCurrent:()=>true});const cancelledCheck=assert.rejects(cancelledPromise);
+  cancelledRead.bridge.cancelCurrent();await cancelledCheck;cancelledClock.advance(20000);
+  assert.equal(cancelledRead.posts.length,1);assert.equal(cancelledRead.issued.length,0);assert.equal(cancelledClock.timers.size,0);assert.equal(cancelledRead.listeners.size,0);
   const issue = context.window.DcatsHanbaiohCompanyApi.issue;
   const login = { command: "login_hanbaioh_company", request_id: webcrypto.randomUUID(), device_id: device };
   for (const r of [null, { ...record, actor_id: device }, { ...record, password: "DO-NOT-ECHO" }]) assert((await issue(r, login)).error);

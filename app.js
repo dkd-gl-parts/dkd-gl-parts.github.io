@@ -568,6 +568,7 @@ var TRANSLATIONS = {
     integration_check_unverified: "設定状況は自動確認待ちです。",
     integration_check_extension: "拡張機能が未接続・旧版の可能性があります。「拡張機能の管理」で有効化・再読み込みを確認してください。",
     integration_check_pc: "PC連携アプリに接続できません。導入・更新・修復が必要です。",
+    integration_check_timeout: "PC連携アプリの端末確認が時間切れになりました。今回の処理は開始していません。接続状態を確認してから、もう一度操作してください。",
     integration_check_device: "現在の本人・端末の対応を確認できないか、端末が変わりました。端末登録を担当者へ確認し、接続を確認し直してください。",
     integration_check_identity: "本人・会社・このPCの対応を確認できません。D-CATSのログイン状態と端末登録を確認してください。",
     integration_check_settings: "自動確認で未設定・未確認の項目が見つかりました。必要な項目だけ設定してください。設定後は自動で再確認します。",
@@ -3152,6 +3153,7 @@ var TRANSLATIONS = {
     integration_check_unverified: "Waiting for an automatic setup check.",
     integration_check_extension: "The extension may be disconnected or outdated. Check that it is enabled and reload it in Manage extensions.",
     integration_check_pc: "Cannot connect to the PC integration app. Installation, update or repair is required.",
+    integration_check_timeout: "The PC integration device check timed out. This operation has not started. Check the connection before trying again.",
     integration_check_device: "The current user/device binding could not be verified or the device changed. Ask your administrator to check registration, then reconnect.",
     integration_check_identity: "The user, company and PC binding could not be verified. Check D-CATS sign-in and device registration.",
     integration_check_settings: "The automatic check found missing or unverified settings. Complete the required setup; it will be checked again automatically.",
@@ -5680,6 +5682,7 @@ var TRANSLATIONS = {
     integration_check_unverified: "正在等待自动检查设置。",
     integration_check_extension: "扩展可能未连接或版本过旧。请在扩展管理中确认启用并重新加载。",
     integration_check_pc: "无法连接电脑联动程序。需要安装、更新或修复。",
+    integration_check_timeout: "电脑联动程序的设备验证超时，本次操作尚未开始。请确认连接后重试。",
     integration_check_device: "无法确认当前用户与设备对应，或设备已更改。请联系负责人确认设备登记后重新连接。",
     integration_check_identity: "无法确认本人、公司与此电脑的对应。请确认D-CATS登录状态及设备登记。",
     integration_check_settings: "自动检查发现未设置或未验证的项目。请完成所需设置，之后会自动复查。",
@@ -7880,7 +7883,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1169";
+var APP_VERSION       = "v1.1.1170";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -15331,7 +15334,7 @@ function syncDcatsIntegrationReadinessContext() {
 function renderDcatsIntegrationReadiness(state) {
   var allowed=!!state.owner&&!!currentUser&&state.owner===currentUser.id&&typeof isSystemAdmin==="function"&&isSystemAdmin();
   var attention=state.phase==="attention";
-  var reasons={extension_unavailable:"extension",extension_outdated:"extension",extension_reload:"extension",native_unavailable:"pc",device_unavailable:"device",device_changed:"device",
+  var reasons={extension_unavailable:"extension",extension_outdated:"extension",extension_reload:"extension",native_unavailable:"pc",discovery_timeout:"timeout",device_unavailable:"device",device_changed:"device",
     identity_unverified:"identity",authentication_required:"identity",not_authorized:"identity",settings_required:"settings",busy:"busy",check_unavailable:"failed"};
   var key="integration_check_"+(state.phase==="checking"?"checking":state.phase==="ready"?"ready":state.phase==="checked"?"connected":attention?(reasons[state.reason]||"failed"):"unverified");
   document.querySelectorAll("[data-integration-check-status]").forEach(function(node){node.dataset.i18n=key;node.textContent=t(key);});

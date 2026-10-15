@@ -68,11 +68,15 @@
   }
   function nativeRequest(request, options) {
     return new Promise(function (resolve, reject) {
-      var settled = false, opened = false;
+      var settled = false, opened = false, timedOut = false;
+      var isDeviceDiscovery = request.command === "read_hanbaioh_company_device";
       var isReadiness = request.command === "read_hanbaioh_company_backup_readiness";
       var isBackupSetup = request.command === "open_hanbaioh_company_backup_setup" || request.command === "open_hanbaioh_preimport_backup" || request.command === "open_hanbaioh_preimport_backup_result" || request.command === "open_hanbaioh_company_import_result";
       var isExport = request.command.startsWith("export_hanbaioh_") || request.command === "read_hanbaioh_company_export" || isReadiness;
-      var timer = window.setTimeout(function () { finish(null); }, isBackupSetup ? 20000 : isReadiness ? 20000 : request.command === "login_hanbaioh_company" || isExport ? 210000 : request.command === "read_hanbaioh_company_device" ? 5000 : 30000);
+      // Cold native startup and the existing DPAPI device read can exceed five
+      // seconds. Discovery gets a bounded read-only interval; no ticket or
+      // business-operation deadline is extended and no request is retried.
+      var timer = window.setTimeout(function () { timedOut = true; finish(null); }, isBackupSetup ? 20000 : isReadiness ? 20000 : request.command === "login_hanbaioh_company" || isExport ? 210000 : isDeviceDiscovery ? 20000 : 30000);
       var watch = window.setInterval(function () { if (!options.isCurrent()) finish(null); }, 250);
       function finish(response) {
         if (settled) return; settled = true;
@@ -82,6 +86,7 @@
         if (response && options.isCurrent() && response.ok === true && response.command === request.command && (!isBackupSetup || opened)) resolve(response.data);
         else {
           var code = response && response.error && response.error.code;
+          if (isDeviceDiscovery && timedOut && options.isCurrent()) { reject(new Error("company_device_read_timeout")); return; }
           if (code === "EXTENSION_CONTEXT_INVALIDATED" && options.isCurrent() && (request.command === "read_hanbaioh_company_device" || isBackupSetup && !opened)) { reject(new Error("company_extension_reload_required")); return; }
           if (isBackupSetup && code === "REQUEST_REJECTED" && options.isCurrent()) { reject(new Error("company_extension_update_required")); return; }
           if (isBackupSetup && !opened) { reject(new Error("company_backup_window_unavailable")); return; }

@@ -71,6 +71,9 @@ function uiHarness(options={}){
   for(const invalid of [{...readiness(),actorId:device},{...readiness(),deviceId:actor},{...readiness(),ready:false},readiness({identity:'unverified'}),readiness({recovery:'PRIVATE'})]){
     const f=harness({readiness:invalid});assert.equal((await f.engine.check('login',f.options)).ok,false);assert(!JSON.stringify(f.engine.snapshot()).includes('PRIVATE'));}
   for(const code of ['company_native_host_unavailable','company_device_unavailable','PRIVATE']){const f=harness({failDevice:code});assert.equal((await f.engine.check('login',f.options)).ok,false);assert(!JSON.stringify(f.engine.snapshot()).includes('PRIVATE'));}
+  const discoveryTimeout=uiHarness({failDevice:'company_device_read_timeout'});await discoveryTimeout.ctx.runDcatsCompanyIntegration('login');
+  assert.equal(discoveryTimeout.engine.snapshot().reason,'discovery_timeout');assert.equal(discoveryTimeout.engine.snapshot().checks.extension,'available');
+  assert.equal(discoveryTimeout.engine.snapshot().checks.pc,'unverified');assert.deepEqual(discoveryTimeout.business,[]);assert.deepEqual(discoveryTimeout.calls,['extension','device']);
   const stale=harness({leaveDuringRead:true});assert.equal((await stale.engine.check('backup',stale.options)).reason,'session_changed');
   assert.equal(stale.engine.snapshot().phase,'unverified');
   const denied=harness();denied.deny();assert.equal((await denied.engine.check('login',denied.options)).ok,false);assert.equal(denied.calls.length,0);
@@ -100,6 +103,6 @@ function uiHarness(options={}){
   assert(!html.includes('data-integration-check-dismiss'),'No mandatory first-use dismissal');
   assert(html.indexOf('data-integration-check-recheck')>html.indexOf('id="dcats-integration-check-details"'),'Manual retry is optional under details');
   assert(html.indexOf('integration-readiness.js?')<html.indexOf('src="app.js?'));
-  for(const key of ['title','first_hint','review','dismiss','scope','recheck','details','password_note','checking','ready','connected','unverified','extension','pc','device','identity','settings','busy','failed','blocked','extension_label','pc_label','available','required','open_settings'])assert.equal((source.match(new RegExp('^    integration_check_'+key+':','gm'))||[]).length,3,key);
+  for(const key of ['title','first_hint','review','dismiss','scope','recheck','details','password_note','checking','ready','connected','unverified','extension','pc','timeout','device','identity','settings','busy','failed','blocked','extension_label','pc_label','available','required','open_settings'])assert.equal((source.match(new RegExp('^    integration_check_'+key+':','gm'))||[]).length,3,key);
   console.log('Integration readiness: automatic startup/settings/return checks, coalescing/throttle/trailing retry, idle/owner guards, fresh action checks, setup recovery, identity/device changes, all entrances and translations passed');
 })().catch(error=>{console.error(error);process.exitCode=1;});
