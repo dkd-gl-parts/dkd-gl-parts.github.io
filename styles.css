@@ -8079,7 +8079,6 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .shipping-document-batch-panel > p { min-height: 14px; margin-top: 5px; color: #4f715f; font-size: 8px; line-height: 1.4; }
 .shipping-document-batch-panel > p.error { color: #b42318; }
 .shipping-document-detail-pane { min-width: 0; overflow-y: auto; padding: 20px 24px 44px; background: #fff; }
-.shipping-document-product-preview { display: none; }
 .shipping-document-detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding-bottom: 15px; border-bottom: 2px solid #d9dfe4; }
 .shipping-document-detail-head span { color: #78828d; font-size: 9px; }
 .shipping-document-detail-head .shipping-document-order-id-label { color: #52606d; font-size: 9px; font-weight: 800; }
@@ -10455,21 +10454,21 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-shipping-document-mgmt .shipping-document-required-row > .shipping-document-state-cell { align-items: flex-end; }
 }
 
-/* Keep selected shipment items beside the document actions on desktop. */
+/* Keep selected shipment items and document actions in the order detail. */
 @media screen and (min-width: 1121px) {
+  #screen-shipping-document-mgmt .shipping-document-detail-head { align-items: center; padding-bottom: 6px; }
+  #screen-shipping-document-mgmt .shipping-document-lookup-message:empty { display: none; }
+  #screen-shipping-document-mgmt .shipping-document-detail-head .sales-order-workspace-switch { flex: 0 0 auto; border-bottom: 0; padding: 0; }
+  #screen-shipping-document-mgmt .shipping-document-order-contents { display: grid; grid-template-columns: 104px minmax(0, 1fr); align-items: center; gap: 10px; padding: 5px 8px; background: #f3f7fb; }
+  #screen-shipping-document-mgmt .shipping-document-order-contents-head { display: block; margin: 0; }
+  #screen-shipping-document-mgmt .shipping-document-order-contents-head > span { display: block; margin-top: 2px; }
+  #screen-shipping-document-mgmt .shipping-document-order-items { max-height: 100px; overflow-y: auto; }
+  #screen-shipping-document-mgmt .shipping-document-order-core { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+  #screen-shipping-document-mgmt .shipping-document-order-items:focus-visible { outline: 2px solid #287356; outline-offset: -2px; }
+  #screen-shipping-document-mgmt .shipping-document-order-item { grid-template-columns: minmax(155px, 1fr) minmax(100px, .6fr) 64px 150px; gap: 8px; padding: 3px 0; }
   #screen-shipping-document-mgmt .shipping-document-required-documents { display: flex; flex-direction: column; }
   #screen-shipping-document-mgmt .shipping-document-required-documents .shipping-document-required-list { order: 1; }
   #screen-shipping-document-mgmt .shipping-document-required-documents .shipping-document-guidance { order: 2; }
-  #screen-shipping-document-mgmt .shipping-document-product-preview:not(:empty) { display: block; flex: 0 1 auto; min-height: 0; max-height: min(30vh, 240px); overflow-y: auto; border-top: 1px solid #cfd6dd; padding: 0 12px; background: #f3f7fb; }
-  #screen-shipping-document-mgmt .shipping-document-product-preview:focus-visible { outline: 2px solid #287356; outline-offset: -2px; }
-  #screen-shipping-document-mgmt .shipping-document-product-preview .shipping-document-order-contents { padding: 8px 0; border-bottom: 0; }
-  #screen-shipping-document-mgmt .shipping-document-product-preview .shipping-document-order-contents-head { position: sticky; top: 0; margin: 0; padding-bottom: 6px; background: #f3f7fb; }
-  #screen-shipping-document-mgmt .shipping-document-product-preview .shipping-document-order-items { max-height: none; overflow: visible; }
-  #screen-shipping-document-mgmt .shipping-document-product-preview .shipping-document-order-item { grid-template-columns: minmax(0, 1fr) auto; min-height: 0; gap: 4px 10px; padding: 8px 0; }
-  #screen-shipping-document-mgmt .shipping-document-product-preview .shipping-document-order-item > div:first-child { grid-column: 1 / -1; }
-  #screen-shipping-document-mgmt .shipping-document-product-preview .shipping-document-order-quantity { align-self: start; }
-  #screen-shipping-document-mgmt .shipping-document-product-preview .shipping-document-order-core { grid-column: 1 / -1; justify-self: start; }
-  #screen-shipping-document-mgmt #shipping-document-detail > .shipping-document-order-contents { display: none; }
 }
 
 /* Match order operations to the readable type scale used by shipping documents. */
