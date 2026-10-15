@@ -1225,6 +1225,21 @@
       <button type="button" id="dcats-business-workspace-settings-close" aria-label="閉じる">&#10005;</button>
     </div>
     <p id="dcats-business-workspace-settings-description" class="dcats-business-workspace-settings-description" data-i18n="business_workspace_settings_hint">初回の準備や、パスワード・接続・保存先を変更するときに使います。設定画面を開くだけでは、販売王の起動やデータ取込は行いません。</p>
+    <section class="dcats-business-workspace-backup dcats-extension-manager" id="dcats-extension-manager" aria-labelledby="dcats-extension-manager-title" hidden>
+      <h4 id="dcats-extension-manager-title" data-i18n="extension_manager_title">拡張機能の管理</h4>
+      <p data-i18n="extension_manager_hint">PC版Chrome／Edgeの拡張機能を、アドレス欄のないD-CATSアプリから確認できます。</p>
+      <button type="button" id="dcats-extension-manager-open" aria-describedby="dcats-extension-manager-status" data-i18n="extension_manager_open">拡張機能の管理を開く</button>
+      <p id="dcats-extension-manager-status" role="status" aria-live="polite"></p>
+      <details class="dcats-business-workspace-backup-help" id="dcats-extension-manager-help">
+        <summary data-i18n="extension_manager_help">開けない場合・連携がつながらない場合</summary>
+        <ol>
+          <li data-i18n="extension_manager_step_browser">D-CATSウィンドウ右上の［⋮］から［Chromeで開く］または［Microsoft Edgeで開く］を選びます。</li>
+          <li><span data-i18n="extension_manager_step_address">開いたブラウザのアドレス欄に、使用中のブラウザに合う次のアドレスを入力してEnterを押します。</span><p>Chrome: <code>chrome://extensions/</code><br>Edge: <code>edge://extensions/</code></p></li>
+          <li data-i18n="extension_manager_step_reload">「D-CATS 管理者用 Windows 連携」を有効にし、カードの丸い矢印で再読み込みします。その後D-CATSに戻り、設定パネルを閉じて画面上部の［更新］を押します。</li>
+        </ol>
+        <p class="dcats-business-workspace-backup-note" data-i18n="extension_manager_same_browser">D-CATSから開いた同じブラウザを使ってください。別のブラウザやプロファイルの拡張設定は共有されません。</p>
+      </details>
+    </section>
     <div class="dcats-business-workspace-settings-group">
       <h4 data-i18n="business_workspace_settings_drive_title">PCの共有フォルダ設定</h4>
       <div class="dcats-business-workspace-actions dcats-business-workspace-daily-actions">
