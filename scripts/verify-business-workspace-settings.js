@@ -28,7 +28,7 @@ function harness(role = 'system_admin') {
     cancelCurrent: () => calls.push('cancel'), enrollAccountFromPc: defer, openBackupSetupFromPc: defer, checkBackupReadinessFromPc: defer
   } }, currentUser: { id: 'test-actor' }, t: key => key,
     isSystemAdmin: () => role === 'system_admin', canManageSalesOrders: () => role !== 'customer',
-    document: { getElementById: id => elements.get(id) || null, querySelector: () => null, activeElement: null },
+    document: { getElementById: id => elements.get(id) || null, querySelector: () => null, querySelectorAll: () => [], activeElement: null },
     Array, Promise, Error, Set
   };
   function element(id) {
@@ -41,6 +41,8 @@ function harness(role = 'system_admin') {
   }
   for (const id of ids.filter(id => id.startsWith('dcats-business-workspace'))) element(id);
   vm.runInNewContext(section(app, 'var DCATS_BUSINESS_WORKSPACE_URL', 'function updateSalesOrderSelectionButtons'), context);
+  // Shared preflight is exercised by verify-integration-readiness.js; this harness isolates the existing settings lifecycle.
+  context.ensureDcatsIntegrationBeforeAction = async () => ({ ok: true });
   context.refreshDcatsB2ExportDirectoryState = async () => calls.push('read-folder-state');
   const trigger = element('menu-trigger');
   const visible = id => elements.get('dcats-business-workspace-' + id).classList.contains('show');
@@ -61,12 +63,14 @@ function harness(role = 'system_admin') {
     await h.context[method](); assert.equal(h.calls.length, 0, 'Hidden settings must reject ' + method);
     h.context.openDcatsBusinessWorkspaceSettings({ currentTarget: h.trigger });
     const pending = h.context[method]();
+    await new Promise(resolve => setImmediate(resolve));
     const permit = h.calls.find(call => typeof call === 'object'); assert(permit.isCurrent());
     h.context.closeDcatsBusinessWorkspaceSettings(); assert(!permit.isCurrent()); assert(h.calls.includes('cancel'));
     h.resolve({ status: 'saved', checks: {} }); await pending;
     assert.equal(h.elements.get('dcats-business-workspace-backup-status').textContent, '');
     h.context.openDcatsBusinessWorkspaceSettings({ currentTarget: h.trigger });
     const ownerPending = h.context[method]();
+    await new Promise(resolve => setImmediate(resolve));
     const ownerPermit = h.calls.filter(call => typeof call === 'object').at(-1);
     h.context.currentUser = { id: 'different-actor' }; h.context.syncDcatsCompanyAccountControls();
     assert(!ownerPermit.isCurrent());

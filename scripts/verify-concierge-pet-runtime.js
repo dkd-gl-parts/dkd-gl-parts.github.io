@@ -301,6 +301,8 @@ const windowObject = {
   location: { search: "", href: "https://dcats.example.test/", origin: "https://dcats.example.test" },
   currentUser: { id: "user-a" },
   userProfile: { role: "price_viewer" },
+  // Shared preflight behavior is exercised by verify-integration-readiness.js.
+  ensureDcatsIntegrationBeforeAction: async () => ({ ok: true }),
   DcatsAccess: { isSystemAdmin: () => Boolean(windowObject.userProfile && windowObject.userProfile.role === "system_admin") },
   matchMedia() { return reduceMotionQuery; },
   addEventListener(type, listener) {
@@ -593,6 +595,7 @@ assert(backupTicket.value === "" && backupCopy.disabled && backupStatus.textCont
 let completeLateBackup;
 windowObject.DcatsHanbaiohBackupEnrollmentApi.issue = () => new Promise((resolve) => { completeLateBackup = resolve; });
 dispatch(backupIssue.listeners, "click", { target: backupIssue });
+await new Promise((resolve) => setImmediate(resolve));
 dispatch(panelClose.listeners, "click", { target: panelClose });
 completeLateBackup({ data: { ok: true, device_id: reviewRecord.device_id, capability: syntheticTicket,
   expires_at: new Date(Date.now() + 59000).toISOString() }, error: null });
