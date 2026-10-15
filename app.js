@@ -7970,7 +7970,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1174";
+var APP_VERSION       = "v1.1.1175";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -15663,7 +15663,10 @@ async function runDcatsCompanyIntegration(action, category) {
   try {
     var bridge=window.DcatsHanbaiohCompanyBridge;
     if(!bridge)throw new Error("company_bridge_unavailable");
-    var preflight=await ensureDcatsIntegrationBeforeAction(action,isCurrent);
+    // This button opens the independently authenticated preparation window.
+    // The offline probe cannot verify its Google/recovery prerequisites; the
+    // native controller verifies them afresh before offering an explicit Start.
+    var preflight=await ensureDcatsIntegrationBeforeAction(action==="backup"?"prepare":action,isCurrent);
     if(!isCurrent())return;
     if(!preflight.ok){status.className="error";status.textContent=t("integration_check_blocked");return;}
     if(action==="connect") {
