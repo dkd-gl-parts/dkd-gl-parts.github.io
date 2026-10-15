@@ -59,7 +59,7 @@
       modeVertical: "縦移動だけ",
       modeFixed: "定位置",
       modeOff: "非表示",
-      help: "選択した1体だけを読み込みます。「よく動く」は操作部品を避けて自由に歩き、「横移動だけ」「縦移動だけ」は指定した一方向に歩きます。「定位置」は画面右下で反応だけを表示します。OSの「視差効果を減らす」が有効な場合も静止します。",
+      help: "選択した1体だけを読み込みます。「よく動く」は操作部品を避けて歩き、「横移動だけ」「縦移動だけ」は指定した一方向に歩きます。「定位置」は通常は画面右下で待機します。PCの販売管理では、どのモードも左の検索結果側の専用エリアに収めます。OSの「視差効果を減らす」が有効な場合も静止します。",
       openSettings: "{name}の設定を開く",
       openQuestion: "{name}に質問する",
       launcherOff: "コンシェルジュを表示",
@@ -251,7 +251,7 @@
       modeVertical: "Vertical only",
       modeFixed: "Stay put",
       modeOff: "Hide",
-      help: "Only the selected concierge is loaded. Active mode walks freely while avoiding controls. Horizontal only and Vertical only restrict walking to one direction. Stay put keeps the concierge in the lower-right corner for reactions only. Motion also stops when your OS requests reduced motion.",
+      help: "Only the selected concierge is loaded. Active mode avoids controls. Horizontal only and Vertical only restrict walking to one direction. Stay put normally waits in the lower-right corner. In desktop Sales management, every mode stays in the reserved area beside the left-hand results. Motion also stops when your OS requests reduced motion.",
       openSettings: "Open {name}'s settings",
       openQuestion: "Ask {name}",
       launcherOff: "Show concierge",
@@ -442,7 +442,7 @@
       modeVertical: "仅纵向移动",
       modeFixed: "固定位置",
       modeOff: "隐藏",
-      help: "仅加载所选的一位礼宾助手。“活跃移动”会避开操作控件自由行走；“仅横向移动”和“仅纵向移动”会限制为一个方向。“固定位置”只在右下角作出反应。操作系统启用减少动态效果时也会停止移动。",
+      help: "仅加载所选的一位礼宾助手。“活跃移动”会避开操作控件；“仅横向移动”和“仅纵向移动”限制为一个方向。“固定位置”通常在右下角等候。在电脑版销售管理中，所有模式都限制在左侧搜索结果的专用区域内。操作系统启用减少动态效果时也会停止移动。",
       openSettings: "打开{name}的设置",
       openQuestion: "向{name}提问",
       launcherOff: "显示礼宾助手",
@@ -643,6 +643,7 @@
   var aiUsage;
   var aiImageFile, aiImagePreview, aiImageRemove;
   var aiImageData = "", aiImageToken = 0, aiImagePending = false, aiLastUsage = null;
+  var salesDock = null;
   var requestUi;
   var bridgeCard;
   var bridgeButton;
@@ -2453,6 +2454,7 @@
       stopActivity();
       applySettings();
       closePanel();
+      syncRunningState();
       return;
     }
     applySettings();
@@ -2514,6 +2516,12 @@
   }
 
   function syncRunningState() {
+    syncSalesDock();
+    if (salesDock && !salesMovementBounds(petSize())) {
+      root.classList.add("has-no-safe-target");
+      stopActivity();
+      return;
+    }
     if (!visible || isPresentationHidden() || settings.mode === "off") {
       clearDragState();
       stopActivity();
@@ -2712,6 +2720,11 @@
     var maximumY = Math.max(0, viewport.innerHeight - size.height - 8);
     var minimumX = Math.min(8, maximumX);
     var minimumY = Math.min(isFloatingWindowOpen() ? 8 : 46, maximumY);
+    var sales = salesMovementBounds(size);
+    if (sales) {
+      minimumX = sales.left; maximumX = sales.right;
+      minimumY = sales.top; maximumY = sales.bottom;
+    }
     return {
       x: Math.max(minimumX, Math.min(target.x, maximumX)),
       y: Math.max(minimumY, Math.min(target.y, maximumY))
@@ -2729,6 +2742,18 @@
     var verticalOnly = settings.mode === "vertical";
     var fixedX = Math.max(10, Math.min(position.x, width - 10));
     var fixedY = Math.max(minimumY, Math.min(position.y, height - 12));
+    var sales = salesMovementBounds(size);
+    if (salesDock) {
+      if (!sales) return null;
+      for (var salesAttempt = 0; salesAttempt < 32; salesAttempt += 1) {
+        var salesTarget = {
+          x: verticalOnly ? Math.max(sales.left, Math.min(position.x, sales.right)) : sales.left + Math.random() * (sales.right - sales.left),
+          y: horizontalOnly ? Math.max(sales.top, Math.min(position.y, sales.bottom)) : sales.top + Math.random() * (sales.bottom - sales.top)
+        };
+        if (isSafeCandidate(salesTarget, size, rects)) return salesTarget;
+      }
+      return null;
+    }
     for (var attempt = 0; attempt < 32; attempt += 1) {
       var x;
       var y;
@@ -2757,18 +2782,67 @@
     return null;
   }
 
+  // Reserve a control-free strip outside the scrolling results; never lift the pet over details.
+  function syncSalesDock() {
+    var host = document.querySelector("#screen-search .left-col");
+    var salesContext = visible && isSystemAdminSession() && !isFloatingWindowOpen() && activeScreenName() === "search" && window.innerWidth >= 768 && !!host;
+    root.classList.toggle("is-sales-context", salesContext);
+    var enabled = salesContext && settings.mode !== "off";
+    var wasDocked = !!(salesDock && salesDock.parentElement);
+    if (!enabled || (salesDock && salesDock.parentElement !== host)) {
+      if (salesDock) salesDock.remove();
+      salesDock = null;
+      root.classList.remove("is-sales-docked");
+      if (!enabled) return;
+      wasDocked = false;
+    }
+    if (!salesDock) {
+      salesDock = document.createElement("div");
+      salesDock.className = "dcats-concierge-sales-dock";
+      salesDock.setAttribute("aria-hidden", "true");
+      host.appendChild(salesDock);
+    }
+    root.classList.add("is-sales-docked");
+    var bounds = salesMovementBounds(petSize());
+    if (bounds && (!wasDocked || position.x < bounds.left || position.x > bounds.right || position.y < bounds.top || position.y > bounds.bottom)) {
+      // A direct placement is intentional: crossing the right-hand product detail is not a safe walk.
+      freezeMovement();
+      parkAtSafeCorner();
+    }
+  }
+
+  function salesMovementBounds(size) {
+    if (!salesDock || !salesDock.parentElement || isFloatingWindowOpen() || activeScreenName() !== "search" || window.innerWidth < 768) return null;
+    var rect = salesDock.getBoundingClientRect();
+    var left = Math.max(8, rect.left + 8), top = Math.max(46, rect.top + 8);
+    // Keep the same 18px safety margin used around the adjacent detail panel.
+    var right = Math.min(window.innerWidth - size.width - 8, rect.right - size.width - 26);
+    var bottom = Math.min(window.innerHeight - size.height - 8, rect.bottom - size.height - 8);
+    return right >= left && bottom >= top ? { left: left, top: top, right: right, bottom: bottom } : null;
+  }
+
   function collectExclusionRects() {
     var selectors = "button,input,select,textarea,a[href],summary,[role='button'],[role='link'],[role='dialog'],[tabindex]:not([tabindex='-1']),[data-production-index],.sales-order-detail-head,.sales-order-dispatch-summary,.sales-order-waybill-progress,.core-return-mgmt-detail-head,.core-return-mgmt-facts,.core-return-mgmt-section,.core-return-mgmt-history,.form-overlay,.overlay.show,.panel.show,.fullscreen,.toast,.loading-overlay";
     var rects = [];
     if (!isFloatingWindowOpen()) {
       var active = document.querySelector(".screen.active");
+      var results = salesDock ? document.querySelector("#screen-search .list-area") : null;
+      var resultsRect = results && results.getBoundingClientRect();
       var elements = active ? active.querySelectorAll(selectors) : [];
       for (var i = 0; i < elements.length && rects.length < 260; i += 1) {
         var element = elements[i];
         if (!isElementVisible(element)) continue;
         var rect = element.getBoundingClientRect();
         if (rect.width < 8 || rect.height < 8) continue;
-        rects.push({ left: rect.left - 18, top: rect.top - 18, right: rect.right + 18, bottom: rect.bottom + 18 });
+        var exclusion = { left: rect.left - 18, top: rect.top - 18, right: rect.right + 18, bottom: rect.bottom + 18 };
+        if (resultsRect && results.contains(element)) {
+          exclusion.left = Math.max(exclusion.left, resultsRect.left);
+          exclusion.top = Math.max(exclusion.top, resultsRect.top);
+          exclusion.right = Math.min(exclusion.right, resultsRect.right);
+          exclusion.bottom = Math.min(exclusion.bottom, resultsRect.bottom);
+          if (exclusion.right <= exclusion.left || exclusion.bottom <= exclusion.top) continue;
+        }
+        rects.push(exclusion);
       }
     }
     [launcher, panel].forEach(function (element) {
@@ -2816,6 +2890,10 @@
     var dialogs = document.querySelectorAll("[role='dialog'],.form-overlay,.overlay.show,.panel.show,.fullscreen,.loading-overlay");
     for (var i = 0; i < dialogs.length; i += 1) {
       if (panel.contains(dialogs[i]) || dialogs[i] === panel) continue;
+      if (salesDock && salesMovementBounds(petSize()) && dialogs[i] === document.querySelector("#screen-search .right-col > #panel")) {
+        var detailRect = dialogs[i].getBoundingClientRect();
+        if (detailRect.left >= salesDock.getBoundingClientRect().right - 1) continue;
+      }
       if (isElementVisible(dialogs[i]) && dialogs[i].getBoundingClientRect().width > 20) return true;
     }
     return false;
