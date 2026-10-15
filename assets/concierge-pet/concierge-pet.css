@@ -38,11 +38,11 @@
 }
 
 .dcats-concierge-sprite.is-suzuto {
-  background-image: url("./suzuto/spritesheet.webp?v=1.1.1155");
+  background-image: url("./suzuto/spritesheet.webp?v=1.1.1156");
 }
 
 .dcats-concierge-sprite.is-rinna {
-  background-image: url("./rinna/spritesheet.webp?v=1.1.1155");
+  background-image: url("./rinna/spritesheet.webp?v=1.1.1156");
 }
 
 .dcats-concierge-hit-target {
@@ -182,11 +182,14 @@
 }
 
 .dcats-concierge-panel {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
   position: fixed;
   z-index: 4;
   right: max(14px, env(safe-area-inset-right));
   bottom: calc(max(14px, env(safe-area-inset-bottom)) + 52px);
-  width: min(360px, calc(100vw - 28px));
+  width: min(360px, calc(100% - 28px));
   max-height: calc(100dvh - max(76px, env(safe-area-inset-bottom)) - 20px);
   overflow: hidden;
   border: 1px solid rgb(66 80 107 / 16%);
@@ -199,10 +202,10 @@
 }
 
 .dcats-concierge-panel.is-question-view {
-  width: min(420px, calc(100vw - 28px));
+  width: min(420px, calc(100% - 28px));
 }
 
-.dcats-concierge-panel.is-question-view .dcats-concierge-panel-body > :not(.dcats-concierge-ai-card) {
+.dcats-concierge-panel.is-question-view .dcats-concierge-panel-body > :not(.dcats-concierge-ai-card):not(.dcats-concierge-request-card) {
   display: none;
 }
 
@@ -219,7 +222,40 @@
   box-shadow: 0 8px 20px rgb(66 80 107 / 18%);
 }
 
+.dcats-concierge-request-card {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #e0d7d4;
+  font-size: 13px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.dcats-concierge-request-card h3 { margin: 0 0 8px; font-size: 15px; }
+.dcats-concierge-request-card h4 { margin: 8px 0; font-size: 14px; }
+.dcats-concierge-request-card p { margin: 8px 0; }
+.dcats-concierge-request-card summary { cursor: pointer; font-weight: 650; padding: 8px 0; }
+.dcats-concierge-request-card label { display: block; margin: 9px 0 4px; }
+.dcats-concierge-request-card input,
+.dcats-concierge-request-card select,
+.dcats-concierge-request-card textarea { box-sizing: border-box; display: block; width: 100%; min-width: 0; padding: 9px; border: 1px solid #b8bec8; border-radius: 8px; background: #fff; color: #33415a; font: inherit; }
+.dcats-concierge-request-card textarea { min-height: 116px; resize: vertical; }
+.dcats-concierge-request-card button { min-height: 40px; padding: 8px 12px; margin: 5px 5px 5px 0; border: 1px solid #b8bec8; border-radius: 8px; background: #fff8f5; color: #33415a; font: inherit; cursor: pointer; }
+.dcats-concierge-request-card button:disabled { opacity: .55; cursor: wait; }
+.dcats-concierge-request-card :focus-visible { outline: 3px solid #527ba8; outline-offset: 2px; }
+.dcats-concierge-request-card .dcats-request-primary { background: #6d4946; border-color: #6d4946; color: #fff; }
+.dcats-concierge-request-card .dcats-request-message { white-space: pre-wrap; }
+.dcats-concierge-request-card .dcats-request-message.is-error { color: #a12f29; }
+.dcats-concierge-request-card .dcats-request-muted { color: #5e687a; font-size: 12px; }
+.dcats-concierge-request-card .dcats-request-preview { display: block; max-width: 100%; max-height: 200px; object-fit: contain; margin: 10px auto; border: 1px solid #ddd; }
+.dcats-concierge-request-card .dcats-request-list { list-style: none; margin: 6px 0; padding: 0; }
+.dcats-concierge-request-card .dcats-request-list li { border-bottom: 1px solid #e3e5e8; padding: 5px 0; }
+.dcats-concierge-request-card .dcats-request-list button { width: 100%; text-align: left; background: #fff; }
+.dcats-concierge-request-card .dcats-request-history { padding-left: 20px; }
+.dcats-concierge-request-card .dcats-request-pre { white-space: pre-wrap; }
+.dcats-concierge-request-card [hidden] { display: none !important; }
+
 .dcats-concierge-panel-head {
+  flex: 0 0 auto;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -259,6 +295,10 @@
 }
 
 .dcats-concierge-panel-body {
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  min-height: 0;
+  align-content: start;
   display: grid;
   gap: 15px;
   max-height: calc(100dvh - max(152px, env(safe-area-inset-bottom)) - 20px);
