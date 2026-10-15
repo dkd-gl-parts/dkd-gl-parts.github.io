@@ -15690,7 +15690,10 @@ async function runDcatsCompanyIntegration(action, category) {
   try {
     var bridge=window.DcatsHanbaiohCompanyBridge;
     if(!bridge)throw new Error("company_bridge_unavailable");
-    var preflight=await ensureDcatsIntegrationBeforeAction(action,isCurrent);
+    // This button opens the independently authenticated preparation window.
+    // The offline probe cannot verify its Google/recovery prerequisites; the
+    // native controller verifies them afresh before offering an explicit Start.
+    var preflight=await ensureDcatsIntegrationBeforeAction(action==="backup"?"prepare":action,isCurrent);
     if(!isCurrent())return;
     if(!preflight.ok){status.className="error";status.textContent=t("integration_check_blocked");return;}
     if(action==="connect") {
