@@ -508,6 +508,38 @@ assert(aiStatus.textContent === "回答しました。操作は実行してい�
 assert(aiAnswer.textContent === "受注・出荷管理画面で確認できます。" && !aiAnswer.hidden, "AI answer was not presented as text");
 assert(aiGuide.textContent.includes("案内先：受注・出荷管理") && !aiGuide.hidden, "Fixed-screen guidance was not presented");
 assert(aiUsage.textContent.includes("入力100／出力50トークン") && aiUsage.textContent.includes("US$0.00008000"), "Per-request usage and estimated API cost were not presented");
+const originalAiResponseFactory = aiResponseFactory;
+let finishPendingAi;
+aiResponseFactory = () => new Promise(resolve => { finishPendingAi = resolve; });
+api.openSettings("question");
+aiQuestionInput.value = "小窓での応答確認";
+const beforePendingAi = aiRequests.length;
+dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
+dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
+assert(aiRequests.length === beforePendingAi + 1 && aiAskButton.disabled &&
+  aiAskButton.textContent === "回答を確認しています。" && aiAskButton.getAttribute("aria-busy") === "true",
+  "Pending AI request must visibly change its button and remain single-submit");
+finishPendingAi({ data: null, error: new Error("invalid_authorization") });
+await new Promise(resolve => setImmediate(resolve));
+assert(!aiAskButton.disabled && aiAskButton.textContent === "AIに質問する" && aiAskButton.getAttribute("aria-busy") === "false",
+  "AI failure must restore the question button");
+assert(aiStatus.textContent.includes("再ログイン") && aiStatus.classList.contains("is-error") && aiAnswer.hidden,
+  "Expired/invalid authorization must show sign-in guidance, not an invalid-question message");
+aiResponseFactory = () => ({ data: null, error: Object.assign(new Error("Edge Function returned a non-2xx status code"), { status: 401 }) });
+dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
+await new Promise(resolve => setImmediate(resolve));
+assert(aiStatus.textContent.includes("再ログイン"), "Gateway 401 without a custom error code must show sign-in guidance");
+aiResponseFactory = () => ({ data: null, error: new Error("ai_provider_failed") });
+dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
+await new Promise(resolve => setImmediate(resolve));
+assert(aiStatus.textContent.includes("AIから回答を取得できませんでした") && !aiAskButton.disabled,
+  "AI provider failure must be visible and recoverable");
+aiQuestionInput.value = " ";
+const beforeEmptyAi = aiRequests.length;
+dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
+assert(aiRequests.length === beforeEmptyAi && aiStatus.classList.contains("is-error"), "Empty question must show feedback without an API request");
+aiResponseFactory = originalAiResponseFactory;
+dispatch(panelClose.listeners, "click", { target: panelClose });
 const bridgeCard = byClass("dcats-concierge-bridge-card")[0];
 const bridgeButton = byClass("dcats-concierge-bridge-button")[0];
 const bridgeButtons = byClass("dcats-concierge-bridge-button");
