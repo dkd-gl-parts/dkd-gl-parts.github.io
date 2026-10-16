@@ -82,7 +82,9 @@
       aiQuestionLabel: "相談内容",
       aiPlaceholder: "例：受注の確認方法は？／検索ボタンが反応しない／検索条件を保存したい",
       aiAsk: "送信",
-      aiPrivacy: "送信前に文章と画像を確認してください。顧客・受注情報、価格、個人情報、パスワード、APIキーは含めないでください。質問文・表示言語・画面名・選んだ画像と、サーバーで確認した権限・受注準備の可否を、送信時にOpenAIへ送ります。",
+      aiPrivacy: "送信した本文・画像・AI回答・エラーは、管理者だけが確認できる相談ログに保存します。入力途中の下書きは保存しません。送信前に文章と画像を確認し、顧客・受注情報、価格、個人情報、パスワード、APIキーは含めないでください。質問文・表示言語・画面名・選んだ画像と、サーバーで確認した権限・受注準備の可否を、送信時にOpenAIへ送ります。",
+      aiLogUnavailable: "相談ログを保存できなかったため、AIへの送信を止めました。時間をおいて確認してください。",
+      aiMessagePending: "この相談は処理中、または結果が未確定です。管理画面の相談ログを確認してください。自動では再送しません。",
       aiImage: "画像を添付（任意・1枚）",
       aiImageHint: "質問欄またはここを選び、Ctrl+V／⌘Vで画像を貼り付けられます。PNG・JPEG・WebP、10MB以内。送信前に確認・削除できます。",
       aiImageRemove: "画像を外す",
@@ -280,7 +282,9 @@
       aiQuestionLabel: "Message",
       aiPlaceholder: "Example: How do I view orders? / Search does not respond / I want to save search filters",
       aiAsk: "Send",
-      aiPrivacy: "Review the text and image before sending. Exclude customer or order data, prices, personal data, passwords and API keys. Your question, language, screen name, selected image and server-verified role/order-entry availability are sent to OpenAI when you submit.",
+      aiPrivacy: "Submitted text, images, AI replies and errors are saved privately for administrators. Unsent drafts are not saved. Review before sending; exclude customer/order data, prices, personal data, passwords and API keys. Your question, language, screen name, selected image and server-verified role/order-entry availability are sent to OpenAI on submission.",
+      aiLogUnavailable: "The consultation log could not be saved, so the AI request was stopped. Please check again later.",
+      aiMessagePending: "This message is processing or its outcome is unknown. Check the administrator message log. It will not be resent automatically.",
       aiImage: "Attach an image (optional, one image)",
       aiImageHint: "Select the question field or here and paste an image with Ctrl+V / ⌘V. PNG, JPEG or WebP up to 10 MB. Review or remove it before sending.",
       aiImageRemove: "Remove image",
@@ -477,7 +481,9 @@
       aiQuestionLabel: "咨询内容",
       aiPlaceholder: "示例：如何确认订单？／搜索按钮无反应／希望保存搜索条件",
       aiAsk: "发送",
-      aiPrivacy: "发送前请检查文字和图片。请勿包含客户或订单信息、价格、个人信息、密码或API密钥。提交时向OpenAI发送问题、语言、页面名称、所选图片及服务器确认的权限与订单录入可用状态。",
+      aiPrivacy: "发送的正文、图片、AI回答及错误会保存为仅管理员可查看的咨询日志，不保存未发送草稿。发送前请检查内容，勿包含客户或订单信息、价格、个人信息、密码或API密钥。提交时向OpenAI发送问题、语言、页面名称、所选图片及服务器确认的权限与订单录入可用状态。",
+      aiLogUnavailable: "无法保存咨询日志，已停止发送至AI。请稍后确认。",
+      aiMessagePending: "该咨询正在处理或结果未确定，请查看管理员咨询日志。不会自动重新发送。",
       aiImage: "添加图片（可选，1张）",
       aiImageHint: "选择问题栏或此处，按Ctrl+V／⌘V粘贴图片。支持PNG、JPEG、WebP，10MB以内。发送前可以确认或移除。",
       aiImageRemove: "移除图片",
@@ -1567,6 +1573,8 @@
     if (code.indexOf("invalid_") >= 0) return "aiInvalidQuestion";
     if (code.indexOf("ai_not_configured") >= 0 || code.indexOf("missing_env") >= 0) return "aiNotConfigured";
     if (code.indexOf("configuration_invalid") >= 0 || code.indexOf("service_not_configured") >= 0) return "aiConfigurationInvalid";
+    if (code.indexOf("message_log_unavailable") >= 0) return "aiLogUnavailable";
+    if (code.indexOf("message_in_progress") >= 0 || code.indexOf("idempotency_conflict") >= 0) return "aiMessagePending";
     if (code.indexOf("rate_limited") >= 0) return "aiRateLimited";
     if (code.indexOf("provider_failed") >= 0) return "aiProviderFailed";
     return "aiFailed";
@@ -1615,7 +1623,7 @@
       }
       var route = data.routing;
       if (!route || ["question", "bug", "suggestion"].indexOf(route.kind) < 0 || typeof route.title !== "string" || route.title.length > 120 || (route.kind !== "question" && !route.title.trim())) throw new Error("ai_provider_failed");
-      if (route.kind !== "question" && (!requestUi || !requestUi.prepare({ kind: route.kind, title: route.title, question: submitted.question, image: submitted.image, screenId: submitted.screenId, language: submitted.language }))) throw new Error("ai_provider_failed");
+      if (route.kind !== "question" && (!requestUi || !requestUi.prepare({ kind: route.kind, title: route.title, question: submitted.question, image: submitted.image, screenId: submitted.screenId, language: submitted.language, messageId: data.message_id }))) throw new Error("ai_provider_failed");
       aiAnswer.textContent = data.answer.trim();
       aiAnswer.hidden = false;
       if (route.kind === "question" && data.action && data.action.kind === "prepare_test_order" && data.action.requires_confirmation === true && typeof api.prepareTestOrder === "function") {
