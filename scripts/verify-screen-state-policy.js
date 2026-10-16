@@ -41,6 +41,7 @@ let active = "production-search";
 const screens = [{ classList: { remove() {} } }];
 const target = { classList: { add() {} }, querySelectorAll: () => [] };
 const context = {
+  closeConciergeAdmin() { context.conciergeCloseCount = (context.conciergeCloseCount || 0) + 1; },
   salesOrderDetailView: "history",
   activeAppScreenName: () => active,
   resetScreenStateForMenu: (id) => calls.push(id),
@@ -71,6 +72,9 @@ if (calls.length !== 1) {
 if (context.salesOrderDetailView !== "overview") {
   throw new Error("Leaving order management must reset its detail tab to the default billing and delivery view");
 }
+if (context.conciergeCloseCount !== 3) throw new Error("Leaving the concierge inbox must clear private detail DOM");
+context.showScreen("concierge-admin");
+if (context.conciergeCloseCount !== 3) throw new Error("Opening the inbox must not destroy the newly mounted view");
 
 const productReturn = sourceBetween("function returnFromProductSearch()", "function shippingPrefectureLabel");
 for (const fragment of ["clearAppRestoreState();", "showAuthenticatedHome();"]) requireFragment(productReturn, fragment);

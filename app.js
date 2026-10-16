@@ -1859,6 +1859,9 @@ var TRANSLATIONS = {
     mi_api_settings_desc: "外部APIの共通設定を管理します。",
     mi_rakuten_desc: "カテゴリ別の調査対象を管理し、楽天・Yahooショッピング・ヤフオクの最安値を毎日継続調査します。",
     mi_logs_title: "操作ログ",
+    mi_concierge_admin_title: "コンシェルジュ管理",
+    mi_concierge_admin_desc: "相談ログ・依頼の確認と開発タスクへの引き渡し",
+    mi_concierge_admin_unread: "未読の依頼 {requests} ／ 相談 {messages}",
     mi_logs_desc: "商品・互換の追加・修正・削除の履歴を確認します。",
     screen_parts_title: "商品管理",
     screen_core_list_title: "コア管理",
@@ -4482,6 +4485,9 @@ var TRANSLATIONS = {
     mi_api_settings_desc: "Manage shared external API settings.",
     mi_rakuten_desc: "Manage category-based targets and continuously check Rakuten, Yahoo Shopping, and Yahoo Auctions lowest prices.",
     mi_logs_title: "Operation Logs",
+    mi_concierge_admin_title: "Concierge inbox",
+    mi_concierge_admin_desc: "Review messages and requests; prepare development handoffs",
+    mi_concierge_admin_unread: "Unread requests {requests} / messages {messages}",
     mi_logs_desc: "View history of part and compatibility changes.",
     screen_parts_title: "Parts Management",
     screen_core_list_title: "CORE Management",
@@ -7115,6 +7121,9 @@ var TRANSLATIONS = {
     mi_api_settings_title: "API设置",
     mi_api_settings_desc: "管理EC商城价格调查所使用的API设置。",
     mi_logs_title: "操作日志",
+    mi_concierge_admin_title: "礼宾管理",
+    mi_concierge_admin_desc: "查看咨询和请求，准备转交开发任务",
+    mi_concierge_admin_unread: "未读请求 {requests} ／ 咨询 {messages}",
     mi_logs_desc: "查看零件和兼容性更改的历史记录。",
     screen_parts_title: "零件管理",
     screen_core_list_title: "CORE管理",
@@ -7997,7 +8006,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1190";
+var APP_VERSION       = "v1.1.1191";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -8799,6 +8808,7 @@ var CONCIERGE_AI_SCREEN_IDS = Object.freeze({
   "rakuten-bulk": true,
   "rakuten-price-list": true,
   logs: true,
+  "concierge-admin": true,
   "api-settings": true,
   "change-pw": true
 });
@@ -8818,6 +8828,7 @@ async function askConciergeAi(request) {
   }
   var owner = currentUser.id;
   var body = { question: question, language: language, screen_id: screenId };
+  if (window.crypto && typeof window.crypto.randomUUID === "function") body.submission_id = window.crypto.randomUUID();
   if (request.classify !== undefined) {
     if (typeof request.classify !== "boolean") return { data: null, error: new Error("invalid_concierge_ai_request") };
     body.classify = request.classify;
@@ -8900,7 +8911,7 @@ window.DcatsConciergeAiApi = Object.freeze({
 async function sendConciergeRequest(command) {
   if (!currentUser || !isSystemAdmin()) return { data: null, error: new Error("system_admin_required") };
   var owner = currentUser.id;
-  if (!command || ["create", "list", "detail", "update", "image", "attach"].indexOf(command.action) < 0) {
+  if (!command || ["create", "list", "detail", "update", "image", "attach", "admin"].indexOf(command.action) < 0) {
     return { data: null, error: new Error("invalid_request") };
   }
   var result = await sb.functions.invoke("concierge-requests", { body: command });
@@ -8920,6 +8931,33 @@ async function sendConciergeRequest(command) {
   return result;
 }
 window.DcatsConciergeRequestApi = Object.freeze({ send: sendConciergeRequest });
+var conciergeAdminController = null;
+function closeConciergeAdmin() {
+  if (conciergeAdminController) conciergeAdminController.destroy();
+  conciergeAdminController = null;
+  var host = document.getElementById("concierge-admin-host");
+  if (host) host.replaceChildren();
+}
+function enterConciergeAdmin() {
+  closeConciergeAdmin();
+  if (!currentUser || !isSystemAdmin() || !window.DcatsConciergeAdmin) return;
+  showScreen("concierge-admin");
+  conciergeAdminController = window.DcatsConciergeAdmin.mount(document.getElementById("concierge-admin-host"), {
+    context: function () { return { id: currentUser && currentUser.id, admin: !!currentUser && isSystemAdmin(), language: currentLang }; },
+    send: sendConciergeRequest
+  });
+}
+async function refreshConciergeMenuBadge(grid) {
+  var card = grid && grid.querySelector('[data-action="concierge-admin"]');
+  if (!card || !currentUser || !isSystemAdmin()) return;
+  var owner = currentUser.id, language = currentLang;
+  var result = await sendConciergeRequest({ action: "admin", operation: "summary" });
+  if (!currentUser || currentUser.id !== owner || !isSystemAdmin() || language !== currentLang || !card.isConnected || result.error || !result.data) return;
+  var badge = document.createElement("span");
+  badge.className = "concierge-admin-menu-badge";
+  badge.textContent = tf("mi_concierge_admin_unread", { requests: Number(result.data.request_unread) || 0, messages: Number(result.data.message_unread) || 0 });
+  card.appendChild(badge);
+}
 function canUseInstallApp() {
   return !!currentUser && !!userProfile;
 }
@@ -10791,6 +10829,7 @@ function resetScreenStateForMenu(screenId) {
 
 function showScreen(id) {
   var previousScreenId = activeAppScreenName();
+  if (id !== "concierge-admin") closeConciergeAdmin();
   if (previousScreenId === "sales-order-mgmt" && id !== previousScreenId) {
     setSalesOrderDetailView("overview", false);
   }
@@ -11391,7 +11430,8 @@ function renderMenu() {
     { icon: "&#x1F4CA;", titleKey: "mi_report_title", descKey: "mi_report_desc", action: "report-hub", available: canViewManufacturingReport() || canManageCustomerAccess() },
     { icon: "&#x1F504;", titleKey: "mi_kikan_title", descKey: "mi_kikan_desc", action: "kikan-mgmt", available: canManageCompatibility() },
     { icon: "&#x2699;", titleKey: "mi_api_settings_title", descKey: "mi_api_settings_desc", action: "api-settings", available: canManageSharedSettings() },
-    { icon: "&#x1F4CB;", titleKey: "mi_logs_title", descKey: "mi_logs_desc", action: "logs", available: canViewOperationLogs() }
+    { icon: "&#x1F4CB;", titleKey: "mi_logs_title", descKey: "mi_logs_desc", action: "logs", available: canViewOperationLogs() },
+    { icon: "&#x1F4E8;", titleKey: "mi_concierge_admin_title", descKey: "mi_concierge_admin_desc", action: "concierge-admin", available: isSystemAdmin() }
   ].filter(function(item) { return item.available; });
 
   var settingsItems = [
@@ -11446,6 +11486,8 @@ function renderMenu() {
 
   grid.innerHTML = html;
 
+  refreshConciergeMenuBadge(grid).catch(function () {});
+
   grid.querySelectorAll(".menu-card:not(.disabled)[data-action], .menu-admin-link:not(.disabled)[data-action]").forEach(function(card) {
     card.addEventListener("click", function(event) {
       if (card.dataset.action === "search") enterSearch();
@@ -11477,6 +11519,7 @@ function renderMenu() {
       else if (card.dataset.action === "business-workspace-settings") openDcatsBusinessWorkspaceSettings(event);
       else if (card.dataset.action === "api-settings") enterApiSettings();
       else if (card.dataset.action === "logs") enterLogs();
+      else if (card.dataset.action === "concierge-admin") enterConciergeAdmin();
     });
   });
 }
@@ -57283,6 +57326,8 @@ document.getElementById("btn-back-rakuten-bulk").addEventListener("click", retur
 document.getElementById("btn-back-api-settings").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-rakuten-price-list").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-logs").addEventListener("click", returnToMenuFresh);
+document.getElementById("btn-back-concierge-admin").addEventListener("click", returnToMenuFresh);
+document.getElementById("btn-logout-concierge-admin").addEventListener("click", doLogout);
 document.getElementById("btn-add-part").addEventListener("click", openCoreProductAddFromManagement);
 document.getElementById("btn-part-form-cancel").addEventListener("click", function(){ document.getElementById("part-form-overlay").classList.remove("show"); });
 document.getElementById("btn-part-form-save").addEventListener("click", savePartForm);
