@@ -66,7 +66,7 @@
   }
   async function fetchCostProductIds(listId) {
     var result = await sb.from("manufacturing_cost_list_items")
-      .select("dkd_shohin_id,import_part_numbers,part_number_snapshot,genuine_part_number_snapshot,manufacturer_snapshot,category_code_snapshot", { count: "exact" })
+      .select("dkd_shohin_id,import_part_numbers,import_quantities_snapshot,part_number_snapshot,genuine_part_number_snapshot,manufacturer_snapshot,category_code_snapshot", { count: "exact" })
       .eq("list_id", Number(listId)).order("sort_order", { ascending: true }).order("id", { ascending: true }).limit(1001);
     if (result.error) throw result.error;
     if (!result.data || !result.data.length) throw new Error("リストに商品がありません。");
@@ -77,9 +77,29 @@
     ids.displayItems = result.data;
     return ids;
   }
+  function savedCostQuantity(item) {
+    var snapshot = item.import_quantities_snapshot;
+    if (!Array.isArray(snapshot) || !snapshot.length || snapshot.length > 200) return null;
+    var normalize = root.DcatsManufacturingCostImport.normalizePart;
+    var seen = new Set();
+    var total = 0;
+    for (var i = 0; i < snapshot.length; i++) {
+      var source = snapshot[i] || {};
+      var key = normalize(source.part_number);
+      if (!key || seen.has(key) || !Number.isSafeInteger(source.quantity) || source.quantity <= 0 || source.quantity > 20000000) return null;
+      seen.add(key);
+      total += source.quantity;
+    }
+    var parts = item.import_part_numbers || [];
+    if (parts.length && parts.some(function(part) { return !seen.has(normalize(part)); })) return null;
+    return Number.isSafeInteger(total) ? total : null;
+  }
   function costListQuantities() {
     var labels = new Map();
-    state.costDisplayItems.forEach(function(item) { labels.set(String(item.dkd_shohin_id), "未読込"); });
+    state.costDisplayItems.forEach(function(item) {
+      var saved = savedCostQuantity(item);
+      labels.set(String(item.dkd_shohin_id), saved === null ? "数量未保存" : String(saved));
+    });
     if (!state.sheets.length) return labels;
     var rows;
     try { rows = collectedRows(); }
@@ -127,8 +147,15 @@
     if (host.hidden) { host.innerHTML = ""; return; }
     if (message) { host.innerHTML = "<p>" + esc(message) + "</p>"; return; }
     var quantities = costListQuantities();
-    host.innerHTML = "<h3><span>" + esc(state.costListName) + "</span> · <span>照合済み商品</span> <span>" + state.costDisplayItems.length + "件</span></h3>" +
-      "<p>数量（取込）は、選択したExcel / CSVの対象シートを品番別に合算した数量です。未読込の場合は元ファイルを選択してください。在庫への反映は取込内容の照合・確定後です。</p>" +
+    var known = 0, total = 0;
+    quantities.forEach(function(value) { if (/^[1-9][0-9]*$/.test(value)) { known += 1; total += Number(value); } });
+    var sourceLabel = state.sheets.length ? "今回のファイル数量" : "保存済み数量";
+    host.innerHTML = "<div class='container-stock-list-heading'><div><p>原価計算の保存済みリスト</p><h3>" + esc(state.costListName) + "</h3></div><span class='container-stock-source-badge'>" + esc(sourceLabel) + "</span></div>" +
+      "<dl class='container-stock-list-stats'><div><dt>照合済み商品</dt><dd>" + state.costDisplayItems.length + "<small>件</small></dd></div>" +
+      "<div><dt>確認できた数量</dt><dd>" + total.toLocaleString("ja-JP") + "<small>台</small></dd></div>" +
+      "<div><dt>数量の確認が必要</dt><dd>" + (state.costDisplayItems.length - known) + "<small>件</small></dd></div></dl>" +
+      "<p>" + (state.sheets.length ? "今回のファイルから読み取った数量です。入庫登録は取込内容を照合してから確定してください。" : "保存済み数量はリストを選ぶだけで表示します。入庫登録は元ファイルを照合してから確定してください。") + "</p>" +
+      (!state.sheets.length && known < state.costDisplayItems.length ? "<p class='container-stock-quantity-notice'>数量未保存の商品は、原価計算で元ファイルを取り込み、リストを保存すると表示できます。</p>" : "") +
       "<div class='container-stock-table-wrap' tabindex='0' role='region' aria-label='照合済み商品一覧（横スクロール可）'><table class='mgmt-table container-stock-table container-stock-cost-table'>" +
       "<thead><tr><th scope='col'>元の取込品番</th><th scope='col' class='container-stock-cost-quantity'>数量（取込）</th><th scope='col'>メーカー品番</th><th scope='col'>純正品番</th><th scope='col'>メーカー</th><th scope='col'>カテゴリ</th><th scope='col'>DKD商品ID</th></tr></thead><tbody>" +
       state.costDisplayItems.map(function(item) {
@@ -198,7 +225,7 @@
       if (note) note.textContent = state.costListName + " の照合済み " +
         state.costProductIds.length + " 商品を優先します。一致しない品番は要確認のまま残します。";
       if (!state.sheets.length && !state.resumeRows)
-        setStatus("商品一覧を表示しました。入庫数量を読み込むには、対応するExcel / CSVを選択してください。");
+        setStatus("保存済みの品番と取込数量を表示しました。数量の保存だけでは在庫に反映されません。");
     } catch (error) {
       if (requestSeq !== state.costListRequestSeq) return;
       state.costListReady = false;

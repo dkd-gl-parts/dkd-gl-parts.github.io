@@ -97,6 +97,12 @@
     var number = Number(match[0]);
     return Number.isFinite(number) && number > 0 ? number : null;
   }
+  function savedUnitQuantity(value) {
+    var text = normalizeText(value);
+    if (typeof value !== "number" && !/^(?:[1-9][0-9]*|[1-9][0-9]{0,2}(?:,[0-9]{3})+)$/.test(text)) return null;
+    var number = Number(text.replace(/,/g, ""));
+    return Number.isSafeInteger(number) && number > 0 && number <= 20000000 ? number : null;
+  }
 
   function columnValues(matrix, column, startRow) {
     var values = [];
@@ -237,11 +243,13 @@
         continue;
       }
       var quantity = mapping.quantityColumn >= 0 ? parseQuantity(row[mapping.quantityColumn]) : null;
+      var quantityComplete = mapping.quantityColumn >= 0 && savedUnitQuantity(row[mapping.quantityColumn]) !== null;
       var key = normalizePart(part);
       if (!rowsByPart[key]) {
-        rowsByPart[key] = { key: key, part: part, quantity: quantity, sourceRows: [rowIndex + 1], confidence: mapping.confidence };
+        rowsByPart[key] = { key: key, part: part, quantity: quantity, quantityComplete: quantityComplete, sourceRows: [rowIndex + 1], confidence: mapping.confidence };
       } else {
         if (quantity != null) rowsByPart[key].quantity = (rowsByPart[key].quantity || 0) + quantity;
+        rowsByPart[key].quantityComplete = rowsByPart[key].quantityComplete && quantityComplete;
         rowsByPart[key].sourceRows.push(rowIndex + 1);
       }
     }
@@ -272,11 +280,13 @@
             key: row.key,
             part: row.part,
             quantity: row.quantity,
+            quantityComplete: row.quantityComplete !== false && savedUnitQuantity(row.quantity) !== null,
             sources: [{ sheet: analysis.sheet.name, rows: row.sourceRows.slice() }],
             confidence: row.confidence
           };
         } else {
           if (row.quantity != null) byPart[row.key].quantity = (byPart[row.key].quantity || 0) + row.quantity;
+          byPart[row.key].quantityComplete = byPart[row.key].quantityComplete && row.quantityComplete !== false && savedUnitQuantity(row.quantity) !== null;
           byPart[row.key].sources.push({ sheet: analysis.sheet.name, rows: row.sourceRows.slice() });
           if (row.confidence === "low") byPart[row.key].confidence = "low";
           else if (row.confidence === "medium" && byPart[row.key].confidence === "high") byPart[row.key].confidence = "medium";
@@ -651,11 +661,14 @@
       values.push(part);
     });
     var searchEvent;
+    var quantities = selected.map(function(row) {
+      return { part_number: row.part, quantity: row.quantityComplete ? savedUnitQuantity(row.quantity) : null };
+    });
     if (typeof root.CustomEvent === "function") {
-      searchEvent = new root.CustomEvent("dcats:manufacturing-cost-import-search", { detail: { parts: values.slice() } });
+      searchEvent = new root.CustomEvent("dcats:manufacturing-cost-import-search", { detail: { parts: values.slice(), quantities: quantities } });
     } else {
       searchEvent = document.createEvent("CustomEvent");
-      searchEvent.initCustomEvent("dcats:manufacturing-cost-import-search", false, false, { parts: values.slice() });
+      searchEvent.initCustomEvent("dcats:manufacturing-cost-import-search", false, false, { parts: values.slice(), quantities: quantities });
     }
     document.dispatchEvent(searchEvent);
     closeDialog();

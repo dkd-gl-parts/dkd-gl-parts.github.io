@@ -225,13 +225,13 @@ if (process.argv[2]) {
     part_number_snapshot: "M001", genuine_part_number_snapshot: "G001", manufacturer_snapshot: "<script>",
     category_code_snapshot: "starter" }], count: 1 };
   await selectList("6");
-  assert.match(products.innerHTML, /照合済み商品<\/span> <span>1件/);
+  assert.match(products.innerHTML, /<dt>照合済み商品<\/dt><dd>1<small>件/);
   assert.match(products.innerHTML, /SM-760-01/);
   assert.match(products.innerHTML, /M001/);
   assert.match(products.innerHTML, /G001/);
   assert.match(products.innerHTML, /&lt;img/);
   assert.doesNotMatch(products.innerHTML, /<script>|<img /);
-  assert.match(element("container-stock-status").textContent, /入庫数量/);
+  assert.match(element("container-stock-status").textContent, /取込数量/);
   assert.strictEqual(products.hidden, false);
   assert.strictEqual(products.attrs["aria-busy"], "false");
   assert.strictEqual(element("container-stock-preview").disabled, true);
@@ -239,7 +239,27 @@ if (process.argv[2]) {
   assert.ok(queries[0].includes("part_number_snapshot"));
   assert.strictEqual(api._state.costLinkItems.length, 1);
   assert.match(products.innerHTML, /<th[^>]*>数量（取込）<\/th>/);
-  assert.deepStrictEqual(quantityCells(), ["未読込"], "missing source quantity is not zero");
+  assert.deepStrictEqual(quantityCells(), ["数量未保存"], "missing source quantity is not zero");
+  const savedItem = { ...response.data[0], import_part_numbers: ["SM-760-01", "SM-760-02"],
+    import_quantities_snapshot: [{ part_number: "SM-760-01", quantity: 7 }, { part_number: "SM-760-02", quantity: 10 }] };
+  response = { data: [savedItem], count: 1 };
+  await selectList("6");
+  assert.deepStrictEqual(quantityCells(), ["17"], "saved quantities load without a file");
+  assert.match(products.innerHTML, /保存済み数量/);
+  assert.strictEqual(element("container-stock-preview").disabled, true);
+  assert.strictEqual(element("container-stock-apply").disabled, true);
+  for (const snapshot of [[], [{ part_number: "SM-760-01", quantity: 7 }],
+    [{ part_number: "SM-760-01", quantity: 7 }, { part_number: "SM-760-02", quantity: null }],
+    [{ part_number: "SM-760-01", quantity: -1 }], [{ part_number: "SM-760-01", quantity: "7" }],
+    [{ part_number: "SM-760-01", quantity: 7 }, { part_number: "SM76001", quantity: 7 }]]) {
+    response = { data: [{ ...savedItem, import_quantities_snapshot: snapshot }], count: 1 };
+    await selectList("6");
+    assert.deepStrictEqual(quantityCells(), ["数量未保存"], "incomplete/invalid saved totals remain unknown");
+  }
+  response = { data: [{ ...savedItem, import_part_numbers: ["SM-760-01"],
+    import_quantities_snapshot: [{ part_number: "SM-760-01", quantity: 99 }] }], count: 1 };
+  await selectList("6");
+  assert.deepStrictEqual(quantityCells(), ["99"]);
 
   const csv = Buffer.from("Parts No,Quantity\nSM-760-01,3\n");
   element("container-stock-file").files = [{ name: "STA-test.csv", size: csv.length,

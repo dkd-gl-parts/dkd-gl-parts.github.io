@@ -41,6 +41,11 @@ const duplicate = attached.rows.find((row) => row.part === "31400-75F02");
 if (!duplicate || duplicate.quantity !== 20 || duplicate.sourceRows.length !== 2) {
   throw new Error("duplicate part quantities must be merged with source evidence");
 }
+if (!duplicate.quantityComplete) throw new Error("valid duplicate quantities must remain complete");
+for (const value of [null, "", "6 pcs", 0, -1, 1.5, 20000001]) {
+  const invalid = api.analyzeMatrix([["Parts No", "Quantity"], ["SM-760-01", 3], ["SM-760-01", value]]);
+  if (invalid.rows[0].quantityComplete !== false) throw new Error("a partially missing/invalid duplicate must not be saved as a complete quantity");
+}
 
 const shiftedLayout = [
   ["CONTAINER 18", "", "", ""],
