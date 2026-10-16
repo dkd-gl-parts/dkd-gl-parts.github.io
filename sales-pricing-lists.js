@@ -160,7 +160,7 @@
     if(valid()&&epoch===state.epoch){await load(true);status((ok?w('fetchDone'):w('fetchFailed'))+(failed?' '+failed+' '+w('count')+'：'+w('fetchReview'):''),!!failed);}
   }
   function ecAllowed(){return valid()&&typeof root.canUseRakutenResearch==='function'&&root.canUseRakutenResearch()&&typeof root.canViewPriceResearchHistory==='function'&&root.canViewPriceResearchHistory();}
-  function ecCurrent(job){return ecAllowed()&&state.ec===job&&String(job.listId)===String(state.listId);}
+  function ecCurrent(job){return ecAllowed()&&state.ec===job&&String(job.listId)===String(state.listId)&&el('spl-list')&&String(job.listId)===String(el('spl-list').value);}
   function ecRender(){
     var e=el('spl-ec-status');if(!e)return;e.replaceChildren();var job=state.ec;
     if(el('spl-ec'))el('spl-ec').disabled=state.busy||!!state.pending||!!job;
