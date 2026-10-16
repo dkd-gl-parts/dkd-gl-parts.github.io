@@ -7997,7 +7997,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1182";
+var APP_VERSION       = "v1.1.1183";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -8840,8 +8840,60 @@ async function askConciergeAi(request) {
   }
   return result;
 }
+var conciergeTestOrderOpening = false;
+async function prepareConciergeTestOrder(options) {
+  if (conciergeTestOrderOpening) return { data: null, error: new Error("test_order_busy") };
+  if (!currentUser || !isSystemAdmin()) return { data: null, error: new Error("system_admin_required") };
+  var owner = currentUser.id;
+  function stillCurrent() {
+    return !!currentUser && currentUser.id === owner && isSystemAdmin() &&
+      !!options && typeof options.isCurrent === "function" && options.isCurrent();
+  }
+  function assertReady() {
+    if (!stillCurrent()) throw new Error("test_order_stale");
+    if (customerOrderSaving || customerOrderCart.length) throw new Error("test_order_cart_busy");
+  }
+  conciergeTestOrderOpening = true;
+  try {
+    assertReady();
+    var profileResult = await sb.from("profiles").select("id,role,role_code,status").eq("id", owner).maybeSingle();
+    assertReady();
+    var profile = profileResult.data;
+    if (profileResult.error || !profile || profile.status !== "active" ||
+      (profile.role_code || profile.role) !== "system_admin") throw new Error("system_admin_required");
+    // This RPC checks the caller's current permission overrides and feature flags.
+    var features = await sb.rpc("get_customer_order_feature_status");
+    assertReady();
+    if (features.error || !features.data || features.data.enabled !== true || features.data.internal_management !== true) throw new Error("test_order_unavailable");
+    // Populate the normal selector too; never cache only the dedicated test row.
+    var customers = await loadDetailSalesCustomerOptions(stillCurrent);
+    assertReady();
+    if (!customers || !customers.length) throw new Error("test_order_unavailable");
+    var result = await sb.from("sales_customers")
+      .select("id,source_customer_code,customer_name,price_rank_code,is_active")
+      .eq("source_code", "dcats_test").eq("source_customer_code", "DEV-ORDER-001")
+      .eq("is_active", true).contains("raw_payload", { dcats_test_customer: true }).maybeSingle();
+    assertReady();
+    var customer = result.data;
+    if (result.error || !customer || !customer.id) throw new Error("test_order_unavailable");
+    var context = await loadCustomerPortalContextForCustomer(customer);
+    assertReady();
+    if (!context || String(context.sales_customer_id) !== String(customer.id) || !context.customer || context.customer.is_active === false) throw new Error("test_order_unavailable");
+    customerOrderFeatureStatus = { loaded: true, customer_ordering: features.data.customer_ordering === true, internal_management: true, reason: "" };
+    if (!canStartInternalCustomerOrderEntry()) throw new Error("test_order_unavailable");
+    if (!detailSalesCustomerOptions.some(function(row) { return String(row.id) === String(customer.id); })) detailSalesCustomerOptions.push(customer);
+    applyCustomerPortalPreviewContext(customer, context);
+    customerOrderActiveView = "cart";
+    customerPortalSearchActive = false;
+    await enterCustomerCatalog({ query: "" });
+    return { data: { ok: true, order_created: false }, error: null };
+  } catch (error) {
+    return { data: null, error: error };
+  } finally { conciergeTestOrderOpening = false; }
+}
 window.DcatsConciergeAiApi = Object.freeze({
   ask: askConciergeAi,
+  prepareTestOrder: prepareConciergeTestOrder,
   allowedScreens: CONCIERGE_AI_SCREEN_IDS
 });
 async function sendConciergeRequest(command) {
@@ -11534,7 +11586,12 @@ async function loadCustomerPortalPreviewContext(customerId) {
   customerId = String(customerId || "");
   if (!detailSalesCustomerOptions.length) await loadDetailSalesCustomerOptions();
   var customer = detailSalesCustomerOptions.find(function(row) { return String(row.id) === customerId; }) || null;
-  customerPortalPreviewContext = customer ? await loadCustomerPortalContextForCustomer(customer) : null;
+  var context = customer ? await loadCustomerPortalContextForCustomer(customer) : null;
+  applyCustomerPortalPreviewContext(customer, context);
+}
+
+function applyCustomerPortalPreviewContext(customer, context) {
+  customerPortalPreviewContext = context;
   detailSelectedSalesCustomerId = customer ? String(customer.id) : "";
   customerOrderCart = [];
   customerOrderPreview = null;
@@ -50020,13 +50077,14 @@ async function loadCustomerPortalPreviewSalesPriceSummary(wrap, dkdId) {
   }
 }
 
-async function loadDetailSalesCustomerOptions() {
+async function loadDetailSalesCustomerOptions(isCurrent) {
   if (detailSalesCustomerOptions.length) return detailSalesCustomerOptions;
   var r = await sb.from("sales_customers")
     .select("id,source_customer_code,customer_name,price_rank_code,is_active")
     .eq("is_active", true)
     .order("source_customer_code", { ascending: true })
     .limit(1000);
+  if (typeof isCurrent === "function" && !isCurrent()) return [];
   if (r.error) {
     console.warn("detail sales customers lookup failed", r.error);
     detailSalesCustomerOptions = [];

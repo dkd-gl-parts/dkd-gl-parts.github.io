@@ -71,11 +71,11 @@
 }
 
 .dcats-concierge-sprite.is-suzuto {
-  background-image: url("./suzuto/spritesheet.webp?v=1.1.1182");
+  background-image: url("./suzuto/spritesheet.webp?v=1.1.1183");
 }
 
 .dcats-concierge-sprite.is-rinna {
-  background-image: url("./rinna/spritesheet.webp?v=1.1.1182");
+  background-image: url("./rinna/spritesheet.webp?v=1.1.1183");
 }
 
 .dcats-concierge-hit-target {
@@ -612,6 +612,19 @@
 .dcats-concierge-ai-guide {
   font-size: 13px;
   line-height: 1.65;
+}
+
+.dcats-concierge-ai-order-action {
+  margin: 12px 0;
+  border-top: 1px solid #d8c5c0;
+  padding-top: 6px;
+}
+.dcats-concierge-ai-order-action .dcats-concierge-ai-guide {
+  font-size: 14px;
+}
+.dcats-concierge-panel.is-question-view .dcats-concierge-ai-order-action .dcats-concierge-ai-button {
+  position: static;
+  white-space: normal;
 }
 
 .dcats-concierge-bridge-inbox-help {
