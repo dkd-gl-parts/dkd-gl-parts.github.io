@@ -29,6 +29,10 @@ function harness(role = 'system_admin') {
   } }, currentUser: { id: 'test-actor' }, t: key => key,
     isSystemAdmin: () => role === 'system_admin', canManageSalesOrders: () => role !== 'customer',
     document: { getElementById: id => elements.get(id) || null, querySelector: () => null, querySelectorAll: () => [], activeElement: null },
+    sb: { auth: {
+      getSession: async () => ({ data: { session: { user: { id: context.currentUser.id }, expires_at: Date.now()/1000+3600 } } }),
+      getUser: async () => ({ data: { user: { id: context.currentUser.id, is_anonymous: false } } })
+    } },
     Array, Promise, Error, Set
   };
   function element(id) {
