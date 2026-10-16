@@ -8,7 +8,7 @@ const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const section = (text, start, end) => text.slice(text.indexOf(start), text.indexOf(end, text.indexOf(start)));
 const daily = section(html, '<div class="form-overlay" id="dcats-business-workspace-overlay"', '<div class="form-overlay" id="dcats-business-workspace-settings-overlay"');
 const settings = section(html, '<div class="form-overlay" id="dcats-business-workspace-settings-overlay"', '<div class="form-overlay sales-order-b2-import-guide-overlay"');
-for (const id of ['shortcut','drive-support','account','backup','b2-select']) {
+for (const id of ['shortcut','drive-support','account','backup','b2-select','first-setup']) {
   assert(!daily.includes('id="dcats-business-workspace-' + id + '"'), id + ' must leave the daily panel');
   assert(settings.includes('id="dcats-business-workspace-' + id + '"'), id + ' must be available in Settings');
 }
@@ -79,7 +79,7 @@ function harness(role = 'system_admin') {
     h.context.closeDcatsBusinessWorkspace(); h.context.currentUser = { id: 'test-actor' };
   }
   const staff = harness('staff'); staff.context.openDcatsBusinessWorkspaceSettings({ currentTarget: staff.trigger });
-  for (const id of ['account','backup','company']) assert(staff.elements.get('dcats-business-workspace-' + id).hidden);
+  for (const id of ['account','backup','company','first-setup']) assert(staff.elements.get('dcats-business-workspace-' + id).hidden);
   const customer = harness('customer'); customer.context.openDcatsBusinessWorkspaceSettings({ currentTarget: customer.trigger });
   assert(!customer.visible('settings-overlay')); assert.equal(customer.calls.length, 0);
   console.log('Business workspace Settings: separate daily/setup controls, no duplicate IDs, three languages, no automatic native action, hidden/role rejection, cancellation, owner change, focus return: OK');
