@@ -26,9 +26,12 @@
     if (!validRecord(options.record) || typeof options.isCurrent !== "function" || !options.isCurrent()) throw new Error("company_session_changed");
   }
   function issuedTicket(result, request) {
-    var value = result && result.data, expires = value && Date.parse(value.expires_at);
+    var value = result && result.data, expires = value && Date.parse(value.expires_at), observedAt=Date.now();
     if (result && result.error || !value || value.ok !== true || value.request_id !== request.request_id || value.device_id !== request.device_id ||
-        typeof value.expires_at !== "string" || !Number.isFinite(expires) || new Date(expires).toISOString() !== value.expires_at || expires <= Date.now() || expires > Date.now() + 180000 ||
+        // Match the native signed-ticket verifier's existing 30-second clock
+        // tolerance. Forward the original permit unchanged; input/save leases
+        // are independently capped and checked by Native, never renewed here.
+        typeof value.expires_at !== "string" || !Number.isFinite(expires) || new Date(expires).toISOString() !== value.expires_at || expires <= observedAt || expires > observedAt + (request.command === "enroll_hanbaioh_company_account" ? 210000 : 180000) ||
         typeof value.capability !== "string" || value.capability.length > 8192 || !/^v2\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{86}$/.test(value.capability)) throw new Error("company_ticket_unavailable");
     return value.capability;
   }

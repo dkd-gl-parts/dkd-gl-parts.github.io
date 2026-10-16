@@ -612,7 +612,8 @@ var TRANSLATIONS = {
     business_workspace_account_extension_update_required: "ブラウザに旧版の連携機能が残っています。「拡張機能の管理」で「D-CATS 管理者用 Windows 連携」を再読み込みし、0.5.3以上になったことを確認後、D-CATSのページを再読み込みしてください。続く場合は連携アプリの更新も必要です。（確認コード HBR-02）",
     business_workspace_account_native_host_unavailable: "PCの連携アプリを起動できません。連携アプリの導入・修復が必要です。（確認コード HBR-03）",
     business_workspace_account_device_unavailable: "このPCに、現在のD-CATS利用者の端末登録が見つからないか、読み取れません。担当者へ端末登録の確認を依頼してください。（確認コード HBR-04）",
-    business_workspace_account_authentication_required: "D-CATSの本人確認が切れました。D-CATSへ再度サインインしてから登録を開始してください。（確認コード HBR-05）",
+    business_workspace_account_authentication_required: "D-CATSの本人確認を更新できませんでした。下の［D-CATSに再サインイン］でログインし直し、設定から登録を開始してください。（確認コード HBR-05）",
+    business_workspace_account_sign_in: "D-CATSに再サインイン",
     business_workspace_account_not_authorized: "現在のD-CATS利用者では、この登録を実行できません。担当者へ権限の確認を依頼してください。（確認コード HBR-06）",
     business_workspace_account_binding_unavailable: "D-CATS利用者・販売王ID・このPCの対応をサーバーで確認できません。担当者へ対応設定の確認を依頼してください。（確認コード HBR-07）",
     business_workspace_account_issuer_unavailable: "登録の本人確認サーバーへ接続できないか、処理を完了できません。通信状況を確認し、続く場合は確認コードを担当者へ伝えてください。（確認コード HBR-08）",
@@ -3239,6 +3240,7 @@ var TRANSLATIONS = {
     business_workspace_account_native_host_unavailable: "The PC integration app could not start. Install or repair it. (Code HBR-03)",
     business_workspace_account_device_unavailable: "This PC's registration for the current D-CATS user is missing or unreadable. Ask support to check the device registration. (Code HBR-04)",
     business_workspace_account_authentication_required: "Your D-CATS authentication expired. Sign in to D-CATS again before starting registration. (Code HBR-05)",
+    business_workspace_account_sign_in: "Sign in to D-CATS again",
     business_workspace_account_not_authorized: "The current D-CATS user cannot perform this registration. Ask support to check permissions. (Code HBR-06)",
     business_workspace_account_binding_unavailable: "The server could not verify the D-CATS user, HanbaiOh ID and PC binding. Ask support to check the binding. (Code HBR-07)",
     business_workspace_account_issuer_unavailable: "The registration authorization server could not be reached or complete the request. Check connectivity and give support this code if it continues. (Code HBR-08)",
@@ -5809,6 +5811,7 @@ var TRANSLATIONS = {
     business_workspace_account_native_host_unavailable: "无法启动电脑联动应用。请安装或修复应用。（确认代码 HBR-03）",
     business_workspace_account_device_unavailable: "找不到或无法读取当前D-CATS用户在此电脑上的设备登记。请联系负责人确认。（确认代码 HBR-04）",
     business_workspace_account_authentication_required: "D-CATS身份验证已过期。请重新登录D-CATS后开始登记。（确认代码 HBR-05）",
+    business_workspace_account_sign_in: "重新登录 D-CATS",
     business_workspace_account_not_authorized: "当前D-CATS用户无权执行此登记。请联系负责人确认权限。（确认代码 HBR-06）",
     business_workspace_account_binding_unavailable: "服务器无法确认D-CATS用户、販売王ID和此电脑的对应关系。请联系负责人确认设置。（确认代码 HBR-07）",
     business_workspace_account_issuer_unavailable: "无法连接登记身份验证服务器或完成请求。请检查网络，若仍失败请向负责人提供确认代码。（确认代码 HBR-08）",
@@ -8006,7 +8009,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1195";
+var APP_VERSION       = "v1.1.1196";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -15806,9 +15809,47 @@ function syncDcatsCompanyAccountControls() {
     if(integration)integration.querySelectorAll('[role="status"]').forEach(function(node){node.textContent="";node.className="";});
     var status=document.getElementById("dcats-business-workspace-account-status");
     if(status){status.textContent="";status.className="";}
+    var signIn=document.getElementById("dcats-business-workspace-account-sign-in");if(signIn)signIn.hidden=true;
     dcatsCompanyAccountOwner=owner;
   }
   updateDcatsCompanyIntegrationControls();
+}
+// Check the SDK-owned session before requesting a one-use native enrollment.
+// No token is copied to Native, inspected, logged, or stored by this flow.
+async function verifyDcatsCompanyAccountIdentity(actor, isCurrent) {
+  function authFailure(result) {
+    var status=result&&result.error&&result.error.status;
+    return !result||!result.error||[400,401,403].includes(status)||result.error.name==="AuthSessionMissingError";
+  }
+  function fail(result) { throw new Error(authFailure(result)?"company_authentication_required":"company_issuer_unavailable"); }
+  if(!isCurrent())throw new Error("company_session_changed");
+  var result;
+  try {result=await sb.auth.getSession();}catch {throw new Error("company_issuer_unavailable");}
+  if(!isCurrent())throw new Error("company_session_changed");
+  if(result.error||!result.data||!result.data.session)fail(result);
+  var session=result.data.session;
+  if(!session.user||session.user.id!==actor)throw new Error("company_authentication_required");
+  if(typeof session.expires_at!=="number"||!Number.isFinite(session.expires_at))throw new Error("company_authentication_required");
+  if(session.expires_at*1000<=Date.now()+60000){
+    // The SDK performs the normal refresh once. Invalid/revoked sessions need
+    // the user's sign-in; neither a permit nor a business request is retried.
+    try {result=await sb.auth.refreshSession();}catch {throw new Error("company_issuer_unavailable");}
+    if(!isCurrent())throw new Error("company_session_changed");
+    if(result.error||!result.data||!result.data.session)fail(result);
+    session=result.data.session;
+    if(!session.user||session.user.id!==actor||typeof session.expires_at!=="number"||session.expires_at*1000<=Date.now()+60000)throw new Error("company_authentication_required");
+  }
+  try {result=await sb.auth.getUser();}catch {throw new Error("company_issuer_unavailable");}
+  if(!isCurrent())throw new Error("company_session_changed");
+  if(result.error||!result.data||!result.data.user)fail(result);
+  if(result.data.user.id!==actor||result.data.user.is_anonymous===true)throw new Error("company_authentication_required");
+}
+async function signInAgainForDcatsCompanyAccount() {
+  var button=document.getElementById("dcats-business-workspace-account-sign-in");
+  if(!currentUser||!isSystemAdmin()||!button||button.hidden||button.disabled||dcatsCompanyAccountBusy||dcatsCompanyIntegrationBusy||dcatsCompanyBackupBusy)return;
+  button.disabled=true;
+  try {await doLogout();document.getElementById("login-email").focus();}
+  finally {button.disabled=false;button.hidden=true;}
 }
 async function registerDcatsCompanyAccount() {
   if(dcatsCompanyAccountBusy||dcatsCompanyIntegrationBusy||dcatsCompanyBackupBusy||!currentUser||!isSystemAdmin())return;
@@ -15817,9 +15858,12 @@ async function registerDcatsCompanyAccount() {
   var epoch=dcatsCompanyIntegrationEpoch;
   function isCurrent(){return !!currentUser&&currentUser.id===actor&&isSystemAdmin()&&epoch===dcatsCompanyIntegrationEpoch&&overlay.classList.contains("show");}
   if(!isCurrent())return;
+  var signIn=document.getElementById("dcats-business-workspace-account-sign-in");if(signIn)signIn.hidden=true;
   dcatsCompanyAccountBusy=true;button.disabled=true;button.setAttribute("aria-busy","true");status.className="";status.textContent=t("business_workspace_account_opening");
   updateDcatsCompanyIntegrationControls();
   try{
+    await verifyDcatsCompanyAccountIdentity(actor,isCurrent);
+    if(!isCurrent())return;
     var bridge=window.DcatsHanbaiohCompanyBridge;
     if(!bridge||typeof bridge.enrollAccountFromPc!=="function")throw new Error();
     var preflight=await ensureDcatsIntegrationBeforeAction("setup",isCurrent);
@@ -15835,6 +15879,7 @@ async function registerDcatsCompanyAccount() {
       var allowed=["company_bridge_unavailable","company_extension_reload_required","company_extension_update_required","company_native_host_unavailable","company_device_unavailable","company_authentication_required","company_not_authorized","company_binding_unavailable","company_issuer_unavailable","company_ticket_unavailable"];
       var key=allowed.includes(reason)?"business_workspace_account_"+reason.slice("company_".length):"business_workspace_account_failed";
       status.className="error";status.textContent=t(key);
+      if(signIn)signIn.hidden=reason!=="company_authentication_required";
     }
   }finally{dcatsCompanyAccountBusy=false;button.disabled=false;button.removeAttribute("aria-busy");syncDcatsCompanyAccountControls();if(isCurrent())refreshDcatsIntegrationReadinessAutomatically(true);}
 }
@@ -57137,6 +57182,7 @@ document.getElementById("dcats-business-workspace-cancel").addEventListener("cli
 document.getElementById("dcats-business-workspace-shortcut").addEventListener("click", createDcatsBusinessWorkspaceShortcut);
 document.getElementById("dcats-business-workspace-b2-select").addEventListener("click", configureDcatsB2ExportDirectory);
 document.getElementById("dcats-business-workspace-account-register").addEventListener("click", registerDcatsCompanyAccount);
+document.getElementById("dcats-business-workspace-account-sign-in").addEventListener("click", signInAgainForDcatsCompanyAccount);
 document.getElementById("dcats-extension-manager-open").addEventListener("click", openDcatsExtensionManager);
 document.querySelectorAll("[data-integration-check-settings]").forEach(function(button){button.addEventListener("click",function(event){openDcatsIntegrationCheckSettings(event,"check");});});
 document.querySelectorAll("[data-integration-check-recheck]").forEach(function(button){button.addEventListener("click",recheckDcatsIntegrationReadiness);});
