@@ -11,6 +11,7 @@
     costListName: "",
     costProductIds: [],
     costLinkItems: [],
+    costDisplayItems: [],
     familyConfirmed: {},
     costListReady: false,
     costListLoading: false,
@@ -65,14 +66,38 @@
   }
   async function fetchCostProductIds(listId) {
     var result = await sb.from("manufacturing_cost_list_items")
-      .select("dkd_shohin_id,import_part_numbers", { count: "exact" }).eq("list_id", Number(listId)).limit(1001);
+      .select("dkd_shohin_id,import_part_numbers,part_number_snapshot,genuine_part_number_snapshot,manufacturer_snapshot,category_code_snapshot", { count: "exact" })
+      .eq("list_id", Number(listId)).order("sort_order", { ascending: true }).order("id", { ascending: true }).limit(1001);
     if (result.error) throw result.error;
     if (!result.data || !result.data.length) throw new Error("リストに商品がありません。");
     if (result.data.length > 1000 || (result.count != null && result.count > result.data.length))
       throw new Error("原価計算リストの商品数が上限を超えています。");
     var ids = result.data.map(function(item) { return String(item.dkd_shohin_id); }).sort();
     ids.linkItems = Number.isInteger(result.count) && result.count === result.data.length ? result.data : [];
+    ids.displayItems = result.data;
     return ids;
+  }
+  function renderCostListProducts(message) {
+    var host = byId("container-stock-cost-products");
+    if (!host) return;
+    host.hidden = !state.costListId || state.costListId === "none";
+    host.setAttribute("aria-busy", state.costListLoading ? "true" : "false");
+    if (host.hidden) { host.innerHTML = ""; return; }
+    if (message) { host.innerHTML = "<p>" + esc(message) + "</p>"; return; }
+    host.innerHTML = "<h3><span>" + esc(state.costListName) + "</span> · <span>照合済み商品</span> <span>" + state.costDisplayItems.length + "件</span></h3>" +
+      "<p>保存済みの品番一覧です。入庫数量は、対応するExcel / CSVを選択して読み込んでください。</p>" +
+      "<div class='container-stock-table-wrap' tabindex='0' role='region' aria-label='照合済み商品一覧（横スクロール可）'><table class='mgmt-table container-stock-table container-stock-cost-table'>" +
+      "<thead><tr><th scope='col'>元の取込品番</th><th scope='col'>メーカー品番</th><th scope='col'>純正品番</th><th scope='col'>メーカー</th><th scope='col'>カテゴリ</th><th scope='col'>DKD商品ID</th></tr></thead><tbody>" +
+      state.costDisplayItems.map(function(item) {
+        var parts = Array.isArray(item.import_part_numbers) ? item.import_part_numbers : [];
+        var category = item.category_code_snapshot;
+        if (category === "alternator") category = "オルタネータ";
+        else if (category === "starter") category = "スタータ";
+        return "<tr><td>" + (parts.length ? parts.map(function(part) { return esc(part); }).join("<br>") : "—") +
+          "</td><td>" + esc(item.part_number_snapshot || "—") + "</td><td>" + esc(item.genuine_part_number_snapshot || "—") +
+          "</td><td>" + esc(item.manufacturer_snapshot || "—") + "</td><td>" + esc(category || "—") +
+          "</td><td>" + esc(item.dkd_shohin_id) + "</td></tr>";
+      }).join("") + "</tbody></table></div>";
   }
   async function loadCostLists() {
     var select = byId("container-stock-cost-list");
@@ -98,12 +123,15 @@
   }
   async function loadCostListProducts() {
     var listId = state.costListId;
+    var userId = root.currentUser && root.currentUser.id;
     var requestSeq = ++state.costListRequestSeq;
     state.costProductIds = [];
     state.costLinkItems = [];
+    state.costDisplayItems = [];
     state.costListReady = listId === "none";
     state.costListLoading = !!listId && listId !== "none";
     var note = byId("container-stock-cost-list-note");
+    renderCostListProducts(state.costListLoading ? "照合済み商品を読み込んでいます。" : "");
     if (!state.costListLoading) {
       if (note) note.textContent = listId === "none"
         ? "原価計算リストは使いません。候補が複数ある場合は入庫先を確認してください。"
@@ -116,19 +144,31 @@
     try {
       var productIds = await fetchCostProductIds(listId);
       if (requestSeq !== state.costListRequestSeq) return;
+      if (userId !== (root.currentUser && root.currentUser.id) ||
+          (typeof root.canEditProductKindStockMgmt === "function" && !root.canEditProductKindStockMgmt()))
+        throw new Error("ログイン状態が変わりました。画面を開き直してください。");
       state.costProductIds = productIds;
       state.costLinkItems = productIds.linkItems || [];
+      state.costDisplayItems = productIds.displayItems || [];
       state.costListReady = true;
       if (note) note.textContent = state.costListName + " の照合済み " +
         state.costProductIds.length + " 商品を優先します。一致しない品番は要確認のまま残します。";
+      if (!state.sheets.length && !state.resumeRows)
+        setStatus("商品一覧を表示しました。入庫数量を読み込むには、対応するExcel / CSVを選択してください。");
     } catch (error) {
       if (requestSeq !== state.costListRequestSeq) return;
       state.costListReady = false;
+      renderCostListProducts("照合済み商品を表示できません: " + (error.message || String(error)));
       if (note) note.textContent = "原価計算リストを読み込めません: " +
         (error.message || String(error));
     } finally {
       if (requestSeq === state.costListRequestSeq) {
         state.costListLoading = false;
+        if (state.costListReady) renderCostListProducts();
+        else {
+          var products = byId("container-stock-cost-products");
+          if (products) products.setAttribute("aria-busy", "false");
+        }
         byId("container-stock-preview").disabled = !canPreview();
       }
     }
@@ -347,14 +387,6 @@
     state.corrections = {};
     state.correctionReasons = {};
     state.preferredTargets = {};
-    state.costListId = "";
-    state.costListName = "";
-    state.costProductIds = [];
-    state.costListReady = false;
-    state.costListLoading = false;
-    state.costListRequestSeq += 1;
-    var costSelect = byId("container-stock-cost-list");
-    if (costSelect) costSelect.value = "";
     useFileNameAsReference(file.name);
     byId("container-stock-file-name").textContent = file.name;
     invalidatePreview();
@@ -832,6 +864,9 @@
     state.costListId = "none";
     state.costListReady = true;
     state.costProductIds = [];
+    state.costLinkItems = [];
+    state.costDisplayItems = [];
+    state.costListName = "";
     state.costListRequestSeq += 1;
     state.costListLoading = false;
     byId("container-stock-reference").value = "";
@@ -839,6 +874,9 @@
     byId("container-stock-file-name").textContent = "";
     byId("container-stock-sheets").innerHTML = "";
     byId("container-stock-cost-list").value = "none";
+    renderCostListProducts();
+    var note = byId("container-stock-cost-list-note");
+    if (note) note.textContent = "原価計算リストは使いません。候補が複数ある場合は入庫先を確認してください。";
     invalidatePreview();
     busyControls();
     setStatus("新しいファイルを選択してください。保存済みの保留品番は消えません。");
@@ -868,6 +906,10 @@
       state.costListReady = true;
       state.costListLoading = false;
       state.costProductIds = [];
+      state.costLinkItems = [];
+      state.costDisplayItems = [];
+      state.costListName = "";
+      renderCostListProducts();
       state.costListRequestSeq += 1;
       receipt.lines.forEach(function(row) {
         if (!received(row)) {
@@ -1038,6 +1080,16 @@
     if (!host) return;
     host.hidden = !(typeof root.canEditProductKindStockMgmt === "function" &&
       root.canEditProductKindStockMgmt());
+    if (host.hidden) {
+      state.costListRequestSeq += 1;
+      state.costListId = "";
+      state.costListReady = false;
+      state.costListLoading = false;
+      state.costProductIds = [];
+      state.costLinkItems = [];
+      state.costDisplayItems = [];
+      renderCostListProducts();
+    }
     if (!host.hidden) {
       invalidatePreview();
       setStatus("Excel / CSVを選択してください。ファイル名を識別子に使用します。");
@@ -1066,14 +1118,6 @@
       state.holds = {};
       state.fileName = "";
       state.fileSha256 = "";
-      state.costListId = "";
-      state.costListName = "";
-      state.costProductIds = [];
-      state.costListReady = false;
-      state.costListLoading = false;
-      state.costListRequestSeq += 1;
-      var costSelect = byId("container-stock-cost-list");
-      if (costSelect) costSelect.value = "";
       byId("container-stock-file-name").textContent = "";
       byId("container-stock-sheets").innerHTML = "";
       invalidatePreview();
@@ -1209,10 +1253,12 @@
     });
     var costListSelect = byId("container-stock-cost-list");
     if (costListSelect) costListSelect.addEventListener("change", function() {
+      if (state.working || state.resumeRows) return;
       state.costListId = costListSelect.value;
       state.costListName = costListSelect.selectedOptions[0]
         ? costListSelect.selectedOptions[0].textContent : "";
       state.preferredTargets = {};
+      setStatus("");
       invalidatePreview();
       loadCostListProducts();
     });

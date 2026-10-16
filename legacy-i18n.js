@@ -2,6 +2,16 @@
 // Runtime translation is local; this file makes no external requests.
 var DCATS_LEGACY_UI_TRANSLATIONS = {
   "en": {
+    "リストを選ぶと照合済み商品を表示します。入庫数量はExcel / CSVから読み込みます。": "Choose a list to display matched products. Receipt quantities are loaded from Excel / CSV.",
+    "原価計算の照合済み商品": "Products matched in cost calculation",
+    "照合済み商品": "Matched products",
+    "保存済みの品番一覧です。入庫数量は、対応するExcel / CSVを選択して読み込んでください。": "These are saved part numbers. Select the corresponding Excel / CSV to load receipt quantities.",
+    "照合済み商品一覧（横スクロール可）": "Matched products (scroll horizontally)",
+    "元の取込品番": "Original imported part number",
+    "照合済み商品を読み込んでいます。": "Loading matched products.",
+    "商品一覧を表示しました。入庫数量を読み込むには、対応するExcel / CSVを選択してください。": "Products are displayed. Select the corresponding Excel / CSV to load receipt quantities.",
+    "照合済み商品を表示できません:": "Could not display matched products:",
+    "ログイン状態が変わりました。画面を開き直してください。": "Your sign-in state changed. Reopen this screen.",
     "出荷指示書を確認できません。": "The shipment instruction could not be verified.",
     "ピッキング後の受注取消（現物確認済み）": "Cancellation after picking (physical goods verified)",
     "全体集計を含む選択シートの指定順位範囲": "Specified source rank range for the selected sheets including aggregate totals",
@@ -3888,6 +3898,16 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "/ ALDK除外": "/ ALDK excluded"
   },
   "zh": {
+    "リストを選ぶと照合済み商品を表示します。入庫数量はExcel / CSVから読み込みます。": "选择清单以显示已匹配商品。入库数量从Excel / CSV读取。",
+    "原価計算の照合済み商品": "原价计算中已匹配的商品",
+    "照合済み商品": "已匹配商品",
+    "保存済みの品番一覧です。入庫数量は、対応するExcel / CSVを選択して読み込んでください。": "此处显示已保存的品号。请选择对应的Excel / CSV以读取入库数量。",
+    "照合済み商品一覧（横スクロール可）": "已匹配商品清单（可横向滚动）",
+    "元の取込品番": "原始导入品号",
+    "照合済み商品を読み込んでいます。": "正在加载已匹配商品。",
+    "商品一覧を表示しました。入庫数量を読み込むには、対応するExcel / CSVを選択してください。": "已显示商品清单。请选择对应的Excel / CSV以读取入库数量。",
+    "照合済み商品を表示できません:": "无法显示已匹配商品：",
+    "ログイン状態が変わりました。画面を開き直してください。": "登录状态已更改。请重新打开此页面。",
     "出荷指示書を確認できません。": "无法确认出货指示书。",
     "ピッキング後の受注取消（現物確認済み）": "拣货后取消订单（已核对实物）",
     "全体集計を含む選択シートの指定順位範囲": "包含汇总表的所选工作表指定原始排名范围",

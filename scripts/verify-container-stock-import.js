@@ -175,3 +175,135 @@ if (process.argv[2]) {
 } else {
   console.log("Container receipt parser checks passed");
 }
+
+// Exercise actual selection/file events: a saved list is visible without a workbook,
+// but cannot supply inventory quantities or trigger a stock mutation.
+(async function verifyCostListDisplay() {
+  const vm = require("vm");
+  const elements = {};
+  function element(id) {
+    return elements[id] || (elements[id] = {
+      value: "", innerHTML: "", textContent: "", hidden: false, disabled: false,
+      selectedOptions: [{ textContent: "コンテナ検証" }], files: [], listeners: {}, attrs: {},
+      classList: { toggle() {} },
+      setAttribute(key, value) { this.attrs[key] = value; },
+      addEventListener(type, listener) { this.listeners[type] = listener; }
+    });
+  }
+  let finishInit, response, pending;
+  const queries = [];
+  const context = {
+    console, crypto: require("crypto").webcrypto,
+    DcatsManufacturingCostImport: { ...parser, loadSpreadsheetLibrary: async () => XLSX },
+    document: { readyState: "loading", getElementById: element,
+      addEventListener(type, listener) { if (type === "DOMContentLoaded") finishInit = listener; } },
+    canEditProductKindStockMgmt: () => true,
+    sb: {
+      from(table) {
+        assert.strictEqual(table, "manufacturing_cost_list_items");
+        return {
+          select(columns) { queries.push(columns); return this; }, eq() { return this; }, order() { return this; },
+          limit() { return pending || Promise.resolve(response); }
+        };
+      },
+      rpc() { throw new Error("Selecting a list must not call a stock RPC"); }
+    }
+  };
+  context.window = context;
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../container-stock-import.js"), "utf8"), context);
+  finishInit();
+  const api = context.DcatsContainerStockImport;
+  const products = element("container-stock-cost-products");
+  const select = element("container-stock-cost-list");
+  async function selectList(id) {
+    select.value = id;
+    select.listeners.change();
+    await new Promise(resolve => setImmediate(resolve));
+  }
+  response = { data: [{ dkd_shohin_id: 102, import_part_numbers: ["SM-760-01", "<img src=x onerror=alert(1)>"],
+    part_number_snapshot: "M001", genuine_part_number_snapshot: "G001", manufacturer_snapshot: "<script>",
+    category_code_snapshot: "starter" }], count: 1 };
+  await selectList("6");
+  assert.match(products.innerHTML, /照合済み商品<\/span> <span>1件/);
+  assert.match(products.innerHTML, /SM-760-01/);
+  assert.match(products.innerHTML, /M001/);
+  assert.match(products.innerHTML, /G001/);
+  assert.match(products.innerHTML, /&lt;img/);
+  assert.doesNotMatch(products.innerHTML, /<script>|<img /);
+  assert.match(element("container-stock-status").textContent, /入庫数量/);
+  assert.strictEqual(products.hidden, false);
+  assert.strictEqual(products.attrs["aria-busy"], "false");
+  assert.strictEqual(element("container-stock-preview").disabled, true);
+  assert.strictEqual(element("container-stock-apply").disabled, true);
+  assert.ok(queries[0].includes("part_number_snapshot"));
+  assert.strictEqual(api._state.costLinkItems.length, 1);
+
+  const csv = Buffer.from("Parts No,Quantity\nSM-760-01,3\n");
+  element("container-stock-file").files = [{ name: "STA-test.csv", size: csv.length,
+    arrayBuffer: async () => csv.buffer.slice(csv.byteOffset, csv.byteOffset + csv.byteLength) }];
+  await element("container-stock-file").listeners.change();
+  assert.strictEqual(api._state.costListId, "6", "file selection preserves the saved list");
+  assert.strictEqual(select.value, "6");
+  assert.match(products.innerHTML, /SM-760-01/);
+  element("container-stock-sheets").listeners.change({ target: {
+    closest: () => ({ dataset: { sheetIndex: "0" } }), dataset: { sheetField: "category" }, value: "starter"
+  } });
+  assert.strictEqual(api._collectRows()[0].quantity, 3);
+  assert.strictEqual(element("container-stock-preview").disabled, false);
+  assert.strictEqual(element("container-stock-apply").disabled, true);
+
+  let release;
+  pending = new Promise(resolve => { release = resolve; });
+  await selectList("7");
+  assert.match(products.innerHTML, /読み込んでいます/);
+  assert.doesNotMatch(products.innerHTML, /SM-760-01/);
+  assert.strictEqual(element("container-stock-preview").disabled, true);
+  pending = null;
+  response = { data: [{ dkd_shohin_id: 103, part_number_snapshot: "NEW-LIST" }], count: 1 };
+  await selectList("8");
+  release({ data: [{ dkd_shohin_id: 104, part_number_snapshot: "STALE-LIST" }], count: 1 });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.match(products.innerHTML, /NEW-LIST/);
+  assert.doesNotMatch(products.innerHTML, /STALE-LIST/);
+  assert.strictEqual(api._state.costLinkItems.length, 1);
+
+  response = { data: [] };
+  await selectList("9");
+  assert.match(products.innerHTML, /リストに商品がありません/);
+  assert.doesNotMatch(products.innerHTML, /NEW-LIST/);
+  assert.strictEqual(api._state.costListReady, false);
+  response = { error: { message: "permission denied" } };
+  await selectList("10");
+  assert.match(products.innerHTML, /permission denied/);
+  response = { data: [{ dkd_shohin_id: 1 }], count: 1001 };
+  await selectList("11");
+  assert.match(products.innerHTML, /上限/);
+  await selectList("none");
+  assert.strictEqual(products.hidden, true);
+  assert.strictEqual(products.innerHTML, "");
+  response = { data: [{ dkd_shohin_id: 102 }], count: 1 };
+  await selectList("6");
+  api._resetReceipt();
+  assert.strictEqual(products.hidden, true);
+  assert.strictEqual(api._state.costDisplayItems.length, 0);
+  pending = new Promise(resolve => { release = resolve; });
+  await selectList("6");
+  context.canEditProductKindStockMgmt = () => false;
+  api.enter();
+  release(response);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.strictEqual(element("container-stock-import").hidden, true);
+  assert.strictEqual(products.innerHTML, "");
+  assert.strictEqual(api._state.costListReady, false);
+  context.canEditProductKindStockMgmt = () => true;
+  context.currentUser = { id: "synthetic-user-a" };
+  pending = new Promise(resolve => { release = resolve; });
+  await selectList("6");
+  context.currentUser = { id: "synthetic-user-b" };
+  release(response);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.match(products.innerHTML, /ログイン状態が変わりました/);
+  assert.strictEqual(api._state.costDisplayItems.length, 0);
+  assert.strictEqual(api._state.costListReady, false);
+  console.log("Container cost-list display, file continuity, stale/error/empty and role checks passed");
+})().catch(error => { console.error(error); process.exitCode = 1; });
