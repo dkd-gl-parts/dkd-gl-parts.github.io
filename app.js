@@ -446,6 +446,11 @@ var TRANSLATIONS = {
     business_workspace_settings_open: "業務連携設定を開く",
     business_workspace_settings_hint: "初回の準備や、パスワード・接続・保存先を変更するときに使います。設定画面を開くだけでは、販売王の起動やデータ取込は行いません。",
     business_workspace_settings_drive_title: "PCの共有フォルダ設定",
+    business_workspace_first_setup_title: "別PC・別アカウントの初回設定",
+    business_workspace_first_setup_hint: "このPCで初めて販売王連携を使う場合は、初回設定を実行します。設定済みの項目は再利用します。",
+    business_workspace_first_setup_download: "初回設定ツールを取得",
+    business_workspace_first_setup_steps: "共有フォルダーから初回設定ツールをダウンロードして実行し、画面の「確認して未設定項目を準備」を押してください。",
+    business_workspace_first_setup_identity: "PC側の準備後、ツールの「本人確認・このPCの端末申請」から登録を進めます。管理者の承認後、下の「販売王ログイン設定」でパスワードを登録してください。",
     business_workspace_title: "D-CATS業務連携",
     business_workspace_company_title: "販売王データ連携（管理者検証）",
     business_workspace_company_hint: "登録済みの販売王IDとパスワードでログインし、商品・得意先・売上を別々のCSVへ出力します。",
@@ -3069,6 +3074,11 @@ var TRANSLATIONS = {
     business_workspace_settings_open: "Open Integration Settings",
     business_workspace_settings_hint: "Use this screen for initial setup or to change passwords, connections and save folders. Opening it does not start Sales King or import data.",
     business_workspace_settings_drive_title: "Shared Folder Setup on This PC",
+    business_workspace_first_setup_title: "First setup for another PC or account",
+    business_workspace_first_setup_hint: "Run first setup when using this PC for Hanbai-Oh integration for the first time. Existing settings are reused.",
+    business_workspace_first_setup_download: "Get the first setup tool",
+    business_workspace_first_setup_steps: "Download and run the tool from the shared folder, then choose the button to check and prepare missing items.",
+    business_workspace_first_setup_identity: "After PC setup, use the tool's identity verification and device request button. Once an administrator approves the device, register your password in Sales King login settings below.",
     business_workspace_title: "D-CATS Business Exchange",
     business_workspace_company_title: "Sales King integration (admin verification)",
     business_workspace_company_hint: "Sign in with the registered Sales King ID and saved password. Export products, customers and sales as separate CSV files.",
@@ -5636,6 +5646,11 @@ var TRANSLATIONS = {
     business_workspace_settings_open: "打开业务联动设置",
     business_workspace_settings_hint: "首次准备或更改密码、连接及保存位置时使用此画面。打开设置不会启动销售王或导入数据。",
     business_workspace_settings_drive_title: "本机共享文件夹设置",
+    business_workspace_first_setup_title: "其他电脑或账号的首次设置",
+    business_workspace_first_setup_hint: "首次在此电脑使用销售王联动时，请运行首次设置。已有设置将继续使用。",
+    business_workspace_first_setup_download: "获取首次设置工具",
+    business_workspace_first_setup_steps: "从共享文件夹下载并运行工具，然后点击检查并准备未设置项目的按钮。",
+    business_workspace_first_setup_identity: "电脑准备完成后，使用工具中的本人认证及本机设备申请按钮。管理员批准设备后，请在下方的销售王登录设置中登记密码。",
     business_workspace_title: "D-CATS业务协作",
     business_workspace_company_title: "销售王数据联动（管理员验证）",
     business_workspace_company_hint: "使用已登记的销售王ID及已保存的密码登录，将商品、客户和销售分别导出为CSV。",
@@ -7997,7 +8012,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1188";
+var APP_VERSION       = "v1.1.1189";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -15661,6 +15676,8 @@ function syncDcatsCompanyAccountControls() {
   var allowed=!!user&&typeof isSystemAdmin==="function"&&isSystemAdmin();
   var manager=document.getElementById("dcats-extension-manager");
   if(manager)manager.hidden=!allowed;
+  var firstSetup=document.getElementById("dcats-business-workspace-first-setup");
+  if(firstSetup)firstSetup.hidden=!allowed;
   if(section) section.hidden=!allowed;
   var integration=document.getElementById("dcats-business-workspace-company");
   if(integration)integration.hidden=!allowed;
