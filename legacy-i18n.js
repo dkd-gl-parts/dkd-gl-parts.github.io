@@ -2,6 +2,10 @@
 // Runtime translation is local; this file makes no external requests.
 var DCATS_LEGACY_UI_TRANSLATIONS = {
   "en": {
+    "未読込": "Not loaded",
+    "要照合": "Reconcile",
+    "数量（取込）": "Quantity (import)",
+    "数量（取込）は、選択したExcel / CSVの対象シートを品番別に合算した数量です。未読込の場合は元ファイルを選択してください。在庫への反映は取込内容の照合・確定後です。": "Imported quantities are totals by part number from the selected Excel / CSV sheets. Select the source file if not loaded. Stock is updated after reconciliation and confirmation.",
     "リストを選ぶと照合済み商品を表示します。入庫数量はExcel / CSVから読み込みます。": "Choose a list to display matched products. Receipt quantities are loaded from Excel / CSV.",
     "原価計算の照合済み商品": "Products matched in cost calculation",
     "照合済み商品": "Matched products",
@@ -3898,6 +3902,10 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "/ ALDK除外": "/ ALDK excluded"
   },
   "zh": {
+    "未読込": "未读取",
+    "要照合": "待匹配",
+    "数量（取込）": "数量（导入）",
+    "数量（取込）は、選択したExcel / CSVの対象シートを品番別に合算した数量です。未読込の場合は元ファイルを選択してください。在庫への反映は取込内容の照合・確定後です。": "导入数量为所选Excel / CSV工作表中按品号汇总的数量。若未读取，请选择原始文件。匹配并确认后才会更新库存。",
     "リストを選ぶと照合済み商品を表示します。入庫数量はExcel / CSVから読み込みます。": "选择清单以显示已匹配商品。入库数量从Excel / CSV读取。",
     "原価計算の照合済み商品": "原价计算中已匹配的商品",
     "照合済み商品": "已匹配商品",

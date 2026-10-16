@@ -215,6 +215,7 @@ if (process.argv[2]) {
   const api = context.DcatsContainerStockImport;
   const products = element("container-stock-cost-products");
   const select = element("container-stock-cost-list");
+  const quantityCells = () => [...products.innerHTML.matchAll(/<td class='container-stock-cost-quantity'>([^<]*)<\/td>/g)].map(match => match[1]);
   async function selectList(id) {
     select.value = id;
     select.listeners.change();
@@ -237,6 +238,8 @@ if (process.argv[2]) {
   assert.strictEqual(element("container-stock-apply").disabled, true);
   assert.ok(queries[0].includes("part_number_snapshot"));
   assert.strictEqual(api._state.costLinkItems.length, 1);
+  assert.match(products.innerHTML, /<th[^>]*>数量（取込）<\/th>/);
+  assert.deepStrictEqual(quantityCells(), ["未読込"], "missing source quantity is not zero");
 
   const csv = Buffer.from("Parts No,Quantity\nSM-760-01,3\n");
   element("container-stock-file").files = [{ name: "STA-test.csv", size: csv.length,
@@ -251,6 +254,48 @@ if (process.argv[2]) {
   assert.strictEqual(api._collectRows()[0].quantity, 3);
   assert.strictEqual(element("container-stock-preview").disabled, false);
   assert.strictEqual(element("container-stock-apply").disabled, true);
+
+  assert.deepStrictEqual(quantityCells(), ["3"], "source quantity is rendered after file/category events");
+  const originalSheet = api._state.sheets[0];
+  const additionalSheet = sheet("STA extra", [["Parts No", "Quantity"], ["SM-760-01", 4], ["SM-760-01", 5]], "starter");
+  api._state.sheets.push(additionalSheet);
+  element("container-stock-reference").listeners.input();
+  assert.deepStrictEqual(quantityCells(), ["12"], "duplicate parts and pallets are summed once");
+  const changeSheet = (index, field, value, checked) => element("container-stock-sheets").listeners.change({ target: {
+    closest: () => ({ dataset: { sheetIndex: String(index) } }), dataset: { sheetField: field }, value, checked
+  } });
+  changeSheet(1, "included", "", false);
+  assert.deepStrictEqual(quantityCells(), ["3"], "excluded sheets do not contribute quantities");
+  changeSheet(1, "included", "", true);
+  additionalSheet.matrix[1][1] = "4 pcs";
+  changeSheet(1, "quantityColumn", "1");
+  assert.deepStrictEqual(quantityCells(), ["要確認"], "invalid quantity must not show a partial total");
+  additionalSheet.matrix[1][1] = 4;
+  changeSheet(1, "category", "alternator");
+  assert.deepStrictEqual(quantityCells(), ["3"], "a different category is not added to the product");
+  api._state.sheets = [originalSheet];
+  const originalItem = api._state.costDisplayItems[0];
+  api._state.costDisplayItems.push({ dkd_shohin_id: 103, import_part_numbers: ["SM-760-01"], category_code_snapshot: "starter" });
+  element("container-stock-reference").listeners.input();
+  assert.deepStrictEqual(quantityCells(), ["要照合", "要照合"], "ambiguous source cannot duplicate quantities into two products");
+  api._state.costDisplayItems = [{ ...originalItem, import_part_numbers: ["SM-760-01", "SM-760-01"], part_number_snapshot: "SM-760-01" }];
+  element("container-stock-reference").listeners.input();
+  assert.deepStrictEqual(quantityCells(), ["3"], "repeated aliases on one product do not double count");
+  api._state.costDisplayItems = [{ ...originalItem, import_part_numbers: [], part_number_snapshot: "SM-760-01" }];
+  element("container-stock-reference").listeners.input();
+  assert.deepStrictEqual(quantityCells(), ["3"], "legacy lists can use saved part-number snapshots");
+  api._state.costDisplayItems = [{ ...originalItem, import_part_numbers: ["OTHER-001"] }];
+  element("container-stock-reference").listeners.input();
+  assert.deepStrictEqual(quantityCells(), ["対象なし"], "absent part is not falsely represented as zero");
+  api._state.costDisplayItems = [originalItem];
+  changeSheet(0, "quantityColumn", "0");
+  assert.deepStrictEqual(quantityCells(), ["要確認"], "changing the quantity column refreshes the quantity state");
+  changeSheet(0, "quantityColumn", "1");
+  assert.deepStrictEqual(quantityCells(), ["3"]);
+  changeSheet(0, "category", "");
+  assert.deepStrictEqual(quantityCells(), ["要確認"]);
+  changeSheet(0, "category", "starter");
+  assert.deepStrictEqual(quantityCells(), ["3"]);
 
   let release;
   pending = new Promise(resolve => { release = resolve; });
