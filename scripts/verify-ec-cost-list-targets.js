@@ -24,7 +24,8 @@ function fixture() {
   assert.ok(f.el('results').innerHTML.includes('自動復活しません'));
   const keep=JSON.stringify(f.sandbox.rakutenTargets[0]);
   await f.commit();assert.equal(f.calls.filter(c=>c.args.p_commit).length,1);assert.equal(f.sandbox.rakutenTargets.length,2);
-  assert.equal(JSON.stringify(f.sandbox.rakutenTargets[0]),keep,'existing local conditions remain unchanged');
+  assert.equal(JSON.stringify(f.sandbox.rakutenTargets.find(row=>row.id===9)),keep,'existing local conditions remain unchanged');
+  assert.equal(f.sandbox.rakutenTargets[0].id,10,'new targets stay visible within the existing 200-row display limit');
   assert.equal(f.el('dialog').open,false);await f.commit();assert.equal(f.calls.length,2,'completed preview cannot replay');
   f=fixture();f.permission(false);await f.entry();assert.equal(f.el('dialog').open,false);assert.equal(f.calls.length,0);
   f=fixture();f.sandbox.rakutenTargets.push({search_number:'UNSAVED'});await f.entry();assert.equal(f.el('dialog').open,false);assert.equal(f.calls.length,0);

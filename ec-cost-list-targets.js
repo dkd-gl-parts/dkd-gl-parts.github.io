@@ -142,11 +142,14 @@
       if (result.error) throw result.error;
       if (!result.data || result.data.inserted !== expected || !Array.isArray(result.data.targets) || result.data.targets.length !== expected) throw Error("Unconfirmed result");
       if (!allowed() || !root.currentUser || root.currentUser.id !== state.userId) { clearPreview(); status("permission", true); return; }
-      result.data.targets.forEach(function(row) {
-        if (!(root.rakutenTargets || []).some(function(target) { return target.target_key === row.target_key || String(target.dkd_shohin_id) === String(row.dkd_shohin_id); }))
-          root.rakutenTargets.push(root.ecMallTargetFromDb(row));
-      });
+      var additions = result.data.targets.filter(function(row) {
+        return !(root.rakutenTargets || []).some(function(target) { return target.target_key === row.target_key || String(target.dkd_shohin_id) === String(row.dkd_shohin_id); });
+      }).map(root.ecMallTargetFromDb);
+      // The existing list renders its first 200 entries. Keep the new rows visible
+      // without changing any saved priority or an existing row's settings.
+      root.rakutenTargets = additions.concat(root.rakutenTargets || []);
       root.renderRakutenTargets(); root.setRakutenStatus(label("added", { n: expected }), false);
+      if (root.loadEcMallResearchStatus) root.loadEcMallResearchStatus({ silent: true });
       state.committing = false; close();
     } catch (error) {
       clearPreview(); status(error.code === "40001" || /EC_COST_STALE_PREVIEW/.test(error.message || "") ? "stale" : error.code === "42501" ? "permission" : "unknown", true);
