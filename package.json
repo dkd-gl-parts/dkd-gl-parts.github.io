@@ -12,6 +12,7 @@
   },
   "devDependencies": {
     "acorn": "8.18.0",
+    "linkedom": "0.18.12",
     "yaml": "2.9.0"
   }
 }
