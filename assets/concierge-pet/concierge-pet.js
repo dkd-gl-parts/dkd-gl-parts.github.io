@@ -82,7 +82,7 @@
       aiQuestionLabel: "相談内容",
       aiPlaceholder: "例：受注の確認方法は？／検索ボタンが反応しない／検索条件を保存したい",
       aiAsk: "送信",
-      aiPrivacy: "送信前に文章と画像を確認してください。顧客・受注情報、価格、個人情報、パスワード、APIキーは含めないでください。質問文・表示言語・画面名と選んだ画像だけを、送信時にOpenAIへ送ります。",
+      aiPrivacy: "送信前に文章と画像を確認してください。顧客・受注情報、価格、個人情報、パスワード、APIキーは含めないでください。質問文・表示言語・画面名・選んだ画像と、サーバーで確認した権限・受注準備の可否を、送信時にOpenAIへ送ります。",
       aiImage: "画像を添付（任意・1枚）",
       aiImageHint: "質問欄またはここを選び、Ctrl+V／⌘Vで画像を貼り付けられます。PNG・JPEG・WebP、10MB以内。送信前に確認・削除できます。",
       aiImageRemove: "画像を外す",
@@ -105,6 +105,12 @@
       aiProviderFailed: "AIから回答を取得できませんでした。時間をおいてもう一度お試しください。",
       aiFailed: "AIに接続できませんでした。時間をおいてもう一度お試しください。",
       aiGuide: "案内先：{screen} — {reason}",
+      aiTestOrderNote: "D-CATS開発テスト得意先の受注入力画面を開きます。ここではまだ登録しません。商品・数量などを選び、価格・在庫を確認して登録を確定してください。テスト受注でも、確定時には本番在庫を予約します。保存済みのテスト用カートがある場合は内容も確認してください。",
+      aiTestOrderOpen: "テスト受注の入力画面を開く（未登録）",
+      aiTestOrderOpening: "権限とテスト得意先を確認しています…",
+      aiTestOrderCartBusy: "入力中または登録処理中の受注があります。既存の入力を確認・完了してから、もう一度お試しください。入力内容は変更していません。",
+      aiTestOrderFailed: "受注権限・機能設定またはテスト得意先を確認できませんでした。入力画面は開いていません。再度質問するか、受注・出荷管理の設定を確認してください。",
+      aiTestOrderOpened: "テスト受注の入力画面を開きました。受注はまだ登録していません。",
       bridgeLegend: "Windows業務連携（管理者テスト）",
       bridgeCheck: "Windows連携を確認",
       bridgeHelp: "連携キューの確認、CSV事前検査、固定フォルダー表示、販売王25の起動を利用できます。承認済み端末の単回ログインは下の管理者テスト欄から行います。端末申請だけではログインやCSV取込は有効になりません。",
@@ -274,7 +280,7 @@
       aiQuestionLabel: "Message",
       aiPlaceholder: "Example: How do I view orders? / Search does not respond / I want to save search filters",
       aiAsk: "Send",
-      aiPrivacy: "Review the text and image before sending. Exclude customer or order data, prices, personal data, passwords and API keys. Only your question, language, screen name and selected image are sent to OpenAI when you submit.",
+      aiPrivacy: "Review the text and image before sending. Exclude customer or order data, prices, personal data, passwords and API keys. Your question, language, screen name, selected image and server-verified role/order-entry availability are sent to OpenAI when you submit.",
       aiImage: "Attach an image (optional, one image)",
       aiImageHint: "Select the question field or here and paste an image with Ctrl+V / ⌘V. PNG, JPEG or WebP up to 10 MB. Review or remove it before sending.",
       aiImageRemove: "Remove image",
@@ -297,6 +303,12 @@
       aiProviderFailed: "AI could not return an answer. Please try again later.",
       aiFailed: "AI could not be reached. Please try again later.",
       aiGuide: "Suggested screen: {screen} — {reason}",
+      aiTestOrderNote: "Open order entry for the dedicated D-CATS development test customer. Nothing is registered yet. Select products and quantities, review prices and stock, then confirm registration. Even test orders reserve REAL production stock when registered. Review any saved test cart too.",
+      aiTestOrderOpen: "Open test order entry (not registered)",
+      aiTestOrderOpening: "Checking permission and the test customer…",
+      aiTestOrderCartBusy: "An order cart or registration is already in progress. Review and finish it before trying again. Your entries have not been changed.",
+      aiTestOrderFailed: "Order permission, feature availability or the test customer could not be verified. No entry screen was opened. Ask again or check Orders and shipping settings.",
+      aiTestOrderOpened: "Test order entry is open. No order has been registered.",
       bridgeLegend: "Windows integration (admin pilot)",
       bridgeCheck: "Check Windows integration",
       bridgeHelp: "Check the queue, validate CSV files, open the fixed folder or launch Sales King 25. Approved devices can use the administrator test sign-in below. Device enrollment alone does not enable sign-in or CSV import.",
@@ -465,7 +477,7 @@
       aiQuestionLabel: "咨询内容",
       aiPlaceholder: "示例：如何确认订单？／搜索按钮无反应／希望保存搜索条件",
       aiAsk: "发送",
-      aiPrivacy: "发送前请检查文字和图片。请勿包含客户或订单信息、价格、个人信息、密码或API密钥。仅在提交时向OpenAI发送问题、语言、页面名称和所选图片。",
+      aiPrivacy: "发送前请检查文字和图片。请勿包含客户或订单信息、价格、个人信息、密码或API密钥。提交时向OpenAI发送问题、语言、页面名称、所选图片及服务器确认的权限与订单录入可用状态。",
       aiImage: "添加图片（可选，1张）",
       aiImageHint: "选择问题栏或此处，按Ctrl+V／⌘V粘贴图片。支持PNG、JPEG、WebP，10MB以内。发送前可以确认或移除。",
       aiImageRemove: "移除图片",
@@ -488,6 +500,12 @@
       aiProviderFailed: "无法从AI取得回答，请稍后重试。",
       aiFailed: "无法连接AI，请稍后重试。",
       aiGuide: "建议画面：{screen} — {reason}",
+      aiTestOrderNote: "打开D-CATS开发测试客户的订单录入画面，此时尚未登记。请选择商品、数量等，确认价格和库存后再登记。测试订单在登记时也会预留实际生产库存。如有已保存的测试购物车，请同时确认内容。",
+      aiTestOrderOpen: "打开测试订单录入（尚未登记）",
+      aiTestOrderOpening: "正在确认权限和测试客户…",
+      aiTestOrderCartBusy: "已有录入中的购物车或正在登记的订单。请先确认并完成现有操作后再试，原有内容未更改。",
+      aiTestOrderFailed: "无法确认订单权限、功能设置或测试客户，未打开录入画面。请重新提问或检查订单与发货管理设置。",
+      aiTestOrderOpened: "已打开测试订单录入画面，尚未登记订单。",
       bridgeLegend: "Windows业务联动（管理员测试）",
       bridgeCheck: "检查Windows联动",
       bridgeHelp: "可检查队列、预检CSV、打开固定文件夹和启动销售王25。已批准设备可使用下方管理员测试登录。设备申请本身不会启用登录或CSV导入。",
@@ -644,6 +662,7 @@
   var aiAnswer;
   var aiGuide;
   var aiUsage;
+  var aiOrderAction, aiOrderNote, aiOrderButton, aiOrderProposal = null, aiOrderPending = false;
   var aiImageFile, aiImagePreview, aiImageRemove;
   var aiImageData = "", aiImageToken = 0, aiImagePending = false, aiLastUsage = null;
   var salesDock = null;
@@ -976,12 +995,21 @@
     aiAnswer.hidden = true;
     aiGuide = createElement("p", "dcats-concierge-ai-guide");
     aiGuide.hidden = true;
+    aiOrderAction = createElement("div", "dcats-concierge-ai-order-action");
+    aiOrderAction.hidden = true;
+    aiOrderNote = createCopyElement("p", "dcats-concierge-ai-guide", "aiTestOrderNote");
+    aiOrderButton = createCopyElement("button", "dcats-concierge-ai-button", "aiTestOrderOpen");
+    aiOrderButton.type = "button";
+    aiOrderButton.addEventListener("click", runTestOrderEntry);
+    aiOrderAction.appendChild(aiOrderNote);
+    aiOrderAction.appendChild(aiOrderButton);
     aiUsage = createElement("div", "dcats-concierge-ai-usage");
     aiUsage.hidden = true;
     var aiFeedback = createElement("div", "dcats-concierge-ai-feedback");
     aiFeedback.appendChild(aiStatus);
     aiFeedback.appendChild(aiAnswer);
     aiFeedback.appendChild(aiGuide);
+    aiFeedback.appendChild(aiOrderAction);
     aiFeedback.appendChild(aiUsage);
     aiCard.appendChild(aiTitle);
     aiCard.appendChild(aiHelp);
@@ -1421,6 +1449,9 @@
   }
 
   function clearAiResult() {
+    aiOrderProposal = null;
+    aiOrderPending = false;
+    if (aiOrderAction) aiOrderAction.hidden = true;
     aiLastUsage = null;
     if (aiAnswer) {
       aiAnswer.textContent = "";
@@ -1451,17 +1482,23 @@
   function updateAiStatus() {
     if (!aiAskButton || !aiQuestionInput || !aiStatus) return;
     var reviewing = !!(requestUi && requestUi.pending());
-    aiAskButton.disabled = aiRequestPending || aiImagePending || reviewing;
+    aiAskButton.disabled = aiRequestPending || aiImagePending || reviewing || aiOrderPending;
     aiAskButton.textContent = copy(aiRequestPending ? "aiWorking" : "aiAsk");
     aiAskButton.setAttribute("aria-busy", String(aiRequestPending));
-    aiQuestionInput.disabled = aiRequestPending || reviewing;
-    if (aiImageFile) aiImageFile.disabled = aiRequestPending || reviewing;
-    if (aiImageRemove) aiImageRemove.disabled = aiRequestPending || reviewing;
+    aiQuestionInput.disabled = aiRequestPending || reviewing || aiOrderPending;
+    if (aiImageFile) aiImageFile.disabled = aiRequestPending || reviewing || aiOrderPending;
+    if (aiImageRemove) aiImageRemove.disabled = aiRequestPending || reviewing || aiOrderPending;
     aiQuestionInput.placeholder = copy("aiPlaceholder");
     aiStatus.textContent = copy(aiStatusState);
     aiStatus.classList.toggle("is-success", aiStatusState === "aiDone");
-    aiStatus.classList.toggle("is-error", ["aiImageInvalid", "aiImageLarge", "aiInvalidQuestion", "aiNotConfigured", "aiConfigurationInvalid", "aiForbidden", "aiRateLimited", "aiProviderFailed", "aiFailed"].indexOf(aiStatusState) >= 0);
+    aiStatus.classList.toggle("is-error", ["aiImageInvalid", "aiImageLarge", "aiInvalidQuestion", "aiNotConfigured", "aiConfigurationInvalid", "aiForbidden", "aiRateLimited", "aiProviderFailed", "aiFailed", "aiTestOrderCartBusy", "aiTestOrderFailed"].indexOf(aiStatusState) >= 0);
     if (aiLastUsage) renderAiUsage(aiLastUsage);
+    if (aiOrderButton) {
+      aiOrderButton.disabled = aiOrderPending;
+      aiOrderButton.textContent = copy(aiOrderPending ? "aiTestOrderOpening" : "aiTestOrderOpen");
+      aiOrderButton.setAttribute("aria-busy", String(aiOrderPending));
+      aiOrderNote.textContent = copy("aiTestOrderNote");
+    }
   }
 
   function revealAiFeedback() {
@@ -1542,6 +1579,7 @@
   }
 
   async function runAiRequest() {
+    if (aiOrderPending) return;
     if (aiRequestPending || aiImagePending || (requestUi && requestUi.pending()) || !isSystemAdminSession()) return;
     var question = String(aiQuestionInput && aiQuestionInput.value || "").trim();
     if (!question || question.length > 800) {
@@ -1580,6 +1618,10 @@
       if (route.kind !== "question" && (!requestUi || !requestUi.prepare({ kind: route.kind, title: route.title, question: submitted.question, image: submitted.image, screenId: submitted.screenId, language: submitted.language }))) throw new Error("ai_provider_failed");
       aiAnswer.textContent = data.answer.trim();
       aiAnswer.hidden = false;
+      if (route.kind === "question" && data.action && data.action.kind === "prepare_test_order" && data.action.requires_confirmation === true && typeof api.prepareTestOrder === "function") {
+        aiOrderProposal = { token: requestToken, owner: owner };
+        aiOrderAction.hidden = false;
+      }
       if (data.guide && typeof data.guide.screen_label === "string" && typeof data.guide.reason === "string") {
         aiGuide.textContent = copy("aiGuide", { screen: data.guide.screen_label, reason: data.guide.reason });
         aiGuide.hidden = false;
@@ -1597,6 +1639,32 @@
         updateAiStatus();
         revealAiFeedback();
       }
+    }
+  }
+
+  async function runTestOrderEntry() {
+    if (aiOrderPending || aiRequestPending || !aiOrderProposal || !isSystemAdminSession()) return;
+    var proposal = aiOrderProposal, api = window.DcatsConciergeAiApi;
+    function isCurrent() {
+      return panelOpen && aiOrderProposal === proposal && proposal.token === aiRequestToken && proposal.owner === currentSettingsOwner() && isSystemAdminSession();
+    }
+    if (!isCurrent() || !api || typeof api.prepareTestOrder !== "function") return;
+    aiOrderPending = true;
+    aiStatusState = "aiTestOrderOpening";
+    updateAiStatus();
+    try {
+      // Only this explicit click may request the bounded order-entry handoff.
+      var result = await api.prepareTestOrder({ isCurrent: isCurrent });
+      if (!isCurrent()) return;
+      if (!result || result.error || !result.data || result.data.ok !== true || result.data.order_created !== false) throw result && result.error || new Error("test_order_unavailable");
+      aiOrderProposal = null;
+      aiOrderAction.hidden = true;
+      aiStatusState = "aiTestOrderOpened";
+    } catch (error) {
+      if (!isCurrent()) return;
+      aiStatusState = String(error && error.message) === "test_order_cart_busy" ? "aiTestOrderCartBusy" : "aiTestOrderFailed";
+    } finally {
+      if (proposal.token === aiRequestToken) { aiOrderPending = false; updateAiStatus(); revealAiFeedback(); }
     }
   }
 

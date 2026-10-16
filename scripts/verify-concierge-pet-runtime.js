@@ -833,6 +833,52 @@ await tick();
 assert(intakeCalls.at(-1).action === "attach" && intakeCalls.at(-1).id === partial.id && intakeCalls.at(-1).image === partial.image && !aiAskButton.disabled, "Image retry must attach to the same accepted request only");
 aiResponseFactory = originalAiResponseFactory;
 dispatch(panelClose.listeners, "click", { target: panelClose });
+// A proposal cannot navigate; only a fresh explicit click can request fixed test entry.
+const orderAction = byClass("dcats-concierge-ai-order-action")[0], orderButton = orderAction.children[1];
+let orderCalls = 0, finishOrder, orderOptions;
+windowObject.DcatsConciergeAiApi.prepareTestOrder = async options => {
+  orderCalls++; orderOptions = options;
+  return new Promise(resolve => { finishOrder = resolve; });
+};
+const orderReply = () => ({ data: { ok: true, performed_action: false, answer: "テスト受注を準備できます。", routing: { kind: "question", title: "" }, action: { kind: "prepare_test_order", requires_confirmation: true } } });
+for (const [i, language] of ["ja", "en", "zh"].entries()) {
+  documentObject.documentElement.lang = language; notifyObservers();
+  api.openSettings("question"); aiQuestionInput.value = "受注のテストデータを作りたい";
+  aiResponseFactory = orderReply;
+  dispatch(aiAskButton.listeners, "click", { target: aiAskButton }); await tick();
+  assert(!orderAction.hidden && orderCalls === i, "Proposal navigated without a click");
+  assert(orderAction.children[0].textContent.includes(language === "ja" ? "本番在庫" : language === "en" ? "REAL production stock" : "实际生产库存"), "Localized stock warning missing");
+  dispatch(orderButton.listeners, "click", { target: orderButton }); dispatch(orderButton.listeners, "click", { target: orderButton });
+  assert(orderOptions.isCurrent() && orderButton.disabled && aiAskButton.disabled && aiQuestionInput.disabled, "Entry must remain single-submit and owner-bound");
+  finishOrder({ data: null, error: new Error("test_order_cart_busy") }); await tick();
+  assert(!orderButton.disabled && !orderAction.hidden && aiStatus.classList.contains("is-error"), "Busy cart lost retryable proposal/guidance");
+  dispatch(panelClose.listeners, "click", { target: panelClose });
+  assert(orderAction.hidden && !orderOptions.isCurrent(), "Closed question kept a live proposal");
+}
+documentObject.documentElement.lang = "ja"; notifyObservers();
+api.openSettings("question"); aiQuestionInput.value = "テスト受注";
+dispatch(aiAskButton.listeners, "click", { target: aiAskButton }); await tick();
+dispatch(orderButton.listeners, "click", { target: orderButton });
+const dismissedOptions = orderOptions;
+dispatch(panelClose.listeners, "click", { target: panelClose });
+api.openSettings("question"); aiQuestionInput.value = "新しい質問";
+finishOrder({ data: { ok: true, order_created: false }, error: null }); await tick();
+assert(!dismissedOptions.isCurrent() && orderAction.hidden && aiQuestionInput.value === "新しい質問" && !aiAskButton.disabled, "Late entry receipt changed a new question");
+for (const action of [{ kind: "delete_order", requires_confirmation: true }, { kind: "prepare_test_order", requires_confirmation: false }]) {
+  aiResponseFactory = () => { const r = orderReply(); r.data.action = action; return r; };
+  dispatch(aiAskButton.listeners, "click", { target: aiAskButton }); await tick();
+  assert(orderAction.hidden, "Unreviewed descriptor created an action button");
+}
+aiResponseFactory = orderReply;
+dispatch(aiAskButton.listeners, "click", { target: aiAskButton }); await tick();
+dispatch(orderButton.listeners, "click", { target: orderButton });
+const revokedOptions = orderOptions;
+windowObject.userProfile = { role: "company_admin" }; notifyObservers();
+finishOrder({ data: { ok: true, order_created: false }, error: null }); await tick();
+assert(!revokedOptions.isCurrent() && root.hidden && orderAction.hidden, "Role loss retained a pending action");
+windowObject.userProfile = { role: "system_admin" }; notifyObservers();
+aiResponseFactory = originalAiResponseFactory;
+dispatch(panelClose.listeners, "click", { target: panelClose });
 const bridgeCard = byClass("dcats-concierge-bridge-card")[0];
 const bridgeButton = byClass("dcats-concierge-bridge-button")[0];
 const bridgeButtons = byClass("dcats-concierge-bridge-button");
