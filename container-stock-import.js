@@ -77,6 +77,48 @@
     ids.displayItems = result.data;
     return ids;
   }
+  function costListQuantities() {
+    var labels = new Map();
+    state.costDisplayItems.forEach(function(item) { labels.set(String(item.dkd_shohin_id), "未読込"); });
+    if (!state.sheets.length) return labels;
+    var rows;
+    try { rows = collectedRows(); }
+    catch (error) {
+      labels.forEach(function(value, id) { labels.set(id, "要確認"); });
+      return labels;
+    }
+    var normalize = root.DcatsManufacturingCostImport.normalizePart;
+    var totals = new Map();
+    var byPart = new Map();
+    state.costDisplayItems.forEach(function(item) {
+      var id = String(item.dkd_shohin_id);
+      totals.set(id, { quantity: 0, ambiguous: false });
+      var parts = Array.isArray(item.import_part_numbers) && item.import_part_numbers.length
+        ? item.import_part_numbers : [item.part_number_snapshot, item.genuine_part_number_snapshot];
+      parts.forEach(function(part) {
+        var key = normalize(part);
+        if (!key) return;
+        if (!byPart.has(key)) byPart.set(key, new Map());
+        byPart.get(key).set(id, item.category_code_snapshot || "");
+      });
+    });
+    rows.forEach(function(row) {
+      var candidates = [];
+      var matches = byPart.get(normalize(row.part_number));
+      if (matches) matches.forEach(function(category, id) {
+        if (!category || category === row.category_code) candidates.push(id);
+      });
+      candidates.forEach(function(id) {
+        var total = totals.get(id);
+        if (candidates.length !== 1) total.ambiguous = true;
+        else total.quantity += row.quantity;
+      });
+    });
+    totals.forEach(function(total, id) {
+      labels.set(id, total.ambiguous ? "要照合" : total.quantity ? String(total.quantity) : "対象なし");
+    });
+    return labels;
+  }
   function renderCostListProducts(message) {
     var host = byId("container-stock-cost-products");
     if (!host) return;
@@ -84,16 +126,18 @@
     host.setAttribute("aria-busy", state.costListLoading ? "true" : "false");
     if (host.hidden) { host.innerHTML = ""; return; }
     if (message) { host.innerHTML = "<p>" + esc(message) + "</p>"; return; }
+    var quantities = costListQuantities();
     host.innerHTML = "<h3><span>" + esc(state.costListName) + "</span> · <span>照合済み商品</span> <span>" + state.costDisplayItems.length + "件</span></h3>" +
-      "<p>保存済みの品番一覧です。入庫数量は、対応するExcel / CSVを選択して読み込んでください。</p>" +
+      "<p>数量（取込）は、選択したExcel / CSVの対象シートを品番別に合算した数量です。未読込の場合は元ファイルを選択してください。在庫への反映は取込内容の照合・確定後です。</p>" +
       "<div class='container-stock-table-wrap' tabindex='0' role='region' aria-label='照合済み商品一覧（横スクロール可）'><table class='mgmt-table container-stock-table container-stock-cost-table'>" +
-      "<thead><tr><th scope='col'>元の取込品番</th><th scope='col'>メーカー品番</th><th scope='col'>純正品番</th><th scope='col'>メーカー</th><th scope='col'>カテゴリ</th><th scope='col'>DKD商品ID</th></tr></thead><tbody>" +
+      "<thead><tr><th scope='col'>元の取込品番</th><th scope='col' class='container-stock-cost-quantity'>数量（取込）</th><th scope='col'>メーカー品番</th><th scope='col'>純正品番</th><th scope='col'>メーカー</th><th scope='col'>カテゴリ</th><th scope='col'>DKD商品ID</th></tr></thead><tbody>" +
       state.costDisplayItems.map(function(item) {
         var parts = Array.isArray(item.import_part_numbers) ? item.import_part_numbers : [];
         var category = item.category_code_snapshot;
         if (category === "alternator") category = "オルタネータ";
         else if (category === "starter") category = "スタータ";
         return "<tr><td>" + (parts.length ? parts.map(function(part) { return esc(part); }).join("<br>") : "—") +
+          "</td><td class='container-stock-cost-quantity'>" + esc(quantities.get(String(item.dkd_shohin_id))) +
           "</td><td>" + esc(item.part_number_snapshot || "—") + "</td><td>" + esc(item.genuine_part_number_snapshot || "—") +
           "</td><td>" + esc(item.manufacturer_snapshot || "—") + "</td><td>" + esc(category || "—") +
           "</td><td>" + esc(item.dkd_shohin_id) + "</td></tr>";
@@ -270,6 +314,7 @@
     byId("container-stock-results").innerHTML = "";
     byId("container-stock-apply").disabled = true;
     byId("container-stock-preview").disabled = !canPreview();
+    if (state.costListReady && state.costDisplayItems.length) renderCostListProducts();
   }
   function renderSheets() {
     var host = byId("container-stock-sheets");
