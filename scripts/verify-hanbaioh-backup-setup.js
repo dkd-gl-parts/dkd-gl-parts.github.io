@@ -45,7 +45,8 @@ function fixture(mode={}){
     if(flag==='issuerLate'){f.late();await new Promise(resolve=>setTimeout(resolve,10));assert.equal(f.posts.filter(m=>m.request).length,1);}
   }
   const html=fs.readFileSync(path.join(root,'index.html'),'utf8'),app=fs.readFileSync(path.join(root,'app.js'),'utf8');
-  const card=html.slice(html.indexOf('<section class="dcats-business-workspace-backup"'),html.indexOf('</section>', html.indexOf('<section class="dcats-business-workspace-backup"')));
+  const card=html.match(/<section\b[^>]*\bid="dcats-business-workspace-backup"[^>]*>[\s\S]*?<\/section>/)?.[0];
+  assert(card, 'The protected backup settings must be independent of the first setup card');
   assert(card.includes(' hidden>'));assert(!card.includes('<input'));assert(card.includes('id="dcats-business-workspace-backup-setup"'));assert(card.includes('id="dcats-business-workspace-backup-recover"'));
   for(const key of ['recover','recover_hint'])assert.equal((app.match(new RegExp('business_workspace_backup_'+key+':','g'))||[]).length,3);
   for(const name of ['setup','setup_hint','setup_device','setup_authorization','setup_opening','setup_opened','setup_window_unavailable','setup_saved','setup_pending_recovery','setup_password_recovery_closed','setup_password_not_saved','setup_cancelled','setup_failed','setup_outcome_unknown','setup_expired'])assert.equal((app.match(new RegExp('business_workspace_backup_'+name+':','g'))||[]).length,3,name);
