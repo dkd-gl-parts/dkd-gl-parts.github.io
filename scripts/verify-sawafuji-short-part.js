@@ -34,7 +34,8 @@ async function verify(){
   ctx.fetchSawafujiImportCandidates=async()=>({error:{message:"offline"}});
   assert.equal((await ctx.fetchManufacturingCostProducts(["0355502002"],"starter",{exactOnly:true,groupByToken:true})).error.message,"offline","Failed family lookup must not appear complete");
 
-  const elements={};["results","apply","status","reference","preview","choose","file","file-name","cost-list","cost-list-note","sheets","held-toggle","held-list","new","history","history-toggle","held-panel","held-refresh"].forEach(id=>elements["container-stock-"+id]={value:"",textContent:"",innerHTML:"",disabled:false,classList:{toggle(){}},listeners:{},addEventListener(name,fn){const old=this.listeners[name];this.listeners[name]=old?event=>{old(event);fn(event);}:fn;},querySelector(){return {focus(){}};}});
+  const elements={};["results","apply","status","reference","preview","choose","file","file-name","cost-list","cost-list-note","sheets","held-toggle","held-list","new","history","history-toggle","held-panel","held-refresh","confirm","confirm-title","confirm-description","confirm-summary","confirm-submit","confirm-cancel"].forEach(id=>elements["container-stock-"+id]={value:"",textContent:"",innerHTML:"",disabled:false,classList:{toggle(){}},listeners:{},addEventListener(name,fn){const old=this.listeners[name];this.listeners[name]=old?event=>{old(event);fn(event);}:fn;},removeEventListener(name){delete this.listeners[name];},focus(){},querySelector(){return {focus(){}};}});
+  elements["container-stock-confirm"].showModal=function(){this.returnValue="confirm";queueMicrotask(()=>this.listeners.close());};
   let init;
   globalThis.document={readyState:"loading",addEventListener(name,fn){init=fn;},getElementById:id=>elements[id]||null};
   globalThis.normalizePartQuery=ctx.normalizePartQuery;globalThis.manufacturingCostBuildImportHistory=ctx.manufacturingCostBuildImportHistory;

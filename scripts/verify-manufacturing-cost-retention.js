@@ -9,7 +9,7 @@ const source = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const ast = acorn.parse(source, { ecmaVersion: "latest" });
 const names = ["resetManufacturingCostWorkingList", "clearManufacturingCostQueryInput", "manufacturingCostTokens",
   "setManufacturingCostImportSearchContext", "clearManufacturingCostImportSearchContext",
-  "activeManufacturingCostImportSearchContext", "searchManufacturingCostCandidates", "manufacturingCostImportPartNumbersForRow"];
+  "activeManufacturingCostImportSearchContext", "searchManufacturingCostCandidates", "manufacturingCostImportPartNumbersForRow", "manufacturingCostImportQuantitiesForRow", "captureManufacturingCostImportQuantities", "saveManufacturingCostList", "loadManufacturingCostList"];
 const code = names.map(name => {
   const node = ast.body.find(n => n.type === "FunctionDeclaration" && n.id.name === name);
   assert(node, name);
@@ -33,10 +33,12 @@ async function verify() {
     normalizeAsciiWidth: x => x.normalize("NFKC"), normalizePartQuery: x => x.toUpperCase().replace(/[-\s]/g, ""),
     manufacturingCostImportSearchContext: null, manufacturingCostOperation: null, manufacturingCostActiveListId: 9,
     manufacturingCostListItemSnapshotMap: { 1: { import_part_numbers: ["ORIGINAL"] } },
+    manufacturingCostImportedQuantityByProduct: {},
     manufacturingCostRows: [{ productId: 1 }], manufacturingCostCandidateRows: [{ dkd_shohin_id: 1 }],
     manufacturingCostCandidateGroups: [{ token: "PALLET-1", candidates: [{ dkd_shohin_id: 1 }] }],
     manufacturingCostCandidateMode: "import", manufacturingCostCandidateStatusMap: {}, manufacturingCostCandidateRequestSeq: 0,
     manufacturingCostImportHistory: { byToken: {} }, productDkdId: p => p.dkd_shohin_id,
+    manufacturingCostCurrentProductIdMap: () => Object.fromEntries(context.manufacturingCostRows.map(row => [String(row.productId), true])),
     canViewManufacturingCostMgmt: () => allowed, alert() { calls.push("denied"); }, t: key => key,
     tf: (key, values) => key + JSON.stringify(values), esc: x => x, console: { warn() {} },
     setManufacturingCostListStatus() {},
@@ -61,6 +63,27 @@ async function verify() {
   assert.equal(get("manufacturing-cost-query").value, "", "Import must not fill the editable query with 200 parts");
   assert.deepEqual(calls[0].tokens, parts, "Only the selected pallet parts form the new import");
   assert.equal(calls[0].options.exactOnly, true);
+  assert.equal(context.manufacturingCostImportSearchContext.quantities.length, 200);
+  assert.equal(context.manufacturingCostImportSearchContext.quantities[0].quantity, 1);
+  context.manufacturingCostCandidateMode = "import";
+  context.manufacturingCostCandidateGroups = [{ token: "PALLET-1", candidates: [{ dkd_shohin_id: 1 }] }];
+  context.captureManufacturingCostImportQuantities();
+  assert.equal(context.manufacturingCostImportQuantitiesForRow({ productId: 1 })[0].quantity, 1);
+  context.captureManufacturingCostImportQuantities();
+  assert.equal(context.manufacturingCostImportQuantitiesForRow({ productId: 1 }).length, 1, "recalculation replaces same source instead of adding twice");
+  context.manufacturingCostImportedQuantityByProduct = {};
+  context.manufacturingCostListItemSnapshotMap[1].import_quantities_snapshot = [{ part_number: "SAVED-1", quantity: 12 }];
+  assert.equal(context.manufacturingCostImportQuantitiesForRow({ productId: 1 })[0].quantity, 12, "loaded snapshot survives without import context");
+  context.captureManufacturingCostImportQuantities();
+  assert.equal(context.manufacturingCostImportQuantitiesForRow({ productId: 1 }).length, 2, "additional imports preserve earlier sources");
+  context.manufacturingCostRows.push({ productId: 2 });
+  context.manufacturingCostCandidateGroups[0].candidates.push({ dkd_shohin_id: 2 });
+  context.captureManufacturingCostImportQuantities();
+  assert.equal(context.manufacturingCostImportQuantitiesForRow({ productId: 1 }).find(q => q.part_number === "PALLET-1").quantity, null, "ambiguous source cannot duplicate a quantity across products");
+  context.manufacturingCostRows.pop();
+  context.manufacturingCostCandidateGroups[0].candidates.pop();
+  context.manufacturingCostImportedQuantityByProduct = {};
+  delete context.manufacturingCostListItemSnapshotMap[1].import_quantities_snapshot;
   get("manufacturing-cost-candidates").innerHTML = "candidates with manual checks";
   const imported = context.manufacturingCostImportSearchContext;
   const before = [context.manufacturingCostCandidateRows, context.manufacturingCostCandidateGroups, context.manufacturingCostRows, context.manufacturingCostListItemSnapshotMap];
@@ -96,6 +119,43 @@ async function verify() {
   assert.equal(context.manufacturingCostImportSearchContext, imported);
   await context.searchManufacturingCostCandidates();
   assert.equal(calls.at(-1), "denied");
+  allowed = true;
+  const savedList = { id: 9, list_name: "Persisted", category_code: null, product_kind: "rebuilt", core_cost_jpy: 0,
+    labor_amount_jpy: 0, transport_cost_jpy: 0, packaging_cost_jpy: 0, included_documents_cost_jpy: 0, core_return_shipping_cost_jpy: 0 };
+  let storedItems;
+  Object.assign(context, {
+    currentUser: { id: "synthetic" }, canEditManufacturingCostMgmt: () => true, console,
+    manufacturingCostSelectedCategory: () => "", selectedManufacturingCostList: () => savedList,
+    manufacturingCostSettings: () => ({}), loadManufacturingCostComponents: async () => ({}),
+    manufacturingCostRowWithCurrentUnitPrices: row => ({ row, updatedCount: 0 }),
+    manufacturingCostCoreCostForCategory: () => 0, manufacturingCostRowComponentSnapshots: () => [],
+    syncManufacturingCostListItems: async (id, items) => { storedItems = JSON.parse(JSON.stringify(items)); return {}; },
+    manufacturingCostBuildSnapshotMap: rows => Object.fromEntries(rows.map(row => [String(row.dkd_shohin_id), row])),
+    refreshManufacturingCostSavedLists: async () => {}, renderManufacturingCostRows() {},
+    renderManufacturingCostLoading: () => "", renderManufacturingCostDetailLoading() {},
+    manufacturingCostNumberFromInput: () => 0,
+    MANUFACTURING_COST_DEFAULT_LABOR_AMOUNT_JPY: 1000, MANUFACTURING_COST_DEFAULT_PACKAGING_COST_JPY: 500,
+    MANUFACTURING_COST_DEFAULT_DOCUMENTS_COST_JPY: 10,
+    renderManufacturingCostCandidateEmpty() { context.manufacturingCostImportSearchContext = null; },
+    fetchManufacturingCostProductsByIds: async ids => ({ data: ids.map(id => ({ dkd_shohin_id: id })) }),
+    buildAndRenderManufacturingCostProducts: async (products, settings, options) => {
+      context.manufacturingCostListItemSnapshotMap = options.snapshotMap;
+      context.manufacturingCostRows = products.map(product => ({ productId: product.dkd_shohin_id, product }));
+    },
+    sb: { from(table) { return { update() { return this; }, eq() { return this; }, select() { return this; },
+      single: async () => ({ data: savedList }), order: async () => ({ data: storedItems }) }; } }
+  });
+  get("manufacturing-cost-list-name").value = "Persisted";
+  context.manufacturingCostRows = [{ productId: 1, product: { dkd_shohin_id: 1 } }];
+  context.manufacturingCostImportedQuantityByProduct = { 1: [{ part_number: "PALLET-1", quantity: 7 }] };
+  await context.saveManufacturingCostList();
+  assert.equal(storedItems[0].import_quantities_snapshot[0].quantity, 7, "actual save payload includes imported quantity");
+  context.manufacturingCostImportedQuantityByProduct = { 1: [{ part_number: "STALE", quantity: 999 }] };
+  await context.loadManufacturingCostList();
+  assert.equal(context.manufacturingCostOperation, null);
+  assert.equal(context.manufacturingCostImportQuantitiesForRow({ productId: 1 })[0].quantity, 7, "actual load restores saved quantity and discards earlier working quantities");
+  await context.saveManufacturingCostList();
+  assert.equal(storedItems[0].import_quantities_snapshot[0].quantity, 7, "saving again without a file preserves the saved quantity");
   console.log("Manufacturing retention: 200-part import, real event handoff, query edit/clear, new-list metadata, checks, snapshots, provenance, extra search and busy/permission guards passed");
 }
 verify().catch(error => { console.error(error); process.exitCode = 1; });

@@ -66,7 +66,7 @@
   }
   async function fetchCostProductIds(listId) {
     var result = await sb.from("manufacturing_cost_list_items")
-      .select("dkd_shohin_id,import_part_numbers,part_number_snapshot,genuine_part_number_snapshot,manufacturer_snapshot,category_code_snapshot", { count: "exact" })
+      .select("dkd_shohin_id,import_part_numbers,import_quantities_snapshot,part_number_snapshot,genuine_part_number_snapshot,manufacturer_snapshot,category_code_snapshot", { count: "exact" })
       .eq("list_id", Number(listId)).order("sort_order", { ascending: true }).order("id", { ascending: true }).limit(1001);
     if (result.error) throw result.error;
     if (!result.data || !result.data.length) throw new Error("リストに商品がありません。");
@@ -77,9 +77,29 @@
     ids.displayItems = result.data;
     return ids;
   }
+  function savedCostQuantity(item) {
+    var snapshot = item.import_quantities_snapshot;
+    if (!Array.isArray(snapshot) || !snapshot.length || snapshot.length > 200) return null;
+    var normalize = root.DcatsManufacturingCostImport.normalizePart;
+    var seen = new Set();
+    var total = 0;
+    for (var i = 0; i < snapshot.length; i++) {
+      var source = snapshot[i] || {};
+      var key = normalize(source.part_number);
+      if (!key || seen.has(key) || !Number.isSafeInteger(source.quantity) || source.quantity <= 0 || source.quantity > 20000000) return null;
+      seen.add(key);
+      total += source.quantity;
+    }
+    var parts = item.import_part_numbers || [];
+    if (parts.length && parts.some(function(part) { return !seen.has(normalize(part)); })) return null;
+    return Number.isSafeInteger(total) ? total : null;
+  }
   function costListQuantities() {
     var labels = new Map();
-    state.costDisplayItems.forEach(function(item) { labels.set(String(item.dkd_shohin_id), "未読込"); });
+    state.costDisplayItems.forEach(function(item) {
+      var saved = savedCostQuantity(item);
+      labels.set(String(item.dkd_shohin_id), saved === null ? "数量未保存" : String(saved));
+    });
     if (!state.sheets.length) return labels;
     var rows;
     try { rows = collectedRows(); }
@@ -127,8 +147,15 @@
     if (host.hidden) { host.innerHTML = ""; return; }
     if (message) { host.innerHTML = "<p>" + esc(message) + "</p>"; return; }
     var quantities = costListQuantities();
-    host.innerHTML = "<h3><span>" + esc(state.costListName) + "</span> · <span>照合済み商品</span> <span>" + state.costDisplayItems.length + "件</span></h3>" +
-      "<p>数量（取込）は、選択したExcel / CSVの対象シートを品番別に合算した数量です。未読込の場合は元ファイルを選択してください。在庫への反映は取込内容の照合・確定後です。</p>" +
+    var known = 0, total = 0;
+    quantities.forEach(function(value) { if (/^[1-9][0-9]*$/.test(value)) { known += 1; total += Number(value); } });
+    var sourceLabel = state.sheets.length ? "今回のファイル数量" : "保存済み数量";
+    host.innerHTML = "<div class='container-stock-list-heading'><div><p>原価計算の保存済みリスト</p><h3>" + esc(state.costListName) + "</h3></div><span class='container-stock-source-badge'>" + esc(sourceLabel) + "</span></div>" +
+      "<dl class='container-stock-list-stats'><div><dt>照合済み商品</dt><dd>" + state.costDisplayItems.length + "<small>件</small></dd></div>" +
+      "<div><dt>確認できた数量</dt><dd>" + total.toLocaleString("ja-JP") + "<small>台</small></dd></div>" +
+      "<div><dt>数量の確認が必要</dt><dd>" + (state.costDisplayItems.length - known) + "<small>件</small></dd></div></dl>" +
+      "<p>" + (state.sheets.length ? "今回のファイルから読み取った数量です。入庫登録は取込内容を照合してから確定してください。" : "保存済み数量はリストを選ぶだけで表示します。入庫登録は元ファイルを照合してから確定してください。") + "</p>" +
+      (!state.sheets.length && known < state.costDisplayItems.length ? "<p class='container-stock-quantity-notice'>数量未保存の商品は、原価計算で元ファイルを取り込み、リストを保存すると表示できます。</p>" : "") +
       "<div class='container-stock-table-wrap' tabindex='0' role='region' aria-label='照合済み商品一覧（横スクロール可）'><table class='mgmt-table container-stock-table container-stock-cost-table'>" +
       "<thead><tr><th scope='col'>元の取込品番</th><th scope='col' class='container-stock-cost-quantity'>数量（取込）</th><th scope='col'>メーカー品番</th><th scope='col'>純正品番</th><th scope='col'>メーカー</th><th scope='col'>カテゴリ</th><th scope='col'>DKD商品ID</th></tr></thead><tbody>" +
       state.costDisplayItems.map(function(item) {
@@ -198,7 +225,7 @@
       if (note) note.textContent = state.costListName + " の照合済み " +
         state.costProductIds.length + " 商品を優先します。一致しない品番は要確認のまま残します。";
       if (!state.sheets.length && !state.resumeRows)
-        setStatus("商品一覧を表示しました。入庫数量を読み込むには、対応するExcel / CSVを選択してください。");
+        setStatus("保存済みの品番と取込数量を表示しました。数量の保存だけでは在庫に反映されません。");
     } catch (error) {
       if (requestSeq !== state.costListRequestSeq) return;
       state.costListReady = false;
@@ -734,6 +761,39 @@
   function familyReady(row,candidate) {
     return candidate.match_type !== "sawafuji_family" || state.familyConfirmed[sourceKey(row)] === String(candidate.dkd_shohin_id);
   }
+  function receiptInputFingerprint(reference) {
+    try {
+      return JSON.stringify({ reference: reference, fileName: state.fileName,
+        fileSha256: state.fileSha256, costListId: state.costListId,
+        costProductIds: state.costProductIds, rows: collectedRows() });
+    } catch (error) { return ""; }
+  }
+  function confirmReceipt(reference, readyRows, holdRows, receivedRows) {
+    var dialog = byId("container-stock-confirm");
+    if (!dialog || typeof dialog.showModal !== "function") {
+      return Promise.resolve(null);
+    }
+    var quantity = function(rows) { return rows.reduce(function(sum, row) { return sum + Number(row.quantity); }, 0).toLocaleString("ja-JP"); };
+    byId("container-stock-confirm-title").textContent = readyRows.length ? "一括入庫の確認" : "保留内容の保存";
+    byId("container-stock-confirm-description").textContent = readyRows.length ? "次の数量を在庫に追加します。" : "保留中の品番を保存します。今回は入庫しません。";
+    byId("container-stock-confirm-submit").textContent = readyRows.length ? "この内容で入庫する" : "保留内容を保存する";
+    byId("container-stock-confirm-summary").innerHTML =
+      "<p class='container-stock-confirm-source'><span>対象のコンテナ</span><strong>" + esc(reference) + "</strong></p>" +
+      (readyRows.length ? "<dl class='container-stock-confirm-totals'><div><dt>入庫する数量</dt><dd>" + quantity(readyRows) + "<small>台</small></dd></div><div><dt>対象の品番</dt><dd>" + readyRows.length + "<small>品番</small></dd></div></dl>" : "") +
+      (holdRows.length ? "<section class='container-stock-confirm-held'><h3>今回入庫しない保留品番</h3><p><strong>" + holdRows.length + "<span>品番</span> / " + quantity(holdRows) + "<span>台</span></strong></p><p>保留内容を保存し、入庫できるようになってから再開できます。</p></section>" : "") +
+      (receivedRows.length ? "<p class='container-stock-confirm-note'><span>すでに入庫済みの品番は、今回の入庫に含めません。</span> <strong>" + receivedRows.length + "<span>品番</span></strong></p>" : "");
+    if (typeof root.applyLegacyUiI18n === "function") root.applyLegacyUiI18n(dialog);
+    return new Promise(function(resolve) {
+      function finish() {
+        dialog.removeEventListener("close", finish);
+        resolve(dialog.returnValue === "confirm");
+      }
+      dialog.addEventListener("close", finish);
+      dialog.returnValue = "cancel";
+      try { dialog.showModal(); byId("container-stock-confirm-cancel").focus(); }
+      catch (error) { dialog.removeEventListener("close", finish); resolve(null); }
+    });
+  }
   async function applyReceipt() {
     if (state.working || !state.preview || state.preview.duplicate || state.applied ||
         state.editingKey || state.draftDirty) return;
@@ -744,16 +804,7 @@
       return !(row.candidates || []).some(function(candidate) { return String(candidate.dkd_shohin_id) === String(state.selections[sourceKey(row)]) && candidate.variant_active !== false && familyReady(row,candidate); });
     })) return;
     var reference = selectedReference();
-    var currentFingerprint;
-    try {
-      currentFingerprint = JSON.stringify({
-        reference: reference, fileName: state.fileName,
-        fileSha256: state.fileSha256, costListId: state.costListId,
-        costProductIds: state.costProductIds, rows: collectedRows()
-      });
-    } catch (error) {
-      currentFingerprint = "";
-    }
+    var currentFingerprint = receiptInputFingerprint(reference);
     if (reference !== state.preview.container_reference ||
         currentFingerprint !== state.previewInputFingerprint) {
       invalidatePreview();
@@ -795,13 +846,32 @@
       renderPreview();
       return;
     }
-    if (!root.confirm(reference + " の登録可能 " + readyRows.length + "品番・" +
-      readyRows.reduce(function(sum,row) { return sum + Number(row.quantity); },0).toLocaleString("ja-JP") +
-      "台だけを在庫へ加算します。\n保留 " + holdRows.length + "品番は保存のみで、在庫には加算しません。登録済み品番も再加算しません。\n確定しますか？")) {
+    var confirmedPreview = state.preview;
+    var confirmedActor = root.currentUser ? String(root.currentUser.id || "") : "";
+    var confirmation = await confirmReceipt(reference, readyRows, holdRows, rows.filter(received));
+    if (!confirmation) {
       state.working = false;
       byId("container-stock-preview").disabled = !canPreview();
       busyControls();
       renderPreview();
+      if (confirmation === null) setStatus("確認画面を開けませんでした。この画面を更新してから、もう一度照合してください。", true);
+      byId("container-stock-apply").focus();
+      return;
+    }
+    if ((typeof root.canEditProductKindStockMgmt === "function" && !root.canEditProductKindStockMgmt()) ||
+        confirmedActor !== (root.currentUser ? String(root.currentUser.id || "") : "")) {
+      state.working = false;
+      invalidatePreview();
+      busyControls();
+      setStatus("ログイン状態または権限が変わりました。画面を開き直して確認してください。", true);
+      return;
+    }
+    if (state.preview !== confirmedPreview || currentFingerprint !== receiptInputFingerprint(selectedReference()) ||
+        selectionFingerprint !== JSON.stringify([state.selections,state.holds,state.familyConfirmed])) {
+      state.working = false;
+      invalidatePreview();
+      busyControls();
+      setStatus("取込条件が変わりました。再照合してください。", true);
       return;
     }
     renderPreview();
@@ -1126,6 +1196,8 @@
     host.hidden = !(typeof root.canEditProductKindStockMgmt === "function" &&
       root.canEditProductKindStockMgmt());
     if (host.hidden) {
+      var confirmDialog = byId("container-stock-confirm");
+      if (confirmDialog && confirmDialog.open) confirmDialog.close("cancel");
       state.costListRequestSeq += 1;
       state.costListId = "";
       state.costListReady = false;

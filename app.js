@@ -8012,7 +8012,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1186";
+var APP_VERSION       = "v1.1.1189";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -8149,6 +8149,7 @@ var manufacturingCostSavedLists = [];
 var manufacturingCostActiveListId = null;
 var manufacturingCostCategoryCoreCosts = {};
 var manufacturingCostListItemSnapshotMap = null;
+var manufacturingCostImportedQuantityByProduct = {};
 var MANUFACTURING_COST_CATEGORY_CORE_STORAGE_KEY = "dcats_manufacturing_cost_category_core_costs";
 var MANUFACTURING_COST_DEFAULT_LABOR_AMOUNT_JPY = 1000;
 var MANUFACTURING_COST_DEFAULT_PACKAGING_COST_JPY = 500;
@@ -31403,6 +31404,7 @@ async function enterManufacturingCostMgmt() {
 }
 
 function renderManufacturingCostEmpty() {
+  manufacturingCostImportedQuantityByProduct = {};
   manufacturingCostRows = [];
   manufacturingCostSelectedProductId = null;
   manufacturingCostProductMap = {};
@@ -31700,7 +31702,8 @@ function setManufacturingCostImportSearchContext(detail) {
   var parts = detail && Array.isArray(detail.parts) ? detail.parts : [];
   var tokens = manufacturingCostTokens(parts.join(" "));
   manufacturingCostImportSearchContext = tokens.length ? {
-    tokens: tokens
+    tokens: tokens,
+    quantities: detail && Array.isArray(detail.quantities) ? detail.quantities.slice(0, 200) : []
   } : null;
 }
 
@@ -32247,7 +32250,39 @@ function manufacturingCostImportPartNumbersForRow(row) {
   var current = manufacturingCostCandidateMode === "import" ? manufacturingCostCandidateGroups.filter(function(group) {
     return (group.candidates || []).some(function(candidate) { return String(productDkdId(candidate)) === String(row.productId); });
   }).map(function(group) { return group.token; }) : [];
-  return manufacturingCostTokens(saved.concat(current).join(" "));
+  var recorded = manufacturingCostImportQuantitiesForRow(row).map(function(item) { return item.part_number; });
+  return manufacturingCostTokens(saved.concat(current, recorded).join(" "));
+}
+
+function manufacturingCostImportQuantitiesForRow(row) {
+  var id = String(row.productId);
+  var stored = Object.prototype.hasOwnProperty.call(manufacturingCostImportedQuantityByProduct, id)
+    ? manufacturingCostImportedQuantityByProduct[id]
+    : ((manufacturingCostListItemSnapshotMap || {})[id] || {}).import_quantities_snapshot;
+  return Array.isArray(stored) ? stored.map(function(item) {
+    return { part_number: String(item.part_number || ""), quantity: item.quantity };
+  }) : [];
+}
+
+function captureManufacturingCostImportQuantities() {
+  var context = activeManufacturingCostImportSearchContext();
+  if (!context || !Array.isArray(context.quantities) || manufacturingCostCandidateMode !== "import") return;
+  var currentIds = manufacturingCostCurrentProductIdMap();
+  context.quantities.forEach(function(source) {
+    var token = String(source.part_number || "").trim();
+    var key = normalizePartQuery(token);
+    if (!key || token.length > 100) return;
+    var group = manufacturingCostCandidateGroups.find(function(item) { return normalizePartQuery(item.token) === key; });
+    if (!group) return;
+    var ids = Array.from(new Set((group.candidates || []).map(function(p) { return String(productDkdId(p)); }).filter(function(id) { return currentIds[id]; })));
+    ids.forEach(function(id) {
+      var snapshot = manufacturingCostImportQuantitiesForRow({ productId: id });
+      var quantity = ids.length === 1 && Number.isSafeInteger(source.quantity) && source.quantity > 0 && source.quantity <= 20000000 ? source.quantity : null;
+      snapshot = snapshot.filter(function(item) { return normalizePartQuery(item.part_number) !== key; });
+      snapshot.push({ part_number: token, quantity: quantity });
+      manufacturingCostImportedQuantityByProduct[id] = snapshot.slice(0, 200);
+    });
+  });
 }
 
 function renderManufacturingCostCandidates(products, mode, groups) {
@@ -33082,6 +33117,8 @@ async function calculateSelectedManufacturingCost() {
   var previousComponents = manufacturingCostComponentMap;
   try {
     await buildAndRenderManufacturingCostProducts(mergeManufacturingCostProducts(products), manufacturingCostSettings());
+    captureManufacturingCostImportQuantities();
+    renderManufacturingCostRows();
     renderManufacturingCostCandidates(manufacturingCostCandidateRows, manufacturingCostCandidateMode);
     setManufacturingCostListStatus(t("manufacturing_cost_calculation_done"), false);
   } catch (e) {
@@ -33193,6 +33230,7 @@ async function saveManufacturingCostList() {
       dkd_shohin_id: row.productId,
       sort_order: idx + 1,
       import_part_numbers: manufacturingCostImportPartNumbersForRow(row),
+      import_quantities_snapshot: manufacturingCostImportQuantitiesForRow(row),
       part_number_snapshot: p.manufacturer_part_number || null,
       genuine_part_number_snapshot: p.genuine_part_number || null,
       manufacturer_snapshot: p.manufacturer || null,
@@ -33277,6 +33315,7 @@ async function loadManufacturingCostList() {
     if (!itemRows.length) throw new Error(t("manufacturing_cost_list_rows_required"));
     var ids = itemRows.map(function(row) { return row.dkd_shohin_id; });
     var snapshotMap = manufacturingCostBuildSnapshotMap(itemRows);
+    manufacturingCostImportedQuantityByProduct = {};
     var productR = await fetchManufacturingCostProductsByIds(ids);
     if (productR.error) throw productR.error;
     updateManufacturingCostOperation(operation, t("manufacturing_cost_reading_components"));
