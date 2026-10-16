@@ -26,6 +26,7 @@
 <link rel="stylesheet" href="product-data-research.css?v=1.1.1188">
 <link rel="stylesheet" href="partsfan-research.css?v=1.1.1188">
 <link rel="stylesheet" href="assets/concierge-pet/concierge-pet.css?v=1.1.1188">
+<link rel="stylesheet" href="assets/concierge-pet/concierge-admin.css?v=1.1.1188">
 <link rel="stylesheet" href="customer-price-report.css?v=1.1.1188">
 </head>
 <body>
@@ -4941,6 +4942,19 @@
 <!-- =============================================
    操作ログ画面
 ============================================= -->
+<div id="screen-concierge-admin" class="screen">
+  <div class="page-header">
+    <div class="page-header-left">
+      <button class="back-btn" id="btn-back-concierge-admin" data-i18n="btn_back">← メニュー</button>
+      <span class="logo-text" data-i18n="mi_concierge_admin_title">コンシェルジュ管理</span>
+    </div>
+    <div class="page-header-right">
+      <span class="role-badge role-system-admin" data-i18n="role_system_admin">システム管理者</span>
+      <button class="btn-logout" id="btn-logout-concierge-admin" data-i18n="btn_logout">ログアウト</button>
+    </div>
+  </div>
+  <div id="concierge-admin-host"></div>
+</div>
 <div id="screen-logs" class="screen">
   <div class="page-header">
     <div class="page-header-left">
@@ -5770,6 +5784,7 @@
 <script src="assets/concierge-pet/company-bridge.js?v=1.1.1188"></script>
 <script src="assets/concierge-pet/concierge-images.js?v=1.1.1188"></script>
 <script src="assets/concierge-pet/concierge-requests.js?v=1.1.1188"></script>
+<script src="assets/concierge-pet/concierge-admin.js?v=1.1.1188"></script>
 <script src="assets/concierge-pet/concierge-pet.js?v=1.1.1188"></script>
 <script src="manufacturing-ranking-report.js?v=1.1.1188&amp;ranking=20"></script>
 <script src="customer-price-report.js?v=1.1.1188"></script>

@@ -1,0 +1,28 @@
+.dcats-concierge-admin { max-width: 1440px; margin: 0 auto; padding: 20px; color: #283448; font-size: 16px; }
+.concierge-admin-menu-badge { display: block; margin: 4px 0; font-size: 12px; color: #892f35; }
+.dcats-concierge-admin [hidden] { display: none !important; }
+.concierge-admin-intro { color: #556276; line-height: 1.6; }
+.concierge-admin-summary { padding: 12px; background: #edf3f9; border-radius: 8px; }
+.concierge-admin-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.dcats-concierge-admin button, .dcats-concierge-admin select { min-height: 42px; padding: 8px 12px; border: 1px solid #c3cddd; border-radius: 7px; background: #fff; color: #283448; font: inherit; cursor: pointer; }
+.dcats-concierge-admin button[aria-pressed="true"] { background: #892f35; color: #fff; border-color: #892f35; }
+.dcats-concierge-admin button:disabled { opacity: .6; cursor: wait; }
+.dcats-concierge-admin :focus-visible { outline: 3px solid #1864bb; outline-offset: 2px; }
+.concierge-admin-layout { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(0, 2fr); gap: 20px; align-items: start; }
+.concierge-admin-list-panel, .concierge-admin-detail { min-width: 0; padding: 16px; border: 1px solid #d6dce6; border-radius: 10px; background: #fff; }
+.concierge-admin-list { margin: 0; padding: 0; list-style: none; }
+.concierge-admin-list li { margin-bottom: 8px; }
+.concierge-admin-list button { width: 100%; text-align: left; overflow-wrap: anywhere; }
+.concierge-admin-list button span { display: block; margin-top: 6px; color: #627187; font-size: 13px; }
+.concierge-admin-detail h2 { margin-top: 0; font-size: 21px; overflow-wrap: anywhere; }
+.concierge-admin-detail h3 { font-size: 14px; margin: 18px 0 5px; color: #627187; }
+.concierge-admin-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; }
+.concierge-admin-detail > button, .concierge-admin-detail > select { margin: 12px 8px 0 0; }
+.concierge-admin-detail label { display: block; margin: 16px 0 8px; }
+.dcats-concierge-admin textarea { display: block; box-sizing: border-box; width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #c3cddd; border-radius: 6px; font: inherit; line-height: 1.6; resize: vertical; }
+.concierge-admin-image { display: block; max-width: 100%; max-height: 600px; object-fit: contain; margin: 14px 0; border: 1px solid #d6dce6; }
+.concierge-admin-image[hidden] { display: none; }
+.concierge-admin-handoff { margin-top: 24px; padding-top: 12px; border-top: 1px solid #d6dce6; }
+.concierge-admin-handoff p { line-height: 1.6; color: #556276; }
+.concierge-admin-detail details { margin-top: 18px; }
+@media (max-width: 700px) { .dcats-concierge-admin { padding: 12px; } .concierge-admin-layout { grid-template-columns: minmax(0, 1fr); } }

@@ -11,7 +11,7 @@
   var COPY = {
     ja: {
       confirmHeading: "受付内容の確認",
-      confirmPrivacy: "まだ受付は保存されていません。本文・対象画面・画像を確認してください。確定すると管理者だけが閲覧できる依頼として保存します。コードや業務データの自動修正は行いません。",
+      confirmPrivacy: "相談ログは記録済みです。依頼の受付はまだ確定していません。本文・対象画面・画像を確認し、確定すると管理者の依頼一覧へ登録します。コードや業務データの自動修正は行いません。",
       confirmSave: "この内容で受付を確定",
       confirmRetry: "同じ受付を確認・再送",
       editMessage: "本文を直す",
@@ -83,7 +83,7 @@
     },
     en: {
       confirmHeading: "Review request",
-      confirmPrivacy: "Not saved yet. Review the message, screen and image. Confirming saves a request visible only to administrators. No code or business data is changed automatically.",
+      confirmPrivacy: "The consultation is logged, but this request is not confirmed yet. Review the text, screen and image. Confirm to add it to the administrator inbox. No code or business data is changed automatically.",
       confirmSave: "Confirm and save request",
       confirmRetry: "Check / retry the same request",
       editMessage: "Edit message",
@@ -155,7 +155,7 @@
     },
     zh: {
       confirmHeading: "确认受理内容",
-      confirmPrivacy: "尚未保存。请确认正文、页面和图片。确认后保存为仅管理员可见的请求。不会自动修改代码或业务数据。",
+      confirmPrivacy: "咨询已记录，但请求尚未确认。请检查正文、页面和图片，确认后加入管理员的请求列表。不会自动修改代码或业务数据。",
       confirmSave: "确认并保存请求",
       confirmRetry: "确认或重发同一请求",
       editMessage: "修改正文",
@@ -326,6 +326,7 @@
       "电商价格列表",
     ],
     logs: ["操作ログ", "Activity logs", "操作日志"],
+    "concierge-admin": ["コンシェルジュ管理", "Concierge inbox", "礼宾管理"],
     "api-settings": ["API設定", "API settings", "API设置"],
     "change-pw": ["パスワード変更", "Change password", "修改密码"],
   };
@@ -546,7 +547,7 @@
     }
     function prepare(value) {
       if (!valid() || draft || sending || pendingImage || !value || ["bug", "suggestion"].indexOf(value.kind) < 0 || typeof value.title !== "string" || !value.title.trim() || value.title.length > 120 || typeof value.question !== "string" || !value.question.trim() || value.question.length > 800 || !SCREENS[value.screenId] || !COPY[value.language]) return false;
-      draft = { kind: value.kind, title: value.title.trim(), question: value.question.trim(), image: value.image || "", screenId: value.screenId, language: value.language };
+      draft = { kind: value.kind, title: value.title.trim(), question: value.question.trim(), image: value.image || "", screenId: value.screenId, language: value.language, messageId: typeof value.messageId === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.messageId) ? value.messageId : "" };
       draftContext = { screenId: draft.screenId, language: draft.language };
       title.textContent = draft.title;
       description.textContent = draft.question;
@@ -573,7 +574,7 @@
       };
       var next = JSON.stringify(body);
       if (fingerprint !== next) {
-        draftId = uuid();
+        draftId = draft.messageId || uuid();
         fingerprint = next;
       }
       body.id = draftId;
