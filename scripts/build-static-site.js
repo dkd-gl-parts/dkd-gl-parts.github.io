@@ -7,6 +7,8 @@ const files = [
   "_headers",
   "app.js",
   "sales-order-revision.js",
+  "sales-pricing-lists.js",
+  "sales-pricing-lists.css",
   "install-app.js",
   "apple-touch-icon.png",
   "box-label-print.css",

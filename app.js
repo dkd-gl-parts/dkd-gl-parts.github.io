@@ -7997,7 +7997,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1188";
+var APP_VERSION       = "v1.1.1190";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -50688,6 +50688,7 @@ async function enterSalesPricingMgmt() {
   var q = document.getElementById("sales-pricing-mgmt-search");
   if (q) q.focus();
   renderSalesPricingMgmt();
+  if (window.DcatsSalesPricingLists) await window.DcatsSalesPricingLists.enter();
 }
 
 async function loadSalesPricingMgmt() {
