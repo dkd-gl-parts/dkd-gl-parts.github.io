@@ -7997,7 +7997,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1188";
+var APP_VERSION       = "v1.1.1189";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -10063,6 +10063,7 @@ async function applyLanguage(lang) {
   // 静的要素を更新する
   applyI18n();
   updateLangSwitchers(lang);
+  if (window.DcatsEcCostListTargets) window.DcatsEcCostListTargets.refresh();
 
   // 動的コンテンツを再描画する
   componentCatalogNameCandidateCache = {};
@@ -25621,6 +25622,7 @@ function openRakutenForCurrentProduct() {
 
 async function enterRakutenPrice(seedKeyword) {
   if (!canUseRakutenResearch()) { alert(t("err_perm")); return; }
+  if (window.DcatsEcCostListTargets) window.DcatsEcCostListTargets.refresh();
   relocateRakutenSections("price");
   showScreen("rakuten-price");
   await loadRakutenKeyFields();

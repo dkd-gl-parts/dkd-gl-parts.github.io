@@ -2,6 +2,10 @@
 // Runtime translation is local; this file makes no external requests.
 var DCATS_LEGACY_UI_TRANSLATIONS = {
   "en": {
+    "原価計算リストから追加": "Add from a saved cost list",
+    "保存済みリストを選択": "Choose a saved list",
+    "新規対象 0 件を追加": "Add 0 new targets",
+    "追加内容": "Items to add",
     "一括入庫の確認": "Confirm stock receipt",
     "次の数量を在庫に追加します。": "The following quantities will be added to stock.",
     "戻って確認": "Go back and review",
@@ -3930,6 +3934,10 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "/ ALDK除外": "/ ALDK excluded"
   },
   "zh": {
+    "原価計算リストから追加": "从成本清单添加",
+    "保存済みリストを選択": "选择已保存清单",
+    "新規対象 0 件を追加": "添加 0 个新对象",
+    "追加内容": "添加内容",
     "一括入庫の確認": "确认批量入库",
     "次の数量を在庫に追加します。": "将以下数量添加至库存。",
     "戻って確認": "返回检查",
