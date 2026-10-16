@@ -632,6 +632,9 @@
   var panelTitle;
   var panelBody;
   var panelClose;
+  var questionTail;
+  var questionPanelAnimation = null, questionTailAnimation = null;
+  var questionMeasureKey = "", questionPanelLayoutKey = "", questionTailLayoutKey = "";
   var floatingButton;
   var floatingStatus;
   var aiCard;
@@ -1230,6 +1233,10 @@
     root.appendChild(mover);
     root.appendChild(launcher);
     root.appendChild(panel);
+    questionTail = createElement("div", "dcats-concierge-question-tail");
+    questionTail.setAttribute("aria-hidden", "true");
+    questionTail.hidden = true;
+    root.appendChild(questionTail);
     document.body.appendChild(root);
 
     hitTarget.addEventListener("click", function () {
@@ -1289,6 +1296,11 @@
     window.addEventListener("dcats:concierge-state", onConciergeState);
     document.addEventListener("visibilitychange", syncRunningState);
     window.addEventListener("resize", scheduleViewportSync, { passive: true });
+    bindQuestionViewport(window, true);
+    if (typeof ResizeObserver === "function") {
+      var questionSizeObserver = new ResizeObserver(syncQuestionPlacement);
+      questionSizeObserver.observe(panel);
+    }
     if (reduceMotionQuery) {
       if (reduceMotionQuery.addEventListener) reduceMotionQuery.addEventListener("change", syncRunningState);
       else if (reduceMotionQuery.addListener) reduceMotionQuery.addListener(syncRunningState);
@@ -2269,6 +2281,7 @@
         restoreFromFloatingWindow(requestedWindow, false);
       }, { once: true });
       requestedWindow.addEventListener("resize", scheduleViewportSync, { passive: true });
+      bindQuestionViewport(requestedWindow, true);
       requestedWindow.document.addEventListener("keydown", onPresentationKeyDown);
       requestedWindow.document.addEventListener("pointerdown", onPresentationPointerDown, { passive: true });
       requestedWindow.document.addEventListener("pointermove", onPointerMove, { passive: true });
@@ -2313,6 +2326,7 @@
 
   function restoreFromFloatingWindow(targetWindow, closeWindow) {
     if (!targetWindow || floatingWindow !== targetWindow) return;
+    bindQuestionViewport(targetWindow, false);
     cancelLayoutFrame();
     floatingWindow = null;
     floatingRequestPending = false;
@@ -2432,6 +2446,107 @@
     panelClose.setAttribute("aria-label", copy(questionView ? "closeQuestion" : "closeSettings"));
     hitTarget.setAttribute("aria-expanded", String(questionView));
     launcher.setAttribute("aria-expanded", String(panelOpen && panelView === "settings"));
+    if (!questionView) clearQuestionPlacement();
+  }
+
+  function bindQuestionViewport(targetWindow, enabled) {
+    var viewport = targetWindow.visualViewport;
+    if (!viewport) return;
+    var method = enabled ? "addEventListener" : "removeEventListener";
+    viewport[method]("resize", syncQuestionPlacement, { passive: true });
+    viewport[method]("scroll", syncQuestionPlacement, { passive: true });
+  }
+
+  function clearQuestionPlacement() {
+    if (!panel || !questionTail) return;
+    panel.classList.remove("is-question-anchored", "is-compact-question");
+    if (questionPanelAnimation) questionPanelAnimation.cancel();
+    if (questionTailAnimation) questionTailAnimation.cancel();
+    questionPanelAnimation = questionTailAnimation = null;
+    questionMeasureKey = questionPanelLayoutKey = questionTailLayoutKey = "";
+    questionTail.hidden = true;
+  }
+
+  // Pin layout through the same CSP-compatible Web Animations surface as the character.
+  function holdQuestionLayout(element, previous, values) {
+    var next = element.animate([values, values], { duration: 1, fill: "forwards" });
+    next.pause();
+    next.currentTime = 1;
+    if (previous) previous.cancel();
+    return next;
+  }
+
+  function syncQuestionPlacement() {
+    if (!panel || !questionTail || !panelOpen || panelView !== "question" || !visible) return;
+    var viewport = viewportWindow();
+    var visual = viewport.visualViewport;
+    var width = visual && visual.width > 0 ? visual.width : viewport.innerWidth;
+    var height = visual && visual.height > 0 ? visual.height : viewport.innerHeight;
+    var startX = visual ? Number(visual.offsetLeft) || 0 : 0;
+    var startY = visual ? Number(visual.offsetTop) || 0 : 0;
+    var margin = 12, gap = 16;
+    var leftEdge = startX + margin, rightEdge = startX + width - margin;
+    var topEdge = startY + margin, bottomEdge = startY + height - margin;
+    var anchor = mover.getBoundingClientRect();
+    var fullWidth = Math.max(1, Math.min(420, rightEdge - leftEdge));
+    var rightRoom = rightEdge - anchor.right - gap;
+    var leftRoom = anchor.left - gap - leftEdge;
+    var aboveRoom = anchor.top - gap - topEdge;
+    var belowRoom = bottomEdge - anchor.bottom - gap;
+    var side = "compact";
+    var panelWidth = fullWidth;
+    var maxHeight = Math.max(1, bottomEdge - topEdge);
+    if (anchor.width > 0 && anchor.height > 0 && settings.mode !== "off") {
+      if (rightRoom >= fullWidth) side = "right";
+      else if (leftRoom >= fullWidth) side = "left";
+      else if (Math.max(rightRoom, leftRoom) >= 300) {
+        side = rightRoom >= leftRoom ? "right" : "left";
+        panelWidth = side === "right" ? rightRoom : leftRoom;
+      } else if (Math.max(aboveRoom, belowRoom) >= 160) {
+        side = aboveRoom >= belowRoom ? "above" : "below";
+        maxHeight = side === "above" ? aboveRoom : belowRoom;
+      }
+    }
+    panel.classList.add("is-question-anchored");
+    panel.classList.toggle("is-compact-question", side === "compact");
+    var dimensions = { right: "auto", bottom: "auto", width: panelWidth + "px", maxHeight: maxHeight + "px" };
+    var measureKey = JSON.stringify(dimensions);
+    if (measureKey !== questionMeasureKey) {
+      questionPanelAnimation = holdQuestionLayout(panel, questionPanelAnimation, dimensions);
+      questionMeasureKey = measureKey;
+      questionPanelLayoutKey = "";
+    }
+    var panelHeight = Math.min(maxHeight, panel.getBoundingClientRect().height);
+    var x = side === "right" ? anchor.right + gap : side === "left" ? anchor.left - gap - panelWidth : anchor.left + anchor.width / 2 - panelWidth / 2;
+    var y = side === "above" ? anchor.top - gap - panelHeight : side === "below" ? anchor.bottom + gap : anchor.bottom - panelHeight;
+    x = Math.max(leftEdge, Math.min(x, rightEdge - panelWidth));
+    y = Math.max(topEdge, Math.min(y, bottomEdge - panelHeight));
+    dimensions.left = x + "px";
+    dimensions.top = y + "px";
+    var panelKey = JSON.stringify(dimensions);
+    if (panelKey !== questionPanelLayoutKey) {
+      questionPanelAnimation = holdQuestionLayout(panel, questionPanelAnimation, dimensions);
+      questionPanelLayoutKey = panelKey;
+    }
+    questionTail.className = "dcats-concierge-question-tail is-" + side;
+    questionTail.hidden = side === "compact";
+    var tailPosition;
+    if (side === "right" || side === "left") {
+      tailPosition = {
+        left: (side === "right" ? x - 7 : x + panelWidth - 7) + "px",
+        top: (Math.max(y + 28, Math.min(anchor.top + anchor.height * .3, y + panelHeight - 28)) - 7) + "px"
+      };
+    } else {
+      tailPosition = {
+        left: (Math.max(x + 28, Math.min(anchor.left + anchor.width / 2, x + panelWidth - 28)) - 7) + "px",
+        top: (side === "above" ? y + panelHeight - 7 : y - 7) + "px"
+      };
+    }
+    var tailKey = JSON.stringify(tailPosition);
+    if (side !== "compact" && tailKey !== questionTailLayoutKey) {
+      questionTailAnimation = holdQuestionLayout(questionTail, questionTailAnimation, tailPosition);
+      questionTailLayoutKey = tailKey;
+    }
   }
 
   function selectCharacter(character) {
@@ -2470,15 +2585,6 @@
     syncRunningState();
   }
 
-  function parkBesideQuestionPanel() {
-    var size = petSize();
-    var viewport = viewportWindow();
-    holdMoverAt(clampToViewport({
-      x: 10,
-      y: Math.max(54, viewport.innerHeight - size.height - 16)
-    }, size, viewport));
-  }
-
   function openPanel(view) {
     if (!isSystemAdminSession()) return;
     var nextView = view === "question" ? "question" : "settings";
@@ -2490,9 +2596,8 @@
     panelOpen = true;
     panelView = nextView;
     panel.hidden = false;
-    syncPanelPresentation();
     stopActivity();
-    if (panelView === "question") parkBesideQuestionPanel();
+    syncPanelPresentation();
     syncRunningState();
     if (panelView === "question" && aiQuestionInput) aiQuestionInput.focus();
     else panelClose.focus();
@@ -2518,6 +2623,7 @@
 
   function syncRunningState() {
     syncSalesDock();
+    syncQuestionPlacement();
     if (salesDock && !salesMovementBounds(petSize())) {
       root.classList.add("has-no-safe-target");
       stopActivity();

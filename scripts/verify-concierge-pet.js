@@ -197,6 +197,14 @@ assert((runtime.match(/createElement\("div", "dcats-concierge-sprite"\)/g) || []
 assert(!runtime.includes("innerHTML"), "Concierge UI must not use innerHTML");
 assert(!runtime.includes("eval("), "Concierge runtime must not use eval");
 assert(!runtime.includes(".style."), "Strict CSP forbids inline style mutation");
+assert(!runtime.includes(".style["), "Speech positioning must not bypass the strict inline-style guard");
+requireFragment(runtime, "function syncQuestionPlacement()", "Question view must be anchored to the clicked character");
+requireFragment(runtime, "new ResizeObserver(syncQuestionPlacement)", "Speech position must track answer/image/intake height changes");
+requireFragment(runtime, "var visual = viewport.visualViewport", "Speech bounds must account for the visible keyboard viewport");
+requireFragment(runtime, 'side = "right"', "Speech view must prefer the available right-hand space");
+requireFragment(runtime, 'side = "left"', "Speech view must switch left when required");
+requireFragment(runtime, "function holdQuestionLayout(element, previous, values)", "Speech position must use the existing CSP-compatible animation surface");
+assert(!runtime.includes("parkBesideQuestionPanel"), "Opening a speech question must not teleport the character");
 assert(!runtime.includes('setAttribute("style"'), "Strict CSP forbids style attributes");
 assert(!runtime.includes("fetch("), "Concierge preferences must remain local and must not add network/API work");
 assert(!runtime.includes("window.open("), "A normal popup cannot guarantee always-on-top concierge display");
@@ -249,6 +257,8 @@ requireFragment(css, "visibility: hidden", "A concierge without a safe target mu
 requireFragment(css, "touch-action: none;", "The concierge drag target must own touch and pointer movement");
 requireFragment(css, ".dcats-concierge.is-dragging .dcats-concierge-hit-target", "Dragging must expose a stable grabbed-pointer state");
 requireFragment(css, ".dcats-concierge-panel.is-question-view", "The character question view must have dedicated layout rules");
+requireFragment(css, ".dcats-concierge-question-tail", "Question view needs a decorative speech tail");
+requireFragment(css, ".dcats-concierge-panel.is-question-anchored .dcats-concierge-panel-body", "Anchored question body must scroll within its measured height");
 requireFragment(css, ".dcats-concierge-panel.is-question-view .dcats-concierge-ai-button", "The question submit button must remain actionable in the dedicated view");
 requireFragment(css, "html.dcats-concierge-floating-document");
 requireFragment(css, "body.dcats-concierge-floating-body");
