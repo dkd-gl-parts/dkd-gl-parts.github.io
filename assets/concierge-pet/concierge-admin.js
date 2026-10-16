@@ -54,6 +54,7 @@
     filter.addEventListener("change", function () { loadList(false); });
     var refresh = button("refresh", function () { refreshSummary(); loadList(false); }); toolbar.appendChild(refresh); host.appendChild(toolbar);
     var layout = el("div", null, "concierge-admin-layout"), listPanel = el("section", null, "concierge-admin-list-panel"), listStatus = el("p"), list = el("ul", null, "concierge-admin-list"), more = button("more", function () { loadList(true); }), detail = el("section", null, "concierge-admin-detail");
+    more.hidden = true;
     listStatus.setAttribute("role", "status"); detail.setAttribute("aria-live", "polite");
     listPanel.appendChild(listStatus); listPanel.appendChild(list); listPanel.appendChild(more); layout.appendChild(listPanel); layout.appendChild(detail); host.appendChild(layout);
     async function refreshSummary() {
@@ -71,6 +72,7 @@
     }
     async function loadList(append) {
       if (!valid()) return;
+      if (!append) { items = []; page = []; list.replaceChildren(); more.hidden = true; }
       var token = ++listToken, selectedMode = mode, command = selectedMode === "requests" ? { action: "list", status: filter.value } : { action: "admin", operation: "messages", kind: filter.value };
       if (append && items.length) command.before_no = items[items.length - 1][selectedMode === "requests" ? "request_no" : "log_no"];
       refresh.disabled = true; more.disabled = true; listStatus.textContent = t("loading");
