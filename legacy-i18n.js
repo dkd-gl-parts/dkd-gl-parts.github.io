@@ -2,6 +2,19 @@
 // Runtime translation is local; this file makes no external requests.
 var DCATS_LEGACY_UI_TRANSLATIONS = {
   "en": {
+    "今回のファイルから読み取った数量です。入庫登録は取込内容を照合してから確定してください。": "Quantities are read from the current file. Reconcile its contents before confirming stock receipt.",
+
+    "保存済み数量はリストを選ぶだけで表示します。入庫登録は元ファイルを照合してから確定してください。": "Choose a list to view saved quantities. Reconcile the source file before confirming stock receipt.",
+    "数量未保存の商品は、原価計算で元ファイルを取り込み、リストを保存すると表示できます。": "For items without saved quantities, import the source file in cost calculation and save the list.",
+    "数量未保存": "Quantity not saved",
+    "今回のファイル数量": "Current file quantities",
+    "保存済み数量": "Saved quantities",
+    "原価計算の保存済みリスト": "Saved cost calculation list",
+    "確認できた数量": "Available quantity",
+    "数量の確認が必要": "Quantity needs checking",
+    "リストを選ぶと保存済みの品番と数量を表示します。入庫する場合は元ファイルを照合してください。": "Choose a list to view saved part numbers and quantities. Reconcile the source file to receive stock.",
+    "保存済みの数量を表示しています。数量の保存だけでは在庫に反映されません。": "Saved quantities are displayed. Saving quantities does not update stock.",
+    "保存済みの品番と取込数量を表示しました。数量の保存だけでは在庫に反映されません。": "Saved part numbers and imported quantities are displayed. Saving quantities does not update stock.",
     "未読込": "Not loaded",
     "要照合": "Reconcile",
     "数量（取込）": "Quantity (import)",
@@ -3902,6 +3915,19 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "/ ALDK除外": "/ ALDK excluded"
   },
   "zh": {
+    "今回のファイルから読み取った数量です。入庫登録は取込内容を照合してから確定してください。": "此处数量来自本次文件。请先匹配导入内容，再确认入库。",
+    "保存済み数量はリストを選ぶだけで表示します。入庫登録は元ファイルを照合してから確定してください。": "选择清单即可显示已保存数量。请先匹配原始文件，再确认入库。",
+    "数量未保存の商品は、原価計算で元ファイルを取り込み、リストを保存すると表示できます。": "数量未保存的商品，请在原价计算中导入原始文件并保存清单。",
+
+    "数量未保存": "数量未保存",
+    "今回のファイル数量": "本次文件数量",
+    "保存済み数量": "已保存数量",
+    "原価計算の保存済みリスト": "原价计算已保存清单",
+    "確認できた数量": "已确认数量",
+    "数量の確認が必要": "数量需确认",
+    "リストを選ぶと保存済みの品番と数量を表示します。入庫する場合は元ファイルを照合してください。": "选择清单即可查看已保存的品号和数量。入库时请匹配原始文件。",
+    "保存済みの数量を表示しています。数量の保存だけでは在庫に反映されません。": "正在显示已保存数量。仅保存数量不会更新库存。",
+    "保存済みの品番と取込数量を表示しました。数量の保存だけでは在庫に反映されません。": "已显示保存的品号和导入数量。仅保存数量不会更新库存。",
     "未読込": "未读取",
     "要照合": "待匹配",
     "数量（取込）": "数量（导入）",

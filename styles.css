@@ -2450,11 +2450,32 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .container-stock-sheet input[type='number'] { width: 76px; }
 .container-stock-results { margin-top: 12px; }
 .container-stock-cost-products { min-width: 0; margin-top: 16px; }
-.container-stock-cost-products h3 { margin: 0 0 6px; font-size: 14px; color: #24364a; overflow-wrap: anywhere; }
+.container-stock-cost-products h3 { margin: 3px 0 0; font-size: 18px; color: var(--dcats-ink); overflow-wrap: anywhere; }
 .container-stock-cost-products > p { margin: 0 0 10px; font-size: 12px; color: #52647b; line-height: 1.6; }
-.container-stock-cost-products .container-stock-cost-table { min-width: 800px; table-layout: fixed; }
+.container-stock-list-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+.container-stock-list-heading p { color: #52647b; font-size: 11px; }
+.container-stock-source-badge { padding: 6px 10px; border-radius: 6px; background: #edf4fb; color: #204568; font-size: 12px; font-weight: 700; }
+.container-stock-list-stats { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; margin: 0 0 14px; }
+.container-stock-list-stats > div { padding: 12px 14px; border: 1px solid #dce4ed; border-radius: 8px; background: #f8fafc; }
+.container-stock-list-stats dt { color: #52647b; font-size: 11px; line-height: 1.5; }
+.container-stock-list-stats dd { margin-top: 5px; font-size: 24px; font-weight: 750; color: var(--dcats-ink); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.container-stock-list-stats small { margin-left: 4px; color: #52647b; font-size: 12px; font-weight: 500; }
+.container-stock-cost-products > .container-stock-quantity-notice { padding: 9px 12px; background: #fff8e9; border-radius: 6px; color: #765516; }
+.container-stock-cost-products .container-stock-cost-table { min-width: 920px; table-layout: fixed; font-size: 13px; }
 .container-stock-cost-table td, .container-stock-cost-table th { overflow-wrap: anywhere; }
-.container-stock-cost-table .container-stock-cost-quantity { width: 90px; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.container-stock-cost-table td { padding: 13px 12px; color: #52647b; }
+.container-stock-cost-table th { position: sticky; top: 0; z-index: 2; background: #edf2f7; }
+.container-stock-cost-table td:first-child, .container-stock-cost-table th:first-child { position: sticky; left: 0; width: 160px; z-index: 1; background: #fff; color: var(--dcats-ink); font-weight: 650; }
+.container-stock-cost-table th:first-child { z-index: 3; background: #edf2f7; }
+.container-stock-cost-table .container-stock-cost-quantity { width: 104px; text-align: right; font-size: 14px; font-weight: 750; color: var(--dcats-ink); font-variant-numeric: tabular-nums; background: #f2f7fc; }
+.container-stock-cost-table th.container-stock-cost-quantity { font-size: 12px; }
+.container-stock-cost-table tbody tr:hover td { background: #edf4fb; }
+@media (max-width: 600px) {
+  .container-stock-list-stats { gap: 6px; }
+  .container-stock-list-stats > div { padding: 9px 8px; }
+  .container-stock-list-stats dd { font-size: 21px; }
+  .container-stock-list-stats dt { font-size: 10px; }
+}
 .container-stock-result-state { display: grid; gap: 4px; margin-bottom: 12px; padding: 12px 14px; border: 1px solid #d9e4ef; border-radius: 9px; background: #f5f9fd; color: #1c4265; line-height: 1.5; }
 .container-stock-result-state strong { font-size: 15px; }
 .container-stock-result-state p { margin: 0; font-size: 12px; }

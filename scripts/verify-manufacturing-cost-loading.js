@@ -56,6 +56,7 @@ function harness() {
     renderManufacturingCostCandidates: data => { calls.rendered++; elements["manufacturing-cost-candidates"].innerHTML = data.length ? "candidates" : "no_results"; },
     selectedManufacturingCostDuplicateCandidateProducts: () => [], selectedManufacturingCostCandidateProducts: () => products,
     mergeManufacturingCostProducts: p => p, manufacturingCostSettings: () => ({}),
+    captureManufacturingCostImportQuantities() {},
     buildAndRenderManufacturingCostProducts: async p => { calls.build++; context.manufacturingCostRows = p; context.renderManufacturingCostRows(); },
     renderManufacturingCostRows: () => { elements["manufacturing-cost-list"].innerHTML = "rows"; },
     renderManufacturingCostProductDetail: () => { elements["manufacturing-cost-detail"].innerHTML = "empty"; },
