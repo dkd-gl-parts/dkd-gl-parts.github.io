@@ -104,6 +104,8 @@ jobs:
         run: node scripts/verify-kikan-management-search.js
       - name: Verify EC mall result performance
         run: node scripts/verify-ec-mall-result-performance.js
+      - name: Verify EC targets from saved cost lists
+        run: node scripts/verify-ec-cost-list-targets.js
       - name: Verify EC mall seller review
         run: node scripts/verify-ec-mall-seller-review.js
       - name: Verify customer catalog detail

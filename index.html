@@ -23,6 +23,7 @@
 <script src="vendor/supabase-js-2.115.0.js" integrity="sha384-CLZeq1dk8+Uzrs7TVvBUdlFoV5F0DMqgRoeHa8g5wJcuPe5SkVfEvdxB0ZuzlnBQ" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="styles.css?v=1.1.1190&amp;ranking=9&amp;brand=4">
 <link rel="stylesheet" href="sales-pricing-lists.css?v=1.1.1190">
+<link rel="stylesheet" href="ec-cost-list-targets.css?v=1.1.1190">
 <link rel="stylesheet" href="manufacturing-cost-workspace.css?v=1.1.1190">
 <link rel="stylesheet" href="product-data-research.css?v=1.1.1190">
 <link rel="stylesheet" href="partsfan-research.css?v=1.1.1190">
@@ -5108,6 +5109,7 @@
       </div>
       <div class="rakuten-actions">
         <button class="btn-sm-edit" id="btn-ec-load-saved-targets" data-i18n="ec_load_saved_targets">保存済み対象を読み込み</button>
+        <button class="btn-sm-edit" id="btn-ec-cost-list-targets" type="button" data-ec-cost-label="title">原価計算リストから追加</button>
         <button class="btn-sm-edit" id="btn-rakuten-load-master" data-i18n="ec_build_category_targets">カテゴリ別品番一覧を作成</button>
         <button class="btn-sm-edit" id="btn-ec-save-targets" data-i18n="ec_save_targets">調査条件を保存</button>
         <button class="btn-sm-del" id="btn-ec-delete-selected-targets" type="button" data-i18n="ec_delete_selected_targets" disabled>選択対象を削除</button>
@@ -5139,6 +5141,26 @@
 
   </div>
 </div>
+
+<dialog id="ec-cost-dialog" class="ec-cost-dialog" aria-labelledby="ec-cost-title" aria-describedby="ec-cost-help ec-cost-rules">
+  <div class="ec-cost-body">
+    <h2 id="ec-cost-title" data-ec-cost-label="title">原価計算リストから追加</h2>
+    <p id="ec-cost-help" data-ec-cost-label="help"></p>
+    <p id="ec-cost-rules" class="ec-cost-rules" data-ec-cost-label="rules"></p>
+    <div class="ec-cost-picker">
+      <label for="ec-cost-list" data-ec-cost-label="choose">保存済みリストを選択</label>
+      <select id="ec-cost-list"></select>
+      <button id="ec-cost-recheck" class="btn-sm-edit" type="button" data-ec-cost-label="recheck">再確認</button>
+    </div>
+    <div id="ec-cost-status" class="ec-cost-status" role="status" aria-live="polite"></div>
+    <div id="ec-cost-summary" class="ec-cost-summary"></div>
+    <div id="ec-cost-results" class="ec-cost-results" tabindex="0" aria-label="追加内容"></div>
+    <div class="ec-cost-footer">
+      <button id="ec-cost-close" class="btn-cancel" type="button" data-ec-cost-label="cancel">閉じる</button>
+      <button id="ec-cost-add" class="btn-primary" type="button" disabled>新規対象 0 件を追加</button>
+    </div>
+  </div>
+</dialog>
 
 <div class="form-overlay" id="ec-category-target-overlay">
   <div class="form-card ec-category-target-card">
@@ -5759,6 +5781,7 @@
 <script src="assets/concierge-pet/integration-readiness.js?v=1.1.1190"></script>
 <script src="shipping-rate-print.js?v=1.1.1190"></script>
 <script src="app.js?v=1.1.1190"></script>
+<script src="ec-cost-list-targets.js?v=1.1.1190"></script>
 <script src="sales-pricing-lists.js?v=1.1.1190"></script>
 <script src="sales-order-revision.js?v=1.1.1190"></script>
 <script src="manufacturing-cost-import.js?v=1.1.1190"></script>
