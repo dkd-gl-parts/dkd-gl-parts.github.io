@@ -8866,8 +8866,9 @@ async function prepareConciergeTestOrder(options) {
     assertReady();
     if (features.error || !features.data || features.data.enabled !== true || features.data.internal_management !== true) throw new Error("test_order_unavailable");
     // Populate the normal selector too; never cache only the dedicated test row.
-    await loadDetailSalesCustomerOptions(stillCurrent);
+    var customers = await loadDetailSalesCustomerOptions(stillCurrent);
     assertReady();
+    if (!customers || !customers.length) throw new Error("test_order_unavailable");
     var result = await sb.from("sales_customers")
       .select("id,source_customer_code,customer_name,price_rank_code,is_active")
       .eq("source_code", "dcats_test").eq("source_customer_code", "DEV-ORDER-001")

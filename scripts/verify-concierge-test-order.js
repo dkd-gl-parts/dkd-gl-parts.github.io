@@ -13,7 +13,7 @@ function fixture(scenario = "allowed") {
     customerOrderSaving: scenario === "saving", customerOrderCart: scenario === "cart" ? [{ id: "keep" }] : [],
     customerOrderFeatureStatus: {}, detailSalesCustomerOptions: [], customerPortalSearchActive: true,
     canStartInternalCustomerOrderEntry: () => scenario !== "localdenied",
-    loadDetailSalesCustomerOptions: async isCurrent => { assert(isCurrent()); calls.push("options"); },
+    loadDetailSalesCustomerOptions: async isCurrent => { assert(isCurrent()); calls.push("options"); if (scenario === "optionstale") active = false; return scenario === "optionserror" ? [] : [{ id: 10 }]; },
     applyCustomerPortalPreviewContext: (row, value) => { calls.push("apply"); assert.equal(row.id, 167); assert.equal(value.sales_customer_id, 167); },
     loadCustomerPortalContextForCustomer: async row => { calls.push("context"); if (scenario === "latecart") context.customerOrderCart.push({ id: "new" }); if (scenario === "contextstale") active = false; return { sales_customer_id: row.id, customer: row }; },
     enterCustomerCatalog: async opts => { calls.push("open"); assert.equal(opts.query, ""); },
@@ -32,7 +32,7 @@ function fixture(scenario = "allowed") {
   return { context, calls, filters, options: { isCurrent: () => active }, release: () => resolveWait() };
 }
 (async () => {
-  for (const scenario of ["allowed", "nonadmin", "saving", "cart", "localdenied", "latecart", "contextstale", "owner", "closed", "offline", "disabled", "override", "rpcerror", "revoked", "inactive", "missing", "queryerror"]) {
+  for (const scenario of ["allowed", "nonadmin", "saving", "cart", "localdenied", "latecart", "contextstale", "optionstale", "optionserror", "owner", "closed", "offline", "disabled", "override", "rpcerror", "revoked", "inactive", "missing", "queryerror"]) {
     const f = fixture(scenario), before = JSON.stringify(f.context.customerOrderCart);
     const result = await f.context.prepareConciergeTestOrder(f.options);
     assert.equal(!!result.data?.ok, scenario === "allowed", scenario);
