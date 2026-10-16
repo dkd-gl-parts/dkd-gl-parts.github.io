@@ -5,6 +5,7 @@ const vm = require("vm");
 const rootDir = path.resolve(__dirname, "..");
 const runtime = fs.readFileSync(path.join(rootDir, "assets", "concierge-pet", "concierge-pet.js"), "utf8");
 const observers = [];
+const resizeObservers = [];
 const animations = [];
 const storage = new Map();
 
@@ -46,6 +47,7 @@ class FakeAnimation {
     this.canceled = true;
     this.playState = "idle";
   }
+  pause() { this.playState = "paused"; }
 }
 
 class FakeElement {
@@ -150,6 +152,13 @@ class FakeElement {
     }
     if (this.customRect) return { ...this.customRect };
     const ownerWindow = this.ownerDocument && this.ownerDocument.defaultView || windowObject;
+    if (this.classList.contains("dcats-concierge-panel") && this.classList.contains("is-question-view")) {
+      const frame = animations.filter(a => a.owner === this && !a.canceled).at(-1)?.keyframes.at(-1) || {};
+      const width = parseFloat(frame.width) || Math.min(420, ownerWindow.innerWidth - 28);
+      const height = Math.min(this.questionNaturalHeight || 600, parseFloat(frame.maxHeight) || ownerWindow.innerHeight - 96);
+      const left = parseFloat(frame.left) || 0, top = parseFloat(frame.top) || 0;
+      return { left, top, right: left + width, bottom: top + height, width, height };
+    }
     const mobile = ownerWindow.innerWidth <= 700;
     const floatingMover = this.classList.contains("dcats-concierge-mover") && ownerWindow !== windowObject;
     const floatingWidth = Math.max(32, Math.min(192, ownerWindow.innerWidth - 16, (ownerWindow.innerHeight - 16) * 12 / 13));
@@ -222,6 +231,25 @@ documentObject.body.appendChild(activeScreen);
 class FakeMutationObserver {
   constructor(callback) { this.callback = callback; observers.push(this); }
   observe() {}
+}
+class FakeResizeObserver {
+  constructor(callback) { this.callback = callback; this.targets = []; resizeObservers.push(this); }
+  observe(target) { this.targets.push(target); }
+}
+
+function createVisualViewport(getWindow) {
+  const listeners = new Map();
+  return {
+    testRect: null,
+    get width() { return this.testRect?.width ?? getWindow().innerWidth; },
+    get height() { return this.testRect?.height ?? getWindow().innerHeight; },
+    get offsetLeft() { return this.testRect?.left || 0; },
+    get offsetTop() { return this.testRect?.top || 0; },
+    addEventListener(type, callback) { const list = listeners.get(type) || []; list.push(callback); listeners.set(type, list); },
+    removeEventListener(type, callback) { listeners.set(type, (listeners.get(type) || []).filter(v => v !== callback)); },
+    dispatchForTest(type) { dispatch(listeners, type); },
+    listenerCount() { return [...listeners.values()].reduce((n, v) => n + v.length, 0); }
+  };
 }
 
 let frameId = 0;
@@ -310,6 +338,7 @@ function createFloatingWindow() {
     getComputedStyle(element) { return windowObject.getComputedStyle(element); }
   };
   floatingDocument.defaultView = floating;
+  floating.visualViewport = createVisualViewport(() => floating);
   floatingWindows.push(floating);
   return floating;
 }
@@ -374,6 +403,7 @@ const windowObject = {
   }
 };
 documentObject.defaultView = windowObject;
+windowObject.visualViewport = createVisualViewport(() => windowObject);
 
 const context = {
   window: windowObject,
@@ -383,6 +413,7 @@ const context = {
     setItem(key, value) { storage.set(key, String(value)); }
   },
   MutationObserver: FakeMutationObserver,
+  ResizeObserver: FakeResizeObserver,
   URLSearchParams,
   URL,
   Promise,
@@ -504,11 +535,14 @@ const aiUsage = byClass("dcats-concierge-ai-usage")[0];
 assert(aiCard && aiQuestionInput && aiAskButton && aiStatus && aiAnswer && aiGuide && aiUsage, "System administrator did not receive the AI question controls");
 assert(aiQuestionInput.maxLength === 800, "AI question input did not enforce the reviewed length limit");
 hitTarget.focus();
+const beforeCharacterQuestion = mover.getBoundingClientRect();
 dispatch(hitTarget.listeners, "click", { target: hitTarget });
 assert(!panel.hidden && panel.classList.contains("is-question-view"), "A short character click did not open the dedicated question view");
 assert(documentObject.activeElement === aiQuestionInput, "Character question view did not focus the question input");
 assert(hitTarget.getAttribute("aria-expanded") === "true" && launcher.getAttribute("aria-expanded") === "false", "Character question view exposed the wrong expanded trigger");
-assert(mover.getBoundingClientRect().left <= 10, "Character did not move beside the question panel");
+assert(mover.getBoundingClientRect().left === beforeCharacterQuestion.left && mover.getBoundingClientRect().top === beforeCharacterQuestion.top, "Opening a question must keep the character where it was clicked");
+const questionTail = byClass("dcats-concierge-question-tail")[0];
+assert(questionTail && !questionTail.hidden && questionTail.getAttribute("aria-hidden") === "true", "Character question did not display its decorative speech tail");
 dispatch(panelClose.listeners, "click", { target: panelClose });
 assert(panel.hidden && documentObject.activeElement === hitTarget, "Closing the question view did not restore character focus");
 launcher.focus();
@@ -517,6 +551,54 @@ assert(!panel.hidden && !panel.classList.contains("is-question-view"), "Header l
 assert(documentObject.activeElement === panelClose && launcher.getAttribute("aria-expanded") === "true", "Settings view did not focus its close control");
 dispatch(panelClose.listeners, "click", { target: panelClose });
 assert(panel.hidden && documentObject.activeElement === launcher, "Closing settings did not restore launcher focus");
+
+function assertQuestionFits(label, bounds = { left: 0, top: 0, right: windowObject.innerWidth, bottom: windowObject.innerHeight }) {
+  const r = panel.getBoundingClientRect();
+  assert(r.left >= bounds.left + 12 && r.top >= bounds.top + 12 && r.right <= bounds.right - 12 && r.bottom <= bounds.bottom - 12, label + ": speech panel escaped the visible viewport");
+}
+function openQuestionAt(x, y) {
+  mover.transformPoint = { x, y };
+  api.openSettings("question");
+  const r = mover.getBoundingClientRect();
+  assert(r.left === x && r.top === y, "Speech placement moved the character");
+}
+for (const [x, y, side] of [[8,46,"right"],[1074,46,"left"],[8,650,"right"],[1074,650,"left"]]) {
+  openQuestionAt(x,y); assertQuestionFits(side + " corner");
+  assert(questionTail.classList.contains("is-" + side), "Speech tail did not select the available " + side + " side");
+  const r = panel.getBoundingClientRect(), a = mover.getBoundingClientRect();
+  assert(side === "right" ? r.left === a.right + 16 : r.right === a.left - 16, "Speech panel is not adjacent to the character");
+  dispatch(panelClose.listeners,"click",{target:panelClose});
+  assert(questionTail.hidden && !panel.classList.contains("is-question-anchored") && !animations.some(v=>[panel,questionTail].includes(v.owner)&&!v.canceled), "Closing the question retained its speech layout");
+}
+openQuestionAt(40,600);
+const panelSizeObserver = resizeObservers.find(v=>v.targets.includes(panel));
+assert(panelSizeObserver, "Question content height is not observed");
+panel.questionNaturalHeight = 230; panelSizeObserver.callback([]);
+assert(panel.getBoundingClientRect().bottom === mover.getBoundingClientRect().bottom, "A shorter answer detached the speech panel from its character");
+panel.questionNaturalHeight = 900; panelSizeObserver.callback([]); assertQuestionFits("long answer");
+const beforeRepeatLayout = animations.length;
+panelSizeObserver.callback([]);
+assert(animations.length === beforeRepeatLayout, "Unchanged speech geometry restarted layout animations/resize observation");
+panel.questionNaturalHeight = 600;
+windowObject.visualViewport.testRect = {left:0,top:220,width:1200,height:450};
+windowObject.visualViewport.dispatchForTest("resize");
+assertQuestionFits("keyboard",{left:0,top:220,right:1200,bottom:670});
+windowObject.visualViewport.testRect = null;
+windowObject.visualViewport.dispatchForTest("scroll");
+assertQuestionFits("visual viewport restored");
+dispatch(panelClose.listeners,"click",{target:panelClose});
+windowObject.innerWidth = 390;
+openQuestionAt(274,600); assertQuestionFits("narrow screen above");
+assert(questionTail.classList.contains("is-above") && panel.getBoundingClientRect().bottom === mover.getBoundingClientRect().top - 16, "Narrow screen did not stack the speech panel above the character");
+dispatch(panelClose.listeners,"click",{target:panelClose});
+openQuestionAt(274,46); assertQuestionFits("narrow screen below");
+assert(questionTail.classList.contains("is-below"), "Narrow screen did not use the available space below the character");
+dispatch(panelClose.listeners,"click",{target:panelClose});
+windowObject.innerWidth = windowObject.innerHeight = 120;
+openQuestionAt(8,8); assertQuestionFits("tiny screen compact");
+assert(questionTail.hidden && panel.classList.contains("is-compact-question"), "Tiny window did not use the tail-free compact fallback");
+dispatch(panelClose.listeners,"click",{target:panelClose});
+windowObject.innerWidth = 1200; windowObject.innerHeight = 800;
 aiQuestionInput.value = "受注データはどの画面で確認しますか？";
 dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
 dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
@@ -991,6 +1073,9 @@ const compactFloatingRect = mover.getBoundingClientRect();
 assert(compactFloatingRect.width <= 104 && compactFloatingRect.height <= 104, "Floating concierge did not shrink with a cramped window");
 assert(compactFloatingRect.left >= 0 && compactFloatingRect.top >= 0 && compactFloatingRect.right <= firstFloatingWindow.innerWidth && compactFloatingRect.bottom <= firstFloatingWindow.innerHeight, "Floating concierge escaped the cramped window viewport");
 assert(!root.classList.contains("has-no-safe-target"), "Cramped floating window hid the concierge when no movement lane was available");
+api.openSettings("question");
+assert(panel.classList.contains("is-compact-question") && questionTail.hidden && panel.getBoundingClientRect().width <= 96, "Tiny floating question did not use its own compact viewport");
+dispatch(firstFloatingWindow.document.listeners,"keydown",{key:"Escape"});
 firstFloatingWindow.innerWidth = 360;
 firstFloatingWindow.innerHeight = 420;
 firstFloatingWindow.dispatchForTest("resize");
