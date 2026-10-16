@@ -9,6 +9,8 @@ const files = [
   "ec-cost-list-targets.js",
   "ec-cost-list-targets.css",
   "sales-order-revision.js",
+  "sales-pricing-lists.js",
+  "sales-pricing-lists.css",
   "install-app.js",
   "apple-touch-icon.png",
   "box-label-print.css",

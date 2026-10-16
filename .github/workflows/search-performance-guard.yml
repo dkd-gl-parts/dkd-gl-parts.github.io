@@ -218,7 +218,9 @@ jobs:
       - name: Verify sales pricing manufacturing cost
         run: node scripts/verify-sales-pricing-manufacturing-cost.js
       - name: Verify sales pricing reference prices
-        run: node scripts/verify-sales-pricing-reference-prices.js
+        run: |
+          node scripts/verify-sales-pricing-reference-prices.js
+          node scripts/verify-sales-pricing-lists.js
       - name: Verify sales pricing responsive layout
         run: node scripts/verify-sales-pricing-layout.js
       - name: Verify class-1 dedicated pricing
