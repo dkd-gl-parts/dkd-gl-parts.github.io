@@ -107,6 +107,12 @@
       aiProviderFailed: "AIから回答を取得できませんでした。時間をおいてもう一度お試しください。",
       aiFailed: "AIに接続できませんでした。時間をおいてもう一度お試しください。",
       aiGuide: "案内先：{screen} — {reason}",
+      aiScreenOpen: "{screen}を開く",
+      aiScreenOpening: "画面と権限を確認しています…",
+      aiScreenOpened: "D-CATS本体で画面を開きました。",
+      aiScreenDraft: "入力・選択中または処理中の作業を保護するため、移動を止めました。必要な作業を保存・完了し、メニューへ戻ってから開いてください。",
+      aiScreenUnavailable: "この画面は現在開けません。権限・機能の状態や、対象の商品・得意先の選択を確認してください。",
+      aiScreenStale: "画面やログイン状態が変わったため、移動を止めました。現在の画面から再度ご相談ください。",
       aiTestOrderNote: "D-CATS開発テスト得意先の受注入力画面を開きます。ここではまだ登録しません。商品・数量などを選び、価格・在庫を確認して登録を確定してください。テスト受注でも、確定時には本番在庫を予約します。保存済みのテスト用カートがある場合は内容も確認してください。",
       aiTestOrderOpen: "テスト受注の入力画面を開く（未登録）",
       aiTestOrderOpening: "権限とテスト得意先を確認しています…",
@@ -307,6 +313,12 @@
       aiProviderFailed: "AI could not return an answer. Please try again later.",
       aiFailed: "AI could not be reached. Please try again later.",
       aiGuide: "Suggested screen: {screen} — {reason}",
+      aiScreenOpen: "Open {screen}",
+      aiScreenOpening: "Checking the screen and permissions…",
+      aiScreenOpened: "Opened the screen in the main D-CATS window.",
+      aiScreenDraft: "Navigation stopped to protect edited selections, inputs or work in progress. Save/finish your work and return to the menu before opening the screen.",
+      aiScreenUnavailable: "This screen is unavailable. Check permissions, feature availability and the selected product/customer.",
+      aiScreenStale: "Navigation stopped because the screen or login changed. Ask again from the current screen.",
       aiTestOrderNote: "Open order entry for the dedicated D-CATS development test customer. Nothing is registered yet. Select products and quantities, review prices and stock, then confirm registration. Even test orders reserve REAL production stock when registered. Review any saved test cart too.",
       aiTestOrderOpen: "Open test order entry (not registered)",
       aiTestOrderOpening: "Checking permission and the test customer…",
@@ -506,6 +518,12 @@
       aiProviderFailed: "无法从AI取得回答，请稍后重试。",
       aiFailed: "无法连接AI，请稍后重试。",
       aiGuide: "建议画面：{screen} — {reason}",
+      aiScreenOpen: "打开{screen}",
+      aiScreenOpening: "正在检查页面和权限…",
+      aiScreenOpened: "已在D-CATS主窗口中打开页面。",
+      aiScreenDraft: "为保护输入、选择或正在处理的工作，已停止跳转。请保存或完成工作，返回菜单后再打开。",
+      aiScreenUnavailable: "当前无法打开此页面。请检查权限、功能状态及所选商品或客户。",
+      aiScreenStale: "页面或登录状态已更改，已停止跳转。请从当前页面重新咨询。",
       aiTestOrderNote: "打开D-CATS开发测试客户的订单录入画面，此时尚未登记。请选择商品、数量等，确认价格和库存后再登记。测试订单在登记时也会预留实际生产库存。如有已保存的测试购物车，请同时确认内容。",
       aiTestOrderOpen: "打开测试订单录入（尚未登记）",
       aiTestOrderOpening: "正在确认权限和测试客户…",
@@ -667,6 +685,7 @@
   var aiStatus;
   var aiAnswer;
   var aiGuide;
+  var aiScreenButton, aiScreenProposal = null, aiScreenPending = false;
   var aiUsage;
   var aiOrderAction, aiOrderNote, aiOrderButton, aiOrderProposal = null, aiOrderPending = false;
   var aiImageFile, aiImagePreview, aiImageRemove;
@@ -1001,6 +1020,10 @@
     aiAnswer.hidden = true;
     aiGuide = createElement("p", "dcats-concierge-ai-guide");
     aiGuide.hidden = true;
+    aiScreenButton = createElement("button", "dcats-concierge-ai-button dcats-concierge-ai-screen-button");
+    aiScreenButton.type = "button";
+    aiScreenButton.hidden = true;
+    aiScreenButton.addEventListener("click", runScreenEntry);
     aiOrderAction = createElement("div", "dcats-concierge-ai-order-action");
     aiOrderAction.hidden = true;
     aiOrderNote = createCopyElement("p", "dcats-concierge-ai-guide", "aiTestOrderNote");
@@ -1015,6 +1038,7 @@
     aiFeedback.appendChild(aiStatus);
     aiFeedback.appendChild(aiAnswer);
     aiFeedback.appendChild(aiGuide);
+    aiFeedback.appendChild(aiScreenButton);
     aiFeedback.appendChild(aiOrderAction);
     aiFeedback.appendChild(aiUsage);
     aiCard.appendChild(aiTitle);
@@ -1455,6 +1479,9 @@
   }
 
   function clearAiResult() {
+    aiScreenProposal = null;
+    aiScreenPending = false;
+    if (aiScreenButton) aiScreenButton.hidden = true;
     aiOrderProposal = null;
     aiOrderPending = false;
     if (aiOrderAction) aiOrderAction.hidden = true;
@@ -1488,17 +1515,27 @@
   function updateAiStatus() {
     if (!aiAskButton || !aiQuestionInput || !aiStatus) return;
     var reviewing = !!(requestUi && requestUi.pending());
-    aiAskButton.disabled = aiRequestPending || aiImagePending || reviewing || aiOrderPending;
+    aiAskButton.disabled = aiRequestPending || aiImagePending || reviewing || aiOrderPending || aiScreenPending;
     aiAskButton.textContent = copy(aiRequestPending ? "aiWorking" : "aiAsk");
     aiAskButton.setAttribute("aria-busy", String(aiRequestPending));
-    aiQuestionInput.disabled = aiRequestPending || reviewing || aiOrderPending;
-    if (aiImageFile) aiImageFile.disabled = aiRequestPending || reviewing || aiOrderPending;
-    if (aiImageRemove) aiImageRemove.disabled = aiRequestPending || reviewing || aiOrderPending;
+    aiQuestionInput.disabled = aiRequestPending || reviewing || aiOrderPending || aiScreenPending;
+    if (aiImageFile) aiImageFile.disabled = aiRequestPending || reviewing || aiOrderPending || aiScreenPending;
+    if (aiImageRemove) aiImageRemove.disabled = aiRequestPending || reviewing || aiOrderPending || aiScreenPending;
     aiQuestionInput.placeholder = copy("aiPlaceholder");
     aiStatus.textContent = copy(aiStatusState);
-    aiStatus.classList.toggle("is-success", aiStatusState === "aiDone");
-    aiStatus.classList.toggle("is-error", ["aiImageInvalid", "aiImageLarge", "aiInvalidQuestion", "aiNotConfigured", "aiConfigurationInvalid", "aiForbidden", "aiRateLimited", "aiProviderFailed", "aiFailed", "aiTestOrderCartBusy", "aiTestOrderFailed"].indexOf(aiStatusState) >= 0);
+    aiStatus.classList.toggle("is-success", aiStatusState === "aiDone" || aiStatusState === "aiScreenOpened");
+    aiStatus.classList.toggle("is-error", ["aiImageInvalid", "aiImageLarge", "aiInvalidQuestion", "aiNotConfigured", "aiConfigurationInvalid", "aiForbidden", "aiRateLimited", "aiProviderFailed", "aiFailed", "aiTestOrderCartBusy", "aiTestOrderFailed", "aiScreenDraft", "aiScreenUnavailable", "aiScreenStale"].indexOf(aiStatusState) >= 0);
     if (aiLastUsage) renderAiUsage(aiLastUsage);
+    if (aiScreenButton) {
+      if (aiScreenProposal && !aiScreenPending && window.DcatsConciergeAiApi && typeof window.DcatsConciergeAiApi.describeScreen === "function") {
+        var currentDestination = window.DcatsConciergeAiApi.describeScreen(aiScreenProposal.screenId);
+        if (currentDestination && currentDestination.screenId === aiScreenProposal.screenId) aiScreenProposal.label = currentDestination.label;
+        else aiScreenButton.hidden = true;
+      }
+      aiScreenButton.disabled = aiScreenPending;
+      aiScreenButton.setAttribute("aria-busy", String(aiScreenPending));
+      aiScreenButton.textContent = copy(aiScreenPending ? "aiScreenOpening" : "aiScreenOpen", { screen: aiScreenProposal ? aiScreenProposal.label : "" });
+    }
     if (aiOrderButton) {
       aiOrderButton.disabled = aiOrderPending;
       aiOrderButton.textContent = copy(aiOrderPending ? "aiTestOrderOpening" : "aiTestOrderOpen");
@@ -1587,7 +1624,7 @@
   }
 
   async function runAiRequest() {
-    if (aiOrderPending) return;
+    if (aiOrderPending || aiScreenPending) return;
     if (aiRequestPending || aiImagePending || (requestUi && requestUi.pending()) || !isSystemAdminSession()) return;
     var question = String(aiQuestionInput && aiQuestionInput.value || "").trim();
     if (!question || question.length > 800) {
@@ -1633,6 +1670,13 @@
       if (data.guide && typeof data.guide.screen_label === "string" && typeof data.guide.reason === "string") {
         aiGuide.textContent = copy("aiGuide", { screen: data.guide.screen_label, reason: data.guide.reason });
         aiGuide.hidden = false;
+        if (route.kind === "question" && !aiOrderProposal && typeof api.describeScreen === "function" && typeof api.openScreen === "function") {
+          var destination = api.describeScreen(data.guide.screen_id);
+          if (destination && destination.screenId === data.guide.screen_id && typeof destination.label === "string" && destination.label) {
+            aiScreenProposal = { screenId: destination.screenId, label: destination.label, contextKey: destination.contextKey, token: requestToken, owner: owner };
+            aiScreenButton.hidden = false;
+          }
+        }
       }
       aiLastUsage = data.usage || {};
       renderAiUsage(aiLastUsage);
@@ -1648,6 +1692,25 @@
         revealAiFeedback();
       }
     }
+  }
+
+  async function runScreenEntry() {
+    if (aiScreenPending || aiOrderPending || aiRequestPending || !aiScreenProposal || !isSystemAdminSession() || (requestUi && requestUi.pending())) return;
+    var proposal = aiScreenProposal, api = window.DcatsConciergeAiApi;
+    function isCurrent() { return panelOpen && aiScreenProposal === proposal && proposal.token === aiRequestToken && proposal.owner === currentSettingsOwner() && isSystemAdminSession(); }
+    if (!isCurrent() || !api || typeof api.openScreen !== "function") return;
+    aiScreenPending = true; aiStatusState = "aiScreenOpening"; updateAiStatus();
+    try {
+      var result = await api.openScreen(proposal.screenId, { isCurrent: isCurrent, contextKey: proposal.contextKey });
+      if (!isCurrent()) return;
+      if (!result || result.error || !result.data || result.data.ok !== true || result.data.screen_id !== proposal.screenId) throw result && result.error || new Error("screen_open_unavailable");
+      aiScreenProposal = null; aiScreenButton.hidden = true; aiStatusState = "aiScreenOpened";
+    } catch (error) {
+      if (!isCurrent()) return;
+      var code = String(error && error.message);
+      aiStatusState = code === "screen_open_draft" ? "aiScreenDraft" : code === "screen_open_stale" ? "aiScreenStale" : code === "screen_open_forbidden" ? "aiForbidden" : "aiScreenUnavailable";
+      if (code !== "screen_open_draft") { aiScreenProposal = null; aiScreenButton.hidden = true; }
+    } finally { if (proposal.token === aiRequestToken) { aiScreenPending = false; updateAiStatus(); revealAiFeedback(); } }
   }
 
   async function runTestOrderEntry() {
