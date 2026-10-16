@@ -48,7 +48,7 @@ async function run(language) {
     if (command.operation === "summary") return result({ request_new: 1, request_unread: 2, message_unread: 3 });
     if (command.operation === "messages") return result({ items: [{ ...log, unread: true }] });
     if (command.operation === "message") return result({ message: log });
-    if (command.operation === "request") return result({ request: { ...row, version }, reporter_name: "QA ADMIN", events: [] });
+    if (command.operation === "request") return result({ request: { ...row, version }, reporter_name: "QA ADMIN", events: [{ occurred_at: "2026-10-16T00:00:00Z", event_type: "status", status: "reviewing", note: "QA HISTORY NOTE" }] });
     if (command.operation === "image") return result({ image });
     if (command.operation === "handoff") return result({ package_text: "D-CATS コンシェルジュ・3Dキャラ開発\nQA ORIGINAL", sent: false });
     throw new Error("unexpected command");
@@ -58,6 +58,8 @@ async function run(language) {
   const item = () => host.all().find(n => n.tagName === "BUTTON" && n.textContent.includes("#"));
   assert(host.textContent.includes("2") && host.textContent.includes("3")); assert.equal(copies.length, 0);
   await item().click(); await settle(); assert(host.textContent.includes("QA ADMIN"));
+  const history = host.all().find(n => n.tagName === "DETAILS");
+  assert(history.textContent.includes(word.status) && history.textContent.includes(word.reviewing) && history.textContent.includes("2026") && history.textContent.includes("QA HISTORY NOTE"), "Render the actual event contract: occurred_at/status, not invented timestamp/status keys");
   await button(word.image).click(); assert(host.all().some(n => n.tagName === "IMG" && n.src.includes("storage/v1/object/sign/concierge-request-images")));
   const note = host.all().find(n => n.tagName === "TEXTAREA" && !n.readOnly); note.value = "QA NOTE";
   await button(word.save).click(); assert(host.textContent.includes(word.failure));

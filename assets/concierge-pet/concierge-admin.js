@@ -5,16 +5,19 @@
     ja: {
       intro: "送信された相談・AI回答・エラーと、確定した依頼を確認できます。入力途中の下書きは記録しません。導入前の質問ログはありません。",
       requests: "受付済みの依頼", messages: "すべての相談ログ", refresh: "更新", more: "さらに表示", all: "すべて",
+      created: "受付", status: "状態更新", attachment: "画像添付",
       question: "質問", bug: "修正依頼", suggestion: "改善提案", failed: "回答エラー", processing: "処理中・結果未確定", completed: "回答済み",
       new: "新規", reviewing: "確認中", needs_info: "追加情報待ち", in_progress: "対応中", resolved: "対応完了", declined: "見送り",
       loading: "読み込み中…", empty: "該当する記録はありません。", choose: "左の一覧から選択してください。", sender: "送信者", screen: "対象画面", date: "送信日時", content: "相談・依頼の内容", answer: "AI回答（参考）", error: "記録されたエラー", state: "状態", note: "対応メモ（最大2000文字）", save: "状態・メモを保存", saving: "保存中…", saved: "保存しました。", unread: "未読", summary: "新規依頼 {new} ／ 未読の依頼 {requests} ／ 未読の相談 {messages}",
       image: "添付画像を表示", noImage: "画像はありません。", linked: "確定した依頼を開く", linkedLog: "元の相談ログを開く", events: "対応履歴", handoff: "この開発タスクへ渡す文面を作成", handoffInfo: "引き渡し先：D-CATS コンシェルジュ・3Dキャラ開発。文面と画像を確認し、このタスクへ貼り付けてください。自動送信・自動修正はしません。", prepared: "引き渡し文面を準備しました（未送信）。", copy: "文面をコピー", copied: "コピーしました。この開発タスクへ貼り付けてください（未送信）。", copyFallback: "コピーできませんでした。文面を選択して手動でコピーしてください。", conflict: "内容が更新されています。一覧を更新して確認してください。", failure: "読み込み・保存に失敗しました。結果不明の場合は一覧を更新して確認してください。", denied: "システム管理者権限が必要です。", historyEmpty: "履歴はありません。", reference: "参照番号"
     },
     en: {
+      created: "Accepted", status: "Status updated", attachment: "Image attached",
       intro: "Review submitted messages, AI replies/errors and confirmed requests. Unsent drafts are not recorded. Questions from before logging was introduced are unavailable.",
       requests: "Confirmed requests", messages: "All message logs", refresh: "Refresh", more: "Load more", all: "All", question: "Question", bug: "Bug report", suggestion: "Suggestion", failed: "Reply error", processing: "Processing / outcome unknown", completed: "Answered", new: "New", reviewing: "Reviewing", needs_info: "Needs information", in_progress: "In progress", resolved: "Resolved", declined: "Declined", loading: "Loading…", empty: "No matching records.", choose: "Choose an item from the list.", sender: "Sender", screen: "Screen", date: "Submitted", content: "Submitted message", answer: "AI reply (reference only)", error: "Recorded error", state: "Status", note: "Response note (up to 2000 characters)", save: "Save status / note", saving: "Saving…", saved: "Saved.", unread: "Unread", summary: "New requests {new} / unread requests {requests} / unread messages {messages}", image: "Show attached image", noImage: "No image.", linked: "Open confirmed request", linkedLog: "Open original message", events: "History", handoff: "Prepare handoff to this development task", handoffInfo: "Destination: D-CATS コンシェルジュ・3Dキャラ開発. Review and paste the text and any image into that task. Nothing is sent or modified automatically.", prepared: "Handoff prepared (not sent).", copy: "Copy handoff text", copied: "Copied. Paste it into the development task (not sent).", copyFallback: "Copy failed. Select and copy the text manually.", conflict: "This item changed. Refresh and review it.", failure: "The operation failed. If its outcome is unknown, refresh the list to check.", denied: "System administrator access is required.", historyEmpty: "No history.", reference: "Reference"
     },
     zh: {
+      created: "已受理", status: "状态更新", attachment: "附件图片",
       intro: "查看已发送的咨询、AI回答/错误及已确认的请求。不记录未发送的草稿，也没有启用日志之前的问题。",
       requests: "已确认的请求", messages: "全部咨询日志", refresh: "刷新", more: "显示更多", all: "全部", question: "问题", bug: "修正请求", suggestion: "改善建议", failed: "回答错误", processing: "处理中／结果未确定", completed: "已回答", new: "新建", reviewing: "确认中", needs_info: "等待补充信息", in_progress: "处理中", resolved: "已完成", declined: "不采纳", loading: "加载中…", empty: "没有相应记录。", choose: "请从列表中选择。", sender: "发送者", screen: "页面", date: "发送时间", content: "咨询或请求内容", answer: "AI回答（仅供参考）", error: "记录的错误", state: "状态", note: "处理备注（最多2000字符）", save: "保存状态和备注", saving: "保存中…", saved: "已保存。", unread: "未读", summary: "新请求 {new} ／ 未读请求 {requests} ／ 未读咨询 {messages}", image: "显示附件图片", noImage: "没有图片。", linked: "打开已确认的请求", linkedLog: "打开原咨询日志", events: "处理记录", handoff: "生成转交此开发任务的文字", handoffInfo: "转交目标：D-CATS コンシェルジュ・3Dキャラ開発。请检查文字及图片后粘贴到该任务。不会自动发送或修改。", prepared: "已准备转交文字（未发送）。", copy: "复制文字", copied: "已复制。请粘贴到开发任务（未发送）。", copyFallback: "无法复制。请选择文字并手动复制。", conflict: "记录已更新，请刷新后确认。", failure: "操作失败。结果不确定时，请刷新列表确认。", denied: "需要系统管理员权限。", historyEmpty: "没有记录。", reference: "参考编号"
     }
@@ -142,7 +145,7 @@
           catch (error) { if (still()) { feedback.textContent = errorText(error); save.disabled = false; } }
         }); detail.appendChild(status); detail.appendChild(noteLabel); detail.appendChild(save);
         var history = el("details"), historyTitle = el("summary", t("events")); history.appendChild(historyTitle);
-        (data.events || []).forEach(function (event) { history.appendChild(el("p", date(event.created_at) + " · " + t(event.to_status || event.event_type) + (event.note ? "\n" + event.note : ""), "concierge-admin-text")); });
+        (data.events || []).forEach(function (event) { history.appendChild(el("p", date(event.occurred_at) + " · " + t(event.event_type) + " · " + t(event.status) + (event.note ? "\n" + event.note : ""), "concierge-admin-text")); });
         if (!(data.events || []).length) history.appendChild(el("p", t("historyEmpty"))); detail.appendChild(history);
       }
       var handoffArea = el("section", null, "concierge-admin-handoff"), preparedText = el("textarea"); preparedText.readOnly = true; preparedText.rows = 12; preparedText.hidden = true; preparedText.setAttribute("aria-label", t("handoff"));
