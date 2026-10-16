@@ -37,6 +37,7 @@
       if (!valid()) throw new Error("stale_session");
       var r = await options.send(command);
       if (!valid()) throw new Error("stale_session");
+      if (r && r.error && /^(forbidden|system_admin_required|invalid_authorization|missing_authorization)$/.test(r.error.message)) { destroy(); throw r.error; }
       if (!r || r.error || !r.data || r.data.ok !== true) throw r && r.error || new Error("request_failed");
       return r.data;
     }

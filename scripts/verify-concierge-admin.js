@@ -71,5 +71,7 @@ async function run(language) {
   deferred = {}; const opening = item().click(); await settle(); state.id = "other-admin"; deferred.resolve(result({ message: log })); await opening; await settle(); assert.equal(host.children.length, 0);
   const before = calls.length; assert.equal(window.DcatsConciergeAdmin.mount(host, { context: () => ({ id: "staff", admin: false }), send }), null); assert.equal(calls.length, before);
   controller.destroy(); assert.equal(host.children.length, 0);
+  window.DcatsConciergeAdmin.mount(host, { context: () => ({ id: "admin", admin: true, language }), send: async () => ({ error: new Error("forbidden") }) });
+  await settle(); assert.equal(host.children.length, 0, "Server-side revocation must clear private DOM too");
 }
 (async () => { for (const language of ["ja", "en", "zh"]) await run(language); console.log("Concierge admin: server-only API, role/session expiry, text safety, logs/images, request updates/replay, explicit unsent handoff and 3 languages passed."); })().catch(e => { console.error(e); process.exitCode = 1; });
