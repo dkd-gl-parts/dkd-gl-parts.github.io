@@ -640,19 +640,16 @@
       setStatus(trf("manufacturing_cost_import_selection_limit", { n: MAX_IMPORT_PARTS }), "error");
       return;
     }
-    var query = document.getElementById("manufacturing-cost-query");
     var searchButton = document.getElementById("btn-manufacturing-cost-calc");
-    if (!query || !searchButton) return;
-    var existing = normalizeText(query.value).split(/[\s,、，]+/).filter(Boolean);
+    if (!searchButton || searchButton.disabled) return;
     var seen = {};
     var values = [];
-    existing.concat(selected.map(function(row) { return row.part; })).forEach(function(part) {
+    selected.map(function(row) { return row.part; }).forEach(function(part) {
       var key = normalizePart(part);
       if (!key || seen[key]) return;
       seen[key] = true;
       values.push(part);
     });
-    query.value = values.join(" ");
     var searchEvent;
     if (typeof root.CustomEvent === "function") {
       searchEvent = new root.CustomEvent("dcats:manufacturing-cost-import-search", { detail: { parts: values.slice() } });
