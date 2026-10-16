@@ -8006,7 +8006,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1194";
+var APP_VERSION       = "v1.1.1195";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -8772,6 +8772,86 @@ window.DcatsHanbaiohTestSalesApi = Object.freeze({
   issueBinding: issueConciergeTestSalesBinding,
   claimOnce: claimConciergeTestSale
 });
+function conciergeNavigationProfileStamp(profile) {
+  if (!profile) return "";
+  var overrides = profile.permission_overrides || {};
+  return JSON.stringify([profile.role, profile.role_code, profile.status, profile.company, profile.company_code, profile.group_name, profile.department_code, profile.manufacturing_cost_allowed,
+    Object.keys(overrides).sort().map(function (key) { return [key, overrides[key]]; })]);
+}
+function conciergeNavigationBusy() {
+  if (customerOrderSaving || customerOrderCart.length || salesOrderSaving || salesOrderPricingSaving || salesOrderB2ImportSaving || salesOrderB2ExportSaving || salesOrderB2ContractSettingsSaving || salesOrderPrintSettingsSaving ||
+      salesAccountingExportSaving || salesAccountingExportCodeSavingKey || salesAccountingProductOnboardingSaving || shippingDocumentSaving || shippingDocumentBatchSelectionDirty || coreReturnManagementSaving ||
+      shippingWaybillLayoutSaving || shippingHandwrittenWaybillSaving || shippingRateFormSaving || shippingServiceVisibilitySavingKey || customerAccessSettingsSaving || customerAccessRegistrationSaving ||
+      componentAddSaving || componentNameMasterSaving || finishedShipmentSaving || finishedWarrantyPolicySaving || finishedShipmentReplacementSaving || salesPricingSavePending || salesRank1SavePending ||
+      Object.keys(productKindStockDirtyMap).some(function (key) { return !!productKindStockDirtyMap[key]; })) return true;
+  return Array.from(document.querySelectorAll('.modal.show,.modal-overlay.show,[role="dialog"]')).some(function (node) {
+    return !node.closest(".dcats-concierge-panel") && node.getClientRects().length > 0;
+  });
+}
+function createConciergeScreenRoutes() { return Object.freeze({
+  menu: { allowed: function () { return true; }, open: function () { showAuthenticatedHome(); } },
+  search: { allowed: canViewProductSearch, open: function () { return enterSearch(); } },
+  "customer-portal": { allowed: canPreviewCustomerPortal, open: function () { return enterCustomerPortal(); } },
+  "sales-order-mgmt": { allowed: canManageSalesOrders, feature: "internal_management", open: function () { return enterSalesOrderMgmt(); } },
+  "shipping-document-mgmt": { allowed: canManageSalesOrders, feature: "internal_management", open: function () { return enterShippingDocumentMgmt(); } },
+  "core-return-mgmt": { allowed: canManageSalesOrders, feature: "internal_management", open: function () { return enterCoreReturnManagement(); } },
+  "production-search": { allowed: canViewProductionFeatures, open: function () { return enterProductionSearch(); } },
+  "finished-label-mgmt": { allowed: canViewFinishedLabelMgmt, open: function () { return enterFinishedLabelMgmt(); } },
+  "finished-product-shipping": { allowed: canManageFinishedProductShipping, open: function () { return enterFinishedProductShipping(); } },
+  "core-list-mgmt": { allowed: canViewCoreManagement, open: function () { return enterCoreListMgmt(); } },
+  "product-kind-stock-mgmt": { allowed: canViewProductKindStockMgmt, open: function () { return enterProductKindStockMgmt(); } },
+  "manufacturing-cost-mgmt": { allowed: canViewManufacturingCostMgmt, open: function () { return enterManufacturingCostMgmt(); } },
+  "rakuten-price": { allowed: canUseRakutenResearch, open: function () { return enterRakutenPrice(); } },
+  "rakuten-bulk": { allowed: canUseRakutenResearch, destination: "rakuten-price", open: function () { return enterRakutenBulk(); } },
+  "rakuten-price-list": { allowed: canViewPriceResearchHistory, open: function () { return enterRakutenPriceList(); } },
+  users: { allowed: canUseUserManagement, open: function () { return enterUsers(); } },
+  "customer-access-mgmt": { allowed: canManageCustomerAccess, open: function () { return enterCustomerAccessMgmt(); } },
+  "shipping-rate-mgmt": { allowed: canManageShippingRates, open: function () { return enterShippingRateMgmt(); } },
+  "parts-mgmt": { allowed: canViewManagementScreen, open: function () { return enterPartsMgmt(); } },
+  "component-name-master-mgmt": { allowed: canManageComponentNameMaster, open: function () { return enterComponentNameMasterMgmt(); } },
+  "component-compat-mgmt": { allowed: canManageComponentCompatibility, open: function () { return enterComponentCompatMgmt(); } },
+  components: { allowed: function () { return !!currentProduct && canSeeComponentInfo(); }, open: function () { return enterComponentsScreen(activeAppScreenName()); } },
+  "component-parallel": { allowed: function () { return !!currentProduct && canSeeComponentInfo(); }, open: function () { return enterComponentParallelScreen(activeAppScreenName()); } },
+  "sales-pricing-mgmt": { allowed: canViewSalesPricing, open: function () { return enterSalesPricingMgmt(); } },
+  "purchase-mgmt": { allowed: canViewPurchaseMgmt, open: function () { return enterPurchaseMgmt(); } },
+  "customer-catalog": { allowed: function () { var c = customerCatalogContext(); return canPreviewCustomerPortal() && !!c.sales_customer_id && !!c.customer && c.customer.is_active !== false; }, open: function () { return enterCustomerCatalog(); } },
+  "customer-orders": { allowed: canOpenCustomerOrdering, open: function () { return enterCustomerOrders(); } },
+  "customer-shipping": { allowed: canViewCustomerShippingRates, open: function () { return enterCustomerShipping(); } },
+  "customer-users": { allowed: function () { return canManageCustomerPortalUsers(); }, open: function () { return enterCustomerUsers(); } },
+  "kikan-mgmt": { allowed: canManageCompatibility, open: function () { return enterKikanMgmt(); } },
+  "report-hub": { allowed: function () { return canViewManufacturingReport() || canManageCustomerAccess(); }, open: function () { return enterReportHub(); } },
+  "customer-price-report": { allowed: canManageCustomerAccess, open: function () { return enterCustomerPriceReport(); } },
+  "manufacturing-ranking-report": { allowed: function () { return canViewManagementScreen() && canViewManufacturingReport(); }, open: function () { return enterManufacturingRankingReport(); } },
+  "production-ranking-mgmt": { allowed: canViewManufacturingReport, open: function () { return enterProductionRankingMgmt(); } },
+  logs: { allowed: canViewOperationLogs, open: function () { return enterLogs(); } },
+  "concierge-admin": { allowed: isSystemAdmin, open: function () { return enterConciergeAdmin(); } },
+  "api-settings": { allowed: canManageSharedSettings, open: function () { return enterApiSettings(); } },
+  "change-pw": { allowed: function () { return true; }, open: function () { return enterChangePw(); } }
+}); }
+var conciergeNavigation = null;
+function getConciergeNavigation() {
+  if (conciergeNavigation || !window.DcatsConciergeNav) return conciergeNavigation;
+  var routes = createConciergeScreenRoutes();
+  conciergeNavigation = window.DcatsConciergeNav.create({
+  document: document, routes: routes, activeScreen: activeAppScreenName,
+  navigationContext: function (id) { return JSON.stringify([conciergeNavigationProfileStamp(userProfile), ["components", "component-parallel"].indexOf(id) >= 0 ? currentProduct && [currentProduct.id, currentProduct.dkd_shohin_id] : null, ["customer-catalog", "customer-orders", "customer-shipping", "customer-users"].indexOf(id) >= 0 ? (activeCustomerPortalContext() || {}).sales_customer_id : null]); },
+  context: function () { return { id: currentUser && currentUser.id, admin: !!currentUser && isSystemAdmin(), stamp: conciergeNavigationProfileStamp(userProfile) }; },
+  label: function (id) { return window.DcatsConciergeRequestsUi && window.DcatsConciergeRequestsUi.screenLabel(id, currentLang); },
+  busy: conciergeNavigationBusy,
+  authorize: async function (start, id) {
+    var auth = await sb.auth.getUser();
+    if (auth.error || !auth.data || !auth.data.user || auth.data.user.id !== start.id) throw new Error("screen_open_forbidden");
+    var result = await sb.from("profiles").select("id,role,role_code,status,company,company_code,group_name,department_code,manufacturing_cost_allowed,permission_overrides").eq("id", start.id).maybeSingle();
+    var p = result.data;
+    if (result.error || !p || p.id !== start.id || p.status !== "active" || (p.role_code || p.role) !== "system_admin" || conciergeNavigationProfileStamp(p) !== start.stamp) throw new Error("screen_open_forbidden");
+    if (routes[id].feature) {
+      var flags = await sb.rpc("get_customer_order_feature_status");
+      if (flags.error || !flags.data || flags.data.enabled !== true || flags.data[routes[id].feature] !== true) throw new Error("screen_open_unavailable");
+    }
+  }
+});
+  return conciergeNavigation;
+}
 var CONCIERGE_AI_SCREEN_IDS = Object.freeze({
   menu: true,
   search: true,
@@ -8906,6 +8986,8 @@ async function prepareConciergeTestOrder(options) {
 window.DcatsConciergeAiApi = Object.freeze({
   ask: askConciergeAi,
   prepareTestOrder: prepareConciergeTestOrder,
+  describeScreen: function (id) { var nav = getConciergeNavigation(); return nav ? nav.describe(id) : null; },
+  openScreen: function (id, options) { var nav = getConciergeNavigation(); return nav ? nav.open(id, options) : Promise.resolve({ data: null, error: new Error("screen_open_unavailable") }); },
   allowedScreens: CONCIERGE_AI_SCREEN_IDS
 });
 async function sendConciergeRequest(command) {
@@ -10825,10 +10907,12 @@ function resetScreenStateForMenu(screenId) {
     if (element.scrollLeft) element.scrollLeft = 0;
   });
   resetScreenRuntimeStateForMenu(screenId);
+  if (typeof conciergeNavigation !== "undefined" && conciergeNavigation) conciergeNavigation.resetScreen(screenId);
 }
 
 function showScreen(id) {
   var previousScreenId = activeAppScreenName();
+  if ((id === "login" || id === "boot") && typeof conciergeNavigation !== "undefined" && conciergeNavigation) conciergeNavigation.clear();
   if (id !== "concierge-admin") closeConciergeAdmin();
   if (previousScreenId === "sales-order-mgmt" && id !== previousScreenId) {
     setSalesOrderDetailView("overview", false);
@@ -58371,3 +58455,4 @@ function startDcatsExtensionUpdate(){
   dcatsExtensionUpdateController.poll();window.setTimeout(function(){dcatsExtensionUpdateController.initialRequired();},5000);
 }
 window.addEventListener('load',startDcatsExtensionUpdate);
+getConciergeNavigation(); // Track edits before the first AI answer, without reading Auth or navigating.

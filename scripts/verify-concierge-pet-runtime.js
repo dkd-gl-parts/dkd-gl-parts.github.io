@@ -270,6 +270,8 @@ const floatingWindows = [];
 const capabilityRequests = [];
 const bridgeRequests = [];
 const aiRequests = [];
+const screenOpenRequests = [];
+let screenOpenFactory = async (id, options) => ({ data: { ok: true, screen_id: id }, error: null });
 let bridgeResponseFactory = (request) => ({ id: request.id, ok: true, command: request.command, data: { counts: {}, jobs: [] } });
 let aiResponseFactory = () => ({
   data: {
@@ -385,6 +387,8 @@ const windowObject = {
   },
   DcatsConciergeAiApi: {
     allowedScreens: { menu: true, search: true, "sales-order-mgmt": true },
+    describeScreen(id) { return id === "sales-order-mgmt" ? { screenId: id, label: "受注・出荷管理", contextKey: "qa-context" } : null; },
+    async openScreen(id, options) { screenOpenRequests.push({ id, options }); return screenOpenFactory(id, options); },
     async ask(request) {
       aiRequests.push({ ...request });
       return aiResponseFactory(request);
@@ -609,6 +613,8 @@ assert(aiRequests[0].question === "受注データはどの画面で確認しま
 assert(aiStatus.textContent === "回答" && aiStatus.classList.contains("is-success"), "AI success heading must be concise");
 assert(aiAnswer.textContent === "受注・出荷管理画面で確認できます。" && !aiAnswer.hidden, "AI answer was not presented as text");
 assert(aiGuide.textContent.includes("案内先：受注・出荷管理") && !aiGuide.hidden, "Fixed-screen guidance was not presented");
+const aiScreenButton = byClass("dcats-concierge-ai-screen-button")[0];
+assert(aiScreenButton && !aiScreenButton.hidden && aiScreenButton.textContent === "受注・出荷管理を開く" && screenOpenRequests.length === 0, "A trusted destination must offer a button without opening automatically");
 assert(aiUsage.children.some(node => node.textContent === "150 トークン") &&
   aiUsage.children.some(node => node.getAttribute("aria-label") === "入力 100 ／ 出力 50"),
   "Actual per-question input/output tokens must appear as an accessible meter, not a cost estimate");
@@ -697,6 +703,7 @@ const imageFile = aiCard.descendants().find(element => element.type === "file");
 function assertBlankQuestion(label) {
   assert(aiQuestionInput.value === "" && aiPreview.hidden && !aiPreview.getAttribute("src") && imageFile.value === "", label + ": input or image survived");
   assert(aiAnswer.hidden && aiAnswer.textContent === "" && aiGuide.hidden && aiGuide.textContent === "" && aiUsage.hidden, label + ": old results survived");
+  assert(aiScreenButton.hidden, label + ": old navigation proposal survived");
   assert(aiStatus.textContent === "内容を入力して送信してください。" && !aiStatus.classList.contains("is-error") && !aiStatus.classList.contains("is-success"), label + ": old status survived");
   assert(!aiAskButton.disabled && !aiQuestionInput.disabled && aiAskButton.getAttribute("aria-busy") === "false", label + ": new question disabled");
 }
@@ -759,6 +766,26 @@ for (const oldFailed of [false, true]) {
   assert(aiAnswer.textContent === "新しい回答だけ" && !aiAskButton.disabled, "New response failed after old completion");
 }
 aiResponseFactory = originalAiResponseFactory;
+dispatch(panelClose.listeners, "click", { target: panelClose });
+// Screen assistance: one explicit click, no second AI call, failure and close expiry.
+api.openSettings("question"); aiQuestionInput.value = "受注はどの画面ですか？";
+dispatch(aiAskButton.listeners, "click", { target: aiAskButton }); await new Promise(resolve => setImmediate(resolve));
+let finishScreenOpen; screenOpenFactory = () => new Promise(resolve => { finishScreenOpen = resolve; });
+const beforeScreenClicks = aiRequests.length, beforeScreenOpenCount = screenOpenRequests.length;
+dispatch(aiScreenButton.listeners, "click", { target: aiScreenButton }); dispatch(aiScreenButton.listeners, "click", { target: aiScreenButton });
+assert(screenOpenRequests.length === beforeScreenOpenCount + 1 && aiScreenButton.disabled && aiAskButton.disabled && screenOpenRequests.at(-1).options.contextKey === "qa-context", "Screen click must bind context and suppress duplicates/questions while checking");
+finishScreenOpen({ data: { ok: true, screen_id: "sales-order-mgmt" }, error: null }); await new Promise(resolve => setImmediate(resolve));
+assert(aiScreenButton.hidden && aiStatus.textContent.includes("D-CATS本体") && aiRequests.length === beforeScreenClicks, "Screen assistance must not call AI again or claim a write");
+for (const code of ["screen_open_draft", "screen_open_forbidden", "screen_open_stale", "screen_open_unavailable"]) {
+  aiQuestionInput.value = "画面の案内"; dispatch(aiAskButton.listeners, "click", { target: aiAskButton }); await new Promise(resolve => setImmediate(resolve));
+  screenOpenFactory = async () => ({ error: new Error(code) }); dispatch(aiScreenButton.listeners, "click", { target: aiScreenButton }); await new Promise(resolve => setImmediate(resolve));
+  assert(!aiScreenButton.disabled && aiScreenButton.hidden === (code !== "screen_open_draft"), "Failed navigation retained an unsafe proposal: " + code);
+}
+aiQuestionInput.value = "開く前に閉じる"; dispatch(aiAskButton.listeners, "click", { target: aiAskButton }); await new Promise(resolve => setImmediate(resolve));
+screenOpenFactory = () => new Promise(resolve => { finishScreenOpen = resolve; }); dispatch(aiScreenButton.listeners, "click", { target: aiScreenButton });
+const oldScreenCaller = screenOpenRequests.at(-1).options; dispatch(panelClose.listeners, "click", { target: panelClose }); api.openSettings("question"); assert(!oldScreenCaller.isCurrent(), "Closed navigation caller remained current");
+finishScreenOpen({ data: { ok: true, screen_id: "sales-order-mgmt" }, error: null }); await new Promise(resolve => setImmediate(resolve)); assertBlankQuestion("late screen-open result");
+screenOpenFactory = async id => ({ data: { ok: true, screen_id: id }, error: null });
 dispatch(panelClose.listeners, "click", { target: panelClose });
 // Actual intake renderer: classification only prepares an immutable confirmation.
 const intakeCalls = [];
@@ -1135,6 +1162,14 @@ assert(api.isFloating() && !root.hidden, "Floating concierge disappeared during 
 activeScreen.id = "screen-menu";
 notifyObservers();
 api.openSettings("question");
+aiQuestionInput.value = "小窓から受注画面を開きたい";
+dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
+await new Promise(resolve => setImmediate(resolve));
+const beforeFloatingScreen = screenOpenRequests.length, beforeFloatingAi = aiRequests.length;
+dispatch(aiScreenButton.listeners, "click", { target: aiScreenButton });
+await new Promise(resolve => setImmediate(resolve));
+assert(screenOpenRequests.length === beforeFloatingScreen + 1 && aiRequests.length === beforeFloatingAi && aiScreenButton.hidden && aiStatus.textContent.includes("D-CATS本体"), "Floating screen assistance did not use the original main-window API without another AI call");
+assert(api.isFloating() && root.ownerDocument === firstFloatingWindow.document, "Screen assistance unexpectedly closed or moved the floating concierge");
 aiQuestionInput.value = "小窓で閉じる質問";
 dispatch(firstFloatingWindow.document.listeners, "keydown", { key: "Escape" });
 assertBlankQuestion("floating Escape");

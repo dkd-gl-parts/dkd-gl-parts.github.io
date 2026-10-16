@@ -52,6 +52,7 @@ jobs:
           node scripts/verify-hanbaioh-test-sales-api.js
           node scripts/verify-concierge-ai.js
           node scripts/verify-concierge-test-order.js
+          node scripts/verify-concierge-navigation.js
           node scripts/verify-concierge-requests.js
           node scripts/verify-concierge-admin.js
           node scripts/verify-concierge-pet-runtime.js
