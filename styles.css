@@ -2461,7 +2461,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .container-stock-list-stats dd { margin-top: 5px; font-size: 24px; font-weight: 750; color: var(--dcats-ink); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .container-stock-list-stats small { margin-left: 4px; color: #52647b; font-size: 12px; font-weight: 500; }
 .container-stock-cost-products > .container-stock-quantity-notice { padding: 9px 12px; background: #fff8e9; border-radius: 6px; color: #765516; }
-.container-stock-cost-products .container-stock-cost-table { min-width: 920px; table-layout: fixed; font-size: 13px; }
+.container-stock-cost-products .container-stock-cost-table { min-width: 920px; table-layout: fixed; font-size: 13px; overflow: visible; border-collapse: separate; border-spacing: 0; box-shadow: none; }
 .container-stock-cost-table td, .container-stock-cost-table th { overflow-wrap: anywhere; }
 .container-stock-cost-table td { padding: 13px 12px; color: #52647b; }
 .container-stock-cost-table th { position: sticky; top: 0; z-index: 2; background: #edf2f7; }
