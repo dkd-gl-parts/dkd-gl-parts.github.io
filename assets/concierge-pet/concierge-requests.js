@@ -902,5 +902,7 @@
       resetDraft: function () { if (draft && !sending && !attempted) clearDraft(); }
     };
   }
-  window.DcatsConciergeRequestsUi = Object.freeze({ mount: mount });
+  window.DcatsConciergeRequestsUi = Object.freeze({ mount: mount, screenLabel: function (id, language) {
+    return (SCREENS[id] || [id, id, id])[language === "en" ? 1 : language === "zh" ? 2 : 0];
+  } });
 })();

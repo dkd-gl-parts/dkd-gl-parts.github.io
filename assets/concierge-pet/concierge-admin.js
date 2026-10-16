@@ -104,7 +104,7 @@
       detail.replaceChildren(el("h2", row.title || t(row.kind || "question")));
       field("reference", "#" + (row.request_no || row.log_no) + " · " + row.id);
       field("sender", source === "message" ? row.reporter_name : data.reporter_name);
-      field("date", date(row.created_at)); field("screen", row.screen_id); field("state", t(row.status || row.state)); field("content", row.question || row.description);
+      field("date", date(row.created_at)); field("screen", window.DcatsConciergeRequestsUi && window.DcatsConciergeRequestsUi.screenLabel ? window.DcatsConciergeRequestsUi.screenLabel(row.screen_id, initial.language) : row.screen_id); field("state", t(row.status || row.state)); field("content", row.question || row.description);
       var log = source === "message" ? row : data.message;
       if (log && log.response && log.response.answer) field("answer", log.response.answer);
       if (log && log.error_code) field("error", log.error_code);

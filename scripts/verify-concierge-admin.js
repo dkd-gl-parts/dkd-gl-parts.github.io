@@ -5,6 +5,8 @@ const source = read("assets/concierge-pet/concierge-admin.js"), html = read("ind
 new vm.Script(source);
 assert(!/innerHTML|localStorage|sessionStorage|\.from\(|fetch\(|api\.openai|service_role|OPENAI_API_KEY/.test(source));
 assert(html.includes('id="screen-concierge-admin"') && html.includes('id="concierge-admin-host"'));
+const version = /concierge-pet\.js\?v=([^"<]+)/.exec(html)[1];
+assert(html.includes('concierge-admin.js?v=' + version) && html.includes('concierge-admin.css?v=' + version));
 assert(app.includes('action: "concierge-admin", available: isSystemAdmin()'));
 assert(app.includes('if (id !== "concierge-admin") closeConciergeAdmin()'));
 assert(app.includes('body.submission_id = window.crypto.randomUUID()'));
