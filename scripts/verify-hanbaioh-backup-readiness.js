@@ -68,7 +68,8 @@ function fixture(mode = {}) {
     const f = fixture({ httpStatus: status }); await assert.rejects(f.run(), e => e.message === code); assert.equal(f.posts.filter(m => m.request).length, 1);
   }
   const html = fs.readFileSync(path.join(root,"index.html"),"utf8"), app = fs.readFileSync(path.join(root,"app.js"),"utf8");
-  const card = html.slice(html.indexOf('<section class="dcats-business-workspace-backup"'), html.indexOf('</section>', html.indexOf('<section class="dcats-business-workspace-backup"')));
+  const card = html.match(/<section\b[^>]*\bid="dcats-business-workspace-backup"[^>]*>[\s\S]*?<\/section>/)?.[0];
+  assert(card, "The preimport backup section must exist independently of other setup cards");
   assert(card.includes(" hidden>")); assert(!card.includes("<input")); assert.equal((card.match(/data-backup-check=/g)||[]).length,7);
   assert(card.includes('id="dcats-business-workspace-backup-check"')); assert(card.includes('role="status"'));
   const names = [...new Set([...card.matchAll(/data-i18n="(business_workspace_backup_[^"]+)"/g)].map(m=>m[1]))];
