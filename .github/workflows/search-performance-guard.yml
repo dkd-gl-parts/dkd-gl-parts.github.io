@@ -63,6 +63,8 @@ jobs:
         run: node scripts/verify-manufacturing-cost-loading.js
       - name: Verify previously linked pallet candidates
         run: node scripts/verify-manufacturing-cost-import-history.js
+      - name: Verify pallet candidate retention while editing and creating lists
+        run: node scripts/verify-manufacturing-cost-retention.js
       - name: Verify held pallet parts and partial receipt resume
         run: node scripts/verify-container-held-parts.js
       - name: Verify Sawafuji abbreviated manufacturer-part linking
