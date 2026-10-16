@@ -2,14 +2,18 @@ const assert = require("assert");
 const fs = require("fs");
 require("../manufacturing-cost-import.js");
 const elements = {};
-["results","apply","status","reference","preview","choose","file","file-name","cost-list","cost-list-note","sheets","held-toggle","held-list","new","history","history-toggle","held-panel","held-refresh"].forEach(id => {
-  elements["container-stock-" + id] = {value:"",textContent:"",innerHTML:"",disabled:false,hidden:id==="history",classList:{toggle(){}},listeners:{},addEventListener(name,fn){this.listeners[name]=fn;}};
+["results","apply","status","reference","preview","choose","file","file-name","cost-list","cost-list-note","sheets","held-toggle","held-list","new","history","history-toggle","held-panel","held-refresh","confirm","confirm-title","confirm-description","confirm-summary","confirm-submit","confirm-cancel"].forEach(id => {
+  elements["container-stock-" + id] = {value:"",textContent:"",innerHTML:"",disabled:false,hidden:id==="history",classList:{toggle(){}},listeners:{},addEventListener(name,fn){this.listeners[name]=fn;},removeEventListener(name){delete this.listeners[name];},focus(){this.focused=true;}};
 });
 let ready;
 globalThis.document={readyState:"loading",addEventListener(name,fn){ready=fn;},getElementById(id){return elements[id]||null;}};
 require("../container-stock-import.js");
 const api=globalThis.DcatsContainerStockImport, state=api._state;
-let calls=[], confirmation="", applyError=null, stored=null;
+let calls=[], confirmation="", applyError=null, stored=null, confirmAction="confirm";
+const dialog=elements["container-stock-confirm"];
+dialog.close=function(value){this.returnValue=value;this.open=false;this.listeners.close?.();};
+dialog.showModal=function(){this.open=true;confirmation=elements["container-stock-confirm-summary"].innerHTML;if(confirmAction!=="pending")queueMicrotask(()=>this.close(confirmAction));};
+globalThis.canEditProductKindStockMgmt=()=>true;
 globalThis.confirm=text=>{confirmation=text;return true;};
 globalThis.sb={async rpc(name,args){
   calls.push({name,args});
@@ -46,7 +50,7 @@ async function main(){
   await api._applyReceipt();
   const first=calls.find(c=>c.name==="apply_container_stock_receipt");
   assert.equal(first.args.p_rows[1].held,true);assert.equal(first.args.p_rows[1].target_dkd_shohin_id,null);assert.equal(first.args.p_rows[1].quantity,3);
-  assert.match(confirmation,/登録可能 1品番・2台/);assert.match(confirmation,/保留 1品番/);
+  assert.match(confirmation,/入庫する数量<\/dt><dd>2<small>台/);assert.match(confirmation,/対象の品番<\/dt><dd>1/);assert.match(confirmation,/今回入庫しない保留品番/);
   assert.match(elements["container-stock-status"].textContent,/保留 1品番は在庫未反映/);
   assert.match(elements["container-stock-results"].innerHTML,/登録完了・保留あり/);
   const count=calls.length;await api._applyReceipt();assert.equal(calls.length,count,"applied UI cannot apply twice");
@@ -63,8 +67,9 @@ async function main(){
   await api._applyReceipt();const resumed=calls.filter(c=>c.name==="apply_container_stock_receipt").at(-1);
   assert.equal(resumed.args.p_rows[0].target_dkd_shohin_id,1,"received target kept immutable");
   assert.equal(resumed.args.p_rows[0].held,false);assert.equal(resumed.args.p_rows[1].held,false);
-  assert.match(confirmation,/登録可能 1品番・3台/);
-  assert.doesNotMatch(confirmation,/登録可能 2品番・5台/);
+  assert.match(confirmation,/入庫する数量<\/dt><dd>3<small>台/);
+  assert.match(confirmation,/すでに入庫済みの品番/);
+  assert.doesNotMatch(confirmation,/入庫する数量<\/dt><dd>5/);
   await api._resumeReceipt(7);applyError="通信エラー";await api._applyReceipt();assert.equal(state.preview,null);assert.match(elements["container-stock-status"].textContent,/再照合/);
   applyError=null;await api._previewReceipt();assert.equal(state.holds["starter|TEST-9999"],first.args.p_rows[1].hold_reason);
   state.working=true;const previous=state.holds["starter|TEST-9999"];api._toggleHold(1);assert.equal(state.holds["starter|TEST-9999"],previous);state.working=false;
@@ -74,10 +79,55 @@ async function main(){
   stored=null;state.sheets=[{name:"STA",matrix:[["Parts No","Quantity"],["TEST-9999",3]],category:"starter",included:true,overrides:{}}];
   state.fileName="all.xlsx";state.fileSha256="b".repeat(64);elements["container-stock-reference"].value="ALL-HELD";
   await api._previewReceipt();api._toggleHold(0);assert.match(elements["container-stock-apply"].textContent,/保留だけ保存/);
-  await api._applyReceipt();assert.match(confirmation,/登録可能 0品番・0台/);
+  await api._applyReceipt();assert.equal(elements["container-stock-confirm-title"].textContent,"保留内容の保存");
+  assert.doesNotMatch(confirmation,/入庫する数量/);
+  assert.equal(elements["container-stock-confirm-submit"].textContent,"保留内容を保存する");
+  // A non-blocking confirmation must never submit on cancel, duplicate clicks or stale state.
+  for (const change of ["cancel","reference","selection","actor","permission"]) {
+    await api._previewReceipt();
+    state.holds["starter|TEST-9999"]="メーカー品番の確認待ち";
+    confirmAction="pending";
+    const count=calls.filter(c=>c.name==="apply_container_stock_receipt").length;
+    const pending=api._applyReceipt();
+    await new Promise(resolve=>setImmediate(resolve));
+    assert(dialog.open);
+    assert(state.working);
+    await api._applyReceipt();
+    assert.equal(calls.filter(c=>c.name==="apply_container_stock_receipt").length,count,"opening/duplicate clicks do not write");
+    if(change==="reference")elements["container-stock-reference"].value="CHANGED";
+    if(change==="selection")state.holds["starter|TEST-9999"]="別の保留理由へ変更";
+    if(change==="actor")globalThis.currentUser={id:"different-user"};
+    if(change==="permission")globalThis.canEditProductKindStockMgmt=()=>false;
+    dialog.close(change==="cancel"?"cancel":"confirm");await pending;
+    assert.equal(state.working,false);
+    assert.equal(calls.filter(c=>c.name==="apply_container_stock_receipt").length,count,"cancel/stale/permission changes must not write");
+    delete globalThis.currentUser;globalThis.canEditProductKindStockMgmt=()=>true;
+    elements["container-stock-reference"].value="ALL-HELD";
+  }
+  confirmAction="confirm";
+  api._resetReceipt();
+  state.costListId="none";state.costListReady=true;state.fileName="<img src=x>.xlsx";state.fileSha256="c".repeat(64);
+  elements["container-stock-reference"].value=state.fileName;
+  state.sheets=[{name:"STA",matrix:[["Parts No","Quantity"],["TEST-1001",753]],category:"starter",included:true,overrides:{}}];
+  await api._previewReceipt();await api._applyReceipt();
+  assert.match(confirmation,/入庫する数量<\/dt><dd>753/);
+  assert.match(confirmation,/&lt;img/);assert.doesNotMatch(confirmation,/<img/);
+  assert.doesNotMatch(confirmation,/保留|入庫済み/ ,"zero held/received rows must not add distracting explanations");
+  assert.equal(elements["container-stock-confirm-submit"].textContent,"この内容で入庫する");
+  const showModal=dialog.showModal;
+  for(const failure of [undefined,()=>{throw Error("unsupported");}]){
+    await api._previewReceipt();dialog.showModal=failure;
+    const count=calls.filter(c=>c.name==="apply_container_stock_receipt").length;
+    await api._applyReceipt();assert.equal(state.working,false);
+    assert.match(elements["container-stock-status"].textContent,/確認画面を開けません/);
+    assert.equal(calls.filter(c=>c.name==="apply_container_stock_receipt").length,count);
+  }
+  dialog.showModal=showModal;
   assert.ok(calls.every(c=>!/(?:create|insert|master|stock_update)/.test(c.name)),"no synthetic master or direct stock writes");
   const html=fs.readFileSync(require("path").join(__dirname,"../index.html"),"utf8");
   for(const id of ["held-panel","held-list","held-toggle","held-refresh","new"]) assert.match(html,new RegExp('id="container-stock-'+id+'"'));
+  for(const id of ["confirm","confirm-title","confirm-description","confirm-summary","confirm-cancel","confirm-submit"]) assert.match(html,new RegExp('id="container-stock-'+id+'"'));
+  assert.match(html,/<form method="dialog">/);
   console.log("Container held-part UI guards passed: explicit hold, reasons, partial/all-held, reload/resume, immutable received rows, retry, escaping");
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});

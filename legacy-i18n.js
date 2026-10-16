@@ -2,6 +2,21 @@
 // Runtime translation is local; this file makes no external requests.
 var DCATS_LEGACY_UI_TRANSLATIONS = {
   "en": {
+    "一括入庫の確認": "Confirm stock receipt",
+    "次の数量を在庫に追加します。": "The following quantities will be added to stock.",
+    "戻って確認": "Go back and review",
+    "この内容で入庫する": "Confirm stock receipt",
+    "確認画面を開けませんでした。この画面を更新してから、もう一度照合してください。": "The confirmation could not be opened. Refresh this page and reconcile again.",
+    "保留内容の保存": "Save held items",
+    "保留中の品番を保存します。今回は入庫しません。": "Held items will be saved. No stock will be received this time.",
+    "保留内容を保存する": "Save held items",
+    "対象のコンテナ": "Container",
+    "入庫する数量": "Quantity to receive",
+    "対象の品番": "Part numbers",
+    "今回入庫しない保留品番": "Held items excluded from this receipt",
+    "保留内容を保存し、入庫できるようになってから再開できます。": "Held items will be saved and can be resumed when ready to receive.",
+    "すでに入庫済みの品番は、今回の入庫に含めません。": "Items already received are excluded from this receipt.",
+    "ログイン状態または権限が変わりました。画面を開き直して確認してください。": "Your sign-in state or permissions changed. Reopen this screen and review.",
     "今回のファイルから読み取った数量です。入庫登録は取込内容を照合してから確定してください。": "Quantities are read from the current file. Reconcile its contents before confirming stock receipt.",
 
     "保存済み数量はリストを選ぶだけで表示します。入庫登録は元ファイルを照合してから確定してください。": "Choose a list to view saved quantities. Reconcile the source file before confirming stock receipt.",
@@ -3915,6 +3930,21 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "/ ALDK除外": "/ ALDK excluded"
   },
   "zh": {
+    "一括入庫の確認": "确认批量入库",
+    "次の数量を在庫に追加します。": "将以下数量添加至库存。",
+    "戻って確認": "返回检查",
+    "この内容で入庫する": "确认入库",
+    "確認画面を開けませんでした。この画面を更新してから、もう一度照合してください。": "无法打开确认窗口。请刷新页面并重新匹配。",
+    "保留内容の保存": "保存暂缓商品",
+    "保留中の品番を保存します。今回は入庫しません。": "将保存暂缓商品，本次不入库。",
+    "保留内容を保存する": "保存暂缓商品",
+    "対象のコンテナ": "目标集装箱",
+    "入庫する数量": "本次入库数量",
+    "対象の品番": "目标品号",
+    "今回入庫しない保留品番": "本次不入库的暂缓品号",
+    "保留内容を保存し、入庫できるようになってから再開できます。": "暂缓内容将被保存，可在具备入库条件后继续处理。",
+    "すでに入庫済みの品番は、今回の入庫に含めません。": "已入库的品号不包含在本次入库中。",
+    "ログイン状態または権限が変わりました。画面を開き直して確認してください。": "登录状态或权限已变更，请重新打开此页面并确认。",
     "今回のファイルから読み取った数量です。入庫登録は取込内容を照合してから確定してください。": "此处数量来自本次文件。请先匹配导入内容，再确认入库。",
     "保存済み数量はリストを選ぶだけで表示します。入庫登録は元ファイルを照合してから確定してください。": "选择清单即可显示已保存数量。请先匹配原始文件，再确认入库。",
     "数量未保存の商品は、原価計算で元ファイルを取り込み、リストを保存すると表示できます。": "数量未保存的商品，请在原价计算中导入原始文件并保存清单。",
