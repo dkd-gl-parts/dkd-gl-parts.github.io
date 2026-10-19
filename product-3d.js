@@ -2140,7 +2140,7 @@
     elements["product-3d-viewer-autorotate"].setAttribute("aria-pressed", "false");
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await import("./product-3d-viewer.js?v=1.1.1198");
+      var module = await import("./product-3d-viewer.js?v=1.1.1199");
       if (!targetStillSelected()) {
         if (requestId === viewerRequestId) closeViewer();
         return;

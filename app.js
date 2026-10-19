@@ -8009,7 +8009,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1198";
+var APP_VERSION       = "v1.1.1199";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -13112,8 +13112,8 @@ function shippingDocumentDeliveryHtml(order) {
   var destination = shippingDocumentDestinationContext(order);
   var waybill = salesOrderWaybillRecord(order, "outbound");
   var trackingNumber = waybill.tracking_number || order.outbound_tracking_number || "";
-  return "<section class='shipping-document-delivery " + esc(destination.type) + "'><div class='shipping-document-delivery-head'><h3>" + esc(t("shipping_document_delivery_confirmation")) + "</h3><span class='shipping-document-destination-badge " + esc(destination.type) + "'>" + esc(destination.badge) + "</span></div>" +
-    "<div class='shipping-document-delivery-grid'><div class='shipping-document-destination-card'><span class='shipping-document-destination-label'>" + esc(destination.label) + "</span><strong>" + esc(destination.recipient) + "</strong>" +
+  return "<section class='shipping-document-delivery " + esc(destination.type) + "'><div class='shipping-document-delivery-head'><h3>" + esc(t("shipping_document_delivery_confirmation")) + "</h3></div>" +
+    "<div class='shipping-document-delivery-grid'><div class='shipping-document-destination-card'><div class='shipping-document-destination-head'><span class='shipping-document-destination-label'>" + esc(destination.label) + "</span><span class='shipping-document-destination-badge " + esc(destination.type) + "'>" + esc(destination.badge) + "</span></div><strong>" + esc(destination.recipient) + "</strong>" +
     (destination.recipientDetail ? "<span>" + esc(destination.recipientDetail) + "</span>" : "") +
     "<span>" + esc(destination.postalAddress) + "</span><span>" + esc(destination.phone) + "</span></div>" +
     "<dl class='shipping-document-delivery-facts'><div class='shipping-document-outbound-service'><dt>" + esc(t("shipping_document_outbound_service")) + "</dt><dd>" + esc(salesOrderWaybillCarrierLabel(order, "outbound")) + "</dd></div>" +

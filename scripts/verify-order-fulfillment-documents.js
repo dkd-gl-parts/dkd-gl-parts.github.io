@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
+const { parseHTML } = require("linkedom");
 
 const root = path.resolve(__dirname, "..");
 const source = fs.readFileSync(path.join(root, "app.js"), "utf8");
@@ -279,6 +280,43 @@ for (const fragment of [
   "salesOrderDeliveryPreferenceLabel(order)",
   "shippingDocumentWaybillNumberFormat(trackingNumber)"
 ]) requireFragment(shippingDocumentDelivery, fragment, `Shipping destination display is incomplete: ${fragment}`);
+
+const deliveryContext = {
+  t: (key) => key,
+  esc: (value) => String(value == null ? "" : value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char])),
+  salesOrderWaybillRecord: () => ({ tracking_number: "123456789012" }),
+  salesOrderWaybillCarrierLabel: () => "Carrier / Service",
+  salesOrderDeliveryPreferenceLabel: () => "2026-10-20",
+  shippingDocumentWaybillNumberFormat: (value) => value
+};
+vm.runInNewContext(shippingDocumentDestinationSource + shippingDocumentDelivery, deliveryContext);
+for (const test of [
+  { type: "standard", address: { company_name: "Customer", recipient_name: "Recipient", phone_number: "03-0000-0000" } },
+  { type: "direct", address: { company_name: "Direct destination", recipient_name: "Recipient", phone_number: "03-0000-0000" } },
+  { type: "office", address: { destination_type: "yamato_office", company_name: "Customer", recipient_name: "Recipient", yamato_office_name: "Carrier office", yamato_office_code: "012345", phone_number: "03-0000-0000" } },
+  { type: "standard", address: {} },
+  { type: "direct", address: { company_name: '<img src=x onerror="alert(1)">', address_line_1: "<script>bad()</script>" } }
+]) {
+  const order = { customer_name: "Customer", shipping_address: test.address };
+  const markup = deliveryContext.shippingDocumentDeliveryHtml(order);
+  const { document } = parseHTML(markup);
+  const card = document.querySelector(".shipping-document-destination-card");
+  const badge = card.querySelector(".shipping-document-destination-head > .shipping-document-destination-badge");
+  if (!badge || !badge.classList.contains(test.type) || document.querySelectorAll(".shipping-document-destination-badge").length !== 1) {
+    throw new Error(`Shipping mode must appear once inside its destination address: ${test.type}`);
+  }
+  if (document.querySelector(".shipping-document-delivery-head .shipping-document-destination-badge")) {
+    throw new Error("Shipping mode must not remain detached in the delivery section heading");
+  }
+  if (card.querySelector("strong").textContent !== deliveryContext.shippingDocumentDestinationContext(order).recipient ||
+      !card.textContent.includes(deliveryContext.shippingDocumentDestinationContext(order).postalAddress) ||
+      !card.textContent.includes(deliveryContext.shippingDocumentDestinationContext(order).phone) ||
+      !document.querySelector(".shipping-document-delivery-facts").textContent.includes("123456789012") ||
+      document.querySelector("script, img")) {
+    throw new Error("Moving the shipping mode must preserve destination details, tracking and HTML escaping");
+  }
+}
+requireFragment(css, ".shipping-document-destination-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;", "Destination mode and label must remain inside the address at narrow widths");
 
 const shippingDocumentOrderContents = sourceBetween("function shippingDocumentOrderContentsHtml", "function renderShippingDocumentDetail");
 for (const fragment of [
@@ -1080,11 +1118,11 @@ for (const fragment of [
 ]) requireFragment(i18n, fragment, `B2 reissue translation is missing: ${fragment}`);
 
 for (const fragment of [
-  'content="v1.1.1198"',
-  'styles.css?v=1.1.1198',
-  'app.js?v=1.1.1198'
+  'content="v1.1.1199"',
+  'styles.css?v=1.1.1199',
+  'app.js?v=1.1.1199'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.1198"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.1199"');
 requireFragment(source, 'sales_management_registered: "売上登録済"');
 requireFragment(source, 'sales_management_unknown: "売上確認不可"');
 
