@@ -15,6 +15,9 @@
   Object.assign(words.ja,{fetchProgressTitle:'参考価格を取得中',fetchResultTitle:'参考価格の取得結果',fetchChecking:'接続設定を確認中',fetchWaiting:'通信の応答待ち',fetchRefreshing:'取得結果を一覧に反映中',fetchComplete:'取得処理が完了しました。',fetchPartial:'取得処理が終了しました。保留・失敗・未実行の品番を確認してください。',fetchRefreshFailed:'取得結果の一覧への反映を確認できません。最新の内容を確認してください。',fetchProcessed:'処理済み',fetchElapsed:'経過',fetchSeconds:'秒',fetchCurrent:'現在の品番',fetchPending:'未実行',fetchWorking:'通信中',fetchFetched:'取得済み',fetchOnHold:'保留',fetchError:'失敗',fetchRequestUnknown:'応答結果を確認できませんでした。自動再取得はしていません。',fetchStartFailed:'取得を開始できませんでした。接続設定・通信状態を確認してください。'});
   Object.assign(words.en,{fetchProgressTitle:'Fetching reference prices',fetchResultTitle:'Reference price results',fetchChecking:'Checking connection settings',fetchWaiting:'Waiting for the response',fetchRefreshing:'Refreshing the list with fetch results',fetchComplete:'Price retrieval completed.',fetchPartial:'Retrieval ended. Review held, failed and unprocessed products.',fetchRefreshFailed:'Could not confirm the refreshed list. Check the latest data.',fetchProcessed:'Processed',fetchElapsed:'Elapsed',fetchSeconds:'s',fetchCurrent:'Current part',fetchPending:'Not processed',fetchWorking:'Fetching',fetchFetched:'Fetched',fetchOnHold:'Held',fetchError:'Failed',fetchRequestUnknown:'The response could not be confirmed. Nothing was retried automatically.',fetchStartFailed:'Could not start retrieval. Check connection settings and network status.'});
   Object.assign(words.zh,{fetchProgressTitle:'正在获取参考价格',fetchResultTitle:'参考价格获取结果',fetchChecking:'正在确认连接设置',fetchWaiting:'等待通信响应',fetchRefreshing:'正在将获取结果更新至清单',fetchComplete:'价格获取已完成。',fetchPartial:'获取已结束，请确认保留、失败和未处理的商品。',fetchRefreshFailed:'无法确认清单更新结果，请查看最新内容。',fetchProcessed:'已处理',fetchElapsed:'已用',fetchSeconds:'秒',fetchCurrent:'当前品号',fetchPending:'未处理',fetchWorking:'获取中',fetchFetched:'已获取',fetchOnHold:'保留',fetchError:'失败',fetchRequestUnknown:'无法确认响应结果，未自动重试。',fetchStartFailed:'无法开始获取，请确认连接设置和网络状态。'});
+  Object.assign(words.ja,{fetchUnmatched:'該当なし／照合不可',fetchOem:'検索に必要なOEM品番を確認してください。',fetchAccess:'ログインまたは取得権限を確認してください。',fetchRateLimit:'取得回数の制限に達したため中断しました。時間をおいて確認してください。',fetchFinishedWithIssues:'全対象の処理が完了しました。該当なし・保留・失敗の結果を確認してください。',fetchPartial:'取得処理を中断しました。未実行の品番と停止理由を確認してください。'});
+  Object.assign(words.en,{fetchUnmatched:'No match / identity unverified',fetchOem:'Check the OEM number required for this search.',fetchAccess:'Check your login and permission to fetch prices.',fetchRateLimit:'Retrieval stopped because the request limit was reached. Check again later.',fetchFinishedWithIssues:'All targets were processed. Review unmatched, held and failed results.',fetchPartial:'Retrieval stopped. Review unprocessed parts and the reason.'});
+  Object.assign(words.zh,{fetchUnmatched:'无匹配／无法核对',fetchOem:'请确认搜索所需的OEM品号。',fetchAccess:'请确认登录及价格获取权限。',fetchRateLimit:'已达到获取次数限制，处理已中断，请稍后确认。',fetchFinishedWithIssues:'所有对象均已处理，请查看无匹配、保留及失败结果。',fetchPartial:'获取已中断，请确认未处理的品号及停止原因。'});
   function w(k){return (words[root.currentLang]||words.ja)[k]||k;}
   function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function money(v){return v==null?'—':'¥'+Number(v).toLocaleString('ja-JP');}
@@ -157,13 +160,16 @@
     catch(e){if(valid()&&epoch===state.epoch){try{var check=await credentialCall('status');ok=check.revision===op&&check.configured===(action==='save');}catch(ignore){}}}
     finally{if(credentials)Object.keys(credentials).forEach(function(k){credentials[k]='';});if(d.open)d.close();if(valid()&&epoch===state.epoch){lock(false);status(w(ok?(action==='save'?'credentialSaved':'credentialRemoved'):'credentialUnknown'),!ok);}}
   }
-  async function dksReviewKey(result){
+  async function dksReviewResult(result){
     var data=result&&result.data,context=result&&result.error&&result.error.context;
     if(!data&&context&&typeof context.clone==='function'){
       try{var response=context.clone();if(typeof response.json==='function')data=await response.json();}catch(ignore){}
     }
-    var keys={dks_tax_basis_unverified:'fetchTax',dks_gateway_rejected:'fetchGateway',dks_login_required:'fetchLogin',dks_login_layout_unverified:'fetchLayout',dks_search_layout_unverified:'fetchLayout',dks_layout_or_identity_unverified:'fetchIdentity',dks_oem_required:'fetchIdentity',dks_ambiguous_prices:'fetchAmbiguous',quote_not_saved:'fetchStore'};
-    return data&&typeof data.reason==='string'&&Object.prototype.hasOwnProperty.call(keys,data.reason)?keys[data.reason]:'fetchReview';
+    var keys={dks_tax_basis_unverified:'fetchTax',dks_gateway_rejected:'fetchGateway',dks_login_required:'fetchLogin',dks_login_layout_unverified:'fetchLayout',dks_search_layout_unverified:'fetchLayout',dks_layout_or_identity_unverified:'fetchIdentity',dks_oem_required:'fetchOem',dks_ambiguous_prices:'fetchAmbiguous',quote_not_saved:'fetchStore'};
+    var reason=data&&(typeof data.reason==='string'?data.reason:data.error),httpStatus=Number(context&&context.status);
+    var key=Object.prototype.hasOwnProperty.call(keys,reason)?keys[reason]:['credentials_not_configured','credentials_required'].includes(reason)?'credentialNeeded':[401,403].includes(httpStatus)||['unauthorized','forbidden','forbidden_origin'].includes(reason)?'fetchAccess':httpStatus===429||reason==='credential_rate_limit'?'fetchRateLimit':'fetchReview';
+    var stop=[401,403,429].includes(httpStatus)||['unauthorized','forbidden','forbidden_origin','credentials_not_configured','credentials_required','credential_rate_limit','dks_gateway_rejected','dks_login_required','dks_login_layout_unverified'].includes(reason);
+    return {key:key,stop:stop};
   }
   async function fetchMissing(){
     if(state.busy||state.pending||!valid()||!root.isSystemAdmin())return;
@@ -199,7 +205,7 @@
     d.querySelector('[data-spl-fetch-elapsed]').textContent=w('fetchElapsed')+' '+Math.floor(((job.finishedAt||Date.now())-job.startedAt)/1000)+' '+w('fetchSeconds');
     d.querySelector('[data-spl-fetch-current]').textContent=!job.finished&&job.active>=0?w('fetchCurrent')+'：'+job.items[job.active].part:'';
     d.querySelector('[data-spl-fetch-totals]').textContent=dksSummary(job);
-    d.querySelectorAll('[data-spl-fetch-result]').forEach(function(n,i){var item=job.items[i];n.dataset.status=item.status;n.querySelector('[data-spl-fetch-state]').textContent=w({pending:'fetchPending',working:'fetchWorking',fetched:'fetchFetched',held:'fetchOnHold',failed:'fetchError'}[item.status]);n.querySelector('small').textContent=item.detail?w(item.detail):item.price!=null?money(item.price):'';});
+    d.querySelectorAll('[data-spl-fetch-result]').forEach(function(n,i){var item=job.items[i];n.dataset.status=item.status;n.querySelector('[data-spl-fetch-state]').textContent=w(item.status==='held'&&item.detail==='fetchIdentity'?'fetchUnmatched':{pending:'fetchPending',working:'fetchWorking',fetched:'fetchFetched',held:'fetchOnHold',failed:'fetchError'}[item.status]);n.querySelector('small').textContent=item.detail?w(item.detail):item.price!=null?money(item.price):'';});
     d.querySelector('[data-spl-confirm]').disabled=!job.finished;d.dataset.finished=String(job.finished);
   }
   function startDksProgress(rows,capturedRun,epoch,listId){
@@ -215,22 +221,27 @@
   function finishDksProgress(job,message){clearTimeout(job.timer);job.finished=true;job.finishedAt=Date.now();job.active=-1;job.message=message;renderDksProgress(job);if(state.dksProgress===job)job.dialog.querySelector('[data-spl-confirm]').focus();}
   async function fetchDksRows(rows,capturedRun,epoch,listId){
     if(state.busy||state.pending||!dksCurrent(capturedRun,epoch,listId))return;
-    var job=startDksProgress(rows,capturedRun,epoch,listId);if(!job)return;var failureKey='fetchReview';lock(true);status(w('fetchChecking'));
+    var job=startDksProgress(rows,capturedRun,epoch,listId);if(!job)return;lock(true);status(w('fetchChecking'));
     try{
       var info=await credentialCall('status');if(!dksCurrent(capturedRun,epoch,listId))return;if(!info.configured){finishDksProgress(job,'credentialNeeded');status(w('credentialNeeded'),true);return;}
       for(var i=0;i<rows.length;i++){
         if(!dksCurrent(capturedRun,epoch,listId))return;
         job.active=i;job.items[i].status='working';job.message='fetchWaiting';renderDksProgress(job);status(w('fetchWaiting')+' '+(i+1)+' / '+rows.length);
-        var r=await root.sb.functions.invoke('sales-pricing-dks-fetch',{body:{dkd_shohin_id:rows[i].dkd_shohin_id},signal:AbortSignal.timeout(105000)});
+        var r;
+        try{r=await root.sb.functions.invoke('sales-pricing-dks-fetch',{body:{dkd_shohin_id:rows[i].dkd_shohin_id},signal:AbortSignal.timeout(105000)});}
+        catch(e){r={error:e||{}};}
         if(!dksCurrent(capturedRun,epoch,listId))return;
-        if(r.error){failureKey=await dksReviewKey(r);if(!dksCurrent(capturedRun,epoch,listId))return;job.items[i].status=failureKey==='fetchReview'?'failed':'held';job.items[i].detail=failureKey==='fetchReview'?'fetchRequestUnknown':failureKey;renderDksProgress(job);break;}
-        if(r.data&&r.data.status==='fetched'){job.items[i].status='fetched';job.items[i].price=r.data.price_jpy;}else{failureKey=await dksReviewKey(r);if(!dksCurrent(capturedRun,epoch,listId))return;job.items[i].status='held';job.items[i].detail=failureKey;}renderDksProgress(job);
+        if(!r||typeof r!=='object')r={error:{}};
+        if(!r.error&&r.data&&r.data.status==='fetched'){job.items[i].status='fetched';job.items[i].price=r.data.price_jpy;renderDksProgress(job);continue;}
+        var review=await dksReviewResult(r);if(!dksCurrent(capturedRun,epoch,listId))return;
+        job.items[i].status=r.error&&review.key==='fetchReview'?'failed':'held';job.items[i].detail=r.error&&review.key==='fetchReview'?'fetchRequestUnknown':review.key;renderDksProgress(job);
+        if(review.stop){job.stopKey=review.key;break;}
       }
     }catch(e){if(dksCurrent(capturedRun,epoch,listId)){if(job.active<0){finishDksProgress(job,'fetchStartFailed');status(w('fetchStartFailed'),true);return;}job.items[job.active].status='failed';job.items[job.active].detail='fetchRequestUnknown';}}
     finally{if(valid()&&epoch===state.epoch)lock(false);if(!dksCurrent(capturedRun,epoch,listId)&&state.dksProgress===job)dropDksProgress(job);}
     if(dksCurrent(capturedRun,epoch,listId)){
       job.active=-1;job.message='fetchRefreshing';renderDksProgress(job);var refreshEpoch=state.epoch+1;job.refreshEpoch=refreshEpoch;await load(true,true);
-      if(valid()&&state.epoch===refreshEpoch&&String(listId)===String(state.listId)&&state.dksProgress===job){var c=dksCounts(job),bad=!!(c.held||c.failed||c.pending),message=!state.run?'fetchRefreshFailed':bad?'fetchPartial':'fetchComplete';finishDksProgress(job,message);status(w(message)+' '+dksSummary(job)+(c.held?'：'+w(failureKey):''),bad||!state.run);}
+      if(valid()&&state.epoch===refreshEpoch&&String(listId)===String(state.listId)&&state.dksProgress===job){var c=dksCounts(job),bad=!!(c.held||c.failed||c.pending),message=!state.run?'fetchRefreshFailed':c.pending?'fetchPartial':bad?'fetchFinishedWithIssues':'fetchComplete';finishDksProgress(job,message);status(w(message)+' '+dksSummary(job)+(job.stopKey?'：'+w(job.stopKey):''),bad||!state.run);}
       else if(state.dksProgress===job)dropDksProgress(job);
     }
   }
