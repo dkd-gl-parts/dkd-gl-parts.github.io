@@ -211,7 +211,10 @@ const documentObject = {
   },
   querySelectorAll(selector) {
     if (selector === ".screen") return [activeScreen];
-    if (selector.includes(".panel.show") && activeScreen.id === "screen-search") return [salesDetail, salesModal].filter(Boolean);
+    if (selector.includes(".panel.show")) return [
+      ...documentObject.body.descendants().filter(node => node.getAttribute("role") === "dialog"),
+      ...(activeScreen.id === "screen-search" ? [salesDetail, salesModal].filter(Boolean) : [])
+    ];
     return [];
   }
 };
@@ -1224,9 +1227,80 @@ assert(!root.hidden && !root.classList.contains("is-dragging") && !hitTarget.has
 assert(api.getSettings().mode === "fixed", "Dragging changed the selected movement mode");
 const droppedRect = mover.getBoundingClientRect();
 assert(droppedRect.left === draggedRect.left && droppedRect.top === draggedRect.top, "Fixed mode did not keep the concierge at the dropped position");
+
+documentObject.hidden = false;
+dispatch(documentObject.listeners, "visibilitychange");
+api.openSettings("question");
+dispatch(panelClose.listeners, "click", { target: panelClose });
+assert(mover.getBoundingClientRect().left === droppedRect.left && mover.getBoundingClientRect().top === droppedRect.top, "Closing a question moved the fixed concierge away from its dropped position");
+api.setState("working", { duration: 1200 });
+while (Array.from(pendingTimers.values()).some(timer => timer.delay === 1200)) runTimerWithDelay(1200);
+assert(mover.getBoundingClientRect().left === droppedRect.left && mover.getBoundingClientRect().top === droppedRect.top, "An external status moved the fixed concierge away from its dropped position");
 dispatch(hitTarget.listeners, "click", { target: hitTarget });
 assert(panel.hidden, "A completed drag was mistaken for a click and opened settings");
 sandboxMath.random = () => 0;
+const expectedFixedActivities = [
+  { name: "waving", duration: 1500 },
+  { name: "bow", column: 1, duration: 1530 },
+  { name: "escort", column: 2, duration: 1660 },
+  { name: "handshake", column: 3, duration: 1780 },
+  { name: "shy", column: 4, duration: 1750 },
+  { name: "welcome", column: 5, duration: 1630 }
+];
+function assertFixedIgnoresPointer(message) {
+  const before = lastAnimationFor(sprite), count = animations.length;
+  dispatch(documentObject.listeners, "pointermove", { target: activeScreen, clientX: 1800, clientY: -800 });
+  flushAnimationFrames();
+  assert(lastAnimationFor(sprite) === before && animations.length === count, message);
+}
+for (const character of ["suzuto", "rinna"]) {
+  api.setCharacter(character);
+  api.setState("greeting", { duration: 1300 });
+  while (Array.from(pendingTimers.values()).some(timer => timer.delay === 1300)) runTimerWithDelay(1300);
+  api.setMode("fixed");
+  const anchor = mover.getBoundingClientRect(), count = animations.length;
+  for (const expected of expectedFixedActivities) {
+    assertFixedIgnoresPointer(`${character} followed the pointer during fixed idle`);
+    runTimerWithDelay(2600); await new Promise(resolve => setImmediate(resolve));
+    const action = lastAnimationFor(sprite);
+    if (expected.name === "waving") assert(animationRowPercent(action) === 30 && action.options.iterations === 2 && action.keyframes.length === 5, `${character} did not play the animated wave`);
+    else assert(action.options.iterations === 1 && Math.abs(animationColumnPercent(action) - expected.column * 100 / 7) < .001, `${character} repeated or used the wrong ${expected.name} pose`);
+    assertFixedIgnoresPointer(`${character}'s ${expected.name} was interrupted by pointer movement`);
+    assert(mover.getBoundingClientRect().left === anchor.left && mover.getBoundingClientRect().top === anchor.top, `${character} walked during fixed ${expected.name}`);
+    runTimerWithDelay(expected.duration); await new Promise(resolve => setImmediate(resolve));
+    assert(animationRowPercent(lastAnimationFor(sprite)) === 0, `${character} did not return to front-facing idle after ${expected.name}`);
+  }
+  assert(!animations.slice(count).some(animation => animation.owner === mover), `${character}'s fixed cycle created a travel animation`);
+  const fixedTimer = Array.from(pendingTimers.entries()).find(([, timer]) => timer.delay === 2600)[0];
+  api.openSettings("question"); assert(!pendingTimers.has(fixedTimer), "Opening a panel did not cancel the fixed cycle");
+  dispatch(panelClose.listeners, "click", { target: panelClose });
+  assert(Array.from(pendingTimers.values()).some(timer => timer.delay === 2600), "Closing the panel did not resume the fixed cycle");
+  reduceMotionQuery.matches = true; reduceMotionListeners.forEach(listener => listener({ matches: true }));
+  assert(!Array.from(pendingTimers.values()).some(timer => timer.delay === 2600) && !liveInfiniteAnimations().length, "Reduced motion did not stop fixed gestures");
+  reduceMotionQuery.matches = false; reduceMotionListeners.forEach(listener => listener({ matches: false }));
+  const fixedTimerAfterResume = Array.from(pendingTimers.entries()).find(([, timer]) => timer.delay === 2600)[0];
+  documentObject.hidden = true; dispatch(documentObject.listeners, "visibilitychange");
+  assert(!pendingTimers.has(fixedTimerAfterResume) && !liveInfiniteAnimations().length, "Hidden presentation did not stop fixed gestures");
+  documentObject.hidden = false; dispatch(documentObject.listeners, "visibilitychange");
+}
+const fixedBlocker = new FakeElement("div", documentObject);
+fixedBlocker.setAttribute("role", "dialog");
+fixedBlocker.customRect = { left: 40, top: 60, right: 180, bottom: 180, width: 140, height: 120 };
+activeScreen.appendChild(fixedBlocker);
+api.setMode("fixed");
+const fixedBlockedAnchor = mover.getBoundingClientRect();
+assert(root.classList.contains("is-blocked") && animationRowPercent(lastAnimationFor(sprite)) === 60, "A blocking dialog did not pause the fixed gesture cycle");
+runTimerWithDelay(700); await new Promise(resolve => setImmediate(resolve));
+assert(mover.getBoundingClientRect().left === fixedBlockedAnchor.left && mover.getBoundingClientRect().top === fixedBlockedAnchor.top, "A blocking dialog relocated the fixed concierge");
+fixedBlocker.hidden = true;
+runTimerWithDelay(700); await new Promise(resolve => setImmediate(resolve));
+assert(!root.classList.contains("is-blocked") && animationRowPercent(lastAnimationFor(sprite)) === 0, "Closing a blocking dialog did not resume fixed idle");
+const fixedTimerBeforeOff = Array.from(pendingTimers.entries()).find(([, timer]) => timer.delay === 2600)[0];
+api.setMode("off");
+assert(!pendingTimers.has(fixedTimerBeforeOff) && !liveInfiniteAnimations().length, "Hiding the concierge did not cancel the fixed cycle");
+api.setMode("fixed");
+api.setCharacter("suzuto");
+while (Array.from(pendingTimers.values()).some(timer => timer.delay === 1300)) runTimerWithDelay(1300);
 api.setMode("active");
 
 documentObject.hidden = false;
@@ -1672,7 +1746,7 @@ activeScreen.id = "screen-login";
 notifyObservers();
 assert(root.hidden, "Concierge must be hidden on the login screen");
 
-console.log("Concierge runtime behavior verification passed (system-admin AI guidance, explicit image preview/remove/send and expiry, token meter, system-admin gate, always-on-top floating display, pointer-captured drag and viewport clamping, 5 movement modes, move-stop cycle, 6 distinct one-shot stop gestures, one sprite, user-scoped preferences, i18n, gaze, card avoidance, scroll-stable viewport revalidation, reduced motion, focus, and inactive cancellation).");
+console.log("Concierge runtime behavior verification passed (system-admin AI guidance, explicit image preview/remove/send and expiry, token meter, system-admin gate, always-on-top floating display, pointer-captured drag and viewport clamping, 5 movement modes, move-stop cycle, 6 distinct one-shot stop gestures, fixed-mode six-action cycle without pointer tracking or travel, one sprite, user-scoped preferences, i18n, gaze, card avoidance, scroll-stable viewport revalidation, reduced motion, focus, and inactive cancellation).");
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;
