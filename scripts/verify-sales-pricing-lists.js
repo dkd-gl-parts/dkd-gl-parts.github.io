@@ -8,6 +8,7 @@ async function fixture(lang='ja'){
  const {window}=parseHTML('<html><body><div id="screen-sales-pricing-mgmt" class="screen active"><section id="sales-pricing-lists"></section></div></body></html>');
  const doc=window.document,selectValue=new WeakMap();
  Object.defineProperty(window.HTMLSelectElement.prototype,'value',{configurable:true,get(){return selectValue.has(this)?selectValue.get(this):(this.querySelector('option[selected],option')?.getAttribute('value')||'');},set(v){selectValue.set(this,String(v));}});
+ const inputChecked=new WeakMap();Object.defineProperty(window.HTMLInputElement.prototype,'checked',{configurable:true,get(){return inputChecked.has(this)?inputChecked.get(this):this.hasAttribute('checked');},set(v){inputChecked.set(this,!!v);}});
  const create=doc.createElement.bind(doc);doc.createElement=(tag)=>{const n=create(tag);if(tag==='dialog'){n.showModal=()=>{n.open=true;n.querySelector('form').reportValidity=()=>Array.from(n.querySelectorAll('[required]')).every(x=>!!x.value);};n.close=()=>{n.open=false;n.dispatchEvent(new window.Event('close'));};}return n;};
  const timers=new Map();let timerSeq=0;const fakeSetTimeout=(fn)=>{timers.set(++timerSeq,fn);return timerSeq;};const fakeClearTimeout=(id)=>timers.delete(id);
  const calls=[],rows=[{item_id:1,dkd_shohin_id:100,manufacturer_part_number:'OEM-100',genuine_part_number:'G-100',manufacturer:'DENSO',state:'ready',cost_jpy:8000,minimum_jpy:11500,suggested_jpy:11500,dks_price_jpy:10000,target_jpy:8000,ec_price_jpy:10500,ec_tax_basis:'unknown'},
@@ -42,7 +43,7 @@ async function fixture(lang='ja'){
  for(const k of ['basic_username','basic_password','password'])f.doc.querySelector('[name="'+k+'"]').value='synthetic-'+k;
  f.loseCredentialResponse();f.doc.querySelector('[data-spl-confirm]').click();f.doc.querySelector('[data-spl-confirm]').click();await tick();await tick();await tick();assert.equal(f.edgeCalls.filter(c=>c.action==='credentials_save').length,1,'duplicate submit blocked');assert.equal(f.doc.querySelector('dialog'),null);assert.match(f.doc.getElementById('spl-status').textContent,/保存しました/,'status recovers a lost save response without resending passwords');
  f.doc.getElementById('spl-credentials').click();await tick();await tick();assert.equal(f.doc.querySelector('[name="password"]').value,'','saved password never refills');assert.match(f.doc.querySelector('dialog').textContent,/登録済み/);f.doc.querySelector('[data-spl-cancel]').click();
- const missing=f.doc.querySelector('[data-spl-select="2"]');missing.checked=true;missing.dispatchEvent(new f.window.Event('change'));f.doc.getElementById('spl-scrape').click();await tick();await tick();await tick();assert.equal(f.edgeCalls.filter(c=>c.dkd_shohin_id).length,1);assert.deepEqual(f.edgeCalls.find(c=>c.dkd_shohin_id),{dkd_shohin_id:101},'fetch request contains no credentials');
+ const missing=f.doc.querySelector('[data-spl-select="2"]');missing.checked=true;missing.dispatchEvent(new f.window.Event('change'));f.doc.getElementById('spl-scrape').click();f.doc.querySelector('dialog[data-spl-dks] [data-spl-confirm]').click();await tick();await tick();await tick();assert.equal(f.edgeCalls.filter(c=>c.dkd_shohin_id).length,1);assert.deepEqual(f.edgeCalls.find(c=>c.dkd_shohin_id),{dkd_shohin_id:101},'fetch request contains no credentials');
  f.doc.getElementById('spl-credentials').click();await tick();await tick();f.doc.querySelector('[data-spl-remove]').click();assert.match(f.doc.querySelector('dialog').textContent,/再登録/);f.doc.querySelector('[data-spl-confirm]').click();await tick();await tick();assert.equal(f.edgeCalls.filter(c=>c.action==='credentials_remove').length,1);
  f.doc.getElementById('spl-credentials').click();await tick();await tick();f.deny();f.doc.querySelector('[name="password"]').value='synthetic-denied';f.doc.querySelector('[data-spl-confirm]').click();assert.equal(f.edgeCalls.filter(c=>c.action==='credentials_save').length,1);f.window.DcatsSalesPricingLists.reset();assert.equal(f.doc.querySelector('dialog'),null);
  f=await fixture();await f.enableEc();f.doc.getElementById('spl-ec').click();await tick();await tick();assert.ok(f.doc.querySelector('dialog'));assert.match(f.doc.querySelector('dialog').textContent,/合成ECリスト/);f.doc.querySelector('[data-spl-cancel]').click();assert.equal(f.calls.filter(c=>c.p_commit).length,0,'cancel does not register or start');
@@ -51,12 +52,43 @@ async function fixture(lang='ja'){
  f=await fixture();await f.enableEc();f.blockEc();f.doc.getElementById('spl-ec').click();await tick();await tick();assert.equal(f.doc.querySelector('dialog'),null);assert.match(f.doc.getElementById('spl-status').textContent,/別のEC/);assert.equal(f.calls.filter(c=>c.p_commit).length,0);
  f=await fixture();await f.enableEc();f.doc.getElementById('spl-ec').click();await tick();await tick();f.deny();f.doc.querySelector('[data-spl-confirm]').click();assert.equal(f.edgeCalls.filter(c=>c.target_ids).length,0,'permission loss blocks research');f.window.DcatsSalesPricingLists.reset();
  for(const lang of ['ja','en','zh']){
-   f=await fixture(lang);f.setReview('dks_tax_basis_unverified');var checkbox=f.doc.querySelector('[data-spl-select="2"]');checkbox.checked=true;checkbox.dispatchEvent(new f.window.Event('change'));f.doc.getElementById('spl-scrape').click();for(var n=0;n<4;n++)await tick();
+   f=await fixture(lang);f.setReview('dks_tax_basis_unverified');var checkbox=f.doc.querySelector('[data-spl-select="2"]');checkbox.checked=true;checkbox.dispatchEvent(new f.window.Event('change'));f.doc.getElementById('spl-scrape').click();f.doc.querySelector('dialog[data-spl-dks] [data-spl-confirm]').click();for(var n=0;n<4;n++)await tick();
    assert.match(f.doc.getElementById('spl-status').textContent,lang==='ja'?/税抜か税込/:lang==='en'?/tax status/:/税别/);assert.doesNotMatch(f.doc.getElementById('spl-status').textContent,/synthetic-secret/);assert.equal(f.edgeCalls.filter(c=>c.dkd_shohin_id).length,1);assert.equal(f.calls.filter(c=>c.action==='commit').length,0);
  }
  for(const reason of ['dks_login_required','unknown-synthetic-secret','broken-json']){
-   f=await fixture();f.setReview(reason);var checkbox=f.doc.querySelector('[data-spl-select="2"]');checkbox.checked=true;checkbox.dispatchEvent(new f.window.Event('change'));f.doc.getElementById('spl-scrape').click();for(var n=0;n<4;n++)await tick();
+   f=await fixture();f.setReview(reason);var checkbox=f.doc.querySelector('[data-spl-select="2"]');checkbox.checked=true;checkbox.dispatchEvent(new f.window.Event('change'));f.doc.getElementById('spl-scrape').click();f.doc.querySelector('dialog[data-spl-dks] [data-spl-confirm]').click();for(var n=0;n<4;n++)await tick();
    assert.doesNotMatch(f.doc.getElementById('spl-status').textContent,/synthetic-secret/);if(reason==='dks_login_required')assert.match(f.doc.getElementById('spl-status').textContent,/strain3/);assert.equal(f.doc.getElementById('spl-scrape').disabled,false);
  }
- console.log('Sales pricing list UI: list selection, margin floor, escaping, existing prices, review/cancel, idempotent retry, permission loss and three languages passed');
+ for(const lang of ['ja','en','zh']){
+   f=await fixture(lang);f.setReview(null);
+   var input=f.doc.querySelector('[data-spl-price]');input.value='12000';input.dispatchEvent(new f.window.Event('input'));
+   f.doc.getElementById('spl-scrape').click();f.doc.getElementById('spl-scrape').click();
+   var d=f.doc.querySelector('dialog[data-spl-dks]'),confirm=d.querySelector('[data-spl-confirm]');
+   assert.equal(f.doc.querySelectorAll('dialog[data-spl-dks]').length,1,'duplicate fetch click does not open another dialog');
+   assert.equal(f.edgeCalls.length,0,'opening target selection does not fetch credentials or prices');
+   assert.equal(d.querySelectorAll('[data-spl-dks-id]').length,1);assert.equal(d.querySelector('[data-spl-dks-id="101"]').checked,true,'zero main selection defaults to eligible missing targets');
+   assert.equal(d.querySelector('script'),null,'untrusted part text remains escaped');
+   var all=d.querySelector('[data-spl-dks-all]');all.checked=false;all.dispatchEvent(new f.window.Event('change'));assert.equal(confirm.disabled,true,'zero fetch targets cannot be submitted');
+   all.checked=true;all.dispatchEvent(new f.window.Event('change'));assert.equal(confirm.disabled,false);
+   confirm.click();confirm.click();for(var n=0;n<5;n++)await tick();
+   assert.equal(f.edgeCalls.filter(c=>c.dkd_shohin_id).length,1);assert.deepEqual(f.edgeCalls.find(c=>c.dkd_shohin_id),{dkd_shohin_id:101});
+   assert.equal(f.calls.filter(c=>c.action==='commit').length,0,'DKS retrieval never saves selling prices');
+   assert.equal(f.doc.querySelector('[data-spl-price]').value,'12000','DKS refresh retains an unchanged valid price draft');
+   assert.equal(f.doc.querySelector('[data-spl-select="1"]').checked,false,'fetch selection does not select selling prices');
+ }
+ f=await fixture();f.setReview(null);f.doc.getElementById('spl-scrape').click();f.doc.querySelector('[data-spl-cancel]').click();assert.equal(f.edgeCalls.length,0,'cancelled target selection performs no network request');
+ for(const bad of [{state:'identity_review'},{state:'oem_review'},{state:'configured'},{dkd_shohin_id:0},{dkd_shohin_id:1.5}]){
+   f=await fixture();Object.assign(f.rows[1],bad);f.doc.getElementById('spl-refresh').click();await tick();await tick();f.doc.getElementById('spl-scrape').click();
+   assert.equal(f.doc.querySelector('dialog'),null);assert.equal(f.edgeCalls.length,0);assert.match(f.doc.getElementById('spl-status').textContent,/表示中に取得可能/);
+ }
+ f=await fixture();f.setReview(null);f.rows.push({...f.rows[1],item_id:4},{...f.rows[1],item_id:5,dkd_shohin_id:103,manufacturer_part_number:'OEM-103'});f.doc.getElementById('spl-refresh').click();await tick();await tick();
+ var selected=f.doc.querySelector('[data-spl-select="4"]');selected.checked=true;selected.dispatchEvent(new f.window.Event('change'));
+ f.doc.getElementById('spl-scrape').click();var d=f.doc.querySelector('dialog[data-spl-dks]');assert.equal(d.querySelectorAll('[data-spl-dks-id]').length,2,'duplicate product IDs appear only once');assert.equal(d.querySelector('[data-spl-dks-id="101"]').checked,true);assert.equal(d.querySelector('[data-spl-dks-id="103"]').checked,false,'explicit missing selection remains the default subset');
+ d.querySelector('[data-spl-confirm]').click();for(var n=0;n<5;n++)await tick();assert.deepEqual(f.edgeCalls.filter(c=>c.dkd_shohin_id).map(c=>c.dkd_shohin_id),[101]);
+ f=await fixture();f.setReview(null);f.rows.push({...f.rows[1],item_id:5,dkd_shohin_id:103,manufacturer_part_number:'OEM-103'});f.doc.getElementById('spl-refresh').click();await tick();await tick();var query=f.doc.getElementById('spl-query');query.value='OEM-103';query.dispatchEvent(new f.window.Event('input'));f.doc.getElementById('spl-scrape').click();assert.equal(f.doc.querySelectorAll('[data-spl-dks-id]').length,1);assert.ok(f.doc.querySelector('[data-spl-dks-id="103"]'),'fetch candidates respect visible filters');f.doc.querySelector('[data-spl-cancel]').click();
+ for(const change of [f=>f.deny(),f=>{f.window.currentUser={id:'different'};},f=>{f.window.isSystemAdmin=()=>false;},f=>{f.doc.getElementById('spl-list').value='2';}]){
+   f=await fixture();f.setReview(null);f.doc.getElementById('spl-scrape').click();change(f);f.doc.querySelector('[data-spl-confirm]').click();await tick();assert.equal(f.edgeCalls.length,0,'stale account, permissions or list cannot start a fetch');f.window.DcatsSalesPricingLists.reset();
+ }
+ f=await fixture();f.setReview(null);var release;var gate=new Promise(resolve=>{release=resolve;}),invoke=f.window.sb.functions.invoke;f.window.sb.functions.invoke=async(name,options)=>{if(options.body.action==='credentials_status')await gate;return invoke(name,options);};f.doc.getElementById('spl-scrape').click();f.doc.querySelector('[data-spl-confirm]').click();f.window.DcatsSalesPricingLists.reset();release();for(var n=0;n<5;n++)await tick();assert.equal(f.edgeCalls.filter(c=>c.dkd_shohin_id).length,0,'late credential status after reset cannot start a product fetch');
+ console.log('Sales pricing list UI: price and fetch selections, zero-selection flow, filters, deduplication, drafts, explicit confirmation, cancellation, lost response, permissions and three languages passed');
 })().catch(e=>{console.error(e);process.exitCode=1;});
