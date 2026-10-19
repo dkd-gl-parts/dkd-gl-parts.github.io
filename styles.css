@@ -8172,6 +8172,8 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .shipping-document-destination-badge.office { border-color: #87a8c8; background: #eef6ff; color: #315f8c; }
 .shipping-document-delivery-grid { display: grid; grid-template-columns: minmax(280px, 1.2fr) minmax(330px, 1fr); border: 1px solid #cfd7de; background: #fff; }
 .shipping-document-destination-card { min-width: 0; border-left: 4px solid #287356; padding: 11px 14px; }
+.shipping-document-destination-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 10px; }
+.shipping-document-destination-head > .shipping-document-destination-label { min-width: 0; overflow-wrap: anywhere; }
 .shipping-document-delivery.direct .shipping-document-destination-card { border-left-color: #d39b37; background: #fffbf0; }
 .shipping-document-delivery.office .shipping-document-destination-card { border-left-color: #5887b5; background: #f5f9fd; }
 .shipping-document-destination-card > span,
