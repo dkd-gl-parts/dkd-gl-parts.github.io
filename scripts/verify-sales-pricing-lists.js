@@ -95,7 +95,7 @@ async function fixture(lang='ja'){
    f=await fixture(lang);Object.assign(f.rows[0],{cost_jpy:5000,minimum_jpy:7200,suggested_jpy:8000,dks_price_jpy:10000,target_jpy:8000,ec_price_jpy:null,cost_incomplete:true,missing_unit_count_snapshot:2});f.rows[1].component_count_snapshot=0;
    f.doc.getElementById('spl-refresh').click();await tick();await tick();
    assert.equal(f.doc.querySelector('[data-spl-price="1"]').value,'8000','server DKS fallback fills the price input despite incomplete unit prices and no EC quote');
-   assert.equal(f.doc.querySelector('[data-spl-select="2"]').disabled,true,'zero components cannot be selected');assert.equal(f.doc.querySelector('[data-spl-select="3"]'),null);
+   assert.equal(f.doc.querySelector('[data-spl-select="2"]').disabled,true,'zero components without a reference cannot be selected');assert.equal(f.doc.querySelector('[data-spl-select="3"]'),null);
    assert.match(f.doc.getElementById('spl-rows').textContent,lang==='ja'?/暫定計算/:lang==='en'?/provisional/:/暂算/);
    f.doc.getElementById('spl-all').click();f.doc.getElementById('spl-bulk').click();assert.equal(f.doc.querySelectorAll('.spl-confirm-items li').length,1);assert.match(f.doc.querySelector('dialog').textContent,lang==='ja'?/暫定計算/:lang==='en'?/provisional/:/暂算/);f.doc.querySelector('[data-spl-cancel]').click();
    f.doc.getElementById('spl-scrape').click();assert.equal(f.doc.querySelector('dialog'),null,'zero-component missing quote is excluded from fetch');assert.equal(f.edgeCalls.length,0);assert.equal(f.calls.filter(c=>c.action==='commit').length,0);
@@ -137,5 +137,21 @@ async function fixture(lang='ja'){
  for(const change of [f=>f.deny(),f=>{f.window.currentUser={id:'another'};},f=>{f.window.isSystemAdmin=()=>false;},f=>{f.doc.getElementById('spl-list').value='2';},f=>f.window.DcatsSalesPricingLists.reset()]){
    f=await fixture();f.setReview(null);let release;const original=f.window.sb.functions.invoke;f.window.sb.functions.invoke=async(name,options)=>options.body.action==='credentials_status'?original(name,options):new Promise(resolve=>{release=resolve;});f.doc.getElementById('spl-scrape').click();f.doc.querySelector('[data-spl-confirm]').click();await tick();await tick();change(f);await f.advanceTime(1000);assert.equal(f.doc.querySelector('dialog[data-spl-dks-progress]'),null);assert.equal(f.timerCount(),0);release({data:{status:'fetched',price_jpy:10000}});for(let n=0;n<4;n++)await tick();assert.equal(f.doc.querySelector('dialog'),null,'late response cannot restore a stale dialog');assert.equal(f.calls.filter(c=>c.action==='commit').length,0);
  }
- console.log('Sales pricing list UI: immediate live progress, elapsed waiting, truthful per-product outcomes, timer/session cleanup, neutral labels, cost candidates, preserved payloads, drafts and three languages passed');
+
+ for(const lang of ['ja','en','zh']){
+   f=await fixture(lang);Object.assign(f.rows[0],{manufacturer_part_number:'M000T46071ZT',genuine_part_number:'23300-KA730',manufacturer:'MITSUBISHI',cost_jpy:3010,component_count_snapshot:0,missing_unit_count_snapshot:0,cost_incomplete:true,minimum_jpy:4300,dks_price_jpy:9600,target_jpy:7600,suggested_jpy:7600,state:'ready'});
+   f.doc.getElementById('spl-refresh').click();await tick();await tick();
+   assert.equal(f.doc.querySelector('[data-spl-select="1"]').disabled,false,'known positive saved costs remain eligible without component rows');
+   assert.equal(f.doc.querySelector('[data-spl-price="1"]').value,'7600');
+   assert.match(f.doc.getElementById('spl-rows').textContent,lang==='ja'?/設定可能（暫定原価）/:lang==='en'?/Ready \(provisional cost\)/:/可设置（暂算成本）/);
+   const knownPrice=f.doc.querySelector('[data-spl-price="1"]');knownPrice.value='3000';knownPrice.dispatchEvent(new f.window.Event('input'));f.doc.querySelector('[data-spl-one]').click();assert.equal(f.doc.querySelector('dialog'),null,'below-cost and below-margin inputs stay blocked');
+   knownPrice.value='7600';knownPrice.dispatchEvent(new f.window.Event('input'));f.doc.getElementById('spl-all').click();f.doc.getElementById('spl-bulk').click();assert.equal(f.doc.querySelectorAll('.spl-confirm-items li').length,1);assert.match(f.doc.querySelector('dialog').textContent,/7,600/);assert.match(f.doc.querySelector('dialog').textContent,lang==='ja'?/原価項目0件.*暫定計算/:lang==='en'?/No cost items.*provisional/:/成本项目0件.*暂算/);f.doc.querySelector('[data-spl-cancel]').click();assert.equal(f.calls.filter(c=>c.action==='commit').length,0);
+   Object.assign(f.rows[0],{manufacturer_part_number:'M0T37871',genuine_part_number:'23300-1HC1B',dks_price_jpy:12600,target_jpy:10600,suggested_jpy:10600,ec_price_jpy:13310,ec_tax_basis:'unknown'});f.doc.getElementById('spl-refresh').click();await tick();await tick();assert.equal(f.doc.querySelector('[data-spl-price="1"]').value,'10600','unknown EC tax does not replace the verified reference proposal');
+   for(const invalid of [{cost_jpy:0},{cost_jpy:null},{cost_jpy:-1},{component_count_snapshot:null},{component_count_snapshot:-1},{dks_price_jpy:null},{state:'identity_review'},{state:'configured',current_base_jpy:9000}]){
+     const previous={...f.rows[0]};Object.assign(f.rows[0],invalid);f.doc.getElementById('spl-refresh').click();await tick();await tick();assert.equal(f.doc.querySelector('[data-spl-price="1"]'),null,'missing/invalid costs, quotes and existing identity/configuration guards remain blocked');Object.assign(f.rows[0],previous);
+   }
+   f.window.DcatsSalesPricingLists.reset();
+ }
+ console.log('Sales pricing list UI: neutral labels and hidden visible IDs; known saved-cost candidates, live fetch progress, existing exclusions, preserved payloads, confirmations, drafts, stale permissions and three languages passed');
+
 })().catch(e=>{console.error(e);process.exitCode=1;});
