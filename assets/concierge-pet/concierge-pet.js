@@ -28,6 +28,7 @@
     review: { row: 8, durations: [150, 150, 150, 150, 150, 280] }
   };
   var STOP_GESTURE_ORDER = ["settle", "bow", "escort", "handshake", "shy", "welcome"];
+  var FIXED_ACTIVITY_ORDER = ["waving", "bow", "escort", "handshake", "shy", "welcome"];
   var STOP_GESTURES = {
     settle: { column: 0, enter: 180, hold: 620, exit: 260 },
     bow: { column: 1, enter: 260, hold: 850, exit: 320 },
@@ -59,7 +60,7 @@
       modeVertical: "縦移動だけ",
       modeFixed: "定位置",
       modeOff: "非表示",
-      help: "選択した1体だけを読み込みます。「よく動く」は操作部品を避けて歩き、「横移動だけ」「縦移動だけ」は指定した一方向に歩きます。「定位置」は通常は画面右下で待機します。PCの販売管理では、どのモードも左の検索結果側の専用エリアに収めます。OSの「視差効果を減らす」が有効な場合も静止します。",
+      help: "選択した1体だけを読み込みます。「よく動く」は操作部品を避けて歩き、「横移動だけ」「縦移動だけ」は指定した一方向に歩きます。「定位置」はマウスを追わず、置いた場所で手振り・お辞儀などのしぐさを見せます。PCの販売管理では、どのモードも左の検索結果側の専用エリアに収めます。OSの「視差効果を減らす」が有効な場合も静止します。",
       openSettings: "{name}の設定を開く",
       openQuestion: "{name}に質問する",
       launcherOff: "コンシェルジュを表示",
@@ -67,7 +68,7 @@
       activeMessage: "元気にご案内します。",
       horizontalMessage: "横方向に歩いてご案内します。",
       verticalMessage: "縦方向に歩いてご案内します。",
-      fixedMessage: "画面の隅で待機します。",
+      fixedMessage: "この場所で、いろいろなしぐさをお見せします。",
       floatingLegend: "画面外表示",
       floatingOpen: "常に前面の小窓で表示",
       floatingReturn: "D-CATS画面に戻す",
@@ -265,7 +266,7 @@
       modeVertical: "Vertical only",
       modeFixed: "Stay put",
       modeOff: "Hide",
-      help: "Only the selected concierge is loaded. Active mode avoids controls. Horizontal only and Vertical only restrict walking to one direction. Stay put normally waits in the lower-right corner. In desktop Sales management, every mode stays in the reserved area beside the left-hand results. Motion also stops when your OS requests reduced motion.",
+      help: "Only the selected concierge is loaded. Active mode avoids controls. Horizontal only and Vertical only restrict walking to one direction. Stay put waves, bows and shows other gestures where you place it, without following the pointer. In desktop Sales management, every mode stays in the reserved area beside the left-hand results. Motion also stops when your OS requests reduced motion.",
       openSettings: "Open {name}'s settings",
       openQuestion: "Ask {name}",
       launcherOff: "Show concierge",
@@ -273,7 +274,7 @@
       activeMessage: "I will guide you actively.",
       horizontalMessage: "I will move horizontally.",
       verticalMessage: "I will move vertically.",
-      fixedMessage: "I will wait in the corner.",
+      fixedMessage: "I will stay here and show different gestures.",
       floatingLegend: "Floating display",
       floatingOpen: "Show in an always-on-top window",
       floatingReturn: "Return to the D-CATS window",
@@ -470,7 +471,7 @@
       modeVertical: "仅纵向移动",
       modeFixed: "固定位置",
       modeOff: "隐藏",
-      help: "仅加载所选的一位礼宾助手。“活跃移动”会避开操作控件；“仅横向移动”和“仅纵向移动”限制为一个方向。“固定位置”通常在右下角等候。在电脑版销售管理中，所有模式都限制在左侧搜索结果的专用区域内。操作系统启用减少动态效果时也会停止移动。",
+      help: "仅加载所选的一位礼宾助手。“活跃移动”会避开操作控件；“仅横向移动”和“仅纵向移动”限制为一个方向。“固定位置”不会跟随鼠标，而会在放置的位置挥手、鞠躬并展示其他动作。在电脑版销售管理中，所有模式都限制在左侧搜索结果的专用区域内。操作系统启用减少动态效果时也会停止移动。",
       openSettings: "打开{name}的设置",
       openQuestion: "向{name}提问",
       launcherOff: "显示礼宾助手",
@@ -478,7 +479,7 @@
       activeMessage: "我会积极为您引导。",
       horizontalMessage: "我会横向移动为您引导。",
       verticalMessage: "我会纵向移动为您引导。",
-      fixedMessage: "我会在画面角落等候。",
+      fixedMessage: "我会留在这里，展示不同的动作。",
       floatingLegend: "屏幕外显示",
       floatingOpen: "在置顶小窗中显示",
       floatingReturn: "返回D-CATS画面",
@@ -777,6 +778,7 @@
   var externalStateUntil = 0;
   var lastInteractionAt = 0;
   var stopGestureIndex = 0;
+  var fixedActivityIndex = 0;
   var dragState = null;
   var suppressHitTargetClickUntil = 0;
 
@@ -2703,6 +2705,10 @@
     if (!isSystemAdminSession()) return;
     syncSettingsOwner();
     if (!MODES[mode]) return;
+    if (mode === "fixed") {
+      stopActivity();
+      parkAtSafeCorner();
+    }
     settings.mode = mode;
     saveSettings();
     if (mode === "off") {
@@ -2791,8 +2797,10 @@
     }
     if (settings.mode === "fixed") {
       stopActivity();
-      parkAtSafeCorner();
+      root.classList.remove("has-no-safe-target");
+      holdMoverAt(clampToViewport(position, petSize(), viewportWindow()));
       playRow("idle", Infinity);
+      startActivity();
       return;
     }
     startActivity();
@@ -2839,12 +2847,17 @@
     }
     if (hasBlockingDialog()) {
       root.classList.add("is-blocked");
-      parkAtSafeCorner();
+      if (settings.mode !== "fixed") parkAtSafeCorner();
       playRow("waiting", Infinity);
       if (await delay(700, token)) runActivityLoop(token);
       return;
     }
     root.classList.remove("is-blocked");
+
+    if (settings.mode === "fixed") {
+      await runFixedActivity(token);
+      return;
+    }
 
     var target = findSafeTarget();
     if (!target) {
@@ -2871,6 +2884,23 @@
 
   function canAnimate() {
     return visible && !isPresentationHidden() && settings.mode !== "off" && !panelOpen && !dragState && !isReducedMotion();
+  }
+
+  async function runFixedActivity(token) {
+    playRow("idle", Infinity);
+    if (!(await delay(2600 + Math.floor(Math.random() * 1800), token)) || !canAnimate() || settings.mode !== "fixed") return;
+    if (hasBlockingDialog()) { runActivityLoop(token); return; }
+    var name = FIXED_ACTIVITY_ORDER[fixedActivityIndex % FIXED_ACTIVITY_ORDER.length];
+    fixedActivityIndex += 1;
+    var duration;
+    if (name === "waving") {
+      playRow("waving", 2);
+      duration = ROWS.waving.durations.reduce(function (sum, value) { return sum + value; }, 0) * 2;
+    } else {
+      playStopGesture(STOP_GESTURES[name]);
+      duration = stopGestureDuration(STOP_GESTURES[name]);
+    }
+    if (await delay(duration + 100, token)) runActivityLoop(token);
   }
 
   function nextStopGesture() {
@@ -3279,7 +3309,7 @@
       return;
     }
     playRow("idle", Infinity);
-    if (settings.mode === "fixed") return;
+    if (settings.mode === "fixed") { startActivity(); return; }
     sequenceToken += 1;
     var token = sequenceToken;
     clearActivityTimer();
@@ -3313,7 +3343,7 @@
   }
 
   function onPointerMove(event) {
-    if (dragState) return;
+    if (dragState || settings.mode === "fixed") return;
     if (isFloatingWindowOpen() && event.target && event.target.ownerDocument !== floatingWindow.document) return;
     pointer.x = event.clientX;
     pointer.y = event.clientY;
@@ -3326,7 +3356,7 @@
   }
 
   function updatePointerGaze() {
-    if (!canAnimate() || movementAnimation && movementAnimation.playState === "running") return;
+    if (settings.mode === "fixed" || !canAnimate() || movementAnimation && movementAnimation.playState === "running") return;
     var rect = mover.getBoundingClientRect();
     var dx = pointer.x - (rect.left + rect.width / 2);
     var dy = pointer.y - (rect.top + rect.height / 2);
