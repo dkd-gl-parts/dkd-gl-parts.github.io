@@ -3,7 +3,8 @@ const source=fs.readFileSync('sales-pricing-lists.js','utf8');
 const app=fs.readFileSync('app.js','utf8'),html=fs.readFileSync('index.html','utf8'),build=fs.readFileSync('scripts/build-static-site.js','utf8');
 assert.match(app,/DcatsSalesPricingLists\.enter\(\)/);assert.match(html,/id="sales-pricing-lists"/);assert.match(html,/sales-pricing-lists\.js\?v=/);assert.match(html,/sales-pricing-lists\.css\?v=/);assert.match(build,/"sales-pricing-lists\.js"/);
 assert.doesNotMatch(source,/localStorage|sessionStorage|console\.(log|warn|error)|innerHTML\s*\+=/);
-function bulkReview(f){f.doc.getElementById('spl-all').click();f.doc.getElementById('spl-bulk').click();}
+function selectVisible(f){const all=f.doc.querySelector('[data-spl-visible-all]');assert.ok(all);all.checked=true;all.dispatchEvent(new f.window.Event('change'));}
+function bulkReview(f){selectVisible(f);f.doc.getElementById('spl-bulk').click();}
 const tick=()=>new Promise(r=>setImmediate(r));
 async function fixture(lang='ja'){
  const {window}=parseHTML('<html><body><div id="screen-sales-pricing-mgmt" class="screen active"><section id="sales-pricing-lists"></section></div></body></html>');
@@ -31,7 +32,7 @@ async function fixture(lang='ja'){
 }
 (async()=>{
  let f=await fixture();assert.equal(f.doc.querySelectorAll('[data-spl-price]').length,1);assert.equal(f.doc.querySelector('[data-spl-select="3"]'),null,'registered products are excluded by default');assert.equal(f.doc.querySelectorAll('script').length,0,'untrusted part text is escaped');
- f.doc.getElementById('spl-all').click();assert.equal(f.doc.querySelector('[data-spl-select="1"]').hasAttribute('checked'),true);assert.equal(f.doc.querySelector('[data-spl-select="2"]').hasAttribute('checked'),true);
+ selectVisible(f);assert.equal(f.doc.querySelector('[data-spl-select="1"]').hasAttribute('checked'),true);assert.equal(f.doc.querySelector('[data-spl-select="2"]').hasAttribute('checked'),true);
  const price=f.doc.querySelector('[data-spl-price]');price.value='10000';price.dispatchEvent(new f.window.Event('input'));bulkReview(f);assert.equal(f.doc.querySelector('dialog'),null,'30% floor blocks underpricing');
  price.value='11500';price.dispatchEvent(new f.window.Event('input'));bulkReview(f);assert.ok(f.doc.querySelector('dialog'));f.doc.querySelector('[data-spl-cancel]').click();assert.equal(f.calls.filter(c=>c.action==='commit').length,0);
  bulkReview(f);f.doc.querySelector('[data-spl-confirm]').click();await tick();await tick();assert.equal(f.calls.filter(c=>c.action==='commit').length,1);assert.deepEqual(f.calls.find(c=>c.action==='commit').payload.items,[{item_id:1,price_jpy:11500}]);
@@ -98,13 +99,13 @@ async function fixture(lang='ja'){
    assert.equal(f.doc.querySelector('[data-spl-price="1"]').value,'8000','server DKS fallback fills the price input despite incomplete unit prices and no EC quote');
    assert.equal(f.doc.querySelector('[data-spl-select="2"]').disabled,false,'zero components can be checked without enabling price/fetch');assert.equal(f.doc.querySelector('[data-spl-select="3"]'),null);
    assert.match(f.doc.getElementById('spl-rows').textContent,lang==='ja'?/暫定計算/:lang==='en'?/provisional/:/暂算/);
-   f.doc.getElementById('spl-all').click();f.doc.getElementById('spl-bulk').click();assert.equal(f.doc.querySelectorAll('.spl-confirm-items li').length,1);assert.match(f.doc.querySelector('dialog').textContent,lang==='ja'?/暫定計算/:lang==='en'?/provisional/:/暂算/);f.doc.querySelector('[data-spl-cancel]').click();
+   selectVisible(f);f.doc.getElementById('spl-bulk').click();assert.equal(f.doc.querySelectorAll('.spl-confirm-items li').length,1);assert.match(f.doc.querySelector('dialog').textContent,lang==='ja'?/暫定計算/:lang==='en'?/provisional/:/暂算/);f.doc.querySelector('[data-spl-cancel]').click();
    f.doc.getElementById('spl-scrape').click();assert.equal(f.doc.querySelector('dialog'),null,'zero-component missing quote is excluded from fetch');assert.equal(f.edgeCalls.length,0);assert.equal(f.calls.filter(c=>c.action==='commit').length,0);
    f.doc.getElementById('spl-filter').value='configured';f.doc.getElementById('spl-filter').dispatchEvent(new f.window.Event('change'));assert.equal(f.doc.querySelector('[data-spl-select="3"]').disabled,false);assert.equal(f.doc.querySelector('[data-spl-price]'),null,'registered history remains viewable but never writable');
  }
  f=await fixture();Object.assign(f.rows[1],{state:'cost_review',registered_component_count:2});f.doc.getElementById('spl-refresh').click();await tick();await tick();f.doc.getElementById('spl-scrape').click();assert.ok(f.doc.querySelector('[data-spl-dks-id="101"]'),'partial cost review with components remains a fetch target');f.doc.querySelector('[data-spl-cancel]').click();
  f=await fixture();Object.assign(f.rows[0],{state:'ready',current_base_jpy:10000});f.doc.getElementById('spl-refresh').click();await tick();await tick();assert.equal(f.doc.querySelector('[data-spl-select="1"]'),null,'existing base price excludes an inconsistent ready row');
- f=await fixture();Object.assign(f.rows[0],{manufacturer_part_number:'A001TA3891',cost_jpy:3829,registered_component_count:5,missing_unit_count_snapshot:2,cost_incomplete:true,minimum_jpy:5500,dks_price_jpy:7800,target_jpy:5800,suggested_jpy:5800,ec_price_jpy:15339,ec_tax_basis:'unknown'});f.doc.getElementById('spl-refresh').click();await tick();await tick();assert.equal(f.doc.querySelector('[data-spl-price="1"]').value,'5800');f.doc.getElementById('spl-all').click();f.doc.getElementById('spl-bulk').click();assert.match(f.doc.querySelector('dialog').textContent,/A001TA3891/);assert.match(f.doc.querySelector('dialog').textContent,/5,800/);assert.match(f.doc.querySelector('dialog').textContent,/暫定計算/);f.doc.querySelector('[data-spl-cancel]').click();assert.equal(f.calls.filter(c=>c.action==='commit').length,0,'reported part is selectable, not automatically saved');
+ f=await fixture();Object.assign(f.rows[0],{manufacturer_part_number:'A001TA3891',cost_jpy:3829,registered_component_count:5,missing_unit_count_snapshot:2,cost_incomplete:true,minimum_jpy:5500,dks_price_jpy:7800,target_jpy:5800,suggested_jpy:5800,ec_price_jpy:15339,ec_tax_basis:'unknown'});f.doc.getElementById('spl-refresh').click();await tick();await tick();assert.equal(f.doc.querySelector('[data-spl-price="1"]').value,'5800');selectVisible(f);f.doc.getElementById('spl-bulk').click();assert.match(f.doc.querySelector('dialog').textContent,/A001TA3891/);assert.match(f.doc.querySelector('dialog').textContent,/5,800/);assert.match(f.doc.querySelector('dialog').textContent,/暫定計算/);f.doc.querySelector('[data-spl-cancel]').click();assert.equal(f.calls.filter(c=>c.action==='commit').length,0,'reported part is selectable, not automatically saved');
  for(const lang of ['ja','en','zh']){
    f=await fixture(lang);Object.assign(f.rows[0],{dks_source:'strain3',dks_observed_at:'2026-10-16T00:00:00Z'});Object.assign(f.rows[1],{dks_source:'registered_dks',dks_observed_at:'2026-10-13T00:00:00Z'});f.doc.getElementById('spl-refresh').click();await tick();await tick();
    const visible=()=>f.doc.body.textContent;const neutral=()=>assert.doesNotMatch(visible(),/DKS|strain3|daiko-system2|大光サービス|Daiko Service|大光服务|\bID\s*\d/i);
@@ -145,12 +146,12 @@ async function fixture(lang='ja'){
    assert.equal(f.doc.querySelector('[data-spl-select="1"]').disabled,false,'partial cost items remain priceable');assert.equal(f.doc.querySelector('[data-spl-price="1"]').value,'7600');
    assert.match(f.doc.getElementById('spl-rows').textContent,lang==='ja'?/設定可能（暫定原価）/:lang==='en'?/Ready \(provisional cost\)/:/可设置（暂算成本）/);
    let price=f.doc.querySelector('[data-spl-price="1"]');price.value='3000';price.dispatchEvent(new f.window.Event('input'));bulkReview(f);assert.equal(f.doc.querySelector('dialog'),null);
-   price.value='7600';price.dispatchEvent(new f.window.Event('input'));f.doc.getElementById('spl-all').click();f.doc.getElementById('spl-bulk').click();assert.equal(f.doc.querySelectorAll('.spl-confirm-items li').length,1);assert.match(f.doc.querySelector('dialog').textContent,/7,600/);f.doc.querySelector('[data-spl-cancel]').click();
+   price.value='7600';price.dispatchEvent(new f.window.Event('input'));selectVisible(f);f.doc.getElementById('spl-bulk').click();assert.equal(f.doc.querySelectorAll('.spl-confirm-items li').length,1);assert.match(f.doc.querySelector('dialog').textContent,/7,600/);f.doc.querySelector('[data-spl-cancel]').click();
    for(const state of ['ready','cost_review']){
      Object.assign(f.rows[0],{manufacturer_part_number:'QA-ZERO',registered_component_count:0,missing_unit_count_snapshot:0,cost_incomplete:false,state});f.doc.getElementById('spl-refresh').click();await tick();await tick();
      assert.equal(f.doc.querySelector('[data-spl-select="1"]').disabled,false,'zero-component selection is independent of bulk eligibility');assert.equal(f.doc.querySelector('[data-spl-price="1"]'),null);assert.ok(f.doc.querySelector('[data-spl-one="1"]'),'individual editor remains available');
      assert.match(f.doc.getElementById('spl-rows').textContent,lang==='ja'?/構成部品登録0件・設定不可/:lang==='en'?/No registered components: cannot set price/:/构成部件登记0件：不可设置/);
-     f.doc.getElementById('spl-all').click();assert.equal(f.doc.getElementById('spl-bulk').disabled,true);f.doc.getElementById('spl-scrape').click();assert.equal(f.doc.querySelector('dialog'),null,'zero cost items cannot fetch or confirm a price');
+     selectVisible(f);assert.equal(f.doc.getElementById('spl-bulk').disabled,true);f.doc.getElementById('spl-scrape').click();assert.equal(f.doc.querySelector('dialog'),null,'zero cost items cannot fetch or confirm a price');
    }
    assert.equal(f.calls.filter(c=>c.action==='commit').length,0);assert.equal(f.edgeCalls.length,0);f.window.DcatsSalesPricingLists.reset();
  }
@@ -197,7 +198,7 @@ async function fixture(lang='ja'){
  for(const lang of ['ja','en','zh']){
   f=await fixture(lang);f.doc.getElementById('spl-filter').value='any';f.doc.getElementById('spl-filter').dispatchEvent(new f.window.Event('change'));
   f.doc.querySelector('[data-spl-one="3"]').click();await tick();assert.deepEqual(f.individual,[{id:102,kind:'rebuilt'}]);assert.equal(f.doc.querySelector('dialog'),null);assert.equal(f.doc.querySelector('[data-spl-select="3"]').disabled,false);assert.equal(f.calls.filter(c=>c.action==='commit').length,0);
-  Object.assign(f.rows[2],{state:'ready',is_loss:true,current_sale_jpy:3000,minimum_jpy:5100,dks_price_jpy:10000,suggested_jpy:8000});f.doc.getElementById('spl-refresh').click();await tick();await tick();f.doc.getElementById('spl-filter').value='any';f.doc.getElementById('spl-filter').dispatchEvent(new f.window.Event('change'));assert.equal(f.doc.querySelector('[data-spl-price="3"]'),null,'configured losses are excluded even in an old ready response');assert.match(f.doc.querySelector('[data-spl-one="3"]').closest('tr').textContent,lang==='ja'?/設定済み/:lang==='en'?/Configured/:/已设置/);f.doc.getElementById('spl-all').click();assert.equal(f.doc.querySelector('[data-spl-select="3"]').checked,true);
+  Object.assign(f.rows[2],{state:'ready',is_loss:true,current_sale_jpy:3000,minimum_jpy:5100,dks_price_jpy:10000,suggested_jpy:8000});f.doc.getElementById('spl-refresh').click();await tick();await tick();f.doc.getElementById('spl-filter').value='any';f.doc.getElementById('spl-filter').dispatchEvent(new f.window.Event('change'));assert.ok(f.doc.querySelector('[data-spl-price="3"]'),'confirmed loss with ready state can be updated');assert.match(f.doc.querySelector('[data-spl-one="3"]').closest('tr').textContent,lang==='ja'?/設定可能/:lang==='en'?/Ready/:/可设置/);selectVisible(f);assert.equal(f.doc.querySelector('[data-spl-select="3"]').checked,true);
   Object.assign(f.rows[2],{state:'configured',is_loss:false,current_sale_jpy:3510});f.doc.getElementById('spl-refresh').click();await tick();await tick();f.doc.getElementById('spl-filter').value='configured';f.doc.getElementById('spl-filter').dispatchEvent(new f.window.Event('change'));assert.equal(f.doc.querySelector('[data-spl-select="3"]').disabled,false);assert.ok(f.doc.querySelector('[data-spl-one="3"]'));
   f.deny();f.doc.querySelector('[data-spl-one="3"]').click();await tick();assert.equal(f.individual.length,1);f.window.DcatsSalesPricingLists.reset();
  }
@@ -217,11 +218,28 @@ async function fixture(lang='ja'){
   const query=f.doc.getElementById('spl-query');query.value='OEM-100';query.dispatchEvent(new f.window.Event('input'));assert.equal(f.doc.querySelectorAll('[data-spl-select]').length,1);all=f.doc.querySelector('[data-spl-visible-all]');all.checked=false;all.dispatchEvent(new f.window.Event('change'));
   query.value='';query.dispatchEvent(new f.window.Event('input'));assert.equal(f.doc.querySelector('[data-spl-select="1"]').checked,false);assert.equal(f.doc.querySelector('[data-spl-select="2"]').checked,true);assert.equal(f.doc.querySelector('[data-spl-select="4"]').checked,true);assert.equal(f.doc.querySelector('[data-spl-select="5"]').checked,true);assert.equal(f.doc.getElementById('spl-bulk').disabled,true);
   f.doc.getElementById('spl-none').click();assert.equal(f.doc.querySelectorAll('[data-spl-select][checked]').length,0);assert.equal(f.doc.querySelector('[data-spl-visible-all]').indeterminate,false);
-  f.doc.getElementById('spl-filter').value='configured';f.doc.getElementById('spl-filter').dispatchEvent(new f.window.Event('change'));f.doc.getElementById('spl-all').click();assert.equal(f.doc.querySelector('[data-spl-select="3"]').checked,true);assert.equal(f.doc.getElementById('spl-bulk').disabled,true);
+  f.doc.getElementById('spl-filter').value='configured';f.doc.getElementById('spl-filter').dispatchEvent(new f.window.Event('change'));selectVisible(f);assert.equal(f.doc.querySelector('[data-spl-select="3"]').checked,true);assert.equal(f.doc.getElementById('spl-bulk').disabled,true);
   f.doc.getElementById('spl-refresh').click();await tick();await tick();assert.equal(f.doc.querySelector('[data-spl-select="3"]').checked,true,'configured selection survives refresh without becoming priceable');
   f.doc.getElementById('spl-filter').value='any';f.doc.getElementById('spl-filter').dispatchEvent(new f.window.Event('change'));f.doc.getElementById('spl-scrape').click();assert.equal(f.doc.querySelector('[data-spl-dks-id="101"]').checked,false,'ineligible selection must not silently select a different fetch target');assert.equal(f.doc.querySelector('[data-spl-confirm]').disabled,true);f.doc.querySelector('[data-spl-cancel]').click();
   const refreshedQuery=f.doc.getElementById('spl-query');refreshedQuery.value='NO-RESULT';refreshedQuery.dispatchEvent(new f.window.Event('input'));assert.equal(f.doc.querySelector('[data-spl-visible-all]'),null);
   assert.equal(f.calls.filter(c=>c.action==='commit').length,0);assert.equal(f.edgeCalls.filter(c=>c.dkd_shohin_id).length,0);f.window.DcatsSalesPricingLists.reset();
+ }
+
+ // Protect configured non-losses even when an older response claims ready/provisional.
+ for(const lang of ['ja','en','zh']){
+  f=await fixture(lang);await f.enableEc();
+  assert.equal(!!f.doc.getElementById('spl-all'),false);
+  const pricing=f.doc.querySelector('[data-spl-pricing-tools]'),ec=f.doc.querySelector('[data-spl-ec-tools]'),log=f.doc.querySelector('[data-spl-log-tools]');
+  assert.ok(pricing.contains(f.doc.getElementById('spl-bulk')));assert.equal(pricing.contains(f.doc.getElementById('spl-ec')),false);
+  assert.ok(ec.contains(f.doc.getElementById('spl-ec')));assert.ok(ec.contains(f.doc.getElementById('spl-ec-open')));assert.ok(ec.contains(f.doc.getElementById('spl-ec-status')));
+  assert.ok(log.contains(f.doc.getElementById('spl-history-button')));assert.equal(ec.contains(log),false);assert.equal(f.doc.getElementById('spl-history-button').textContent,{ja:'ログ',en:'Log',zh:'日志'}[lang]);
+  f.doc.getElementById('spl-history-button').click();await tick();await tick();assert.equal(f.calls.filter(c=>c.action==='history').length,1);assert.ok(f.doc.getElementById('spl-history').textContent);
+  for(const configuredPrice of [{current_base_jpy:9000},{current_rank1_jpy:9000},{configured_at:'2026-10-20'},{identity_configured_count:1}]){
+   Object.assign(f.rows[0],{current_base_jpy:null,current_rank1_jpy:null,configured_at:null,identity_configured_count:0,state:'ready',cost_incomplete:true,is_loss:false,...configuredPrice});
+   f.doc.getElementById('spl-refresh').click();await tick();await tick();f.doc.getElementById('spl-filter').value='any';f.doc.getElementById('spl-filter').dispatchEvent(new f.window.Event('change'));
+   selectVisible(f);assert.equal(!!f.doc.querySelector('[data-spl-price="1"]'),false);assert.equal(f.doc.getElementById('spl-bulk').disabled,true);assert.match(f.doc.getElementById('spl-summary').textContent,lang==='ja'?/設定可能 0/:lang==='en'?/Ready 0/:/可设置 0/);
+  }
+  assert.equal(f.calls.filter(c=>c.action==='commit').length,0);f.window.DcatsSalesPricingLists.reset();
  }
 
  // Exercise the real existing-editor entry, including exact identity and session rechecks.
