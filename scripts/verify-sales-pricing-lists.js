@@ -255,6 +255,16 @@ async function fixture(lang='ja'){
   f.doc.getElementById('spl-refresh').click();await tick();await tick();assert.ok(f.doc.querySelector('[data-spl-price="1"]'));selectVisible(f);f.doc.getElementById('spl-bulk').click();assert.equal(f.doc.querySelectorAll('.spl-confirm-items li').length,1);f.doc.querySelector('[data-spl-cancel]').click();assert.equal(f.calls.filter(c=>c.action==='commit').length,0);f.window.DcatsSalesPricingLists.reset();
  }
 
+ // Keep both original Mitsubishi spellings searchable when selection adopts an alias.
+ for(const lang of ['ja','en','zh']){
+  f=await fixture(lang);Object.assign(f.rows[0],{manufacturer:'MITSUBISHI',manufacturer_part_number:'M000T87681',state:'configured',identity_configured_count:1});f.doc.getElementById('spl-refresh').click();await tick();await tick();
+  for(const [stored,queries] of [['M000T87681',['M0T87681','M000T87681']],['A1TA3891',['A1TA3891','A001TA3891']]]){
+   f.rows[0].manufacturer_part_number=stored;f.doc.getElementById('spl-refresh').click();await tick();await tick();f.doc.getElementById('spl-filter').value='configured';f.doc.getElementById('spl-filter').dispatchEvent(new f.window.Event('change'));
+   for(const query of queries){const q=f.doc.getElementById('spl-query');q.value=query;q.dispatchEvent(new f.window.Event('input'));assert.equal(f.doc.querySelectorAll('[data-spl-select]').length,1,'both spellings find the same configured product');}
+  }
+  f.rows[0].manufacturer='DENSO';f.doc.getElementById('spl-refresh').click();await tick();await tick();const q=f.doc.getElementById('spl-query');q.value='A001TA3891';q.dispatchEvent(new f.window.Event('input'));assert.equal(f.doc.querySelectorAll('[data-spl-select]').length,0,'Mitsubishi normalization never applies to another maker');f.window.DcatsSalesPricingLists.reset();
+ }
+
  // Exercise the real existing-editor entry, including exact identity and session rechecks.
  const entry=app.slice(app.indexOf('async function openSalesPricingListProduct('),app.indexOf('async function openSalesPricingMgmtRow('));
  for(const mode of ['success','missing','wrong-id','permission-changed','actor-changed','screen-left','network']){
