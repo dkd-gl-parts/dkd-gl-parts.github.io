@@ -91,6 +91,8 @@ jobs:
         run: node scripts/verify-screen-state-policy.js
       - name: Verify component catalog recovery
         run: node scripts/verify-component-catalog-recovery.js
+      - name: Verify catalog diagram empty and failure states
+        run: node scripts/verify-catalog-illustration-states.js
       - name: Verify manual component add
         run: node scripts/verify-component-manual-add.js
       - name: Verify shared component unit prices
