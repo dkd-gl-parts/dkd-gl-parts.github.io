@@ -51036,6 +51036,23 @@ function renderSalesPricingMgmt() {
   });
 }
 
+async function openSalesPricingListProduct(dkdId, productKind) {
+  if (!canEditBasePrice() || !canViewManufacturingCostMgmt() || !canViewBasePrice()) throw new Error("pricing_permission_denied");
+  if (!currentUser || !/^[1-9][0-9]*$/.test(String(dkdId)) || productKind !== "rebuilt") throw new Error("pricing_invalid_product");
+  var actorId = currentUser.id;
+  var result = await sb.from("core_products").select(CORE_PRODUCT_FAST_SELECT).eq("dkd_shohin_id", dkdId).limit(1);
+  if (!currentUser || currentUser.id !== actorId || !canEditBasePrice() || !canViewManufacturingCostMgmt() || !canViewBasePrice()) throw new Error("session");
+  var screen = document.getElementById("screen-sales-pricing-mgmt");
+  if (!screen || !screen.classList.contains("active")) throw new Error("session");
+  if (result.error) throw result.error;
+  var row = filterVisibleProducts(normalizeCoreProductFastRows(result.data || []))[0];
+  if (!row || String(row.dkd_shohin_id) !== String(dkdId)) throw new Error("pricing_product_unavailable");
+  currentProduct = row;
+  currentCoreDkdShohinId = row.dkd_shohin_id;
+  currentSelectedProductKind = productKind;
+  await openSalesPricingForCurrent();
+}
+
 async function openSalesPricingMgmtRow(dkdId) {
   var row = salesPricingMgmtRows.find(function(p){ return String(p.dkd_shohin_id) === String(dkdId); });
   if (!row) return;
