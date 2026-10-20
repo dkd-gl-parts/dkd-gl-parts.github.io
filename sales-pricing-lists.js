@@ -36,20 +36,19 @@
   Object.assign(words.ja,{ecTools:'EC相場',log:'ログ',ecMinimum:'直近30日以内の調査先ごとの最新結果から最安値を表示。取得済み送料を加算し、送料不明は加算されません。税区分は各結果の表示を確認してください。'});
   Object.assign(words.en,{ecTools:'EC market prices',log:'Log',ecMinimum:'Lowest of each provider’s latest results within 30 days. Known shipping is added; unknown shipping is not. Check the tax basis shown for each result.'});
   Object.assign(words.zh,{ecTools:'电商行情',log:'日志',ecMinimum:'显示30天内各调查来源最新结果的最低价。加上已知运费，未知运费不加算。请确认各结果显示的税别。'});
-  Object.assign(words.ja,{legacyPrice:'商品マスターの既存価格（税区分未確認）'});
-  Object.assign(words.en,{legacyPrice:'Existing product master price (tax basis unverified)'});
-  Object.assign(words.zh,{legacyPrice:'商品主数据已有价格（税别未确认）'});
+  Object.assign(words.ja,{scope:'当社販売価格は販売価格区分1です。未登録品と、区分1の税抜価格が保存総原価を下回る品番を一括設定の候補にします。参考価格・商品マスター価格・基準価格だけでは設定済みと判定しません。登録時は販売基準価格と区分1を同額で保存します。個別変更は「この品番を確認」から行えます。',relatedConfigured:'同一品番の別商品に区分1価格あり・個別設定から確認'});
+  Object.assign(words.en,{scope:'Company selling prices are class 1 prices. Unset products and class 1 net prices below saved cost may be bulk-priced. Reference, product master and base prices alone do not count as configured. Saving sets the base and class 1 price together. Use individual review for other changes.',relatedConfigured:'Another duplicate has a class 1 price; review individually'});
+  Object.assign(words.zh,{scope:'本公司销售价格为类别1价格。未登记商品及类别1未税价格低于已保存成本的商品可批量设置。仅有参考价、商品主数据价格或基准价格不算已设置。保存时基准价格与类别1设为同额，其他变更请单独确认。',relatedConfigured:'同品号其他商品已有类别1价格，请单独确认'});
   function el(id){return document.getElementById(id);}
   function permitted(){return !!root.currentUser && root.canEditBasePrice() && root.canViewManufacturingCostMgmt() && (!root.canViewBasePrice||root.canViewBasePrice());}
   function owner(){return root.currentUser&&root.currentUser.id;}
   function registeredComponentCount(r){var n=Number(r.registered_component_count);return r.registered_component_count!=null&&Number.isSafeInteger(n)&&n>=0?n:null;}
   function hasCostItems(r){return registeredComponentCount(r)>0;}
   function componentNote(r){return !hasCostItems(r)?(registeredComponentCount(r)==null?'componentUnknown':'costEmpty'):r.cost_snapshot_stale===true?'costSnapshot':r.cost_incomplete===true?'costPartial':null;}
-  function legacyPricePresent(r){return r.legacy_price_present===true||r.legacy_price_jpy!=null||r.legacy_price_raw!=null&&String(r.legacy_price_raw).trim()!=='';}
-  function existingPrice(r){return r.current_rank1_jpy!=null?money(r.current_rank1_jpy):r.current_base_jpy!=null?money(r.current_base_jpy):r.legacy_price_jpy!=null?money(r.legacy_price_jpy):legacyPricePresent(r)?String(r.legacy_price_raw||'—'):'—';}
-  function registered(r){return legacyPricePresent(r)||r.state==='configured'||r.configured_at!=null||r.current_base_jpy!=null||r.current_rank1_jpy!=null||Number(r.identity_configured_count)>0;}
+  function existingPrice(r){return r.current_rank1_jpy!=null?money(r.current_rank1_jpy):'—';}
+  function registered(r){return r.state==='configured'||r.current_rank1_jpy!=null||Number(r.identity_configured_count)>0;}
   function hasPriceableCost(r){var cost=Number(r.cost_jpy);return hasCostItems(r)&&r.cost_jpy!=null&&Number.isSafeInteger(cost)&&cost>=0;}
-  function loss(r){var sale=Number(r.current_sale_jpy);return r.is_loss===true&&r.current_sale_jpy!=null&&Number.isSafeInteger(sale)&&sale>=0&&r.cost_jpy!=null&&sale<Number(r.cost_jpy);}
+  function loss(r){var sale=Number(r.current_rank1_jpy);return r.is_loss===true&&r.current_rank1_jpy!=null&&Number.isSafeInteger(sale)&&sale>=0&&r.cost_jpy!=null&&sale<Number(r.cost_jpy);}
   function canPrice(r){return r.state==='ready'&&hasPriceableCost(r)&&Number(r.dks_price_jpy)>0&&(!registered(r)||loss(r));}
   function canFetch(r){return hasCostItems(r)&&!registered(r)&&!r.dks_price_jpy&&!['missing_product','kind_review','oem_review','identity_review'].includes(r.state);}
   function valid(){return permitted() && state.owner===owner();}
@@ -119,7 +118,7 @@
       '<td data-label="'+esc(w('cost'))+'">'+esc(money(r.cost_jpy))+'<small>'+esc(w('floor'))+' '+esc(money(r.minimum_jpy))+'</small>'+'<small>'+esc(w('componentRegistered'))+' '+esc(registeredComponentCount(r)==null?'—':registeredComponentCount(r))+'</small>'+(componentNote(r)?'<small>'+esc(w(componentNote(r)))+'</small>':'')+'</td>'+
       '<td data-label="'+esc(w('dks'))+'">'+esc(money(r.dks_price_jpy))+'<small>'+esc(r.dks_source?w(r.dks_source==='strain3'?'strain':'registered'):'')+' '+esc((r.dks_observed_at||'').slice(0,10))+'</small><small>'+esc(w('target'))+' '+esc(money(r.target_jpy))+'</small></td>'+
       '<td data-label="'+esc(w('ec'))+'">'+esc(ec)+'<small>'+esc(r.ec_seller||'')+' '+esc((r.ec_observed_at||'').slice(0,10))+'</small></td>'+
-      '<td data-label="'+esc(w('proposal'))+'">'+(loss(r)?'<small>'+esc(w('lossUpdate'))+' '+esc(money(r.current_sale_jpy))+'</small>':'')+(priceable?'<input type="number" min="'+esc(r.minimum_jpy)+'" step="100" data-spl-price="'+esc(k)+'" value="'+esc(p)+'" aria-label="'+esc(w('proposal')+' '+r.manufacturer_part_number)+'" '+(state.busy||state.pending?'disabled':'')+'><small data-spl-margin="'+esc(k)+'">'+esc(profit(r,p))+'</small>'+(!(Number(r.ec_price_jpy)>0)&&Number(r.dks_price_jpy)>0?'<small>'+esc(w('ecFallback'))+'</small>':''):esc(existingPrice(r))+(legacyPricePresent(r)&&r.current_base_jpy==null&&r.current_rank1_jpy==null?'<small>'+esc(w('legacyPrice'))+'</small>':'')+(Number(r.identity_configured_count)>0&&r.current_base_jpy==null&&r.current_rank1_jpy==null&&!legacyPricePresent(r)?'<small>'+esc(w('relatedConfigured'))+'</small>':''))+'</td>'+
+      '<td data-label="'+esc(w('proposal'))+'">'+(loss(r)?'<small>'+esc(w('lossUpdate'))+' '+esc(money(r.current_sale_jpy))+'</small>':'')+(priceable?'<input type="number" min="'+esc(r.minimum_jpy)+'" step="100" data-spl-price="'+esc(k)+'" value="'+esc(p)+'" aria-label="'+esc(w('proposal')+' '+r.manufacturer_part_number)+'" '+(state.busy||state.pending?'disabled':'')+'><small data-spl-margin="'+esc(k)+'">'+esc(profit(r,p))+'</small>'+(!(Number(r.ec_price_jpy)>0)&&Number(r.dks_price_jpy)>0?'<small>'+esc(w('ecFallback'))+'</small>':''):esc(existingPrice(r))+(Number(r.identity_configured_count)>0&&r.current_rank1_jpy==null?'<small>'+esc(w('relatedConfigured'))+'</small>':''))+'</td>'+
       '<td data-label="'+esc(w('status'))+'"><span class="spl-badge spl-'+esc(priceable?(r.cost_incomplete?'review':'ready'):registered(r)?'configured':'review')+'">'+esc(w(registered(r)&&!priceable?'configured':!hasCostItems(r)&&['ready','cost_review','dks_missing'].includes(r.state)?componentNote(r):priceable&&r.cost_incomplete?'readyProvisional':r.state))+'</span>'+(r.state!=='missing_product'&&r.dkd_shohin_id?'<button class="btn-sm-edit" type="button" data-spl-one="'+esc(k)+'" '+(state.busy||state.pending?'disabled':'')+'>'+esc(w('one'))+'</button>':'')+'</td></tr>';
     }).join('')+'</tbody></table>';
     var all=host.querySelector('[data-spl-visible-all]'),checked=rows.filter(function(r){return state.selected.has(String(r.item_id));}).length;
