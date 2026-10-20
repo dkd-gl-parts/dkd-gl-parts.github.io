@@ -39092,6 +39092,11 @@ async function executeUnusedProductDeletion() {
       delete unusedProductDeletionPending[state.key]; state.pending = null;
       state.confirming = false; state.inspection = null;
       state.message = result.status === "busy" ? "busy" : (result.status === "schema_changed" ? "error" : "changed");
+      if (result.status === "in_use" && result.inspection && result.inspection.status === "checked" &&
+        Number(result.inspection.product_id) === state.productId && result.inspection.eligible === false &&
+        Array.isArray(result.inspection.references)) {
+        state.inspection = result.inspection; state.message = "";
+      }
     }
   } catch (error) {
     // A transport failure may follow commit. Keep the original request ID.

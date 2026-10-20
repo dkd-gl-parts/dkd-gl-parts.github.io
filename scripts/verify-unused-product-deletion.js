@@ -74,9 +74,9 @@ const tick = () => new Promise(resolve => setImmediate(resolve));
   {
     const { c, elements } = fixture(); await tick(); c.confirmUnusedProductDeletion();
     elements.get('unused-product-reason').value = 'mistake'; elements.get('unused-product-ack').checked = true;
-    c.sb.rpc = async () => ({ data: { status: 'in_use', inspection: checked({ eligible: false }) } });
+    c.sb.rpc = async () => ({ data: { status: 'in_use', inspection: checked({ eligible: false, references: [{ code: 'stock', count: 1, handling: 'block' }] }) } });
     await c.executeUnusedProductDeletion(); assert.equal(elements.get('btn-unused-product-delete').disabled, true);
-    assert.equal(c.currentProduct.id, 100); passed++;
+    assert.equal(c.currentProduct.id, 100); assert.equal(c.unusedProductDeletionState.inspection.references[0].code,'stock','latest blocking reasons are shown immediately'); passed++;
   }
   {
     const { c, elements } = fixture(); await tick(); c.confirmUnusedProductDeletion();
