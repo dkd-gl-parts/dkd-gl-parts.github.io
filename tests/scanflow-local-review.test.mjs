@@ -58,7 +58,12 @@ test('document processing has no backend or browser-session access; Auth is isol
   const s=await fs.readFile(new URL(n,base),'utf8');assert.ok(!/\b(?:fetch|XMLHttpRequest|WebSocket|EventSource)\s*\(/.test(s),n);
   assert.ok(!/(?:localStorage|sessionStorage|document\.cookie)/.test(s),n);
  }
- const entry=await fs.readFile(new URL('../scanflow/index.html',import.meta.url),'utf8');assert.match(entry,/href="\.\/local-review\/"/);
+ // This release adds a direct route without changing the existing ScanFlow hub.
+ // Every script/style reference must resolve to an existing file in this release.
+ const site=new URL('https://dcats.invalid/scanflow/local-review/'),root=new URL('../',import.meta.url);
+ const assets=[...html.matchAll(/(?:src|href)="([^"]+)"/g)].map(m=>new URL(m[1],site)).filter(u=>!u.pathname.endsWith('/'));
+ assert.equal(assets.length,3);
+ for(const asset of assets){assert.equal(asset.origin,site.origin);assert.ok((await fs.stat(new URL('.'+asset.pathname,root))).isFile(),asset.pathname);}
 });
 
 
