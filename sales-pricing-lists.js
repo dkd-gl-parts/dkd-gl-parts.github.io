@@ -85,7 +85,13 @@
       renderContent();if(filterValue!=null){el('spl-filter').value=filterValue;el('spl-query').value=queryValue||'';renderRows();}status('');
     }catch(e){if(epoch===state.epoch){state.run=null;state.rows=[];el('spl-content').replaceChildren();status(errorText(e),true);}}finally{if(epoch===state.epoch)lock(false);}
   }
-  function filtered(){var f=el('spl-filter')?el('spl-filter').value:'unconfigured',q=el('spl-query')?el('spl-query').value.trim().toLowerCase():'';return state.rows.filter(function(r){return (f==='any'||f==='unconfigured'&&(!registered(r)||loss(r)&&r.state!=='configured')||f==='ready'&&canPrice(r)||f==='review'&&(!['ready','configured'].includes(r.state)||r.cost_incomplete===true)||f==='configured'&&registered(r))&&(!q||[r.dkd_shohin_id,r.manufacturer_part_number,r.genuine_part_number].join(' ').toLowerCase().includes(q));});}
+  function matchesQuery(r,q){
+    if([r.dkd_shohin_id,r.manufacturer_part_number,r.genuine_part_number].join(' ').toLowerCase().includes(q))return true;
+    if(!['MITSUBISHI','三菱','三菱電機'].includes(String(r.manufacturer||'').replace(/\s/g,'').toUpperCase()))return false;
+    var normalize=function(v){return String(v||'').toLowerCase().replace(/[^a-z0-9]/g,'').replace(/^([am])00(\d)t/,'$1$2t');};
+    var key=normalize(q);return !!key&&normalize(r.manufacturer_part_number).includes(key);
+  }
+  function filtered(){var f=el('spl-filter')?el('spl-filter').value:'unconfigured',q=el('spl-query')?el('spl-query').value.trim().toLowerCase():'';return state.rows.filter(function(r){return (f==='any'||f==='unconfigured'&&(!registered(r)||loss(r)&&r.state!=='configured')||f==='ready'&&canPrice(r)||f==='review'&&(!['ready','configured'].includes(r.state)||r.cost_incomplete===true)||f==='configured'&&registered(r))&&(!q||matchesQuery(r,q));});}
   function renderContent(){
     el('spl-content').innerHTML='<div class="spl-summary" id="spl-summary"></div><div class="spl-toolbar"><label>'+esc(w('filter'))+'<select id="spl-filter">'+['unconfigured','any','ready','review','configured'].map(function(k){return '<option value="'+k+'">'+esc(w(k))+'</option>';}).join('')+'</select></label><input id="spl-query" type="search" aria-label="'+esc(w('search'))+'" placeholder="'+esc(w('search'))+'">'+button('spl-refresh','refresh')+'</div>'+
       '<div class="spl-toolbar" data-spl-pricing-tools>'+button('spl-none','none')+button('spl-bulk','bulk')+(root.isSystemAdmin()?button('spl-scrape','scrape'):'')+'</div>'+
