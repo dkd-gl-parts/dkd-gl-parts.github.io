@@ -1897,7 +1897,7 @@ var TRANSLATIONS = {
     gltek_product_mode_rule_identity: "登録後はメーカーをGLTEKとし、メーカー品番とGLTEK品番に同じGLTEK品番を保存します。",
     gltek_product_mode_rule_private: "ベース商品・元メーカー・元メーカー品番・設計系譜は製造機密として非公開で保存します。",
     gltek_product_mode_rule_immutable: "発行したGLTEK品番は、品番修正画面から追加・削除・修正できません。",
-    gltek_product_mode_rule_standard: "通常リビルト・社外新品は、同じメーカー品番なら既存のGLTEK品番を共通利用します。",
+    gltek_product_mode_rule_standard: "通常リビルト・社外新品も、商品コードごとに異なるG品番を発行します。",
     gltek_product_mode_rule_production: "GLTEK製の登録は製造管理からのみ行い、販売管理の商品追加では利用できません。",
     gltek_product_mode_save: "GLTEK製を登録",
     gltek_base_manufacturer_code: "ベースメーカーコード（2文字）",
@@ -4541,7 +4541,7 @@ var TRANSLATIONS = {
     gltek_product_mode_rule_identity: "After registration, the manufacturer is GLTEK and the same GLTEK part number is stored as both manufacturer part number and GLTEK part number.",
     gltek_product_mode_rule_private: "The base product, original manufacturer and part number, and design lineage are stored privately as manufacturing-confidential information.",
     gltek_product_mode_rule_immutable: "An issued GLTEK part number cannot be added, deleted, or changed from the part-number edit screen.",
-    gltek_product_mode_rule_standard: "Standard rebuilt and aftermarket-new products continue sharing an existing GLTEK part number when the manufacturer part number is the same.",
+    gltek_product_mode_rule_standard: "Standard rebuilt and aftermarket-new products receive a separate G part number for each product code.",
     gltek_product_mode_rule_production: "GLTEK products can be registered only from Production Management and are unavailable from Sales Management product add.",
     gltek_product_mode_save: "Register GLTEK Product",
     gltek_base_manufacturer_code: "Base Manufacturer Code (2 chars)",
@@ -7195,7 +7195,7 @@ var TRANSLATIONS = {
     gltek_product_mode_rule_identity: "登记后制造商为GLTEK，并将同一个GLTEK零件编号保存为制造商零件编号和GLTEK零件编号。",
     gltek_product_mode_rule_private: "基础商品、原制造商及零件编号和设计沿革作为制造机密进行非公开保存。",
     gltek_product_mode_rule_immutable: "已发行的GLTEK零件编号不能在零件编号修改界面中新增、删除或修改。",
-    gltek_product_mode_rule_standard: "普通再制造品和副厂新品在制造商零件编号相同时，继续共用现有GLTEK零件编号。",
+    gltek_product_mode_rule_standard: "普通再制造品和副厂新品也按商品代码分别发行不同的G品号。",
     gltek_product_mode_rule_production: "GLTEK产品只能从生产管理登记，不能从销售管理的商品添加中使用。",
     gltek_product_mode_save: "登记GLTEK产品",
     gltek_base_manufacturer_code: "基础制造商代码（2位）",
@@ -8060,7 +8060,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1224";
+var APP_VERSION       = "v1.1.1225";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
