@@ -2618,6 +2618,19 @@ var TRANSLATIONS = {
     component_manufacturing_memo: "製造メモ",
     component_actions: "操作",
     component_catalog: "カタログ",
+    catalog_figure_title: "カタログ図",
+    catalog_figure_empty: "この品番のカタログ図は登録されていません",
+    catalog_figure_data_failed: "図データを取得できませんでした",
+    catalog_figure_image_failed: "登録済みの図の画像を取得できませんでした",
+    catalog_figure_timeout: "応答が時間切れになりました。再読み込みしてください。",
+    catalog_figure_auth: "ログイン状態を確認してください。",
+    catalog_figure_denied: "画像または図データの閲覧が許可されていません。",
+    catalog_figure_network: "通信に失敗しました。接続を確認して再読み込みしてください。",
+    catalog_figure_unavailable: "対象を確認できません。未保存または閲覧制限の可能性があります。",
+    catalog_figure_unknown: "再読み込みしても続く場合は、管理者へ確認してください。",
+    catalog_figure_invalid: "図の登録情報が不完全です。",
+    catalog_figure_retry: "カタログ図を再読み込み",
+    catalog_figure_count: "{count}枚",
     component_child: "子構成",
     component_child_loading: "子構成を読み込み中...",
     component_child_load_failed: "子構成の読み込みに失敗しました",
@@ -5245,6 +5258,19 @@ var TRANSLATIONS = {
     component_manufacturing_memo: "Manufacturing Memo",
     component_actions: "Action",
     component_catalog: "Catalog",
+    catalog_figure_title: "Catalog Diagram",
+    catalog_figure_empty: "No catalog diagram is registered for this part number",
+    catalog_figure_data_failed: "Could not retrieve diagram data",
+    catalog_figure_image_failed: "Could not retrieve the registered diagram image",
+    catalog_figure_timeout: "The request timed out. Please reload.",
+    catalog_figure_auth: "Please check your login session.",
+    catalog_figure_denied: "Access to this image or diagram data is not permitted.",
+    catalog_figure_network: "Connection failed. Check your connection and reload.",
+    catalog_figure_unavailable: "The requested item could not be verified. It may be missing or access-restricted.",
+    catalog_figure_unknown: "Reload, or contact your administrator if the problem persists.",
+    catalog_figure_invalid: "The diagram registration is incomplete.",
+    catalog_figure_retry: "Reload catalog diagrams",
+    catalog_figure_count: "{count} image(s)",
     component_child: "Child",
     component_child_loading: "Loading child components...",
     component_child_load_failed: "Failed to load child components",
@@ -7869,6 +7895,19 @@ var TRANSLATIONS = {
     component_manufacturing_memo: "制造备注",
     component_actions: "操作",
     component_catalog: "目录",
+    catalog_figure_title: "目录图",
+    catalog_figure_empty: "此零件编号尚未登记目录图",
+    catalog_figure_data_failed: "无法获取目录图数据",
+    catalog_figure_image_failed: "无法获取已登记的目录图图片",
+    catalog_figure_timeout: "请求超时，请重新加载。",
+    catalog_figure_auth: "请检查登录状态。",
+    catalog_figure_denied: "没有查看此图片或目录图数据的权限。",
+    catalog_figure_network: "通信失败，请检查连接并重新加载。",
+    catalog_figure_unavailable: "无法确认目标，可能未保存或受到访问限制。",
+    catalog_figure_unknown: "请重新加载；若问题持续，请联系管理员。",
+    catalog_figure_invalid: "目录图登记信息不完整。",
+    catalog_figure_retry: "重新加载目录图",
+    catalog_figure_count: "{count}张",
     component_child: "子构成",
     component_child_loading: "正在读取子构成...",
     component_child_load_failed: "子构成读取失败",
@@ -8009,7 +8048,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1207";
+var APP_VERSION       = "v1.1.1208";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -45036,17 +45075,38 @@ function componentIllustrationPublicUrl(row) {
 
 async function signComponentIllustrationRows(rows) {
   return Promise.all((rows || []).map(async function(row) {
-    if (!row || !row.image_bucket || !row.image_path) return row;
-    var result = await sb.storage
-      .from(row.image_bucket)
-      .createSignedUrl(row.image_path, PRODUCT_IMAGE_SIGNED_URL_TTL_SECONDS);
-    if (result.error) throw result.error;
-    var signedUrl = result.data && (
-      result.data.signedUrl || result.data.signedURL || result.data.publicUrl
-    ) || "";
-    if (!signedUrl) throw new Error("Catalog illustration signed URL is empty");
-    return Object.assign({}, row, { signed_image_url: signedUrl });
+    var prepared = Object.assign({}, row, { signed_image_url: "", image_load_error: "" });
+    if (!row || !row.image_bucket || !row.image_path) {
+      prepared.image_load_error = t("catalog_figure_invalid");
+      return prepared;
+    }
+    try {
+      var result = await sb.storage.from(row.image_bucket)
+        .createSignedUrl(row.image_path, PRODUCT_IMAGE_SIGNED_URL_TTL_SECONDS);
+      if (!result || result.error) throw result && result.error || { code: "invalid_response" };
+      var signedUrl = result.data && (result.data.signedUrl || result.data.signedURL) || "";
+      if (!signedUrl) throw { code: "invalid_response" };
+      prepared.signed_image_url = signedUrl;
+    } catch (error) {
+      prepared.image_load_error = catalogIllustrationFailureText(error, "image");
+      console.warn("catalog illustration image signing failed", { code: String(error && error.code || "unknown").replace(/[^a-z0-9_]/gi, "").slice(0, 32) });
+    }
+    return prepared;
   }));
+}
+
+function catalogIllustrationFailureText(error, stage) {
+  var code = String(error && (error.code || error.error) || "").toLowerCase();
+  var status = Number(error && (error.statusCode || error.status));
+  var message = String(error && error.message || "").toLowerCase();
+  var reason = "catalog_figure_unknown";
+  if (status === 401 || /^(pgrst301|pgrst302|invalid_jwt|jwt_expired)$/.test(code)) reason = "catalog_figure_auth";
+  else if (status === 403 || code === "42501" || code === "accessdenied") reason = "catalog_figure_denied";
+  else if (code === "57014" || code === "etimedout" || /timeout|timed out/.test(message) || (error && error.name === "AbortError")) reason = "catalog_figure_timeout";
+  else if (status === 404 || /^(notfound|not_found|nosuchkey|object_not_found)$/.test(code) || /object not found/.test(message)) reason = "catalog_figure_unavailable";
+  else if ((error && error.name === "TypeError") || /failed to fetch|network|fetch failed/.test(message)) reason = "catalog_figure_network";
+  else if (code === "invalid_response") reason = "catalog_figure_invalid";
+  return t(stage === "image" ? "catalog_figure_image_failed" : "catalog_figure_data_failed") + ": " + t(reason);
 }
 
 function componentIllustrationPoints(row) {
@@ -45106,20 +45166,25 @@ function componentIllustrationDimensions(row) {
 
 function renderComponentIllustrationPanelHtml() {
   if (selectedProductKind() !== "catalog_spec") return "";
+  var head = "<div class='catalog-illustration-head'><div class='catalog-illustration-title'>" + t("catalog_figure_title") + "</div><button class='catalog-illustration-tool' type='button' data-catalog-retry title='" + esc(t("catalog_figure_retry")) + "' aria-label='" + esc(t("catalog_figure_retry")) + "'" + (componentIllustrationLoading ? " disabled" : "") + ">↻</button></div>";
   if (componentIllustrationLoading) {
-    return "<div class='catalog-illustration-panel'><div class='catalog-illustration-head'><div class='catalog-illustration-title'>カタログ図</div></div><div class='component-empty'>" + t("loading") + "</div></div>";
+    return "<div class='catalog-illustration-panel' role='status' aria-busy='true'>" + head + "<div class='component-empty'>" + t("loading") + "</div></div>";
   }
   if (componentIllustrationError) {
-    return "<div class='catalog-illustration-panel catalog-illustration-error'><div class='catalog-illustration-head'><div class='catalog-illustration-title'>カタログ図</div><button class='catalog-illustration-tool' type='button' data-catalog-retry title='再読み込み' aria-label='カタログ図を再読み込み'>↻</button></div><div>" + esc(componentIllustrationError) + "</div></div>";
+    return "<div class='catalog-illustration-panel catalog-illustration-error' role='alert'>" + head + "<div>" + esc(componentIllustrationError) + "</div></div>";
   }
   var rows = componentIllustrationRows || [];
   if (!rows.length) {
-    return "<div class='catalog-illustration-panel catalog-illustration-empty'><div class='catalog-illustration-head'><div class='catalog-illustration-title'>カタログ図</div></div><div class='component-empty'>カタログ図は登録されていません</div></div>";
+    return "<div class='catalog-illustration-panel catalog-illustration-empty' role='status'>" + head + "<div class='component-empty'>" + t("catalog_figure_empty") + "</div></div>";
   }
   var html = "<div class='catalog-illustration-panel'>";
-  html += "<div class='catalog-illustration-head'><div class='catalog-illustration-title'>カタログ図</div><div class='catalog-illustration-meta'>" + esc(String(rows.length)) + "枚</div></div>";
+  html += head + "<div class='catalog-illustration-meta'>" + esc(tf("catalog_figure_count", { count: rows.length })) + "</div>";
   html += "<div class='catalog-illustration-list'>";
-  rows.forEach(function(row) {
+  rows.forEach(function(row, rowIndex) {
+    if (row.image_load_error) {
+      html += "<div class='catalog-illustration-card catalog-illustration-error' role='alert'><div class='component-pn'>" + esc(row.model_id || row.assy_manufacturer_part_number || t("catalog_figure_title")) + "</div><div>" + esc(row.image_load_error) + "</div></div>";
+      return;
+    }
     var url = componentIllustrationPublicUrl(row);
     if (!url) return;
     var points = componentIllustrationPoints(row);
@@ -45139,7 +45204,7 @@ function renderComponentIllustrationPanelHtml() {
     html += "</div></div>";
     html += "<div class='catalog-illustration-frame' data-catalog-viewport data-catalog-width='" + esc(String(dimensions.width)) + "' data-catalog-height='" + esc(String(dimensions.height)) + "' tabindex='0' aria-label='" + esc(imageLabel) + "'>";
     html += "<svg class='catalog-illustration-canvas' data-catalog-canvas viewBox='0 0 " + esc(String(dimensions.width)) + " " + esc(String(dimensions.height)) + "' preserveAspectRatio='xMidYMid meet' role='img' aria-label='" + esc(imageLabel) + "'>";
-    html += "<image class='" + esc(imageClass) + "' href='" + esc(url) + "' x='0' y='0' width='" + esc(String(dimensions.width)) + "' height='" + esc(String(dimensions.height)) + "' preserveAspectRatio='xMidYMid meet'></image>";
+    html += "<image class='" + esc(imageClass) + "' data-catalog-image='" + rowIndex + "' href='" + esc(url) + "' x='0' y='0' width='" + esc(String(dimensions.width)) + "' height='" + esc(String(dimensions.height)) + "' preserveAspectRatio='xMidYMid meet'></image>";
     points.forEach(function(point, index) {
       html += componentIllustrationPointSvg(point, index, dimensions.width, dimensions.height);
     });
@@ -45205,6 +45270,15 @@ function resetCatalogIllustration(viewport) {
 }
 
 function bindCatalogIllustrationInteractions(root) {
+  var requestId = componentIllustrationRequestId;
+  root.querySelectorAll("[data-catalog-image]").forEach(function(image) {
+    var row = componentIllustrationRows[Number(image.dataset.catalogImage)];
+    image.addEventListener("error", function() {
+      if (requestId !== componentIllustrationRequestId || selectedProductKind() !== "catalog_spec" || componentIllustrationRows.indexOf(row) < 0) return;
+      row.image_load_error = catalogIllustrationFailureText(null, "image");
+      renderComponentIllustrationSlot();
+    });
+  });
   root = root || document;
   root.querySelectorAll("[data-catalog-viewport]").forEach(function(viewport) {
     if (viewport.dataset.catalogBound === "1") return;
@@ -45292,10 +45366,11 @@ function renderComponentIllustrationSlot() {
 }
 
 async function retryCatalogIllustrationLoad() {
+  if (componentIllustrationLoading) return;
+  var requestId = componentIllustrationRequestId;
   var dkdId = await resolveCurrentCoreDkdShohinId();
-  if (!dkdId) return;
+  if (!dkdId || requestId !== componentIllustrationRequestId) return;
   await loadCatalogIllustrationsForCurrent(dkdId, selectedProductKind());
-  renderComponentIllustrationSlot();
 }
 
 async function loadCatalogIllustrationsForCurrent(dkdId, selectedKind) {
@@ -45311,15 +45386,10 @@ async function loadCatalogIllustrationsForCurrent(dkdId, selectedKind) {
       target_dkd_shohin_id: dkdId,
       target_product_kind: selectedKind
     });
-    if (r.error) {
-      if (requestId !== componentIllustrationRequestId) return;
-      componentIllustrationLoading = false;
-      componentIllustrationError = "カタログ図を読み込めませんでした: " + (r.error.message || r.error.details || r.error.code || "");
-      console.warn("get_catalog_illustration_for_product failed", r.error);
-      renderComponentIllustrationSlot();
-      return;
-    }
-    var signedRows = await signComponentIllustrationRows(r.data || []);
+    if (requestId !== componentIllustrationRequestId) return;
+    if (!r || r.error) throw r && r.error || { code: "invalid_response" };
+    if (!Array.isArray(r.data)) throw { code: "invalid_response" };
+    var signedRows = await signComponentIllustrationRows(r.data);
     if (requestId !== componentIllustrationRequestId) return;
     componentIllustrationLoading = false;
     componentIllustrationRows = signedRows;
@@ -45327,8 +45397,8 @@ async function loadCatalogIllustrationsForCurrent(dkdId, selectedKind) {
   } catch (e) {
     if (requestId !== componentIllustrationRequestId) return;
     componentIllustrationLoading = false;
-    componentIllustrationError = "カタログ図を読み込めませんでした";
-    console.warn("get_catalog_illustration_for_product failed", e);
+    componentIllustrationError = catalogIllustrationFailureText(e, "data");
+    console.warn("catalog illustration data retrieval failed", { code: String(e && e.code || "unknown").replace(/[^a-z0-9_]/gi, "").slice(0, 32) });
     renderComponentIllustrationSlot();
   }
 }
