@@ -8048,7 +8048,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1211";
+var APP_VERSION       = "v1.1.1212";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -45164,6 +45164,20 @@ function componentIllustrationDimensions(row) {
   };
 }
 
+function componentIllustrationViewportBounds(row) {
+  var dimensions = componentIllustrationDimensions(row);
+  var points = componentIllustrationPoints(row);
+  var padding = 0;
+  if (String(row && row.source_code || "").toLowerCase() === "catalog_sawafuji" && points.length) {
+    var labelLength = points.reduce(function(length, point) {
+      return Math.max(length, componentIllustrationPointLabel(point).length);
+    }, 1);
+    var scale = Math.max(1, Math.min(dimensions.width / 615, dimensions.height / 487));
+    padding = Math.ceil(Math.max(12, labelLength * 3.5 + 2) * scale);
+  }
+  return { x: -padding, y: -padding, width: dimensions.width + padding * 2, height: dimensions.height + padding * 2 };
+}
+
 function renderComponentIllustrationPanelHtml() {
   if (selectedProductKind() !== "catalog_spec") return "";
   var head = "<div class='catalog-illustration-head'><div class='catalog-illustration-title'>" + t("catalog_figure_title") + "</div><button class='catalog-illustration-tool' type='button' data-catalog-retry title='" + esc(t("catalog_figure_retry")) + "' aria-label='" + esc(t("catalog_figure_retry")) + "'" + (componentIllustrationLoading ? " disabled" : "") + ">↻</button></div>";
@@ -45189,6 +45203,7 @@ function renderComponentIllustrationPanelHtml() {
     if (!url) return;
     var points = componentIllustrationPoints(row);
     var dimensions = componentIllustrationDimensions(row);
+    var bounds = componentIllustrationViewportBounds(row);
     var imageLabel = row.model_id || row.assy_manufacturer_part_number || "catalog illustration";
     var imageClass = "catalog-illustration-image";
     if (String(row.source_code || "").toLowerCase() === "catalog_denso") {
@@ -45202,8 +45217,8 @@ function renderComponentIllustrationPanelHtml() {
     html += "<button class='catalog-illustration-tool' type='button' data-catalog-action='zoom-in' title='拡大' aria-label='拡大'>＋</button>";
     html += "<button class='catalog-illustration-tool' type='button' data-catalog-action='reset' title='全体表示' aria-label='全体表示'>↺</button>";
     html += "</div></div>";
-    html += "<div class='catalog-illustration-frame' data-catalog-viewport data-catalog-width='" + esc(String(dimensions.width)) + "' data-catalog-height='" + esc(String(dimensions.height)) + "' tabindex='0' aria-label='" + esc(imageLabel) + "'>";
-    html += "<svg class='catalog-illustration-canvas' data-catalog-canvas viewBox='0 0 " + esc(String(dimensions.width)) + " " + esc(String(dimensions.height)) + "' preserveAspectRatio='xMidYMid meet' role='img' aria-label='" + esc(imageLabel) + "'>";
+    html += "<div class='catalog-illustration-frame' data-catalog-viewport data-catalog-x='" + esc(String(bounds.x)) + "' data-catalog-y='" + esc(String(bounds.y)) + "' data-catalog-width='" + esc(String(bounds.width)) + "' data-catalog-height='" + esc(String(bounds.height)) + "' tabindex='0' aria-label='" + esc(imageLabel) + "'>";
+    html += "<svg class='catalog-illustration-canvas' data-catalog-canvas viewBox='" + [bounds.x, bounds.y, bounds.width, bounds.height].map(function(value) { return esc(String(value)); }).join(" ") + "' preserveAspectRatio='xMidYMid meet' role='img' aria-label='" + esc(imageLabel) + "'>";
     html += "<image class='" + esc(imageClass) + "' data-catalog-image='" + rowIndex + "' href='" + esc(url) + "' x='0' y='0' width='" + esc(String(dimensions.width)) + "' height='" + esc(String(dimensions.height)) + "' preserveAspectRatio='xMidYMid meet'></image>";
     points.forEach(function(point, index) {
       html += componentIllustrationPointSvg(point, index, dimensions.width, dimensions.height);
@@ -45227,12 +45242,14 @@ function setCatalogIllustrationViewBox(viewport, x, y, width, height) {
   if (!svg) return;
   var baseWidth = Number(viewport.dataset.catalogWidth) || 615;
   var baseHeight = Number(viewport.dataset.catalogHeight) || 487;
+  var baseX = Number(viewport.dataset.catalogX) || 0;
+  var baseY = Number(viewport.dataset.catalogY) || 0;
   var minWidth = baseWidth / 6;
   var minHeight = baseHeight / 6;
   width = Math.max(minWidth, Math.min(baseWidth, width));
   height = Math.max(minHeight, Math.min(baseHeight, height));
-  x = Math.max(0, Math.min(baseWidth - width, x));
-  y = Math.max(0, Math.min(baseHeight - height, y));
+  x = Math.max(baseX, Math.min(baseX + baseWidth - width, x));
+  y = Math.max(baseY, Math.min(baseY + baseHeight - height, y));
   svg.setAttribute("viewBox", [x, y, width, height].join(" "));
   var label = viewport.closest(".catalog-illustration-card");
   label = label && label.querySelector("[data-catalog-zoom-label]");
@@ -45266,7 +45283,9 @@ function zoomCatalogIllustration(viewport, multiplier, clientX, clientY) {
 function resetCatalogIllustration(viewport) {
   var baseWidth = Number(viewport && viewport.dataset.catalogWidth) || 615;
   var baseHeight = Number(viewport && viewport.dataset.catalogHeight) || 487;
-  setCatalogIllustrationViewBox(viewport, 0, 0, baseWidth, baseHeight);
+  var baseX = Number(viewport && viewport.dataset.catalogX) || 0;
+  var baseY = Number(viewport && viewport.dataset.catalogY) || 0;
+  setCatalogIllustrationViewBox(viewport, baseX, baseY, baseWidth, baseHeight);
 }
 
 function bindCatalogIllustrationInteractions(root) {

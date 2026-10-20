@@ -7,6 +7,7 @@ const { parseHTML } = require("linkedom");
 const source = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
 const ast = acorn.parse(source, { ecmaVersion: "latest", sourceType: "script" });
 const names = ["esc", "componentIllustrationPublicUrl", "signComponentIllustrationRows", "catalogIllustrationFailureText", "componentIllustrationPoints", "componentIllustrationPointLabel", "componentIllustrationPointTitle", "componentIllustrationPointSvg", "componentIllustrationDimensions", "renderComponentIllustrationPanelHtml", "catalogIllustrationViewBox", "setCatalogIllustrationViewBox", "zoomCatalogIllustration", "resetCatalogIllustration", "bindCatalogIllustrationInteractions", "renderComponentIllustrationSlot", "retryCatalogIllustrationLoad", "loadCatalogIllustrationsForCurrent"];
+names.push("componentIllustrationViewportBounds");
 const functions = names.map(name => {
   const node = ast.body.find(n => n.type === "FunctionDeclaration" && n.id.name === name);
   assert(node, name); return source.slice(node.start, node.end);
@@ -90,6 +91,30 @@ async function test(name, run) { await run(); checks++; }
   await test("noncatalog hidden and error escaped", async () => {
     const c = sandbox(); c.kind = "rebuilt"; assert.equal(c.renderComponentIllustrationPanelHtml(), "");
     c.kind = "catalog_spec"; c.componentIllustrationError = "<script>BAD</script>"; c.renderComponentIllustrationSlot(); assert.equal(c.document.querySelectorAll("script").length, 0);
+  });
+  await test("Sawafuji viewport padding preserves image pixels and edge labels", async () => {
+    const c = sandbox();
+    const r = { ...row, source_code: "catalog_sawafuji", image_width: 791, image_height: 486, signed_image_url: "https://example.test/private.gif", points: [{ x_px: 0, y_px: 1, component_position: "19-2" }, { x_px: 791, y_px: 486, component_position: "32" }] };
+    c.componentIllustrationRows = [r];
+    c.renderComponentIllustrationSlot();
+    const viewport = c.document.querySelector("[data-catalog-viewport]");
+    const svg = viewport.querySelector("svg"), image = svg.querySelector("image");
+    assert.equal(image.getAttribute("width"), "791"); assert.equal(image.getAttribute("height"), "486");
+    assert.equal(svg.querySelector("circle").getAttribute("cx"), "0");
+    assert.equal(svg.querySelector("circle").getAttribute("cy"), "1");
+    const originalBox = svg.getAttribute("viewBox");
+    assert(Number(originalBox.split(" ")[0]) < -7);
+    viewport.getBoundingClientRect = () => ({ left: 0, top: 0, width: 400, height: 260 });
+    c.zoomCatalogIllustration(viewport, 1.2);
+    assert.notEqual(svg.getAttribute("viewBox"), originalBox);
+    c.setCatalogIllustrationViewBox(viewport, -9999, -9999, 1, 1);
+    assert.equal(Number(svg.getAttribute("viewBox").split(" ")[0]), Number(viewport.dataset.catalogX));
+    c.resetCatalogIllustration(viewport); assert.equal(svg.getAttribute("viewBox"), originalBox);
+    assert.equal(viewport.closest(".catalog-illustration-card").querySelector("[data-catalog-zoom-label]").textContent, "100%");
+    const other = c.componentIllustrationViewportBounds({ ...r, source_code: "catalog_denso" });
+    assert.deepEqual(JSON.parse(JSON.stringify(other)), { x: 0, y: 0, width: 791, height: 486 });
+    const plain = c.componentIllustrationViewportBounds({ ...r, points: [] });
+    assert.deepEqual(JSON.parse(JSON.stringify(plain)), { x: 0, y: 0, width: 791, height: 486 });
   });
   console.log("Catalog illustration states: " + checks + " scenarios passed");
 })().catch(error => { console.error(error); process.exitCode = 1; });
