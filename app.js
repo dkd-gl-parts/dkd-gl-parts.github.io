@@ -8054,7 +8054,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1221";
+var APP_VERSION       = "v1.1.1222";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -45499,7 +45499,12 @@ function bindCatalogIllustrationInteractions(root) {
 function renderComponentIllustrationSlot() {
   var slot = document.getElementById("component-illustration-slot");
   if (!slot) return;
-  slot.innerHTML = renderComponentIllustrationPanelHtml();
+  var html = renderComponentIllustrationPanelHtml();
+  var renderKey = String(componentIllustrationRequestId) + "\n" + html;
+  // Component-table updates must not restart the unchanged image or its zoom.
+  if (slot._catalogIllustrationRenderKey === renderKey) return;
+  slot._catalogIllustrationRenderKey = renderKey;
+  slot.innerHTML = html;
   bindCatalogIllustrationInteractions(slot);
 }
 

@@ -281,5 +281,25 @@ async function test(name, run) { await run(); checks++; }
     assert.equal(calls.signed, 1); assert.equal(c.document.querySelectorAll("image").length, 0);
     assert.equal(c.componentIllustrationSignedUrlCache, null);
   });
+  await test("unchanged table renders preserve the loaded image and zoom", async () => {
+    const c = sandbox(); instrument(c); await c.loadCatalogIllustrationsForCurrent(1, "catalog_spec");
+    const image = c.document.querySelector("image"), svg = c.document.querySelector("svg");
+    const viewport = c.document.querySelector("[data-catalog-viewport]");
+    c.zoomCatalogIllustration(viewport, 1.2); const zoom = svg.getAttribute("viewBox");
+    for (let i = 0; i < 5; i++) c.renderComponentIllustrationSlot();
+    assert.equal(c.document.querySelector("image"), image); assert.equal(c.document.querySelector("svg"), svg);
+    assert.equal(svg.getAttribute("viewBox"), zoom);
+    image.dispatchEvent(new c.window.Event("error")); assert.equal(c.document.querySelectorAll("image").length, 0);
+  });
+  await test("new requests, metadata, language and errors replace the diagram", async () => {
+    const c = sandbox(); instrument(c); await c.loadCatalogIllustrationsForCurrent(1, "catalog_spec");
+    let image = c.document.querySelector("image"); c.componentIllustrationRequestId++; c.renderComponentIllustrationSlot();
+    assert.notEqual(c.document.querySelector("image"), image);
+    image = c.document.querySelector("image"); c.componentIllustrationRows[0].points[0].x_px = 77; c.renderComponentIllustrationSlot();
+    assert.notEqual(c.document.querySelector("image"), image); assert.equal(c.document.querySelector("circle").getAttribute("cx"), "77");
+    image = c.document.querySelector("image"); c.currentLang = "en"; c.renderComponentIllustrationSlot();
+    assert.notEqual(c.document.querySelector("image"), image);
+    c.clearCatalogIllustrationSignedUrlCache(true); assert.equal(c.document.querySelectorAll("image").length, 0);
+  });
   console.log("Catalog illustration states: " + checks + " scenarios passed");
 })().catch(error => { console.error(error); process.exitCode = 1; });
