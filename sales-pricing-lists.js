@@ -156,6 +156,7 @@
     all.indeterminate=checked>0&&checked<rows.length;all.addEventListener('change',function(){var focused=document.activeElement===all;selectVisible(all.checked);if(focused){var current=host.querySelector('[data-spl-visible-all]');if(current)current.focus();}});
     host.querySelectorAll('[data-spl-select]').forEach(function(n){n.addEventListener('change',function(){if(state.busy||state.pending||!valid())return;var focused=document.activeElement===n,k=n.dataset.splSelect;if(n.checked)state.selected.add(k);else state.selected.delete(k);renderRows();if(focused){var next=host.querySelector('[data-spl-select="'+k+'"]');if(next)next.focus();}});});
     host.querySelectorAll('[data-spl-price]').forEach(function(n){n.addEventListener('input',function(){var r=state.rows.find(function(r){return String(r.item_id)===n.dataset.splPrice;});editPrice(r,n.value);});});
+    host.querySelectorAll('[data-spl-row]').forEach(function(n){n.addEventListener('click',function(e){if(e.target.closest('button,input,select,textarea,a,label'))return;focusPart(n.dataset.splRow);});});
     host.querySelectorAll('[data-spl-detail]').forEach(function(n){n.addEventListener('click',function(){focusPart(n.dataset.splDetail);});});
     host.querySelectorAll('[data-spl-one]').forEach(function(n){n.addEventListener('click',function(){openIndividual(n.dataset.splOne);});});
     if(el('spl-bulk'))el('spl-bulk').disabled=state.busy||!!state.pending||!state.rows.some(function(r){return canPrice(r)&&state.selected.has(String(r.item_id));});

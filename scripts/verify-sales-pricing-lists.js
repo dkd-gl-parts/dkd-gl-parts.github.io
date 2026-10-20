@@ -9,6 +9,7 @@ const tick=()=>new Promise(r=>setImmediate(r));
 async function fixture(lang='ja'){
  const {window}=parseHTML('<html><body><div id="screen-sales-pricing-mgmt" class="screen active"><section id="sales-pricing-lists"></section></div></body></html>');
  const doc=window.document,selectValue=new WeakMap();
+ const scrollPositions=new WeakMap();Object.defineProperty(window.HTMLElement.prototype,'scrollTop',{configurable:true,get(){return scrollPositions.get(this)||0;},set(v){scrollPositions.set(this,Number(v));}});
  Object.defineProperty(window.HTMLSelectElement.prototype,'value',{configurable:true,get(){return selectValue.has(this)?selectValue.get(this):(this.querySelector('option[selected],option')?.getAttribute('value')||'');},set(v){selectValue.set(this,String(v));}});
  const inputChecked=new WeakMap();Object.defineProperty(window.HTMLInputElement.prototype,'checked',{configurable:true,get(){return inputChecked.has(this)?inputChecked.get(this):this.hasAttribute('checked');},set(v){inputChecked.set(this,!!v);}});
  const create=doc.createElement.bind(doc);doc.createElement=(tag)=>{const n=create(tag);if(tag==='dialog'){n.showModal=()=>{n.open=true;n.querySelector('form').reportValidity=()=>Array.from(n.querySelectorAll('[required]')).every(x=>!!x.value);};n.close=()=>{n.open=false;n.dispatchEvent(new window.Event('close'));};}return n;};
@@ -261,6 +262,38 @@ async function fixture(lang='ja'){
   }
   f.rows[0].manufacturer='DENSO';f.doc.getElementById('spl-refresh').click();await tick();await tick();const q=f.doc.getElementById('spl-query');q.value='A001TA3891';q.dispatchEvent(new f.window.Event('input'));assert.equal(f.doc.querySelectorAll('[data-spl-select]').length,0,'Mitsubishi normalization never applies to another maker');f.window.DcatsSalesPricingLists.reset();
  }
+
+ // A row's read-only cells and whitespace select details without changing bulk selection.
+ for(const lang of ['ja','en','zh']){
+  f=await fixture(lang);const inspector=f.doc.getElementById('spl-inspector');
+  const input=f.doc.querySelector('[data-spl-price="1"]');input.value='12000';input.dispatchEvent(new f.window.Event('input'));
+  f.doc.querySelector('.spl-detail-body').scrollTop=250;
+  f.doc.querySelector('[data-spl-row="2"]').children[2].click();
+  assert.equal(f.doc.querySelector('#spl-inspector h2').textContent,'<script>bad</script>');
+  assert.equal(f.doc.querySelector('.spl-detail-body').scrollTop,0,'a newly selected product starts at the top of the actual detail scroller');
+  assert.ok(f.doc.querySelector('[data-spl-row="2"]').classList.contains('spl-active'));
+  assert.equal(f.doc.querySelector('[data-spl-detail="2"]').getAttribute('aria-pressed'),'true');
+  assert.equal(f.doc.querySelector('[data-spl-detail="1"]').getAttribute('aria-pressed'),'false');
+  assert.equal(f.doc.querySelectorAll('[data-spl-select][checked]').length,0,'detail selection does not check products for bulk pricing');
+  input.click();assert.equal(f.doc.querySelector('[data-spl-detail="2"]').getAttribute('aria-pressed'),'true','editing an input does not trigger the row action');
+  const check=f.doc.querySelector('[data-spl-select="1"]');check.click();check.checked=true;check.dispatchEvent(new f.window.Event('change'));
+  assert.equal(f.doc.querySelector('[data-spl-detail="2"]').getAttribute('aria-pressed'),'true','bulk checkboxes retain their existing action');
+  assert.equal(f.doc.querySelector('[data-spl-price="1"]').value,'12000');
+  f.doc.querySelector('[data-spl-row="1"] .spl-check').click();
+  assert.equal(f.doc.querySelector('[data-spl-detail="2"]').getAttribute('aria-pressed'),'true','the checkbox label does not open mobile details');
+  f.doc.getElementById('spl-filter').value='any';f.doc.getElementById('spl-filter').dispatchEvent(new f.window.Event('change'));
+  f.doc.querySelector('[data-spl-row="3"] .spl-badge').click();
+  assert.equal(f.doc.querySelector('#spl-inspector h2').textContent,'OEM-102');assert.match(inspector.textContent,/9,000/);
+  f.doc.querySelector('[data-spl-row="2"]').click();
+  f.doc.querySelector('[data-spl-one="3"]').click();await tick();await tick();
+  assert.deepEqual(f.individual,[{id:102,kind:'rebuilt'}]);
+  assert.equal(f.doc.querySelector('[data-spl-detail="2"]').getAttribute('aria-pressed'),'true','the individual button does not also invoke the row action');
+  f.deny();f.doc.querySelector('[data-spl-row="1"]').click();
+  assert.equal(f.doc.querySelector('[data-spl-detail="2"]').getAttribute('aria-pressed'),'true');
+  assert.equal(f.calls.filter(c=>c.action==='commit').length,0);f.window.DcatsSalesPricingLists.reset();
+ }
+ f=await fixture();f.setUnknown();bulkReview(f);f.doc.querySelector('[data-spl-confirm]').click();await tick();await tick();
+ f.doc.querySelector('[data-spl-row="2"]').click();assert.equal(f.doc.querySelector('[data-spl-detail="1"]').getAttribute('aria-pressed'),'true','unknown save outcomes block row actions too');f.window.DcatsSalesPricingLists.reset();
 
  // Split view keeps drafts, focus identity and financial eligibility independent.
  for(const lang of ['ja','en','zh']){
