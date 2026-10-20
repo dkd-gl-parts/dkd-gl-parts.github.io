@@ -2697,7 +2697,61 @@ var TRANSLATIONS = {
     spec_ph_current: "例: 80（Aは不要）",
     spec_ph_power_kw: "例: 5.5（kWは不要）",
     spec_ph_power_w: "例: 120（Wは不要）",
-    spec_ph_diameter: "例: 139（φ/Dは不要）"
+    spec_ph_diameter: "例: 139（φ/Dは不要）",
+    "unused_product_delete_title": "使用状況と削除",
+    "unused_product_delete_loading": "使用状況を確認しています…",
+    "unused_product_delete_eligible": "未使用のため削除できます",
+    "unused_product_delete_blocked": "使用中のため削除できません",
+    "unused_product_delete_error": "使用状況を確認できません。削除せず、再確認してください。",
+    "unused_product_delete_refresh": "使用状況を再確認",
+    "unused_product_delete_remove": "この商品を削除",
+    "unused_product_delete_confirm": "保存済みの次の商品を削除します。同じ品番の別商品は削除しません。入力中の変更は保存されません。",
+    "unused_product_delete_reason": "削除理由（必須）",
+    "unused_product_delete_ack": "上記の商品IDを確認しました",
+    "unused_product_delete_execute": "確認して削除",
+    "unused_product_delete_cancel": "削除を取り消す",
+    "unused_product_delete_required": "削除理由を入力し、商品IDの確認にチェックしてください。",
+    "unused_product_delete_unknown": "削除結果を確認できません。同じ削除を再送せず「結果を確認」を押してください。",
+    "unused_product_delete_result": "結果を確認",
+    "unused_product_delete_busy": "他の処理が利用中です。削除していません。使用状況を再確認してください。",
+    "unused_product_delete_changed": "商品または関連情報が変わりました。使用状況を再確認してください。",
+    "unused_product_delete_deleted": "商品を削除しました。",
+    "unused_product_delete_identity": "商品ID",
+    "unused_product_delete_count": "{n}件",
+    "unused_product_delete_block_group": "削除できない理由",
+    "unused_product_delete_owned_group": "削除時に整理・保全する情報",
+    "unused_product_delete_stock": "在庫あり（商品区分数）",
+    "unused_product_delete_issued_g": "G品番発行済み",
+    "unused_product_delete_legacy_link": "旧商品との紐付け",
+    "unused_product_delete_reserved_code": "未出力の連携コード（番号を保持）",
+    "unused_product_delete_core_product_sources": "登録元の紐付け",
+    "unused_product_delete_core_product_variants": "未使用の商品区分",
+    "unused_product_delete_manufacturing_report_rows": "自動照合候補（元の帳票は保持）",
+    "unused_product_delete_assembly_component_usages": "構成部品",
+    "unused_product_delete_core_collection_list_items": "コア回収リスト",
+    "unused_product_delete_core_product_variant_stock_movements": "入出庫履歴",
+    "unused_product_delete_manufacturing_cost_list_items": "原価計算リスト",
+    "unused_product_delete_product_base_prices": "基準価格",
+    "unused_product_delete_product_rank1_prices": "販売価格",
+    "unused_product_delete_product_base_price_history": "基準価格履歴",
+    "unused_product_delete_product_rank1_price_events": "販売価格履歴",
+    "unused_product_delete_customer_price_report_issues": "発行済み販売価格表",
+    "unused_product_delete_customer_order_items": "受注明細",
+    "unused_product_delete_customer_order_stock_reservations": "在庫引当",
+    "unused_product_delete_finished_product_units": "完成品",
+    "unused_product_delete_finished_label_issues": "ラベル発行",
+    "unused_product_delete_kikan_group_members": "互換グループ",
+    "unused_product_delete_sales_accounting_product_codes": "販売管理への出力・登録",
+    "unused_product_delete_sales_accounting_export_batches": "売上CSV出力履歴",
+    "unused_product_delete_sales_accounting_product_master_export_batches": "商品台帳CSV出力履歴",
+    "unused_product_delete_other": "その他の関連情報",
+    "unused_product_delete_core_product_dks_links": "DKS品番との紐付け",
+    "unused_product_delete_dks_core_product_review_stage": "取込照合情報",
+    "unused_product_delete_product_specs": "公称仕様",
+    "unused_product_delete_production_core_list_entries": "製造用コアリスト",
+    "unused_product_delete_production_instruction_candidates": "製造指示候補",
+    "unused_product_delete_rebuilt_sales_top_parts": "出荷実績分析",
+    "unused_product_delete_operation_logs": "G品番の発行履歴"
   },
 
   en: {
@@ -5341,7 +5395,61 @@ var TRANSLATIONS = {
     spec_ph_current: "Ex: 80 (no A)",
     spec_ph_power_kw: "Ex: 5.5 (no kW)",
     spec_ph_power_w: "Ex: 120 (no W)",
-    spec_ph_diameter: "Ex: 139 (no φ/D)"
+    spec_ph_diameter: "Ex: 139 (no φ/D)",
+    "unused_product_delete_title": "Usage and deletion",
+    "unused_product_delete_loading": "Checking usage…",
+    "unused_product_delete_eligible": "Unused: eligible for deletion",
+    "unused_product_delete_blocked": "In use: deletion unavailable",
+    "unused_product_delete_error": "Usage could not be verified. Check again before deleting.",
+    "unused_product_delete_refresh": "Check usage again",
+    "unused_product_delete_remove": "Delete this product",
+    "unused_product_delete_confirm": "Delete the saved product below. Other products with the same part numbers are preserved. Unsaved edits are not saved.",
+    "unused_product_delete_reason": "Reason for deletion (required)",
+    "unused_product_delete_ack": "I have checked the product ID above",
+    "unused_product_delete_execute": "Confirm deletion",
+    "unused_product_delete_cancel": "Cancel deletion",
+    "unused_product_delete_required": "Enter a reason and confirm the product ID.",
+    "unused_product_delete_unknown": "The deletion result is unconfirmed. Use Check result without resending the deletion.",
+    "unused_product_delete_result": "Check result",
+    "unused_product_delete_busy": "Another operation is using this data. Nothing was deleted. Check usage again.",
+    "unused_product_delete_changed": "The product or its references changed. Check usage again.",
+    "unused_product_delete_deleted": "Product deleted.",
+    "unused_product_delete_identity": "Product ID",
+    "unused_product_delete_count": "{n} record(s)",
+    "unused_product_delete_block_group": "Reasons deletion is unavailable",
+    "unused_product_delete_owned_group": "Information to preserve or recalculate",
+    "unused_product_delete_stock": "Stock present (product variants)",
+    "unused_product_delete_issued_g": "G number issued",
+    "unused_product_delete_legacy_link": "Legacy product link",
+    "unused_product_delete_reserved_code": "Unexported accounting code (reserved)",
+    "unused_product_delete_core_product_sources": "Import source links",
+    "unused_product_delete_core_product_variants": "Unused product variants",
+    "unused_product_delete_manufacturing_report_rows": "Automatic matching candidates (report retained)",
+    "unused_product_delete_assembly_component_usages": "Assembly components",
+    "unused_product_delete_core_collection_list_items": "Core collection list",
+    "unused_product_delete_core_product_variant_stock_movements": "Stock movements",
+    "unused_product_delete_manufacturing_cost_list_items": "Cost list",
+    "unused_product_delete_product_base_prices": "Base prices",
+    "unused_product_delete_product_rank1_prices": "Sales prices",
+    "unused_product_delete_product_base_price_history": "Base price history",
+    "unused_product_delete_product_rank1_price_events": "Sales price history",
+    "unused_product_delete_customer_price_report_issues": "Issued customer price lists",
+    "unused_product_delete_customer_order_items": "Order items",
+    "unused_product_delete_customer_order_stock_reservations": "Stock reservations",
+    "unused_product_delete_finished_product_units": "Finished units",
+    "unused_product_delete_finished_label_issues": "Label issues",
+    "unused_product_delete_kikan_group_members": "Compatibility group",
+    "unused_product_delete_sales_accounting_product_codes": "Accounting export or registration",
+    "unused_product_delete_sales_accounting_export_batches": "Sales CSV export history",
+    "unused_product_delete_sales_accounting_product_master_export_batches": "Product master CSV export history",
+    "unused_product_delete_other": "Other related information",
+    "unused_product_delete_core_product_dks_links": "DKS part links",
+    "unused_product_delete_dks_core_product_review_stage": "Import matching records",
+    "unused_product_delete_product_specs": "Nominal specifications",
+    "unused_product_delete_production_core_list_entries": "Production core list",
+    "unused_product_delete_production_instruction_candidates": "Production instruction candidates",
+    "unused_product_delete_rebuilt_sales_top_parts": "Shipment analysis",
+    "unused_product_delete_operation_logs": "G-number issuance history"
   },
 
   zh: {
@@ -7985,7 +8093,61 @@ var TRANSLATIONS = {
     spec_ph_diameter: "例: 139（不要φ/D）",
     ec_provider_rakuten: "乐天",
     ec_provider_yahoo_shopping: "Yahoo购物",
-    ec_provider_yahoo_auction: "雅虎拍卖"
+    ec_provider_yahoo_auction: "雅虎拍卖",
+    "unused_product_delete_title": "使用情况与删除",
+    "unused_product_delete_loading": "正在确认使用情况…",
+    "unused_product_delete_eligible": "未使用，可以删除",
+    "unused_product_delete_blocked": "正在使用，无法删除",
+    "unused_product_delete_error": "无法确认使用情况。请重新检查后再删除。",
+    "unused_product_delete_refresh": "重新检查使用情况",
+    "unused_product_delete_remove": "删除此商品",
+    "unused_product_delete_confirm": "将删除以下已保存的商品。相同品号的其他商品将保留，尚未保存的修改不会保存。",
+    "unused_product_delete_reason": "删除原因（必填）",
+    "unused_product_delete_ack": "我已确认上述商品ID",
+    "unused_product_delete_execute": "确认删除",
+    "unused_product_delete_cancel": "取消删除",
+    "unused_product_delete_required": "请输入删除原因并勾选商品ID确认。",
+    "unused_product_delete_unknown": "删除结果尚未确认。请点击“确认结果”，不要重新发送删除操作。",
+    "unused_product_delete_result": "确认结果",
+    "unused_product_delete_busy": "其他操作正在使用此数据，尚未删除。请重新检查使用情况。",
+    "unused_product_delete_changed": "商品或关联信息已更改，请重新检查。",
+    "unused_product_delete_deleted": "商品已删除。",
+    "unused_product_delete_identity": "商品ID",
+    "unused_product_delete_count": "{n}条",
+    "unused_product_delete_block_group": "无法删除的原因",
+    "unused_product_delete_owned_group": "删除时保留或重新计算的信息",
+    "unused_product_delete_stock": "有库存（商品类别数）",
+    "unused_product_delete_issued_g": "已发行G品号",
+    "unused_product_delete_legacy_link": "旧商品关联",
+    "unused_product_delete_reserved_code": "未导出的业务代码（保留号码）",
+    "unused_product_delete_core_product_sources": "导入来源关联",
+    "unused_product_delete_core_product_variants": "未使用的商品类别",
+    "unused_product_delete_manufacturing_report_rows": "自动匹配候选（保留原报表）",
+    "unused_product_delete_assembly_component_usages": "构成部件",
+    "unused_product_delete_core_collection_list_items": "旧件回收清单",
+    "unused_product_delete_core_product_variant_stock_movements": "库存变动记录",
+    "unused_product_delete_manufacturing_cost_list_items": "成本计算清单",
+    "unused_product_delete_product_base_prices": "基准价格",
+    "unused_product_delete_product_rank1_prices": "销售价格",
+    "unused_product_delete_product_base_price_history": "基准价格历史",
+    "unused_product_delete_product_rank1_price_events": "销售价格历史",
+    "unused_product_delete_customer_price_report_issues": "已发行销售价格表",
+    "unused_product_delete_customer_order_items": "订单明细",
+    "unused_product_delete_customer_order_stock_reservations": "库存预留",
+    "unused_product_delete_finished_product_units": "成品",
+    "unused_product_delete_finished_label_issues": "标签发行",
+    "unused_product_delete_kikan_group_members": "互换组",
+    "unused_product_delete_sales_accounting_product_codes": "业务系统导出或登记",
+    "unused_product_delete_sales_accounting_export_batches": "销售CSV导出历史",
+    "unused_product_delete_sales_accounting_product_master_export_batches": "商品台账CSV导出历史",
+    "unused_product_delete_other": "其他关联信息",
+    "unused_product_delete_core_product_dks_links": "DKS品号关联",
+    "unused_product_delete_dks_core_product_review_stage": "导入匹配信息",
+    "unused_product_delete_product_specs": "公称规格",
+    "unused_product_delete_production_core_list_entries": "生产用旧件清单",
+    "unused_product_delete_production_instruction_candidates": "生产指示候选",
+    "unused_product_delete_rebuilt_sales_top_parts": "出货实绩分析",
+    "unused_product_delete_operation_logs": "G品号发行历史"
   },
 
   // タガログ語（Tagalog）— 準備中
@@ -8060,7 +8222,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1224";
+var APP_VERSION       = "v1.1.1225";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -10304,6 +10466,7 @@ async function applyLanguage(lang) {
   }
   if (document.getElementById("part-form-overlay") && document.getElementById("part-form-overlay").classList.contains("show") && partFormSource === "core_products") {
     renderCoreProductStampPairForm();
+    renderUnusedProductDeletion();
   }
   var componentScreenActive = isScreenActive("components");
   if (currentProduct && !componentScreenActive) { renderPanelStatic(); }
@@ -11409,6 +11572,7 @@ async function signOutAllDevices() {
 }
 
 async function doLogout() {
+  resetUnusedProductDeletion();
   clearAppRestoreState();
   stopFinishedLabelPrintStation();
   clearTimeout(autoLogoutTimer);
@@ -29325,6 +29489,7 @@ function renderPartsMgmt() {
 }
 
 async function openPartForm(mode, partId) {
+  resetUnusedProductDeletion();
   var shippingLoadSequence = ++partFormShippingLoadSequence;
   partFormSource = "parts";
   partFormMode = mode;
@@ -29414,6 +29579,7 @@ async function openPartForm(mode, partId) {
 }
 
 async function savePartForm() {
+  if (unusedProductDeletionBusy()) return;
   if (partFormSource === "core_products") {
     await saveCoreProductForm();
     return;
@@ -38735,7 +38901,207 @@ function setCoreProductFormFields(p) {
   setGltekProductAddPanel();
 }
 
+var unusedProductDeletionState = null;
+var unusedProductDeletionSequence = 0;
+var unusedProductDeletionPending = Object.create(null);
+
+
+function unusedProductDeletionText(key) {
+  var label = t("unused_product_delete_" + key);
+  return label === "unused_product_delete_" + key ? t("unused_product_delete_other") : label;
+}
+function canDeleteUnusedCoreProduct() {
+  return !!currentUser && !!userProfile && canDelete() &&
+    (isSystemAdmin() || (accessRoleCode(userProfile) === "company_admin" && userCompanyCode(userProfile) === "daiko"));
+}
+function unusedProductDeletionScopeValid(state) {
+  return !!state && state === unusedProductDeletionState && state.owner === currentUser &&
+    state.profile === userProfile && canDeleteUnusedCoreProduct() &&
+    partFormSource === "core_products" && partFormMode === "edit" &&
+    String(productDkdId(currentProduct)) === String(state.productId) &&
+    document.getElementById("part-form-overlay").classList.contains("show");
+}
+function resetUnusedProductDeletion() {
+  unusedProductDeletionSequence += 1;
+  unusedProductDeletionState = null;
+  document.getElementById("unused-product-deletion").hidden = true;
+  document.getElementById("btn-part-form-save").disabled = false;
+  document.getElementById("btn-part-form-cancel").disabled = false;
+}
+function unusedProductDeletionBusy() {
+  return !!unusedProductDeletionState && (unusedProductDeletionState.busy || unusedProductDeletionState.pending);
+}
+function renderUnusedProductDeletion() {
+  var state = unusedProductDeletionState;
+  var panel = document.getElementById("unused-product-deletion");
+  if (!unusedProductDeletionScopeValid(state)) { panel.hidden = true; return; }
+  panel.hidden = false;
+  document.getElementById("unused-product-title").textContent = unusedProductDeletionText("title");
+  var inspection = state.inspection;
+  var valid = inspection && inspection.status === "checked" && Number(inspection.product_id) === state.productId;
+  var eligible = valid && inspection.eligible === true;
+  document.getElementById("unused-product-status").textContent = unusedProductDeletionText(
+    state.pending ? "unknown" : (state.message || (state.loading ? "loading" : (valid ? (eligible ? "eligible" : "blocked") : "error"))));
+  var identity = valid ? inspection.product : null;
+  document.getElementById("unused-product-identity").textContent = identity ?
+    unusedProductDeletionText("identity") + " " + state.productId + " · " + (identity.manufacturer || "-") +
+    " · " + tCat(identity.category) + " · " + (identity.manufacturer_part_number || "-") +
+    " / " + (identity.genuine_part_number || "-") : "";
+  var list = document.getElementById("unused-product-references");
+  list.replaceChildren();
+  if (valid) {
+    ["block", "owned"].forEach(function(group) {
+      var refs = {};
+      (inspection.references || []).forEach(function(ref) {
+        if ((ref.handling === "block" ? "block" : "owned") === group) {
+          refs[ref.code] = Math.max(refs[ref.code] || 0, Number(ref.count) || 0);
+        }
+      });
+      if (!Object.keys(refs).length) return;
+      var heading = document.createElement("p"); heading.className = "unused-product-group-title";
+      heading.textContent = unusedProductDeletionText(group === "block" ? "block_group" : "owned_group"); list.appendChild(heading);
+      var ul = document.createElement("ul");
+      Object.keys(refs).forEach(function(code) {
+        var li = document.createElement("li");
+        li.textContent = unusedProductDeletionText(code) + ": " + unusedProductDeletionText("count").replace("{n}", refs[code]);
+        ul.appendChild(li);
+      });
+      list.appendChild(ul);
+    });
+  }
+  var refresh = document.getElementById("btn-unused-product-refresh");
+  refresh.textContent = unusedProductDeletionText(state.pending ? "result" : "refresh");
+  refresh.disabled = state.busy || state.loading;
+  var remove = document.getElementById("btn-unused-product-delete");
+  remove.textContent = unusedProductDeletionText("remove");
+  remove.disabled = !eligible || state.busy || state.loading || !!state.pending;
+  document.getElementById("unused-product-confirm").hidden = !state.confirming || !eligible || !!state.pending;
+  document.getElementById("unused-product-confirm-text").textContent = unusedProductDeletionText("confirm");
+  document.getElementById("unused-product-reason-label").textContent = unusedProductDeletionText("reason");
+  document.getElementById("unused-product-ack-label").textContent = unusedProductDeletionText("ack");
+  document.getElementById("btn-unused-product-execute").textContent = unusedProductDeletionText("execute");
+  document.getElementById("btn-unused-product-cancel").textContent = unusedProductDeletionText("cancel");
+  document.getElementById("btn-unused-product-execute").disabled = state.busy || !!state.pending;
+  document.getElementById("btn-part-form-save").disabled = state.busy || !!state.pending;
+  document.getElementById("btn-part-form-cancel").disabled = state.busy;
+}
+async function loadUnusedProductDeletion() {
+  var state = unusedProductDeletionState;
+  if (!unusedProductDeletionScopeValid(state) || state.busy) return;
+  if (state.pending) { await checkUnusedProductDeletionResult(); return; }
+  var sequence = ++unusedProductDeletionSequence;
+  state.inspection = null; state.loading = true; state.confirming = false; state.message = "";
+  renderUnusedProductDeletion();
+  try {
+    var response = await sb.rpc("inspect_core_product_deletion", { p_product_id: state.productId });
+    if (!unusedProductDeletionScopeValid(state) || sequence !== unusedProductDeletionSequence) return;
+    if (response.error || !response.data || response.data.status !== "checked" ||
+      Number(response.data.product_id) !== state.productId || typeof response.data.eligible !== "boolean" ||
+      typeof response.data.fingerprint !== "string" || !Array.isArray(response.data.references)) throw new Error("Invalid deletion inspection");
+    state.inspection = response.data;
+  } catch (error) {
+    if (!unusedProductDeletionScopeValid(state) || sequence !== unusedProductDeletionSequence) return;
+    state.message = "error";
+  } finally {
+    if (unusedProductDeletionScopeValid(state) && sequence === unusedProductDeletionSequence) {
+      state.loading = false; renderUnusedProductDeletion();
+    }
+  }
+}
+function startUnusedProductDeletion(product) {
+  resetUnusedProductDeletion();
+  if (partFormSource !== "core_products" || partFormMode !== "edit" || !canDeleteUnusedCoreProduct()) return;
+  var id = Number(productDkdId(product));
+  if (!Number.isSafeInteger(id) || id <= 0) return;
+  var key = currentUser.id + ":" + id;
+  unusedProductDeletionState = { productId: id, owner: currentUser, profile: userProfile, key: key,
+    pending: unusedProductDeletionPending[key] || null, inspection: null, loading: false, busy: false, confirming: false };
+  if (unusedProductDeletionState.pending) renderUnusedProductDeletion();
+  else loadUnusedProductDeletion();
+}
+function confirmUnusedProductDeletion() {
+  var state = unusedProductDeletionState;
+  if (!unusedProductDeletionScopeValid(state) || state.busy || state.pending ||
+    !state.inspection || !state.inspection.eligible) return;
+  state.confirming = true; state.message = "";
+  document.getElementById("unused-product-reason").value = "";
+  document.getElementById("unused-product-ack").checked = false;
+  renderUnusedProductDeletion();
+  document.getElementById("unused-product-reason").focus();
+}
+async function finishUnusedProductDeletion(state, result) {
+  if (!unusedProductDeletionScopeValid(state) || !result || result.status !== "deleted" ||
+    Number(result.product_id) !== state.productId || result.request_id !== state.pending.requestId) return false;
+  delete unusedProductDeletionPending[state.key];
+  allProducts = allProducts.filter(function(p) { return String(productDkdId(p)) !== String(state.productId); });
+  currentProduct = null;
+  if (currentProductionRow && String(productDkdId(currentProductionRow)) === String(state.productId)) currentProductionRow = null;
+  document.getElementById("part-form-overlay").classList.remove("show");
+  resetUnusedProductDeletion();
+  document.getElementById("btn-part-form-save").disabled = false;
+  document.getElementById("btn-part-form-cancel").disabled = false;
+  await enterPartsMgmt();
+  if (currentUser === state.owner && userProfile === state.profile) {
+    var notice = document.getElementById("parts-mgmt-deletion-notice");
+    notice.textContent = unusedProductDeletionText("deleted") + " " + unusedProductDeletionText("identity") + " " + state.productId;
+    notice.hidden = false;
+  }
+  return true;
+}
+async function checkUnusedProductDeletionResult() {
+  var state = unusedProductDeletionState;
+  if (!unusedProductDeletionScopeValid(state) || state.busy || !state.pending) return;
+  state.busy = true; renderUnusedProductDeletion();
+  try {
+    var response = await sb.rpc("core_product_deletion_result", { p_request_id: state.pending.requestId });
+    if (!unusedProductDeletionScopeValid(state)) return;
+    if (!response.error && await finishUnusedProductDeletion(state, response.data)) return;
+  } catch (error) {
+    // Preserve the same request for read-only result checks; never auto-resend.
+  } finally {
+    if (unusedProductDeletionScopeValid(state)) { state.busy = false; renderUnusedProductDeletion(); }
+  }
+}
+async function executeUnusedProductDeletion() {
+  var state = unusedProductDeletionState;
+  if (!unusedProductDeletionScopeValid(state) || state.busy || state.pending || !state.confirming ||
+    !state.inspection || state.inspection.eligible !== true) return;
+  var reason = document.getElementById("unused-product-reason").value.trim();
+  if (!reason || reason.length > 500 || !document.getElementById("unused-product-ack").checked) {
+    state.message = "required"; renderUnusedProductDeletion(); return;
+  }
+  var request = { requestId: crypto.randomUUID() };
+  state.pending = request; state.busy = true;
+  unusedProductDeletionPending[state.key] = request;
+  renderUnusedProductDeletion();
+  try {
+    var response = await sb.rpc("delete_unused_core_product", { p_product_id: state.productId,
+      p_fingerprint: state.inspection.fingerprint, p_reason: reason, p_request_id: request.requestId });
+    if (!unusedProductDeletionScopeValid(state)) return;
+    if (response.error) {
+      if (/^[0-9A-Z]{5}$/.test(String(response.error.code || ""))) {
+        delete unusedProductDeletionPending[state.key]; state.pending = null;
+        state.inspection = null; state.confirming = false; state.message = "error";
+        return;
+      }
+      throw response.error;
+    }
+    if (await finishUnusedProductDeletion(state, response.data)) return;
+    var result = response.data;
+    if (result && ["in_use", "changed", "busy", "schema_changed", "not_found"].indexOf(result.status) >= 0) {
+      delete unusedProductDeletionPending[state.key]; state.pending = null;
+      state.confirming = false; state.inspection = null;
+      state.message = result.status === "busy" ? "busy" : (result.status === "schema_changed" ? "error" : "changed");
+    }
+  } catch (error) {
+    // A transport failure may follow commit. Keep the original request ID.
+  } finally {
+    if (unusedProductDeletionScopeValid(state)) { state.busy = false; renderUnusedProductDeletion(); }
+  }
+}
+
 async function openCoreProductForm(mode, product, context) {
+  resetUnusedProductDeletion();
   if (!canEdit()) { alert(t("err_perm")); return; }
   var formProduct = mode === "add" ? (product || null) : product;
   if (mode === "edit" && product && productDkdId(product)) {
@@ -38786,6 +39152,7 @@ async function openCoreProductForm(mode, product, context) {
   if (mode === "add") document.getElementById("part-form-id").value = "";
   document.getElementById("part-form-overlay").classList.add("show");
   loadReadonlyGltekPartNumber("pf-g-part-number", mode === "edit" ? formProduct : null);
+  startUnusedProductDeletion(formProduct);
 }
 
 async function openCoreProductAddFromSearch() {
@@ -57800,8 +58167,16 @@ document.getElementById("btn-back-logs").addEventListener("click", returnToMenuF
 document.getElementById("btn-back-concierge-admin").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-logout-concierge-admin").addEventListener("click", doLogout);
 document.getElementById("btn-add-part").addEventListener("click", openCoreProductAddFromManagement);
-document.getElementById("btn-part-form-cancel").addEventListener("click", function(){ document.getElementById("part-form-overlay").classList.remove("show"); });
+document.getElementById("btn-part-form-cancel").addEventListener("click", function(){ resetUnusedProductDeletion(); document.getElementById("part-form-overlay").classList.remove("show"); });
 document.getElementById("btn-part-form-save").addEventListener("click", savePartForm);
+document.getElementById("btn-unused-product-refresh").addEventListener("click", loadUnusedProductDeletion);
+document.getElementById("btn-unused-product-delete").addEventListener("click", confirmUnusedProductDeletion);
+document.getElementById("btn-unused-product-execute").addEventListener("click", executeUnusedProductDeletion);
+document.getElementById("btn-unused-product-cancel").addEventListener("click", function() {
+  if (unusedProductDeletionState && !unusedProductDeletionState.busy) {
+    unusedProductDeletionState.confirming = false; unusedProductDeletionState.message = ""; renderUnusedProductDeletion();
+  }
+});
 document.getElementById("pf-stamp-pair-add").addEventListener("click", function() {
   if (coreProductFormStampPairs.length >= 100) return;
   coreProductFormStampPairs.push({ f_number: "", r_number: "", pulley_number: "" });
