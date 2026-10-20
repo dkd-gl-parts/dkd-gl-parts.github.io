@@ -242,6 +242,19 @@ async function fixture(lang='ja'){
   assert.equal(f.calls.filter(c=>c.action==='commit').length,0);f.window.DcatsSalesPricingLists.reset();
  }
 
+ // Product master prices count as configured, including stale ready/provisional responses.
+ for(const lang of ['ja','en','zh']){
+  f=await fixture(lang);Object.assign(f.rows[0],{legacy_price_raw:'23,200',legacy_price_jpy:23200,legacy_price_present:true,cost_incomplete:true});
+  f.doc.getElementById('spl-refresh').click();await tick();await tick();assert.equal(!!f.doc.querySelector('[data-spl-select="1"]'),false);
+  f.doc.getElementById('spl-filter').value='any';f.doc.getElementById('spl-filter').dispatchEvent(new f.window.Event('change'));selectVisible(f);
+  assert.equal(!!f.doc.querySelector('[data-spl-price="1"]'),false);assert.equal(f.doc.getElementById('spl-bulk').disabled,true);assert.match(f.doc.getElementById('spl-rows').textContent,/23,200/);
+  assert.match(f.doc.getElementById('spl-summary').textContent,lang==='ja'?/設定可能 0/:lang==='en'?/Ready 0/:/可设置 0/);
+  f.doc.getElementById('spl-filter').value='ready';f.doc.getElementById('spl-filter').dispatchEvent(new f.window.Event('change'));assert.equal(f.doc.querySelectorAll('[data-spl-select]').length,0);
+  for(const raw of ['100','0','ASK','<img src=x onerror=bad>']){Object.assign(f.rows[0],{legacy_price_raw:raw,legacy_price_jpy:null,legacy_price_present:false});f.doc.getElementById('spl-refresh').click();await tick();await tick();f.doc.getElementById('spl-filter').value='any';f.doc.getElementById('spl-filter').dispatchEvent(new f.window.Event('change'));assert.equal(!!f.doc.querySelector('[data-spl-price="1"]'),false);assert.equal(f.doc.querySelectorAll('#spl-rows img').length,0);}
+  Object.assign(f.rows[0],{current_rank1_jpy:3000,current_sale_jpy:3000,is_loss:true,legacy_price_raw:'23200',legacy_price_jpy:23200,legacy_price_present:true});
+  f.doc.getElementById('spl-refresh').click();await tick();await tick();assert.ok(f.doc.querySelector('[data-spl-price="1"]'));selectVisible(f);f.doc.getElementById('spl-bulk').click();assert.equal(f.doc.querySelectorAll('.spl-confirm-items li').length,1);f.doc.querySelector('[data-spl-cancel]').click();assert.equal(f.calls.filter(c=>c.action==='commit').length,0);f.window.DcatsSalesPricingLists.reset();
+ }
+
  // Exercise the real existing-editor entry, including exact identity and session rechecks.
  const entry=app.slice(app.indexOf('async function openSalesPricingListProduct('),app.indexOf('async function openSalesPricingMgmtRow('));
  for(const mode of ['success','missing','wrong-id','permission-changed','actor-changed','screen-left','network']){
