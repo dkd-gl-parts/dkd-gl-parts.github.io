@@ -24,16 +24,23 @@
   function w(k){return (words[root.currentLang]||words.ja)[k]||k;}
   function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function money(v){return v==null?'—':'¥'+Number(v).toLocaleString('ja-JP');}
+  Object.assign(words.ja,{relatedConfigured:'同一品番の別商品に価格設定あり・個別設定から確認'});
+  Object.assign(words.en,{relatedConfigured:'Another duplicate has a price; review individually'});
+  Object.assign(words.zh,{relatedConfigured:'同品号其他商品已设置价格，请单独确认'});
+  Object.assign(words.ja,{unconfigured:'未登録・赤字',chosenProduct:'構成部品件数で採用した商品ID',lossUpdate:'赤字の設定済み価格（更新対象）',scope:'販売基準価格と販売価格区分1を同額で登録します。設定済みは赤字の場合だけ一括更新できます。その他は「この品番を確認」から個別に設定できます。同一品番はリビルト構成部品登録件数が多い商品、同数なら商品IDが若い商品を採用します。'});
+  Object.assign(words.en,{unconfigured:'Unregistered / loss',chosenProduct:'Selected product ID by component count',lossUpdate:'Existing loss-making price (eligible)',scope:'Set the base and rank 1 price together. Existing prices enter bulk updates only below saved cost; use Review this product for individual changes. Duplicate parts use the highest rebuilt component count, then the lowest product ID.'});
+  Object.assign(words.zh,{unconfigured:'未登记／亏损',chosenProduct:'按构成部件数量采用的商品ID',lossUpdate:'已设置亏损价格（可更新）',scope:'同时登记基准价格和类别1。已设置价格仅在亏损时可批量更新；其他价格可通过确认此商品单独设置。同品号优先采用再制造部件登记较多的商品，同数时采用较小商品ID。'});
   function el(id){return document.getElementById(id);}
   function permitted(){return !!root.currentUser && root.canEditBasePrice() && root.canViewManufacturingCostMgmt() && (!root.canViewBasePrice||root.canViewBasePrice());}
   function owner(){return root.currentUser&&root.currentUser.id;}
   function registeredComponentCount(r){var n=Number(r.registered_component_count);return r.registered_component_count!=null&&Number.isSafeInteger(n)&&n>=0?n:null;}
   function hasCostItems(r){return registeredComponentCount(r)>0;}
   function componentNote(r){return !hasCostItems(r)?(registeredComponentCount(r)==null?'componentUnknown':'costEmpty'):r.cost_snapshot_stale===true?'costSnapshot':r.cost_incomplete===true?'costPartial':null;}
-  function registered(r){return r.state==='configured'||r.configured_at!=null||r.current_base_jpy!=null||r.current_rank1_jpy!=null;}
+  function registered(r){return r.state==='configured'||r.configured_at!=null||r.current_base_jpy!=null||r.current_rank1_jpy!=null||Number(r.identity_configured_count)>0;}
   function hasPriceableCost(r){var cost=Number(r.cost_jpy);return hasCostItems(r)&&r.cost_jpy!=null&&Number.isSafeInteger(cost)&&cost>=0;}
-  function canPrice(r){return r.state==='ready'&&hasPriceableCost(r)&&Number(r.dks_price_jpy)>0&&!registered(r);}
-  function canFetch(r){return hasCostItems(r)&&!registered(r)&&!r.dks_price_jpy&&!['missing_product','kind_review','oem_review','identity_review'].includes(r.state);}
+  function loss(r){var sale=Number(r.current_sale_jpy);return r.is_loss===true&&r.current_sale_jpy!=null&&Number.isSafeInteger(sale)&&sale>=0&&r.cost_jpy!=null&&sale<Number(r.cost_jpy);}
+  function canPrice(r){return r.state==='ready'&&hasPriceableCost(r)&&Number(r.dks_price_jpy)>0&&(!registered(r)||loss(r));}
+  function canFetch(r){return hasCostItems(r)&&(!registered(r)||loss(r))&&!r.dks_price_jpy&&!['missing_product','kind_review','oem_review','identity_review'].includes(r.state);}
   function valid(){return permitted() && state.owner===owner();}
   async function rpc(action,payload){if(!valid())throw Error('session');var r=await root.sb.rpc('manage_sales_pricing_list',{action:action,payload:payload||{}});if(!valid())throw Error('session');if(r.error)throw r.error;return r.data;}
   function status(text,bad){var e=el('spl-status');if(e){e.textContent=text||'';e.classList.toggle('error',!!bad);}}
@@ -58,15 +65,16 @@
     if(state.busy||state.pending||!valid())return;
     var id=el('spl-list').value;if(!id)return;
     if(state.ec&&String(state.ec.listId)!==String(id)){clearTimeout(state.ecTimer);state.ec=null;}
+    var filterValue=keep&&el('spl-filter')?el('spl-filter').value:null,queryValue=keep&&el('spl-query')?el('spl-query').value:null;
     var oldRows=state.rows,epoch=++state.epoch;lock(true);status(w('loading'));
     try{var runId=crypto.randomUUID();var result=await rpc('preview',{operation_id:runId,list_id:Number(id)});if(epoch!==state.epoch)return;
       state.listId=id;state.run=result.run_id;state.rows=result.rows||[];if(!keep)state.selected.clear();
       if(preserveEdits)state.rows.forEach(function(r){var old=oldRows.find(function(o){return String(o.item_id)===String(r.item_id);});if(old&&canPrice(r)&&old.fingerprint===r.fingerprint&&Number.isSafeInteger(old.edited_jpy)&&old.edited_jpy>=Number(r.minimum_jpy)&&old.edited_jpy%100===0)r.edited_jpy=old.edited_jpy;});
       state.selected=new Set(Array.from(state.selected).filter(function(k){return state.rows.some(function(r){return String(r.item_id)===k&&(canPrice(r)||canFetch(r));});}));
-      renderContent();status('');
+      renderContent();if(filterValue!=null){el('spl-filter').value=filterValue;el('spl-query').value=queryValue||'';renderRows();}status('');
     }catch(e){if(epoch===state.epoch){state.run=null;state.rows=[];el('spl-content').replaceChildren();status(errorText(e),true);}}finally{if(epoch===state.epoch)lock(false);}
   }
-  function filtered(){var f=el('spl-filter')?el('spl-filter').value:'unconfigured',q=el('spl-query')?el('spl-query').value.trim().toLowerCase():'';return state.rows.filter(function(r){return (f==='any'||f==='unconfigured'&&!registered(r)||f==='ready'&&canPrice(r)||f==='review'&&(!['ready','configured'].includes(r.state)||r.cost_incomplete===true)||f==='configured'&&registered(r))&&(!q||[r.dkd_shohin_id,r.manufacturer_part_number,r.genuine_part_number].join(' ').toLowerCase().includes(q));});}
+  function filtered(){var f=el('spl-filter')?el('spl-filter').value:'unconfigured',q=el('spl-query')?el('spl-query').value.trim().toLowerCase():'';return state.rows.filter(function(r){return (f==='any'||f==='unconfigured'&&(!registered(r)||loss(r))||f==='ready'&&canPrice(r)||f==='review'&&(!['ready','configured'].includes(r.state)||r.cost_incomplete===true)||f==='configured'&&registered(r))&&(!q||[r.dkd_shohin_id,r.manufacturer_part_number,r.genuine_part_number].join(' ').toLowerCase().includes(q));});}
   function renderContent(){
     el('spl-content').innerHTML='<div class="spl-summary" id="spl-summary"></div><div class="spl-toolbar"><label>'+esc(w('filter'))+'<select id="spl-filter">'+['unconfigured','any','ready','review','configured'].map(function(k){return '<option value="'+k+'">'+esc(w(k))+'</option>';}).join('')+'</select></label><input id="spl-query" type="search" aria-label="'+esc(w('search'))+'" placeholder="'+esc(w('search'))+'">'+button('spl-refresh','refresh')+'</div>'+
       '<div class="spl-toolbar">'+button('spl-all','all')+button('spl-none','none')+button('spl-bulk','bulk')+(root.isSystemAdmin()?button('spl-scrape','scrape'):'')+(ecAllowed()?button('spl-ec','ecFetch')+button('spl-ec-open','ecOpen'):'')+button('spl-history-button','history')+'</div><div id="spl-ec-status" role="status" aria-live="polite"></div><p class="spl-muted">'+esc(w('fetchSelect'))+'</p><div id="spl-rows"></div><div id="spl-history"></div>';
@@ -87,16 +95,23 @@
       var k=String(r.item_id),priceable=canPrice(r),allowed=priceable||canFetch(r),p=r.edited_jpy==null?r.suggested_jpy:r.edited_jpy;
       var ec=r.ec_price_jpy?money(r.ec_price_jpy)+' · '+w(r.ec_tax_basis==='exclusive'?'taxExclusive':r.ec_tax_basis==='inclusive'?'taxInclusive':'taxUnknown'):w('noEc');
       return '<tr><td><input type="checkbox" data-spl-select="'+esc(k)+'" aria-label="'+esc(r.manufacturer_part_number||r.genuine_part_number||w('part'))+'" '+(state.selected.has(k)?'checked ':'')+(!allowed||state.busy||state.pending?'disabled':'')+'></td>'+
-      '<td data-label="'+esc(w('part'))+'"><strong>'+esc(r.manufacturer_part_number||r.genuine_part_number||'—')+'</strong><small>'+esc(r.genuine_part_number||'')+'</small>'+(r.manufacturer?'<small>'+esc(r.manufacturer)+'</small>':'')+'</td>'+
+      '<td data-label="'+esc(w('part'))+'"><strong>'+esc(r.manufacturer_part_number||r.genuine_part_number||'—')+'</strong><small>'+esc(r.genuine_part_number||'')+'</small>'+(r.manufacturer?'<small>'+esc(r.manufacturer)+'</small>':'')+(Number(r.identity_count)>1?'<small>'+esc(w('chosenProduct'))+' '+esc(r.dkd_shohin_id)+'</small>':'')+'</td>'+
       '<td data-label="'+esc(w('cost'))+'">'+esc(money(r.cost_jpy))+'<small>'+esc(w('floor'))+' '+esc(money(r.minimum_jpy))+'</small>'+'<small>'+esc(w('componentRegistered'))+' '+esc(registeredComponentCount(r)==null?'—':registeredComponentCount(r))+'</small>'+(componentNote(r)?'<small>'+esc(w(componentNote(r)))+'</small>':'')+'</td>'+
       '<td data-label="'+esc(w('dks'))+'">'+esc(money(r.dks_price_jpy))+'<small>'+esc(r.dks_source?w(r.dks_source==='strain3'?'strain':'registered'):'')+' '+esc((r.dks_observed_at||'').slice(0,10))+'</small><small>'+esc(w('target'))+' '+esc(money(r.target_jpy))+'</small></td>'+
       '<td data-label="'+esc(w('ec'))+'">'+esc(ec)+'<small>'+esc(r.ec_seller||'')+' '+esc((r.ec_observed_at||'').slice(0,10))+'</small></td>'+
-      '<td data-label="'+esc(w('proposal'))+'">'+(priceable?'<input type="number" min="'+esc(r.minimum_jpy)+'" step="100" data-spl-price="'+esc(k)+'" value="'+esc(p)+'" aria-label="'+esc(w('proposal')+' '+r.manufacturer_part_number)+'" '+(state.busy||state.pending?'disabled':'')+'><small data-spl-margin="'+esc(k)+'">'+esc(profit(r,p))+'</small>'+(!(Number(r.ec_price_jpy)>0)&&Number(r.dks_price_jpy)>0?'<small>'+esc(w('ecFallback'))+'</small>':''):esc(money(r.current_rank1_jpy||r.current_base_jpy)))+'</td>'+
-      '<td data-label="'+esc(w('status'))+'"><span class="spl-badge spl-'+esc(priceable&&!r.cost_incomplete?'ready':registered(r)?'configured':'review')+'">'+esc(w(!hasCostItems(r)&&['ready','cost_review','dks_missing'].includes(r.state)?componentNote(r):priceable&&r.cost_incomplete?'readyProvisional':r.state))+'</span>'+(priceable?'<button class="btn-sm-edit" type="button" data-spl-one="'+esc(k)+'" '+(state.busy||state.pending?'disabled':'')+'>'+esc(w('one'))+'</button>':'')+'</td></tr>';
+      '<td data-label="'+esc(w('proposal'))+'">'+(loss(r)?'<small>'+esc(w('lossUpdate'))+' '+esc(money(r.current_sale_jpy))+'</small>':'')+(priceable?'<input type="number" min="'+esc(r.minimum_jpy)+'" step="100" data-spl-price="'+esc(k)+'" value="'+esc(p)+'" aria-label="'+esc(w('proposal')+' '+r.manufacturer_part_number)+'" '+(state.busy||state.pending?'disabled':'')+'><small data-spl-margin="'+esc(k)+'">'+esc(profit(r,p))+'</small>'+(!(Number(r.ec_price_jpy)>0)&&Number(r.dks_price_jpy)>0?'<small>'+esc(w('ecFallback'))+'</small>':''):esc(money(r.current_rank1_jpy!=null?r.current_rank1_jpy:r.current_base_jpy))+(Number(r.identity_configured_count)>0&&r.current_base_jpy==null&&r.current_rank1_jpy==null?'<small>'+esc(w('relatedConfigured'))+'</small>':''))+'</td>'+
+      '<td data-label="'+esc(w('status'))+'"><span class="spl-badge spl-'+esc(priceable&&!r.cost_incomplete?'ready':registered(r)?'configured':'review')+'">'+esc(w(!hasCostItems(r)&&['ready','cost_review','dks_missing'].includes(r.state)?componentNote(r):priceable&&r.cost_incomplete?'readyProvisional':r.state))+'</span>'+(r.state!=='missing_product'&&r.dkd_shohin_id?'<button class="btn-sm-edit" type="button" data-spl-one="'+esc(k)+'" '+(state.busy||state.pending?'disabled':'')+'>'+esc(w('one'))+'</button>':'')+'</td></tr>';
     }).join('')+'</tbody></table>';
     host.querySelectorAll('[data-spl-select]').forEach(function(n){n.addEventListener('change',function(){if(n.checked)state.selected.add(n.dataset.splSelect);else state.selected.delete(n.dataset.splSelect);renderRows();});});
     host.querySelectorAll('[data-spl-price]').forEach(function(n){n.addEventListener('input',function(){var r=state.rows.find(function(r){return String(r.item_id)===n.dataset.splPrice;});r.edited_jpy=Number(n.value);host.querySelector('[data-spl-margin="'+r.item_id+'"]').textContent=profit(r,r.edited_jpy);});});
-    host.querySelectorAll('[data-spl-one]').forEach(function(n){n.addEventListener('click',function(){confirmPrices(state.rows.filter(function(r){return String(r.item_id)===n.dataset.splOne;}));});});
+    host.querySelectorAll('[data-spl-one]').forEach(function(n){n.addEventListener('click',async function(){
+      if(state.busy||state.pending||!valid())return;
+      var r=state.rows.find(function(row){return String(row.item_id)===n.dataset.splOne;});if(!r)return;
+      var epoch=state.epoch;lock(true);
+      try{await root.openSalesPricingListProduct(r.dkd_shohin_id,r.product_kind||'rebuilt');}
+      catch(e){if(valid()&&epoch===state.epoch)status(errorText(e),true);}
+      finally{if(valid()&&epoch===state.epoch)lock(false);}
+    });});
     if(el('spl-bulk'))el('spl-bulk').disabled=state.busy||!!state.pending||!state.rows.some(function(r){return canPrice(r)&&state.selected.has(String(r.item_id));});
   }
   function profit(r,p){return p>0?money(p-r.cost_jpy)+' / '+((p-r.cost_jpy)/p*100).toFixed(1)+'%'+(r.cost_incomplete===true?' · '+w('provisional'):''):'—';}
@@ -305,7 +320,7 @@
     }catch(e){if(ecCurrent(job))job.message='ecUnknown';}
     finally{job.checking=false;if(valid())ecRender();}
   }
-  root.DcatsSalesPricingLists={enter:enter,reset:reset};
+  root.DcatsSalesPricingLists={enter:enter,reset:reset,refresh:function(){if(valid()&&state.run)return load(true,true);}};
   // Account, permission and screen changes clear financial/credential UI. No
   // session is copied from another browser or persisted in browser storage.
   var screen=el('screen-sales-pricing-mgmt');
