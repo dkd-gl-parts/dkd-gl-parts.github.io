@@ -155,8 +155,21 @@
     return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
   }
 
+  function filenameDate(value) {
+    if (!value) return "";
+    var date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    var parts = new Intl.DateTimeFormat("ja-JP", {
+      timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit"
+    }).formatToParts(date);
+    return ["year", "month", "day"].map(function(type) {
+      return parts.find(function(part) { return part.type === type; }).value;
+    }).join("-");
+  }
+
   function printHtml(issue) {
     var customer = issue.customer || {};
+    var issuedDate = filenameDate(issue.issued_at);
     var rows = Array.isArray(issue.rows) ? issue.rows : [];
     var stylesheetUrl = new URL("customer-price-report-print.css", window.location.href).href +
       "?dcats_version=" + encodeURIComponent(APP_VERSION);
@@ -186,7 +199,7 @@
         body + "</tbody></table></section>";
     }).join("");
     return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>" +
-      "<title>販売価格表 " + safe(customer.name) + "</title>" +
+      "<title>販売価格表 " + safe(customer.name) + (issuedDate ? "_" + issuedDate : "") + "</title>" +
       "<link rel='stylesheet' href='" + safe(stylesheetUrl) + "'></head><body>" +
       "<div class='print-toolbar'><span class='print-help'>PDF保存時は印刷設定の「ヘッダーとフッター」をオフにしてください。</span><button type='button' id='cpr-print'>印刷・PDF保存</button><button type='button' id='cpr-close'>閉じる</button></div>" +
       "<main class='document'><div class='document-intro'><header class='document-head'><div><p class='document-eyebrow'>PRICE LIST</p><h1>販売価格表</h1></div>" +
