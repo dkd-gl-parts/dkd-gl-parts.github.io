@@ -49336,7 +49336,10 @@ async function loadAssemblyComponentsForCurrent() {
   wrap.innerHTML = "<div class='component-empty'>" + t("loading") + "</div>";
   renderComponentIllustrationSlot();
 
+  var illustrationRequestId = componentIllustrationRequestId;
+  var productAtLoad = currentProduct;
   var dkdId = await resolveCurrentCoreDkdShohinId();
+  if (illustrationRequestId !== componentIllustrationRequestId || currentProduct !== productAtLoad || selectedKind !== selectedProductKind()) return;
   if (!dkdId) {
     updateComponentTargetSummary(0);
     wrap.innerHTML = "<div class='component-empty'>" + t("component_none") + "</div>";

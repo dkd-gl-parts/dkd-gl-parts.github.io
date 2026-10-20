@@ -247,5 +247,39 @@ async function test(name, run) { await run(); checks++; }
     assert(c.componentIllustrationLastTiming.imageReadyMs > 0); assert.equal(c.componentIllustrationLastTiming.loadedImages, 1);
     assert(!/https:|token|private-/.test(JSON.stringify(c.componentIllustrationLastTiming)));
   });
+  await test("late product resolution cannot start an outdated diagram load", async () => {
+    const loader = ast.body.filter(n => n.type === "FunctionDeclaration" && n.id.name === "loadAssemblyComponentsForCurrent").at(-1);
+    for (const change of ["request", "product", "kind"]) {
+      const c = sandbox(), d = defer(), calls = instrument(c);
+      c.document.body.appendChild(c.document.createElement("div")).id = "component-wrap";
+      c.currentProduct = { id: 1 }; c.componentCatalogCategoryCode = () => "alternator";
+      c.loadComponentDisplayNameTranslations = async () => {}; c.resolveCurrentCoreDkdShohinId = () => d.promise;
+      vm.runInContext(source.slice(loader.start, loader.end), c);
+      const pending = c.loadAssemblyComponentsForCurrent();
+      if (change === "request") c.componentIllustrationRequestId++;
+      if (change === "product") c.currentProduct = { id: 2 };
+      if (change === "kind") c.kind = "rebuilt";
+      d.resolve(1); await pending; assert.equal(calls.rpc, 0); assert.equal(calls.signed, 0);
+    }
+  });
+  await test("rapid revisit shares a pending signature after a fresh RPC", async () => {
+    const c = sandbox(), d = defer(); let rpc = 0, signed = 0;
+    c.sb.rpc = async () => { rpc++; return { data: [row] }; };
+    c.sb.storage.from = () => ({ createSignedUrl: () => { signed++; return d.promise; } });
+    const old = c.loadCatalogIllustrationsForCurrent(1, "catalog_spec"); await new Promise(setImmediate);
+    c.kind = "rebuilt"; await c.loadCatalogIllustrationsForCurrent(1, "rebuilt"); c.kind = "catalog_spec";
+    const next = c.loadCatalogIllustrationsForCurrent(1, "catalog_spec"); await new Promise(setImmediate);
+    assert.equal(rpc, 2); assert.equal(signed, 1);
+    d.resolve({ data: { signedUrl: "https://example.test/shared-pending.gif" } }); await old; await next;
+    assert.equal(c.document.querySelectorAll("image").length, 1);
+  });
+  await test("permission change during RPC cannot sign or reuse a previous URL", async () => {
+    const c = sandbox(), calls = instrument(c); await c.loadCatalogIllustrationsForCurrent(1, "catalog_spec");
+    const d = defer(); c.sb.rpc = () => d.promise;
+    const pending = c.loadCatalogIllustrationsForCurrent(1, "catalog_spec"); await new Promise(setImmediate);
+    c.canSeeComponentInfo = () => false; d.resolve({ data: [row] }); await pending;
+    assert.equal(calls.signed, 1); assert.equal(c.document.querySelectorAll("image").length, 0);
+    assert.equal(c.componentIllustrationSignedUrlCache, null);
+  });
   console.log("Catalog illustration states: " + checks + " scenarios passed");
 })().catch(error => { console.error(error); process.exitCode = 1; });
