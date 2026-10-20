@@ -77,6 +77,9 @@ const forbiddenPullRequestKeys = [
 
 const securityHeaderPaths = [
   "_headers",
+  "scanflow/**",
+  "tests/scanflow-local-review.test.mjs",
+  "tests/scanflow-owner-auth.test.mjs",
   ".gitattributes",
   ".gitignore",
   "assets/icons/**",
@@ -156,6 +159,7 @@ const expectedAuxiliaryWorkflows = new Map([
             name: "Verify animated concierge pets",
             run: "node scripts/verify-concierge-pet.js\nnode scripts/verify-concierge-pet-runtime.js\n",
           },
+          { name: "Verify local ScanFlow review save and restore", run: "node --test tests/scanflow-local-review.test.mjs tests/scanflow-owner-auth.test.mjs" },
           { name: "Build static deployment", run: deploymentBuildCommand },
           { name: "Verify security response headers", run: deploymentHeaderCommand },
         ],

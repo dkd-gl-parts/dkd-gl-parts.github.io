@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ja"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; object-src 'none'; script-src 'self'; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src blob:; connect-src 'self' https://jqoeqximtwfpqwzngutj.supabase.co/auth/v1/; worker-src 'none'; frame-src 'none'; form-action 'none'">
+<title>ScanFlow | 25項目の途中確認</title><link rel="stylesheet" href="./review.css?v=20261020owner1"><script defer src="/vendor/supabase-js-2.115.0.js"></script><script type="module" src="./app.js?v=20261020owner1"></script>
+</head><body>
+<header><a href="../">ScanFlowへ戻る</a><span>25項目の途中確認</span></header>
+<main><section id="auth-panel" class="intro" aria-labelledby="auth-title"><h1 id="auth-title">D-CATSのログイン確認</h1><p id="auth-status" role="status" aria-live="polite">D-CATSのログインを確認しています。</p><p id="auth-badge">ロック中</p><button id="auth-retry" type="button" disabled>ログインを再確認</button><a href="/">D-CATSへ戻る</a></section><div id="owner-content" hidden inert><section class="intro"><h1>原本を照合しながら、途中で保存できます</h1>
+<p>確認パケットをこのPCから選んでください。画像と入力はこの画面で扱い、途中の内容をJSONでダウンロードします。</p>
+<p>この確認票は25項目の途中記録です。共有ライブラリでの全頁確定は別に行います。</p>
+<label class="packet-label">確認パケットを選ぶ<input id="packet-open" type="file" accept=".json,application/json"></label><p id="packet-status" role="status" aria-live="polite">まだ読み込んでいません。</p></section>
+<section id="review-editor" hidden aria-label="25項目の確認">
+<div class="summary"><strong id="progress">確認 0/25</strong><span id="packet-scope"></span></div>
+<div class="toolbar"><button id="draft-save" type="button">途中JSONをダウンロード</button><label class="file-label">下書きを再開<input id="draft-open" type="file" accept=".json,application/json"></label><button id="save" type="button" disabled>25項目のローカル確認票をダウンロード</button></div>
+<p id="status" role="status" aria-live="polite">候補値は未確認です。原本PDFも確認して、値を修正してください。</p>
+<div class="review-grid"><section class="detail" aria-labelledby="selected"><h2 id="selected"></h2><p id="selected-state"></p>
+<div class="navigation"><button id="previous" type="button">前の項目</button><label>項目を選ぶ<select id="field-jump"></select></label><button id="next" type="button">次の項目</button></div>
+<div id="fields"></div><button id="input-current" type="button">確認値へ移動</button>
+<div class="zoom-controls"><button id="zoom-minus" type="button" aria-label="縮小">−</button><output id="zoom-level">300%</output><button id="zoom-plus" type="button" aria-label="拡大">＋</button><button id="fit" type="button">幅に合わせる</button></div>
+<div id="crop-viewport"><canvas id="zoom" aria-label="選んだ項目の拡大画像"></canvas></div></section>
+<aside class="overview"><h2>ページ全体</h2><p>オレンジの枠が現在の項目です。</p><canvas id="overview" aria-label="確認用ページの全体画像"></canvas></aside></div>
+<p class="help">閉じる前に途中JSONを保存してください。ログアウトや認証確認の失敗時は画面と未保存の内容を閉じます。次回は同じ確認パケットを選び、「下書きを再開」でJSONを読み込むと続けられます。</p><img id="page" alt="確認用の参照画像" hidden>
+</section></div></main></body></html>
