@@ -8054,7 +8054,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1220";
+var APP_VERSION       = "v1.1.1221";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -38340,9 +38340,11 @@ async function callGltekPartNumberIssueRpc(dkdId, product) {
 
 async function ensureGltekPartNumberIssuedForDkdId(dkdId, options) {
   options = options || {};
+  if (options.isCurrent && !options.isCurrent()) return { skipped: true, reason: "session" };
   var id = parseInt(dkdId, 10);
   if (!id || isNaN(id)) return { skipped: true, reason: "missing_dkd" };
   var productR = await fetchCoreProductForGltekIssue(id);
+  if (options.isCurrent && !options.isCurrent()) return { skipped: true, reason: "session" };
   if (productR.error) return { error: productR.error };
   var product = productR.data || options.product || null;
   if (!product) return { skipped: true, reason: "missing_product" };
@@ -38364,6 +38366,7 @@ async function ensureGltekPartNumberIssuedForDkdId(dkdId, options) {
     return { error: gltekAutoIssueMissingSourceError() };
   }
   var issueR = await callGltekPartNumberIssueRpc(id, product);
+  if (options.isCurrent && !options.isCurrent()) return { skipped: true, reason: "session" };
   if (issueR.error) return { error: issueR.error, product: product };
   applyGltekPartNumberIssueResult(id, issueR.data || {});
   return { result: issueR.data || {}, product: product };

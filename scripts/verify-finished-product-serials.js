@@ -157,15 +157,17 @@ assert(ensureGltekSource.indexOf("if (product.gltek_part_number)") < ensureGltek
 const issuedPatches = [];
 let issueRpcCount = 0;
 let canIssueGNumber = false;
+let issueLookupHook = null, issueRpcHook = null;
 let issueLookupProduct = { dkd_shohin_id: 101, gltek_part_number: "G0101-00001" };
 const issueSandbox = {
   canIssueGltekPartNumber() { return canIssueGNumber; },
-  async fetchCoreProductForGltekIssue() { return { data: issueLookupProduct, error: null }; },
+  async fetchCoreProductForGltekIssue() { return issueLookupHook ? issueLookupHook() : { data: issueLookupProduct, error: null }; },
   applyGltekPartNumberIssueResult(id, result) { issuedPatches.push({ id, result }); },
   gltekAutoIssuePermissionError() { return new Error("permission"); },
   gltekAutoIssueMissingSourceError() { return new Error("missing-source"); },
   async callGltekPartNumberIssueRpc() {
     issueRpcCount += 1;
+    if (issueRpcHook) return issueRpcHook();
     return { data: { action: "issued", gltek_part_number: "G0101-00002" }, error: null };
   }
 };
@@ -185,6 +187,26 @@ vm.runInContext(`${ensureGltekSource.replace(/^function /, "async function ")}; 
   issueLookupProduct = { dkd_shohin_id: 103, manufacturer: "DENSO", manufacturer_part_number: "104210-0002", gltek_part_number: null };
   outcome = await issueSandbox.ensureGNumber(103, {});
   assert(outcome.error && outcome.error.message === "permission" && issueRpcCount === 1, "a missing G number is silently skipped without issue permission");
+
+  canIssueGNumber = true;
+  let current = false, finishLookup;
+  issueLookupHook = () => new Promise(resolve => { finishLookup = resolve; });
+  outcome = await issueSandbox.ensureGNumber(104, { isCurrent: () => current });
+  assert(outcome.reason === "session" && !finishLookup && issueRpcCount === 1, "a cancelled pricing scope must stop before reading or issuing");
+  current = true;
+  const lookupPending = issueSandbox.ensureGNumber(104, { isCurrent: () => current });
+  current = false;
+  finishLookup({ data: issueLookupProduct, error: null });
+  outcome = await lookupPending;
+  assert(outcome.reason === "session" && issueRpcCount === 1, "an account change during the product read must prevent the issuer RPC");
+  issueLookupHook = null; current = true;
+  let finishRpc; issueRpcHook = () => new Promise(resolve => { finishRpc = resolve; });
+  const patchesBefore = issuedPatches.length;
+  const rpcPending = issueSandbox.ensureGNumber(104, { isCurrent: () => current });
+  await new Promise(setImmediate); current = false;
+  finishRpc({ data: { action: "issued", gltek_part_number: "G0101-00104" }, error: null });
+  outcome = await rpcPending;
+  assert(outcome.reason === "session" && issuedPatches.length === patchesBefore, "a completed RPC for an old scope must not patch the new account's UI");
 })().catch((error) => {
   process.nextTick(() => { throw error; });
 });
