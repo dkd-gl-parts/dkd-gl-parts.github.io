@@ -191,7 +191,7 @@
   function renderGNumberReport(){
     var host=el('spl-g-numbers');if(!host)return;var report=state.gReport;if(!valid()||!report||String(report.listId)!==String(state.listId)){host.replaceChildren();return;}
     var count=function(key){return report.rows.filter(function(r){return r.status===key;}).length;},review=count('gReview');
-    host.innerHTML='<details'+(review?' open':'')+'><summary>'+esc(w('gTitle'))+' · '+esc(w('gIssued'))+' '+count('gIssued')+' · '+esc(w('gExisting'))+' '+count('gExisting')+' · '+esc(w('gReview'))+' '+review+'</summary>'+(review?'<p class="spl-muted">'+esc(w('gReviewHelp'))+'</p>':'')+'<ul>'+report.rows.map(function(r){return '<li><strong>'+esc(r.part)+'</strong><span>'+esc(r.number||w('gReview'))+'</span><small>'+esc(w(r.status))+'</small></li>';}).join('')+'</ul></details>';
+    host.innerHTML='<details'+(review?' open':'')+'><summary>'+esc(w('gTitle'))+' · '+esc(w('gIssued'))+' '+count('gIssued')+' · '+esc(w('gExisting'))+' '+count('gExisting')+' · '+esc(w('gReview'))+' '+review+'</summary>'+(review?'<p class="spl-muted">'+esc(w('gReviewHelp'))+'</p>':'')+'<ul>'+report.rows.map(function(r){return '<li><strong>'+esc(r.part)+'</strong><span>'+esc(r.number||'—')+'</span><small>'+esc(w(r.status))+'</small></li>';}).join('')+'</ul></details>';
   }
   async function issueSavedGNumbers(result,rows,isCurrent,listId){
     var report={listId:listId,rows:[]},processed=new Map();
