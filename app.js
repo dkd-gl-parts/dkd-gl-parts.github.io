@@ -8336,6 +8336,7 @@ var salesRank1SavePending = false;
 var salesPricingRanks = [];
 var salesPricingCustomerCounts = {};
 var salesPricingMgmtRows = [];
+var salesPricingMgmtSearchEpoch = 0;
 var salesPricingMgmtPriceMap = {};
 var salesPricingMgmtRank1Map = {};
 var salesPricingMgmtManufacturingCostMap = {};
@@ -10936,6 +10937,7 @@ function resetScreenControlState(control) {
 
 function resetScreenRuntimeStateForMenu(screenId) {
   if (screenId === "sales-pricing-mgmt") {
+    collapseSalesPricingMgmtResults();
     salesPricingMgmtRows = [];
     salesPricingMgmtPriceMap = {};
     salesPricingMgmtRank1Map = {};
@@ -51080,6 +51082,16 @@ async function saveSalesPricing() {
   }
 }
 
+function collapseSalesPricingMgmtResults() {
+  salesPricingMgmtSearchEpoch += 1;
+  var results = document.getElementById("sales-pricing-mgmt-results");
+  if (results) results.hidden = true;
+}
+
+function isSalesPricingMgmtSearchCurrent(epoch) {
+  return epoch === salesPricingMgmtSearchEpoch && canViewSalesPricing();
+}
+
 async function enterSalesPricingMgmt() {
   if (!canViewSalesPricing()) { alert(t("err_perm")); return; }
   showScreen("sales-pricing-mgmt");
@@ -51097,6 +51109,7 @@ async function loadSalesPricingMgmt() {
   var list = document.getElementById("sales-pricing-mgmt-list");
   var countEl = document.getElementById("sales-pricing-mgmt-count");
   if (!q) {
+    collapseSalesPricingMgmtResults();
     salesPricingMgmtRows = [];
     salesPricingMgmtPriceMap = {};
     salesPricingMgmtRank1Map = {};
@@ -51105,14 +51118,20 @@ async function loadSalesPricingMgmt() {
     if (list) list.innerHTML = "<div class='empty'>" + esc(t("sales_pricing_mgmt_hint")) + "</div>";
     return;
   }
+  var searchEpoch = ++salesPricingMgmtSearchEpoch;
+  var results = document.getElementById("sales-pricing-mgmt-results");
+  if (results) results.hidden = false;
+  if (countEl) countEl.textContent = "";
   if (list) list.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
   var numericDkd = /^\d+$/.test(q) ? parseInt(q, 10) : null;
   var r = numericDkd !== null
     ? await sb.from("core_products").select(CORE_PRODUCT_FAST_SELECT).eq("dkd_shohin_id", numericDkd).limit(1)
     : { data: [] };
+  if (!isSalesPricingMgmtSearchCurrent(searchEpoch)) return;
   if (!r.error && !(r.data || []).length) {
     r = await fetchCoreProductMasterMatches(q, null, 100);
   }
+  if (!isSalesPricingMgmtSearchCurrent(searchEpoch)) return;
   if (r.error) {
     if (list) list.innerHTML = "<div class='empty'>" + esc(r.error.message || t("msg_kikan_err")) + "</div>";
     return;
@@ -51120,33 +51139,39 @@ async function loadSalesPricingMgmt() {
   var rows = r.data || [];
   if (!rows.length) {
     var aliasResult = await fetchSourceAliasProducts(q);
+    if (!isSalesPricingMgmtSearchCurrent(searchEpoch)) return;
     if (aliasResult.error) {
       console.warn("sales pricing alias search failed", aliasResult.error);
     } else {
       rows = aliasResult.data || [];
     }
   }
-  salesPricingMgmtRows = filterVisibleProducts(normalizeCoreProductFastRows(rows)).slice(0, 100);
-  var ids = salesPricingMgmtRows.map(function(row){ return row.dkd_shohin_id; }).filter(Boolean);
-  salesPricingMgmtPriceMap = {};
-  salesPricingMgmtRank1Map = {};
-  salesPricingMgmtManufacturingCostMap = {};
+  var productRows = filterVisibleProducts(normalizeCoreProductFastRows(rows)).slice(0, 100);
+  var ids = productRows.map(function(row){ return row.dkd_shohin_id; }).filter(Boolean);
+  var priceMap = {}, rank1PriceMap = {}, manufacturingCostMap = {};
   if (ids.length) {
     var pr = await sb.from("product_base_prices")
       .select("id,dkd_shohin_id,base_price_jpy,price_basis,basis_note,effective_start,is_current")
       .in("dkd_shohin_id", ids)
       .eq("product_kind", "rebuilt")
       .eq("is_current", true);
+    if (!isSalesPricingMgmtSearchCurrent(searchEpoch)) return;
     (pr.data || []).forEach(function(row) {
-      salesPricingMgmtPriceMap[String(row.dkd_shohin_id)] = row;
+      priceMap[String(row.dkd_shohin_id)] = row;
     });
     var rank1Map = await fetchInternalRank1PriceMap(ids);
+    if (!isSalesPricingMgmtSearchCurrent(searchEpoch)) return;
     ids.forEach(function(id) {
       var price = rank1Map[String(id) + "|rebuilt"];
-      if (price != null) salesPricingMgmtRank1Map[String(id)] = price;
+      if (price != null) rank1PriceMap[String(id)] = price;
     });
-    salesPricingMgmtManufacturingCostMap = await fetchSalesPricingManufacturingCostMap(ids, "rebuilt");
+    manufacturingCostMap = await fetchSalesPricingManufacturingCostMap(ids, "rebuilt");
   }
+  if (!isSalesPricingMgmtSearchCurrent(searchEpoch)) return;
+  salesPricingMgmtRows = productRows;
+  salesPricingMgmtPriceMap = priceMap;
+  salesPricingMgmtRank1Map = rank1PriceMap;
+  salesPricingMgmtManufacturingCostMap = manufacturingCostMap;
   renderSalesPricingMgmt();
 }
 
@@ -58224,6 +58249,12 @@ document.getElementById("parts-mgmt-search-form").addEventListener("submit", fun
 });
 document.getElementById("btn-sales-pricing-mgmt-search").addEventListener("click", loadSalesPricingMgmt);
 document.getElementById("sales-pricing-mgmt-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadSalesPricingMgmt(); });
+document.getElementById("sales-pricing-mgmt-search").addEventListener("input", function(e) {
+  if (!e.target.value.trim()) collapseSalesPricingMgmtResults();
+});
+["click", "input", "change"].forEach(function(type) {
+  document.getElementById("sales-pricing-lists").addEventListener(type, collapseSalesPricingMgmtResults);
+});
 document.getElementById("btn-purchase-mgmt-search").addEventListener("click", loadPurchaseMgmt);
 document.getElementById("purchase-mgmt-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadPurchaseMgmt(); });
 document.getElementById("purchase-mgmt-supplier").addEventListener("change", loadPurchaseMgmt);
