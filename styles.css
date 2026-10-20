@@ -3237,6 +3237,27 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   min-height: 40px;
   font-weight: 700;
 }
+.form-footer.product-form-footer { flex-wrap: wrap; }
+.unused-product-deletion { box-sizing: border-box; margin: 0 20px 16px; padding: 14px; border: 1px solid #e8c7c7; border-radius: 10px; background: #fffafa; text-align: left; font-size: 13px; overflow-wrap: anywhere; }
+.unused-product-deletion[hidden], .unused-product-confirm[hidden], .unused-product-notice[hidden] { display: none; }
+.unused-product-deletion h4 { margin: 0 0 8px; color: #7f2029; font-size: 15px; }
+.unused-product-deletion p { margin: 6px 0; }
+.unused-product-deletion ul { margin: 6px 0 10px; padding-left: 22px; }
+.unused-product-identity { font-weight: 700; }
+.unused-product-group-title { font-weight: 700; }
+.unused-product-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.unused-product-deletion button { min-height: 40px; padding: 8px 14px; }
+.unused-product-deletion .btn-danger { border: 1px solid #a91d32; border-radius: 7px; color: #fff; background: #a91d32; font-weight: 700; cursor: pointer; }
+.unused-product-deletion button:disabled { opacity: .45; cursor: not-allowed; }
+.unused-product-deletion button:focus-visible, .unused-product-deletion textarea:focus-visible { outline: 3px solid #1a6fd4; outline-offset: 2px; }
+.unused-product-confirm { border-top: 1px solid #e8c7c7; margin-top: 12px; padding-top: 12px; }
+.unused-product-confirm textarea { display: block; width: 100%; box-sizing: border-box; margin: 6px 0 10px; }
+.unused-product-ack { display: flex; gap: 8px; align-items: flex-start; }
+.unused-product-notice { padding: 12px; border: 1px solid #bcd7c7; border-radius: 8px; background: #f1faf5; }
+@media(max-width:640px) {
+  .unused-product-deletion { padding: 10px; margin: 0 12px 12px; }
+  .unused-product-actions > button { flex: 1 1 140px; min-width: 0; }
+}
 @media(max-width:960px) {
   .product-form-layout { grid-template-columns: 1fr; }
   .product-form-card { max-width: 760px; }

@@ -228,6 +228,8 @@ jobs:
           node scripts/verify-sales-pricing-lists.js
       - name: Verify sales pricing responsive layout
         run: node scripts/verify-sales-pricing-layout.js
+      - name: Verify unused product deletion
+        run: node scripts/verify-unused-product-deletion.js
       - name: Verify class-1 dedicated pricing
         run: node scripts/verify-rank1-pricing.js
       - name: Verify core return policy
