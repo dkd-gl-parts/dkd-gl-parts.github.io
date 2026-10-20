@@ -8054,7 +8054,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1217";
+var APP_VERSION       = "v1.1.1218";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -8111,6 +8111,15 @@ var componentIllustrationRows = [];
 var componentIllustrationLoading = false;
 var componentIllustrationError = "";
 var componentIllustrationRequestId = 0;
+var componentIllustrationSignedUrlCache = null;
+var componentIllustrationLastTiming = null;
+if (sb.auth && typeof sb.auth.onAuthStateChange === "function") {
+  sb.auth.onAuthStateChange(function(event) {
+    if (["SIGNED_OUT", "SIGNED_IN", "TOKEN_REFRESHED", "USER_UPDATED", "PASSWORD_RECOVERY"].indexOf(event) >= 0) {
+      clearCatalogIllustrationSignedUrlCache(event === "SIGNED_OUT");
+    }
+  });
+}
 var componentCatalogNameCandidates = [];
 var componentCatalogNameCandidateLabelMap = {};
 var componentCatalogNameCandidateKindMap = {};
@@ -11379,12 +11388,14 @@ async function doLogin() {
 }
 
 async function signOutCurrentDevice() {
+  clearCatalogIllustrationSignedUrlCache(true);
   // Supabase defaults to global sign-out, which would also revoke the
   // independently stored Windows print-agent session for this user.
   return sb.auth.signOut({ scope: "local" });
 }
 
 async function signOutAllDevices() {
+  clearCatalogIllustrationSignedUrlCache(true);
   // Account blocking and password reset must still revoke every active session.
   return sb.auth.signOut({ scope: "global" });
 }
@@ -45079,7 +45090,95 @@ function componentIllustrationPublicUrl(row) {
   return row.signed_image_url || "";
 }
 
-async function signComponentIllustrationRows(rows) {
+function catalogIllustrationNow() {
+  return typeof performance !== "undefined" && typeof performance.now === "function" ? performance.now() : Date.now();
+}
+
+function clearCatalogIllustrationSignedUrlCache(clearDisplay) {
+  componentIllustrationSignedUrlCache = null;
+  if (!clearDisplay) return;
+  componentIllustrationRequestId += 1;
+  componentIllustrationRows = [];
+  componentIllustrationLoading = false;
+  componentIllustrationError = "";
+  componentIllustrationLastTiming = null;
+  renderComponentIllustrationSlot();
+}
+
+function catalogIllustrationContextCurrent(context) {
+  var now = Date.now();
+  if (!context || componentIllustrationSignedUrlCache !== context || now < context.lastSeen || now >= context.sessionExpiresAt ||
+      !currentUser || currentUser.id !== context.actor || !userProfile || userProfile.status !== "active" || !canSeeComponentInfo() ||
+      JSON.stringify(userProfile) !== context.profile || !!customerPortalSearchActive !== context.preview) return false;
+  context.lastSeen = now;
+  return true;
+}
+
+async function catalogIllustrationAuthContext(requestId) {
+  var result = await sb.auth.getSession();
+  if (requestId !== componentIllustrationRequestId) return null;
+  var session = result && result.data && result.data.session;
+  var now = Date.now();
+  if (!result || result.error || !session || !session.user || !currentUser || session.user.id !== currentUser.id ||
+      !session.access_token || !Number.isFinite(session.expires_at) || session.expires_at * 1000 <= now ||
+      !userProfile || userProfile.status !== "active") {
+    clearCatalogIllustrationSignedUrlCache(false);
+    throw { status: 401 };
+  }
+  if (!canSeeComponentInfo()) {
+    clearCatalogIllustrationSignedUrlCache(false);
+    throw { status: 403 };
+  }
+  var profile = JSON.stringify(userProfile);
+  var scope = JSON.stringify([session.user.id, session.access_token, profile, !!customerPortalSearchActive]);
+  var context = componentIllustrationSignedUrlCache;
+  if (!context || context.scope !== scope || now < context.lastSeen) {
+    context = { scope: scope, actor: session.user.id, profile: profile, preview: !!customerPortalSearchActive,
+      sessionExpiresAt: session.expires_at * 1000, lastSeen: now, entries: new Map(), pending: new Map() };
+    componentIllustrationSignedUrlCache = context;
+  }
+  return context;
+}
+
+function invalidateCatalogIllustrationSignedUrl(row) {
+  if (componentIllustrationSignedUrlCache && row) {
+    componentIllustrationSignedUrlCache.entries.delete(JSON.stringify([row.image_bucket, row.image_path]));
+  }
+}
+
+async function catalogIllustrationSignedUrl(row, context, timing) {
+  if (!catalogIllustrationContextCurrent(context)) throw { status: 401 };
+  var key = JSON.stringify([row.image_bucket, row.image_path]);
+  var entry = context.entries.get(key);
+  if (entry && entry.expiresAt > Date.now()) {
+    context.entries.delete(key); context.entries.set(key, entry);
+    if (timing) timing.reusedUrls += 1;
+    return entry.url;
+  }
+  context.entries.delete(key);
+  if (context.pending.has(key)) return context.pending.get(key);
+  var startedAt = Date.now();
+  var promise = (async function() {
+    var result = await sb.storage.from(row.image_bucket).createSignedUrl(row.image_path, PRODUCT_IMAGE_SIGNED_URL_TTL_SECONDS);
+    if (!catalogIllustrationContextCurrent(context)) throw { status: 401 };
+    if (!result || result.error) throw result && result.error || { code: "invalid_response" };
+    var url = result.data && (result.data.signedUrl || result.data.signedURL) || "";
+    if (!url) throw { code: "invalid_response" };
+    // Keep the original deadline; hits never prolong a private capability.
+    var expiresAt = Math.min(startedAt + 5 * 60 * 1000,
+      startedAt + PRODUCT_IMAGE_SIGNED_URL_TTL_SECONDS * 1000 - 60000, context.sessionExpiresAt - 60000);
+    if (expiresAt > Date.now()) {
+      context.entries.set(key, { url: url, expiresAt: expiresAt });
+      while (context.entries.size > 32) context.entries.delete(context.entries.keys().next().value);
+    }
+    return url;
+  })();
+  context.pending.set(key, promise);
+  try { return await promise; }
+  finally { if (context.pending.get(key) === promise) context.pending.delete(key); }
+}
+
+async function signComponentIllustrationRows(rows, context, timing) {
   return Promise.all((rows || []).map(async function(row) {
     var prepared = Object.assign({}, row, { signed_image_url: "", image_load_error: "" });
     if (!row || !row.image_bucket || !row.image_path) {
@@ -45087,12 +45186,7 @@ async function signComponentIllustrationRows(rows) {
       return prepared;
     }
     try {
-      var result = await sb.storage.from(row.image_bucket)
-        .createSignedUrl(row.image_path, PRODUCT_IMAGE_SIGNED_URL_TTL_SECONDS);
-      if (!result || result.error) throw result && result.error || { code: "invalid_response" };
-      var signedUrl = result.data && (result.data.signedUrl || result.data.signedURL) || "";
-      if (!signedUrl) throw { code: "invalid_response" };
-      prepared.signed_image_url = signedUrl;
+      prepared.signed_image_url = await catalogIllustrationSignedUrl(row, context, timing);
     } catch (error) {
       prepared.image_load_error = catalogIllustrationFailureText(error, "image");
       console.warn("catalog illustration image signing failed", { code: String(error && error.code || "unknown").replace(/[^a-z0-9_]/gi, "").slice(0, 32) });
@@ -45298,8 +45392,25 @@ function bindCatalogIllustrationInteractions(root) {
   var requestId = componentIllustrationRequestId;
   root.querySelectorAll("[data-catalog-image]").forEach(function(image) {
     var row = componentIllustrationRows[Number(image.dataset.catalogImage)];
+    image.addEventListener("load", function() {
+      var timing = componentIllustrationLastTiming;
+      if (!timing || timing.requestId !== requestId || requestId !== componentIllustrationRequestId ||
+          selectedProductKind() !== "catalog_spec" || componentIllustrationRows.indexOf(row) < 0) return;
+      var index = image.dataset.catalogImage;
+      if (timing.loadedIndices.indexOf(index) < 0) timing.loadedIndices.push(index);
+      timing.loadedImages = timing.loadedIndices.length;
+      if (timing.loadedImages !== timing.imageCount) return;
+      var painted = function() {
+        if (componentIllustrationLastTiming === timing && requestId === componentIllustrationRequestId) {
+          timing.imageReadyMs = catalogIllustrationNow() - timing.startedAt;
+        }
+      };
+      if (typeof requestAnimationFrame === "function") requestAnimationFrame(function() { requestAnimationFrame(painted); });
+      else painted();
+    });
     image.addEventListener("error", function() {
       if (requestId !== componentIllustrationRequestId || selectedProductKind() !== "catalog_spec" || componentIllustrationRows.indexOf(row) < 0) return;
+      invalidateCatalogIllustrationSignedUrl(row);
       row.image_load_error = catalogIllustrationFailureText(null, "image");
       renderComponentIllustrationSlot();
     });
@@ -45395,6 +45506,7 @@ async function retryCatalogIllustrationLoad() {
   var requestId = componentIllustrationRequestId;
   var dkdId = await resolveCurrentCoreDkdShohinId();
   if (!dkdId || requestId !== componentIllustrationRequestId) return;
+  clearCatalogIllustrationSignedUrlCache(false);
   await loadCatalogIllustrationsForCurrent(dkdId, selectedProductKind());
 }
 
@@ -45403,24 +45515,39 @@ async function loadCatalogIllustrationsForCurrent(dkdId, selectedKind) {
   componentIllustrationRows = [];
   componentIllustrationLoading = false;
   componentIllustrationError = "";
+  componentIllustrationLastTiming = null;
   if (selectedKind !== "catalog_spec" || !dkdId) return;
+  var timing = { requestId: requestId, startedAt: catalogIllustrationNow(), authMs: null, rpcMs: null, signingMs: null,
+    imageReadyMs: null, imageCount: 0, loadedImages: 0, loadedIndices: [], reusedUrls: 0 };
+  componentIllustrationLastTiming = timing;
   componentIllustrationLoading = true;
   renderComponentIllustrationSlot();
   try {
+    var context = await catalogIllustrationAuthContext(requestId);
+    if (requestId !== componentIllustrationRequestId) return;
+    timing.authMs = catalogIllustrationNow() - timing.startedAt;
+    var rpcStartedAt = catalogIllustrationNow();
     var r = await sb.rpc("get_catalog_illustration_for_product", {
       target_dkd_shohin_id: dkdId,
       target_product_kind: selectedKind
     });
     if (requestId !== componentIllustrationRequestId) return;
+    if (!catalogIllustrationContextCurrent(context)) throw { status: 401 };
+    timing.rpcMs = catalogIllustrationNow() - rpcStartedAt;
     if (!r || r.error) throw r && r.error || { code: "invalid_response" };
     if (!Array.isArray(r.data)) throw { code: "invalid_response" };
-    var signedRows = await signComponentIllustrationRows(r.data);
+    var signingStartedAt = catalogIllustrationNow();
+    var signedRows = await signComponentIllustrationRows(r.data, context, timing);
     if (requestId !== componentIllustrationRequestId) return;
+    if (!catalogIllustrationContextCurrent(context)) throw { status: 401 };
+    timing.signingMs = catalogIllustrationNow() - signingStartedAt;
+    timing.imageCount = signedRows.filter(function(row) { return !!row.signed_image_url; }).length;
     componentIllustrationLoading = false;
     componentIllustrationRows = signedRows;
     renderComponentIllustrationSlot();
   } catch (e) {
     if (requestId !== componentIllustrationRequestId) return;
+    clearCatalogIllustrationSignedUrlCache(false);
     componentIllustrationLoading = false;
     componentIllustrationError = catalogIllustrationFailureText(e, "data");
     console.warn("catalog illustration data retrieval failed", { code: String(e && e.code || "unknown").replace(/[^a-z0-9_]/gi, "").slice(0, 32) });
