@@ -1881,6 +1881,8 @@ var TRANSLATIONS = {
     lbl_mfr: "メーカー",
     gltek_part_number_section: "GLTEK品番",
     gltek_part_number_label: "GLTEK品番",
+    gltek_part_number_unissued: "未発行",
+    gltek_part_number_unavailable: "確認できません",
     gltek_product_add_section: "部品メーカー区分／GLTEK製",
     gltek_manufacturer_type: "部品メーカー区分",
     gltek_manufacturer_external: "外部メーカー製",
@@ -4523,6 +4525,8 @@ var TRANSLATIONS = {
     lbl_mfr: "Manufacturer",
     gltek_part_number_section: "GLTEK Part Number",
     gltek_part_number_label: "GLTEK Part Number",
+    gltek_part_number_unissued: "Not issued",
+    gltek_part_number_unavailable: "Unable to confirm",
     gltek_product_add_section: "Part Manufacturer Type / GLTEK Product",
     gltek_manufacturer_type: "Part Manufacturer Type",
     gltek_manufacturer_external: "External Manufacturer",
@@ -7175,6 +7179,8 @@ var TRANSLATIONS = {
     lbl_mfr: "制造商",
     gltek_part_number_section: "GLTEK零件编号",
     gltek_part_number_label: "GLTEK零件编号",
+    gltek_part_number_unissued: "未发行",
+    gltek_part_number_unavailable: "无法确认",
     gltek_product_add_section: "零件制造商类别／GLTEK产品",
     gltek_manufacturer_type: "零件制造商类别",
     gltek_manufacturer_external: "外部制造商产品",
@@ -8054,7 +8060,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1223";
+var APP_VERSION       = "v1.1.1224";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -24881,6 +24887,54 @@ async function loadCatalogVehicleSummary(root, product, detailSeq) {
   }
 }
 
+function resetReadonlyGltekPartNumber(id, textKey) {
+  var target = document.getElementById(id);
+  if (!target) return null;
+  target.gltekLoadSequence = (target.gltekLoadSequence || 0) + 1;
+  target.textContent = t(textKey || "loading");
+  target.setAttribute("aria-busy", "false");
+  return target;
+}
+
+async function loadReadonlyGltekPartNumber(id, product) {
+  var target = resetReadonlyGltekPartNumber(id);
+  if (!target) return;
+  var dkdId = Number(productDkdId(product));
+  if (!product) {
+    target.textContent = t("gltek_part_number_unissued");
+    return;
+  }
+  var sequence = target.gltekLoadSequence;
+  var requestUser = currentUser;
+  var overlay = target.closest(".form-overlay");
+  function allowed() {
+    return currentUser === requestUser && (id === "sales-g-part-number" ? canViewSalesPricing() : canEdit());
+  }
+  if (!Number.isSafeInteger(dkdId) || dkdId <= 0 || !allowed()) {
+    target.textContent = t("gltek_part_number_unavailable");
+    return;
+  }
+  target.setAttribute("aria-busy", "true");
+  try {
+    var r = await sb.from("core_products")
+      .select("dkd_shohin_id,gltek_part_number")
+      .eq("dkd_shohin_id", dkdId)
+      .maybeSingle();
+    if (target.gltekLoadSequence !== sequence || !overlay || !overlay.classList.contains("show")) return;
+    if (!allowed() || r.error || !r.data || Number(r.data.dkd_shohin_id) !== dkdId) {
+      target.textContent = t("gltek_part_number_unavailable");
+      return;
+    }
+    target.textContent = r.data.gltek_part_number || t("gltek_part_number_unissued");
+  } catch (error) {
+    if (target.gltekLoadSequence === sequence && overlay && overlay.classList.contains("show")) {
+      target.textContent = t("gltek_part_number_unavailable");
+    }
+  } finally {
+    if (target.gltekLoadSequence === sequence) target.setAttribute("aria-busy", "false");
+  }
+}
+
 function renderGltekPartNumberRow(p) {
   var dkdId = productDkdId(p) || "";
   return "<div class='ac-part-row'>" +
@@ -29321,6 +29375,7 @@ async function openPartForm(mode, partId) {
   applySpecFormCategory();
   setGltekProductAddPanel();
   overlay.classList.add("show");
+  loadReadonlyGltekPartNumber("pf-g-part-number", mode === "edit" ? { dkd_shohin_id: p.dkd_shohin_id || p.shohin_cd || 0 } : null);
 
   if (mode !== "edit" || !p) return;
   var dkdId = parseInt(p.dkd_shohin_id || p.shohin_cd, 10);
@@ -38730,6 +38785,7 @@ async function openCoreProductForm(mode, product, context) {
   applySpecFormCategory();
   if (mode === "add") document.getElementById("part-form-id").value = "";
   document.getElementById("part-form-overlay").classList.add("show");
+  loadReadonlyGltekPartNumber("pf-g-part-number", mode === "edit" ? formProduct : null);
 }
 
 async function openCoreProductAddFromSearch() {
@@ -50740,6 +50796,7 @@ function setSalesPricingBaseFieldsVisible(visible) {
 function closeSalesPricingOverlay() {
   var overlay = document.getElementById("sales-pricing-overlay");
   if (overlay) overlay.classList.remove("show");
+  resetReadonlyGltekPartNumber("sales-g-part-number", "gltek_part_number_unavailable");
   currentSalesPricingDksReference = null;
   currentSalesPricingManufacturingCost = null;
   currentSalesPricingEcReference = null;
@@ -50943,6 +51000,8 @@ async function openSalesPricingForCurrent() {
   var errEl = document.getElementById("sales-pricing-error");
   if (errEl) errEl.textContent = "";
   overlay.classList.add("show");
+  var gNumberTarget = resetReadonlyGltekPartNumber("sales-g-part-number");
+  var gNumberSequence = gNumberTarget && gNumberTarget.gltekLoadSequence;
   document.getElementById("sales-pricing-product").textContent = t("loading");
   document.getElementById("sales-rank-preview").innerHTML = "<div class='component-empty'>" + esc(t("loading")) + "</div>";
   currentSalesPricingDksReference = { loading: true };
@@ -50979,6 +51038,9 @@ async function openSalesPricingForCurrent() {
     applySalesPricingCorePolicyToForm();
     document.getElementById("sales-pricing-product").textContent = salesPricingProductText(currentProduct, dkdId);
     if (!dkdId) throw new Error(t("sales_no_product_id"));
+    if (gNumberTarget && gNumberTarget.gltekLoadSequence === gNumberSequence && overlay.classList.contains("show")) {
+      loadReadonlyGltekPartNumber("sales-g-part-number", { dkd_shohin_id: dkdId });
+    }
     var ranksR = await sb.from("sales_price_ranks")
       .select("rank_code,rank_name,rate_multiplier,amount_adjustment_jpy,rounding_unit_jpy,rounding_method,is_active,display_order")
       .eq("is_active", true)
@@ -51023,6 +51085,9 @@ async function openSalesPricingForCurrent() {
     renderSalesRankPreview();
   } catch (e) {
     console.warn("open sales pricing failed", e);
+    if (gNumberTarget && gNumberTarget.gltekLoadSequence === gNumberSequence) {
+      resetReadonlyGltekPartNumber("sales-g-part-number", "gltek_part_number_unavailable");
+    }
     currentSalesPricingDksReference = null;
     currentSalesPricingManufacturingCost = null;
     currentSalesPricingEcReference = null;

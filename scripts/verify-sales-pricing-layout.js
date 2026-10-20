@@ -105,4 +105,87 @@ sandbox.currentSalesRank1Row = { price_jpy: 5800 };
 vm.runInNewContext(`${source.slice(start, end)}\nrenderSalesRankPreview();`, sandbox);
 requireFragment(sandbox.wrap.innerHTML, "¥5800", "class-1 override must win over the shared base price");
 
-console.log("sales pricing responsive layout guard passed");
+async function verifyReadonlyGNumbers() {
+  const assert = require("node:assert/strict");
+  for (const id of ["pf-g-part-number", "sales-g-part-number"]) {
+    const tag = html.match(new RegExp(`<output\\b[^>]*id="${id}"[^>]*>`));
+    assert.ok(tag, `${id} must be a display output, not an editable input`);
+    assert.ok(tag[0].includes(`aria-labelledby="${id}-label"`));
+    assert.ok(!/\bname=|contenteditable/.test(tag[0]), "G numbers must not become submitted form fields");
+  }
+  for (const key of ["gltek_part_number_unissued", "gltek_part_number_unavailable"]) {
+    assert.equal((source.match(new RegExp(`${key}:`, "g")) || []).length, 3);
+  }
+  const from = source.indexOf("function resetReadonlyGltekPartNumber(");
+  const to = source.indexOf("function renderGltekPartNumberRow(", from);
+  assert.ok(from >= 0 && to > from);
+  let visible = true;
+  let allowed = true;
+  const nodes = Object.fromEntries(["pf-g-part-number", "sales-g-part-number"].map(id => [id, {
+    textContent: "old number", attributes: {},
+    setAttribute(key, value) { this.attributes[key] = value; },
+    closest() { return { classList: { contains: () => visible } }; }
+  }]));
+  const requests = [];
+  const context = {
+    document: { getElementById: id => nodes[id] },
+    currentUser: { id: "test-only" },
+    canEdit: () => allowed, canViewSalesPricing: () => allowed,
+    t: key => key, productDkdId: p => p && p.dkd_shohin_id,
+    sb: { from(table) {
+      assert.equal(table, "core_products");
+      return { select(columns) {
+        assert.equal(columns, "dkd_shohin_id,gltek_part_number");
+        return { eq(column, id) {
+          assert.equal(column, "dkd_shohin_id");
+          return { maybeSingle() { return new Promise((resolve, reject) => requests.push({ id, resolve, reject })); } };
+        } };
+      } };
+    } }
+  };
+  vm.createContext(context);
+  vm.runInContext(source.slice(from, to), context);
+  for (const id of Object.keys(nodes)) {
+    const node = nodes[id];
+    const read = () => context.loadReadonlyGltekPartNumber(id, { dkd_shohin_id: 101, gltek_part_number: "cached-wrong" });
+    const first = read();
+    assert.equal(node.textContent, "loading");
+    assert.equal(node.attributes["aria-busy"], "true");
+    requests.shift().resolve({ data: { dkd_shohin_id: 101, gltek_part_number: "G-FRESH" } });
+    await first;
+    assert.equal(node.textContent, "G-FRESH", "read the authoritative value rather than a stale cached number");
+    for (const [response, expected] of [
+      [{ data: { dkd_shohin_id: 101, gltek_part_number: null } }, "gltek_part_number_unissued"],
+      [{ data: null }, "gltek_part_number_unavailable"],
+      [{ error: { message: "denied" } }, "gltek_part_number_unavailable"],
+      [{ data: { dkd_shohin_id: 999, gltek_part_number: "G-WRONG" } }, "gltek_part_number_unavailable"]
+    ]) {
+      const pending = read(); requests.shift().resolve(response); await pending;
+      assert.equal(node.textContent, expected);
+    }
+    const failed = read(); requests.shift().reject(new Error("network")); await failed;
+    assert.equal(node.textContent, "gltek_part_number_unavailable");
+    const old = read(), oldRequest = requests.shift();
+    const newer = context.loadReadonlyGltekPartNumber(id, { dkd_shohin_id: 102 });
+    requests.shift().resolve({ data: { dkd_shohin_id: 102, gltek_part_number: "G-NEW" } }); await newer;
+    oldRequest.resolve({ data: { dkd_shohin_id: 101, gltek_part_number: "G-OLD" } }); await old;
+    assert.equal(node.textContent, "G-NEW", "a delayed previous product must not overwrite the new product");
+    const closed = read(); visible = false;
+    requests.shift().resolve({ data: { dkd_shohin_id: 101, gltek_part_number: "G-CLOSED" } }); await closed;
+    assert.equal(node.textContent, "loading"); visible = true;
+    for (const change of [() => { allowed = false; }, () => { context.currentUser = { id: "another-user" }; }]) {
+      const pending = read(); change();
+      requests.shift().resolve({ data: { dkd_shohin_id: 101, gltek_part_number: "G-PRIVATE" } }); await pending;
+      assert.equal(node.textContent, "gltek_part_number_unavailable"); allowed = true;
+    }
+    allowed = false; await read(); assert.equal(requests.length, 0); allowed = true;
+    await context.loadReadonlyGltekPartNumber(id, null);
+    assert.equal(node.textContent, "gltek_part_number_unissued", "new forms must not retain the copied base product's G number");
+    await context.loadReadonlyGltekPartNumber(id, { dkd_shohin_id: 0 });
+    assert.equal(node.textContent, "gltek_part_number_unavailable");
+    assert.equal(requests.length, 0, "opening or refreshing a G display must never issue a number");
+  }
+  requireFragment(source, 'loadReadonlyGltekPartNumber("pf-g-part-number", mode === "edit" ? formProduct : null)', "core edit and add must populate the G display independently");
+  requireFragment(source, 'dkd_shohin_id: p.dkd_shohin_id || p.shohin_cd || 0', "legacy parts must use the linked core ID, never their parts row ID");
+}
+verifyReadonlyGNumbers().then(() => console.log("sales pricing responsive layout and read-only G-number guard passed")).catch(error => { console.error(error); process.exitCode = 1; });
