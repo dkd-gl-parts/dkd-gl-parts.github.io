@@ -2285,6 +2285,8 @@ var TRANSLATIONS = {
     sales_no_product_id: "対象商品のDKD商品IDを確認できません",
     sales_base_price_required: "基準価格を入力してください",
     sales_pricing_mgmt_hint: "品番を検索して販売価格を設定してください",
+    sales_pricing_product_search: "品番から個別に設定",
+    sales_pricing_product_search_ph: "品番・純正品番・DKD番号で検索",
     sales_pricing_mgmt_desc: "品番ごとの基準価格と得意先ランク調整を管理します。",
     app_update_title: "D-CATSの最新版があります",
     app_update_auto_message: "{current} から {latest} へ自動更新します。操作中の場合は待機します。",
@@ -4925,6 +4927,8 @@ var TRANSLATIONS = {
     sales_no_product_id: "Could not confirm the target DKD product ID",
     sales_base_price_required: "Enter a base price",
     sales_pricing_mgmt_hint: "Search a part number to set sales pricing.",
+    sales_pricing_product_search: "Set an individual product price",
+    sales_pricing_product_search_ph: "Search part number, genuine number or DKD ID",
     sales_pricing_mgmt_desc: "Manage base prices and customer rank adjustments.",
     app_update_title: "A new D-CATS version is available",
     app_update_auto_message: "D-CATS will update from {current} to {latest}. It will wait while you are working.",
@@ -7565,6 +7569,8 @@ var TRANSLATIONS = {
     sales_no_product_id: "无法确认目标DKD商品ID",
     sales_base_price_required: "请输入基准价格",
     sales_pricing_mgmt_hint: "搜索品番后设置销售价格。",
+    sales_pricing_product_search: "按品号单独设置价格",
+    sales_pricing_product_search_ph: "搜索品号、原厂品号或DKD编号",
     sales_pricing_mgmt_desc: "管理每个品番的基准价格和客户等级调整。",
     app_update_title: "D-CATS有新版本",
     app_update_auto_message: "将从 {current} 自动更新到 {latest}。操作中会等待。",
@@ -8048,7 +8054,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1216";
+var APP_VERSION       = "v1.1.1217";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -51020,7 +51026,8 @@ function renderSalesPricingMgmt() {
   if (!list) return;
   if (countEl) countEl.textContent = salesPricingMgmtRows.length ? (salesPricingMgmtRows.length + " 件") : "";
   if (!salesPricingMgmtRows.length) {
-    list.innerHTML = "<div class='empty'>" + esc(t("sales_pricing_mgmt_hint")) + "</div>";
+    var query = (document.getElementById("sales-pricing-mgmt-search") || {}).value || "";
+    list.innerHTML = "<div class='empty'>" + esc(t(query.trim() ? "no_results" : "sales_pricing_mgmt_hint")) + "</div>";
     return;
   }
   var showBasePrice = canViewBasePrice();
@@ -51036,13 +51043,13 @@ function renderSalesPricingMgmt() {
     var priceText = rank1Price != null ? formatYenCurrency(rank1Price) :
       (price ? formatYenCurrency(price.base_price_jpy) : "-");
     html += "<tr>";
-    html += "<td><div class='sales-pricing-dkd-line'><span class='mgmt-pn'>" + esc(String(row.dkd_shohin_id || "-")) + "</span><span class='sales-pricing-category'>" + esc(tCat(row.category_code || row.category) || "") + "</span></div></td>";
-    html += "<td><div class='mgmt-pn'>" + esc(row.genuine_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(row.genuine_part_number_2 || "") + "</div></td>";
-    html += "<td><div class='mgmt-pn'>" + esc(row.manufacturer_part_number || "-") + "</div></td>";
-    html += "<td><div class='mgmt-sub'>" + esc(row.manufacturer || "-") + "</div></td>";
-    html += "<td><div class='price-value' data-dcats-inline-style='s-1024138906a0'>" + esc(priceText) + (rank1Price != null ? " <small>" + esc(t("sales_rank1_only_badge")) + "</small>" : "") + "</div></td>";
-    if (showManufacturingCost) html += "<td>" + salesPricingManufacturingCostCellHtml(manufacturingCost) + "</td>";
-    if (showBasePrice) html += "<td><div class='price-value'>" + esc(price ? formatYenCurrency(price.base_price_jpy) : "-") + "</div></td>";
+    html += "<td data-label='DKD'><div class='sales-pricing-dkd-line'><span class='mgmt-pn'>" + esc(String(row.dkd_shohin_id || "-")) + "</span><span class='sales-pricing-category'>" + esc(tCat(row.category_code || row.category) || "") + "</span></div></td>";
+    html += "<td data-label='" + esc(t("f_genuine_pn")) + "'><div class='mgmt-pn'>" + esc(row.genuine_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(row.genuine_part_number_2 || "") + "</div></td>";
+    html += "<td data-label='" + esc(t("f_mfr_pn")) + "'><div class='mgmt-pn'>" + esc(row.manufacturer_part_number || "-") + "</div></td>";
+    html += "<td data-label='" + esc(t("f_manufacturer")) + "'><div class='mgmt-sub'>" + esc(row.manufacturer || "-") + "</div></td>";
+    html += "<td data-label='" + esc(t("sales_price_section")) + "'><div class='price-value' data-dcats-inline-style='s-1024138906a0'>" + esc(priceText) + (rank1Price != null ? " <small>" + esc(t("sales_rank1_only_badge")) + "</small>" : "") + "</div></td>";
+    if (showManufacturingCost) html += "<td data-label='" + esc(t("sales_manufacturing_cost")) + "'>" + salesPricingManufacturingCostCellHtml(manufacturingCost) + "</td>";
+    if (showBasePrice) html += "<td data-label='" + esc(t("sales_base_price")) + "'><div class='price-value'>" + esc(price ? formatYenCurrency(price.base_price_jpy) : "-") + "</div></td>";
     html += "<td><button class='btn-sm-edit' data-sales-price-dkd='" + esc(String(row.dkd_shohin_id || "")) + "'>" + esc(t("sales_pricing_title")) + "</button></td>";
     html += "</tr>";
   });

@@ -99,4 +99,47 @@ if (!renderListSource.includes("sales-pricing-dkd-line") || !renderListSource.in
   throw new Error("DKD and category must be displayed on one line");
 }
 
-console.log("sales pricing manufacturing cost guard passed");
+// Individual product search must work independently of the saved-list preview.
+(async () => {
+  const assert = require("node:assert/strict");
+  const {parseHTML} = require("linkedom");
+  const {window} = parseHTML(html);
+  const doc = window.document;
+  const lookup = doc.getElementById("sales-pricing-product-search");
+  assert.ok(lookup.contains(doc.getElementById("sales-pricing-mgmt-search")));
+  assert.ok(lookup.contains(doc.getElementById("sales-pricing-mgmt-list")));
+  assert.equal(lookup.nextElementSibling.id, "sales-pricing-lists");
+  const calls = [], opened = [], alerts = [];
+  let allowed = true;
+  const product = {dkd_shohin_id:77,manufacturer_part_number:"OUTSIDE-LIST",genuine_part_number:"OEM-77",manufacturer:"DENSO"};
+  const ctx = {document:doc, canViewSalesPricing:()=>allowed, alert:x=>alerts.push(x),
+    salesPricingMgmtRows:[],salesPricingMgmtPriceMap:{},salesPricingMgmtRank1Map:{},salesPricingMgmtManufacturingCostMap:{},
+    CORE_PRODUCT_FAST_SELECT:"fixture", currentProduct:null,currentCoreDkdShohinId:null,
+    fetchCoreProductMasterMatches:async q=>{calls.push(q);return q==="ERROR"?{error:{message:"Fixture network failure"}}:{data:q==="NO-HIT"?[]:[product]};},
+    fetchSourceAliasProducts:async()=>({data:[]}),
+    filterVisibleProducts:x=>x,normalizeCoreProductFastRows:x=>x,
+    fetchInternalRank1PriceMap:async()=>({"77|rebuilt":5800}),fetchSalesPricingManufacturingCostMap:async()=>({}),
+    canViewBasePrice:()=>true,canViewManufacturingCostMgmt:()=>true,
+    formatYenCurrency:x=>"¥"+x,tCat:x=>x||"",t:x=>x,
+    salesPricingManufacturingCostCellHtml:()=>"—",esc:x=>String(x==null?"":x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])),
+    openSalesPricingForCurrent:async()=>{opened.push(ctx.currentCoreDkdShohinId);},
+    sb:{from:()=>({select(){return this;},in(){return this;},eq(){return this;},limit(){return this;},then(resolve){return Promise.resolve({data:[]}).then(resolve);}})}
+  };
+  vm.createContext(ctx);
+  vm.runInContext(sourceBetween("async function loadSalesPricingMgmt()", "async function openSalesPricingListProduct(")+
+    sourceBetween("async function openSalesPricingMgmtRow(", "async function enterPurchaseMgmt("),ctx);
+  vm.runInContext(sourceBetween('document.getElementById("btn-sales-pricing-mgmt-search").addEventListener','document.getElementById("btn-purchase-mgmt-search").addEventListener'),ctx);
+  const input=doc.getElementById("sales-pricing-mgmt-search");
+  input.value="OUTSIDE-LIST";doc.getElementById("btn-sales-pricing-mgmt-search").click();await new Promise(setImmediate);
+  assert.deepEqual(calls,["OUTSIDE-LIST"]);assert.ok(doc.querySelector('[data-sales-price-dkd="77"]'));
+  assert.match(doc.getElementById("sales-pricing-mgmt-list").textContent,/5800/);
+  doc.querySelector('[data-sales-price-dkd="77"]').click();await new Promise(setImmediate);assert.deepEqual(opened,[77]);
+  // Loading a saved list must not narrow the independent product search.
+  doc.getElementById("sales-pricing-lists").hidden=false;input.value="OUTSIDE-LIST";
+  const enter=new window.Event("keydown");enter.key="Enter";input.dispatchEvent(enter);await new Promise(setImmediate);assert.equal(calls.length,2);
+  input.value="NO-HIT";await ctx.loadSalesPricingMgmt();assert.match(doc.getElementById("sales-pricing-mgmt-list").textContent,/no_results/);
+  input.value="ERROR";await ctx.loadSalesPricingMgmt();assert.match(doc.getElementById("sales-pricing-mgmt-list").textContent,/Fixture network failure/);
+  input.value="";await ctx.loadSalesPricingMgmt();assert.match(doc.getElementById("sales-pricing-mgmt-list").textContent,/sales_pricing_mgmt_hint/);
+  allowed=false;input.value="OUTSIDE-LIST";const before=calls.length;await ctx.loadSalesPricingMgmt();assert.equal(calls.length,before);assert.equal(alerts.length,1);
+  console.log("sales pricing cost and independent product search: click/Enter, saved-list independence, exact individual identity, no match, empty, error and permissions passed");
+})().catch(error=>{console.error(error);process.exitCode=1;});
