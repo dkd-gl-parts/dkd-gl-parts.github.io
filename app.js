@@ -8222,7 +8222,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1229";
+var APP_VERSION       = "v1.1.1230";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -49749,25 +49749,64 @@ function catalogComponentRowsNeedDkdRecovery(rows, selectedKind) {
 }
 
 async function fetchCatalogComponentRowsByDkd(dkdId) {
-  var selectColumns = "id, dkd_component_id, dkd_shohin_id, product_kind, product_variant_id, assy_manufacturer, assy_manufacturer_part_number, normalized_assy_manufacturer_part_number, assy_genuine_part_number, normalized_assy_genuine_part_number, component_manufacturer_part_number, component_genuine_part_number, component_name, quantity, unit_price_jpy, replacement_rate, procurement_category, manufacturing_memo, interchange_code, effective_start, effective_end, component_position, component_manufacturer, component_part_name, source_code, is_catalog_evidence";
+  var recoveryProduct = currentProduct;
+  var recoveryKind = selectedProductKind();
+  var manufacturer = String((recoveryProduct && recoveryProduct.manufacturer) || "").toUpperCase();
+  var manufacturerPartKeys = componentAssyLookupKeys(recoveryProduct);
+  var genuinePartKeys = componentCurrentProductGenuineKeys();
+  var selectColumns = "id, dkd_component_id, dkd_shohin_id, product_kind, product_variant_id, assy_manufacturer, assy_manufacturer_part_number, normalized_assy_manufacturer_part_number, assy_genuine_part_number, normalized_assy_genuine_part_number, component_manufacturer_part_number, component_genuine_part_number, component_name, quantity, unit_price_jpy, replacement_rate, procurement_category, manufacturing_memo, interchange_code, effective_start, effective_end, component_position, component_manufacturer, component_part_name, source_code, source_table, source_record_key, is_catalog_evidence";
   var r = await sb.from("assembly_component_usage_details")
     .select(selectColumns)
     .eq("dkd_shohin_id", dkdId)
     .eq("is_catalog_evidence", true)
     .order("component_position", { ascending: true, nullsFirst: false })
     .order("component_manufacturer_part_number", { ascending: true });
+  if (currentProduct !== recoveryProduct || selectedProductKind() !== recoveryKind) return { rows: [], error: null, stale: true };
   if (r.error) return { rows: [], error: r.error };
 
-  var manufacturer = String((currentProduct && currentProduct.manufacturer) || "").toUpperCase();
-  var manufacturerPartKeys = componentAssyLookupKeys(currentProduct);
-  var genuinePartKeys = componentCurrentProductGenuineKeys();
   var rows = (r.data || []).filter(function(row) {
     if (manufacturer && String(row.assy_manufacturer || "").toUpperCase() !== manufacturer) return false;
     var manufacturerPartKey = String(row.normalized_assy_manufacturer_part_number || normalizedPartKey(row.assy_manufacturer_part_number));
     if (manufacturerPartKeys.length && manufacturerPartKeys.indexOf(manufacturerPartKey) < 0) return false;
     var genuinePartKey = String(row.normalized_assy_genuine_part_number || normalizedPartKey(row.assy_genuine_part_number));
     return !genuinePartKey || !genuinePartKeys.length || genuinePartKeys.indexOf(genuinePartKey) >= 0;
-  }).map(function(row) {
+  });
+  var blankDensoRow = function(row) {
+    return row.source_code === "catalog_denso" && row.source_table === "TBLPARTSLIST" &&
+      !!row.source_record_key && !!row.dkd_component_id &&
+      !String(row.normalized_assy_genuine_part_number || normalizedPartKey(row.assy_genuine_part_number));
+  };
+  if (manufacturer === "DENSO" && rows.some(blankDensoRow)) {
+    // Preserve source conditions by using the server's verified representatives.
+    var selection;
+    try {
+      selection = await sb.rpc("get_catalog_assembly_components_by_part", {
+        target_manufacturer: "DENSO",
+        target_manufacturer_part_number: recoveryProduct.manufacturer_part_number,
+        target_genuine_part_number: null,
+        max_rows: 5000
+      });
+    } catch (error) {
+      if (currentProduct !== recoveryProduct || selectedProductKind() !== recoveryKind) return { rows: [], error: null, stale: true };
+      return { rows: [], error: error };
+    }
+    if (currentProduct !== recoveryProduct || selectedProductKind() !== recoveryKind) return { rows: [], error: null, stale: true };
+    if (selection && selection.error) return { rows: [], error: selection.error };
+    if (!selection || !Array.isArray(selection.data) || !selection.data.length || selection.data.length >= 5000 ||
+        !selection.data.every(function(row) {
+          return !!row && row.source_code === "catalog_denso" && !!row.dkd_component_id &&
+            !!row.source_table && !!row.source_record_key &&
+            String(row.parent_assy_manufacturer || "").toUpperCase() === manufacturer &&
+            manufacturerPartKeys.indexOf(normalizedPartKey(row.parent_assy_manufacturer_part_number)) >= 0 &&
+            row.catalog_match_basis === "catalog_manufacturer_part_blank_genuine";
+        })) return { rows: [], error: { message: "Catalog source selection unavailable" } };
+    var sourceKey = function(row) {
+      return JSON.stringify([String(row.dkd_component_id), row.source_table, row.source_record_key]);
+    };
+    var selectedSources = new Set(selection.data.map(sourceKey));
+    rows = rows.filter(function(row) { return !blankDensoRow(row) || selectedSources.has(sourceKey(row)); });
+  }
+  rows = rows.map(function(row) {
     return normalizeComponentTreeRow(row, null);
   });
   return { rows: rows, error: null };
@@ -49776,6 +49815,7 @@ async function fetchCatalogComponentRowsByDkd(dkdId) {
 async function loadAssemblyComponentsForCurrent() {
   var wrap = document.getElementById("component-wrap");
   if (!wrap) return;
+  var componentLoadProduct = currentProduct;
   assemblyComponentRows = [];
   componentAlternativeRows = [];
   componentAlternativeMap = {};
@@ -49811,6 +49851,7 @@ async function loadAssemblyComponentsForCurrent() {
       target_product_kind: selectedKind,
       target_product_variant_id: selectedKind === "catalog_spec" ? null : selectedComponentVariantId()
     });
+    if (currentProduct !== componentLoadProduct || selectedProductKind() !== selectedKind) return;
     if (!rpc.error) {
       var rpcRows = (rpc.data || []).map(function(row) {
         return normalizeComponentTreeRow(row, null);
@@ -49818,6 +49859,7 @@ async function loadAssemblyComponentsForCurrent() {
       var recoveredCatalogRows = false;
       if (catalogComponentRowsNeedDkdRecovery(rpcRows, selectedKind)) {
         var recovery = await fetchCatalogComponentRowsByDkd(dkdId);
+        if (recovery.stale) return;
         if (recovery.error) {
           console.warn("catalog component DKD recovery failed", recovery.error);
         } else if (recovery.rows.length > rpcRows.length) {
