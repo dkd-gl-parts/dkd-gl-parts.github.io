@@ -252,7 +252,7 @@ const customerAccessRender = sourceBetween("function renderCustomerAccessDetail"
 if (!customerAccessRender.includes("data-customer-setting='customer_ordering_enabled'") ||
     !customerAccessRender.includes("role='switch'") ||
     !customerAccessRender.includes("customer_access_order_hidden") ||
-    !customerAccessRender.includes("id='btn-customer-order-preview'")) {
+    !sourceBetween("function renderCustomerWorkspaceHeader", "function setCustomerAccessWorkspaceTab").includes("id='btn-customer-order-preview'")) {
   throw new Error("customer management must render ordering publication and internal preview controls");
 }
 const customerAccessSave = sourceBetween("async function saveCustomerAccessSettings", "async function setCustomerAccessActive");

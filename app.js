@@ -1993,6 +1993,32 @@ var TRANSLATIONS = {
     sales_reference_market_price: "参考市場価格",
     sales_tax_excluded: "税別",
     customer_access_search_ph: "得意先コード・得意先名で検索",
+    customer_workspace_intro: "得意先ごとの表示・価格・配送・ログインをまとめて管理します。",
+    customer_workspace_directory: "得意先一覧",
+    customer_workspace_search: "得意先を探す",
+    customer_workspace_refresh: "更新",
+    customer_workspace_back: "得意先一覧へ",
+    customer_workspace_basic: "基本情報",
+    customer_workspace_products: "商品・価格",
+    customer_workspace_shipping: "配送",
+    customer_workspace_accounts: "ログイン",
+    customer_workspace_rank1: "売値区分1",
+    customer_workspace_select_help: "左の一覧から得意先を選び、目的に合わせて設定を切り替えてください。",
+    customer_workspace_overview: "この得意先の設定",
+    customer_workspace_overview_help: "変更した設定は、画面下の「変更を保存」でまとめて反映します。",
+    customer_workspace_products_help: "販売価格の区分と、得意先に見せる商品・情報を設定します。",
+    customer_workspace_shipping_help: "送料の扱いと、商品発送・コア返却に使用する運送便を設定します。",
+    customer_workspace_accounts_value: "ログインID・招待を管理",
+    customer_workspace_accounts_help: "登録済みアカウントの確認、担当者の修正、招待を行います。",
+    customer_workspace_open: "設定を開く",
+    customer_workspace_maintenance: "表示・削除などの管理",
+    customer_workspace_maintenance_help: "得意先の非表示・再表示と削除は、こちらから操作します。",
+    customer_workspace_price_class: "価格区分",
+    customer_workspace_rank_help: "この得意先に適用する販売価格の区分です。",
+    customer_workspace_load_error: "設定を読み込めませんでした",
+    customer_workspace_load_error_help: "通信状態を確認して再読み込みしてください。読み込みが完了するまで保存できません。",
+    customer_workspace_retry: "再読み込み",
+    customer_workspace_invite: "ログインIDを追加・招待する",
     customer_access_customers: "得意先",
     customer_access_add: "得意先を登録",
     customer_register_title: "販売王登録済み得意先を追加",
@@ -2029,11 +2055,11 @@ var TRANSLATIONS = {
     customer_register_saved: "得意先を登録しました。",
     customer_register_export_managed: "得意先管理で登録した販売王コードを使用",
     customer_access_settings: "表示設定",
-    customer_access_save_display: "変更を保存して得意先画面へ反映",
+    customer_access_save_display: "変更を保存",
     customer_access_save_no_customer: "得意先を選択してください",
     customer_access_save_no_customer_help: "左の一覧から設定する得意先を選択してください。",
     customer_access_save_clean: "保存済みです",
-    customer_access_save_clean_help: "表示設定やカテゴリを変更した場合は、保存ボタンを押すと得意先画面へ反映されます。",
+    customer_access_save_clean_help: "商品・価格・請求・配送の変更をまとめて反映します。",
     customer_access_save_dirty: "未保存の変更があります",
     customer_access_save_dirty_help: "まだ得意先画面に反映されていません。右の保存ボタンを押してください。",
     customer_access_saving: "保存中...",
@@ -2054,7 +2080,7 @@ var TRANSLATIONS = {
     customer_access_delete_confirm: "この得意先を削除しますか？表示設定・表示範囲・ユーザー紐づけも削除されます。",
     customer_access_display_settings: "得意先向け表示ルール",
     customer_access_hanbaiou_billing: "販売王 請求設定",
-    customer_access_hanbaiou_billing_help: "得意先台帳の請求得意先コードと締めコードを設定します。売上CSVの請求相手（17・18列目）と請求予定日（20列目）は、この設定からサーバーで作成します。",
+    customer_access_hanbaiou_billing_help: "請求先と締め日を指定します。売上データの請求先・請求予定日に反映されます。",
     customer_access_hanbaiou_billing_code: "請求得意先コード",
     customer_access_hanbaiou_closing_code: "得意先締めコード",
     hanbaiou_closing_select: "選択してください",
@@ -2069,7 +2095,7 @@ var TRANSLATIONS = {
     customer_access_order_preview_unsaved: "表示設定に未保存の変更があります。先に変更を保存してください。",
     customer_access_rule_help: "販売価格をOFFにすると、0円表示・価格あり商品のみ表示もOFFになります。価格あり商品のみ表示をONにすると、価格未設定商品は非表示になります。",
     customer_access_shipping_rule: "送料条件",
-    customer_access_shipping_rule_help: "未設定時は送料別途です。変更後は上の保存ボタンを押すと販売管理と得意先向け価格表へ反映されます。",
+    customer_access_shipping_rule_help: "未設定時は送料別途です。変更後は画面下の保存ボタンで販売管理と得意先向け価格表へ反映します。",
     customer_access_default_shipping: "受注時の既定便",
     customer_access_default_shipping_help: "商品発送便と、同梱するコア返却送り状の便を別々に設定します。注文ごとに変更できます。",
     customer_access_default_outbound_shipping: "商品発送便",
@@ -2077,7 +2103,7 @@ var TRANSLATIONS = {
     customer_access_shipping_separate_desc: "商品価格とは別に、お届け先に応じた送料をご案内します。",
     customer_access_shipping_free_desc: "この得意先には送料を請求しません。",
     customer_access_category_visibility: "得意先に表示するカテゴリ",
-    customer_access_category_help: "チェックしたカテゴリを商品カタログに表示します。未設定時は主要6カテゴリが初期値です。変更後は上の保存ボタンを押してください。",
+    customer_access_category_help: "チェックしたカテゴリを商品カタログに表示します。未設定時は主要6カテゴリが初期値です。変更後は画面下の保存ボタンを押してください。",
     customer_access_category_all: "すべて選択",
     customer_access_category_none: "すべて解除",
     customer_access_category_count: "{n}カテゴリ表示",
@@ -4692,6 +4718,32 @@ var TRANSLATIONS = {
     sales_reference_market_price: "Reference Market Price",
     sales_tax_excluded: "Tax excluded",
     customer_access_search_ph: "Search by customer code or name",
+    customer_workspace_intro: "Manage each customer's products, pricing, delivery and login in one place.",
+    customer_workspace_directory: "Customers",
+    customer_workspace_search: "Find a customer",
+    customer_workspace_refresh: "Refresh",
+    customer_workspace_back: "Back to customers",
+    customer_workspace_basic: "Overview",
+    customer_workspace_products: "Products & pricing",
+    customer_workspace_shipping: "Delivery",
+    customer_workspace_accounts: "Login",
+    customer_workspace_rank1: "Price class 1",
+    customer_workspace_select_help: "Choose a customer, then open the settings you need.",
+    customer_workspace_overview: "Customer settings",
+    customer_workspace_overview_help: "Use Save changes below to apply changes from all settings tabs.",
+    customer_workspace_products_help: "Choose the price class and the products and information this customer can see.",
+    customer_workspace_shipping_help: "Set shipping charges and services for products and core returns.",
+    customer_workspace_accounts_value: "Login accounts & invitations",
+    customer_workspace_accounts_help: "Review accounts, edit contacts and invite users.",
+    customer_workspace_open: "Open settings",
+    customer_workspace_maintenance: "Visibility and removal",
+    customer_workspace_maintenance_help: "Hide, restore or remove this customer here.",
+    customer_workspace_price_class: "Price class",
+    customer_workspace_rank_help: "The sales price class applied to this customer.",
+    customer_workspace_load_error: "Could not load settings",
+    customer_workspace_load_error_help: "Check your connection and reload. Saving is disabled until settings finish loading.",
+    customer_workspace_retry: "Reload",
+    customer_workspace_invite: "Add or invite a login account",
     customer_access_customers: "Customers",
     customer_access_add: "Register Customer",
     customer_register_title: "Add a Sales King Customer",
@@ -4728,11 +4780,11 @@ var TRANSLATIONS = {
     customer_register_saved: "Customer registered.",
     customer_register_export_managed: "Uses the Sales King code registered in Customer Management",
     customer_access_settings: "Display Settings",
-    customer_access_save_display: "Save changes and apply to customer view",
+    customer_access_save_display: "Save changes",
     customer_access_save_no_customer: "Select a customer",
     customer_access_save_no_customer_help: "Select the customer to configure from the list on the left.",
     customer_access_save_clean: "All changes are saved",
-    customer_access_save_clean_help: "After changing display settings or categories, press Save to apply them to the customer view.",
+    customer_access_save_clean_help: "Apply product, price, billing and delivery changes together.",
     customer_access_save_dirty: "You have unsaved changes",
     customer_access_save_dirty_help: "These changes are not visible to the customer yet. Press the Save button.",
     customer_access_saving: "Saving...",
@@ -4753,7 +4805,7 @@ var TRANSLATIONS = {
     customer_access_delete_confirm: "Delete this customer? Display settings, visibility rules, and user links will also be deleted.",
     customer_access_display_settings: "Customer display rules",
     customer_access_hanbaiou_billing: "Sales King billing settings",
-    customer_access_hanbaiou_billing_help: "Set the billing customer and closing codes from the customer ledger. The server uses them for sales CSV fields 17, 18, and 20.",
+    customer_access_hanbaiou_billing_help: "Choose the billing customer and closing date. They determine the billing party and scheduled invoice date in sales data.",
     customer_access_hanbaiou_billing_code: "Billing customer code",
     customer_access_hanbaiou_closing_code: "Closing code",
     hanbaiou_closing_select: "Select",
@@ -4776,7 +4828,7 @@ var TRANSLATIONS = {
     customer_access_shipping_separate_desc: "Show a destination-based shipping charge separately from the product price.",
     customer_access_shipping_free_desc: "Do not charge this customer for shipping.",
     customer_access_category_visibility: "Categories visible to this customer",
-    customer_access_category_help: "Checked categories appear in the product catalog. Six primary categories are selected by default. Press the Save button above after making changes.",
+    customer_access_category_help: "Checked categories appear in the product catalog. Six primary categories are selected by default. Use the Save changes button below to apply changes.",
     customer_access_category_all: "Select all",
     customer_access_category_none: "Clear all",
     customer_access_category_count: "{n} categories visible",
@@ -7391,6 +7443,32 @@ var TRANSLATIONS = {
     sales_reference_market_price: "参考市场价格",
     sales_tax_excluded: "未税",
     customer_access_search_ph: "按客户代码或名称搜索",
+    customer_workspace_intro: "集中管理客户的商品展示、价格、配送和登录。",
+    customer_workspace_directory: "客户列表",
+    customer_workspace_search: "查找客户",
+    customer_workspace_refresh: "刷新",
+    customer_workspace_back: "返回客户列表",
+    customer_workspace_basic: "基本信息",
+    customer_workspace_products: "商品与价格",
+    customer_workspace_shipping: "配送",
+    customer_workspace_accounts: "登录",
+    customer_workspace_rank1: "售价等级1",
+    customer_workspace_select_help: "从列表选择客户，然后切换到所需设置。",
+    customer_workspace_overview: "该客户的设置",
+    customer_workspace_overview_help: "使用下方的“保存更改”统一应用各设置页的更改。",
+    customer_workspace_products_help: "设置该客户的售价等级及可查看的商品和信息。",
+    customer_workspace_shipping_help: "设置运费以及商品发货、旧件退回的配送服务。",
+    customer_workspace_accounts_value: "管理登录账号与邀请",
+    customer_workspace_accounts_help: "查看账号、修改联系人并邀请用户。",
+    customer_workspace_open: "打开设置",
+    customer_workspace_maintenance: "显示与删除管理",
+    customer_workspace_maintenance_help: "可在此隐藏、恢复或删除该客户。",
+    customer_workspace_price_class: "价格等级",
+    customer_workspace_rank_help: "适用于该客户的销售价格等级。",
+    customer_workspace_load_error: "无法加载设置",
+    customer_workspace_load_error_help: "请检查网络后重新加载。加载完成前无法保存。",
+    customer_workspace_retry: "重新加载",
+    customer_workspace_invite: "添加或邀请登录账号",
     customer_access_customers: "客户",
     customer_access_add: "登记客户",
     customer_register_title: "添加已在销售王登记的客户",
@@ -7427,11 +7505,11 @@ var TRANSLATIONS = {
     customer_register_saved: "客户登记完成。",
     customer_register_export_managed: "使用在客户管理中登记的销售王代码",
     customer_access_settings: "显示设置",
-    customer_access_save_display: "保存更改并应用到客户页面",
+    customer_access_save_display: "保存更改",
     customer_access_save_no_customer: "请选择客户",
     customer_access_save_no_customer_help: "请从左侧列表中选择要设置的客户。",
     customer_access_save_clean: "已保存",
-    customer_access_save_clean_help: "更改显示设置或类别后，请按保存按钮以应用到客户页面。",
+    customer_access_save_clean_help: "统一应用商品、价格、账单和配送更改。",
     customer_access_save_dirty: "有未保存的更改",
     customer_access_save_dirty_help: "这些更改尚未显示在客户页面。请按保存按钮。",
     customer_access_saving: "正在保存...",
@@ -7452,7 +7530,7 @@ var TRANSLATIONS = {
     customer_access_delete_confirm: "要删除此客户吗？显示设置、显示范围和用户关联也会被删除。",
     customer_access_display_settings: "客户显示规则",
     customer_access_hanbaiou_billing: "销售王请款设置",
-    customer_access_hanbaiou_billing_help: "设置客户台账中的请款客户代码和结算代码。服务器据此生成销售CSV第17、18和20列。",
+    customer_access_hanbaiou_billing_help: "指定账单客户与结账日，用于销售数据中的开票客户与计划开票日期。",
     customer_access_hanbaiou_billing_code: "请款客户代码",
     customer_access_hanbaiou_closing_code: "客户结算代码",
     hanbaiou_closing_select: "请选择",
@@ -7475,7 +7553,7 @@ var TRANSLATIONS = {
     customer_access_shipping_separate_desc: "商品价格之外，按收货地区另行显示运费。",
     customer_access_shipping_free_desc: "不向此客户收取运费。",
     customer_access_category_visibility: "向客户显示的类别",
-    customer_access_category_help: "商品目录中仅显示已勾选的类别。默认选择六个主要类别。更改后请按上方的保存按钮。",
+    customer_access_category_help: "商品目录中仅显示已勾选的类别。默认选择六个主要类别。更改后请按下方的保存按钮。",
     customer_access_category_all: "全选",
     customer_access_category_none: "全部取消",
     customer_access_category_count: "显示{n}个类别",
@@ -8225,7 +8303,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1231";
+var APP_VERSION       = "v1.1.1232";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -52573,9 +52651,112 @@ async function unlinkPurchaseProduct(linkId) {
   alert(t("purchase_link_removed"));
 }
 
+var customerAccessWorkspaceTab = "overview";
+var customerAccessDetailRequestSeq = 0;
+var customerAccessIncludeInactiveLoaded = false;
+
+function customerAccessRankLabel(code) {
+  var rank = (customerAccessPriceRanks || []).find(function(row) { return row.rank_code === code; });
+  return rank ? salesRankDisplayName(rank) : (String(code || "").replace(/^HANBAIOU_URI_1$/, t("customer_workspace_rank1")) || "-");
+}
+
+function renderCustomerWorkspaceHeader() {
+  var host = document.getElementById("customer-workspace-header");
+  if (!host) return;
+  var customer = currentCustomerAccessCustomer;
+  if (!customer) { host.innerHTML = "<h2>" + esc(t("customer_access_select_hint")) + "</h2>"; return; }
+  host.innerHTML = "<div class='customer-workspace-identity'><p>" + esc(t("customer_access_code")) + " " + esc(customer.source_customer_code || "-") + " <span class='customer-access-status" + (customer.is_active === false ? " inactive" : "") + "'>" + esc(t(customer.is_active === false ? "customer_access_inactive" : "customer_access_active")) + "</span></p><h2 id='customer-workspace-name'>" + esc(customer.customer_name || "-") + "</h2></div>" +
+    "<div class='customer-workspace-actions'><button class='btn-sm-edit' id='btn-customer-price-list' type='button'>" + esc(t("customer_access_price_list")) + "</button><button class='btn-sm-edit' id='btn-customer-order-preview' type='button'" + (customer.is_active === false ? " disabled" : "") + ">" + esc(t("customer_access_order_preview")) + "</button></div>";
+  document.getElementById("btn-customer-price-list").addEventListener("click", openCustomerPriceList);
+  document.getElementById("btn-customer-order-preview").addEventListener("click", openCustomerOrderDevelopmentPreview);
+}
+
+function syncCustomerAccessWorkspaceSummary() {
+  var rank = document.getElementById("customer-access-rank-select");
+  var shipping = document.querySelector("[data-customer-shipping-rule]:checked");
+  var products = document.querySelector("[data-customer-workspace-value='products']");
+  var delivery = document.querySelector("[data-customer-workspace-value='shipping']");
+  if (products && rank) products.textContent = customerAccessRankLabel(rank.value);
+  if (delivery && shipping) delivery.textContent = t(shipping.value === "free" ? "sales_shipping_charge_free" : "sales_shipping_charge_separate");
+}
+
+
+function setCustomerAccessWorkspaceTab(tab, focus) {
+  if (["overview", "products", "shipping", "accounts"].indexOf(tab) < 0) return;
+  if (tab === "accounts" && !canManageCustomerAccounts()) tab = "overview";
+  customerAccessWorkspaceTab = tab;
+  syncCustomerAccessWorkspaceSummary();
+  syncCustomerAccessWorkspaceTabs();
+  if (focus) {
+    var target = document.getElementById("customer-tab-" + tab);
+    if (target) target.focus();
+  }
+}
+
+function syncCustomerAccessWorkspaceTabs() {
+  var ready = !!currentCustomerAccessCustomer && customerAccessSavedDisplayDraft != null;
+  if (customerAccessWorkspaceTab === "accounts" && !canManageCustomerAccounts()) customerAccessWorkspaceTab = "overview";
+  document.querySelectorAll("[data-customer-access-tab]").forEach(function(button) {
+    var key = button.dataset.customerAccessTab;
+    var permitted = key !== "accounts" || canManageCustomerAccounts();
+    button.hidden = !permitted;
+    button.disabled = !ready;
+    button.setAttribute("aria-selected", String(key === customerAccessWorkspaceTab));
+    button.tabIndex = key === customerAccessWorkspaceTab ? 0 : -1;
+  });
+  document.querySelectorAll("[data-customer-access-panel]").forEach(function(panel) {
+    panel.hidden = !ready || panel.dataset.customerAccessPanel !== customerAccessWorkspaceTab;
+  });
+}
+
+function setCustomerAccessWorkspaceView(view) {
+  var screen = document.getElementById("screen-customer-access-mgmt");
+  if (screen) screen.dataset.customerView = view === "detail" ? "detail" : "directory";
+}
+
+function filterCustomerAccessCustomers() {
+  var q = normalizeAsciiWidth((document.getElementById("customer-access-search") || {}).value || "").trim().toLowerCase();
+  customerAccessFilteredRows = customerAccessRows.filter(function(row) {
+    return !q || [row.source_customer_code, row.customer_name, row.customer_kana, row.price_rank_code, customerAccessRankLabel(row.price_rank_code)].some(function(value) {
+      return normalizeAsciiWidth(value).toLowerCase().indexOf(q) >= 0;
+    });
+  });
+  renderCustomerAccessList();
+}
+
+function bindCustomerAccessWorkspaceNavigation() {
+  var nav = document.getElementById("customer-workspace-tabs");
+  if (nav) {
+    nav.querySelectorAll("[data-customer-access-tab]").forEach(function(button) {
+      button.addEventListener("click", function() { setCustomerAccessWorkspaceTab(button.dataset.customerAccessTab); });
+      button.addEventListener("keydown", function(event) {
+        var keys = ["ArrowLeft", "ArrowRight", "Home", "End"];
+        if (keys.indexOf(event.key) < 0) return;
+        var buttons = Array.prototype.filter.call(nav.querySelectorAll("[data-customer-access-tab]"), function(item) { return !item.hidden && !item.disabled; });
+        if (!buttons.length) return;
+        event.preventDefault();
+        var index = buttons.indexOf(button);
+        var next = event.key === "Home" ? 0 : (event.key === "End" ? buttons.length - 1 : (index + (event.key === "ArrowRight" ? 1 : -1) + buttons.length) % buttons.length);
+        setCustomerAccessWorkspaceTab(buttons[next].dataset.customerAccessTab, true);
+      });
+    });
+  }
+  var back = document.getElementById("customer-directory-back");
+  if (back) back.addEventListener("click", function() { setCustomerAccessWorkspaceView("directory"); });
+  var refresh = document.getElementById("btn-customer-access-refresh");
+  if (refresh) refresh.addEventListener("click", loadCustomerAccessMgmt);
+}
+
+
 async function enterCustomerAccessMgmt() {
   if (!canManageCustomerAccess()) { alert(t("err_perm")); return; }
   currentCustomerAccessCustomer = null;
+  customerAccessDetailRequestSeq += 1;
+  customerAccessSavedDisplayDraft = null;
+  customerAccessWorkspaceTab = "overview";
+  setCustomerAccessWorkspaceView("directory");
+  renderCustomerWorkspaceHeader();
+  syncCustomerAccessWorkspaceTabs();
   customerAccessInitialSelectionPending = true;
   var searchInput = document.getElementById("customer-access-search");
   var includeInactiveInput = document.getElementById("customer-access-include-inactive");
@@ -52799,6 +52980,11 @@ async function ensureCustomerAccessCategories() {
 
 async function loadCustomerAccessMgmt() {
   if (!canManageCustomerAccess()) { alert(t("err_perm")); return; }
+  if (customerAccessHasUnsavedChanges() && !confirm(t("customer_access_discard_confirm"))) {
+    var filter = document.getElementById("customer-access-include-inactive");
+    if (filter) filter.checked = customerAccessIncludeInactiveLoaded;
+    return;
+  }
   var q = (document.getElementById("customer-access-search") || {}).value || "";
   q = normalizeAsciiWidth(q).trim().toLowerCase();
   var list = document.getElementById("customer-access-list");
@@ -52814,6 +53000,7 @@ async function loadCustomerAccessMgmt() {
     if (list) list.innerHTML = "<div class='empty'>" + esc(r.error.message || t("msg_kikan_err")) + "</div>";
     return;
   }
+  customerAccessIncludeInactiveLoaded = includeInactive;
   customerAccessRows = r.data || [];
   if (isSystemAdmin()) {
     salesCustomerOptions = customerAccessRows.filter(function(row) { return row.is_active !== false; });
@@ -52876,13 +53063,16 @@ function renderCustomerAccessList() {
   list.innerHTML = customerAccessFilteredRows.map(function(row) {
     var selected = currentCustomerAccessCustomer && String(currentCustomerAccessCustomer.id) === String(row.id) ? " selected" : "";
     var inactive = row.is_active === false;
-    return "<button type='button' class='customer-access-row" + selected + (inactive ? " inactive" : "") + "' data-customer-id='" + esc(String(row.id)) + "'>" +
+    return "<button type='button' class='customer-access-row" + selected + (inactive ? " inactive" : "") + "' data-customer-id='" + esc(String(row.id)) + "' aria-current='" + (selected ? "true" : "false") + "'>" +
       "<div class='customer-access-name'>" + esc(row.customer_name || "-") + (inactive ? " <span class='customer-access-status inactive'>" + esc(t("customer_access_inactive")) + "</span>" : "") + "</div>" +
-      "<div class='customer-access-sub'>" + esc([row.source_customer_code, row.price_rank_code].filter(Boolean).join(" / ")) + "</div>" +
+      "<div class='customer-access-sub'>" + esc([row.source_customer_code, customerAccessRankLabel(row.price_rank_code)].filter(Boolean).join(" · ")) + "</div>" +
     "</button>";
   }).join("");
   list.querySelectorAll("[data-customer-id]").forEach(function(btn) {
-    btn.addEventListener("click", function() { selectCustomerAccessCustomer(btn.dataset.customerId); });
+    btn.addEventListener("click", async function() {
+      if (!currentCustomerAccessCustomer || String(currentCustomerAccessCustomer.id) !== btn.dataset.customerId) await selectCustomerAccessCustomer(btn.dataset.customerId);
+      if (currentCustomerAccessCustomer && String(currentCustomerAccessCustomer.id) === btn.dataset.customerId) setCustomerAccessWorkspaceView("detail");
+    });
   });
 }
 
@@ -52908,28 +53098,39 @@ async function selectCustomerAccessCustomer(customerId) {
 }
 
 async function loadCustomerAccessDetail(customerId) {
+  var requestSeq = ++customerAccessDetailRequestSeq;
   var detail = document.getElementById("customer-access-detail");
-  if (detail) detail.innerHTML = "<div class='empty'>" + esc(t("loading")) + "</div>";
-  var settingsR = await sb.from("customer_display_settings")
-    .select("*")
-    .eq("sales_customer_id", customerId)
-    .maybeSingle();
-  if (settingsR.error) console.warn("customer display settings lookup failed", settingsR.error);
-  customerAccessSettings = Object.assign(defaultCustomerDisplaySettings(), settingsR.data || { sales_customer_id: customerId });
-  var visibilityR = await sb.from("customer_product_visibility")
-    .select("id,sales_customer_id,visibility_scope,category_code,dkd_shohin_id,is_visible,note,updated_at")
-    .eq("sales_customer_id", customerId)
-    .in("visibility_scope", ["all", "category"])
-    .order("visibility_scope", { ascending: true })
-    .order("id", { ascending: true });
-  if (visibilityR.error) {
-    console.warn("customer visibility lookup failed", visibilityR.error);
+  customerAccessSavedDisplayDraft = null;
+  customerAccessSettings = null;
+  updateCustomerAccessSaveState();
+  renderCustomerWorkspaceHeader();
+  syncCustomerAccessWorkspaceTabs();
+  ["btn-customer-price-list", "btn-customer-order-preview"].forEach(function(id) { var button = document.getElementById(id); if (button) button.disabled = true; });
+  if (detail) detail.innerHTML = "<div class='customer-workspace-empty' role='status'>" + esc(t("loading")) + "</div>";
+  var results;
+  try { results = await Promise.all([
+    sb.from("customer_display_settings").select("*").eq("sales_customer_id", customerId).maybeSingle(),
+    sb.from("customer_product_visibility").select("id,sales_customer_id,visibility_scope,category_code,dkd_shohin_id,is_visible,note,updated_at").eq("sales_customer_id", customerId).in("visibility_scope", ["all", "category"]).order("visibility_scope", { ascending: true }).order("id", { ascending: true })
+  ]); } catch (error) { results = [{ error: true }, { error: true }]; }
+  if (requestSeq !== customerAccessDetailRequestSeq || !currentCustomerAccessCustomer || String(currentCustomerAccessCustomer.id) !== String(customerId)) return;
+  if (results[0].error || results[1].error) {
     customerAccessVisibilityRows = [];
-  } else {
-    customerAccessVisibilityRows = visibilityR.data || [];
+    var errorState = document.getElementById("customer-access-save-state");
+    var errorHelp = document.getElementById("customer-access-save-help");
+    if (errorState) errorState.textContent = t("customer_workspace_load_error");
+    if (errorHelp) errorHelp.textContent = t("customer_workspace_load_error_help");
+    if (detail) {
+      detail.innerHTML = "<div class='customer-workspace-empty' role='alert'><h3>" + esc(t("customer_workspace_load_error")) + "</h3><p>" + esc(t("customer_workspace_load_error_help")) + "</p><button type='button' class='btn-sm-edit' id='btn-customer-settings-retry'>" + esc(t("customer_workspace_retry")) + "</button></div>";
+      var retry = document.getElementById("btn-customer-settings-retry");
+      if (retry) retry.addEventListener("click", function() { loadCustomerAccessDetail(customerId); });
+    }
+    return;
   }
+  customerAccessSettings = Object.assign(defaultCustomerDisplaySettings(), results[0].data || { sales_customer_id: customerId });
+  customerAccessVisibilityRows = results[1].data || [];
   renderCustomerAccessDetail();
 }
+
 
 async function loadCustomerAccessRuleProductMap() {
   customerAccessRuleProductMap = {};
@@ -52988,7 +53189,6 @@ function customerAccessRankOptionsHtml(selected) {
   return rows.map(function(rank) {
     var code = rank.rank_code || "";
     var label = salesRankDisplayName(rank);
-    if (code && label !== code) label += " / " + code;
     return "<option value='" + esc(code) + "'" + (String(code) === String(selected) ? " selected" : "") + ">" + esc(label || code || "-") + "</option>";
   }).join("");
 }
@@ -53225,31 +53425,28 @@ function customerAccessShippingServiceOptionsHtml(selectedKey, purpose) {
 function renderCustomerAccessDetail() {
   var detail = document.getElementById("customer-access-detail");
   if (!detail) return;
+  renderCustomerWorkspaceHeader();
   if (!currentCustomerAccessCustomer) {
     customerAccessSavedDisplayDraft = null;
     customerAccessSettingsSaving = false;
     updateCustomerAccessSaveState();
-    detail.innerHTML = "<div class='empty'>" + esc(t("customer_access_select_hint")) + "</div>";
+    detail.innerHTML = "<div class='customer-workspace-empty'><h3>" + esc(t("customer_access_select_hint")) + "</h3><p>" + esc(t("customer_workspace_select_help")) + "</p></div>";
+    syncCustomerAccessWorkspaceTabs();
     return;
   }
   var customer = currentCustomerAccessCustomer;
   var s = Object.assign(defaultCustomerDisplaySettings(), customerAccessSettings || {});
-  var html = "";
-  html += "<div class='customer-access-summary'>";
-  html += "<div class='customer-access-stat'><div class='customer-access-stat-label'>" + esc(t("customer_access_code")) + "</div><div class='customer-access-stat-value'>" + esc(customer.source_customer_code || "-") + "</div></div>";
-  html += "<div class='customer-access-stat'><div class='customer-access-stat-label'>" + esc(t("customer_access_customer")) + "</div><div class='customer-access-stat-value'>" + esc(customer.customer_name || "-") + "</div></div>";
-  html += "<div class='customer-access-stat'><label class='customer-access-stat-label' for='customer-access-rank-select'>" + esc(t("sales_rank")) + "</label><select class='customer-access-rank-select' id='customer-access-rank-select'>" + customerAccessRankOptionsHtml(customer.price_rank_code || "") + "</select></div>";
-  html += "<div class='customer-access-stat'><div class='customer-access-stat-label'>" + esc(t("customer_access_status")) + "</div><div class='customer-access-stat-value'><span class='customer-access-status" + (customer.is_active === false ? " inactive" : "") + "'>" + esc(customer.is_active === false ? t("customer_access_inactive") : t("customer_access_active")) + "</span></div></div>";
-  html += "</div>";
-  html += "<div class='customer-access-management-actions'>";
-  html += "<button class='btn-primary' id='btn-customer-price-list' type='button'>" + esc(t("customer_access_price_list")) + "</button>";
-  html += "<button class='btn-sm-edit customer-order-preview-launch' id='btn-customer-order-preview' type='button'" + (customer.is_active === false ? " disabled" : "") + ">" + esc(t("customer_access_order_preview")) + "</button>";
-  if (customer.is_active === false) {
-    html += "<button class='btn-sm-edit' id='btn-customer-access-restore' type='button'>" + esc(t("customer_access_restore_customer")) + "</button>";
-  } else {
-    html += "<button class='btn-sm-edit' id='btn-customer-access-hide' type='button'>" + esc(t("customer_access_hide_customer")) + "</button>";
-  }
-  html += "<button class='btn-sm-del' id='btn-customer-access-delete' type='button'>" + esc(t("customer_access_delete_customer")) + "</button>";
+  var html = "<section id='customer-panel-overview' class='customer-workspace-tab-panel' data-customer-access-panel='overview' role='tabpanel' aria-labelledby='customer-tab-overview'>";
+  html += "<div class='customer-workspace-section-head'><h3>" + esc(t("customer_workspace_overview")) + "</h3><p>" + esc(t("customer_workspace_overview_help")) + "</p></div>";
+  html += "<div class='customer-workspace-cards'>";
+  [
+    ["products", "customer_workspace_products", customerAccessRankLabel(customer.price_rank_code), "customer_workspace_products_help"],
+    ["shipping", "customer_workspace_shipping", t(normalizeCustomerShippingChargeRule(s) === "free" ? "sales_shipping_charge_free" : "sales_shipping_charge_separate"), "customer_workspace_shipping_help"],
+    ["accounts", "customer_workspace_accounts", t("customer_workspace_accounts_value"), "customer_workspace_accounts_help"]
+  ].forEach(function(row) {
+    if (row[0] === "accounts" && !canManageCustomerAccounts()) return;
+    html += "<button type='button' class='customer-workspace-card' data-customer-access-open='" + row[0] + "'><span>" + esc(t(row[1])) + "</span><strong data-customer-workspace-value='" + row[0] + "'>" + esc(row[2]) + "</strong><small>" + esc(t(row[3])) + "</small><span class='customer-workspace-card-link'>" + esc(t("customer_workspace_open")) + "</span></button>";
+  });
   html += "</div>";
   if (String(customer.source_code || "").trim().toLowerCase() === "hanbaiou") {
     html += "<div class='component-section-title'>" + esc(t("customer_access_hanbaiou_billing")) + "</div>";
@@ -53261,6 +53458,14 @@ function renderCustomerAccessDetail() {
     html += "<div class='customer-hanbaiou-billing-help'>" + esc(t("customer_access_hanbaiou_billing_help")) + "</div>";
     html += "</div>";
   }
+  html += "<details class='customer-workspace-maintenance'><summary>" + esc(t("customer_workspace_maintenance")) + "</summary><p>" + esc(t("customer_workspace_maintenance_help")) + "</p><div class='customer-access-management-actions'>";
+  html += customer.is_active === false
+    ? "<button class='btn-sm-edit' id='btn-customer-access-restore' type='button'>" + esc(t("customer_access_restore_customer")) + "</button>"
+    : "<button class='btn-sm-edit' id='btn-customer-access-hide' type='button'>" + esc(t("customer_access_hide_customer")) + "</button>";
+  html += "<button class='btn-sm-del' id='btn-customer-access-delete' type='button'>" + esc(t("customer_access_delete_customer")) + "</button></div></details></section>";
+  html += "<section id='customer-panel-products' class='customer-workspace-tab-panel' data-customer-access-panel='products' role='tabpanel' aria-labelledby='customer-tab-products' hidden>";
+  html += "<div class='customer-workspace-section-head'><h3>" + esc(t("customer_workspace_products")) + "</h3><p>" + esc(t("customer_workspace_products_help")) + "</p></div>";
+  html += "<label class='customer-workspace-rank'><span>" + esc(t("customer_workspace_price_class")) + "</span><select class='customer-access-rank-select' id='customer-access-rank-select'>" + customerAccessRankOptionsHtml(customer.price_rank_code || "") + "</select><small>" + esc(t("customer_workspace_rank_help")) + "</small></label>";
   var orderingEnabled = s.customer_ordering_enabled === true;
   html += "<div class='component-section-title'>" + esc(t("customer_access_order_publication")) + "</div>";
   html += "<label class='customer-order-publication" + (orderingEnabled ? " enabled" : "") + "' data-customer-order-publication for='customer-ordering-enabled'>";
@@ -53282,6 +53487,11 @@ function renderCustomerAccessDetail() {
   });
   html += "</div>";
   html += "<div class='component-note'>" + esc(t("customer_access_rule_help")) + "</div>";
+  html += "<div class='component-section-title'>" + esc(t("customer_access_category_visibility")) + "</div>";
+  html += "<div class='component-note'>" + esc(t("customer_access_category_help")) + "</div>";
+  html += customerAccessCategoryChecksHtml();
+  html += "</section><section id='customer-panel-shipping' class='customer-workspace-tab-panel' data-customer-access-panel='shipping' role='tabpanel' aria-labelledby='customer-tab-shipping' hidden>";
+  html += "<div class='customer-workspace-section-head'><h3>" + esc(t("customer_workspace_shipping")) + "</h3><p>" + esc(t("customer_workspace_shipping_help")) + "</p></div>";
   var shippingRule = normalizeCustomerShippingChargeRule(s);
   html += "<div class='component-section-title'>" + esc(t("customer_access_shipping_rule")) + "</div>";
   html += "<div class='customer-shipping-rule-options' role='radiogroup' aria-label='" + esc(t("customer_access_shipping_rule")) + "'>";
@@ -53299,14 +53509,17 @@ function renderCustomerAccessDetail() {
   html += "<label><span>" + esc(t("customer_access_default_core_return_shipping")) + "</span><select id='customer-default-core-return-shipping' data-customer-default-shipping='core_return'>" + customerAccessShippingServiceOptionsHtml(customerAccessShippingServiceKey(s, "core_return"), "core_return") + "</select></label>";
   html += "</div>";
   html += "<div class='component-note'>" + esc(t("customer_access_default_shipping_help")) + "</div>";
-  html += "<div class='component-section-title'>" + esc(t("customer_access_category_visibility")) + "</div>";
-  html += "<div class='component-note'>" + esc(t("customer_access_category_help")) + "</div>";
-  html += customerAccessCategoryChecksHtml();
+  html += "</section>";
   detail.innerHTML = html;
   bindCustomerAccessDetailEvents();
+  detail.querySelectorAll("[data-customer-access-open]").forEach(function(button) {
+    button.addEventListener("click", function() { setCustomerAccessWorkspaceTab(button.dataset.customerAccessOpen, true); });
+  });
   syncCustomerDisplayRuleControls();
   resetCustomerAccessSaveState();
+  syncCustomerAccessWorkspaceTabs();
 }
+
 
 function renderCustomerAccessRuleForm() {
   return "<div class='customer-rule-form'>" +
@@ -53381,10 +53594,6 @@ function bindCustomerAccessDetailEvents() {
   });
   var rankSelect = document.getElementById("customer-access-rank-select");
   if (rankSelect) rankSelect.addEventListener("change", updateCustomerAccessSaveState);
-  var priceListBtn = document.getElementById("btn-customer-price-list");
-  if (priceListBtn) priceListBtn.addEventListener("click", openCustomerPriceList);
-  var orderPreviewBtn = document.getElementById("btn-customer-order-preview");
-  if (orderPreviewBtn) orderPreviewBtn.addEventListener("click", openCustomerOrderDevelopmentPreview);
   var categoryAllBtn = document.getElementById("btn-customer-category-all");
   if (categoryAllBtn) categoryAllBtn.addEventListener("click", function() { setCustomerAccessCategoriesChecked(true); });
   var categoryNoneBtn = document.getElementById("btn-customer-category-none");
@@ -56096,7 +56305,7 @@ function syncCustomerAccountFields(useCustomerDefaults) {
       ? "左の得意先一覧から選択してください"
       : (displayCustomer.is_active === false
         ? "非表示の得意先にはアカウントを発行できません"
-        : [displayCustomer.price_rank_code ? "価格ランク: " + displayCustomer.price_rank_code : "", "得意先専用画面"].filter(Boolean).join(" / "));
+        : [displayCustomer.price_rank_code ? "価格ランク: " + customerAccessRankLabel(displayCustomer.price_rank_code) : "", "得意先専用画面"].filter(Boolean).join(" / "));
   }
 }
 
@@ -58766,8 +58975,10 @@ document.getElementById("purchase-link-candidates").addEventListener("click", fu
   if (item) selectPurchaseLinkCandidate(parseInt(item.dataset.purchaseLinkCandidate, 10));
 });
 document.getElementById("btn-purchase-link-save").addEventListener("click", savePurchaseProductLink);
-document.getElementById("btn-customer-access-search").addEventListener("click", loadCustomerAccessMgmt);
-document.getElementById("customer-access-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadCustomerAccessMgmt(); });
+document.getElementById("btn-customer-access-search").addEventListener("click", filterCustomerAccessCustomers);
+bindCustomerAccessWorkspaceNavigation();
+document.getElementById("customer-access-search").addEventListener("input", filterCustomerAccessCustomers);
+document.getElementById("customer-access-search").addEventListener("keydown", function(e){ if(e.key==="Enter") filterCustomerAccessCustomers(); });
 document.getElementById("customer-access-include-inactive").addEventListener("change", loadCustomerAccessMgmt);
 document.getElementById("btn-customer-access-add").addEventListener("click", openCustomerRegistration);
 document.getElementById("btn-customer-register-close").addEventListener("click", closeCustomerRegistration);

@@ -81,7 +81,7 @@ if (!html.includes('id="customer-access-save-bar"') ||
     !html.includes('id="customer-access-save-state"') ||
     !html.includes('id="customer-access-save-help"') ||
     !html.includes('id="btn-customer-access-save"') ||
-    !html.includes("変更を保存して得意先画面へ反映") ||
+    !html.includes("変更を保存") ||
     !styles.includes(".customer-access-save-bar.unsaved")) {
   throw new Error("customer settings must have a prominent saved/unsaved status and save action");
 }
