@@ -117,6 +117,8 @@ jobs:
         run: node scripts/verify-customer-catalog-detail.js
       - name: Verify per-image customer publication
         run: node scripts/verify-customer-image-publication.js
+      - name: Verify customer management workspace
+        run: node scripts/verify-customer-workspace.js
       - name: Verify customer category visibility
         run: node scripts/verify-customer-category-visibility.js
       - name: Verify customer management development default
