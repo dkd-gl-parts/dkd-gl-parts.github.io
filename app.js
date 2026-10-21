@@ -49853,6 +49853,7 @@ function refreshCoreValuationPanel(loading) {
   window.DcatsCoreValuation.mount(document.getElementById("core-valuation-wrap"), {
     allowed: allowed, ownerId: ownerId, productId: productId, variantId: variantId,
     generation: generation, canEdit: canManageComponentsInCurrentContext() && canEditManufacturingCostMgmt(),
+    canEditNow: function() { return canManageComponentsInCurrentContext() && canEditManufacturingCostMgmt(); },
     rpc: function(name, args) { return sb.rpc(name, args); },
     isCurrent: function() {
       return currentProduct === product && componentLoadRequestId === generation &&

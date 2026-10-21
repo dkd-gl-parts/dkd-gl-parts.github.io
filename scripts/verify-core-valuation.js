@@ -27,7 +27,7 @@ function fixture() {
  eq(plain(p.components.map(c=>c.appraisal_jpy)),[1000,600,0,null],"recovery direction and missing rate");
  eq(plain(p.components.map(c=>c.recovery_rate)),[100,60,0,null],"rates exactly once");
  eq(api.preview(context,{...settings,component_bases:{101:0}}).components[0].appraisal_jpy,0,"explicit zero");
- for(const v of [null,"",-1,"NaN","1e2","1000.001","1.0001"])
+ for(const v of [null,"",-1,"NaN","1e2","1000.001","1.0001","00001"," 1","1 ","\t1"])
   eq(api.preview(context,{...settings,net_weight_kg:v}).body_appraisal_jpy,null,"invalid mass "+v);
  eq(api.preview({...context,components:[{...context.components[0],quantity:"1.001",replacement_rate:50}]},settings).components[0].appraisal_jpy,501,"integer scaled half-yen rounding");
  const changed={context,settings,saved:{components:plain(context.components)},stale:true};
@@ -35,8 +35,11 @@ function fixture() {
  changed.context.components[1].component_position='NEW';
  eq(plain(api.draft(changed).component_bases),{101:1000,102:null,103:1000},'removed and changed identities never inherit base');
  eq(plain(api.draft({context,settings:{net_weight_kg:4.3,weight_source:'explicit'}}).component_bases),{101:null,102:null,103:null,104:null},'RPC settings may omit optional bases');
- for(const qty of [null,"","0","1/2","-1","1001"])
+ for(const qty of [null,"","0","1/2","-1","1001","00001","\t1","1\n","　1"])
   eq(api.preview({...context,components:[{...context.components[0],quantity:qty}]},settings).components[0].appraisal_jpy,null,"quantity not defaulted");
+ eq(api.preview({...context,components:[{...context.components[0],quantity:' 1 '}]},settings).components[0].appraisal_jpy,1000,'quantity trims ASCII spaces only');
+ for(const base of ['000000001',' 1','1 ','1\n'])
+  eq(api.preview(context,{...settings,component_bases:{101:base}}).components[0].appraisal_jpy,null,'base format matches SQL');
  for(const rate of [-1,101,"",null])
   eq(api.preview({...context,components:[{...context.components[0],replacement_rate:rate}]},settings).components[0].appraisal_jpy,null,"rate not defaulted");
  const f=fixture(); let requests=[],data={context,can_edit:true,revision:0,settings:null,saved:null,stale:false,history:[]};
@@ -66,6 +69,10 @@ function fixture() {
  eq(data.revision,1,"saved result re-read");
  eq(requests.find(r=>r.action==='save').payload.settings.net_weight_kg,'4.3',"explicit net mass, not packed mass");
  eq(Object.keys(requests.find(r=>r.action==='save').payload).sort(),['dependency_hash','expected_revision','operation_id','settings'],"never sends authoritative total");
+ options.canEdit=false;mount();
+ eq(f.host.querySelector('[data-core-weight]').disabled,true,'same-generation edit revocation disables input');
+ eq(!!f.host.querySelector('[data-core-save]'),false,'same-generation edit revocation removes save');
+ options.canEdit=true;mount();eq(!!f.host.querySelector('[data-core-save]'),true,'restored edit right refreshes same generation');
  mode='uncertain';f.host.querySelector('[data-core-save]').click();await flush();
  eq(!!f.host.querySelector('[data-core-status]'),true,"unknown result has status action");
  eq(!!f.host.querySelector('[data-core-save]'),false,"unknown result cannot blindly save again");
@@ -84,6 +91,28 @@ function fixture() {
  eq(f.host.textContent.includes('取得できません'),true,"transport error not empty success");
  options.generation++;let resolve;options.rpc=()=>new Promise(r=>{resolve=r});mount();const opening=open();await flush();
  alive=false;options.allowed=false;mount();resolve({data});await opening;await flush();eq(f.host.textContent,'',"late response cannot leak after context change");
+ const race=fixture();let oldSave,oldStatus,newSave,saveIndex=0,statusIndex=0;
+ const raceData={context,settings,can_edit:true,revision:0,history:[],saved:null};
+ const raceOptions={allowed:true,ownerId:'race',productId:1,variantId:11,generation:1,canEdit:true,isCurrent:()=>true,
+  rpc:async(name,args)=>{
+   if(args.action==='get') return {data:plain(raceData)};
+   if(args.action==='save') return new Promise(r=>{if(++saveIndex===1) oldSave=r;else newSave=r;});
+   if(++statusIndex===1) return new Promise(r=>{oldStatus=r;});
+   return {data:{state:'not_found'}};
+  }};
+ const raceOpen=async()=>{race.api.mount(race.host,raceOptions);const d=race.host.querySelector('details');d.open=true;d.dispatchEvent(new race.window.Event('toggle'));await flush();};
+ await raceOpen();race.host.querySelector('[data-core-save]').click();await flush();
+ raceOptions.generation++;await raceOpen();race.host.querySelector('[data-core-status]').click();await flush();
+ raceOptions.generation++;await raceOpen();race.host.querySelector('[data-core-status]').click();await flush();
+ race.host.querySelector('[data-core-save]').click();await flush();eq(saveIndex,2,'new operation starts only after confirmed not found');
+ oldSave({error:{code:'40001',message:'CORE_CONTEXT_CHANGED'}});await flush();
+ race.host.querySelector('[data-core-reload]').click();await flush();
+ eq(!!race.host.querySelector('[data-core-status]'),true,'old save rejection cannot erase new pending UUID');
+ oldStatus({data:{state:'not_found'}});await flush();
+ race.host.querySelector('[data-core-reload]').click();await flush();
+ eq(!!race.host.querySelector('[data-core-status]'),true,'old status not-found cannot erase new pending UUID');
+ newSave({error:{code:'40001',message:'CORE_CONTEXT_CHANGED'}});await flush();
+ eq(!!race.host.querySelector('[data-core-save]'),true,'matching rejected operation can clear itself');
  const app=fs.readFileSync('app.js','utf8');
  const lastRender=app.slice(app.lastIndexOf('function renderAssemblyComponentRows()'),app.indexOf('async function loadAssemblyComponentsForCurrent()',app.lastIndexOf('function renderAssemblyComponentRows()')));
  eq(lastRender.includes('refreshCoreValuationPanel(false)'),true,'active renderer integrated');

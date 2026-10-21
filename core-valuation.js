@@ -7,9 +7,10 @@
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
-  function number(value, maximum, decimals, positive) {
-    var text = String(value == null ? "" : value).trim();
-    if (!new RegExp("^[0-9]+" + (decimals ? "(\\.[0-9]{1," + decimals + "})?" : "") + "$").test(text)) return null;
+  function number(value, maximum, decimals, positive, integerDigits, trimSpaces) {
+    var text = String(value == null ? "" : value);
+    if (trimSpaces) text = text.replace(/^ +| +$/g, "");
+    if (!new RegExp("^[0-9]{1," + (integerDigits || (decimals ? 4 : 8)) + "}" + (decimals ? "(\\.[0-9]{1," + decimals + "})?" : "") + "$").test(text)) return null;
     var n = Number(text);
     return Number.isFinite(n) && n <= maximum && (positive ? n > 0 : n >= 0) ? n : null;
   }
@@ -29,19 +30,29 @@
       weight_source: stored.weight_source || "", component_bases: current };
   }
   function preview(context, settings) {
-    var weight = number(settings.net_weight_kg, 1000, 3, true);
+    var weight = number(settings.net_weight_kg, 1000, 3, true, 4, false);
     return {
       body_appraisal_jpy: weight == null ? null : Math.floor((Math.round(weight * 1000) * 360 + 500) / 1000),
       components: (context.components || []).filter(function(c) { return !!c.part_kind; }).map(function(c) {
         var base = number((settings.component_bases || {})[c.id], 10000000, 0, false);
-        var qty = number(c.quantity, 1000, 3, true);
-        var rate = number(c.replacement_rate, 100, 0, false);
+        var qty = number(c.quantity, 1000, 3, true, 4, true);
+        var rate = number(c.replacement_rate, 100, 0, false, 3, false);
         return Object.assign({}, c, { base_jpy: base, recovery_rate: rate == null ? null : 100 - rate,
           appraisal_jpy: base == null || qty == null || rate == null ? null : Math.floor((base * Math.round(qty * 1000) * (100 - rate) + 50000) / 100000) });
       })
     };
   }
   function valid(instance) { return active === instance && instance.options.isCurrent(); }
+  function canEdit(instance) {
+    return instance.data && instance.data.can_edit && instance.options.canEdit &&
+      (!instance.options.canEditNow || instance.options.canEditNow());
+  }
+  function clearPending(scope, operationId) {
+    var operation = pending.get(scope);
+    if (!operation || operation.operation_id !== operationId) return false;
+    pending.delete(scope);
+    return true;
+  }
   function message(instance, text, error) {
     if (!valid(instance)) return;
     var el = instance.host.querySelector("[data-core-message]");
@@ -71,13 +82,14 @@
       if (el) el.textContent = yen(c.appraisal_jpy);
     });
     var save = instance.host.querySelector("[data-core-save]");
-    if (save) save.disabled = !instance.data.can_edit || !!pending.get(instance.scope) ||
+    if (save) save.disabled = !canEdit(instance) || !!pending.get(instance.scope) ||
       result.body_appraisal_jpy == null || !String(instance.settings.weight_source || "").trim();
   }
   function render(instance) {
     if (!valid(instance)) return;
     var data = instance.data, settings = instance.settings, values = preview(data.context, settings);
-    var editable = data.can_edit && instance.options.canEdit && !pending.get(instance.scope);
+    var editable = canEdit(instance) && !pending.get(instance.scope);
+    instance.renderedCanEdit = !!canEdit(instance);
     var disabled = editable ? "" : " disabled";
     var html = '<div class="core-valuation-content"><div data-core-message role="status" aria-live="polite"></div>';
     html += '<div class="core-valuation-body-fields">' +
@@ -97,7 +109,7 @@
     if (!values.components.length) html += '<tr><td colspan="6">対象の4部品は未登録です。</td></tr>';
     html += '</tbody></table><div class="core-valuation-actions">';
     html += '<button type="button" data-core-reload>最新の内容を確認</button>';
-    if (data.can_edit && instance.options.canEdit) html += pending.get(instance.scope) ?
+    if (canEdit(instance)) html += pending.get(instance.scope) ?
       '<button type="button" data-core-status>保存結果を確認</button>' : '<button type="button" data-core-save>評価を保存</button>';
     html += '</div><details class="core-valuation-history"><summary>評価履歴 (' + data.history.length + ')</summary>';
     data.history.forEach(function(h) {
@@ -148,11 +160,11 @@
     try {
       var result = await rpc(instance, "status", { operation_id: operation.operation_id });
       if (result.state === "saved") {
-        pending.delete(instance.scope);
+        clearPending(instance.scope, operation.operation_id);
         instance.busy = false;
         if (valid(instance)) await load(instance);
       } else if (result.state === "not_found") {
-        pending.delete(instance.scope);
+        clearPending(instance.scope, operation.operation_id);
         if (valid(instance)) {
           render(instance);
           message(instance, "未保存であることを確認しました。入力内容を確認して保存してください。", true);
@@ -162,7 +174,12 @@
     finally { instance.busy = false; }
   }
   async function saveValue(instance) {
-    if (!valid(instance) || instance.busy || pending.get(instance.scope) || !instance.data.can_edit || !instance.options.canEdit) return;
+    if (!valid(instance) || instance.busy || pending.get(instance.scope)) return;
+    if (!canEdit(instance)) {
+      render(instance);
+      message(instance, "評価情報を編集する権限がありません。", true);
+      return;
+    }
     var settings = JSON.parse(JSON.stringify(instance.settings));
     var result = preview(instance.data.context, settings);
     var invalidBase = Object.keys(settings.component_bases).some(function(id) {
@@ -181,12 +198,12 @@
     try {
       var response = await rpc(instance, "save", payload);
       if (response.state !== "saved") throw new Error("CORE_UNKNOWN_RESULT");
-      pending.delete(instance.scope);
+      clearPending(instance.scope, payload.operation_id);
       instance.busy = false;
       if (valid(instance)) await load(instance);
     } catch (error) {
       // An explicit database rejection rolled back; transport failures need a status lookup.
-      if (error && /^(22023|22P02|40001|42501)$/.test(error.code || "")) pending.delete(instance.scope);
+      if (error && /^(22023|22P02|40001|42501)$/.test(error.code || "")) clearPending(instance.scope, payload.operation_id);
       if (valid(instance)) {
         render(instance);
         message(instance, pending.get(instance.scope) ? "保存結果が未確認です。再保存せず、結果を確認してください。" : errorText(error), true);
@@ -198,7 +215,11 @@
     var scope = JSON.stringify([options.ownerId, options.productId, options.variantId]);
     var key = scope + ":" + options.generation;
     if (!options.allowed) { active = null; host.replaceChildren(); host.hidden = true; return; }
-    if (active && active.key === key && active.host === host) return;
+    if (active && active.key === key && active.host === host) {
+      active.options = options;
+      if (active.data && active.renderedCanEdit !== !!canEdit(active)) render(active);
+      return;
+    }
     host.hidden = false;
     host.innerHTML = '<details class="core-valuation"><summary>CORE評価</summary><div data-core-content></div></details>';
     var instance = { host: host, options: options, key: key, scope: scope, busy: false,
