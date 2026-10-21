@@ -2002,7 +2002,7 @@ var TRANSLATIONS = {
     customer_workspace_products: "商品・価格",
     customer_workspace_shipping: "配送",
     customer_workspace_accounts: "ログイン",
-    customer_workspace_rank1: "売値区分1",
+    customer_workspace_rank1: "基準価格",
     customer_workspace_select_help: "左の一覧から得意先を選び、目的に合わせて設定を切り替えてください。",
     customer_workspace_overview: "この得意先の設定",
     customer_workspace_overview_help: "変更した設定は、画面下の「変更を保存」でまとめて反映します。",
@@ -4727,7 +4727,7 @@ var TRANSLATIONS = {
     customer_workspace_products: "Products & pricing",
     customer_workspace_shipping: "Delivery",
     customer_workspace_accounts: "Login",
-    customer_workspace_rank1: "Price class 1",
+    customer_workspace_rank1: "Base price",
     customer_workspace_select_help: "Choose a customer, then open the settings you need.",
     customer_workspace_overview: "Customer settings",
     customer_workspace_overview_help: "Use Save changes below to apply changes from all settings tabs.",
@@ -7452,7 +7452,7 @@ var TRANSLATIONS = {
     customer_workspace_products: "商品与价格",
     customer_workspace_shipping: "配送",
     customer_workspace_accounts: "登录",
-    customer_workspace_rank1: "售价等级1",
+    customer_workspace_rank1: "基准价格",
     customer_workspace_select_help: "从列表选择客户，然后切换到所需设置。",
     customer_workspace_overview: "该客户的设置",
     customer_workspace_overview_help: "使用下方的“保存更改”统一应用各设置页的更改。",
@@ -8303,7 +8303,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1232";
+var APP_VERSION       = "v1.1.1233";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -52656,6 +52656,7 @@ var customerAccessDetailRequestSeq = 0;
 var customerAccessIncludeInactiveLoaded = false;
 
 function customerAccessRankLabel(code) {
+  if (code === "HANBAIOU_URI_1") return t("customer_workspace_rank1");
   var rank = (customerAccessPriceRanks || []).find(function(row) { return row.rank_code === code; });
   return rank ? salesRankDisplayName(rank) : (String(code || "").replace(/^HANBAIOU_URI_1$/, t("customer_workspace_rank1")) || "-");
 }
@@ -53064,8 +53065,8 @@ function renderCustomerAccessList() {
     var selected = currentCustomerAccessCustomer && String(currentCustomerAccessCustomer.id) === String(row.id) ? " selected" : "";
     var inactive = row.is_active === false;
     return "<button type='button' class='customer-access-row" + selected + (inactive ? " inactive" : "") + "' data-customer-id='" + esc(String(row.id)) + "' aria-current='" + (selected ? "true" : "false") + "'>" +
-      "<div class='customer-access-name'>" + esc(row.customer_name || "-") + (inactive ? " <span class='customer-access-status inactive'>" + esc(t("customer_access_inactive")) + "</span>" : "") + "</div>" +
-      "<div class='customer-access-sub'>" + esc([row.source_customer_code, customerAccessRankLabel(row.price_rank_code)].filter(Boolean).join(" · ")) + "</div>" +
+      "<div class='customer-access-name'>" + esc(row.customer_name || "-") + "</div>" +
+      "<div class='customer-access-sub'>" + esc(row.source_customer_code || "-") + "</div>" +
     "</button>";
   }).join("");
   list.querySelectorAll("[data-customer-id]").forEach(function(btn) {
@@ -53184,11 +53185,11 @@ function customerAccessRankOptionsHtml(selected) {
     rows.push({ rank_code: selected, rank_name: selected, display_order: 9999 });
   }
   if (!rows.length) {
-    return "<option value='" + esc(selected) + "'>" + esc(selected || "-") + "</option>";
+    return "<option value='" + esc(selected) + "'>" + esc(customerAccessRankLabel(selected)) + "</option>";
   }
   return rows.map(function(rank) {
     var code = rank.rank_code || "";
-    var label = salesRankDisplayName(rank);
+    var label = customerAccessRankLabel(code);
     return "<option value='" + esc(code) + "'" + (String(code) === String(selected) ? " selected" : "") + ">" + esc(label || code || "-") + "</option>";
   }).join("");
 }
