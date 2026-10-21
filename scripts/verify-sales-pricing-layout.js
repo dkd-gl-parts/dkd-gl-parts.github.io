@@ -103,7 +103,9 @@ if (sandbox.wrap.innerHTML.includes(">round</option>")) {
 
 sandbox.currentSalesRank1Row = { price_jpy: 5800 };
 vm.runInNewContext(`${source.slice(start, end)}\nrenderSalesRankPreview();`, sandbox);
-requireFragment(sandbox.wrap.innerHTML, "¥5800", "class-1 override must win over the shared base price");
+requireFragment(sandbox.wrap.innerHTML, "¥6500", "class 1 must follow the single editable price even when an old row exists");
+if (sandbox.wrap.innerHTML.includes('¥5800') || html.includes('id="sales-rank1-price"') || html.includes('id="btn-sales-rank1-save"')) throw new Error('Independent class-1 price controls must not remain');
+requireFragment(html, 'data-i18n="sales_rank1_price"', 'The single price input must be labelled class 1');
 
 async function verifyReadonlyGNumbers() {
   const assert = require("node:assert/strict");

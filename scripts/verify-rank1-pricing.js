@@ -14,10 +14,12 @@ function functionSource(name) {
 
 async function main() {
   let saveArgs = null;
+  let unifiedSaves = 0;
   const elements = {
     'sales-rank1-status': { textContent: '', classList: { add() {}, remove() {} } },
     'sales-rank1-price': { value: '5900' },
     'btn-sales-rank1-save': { disabled: false }
+    ,'sales-base-price': { value: '9000' }
   };
   const context = {
     Set,
@@ -48,6 +50,8 @@ async function main() {
     sales_price_ranks: [],
     document: { getElementById: id => elements[id] || null },
     canEditBasePrice: () => true,
+    canViewBasePrice: () => true,
+    saveSalesPricing: async () => { unifiedSaves++; },
     currentSalesPricingDkdId: 22,
     currentSalesRank1Row: { price_jpy: 5800, updated_at: 'prior-revision' },
     salesPricingCurrentProductKind: () => 'rebuilt',
@@ -58,6 +62,7 @@ async function main() {
     t: key => key,
     sb: {
       rpc: async (name, args) => {
+        if (name === 'get_product_rank1_price') return {data:[{price_jpy:5800,updated_at:'current'}]};
         if (name === 'save_product_rank1_price') {
           saveArgs = args;
           return { data: { price_jpy: args.target_price_jpy, updated_at: 'next-revision' } };
@@ -81,7 +86,7 @@ async function main() {
     }
   };
   vm.createContext(context);
-  ['fetchInternalRank1PriceMap', 'fetchCustomerCatalogPriceMap', 'loadCustomerPriceListRows', 'saveSalesRank1Price']
+  ['fetchInternalRank1PriceMap', 'fetchCustomerCatalogPriceMap', 'loadCustomerPriceListRows', 'saveSalesRank1Price', 'loadSalesPricingRank1Row']
     .forEach(name => vm.runInContext(functionSource(name), context));
 
   const map = await context.fetchInternalRank1PriceMap([11, 22]);
@@ -112,11 +117,10 @@ async function main() {
   assert.equal(otherPriceList[0].salesPrice, 9000);
 
   await context.saveSalesRank1Price();
-  assert.equal(saveArgs.target_dkd_shohin_id, 22);
-  assert.equal(saveArgs.target_product_kind, 'rebuilt');
-  assert.equal(saveArgs.target_price_jpy, 5900);
-  assert.equal(saveArgs.target_expected_updated_at, 'prior-revision');
-  assert.equal(context.salesPricingMgmtRank1Map['22'], 5900);
+  await context.loadSalesPricingRank1Row();
+  assert.equal(elements['sales-base-price'].value,5800,'The single input loads the authoritative class-1 price');
+  assert.equal(unifiedSaves, 1, 'The compatibility entry must use the single atomic pricing save');
+  assert.equal(saveArgs, null, 'No independent class-1 price RPC may be sent');
   assert.equal(elements['btn-sales-rank1-save'].disabled, false);
   console.log('rank-1 pricing frontend scenarios passed');
 }
