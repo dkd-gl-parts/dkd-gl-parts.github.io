@@ -222,6 +222,8 @@ jobs:
         run: node scripts/verify-manufacturing-cost-target-removal.js
       - name: Verify sales pricing manufacturing cost
         run: node scripts/verify-sales-pricing-manufacturing-cost.js
+      - name: Verify permanent G identity and all issuing routes
+        run: node scripts/verify-g-part-permanent-identity.js
       - name: Verify sales pricing reference prices
         run: |
           node scripts/verify-sales-pricing-reference-prices.js
