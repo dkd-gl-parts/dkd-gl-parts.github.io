@@ -8303,7 +8303,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1238";
+var APP_VERSION       = "v1.1.1239";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -42998,10 +42998,8 @@ function render() {
     if (hasCatalogSpec) html += "<div class='card-media-catalog'><span class='badge-catalog'>" + esc(t("product_kind_catalog_spec")) + "</span></div>";
     html += "</div>";
     html += "<div class='card-left'>";
-    html += "<div class='card-pn card-pn-primary'>"+esc(cardPartNumber)+"</div>";
-    html += "<div class='card-name'>"+esc(productCategoryLabel(p))+"</div>";
-    if (p.genuine_part_number_2) html += "<div class='card-sub'>純正2: "+esc(p.genuine_part_number_2)+"</div>";
-    html += renderProductKindPills(kindSummary, { compact: true });
+    html += "<div class='card-pn card-pn-primary' title='"+esc(cardPartNumber)+"'>"+esc(cardPartNumber)+"</div>";
+    html += "<div class='card-category-row'><div class='card-name' title='"+esc(productCategoryLabel(p))+"'>"+esc(productCategoryLabel(p))+"</div>";
     html += renderResultBadgeSlots({
       className: "badges card-badges-inline",
       hasCatalogSpec: false,
@@ -43010,14 +43008,16 @@ function render() {
       imageCount: cnt,
       hideWhenEmpty: true
     });
-    if (p.manufacturer || p.manufacturer_part_number) {
-      html += "<div class='card-mfr'>";
-      if (p.manufacturer) html += esc(p.manufacturer);
-      if (p.manufacturer && p.manufacturer_part_number) html += " / ";
-      if (p.manufacturer_part_number) html += "<span data-dcats-inline-style='s-7b8c3df56487'>"+esc(p.manufacturer_part_number)+"</span>";
-      html += "</div>";
-    }
-    if (hasSL && slNums.length) html += "<div class='card-sl'>SL: "+esc(slNums[0])+(slNums.length>1?" 他":"")+"</div>";
+    html += "</div>";
+    html += renderProductKindPills(kindSummary, { compact: true });
+    html += "<div class='card-mfr' title='"+esc([p.manufacturer, p.manufacturer_part_number].filter(Boolean).join(" / "))+"'>";
+    if (p.manufacturer) html += esc(p.manufacturer);
+    if (p.manufacturer && p.manufacturer_part_number) html += " / ";
+    if (p.manufacturer_part_number) html += "<span data-dcats-inline-style='s-7b8c3df56487'>"+esc(p.manufacturer_part_number)+"</span>";
+    html += "</div><div class='card-reference-row'>";
+    if (p.genuine_part_number_2) html += "<span class='card-sub' title='純正2: "+esc(p.genuine_part_number_2)+"'>純正2: "+esc(p.genuine_part_number_2)+"</span>";
+    if (hasSL && slNums.length) html += "<span class='card-sl' title='"+esc("SL: " + slNums.join(" / "))+"'>SL: "+esc(slNums[0])+(slNums.length>1?" 他":"")+"</span>";
+    html += "</div>";
     html += "</div>";
     html += "</div></div>";
   });

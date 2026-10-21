@@ -87,6 +87,8 @@ jobs:
         run: node scripts/verify-shared-ui-components.js
       - name: Verify search workload ordering
         run: node scripts/verify-search-workload-guard.js
+      - name: Verify uniform sales result cards
+        run: node scripts/verify-sales-search-card-layout.js
       - name: Verify screen state retention policy
         run: node scripts/verify-screen-state-policy.js
       - name: Verify component catalog recovery
