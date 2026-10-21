@@ -22,33 +22,27 @@
   }
   function draft(data, productWeight) {
     var stored = data.settings || {};
-    var bases = stored.component_bases || {};
-    var previous = (data.saved && data.saved.components) || [];
-    var current = {};
-    (data.context.components || []).filter(function(c) { return !!c.part_kind; }).forEach(function(c) {
-      var old = previous.find(function(p) { return String(p.id) === String(c.id); });
-      var identityFields = ["component_id", "part_kind", "component_position", "manufacturer", "manufacturer_part_number", "genuine_part_number"];
-      var changed = data.stale && (!old || identityFields.some(function(k) { return old[k] !== c[k]; }));
-      current[c.id] = changed || bases[c.id] == null || bases[c.id] === "" ? null : bases[c.id];
-    });
     var weight = stored.net_weight_kg == null ? "" : stored.net_weight_kg;
     var source = stored.weight_source || "";
     if (weight === "" && number(productWeight, 1000, 3, true, 4, false) != null) {
       weight = String(Number(productWeight));
       source = "品番に登録された商品重量（" + weight + " kg）";
     }
-    return { net_weight_kg: weight, weight_source: source, component_bases: current };
+    var settings = { net_weight_kg: weight, weight_source: source, component_bases: {} };
+    preview(data.context, settings).components.forEach(function(c) { settings.component_bases[c.id] = c.base_jpy; });
+    return settings;
   }
   function preview(context, settings) {
     var weight = number(settings.net_weight_kg, 1000, 3, true, 4, false);
+    var body = weight == null ? null : Math.floor((Math.round(weight * 1000) * 360 + 500) / 1000);
     return {
-      body_appraisal_jpy: weight == null ? null : Math.floor((Math.round(weight * 1000) * 360 + 500) / 1000),
+      body_appraisal_jpy: body,
       components: (context.components || []).filter(function(c) { return !!c.part_kind; }).map(function(c) {
-        var base = number((settings.component_bases || {})[c.id], 10000000, 0, false);
+        var base = body == null ? null : body / 4;
         var qty = number(c.quantity, 1000, 3, true, 4, true);
         var rate = number(c.replacement_rate, 100, 0, false, 3, false);
         return Object.assign({}, c, { base_jpy: base, recovery_rate: rate == null ? null : 100 - rate,
-          appraisal_jpy: base == null || qty == null || rate == null ? null : Math.floor((base * Math.round(qty * 1000) * (100 - rate) + 50000) / 100000) });
+          appraisal_jpy: base == null || qty == null || rate == null ? null : Math.floor((body * Math.round(qty * 1000) * (100 - rate) + 200000) / 400000) });
       })
     };
   }
@@ -88,6 +82,9 @@
     var result = preview(instance.data.context, instance.settings);
     instance.host.querySelector("[data-core-body-value]").textContent = yen(result.body_appraisal_jpy);
     result.components.forEach(function(c) {
+      instance.settings.component_bases[c.id] = c.base_jpy;
+      var input = instance.host.querySelector('[data-core-base="' + c.id + '"]');
+      if (input) input.value = c.base_jpy == null ? "" : String(c.base_jpy);
       var el = instance.host.querySelector('[data-core-part-value="' + c.id + '"]');
       if (el) el.textContent = yen(c.appraisal_jpy);
     });
@@ -111,7 +108,7 @@
     html += '<h4>部品別評価</h4><table class="core-valuation-table"><thead><tr><th>部品・使用位置</th><th>評価基準単価</th><th>数量</th><th>交換率</th><th>良品回収率</th><th>部品評価額</th></tr></thead><tbody>';
     values.components.forEach(function(c) {
       html += '<tr><th scope="row">' + escape(c.name) + '<small>' + escape(c.component_position || "位置指定なし") + '</small></th>' +
-        '<td data-label="評価基準単価"><input aria-label="' + escape(c.name + ' 評価基準単価') + '" data-core-base="' + c.id + '" type="number" min="0" max="10000000" step="1" value="' + escape(settings.component_bases[c.id]) + '"' + disabled + '></td>' +
+        '<td data-label="評価基準単価"><input aria-label="' + escape(c.name + ' 評価基準単価') + '" data-core-base="' + c.id + '" type="number" min="0" max="90000" step="0.01" readonly value="' + escape(c.base_jpy) + '"' + disabled + '></td>' +
         '<td data-label="数量">' + escape(c.quantity == null ? "未設定" : c.quantity) + '</td>' +
         '<td data-label="交換率">' + escape(c.replacement_rate == null ? "未設定" : c.replacement_rate + "%") + '</td>' +
         '<td data-label="良品回収率">' + (c.recovery_rate == null ? "未設定" : c.recovery_rate + "%") + '</td>' +
@@ -132,9 +129,6 @@
     instance.content.innerHTML = html;
     instance.host.querySelector("[data-core-weight]").addEventListener("input", function(event) { instance.settings.net_weight_kg = event.target.value; updatePreview(instance); });
     instance.host.querySelector("[data-core-source]").addEventListener("input", function(event) { instance.settings.weight_source = event.target.value; updatePreview(instance); });
-    instance.host.querySelectorAll("[data-core-base]").forEach(function(input) {
-      input.addEventListener("input", function() { instance.settings.component_bases[input.dataset.coreBase] = input.value === "" ? null : input.value; updatePreview(instance); });
-    });
     instance.host.querySelector("[data-core-reload]").addEventListener("click", function() { load(instance); });
     var save = instance.host.querySelector("[data-core-save]");
     if (save) save.addEventListener("click", function() { saveValue(instance); });
@@ -211,12 +205,10 @@
     }
     var settings = JSON.parse(JSON.stringify(instance.settings));
     var result = preview(instance.data.context, settings);
-    var invalidBase = Object.keys(settings.component_bases).some(function(id) {
-      var v = settings.component_bases[id];
-      return v !== null && v !== "" && number(v, 10000000, 0, false) == null;
-    });
-    if (result.body_appraisal_jpy == null || !String(settings.weight_source || "").trim() || invalidBase) {
-      message(instance, "正味重量・確認元・評価基準単価の入力を確認してください。", true); return;
+    settings.component_bases = {};
+    result.components.forEach(function(c) { settings.component_bases[c.id] = c.base_jpy; });
+    if (result.body_appraisal_jpy == null || !String(settings.weight_source || "").trim()) {
+      message(instance, "正味重量・確認元の入力を確認してください。", true); return;
     }
     var payload = { operation_id: root.crypto.randomUUID(), expected_revision: instance.data.revision,
       dependency_hash: instance.data.context.dependency_hash, settings: settings };
