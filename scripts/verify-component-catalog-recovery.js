@@ -137,6 +137,7 @@ async function verifyRecovery() {
   assert(loadSource.includes("var loadRequestId = ++componentLoadRequestId")); checks++;
   assert(loadSource.includes("loadRequestId !== componentLoadRequestId")); checks++;
   await verifyOverlappingLoads(); checks++;
+  await verifyOverlappingAlternatives(); checks += 2;
   console.log(JSON.stringify({ componentRecoveryCases: checks, passed: true }));
 }
 async function verifyOverlappingLoads() {
@@ -188,5 +189,34 @@ async function verifyOverlappingLoads() {
   await oldLoad;
   assert.equal(JSON.stringify(c.assemblyComponentRows), published, "older recovery must not overwrite the newer same-product result");
   assert.equal(renders, renderCount, "stale recovery must not render");
+}
+async function verifyOverlappingAlternatives() {
+  const start = source.indexOf("async function loadComponentAlternativesForRows"), end = source.indexOf("async function disableComponentAlternative", start);
+  const alternativeSource = source.slice(start, end);
+  for (const delayedTable of ["component_part_alternatives", "internal_component_suppliers"]) {
+    let release, started, delayed = false;
+    const pending = new Promise(resolve => { release = resolve; }), ready = new Promise(resolve => { started = resolve; });
+    const c = {
+      console, currentProduct: {}, componentLoadRequestId: 1,
+      selectedProductKind: () => "catalog_spec", canViewInternalComponents: () => true,
+      componentAlternativeRows: [], componentAlternativeMap: {},
+      sb: { from(table) {
+        const requestId = c.componentLoadRequestId;
+        const rows = table === "component_part_alternatives" ? [{ id: requestId === 1 ? 111 : 222, catalog_component_id: 333, internal_component_part_id: 7 }] : [{ id: requestId, internal_component_part_id: 7 }];
+        const q = { select: () => q, in: () => q, eq: () => q, is: () => q, order: () => q,
+          then(resolve, reject) { if (table === delayedTable && !delayed) { delayed = true;started();return pending.then(() => ({ data: rows })).then(resolve, reject); }return Promise.resolve({ data: rows }).then(resolve, reject); }
+        };
+        return q;
+      } }
+    };
+    vm.createContext(c);vm.runInContext(alternativeSource, c);
+    const old = c.loadComponentAlternativesForRows([{ dkd_component_id: 333 }], 1);
+    await ready;c.componentLoadRequestId = 2;
+    await c.loadComponentAlternativesForRows([{ dkd_component_id: 333 }], 2);
+    const published = JSON.stringify([c.componentAlternativeRows, c.componentAlternativeMap]);
+    assert.equal(c.componentAlternativeRows[0].id, 222);
+    release();await old;
+    assert.equal(JSON.stringify([c.componentAlternativeRows, c.componentAlternativeMap]), published, "late " + delayedTable + " response must not publish stale alternative state");
+  }
 }
 verifyRecovery().catch(error => { console.error(error); process.exitCode = 1; });

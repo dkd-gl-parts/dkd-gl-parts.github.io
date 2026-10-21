@@ -49345,7 +49345,14 @@ async function saveComponentAlternativeForm() {
   await loadAssemblyComponentsForCurrent();
 }
 
-async function loadComponentAlternativesForRows(rows) {
+async function loadComponentAlternativesForRows(rows, loadRequestId) {
+  var alternativeRequestId = loadRequestId === undefined ? componentLoadRequestId : loadRequestId;
+  var alternativeProduct = currentProduct;
+  var alternativeKind = selectedProductKind();
+  function alternativesAreStale() {
+    return alternativeRequestId !== componentLoadRequestId || currentProduct !== alternativeProduct || selectedProductKind() !== alternativeKind;
+  }
+  if (alternativesAreStale()) return;
   componentAlternativeRows = [];
   componentAlternativeMap = {};
   if (!canViewInternalComponents()) return;
@@ -49366,12 +49373,14 @@ async function loadComponentAlternativesForRows(rows) {
   var r = await rQuery
     .order("priority", { ascending: true })
     .order("id", { ascending: true });
+  if (alternativesAreStale()) return;
   if (r.error) {
     console.warn("component alternatives lookup failed", r.error);
     return;
   }
-  componentAlternativeRows = r.data || [];
-  var internalIds = componentAlternativeRows.map(function(row) { return row.internal_component_part_id; }).filter(function(id, index, arr) {
+  var alternativeRows = r.data || [];
+  var alternativeMap = {};
+  var internalIds = alternativeRows.map(function(row) { return row.internal_component_part_id; }).filter(function(id, index, arr) {
     return id != null && arr.indexOf(id) === index;
   });
   var supplierMap = {};
@@ -49382,6 +49391,7 @@ async function loadComponentAlternativesForRows(rows) {
       .eq("status", "active")
       .order("is_preferred", { ascending: false })
       .order("id", { ascending: true });
+    if (alternativesAreStale()) return;
     if (!sr.error) {
       (sr.data || []).forEach(function(row) {
         var key = String(row.internal_component_part_id);
@@ -49392,12 +49402,15 @@ async function loadComponentAlternativesForRows(rows) {
       console.warn("internal component suppliers lookup failed", sr.error);
     }
   }
-  componentAlternativeRows.forEach(function(row) {
+  alternativeRows.forEach(function(row) {
     row.internal_component_suppliers = supplierMap[String(row.internal_component_part_id)] || [];
     var key = String(row.catalog_component_id);
-    if (!componentAlternativeMap[key]) componentAlternativeMap[key] = [];
-    componentAlternativeMap[key].push(row);
+    if (!alternativeMap[key]) alternativeMap[key] = [];
+    alternativeMap[key].push(row);
   });
+  if (alternativesAreStale()) return;
+  componentAlternativeRows = alternativeRows;
+  componentAlternativeMap = alternativeMap;
 }
 
 async function disableComponentAlternative(altId) {
@@ -49886,7 +49899,7 @@ async function loadAssemblyComponentsForCurrent() {
         if (componentLoadIsStale()) return;
         renderAssemblyComponentRows();
         if (recoveredCatalogRows) {
-          await loadComponentAlternativesForRows(rpcRows);
+          await loadComponentAlternativesForRows(rpcRows, loadRequestId);
           if (componentLoadIsStale()) return;
           renderAssemblyComponentRows();
         }
@@ -49979,7 +49992,7 @@ async function loadAssemblyComponentsForCurrent() {
   });
   assemblyComponentRows = rows;
   updateComponentTargetSummary(rows.length);
-  await loadComponentAlternativesForRows(rows);
+  await loadComponentAlternativesForRows(rows, loadRequestId);
   await translationPromise;
   if (componentLoadIsStale()) return;
   renderAssemblyComponentRows();
