@@ -28,17 +28,22 @@ function fixture() {
  eq(plain(api.resolveVariant(null,[{product_variant_id:null}])),{variantId:null,needsSelection:false},'common-only context preserved');
  let p=api.preview(context,settings);
  eq(p.body_appraisal_jpy,1548,"body weight rule");
- eq(plain(p.components.map(c=>c.appraisal_jpy)),[1000,600,0,null],"recovery direction and missing rate");
+ eq(plain(p.components.map(c=>c.appraisal_jpy)),[387,232,0,null],"recovery direction and missing rate");
+ eq(plain(p.components.map(c=>c.base_jpy)),[387,387,387,387],"fixed equal quarter bases");
+ eq(plain(api.preview({...context,components:context.components.slice(0,2)},settings).components.map(c=>c.base_jpy)),[387,387],"two rows still divide body by four");
  eq(plain(p.components.map(c=>c.recovery_rate)),[100,60,0,null],"rates exactly once");
- eq(api.preview(context,{...settings,component_bases:{101:0}}).components[0].appraisal_jpy,0,"explicit zero");
+ eq(api.preview(context,{...settings,component_bases:{101:0}}).components[0].appraisal_jpy,387,"manual bases cannot override automatic rule");
  for(const v of [null,"",-1,"NaN","1e2","1000.001","1.0001","00001"," 1","1 ","\t1"])
   eq(api.preview(context,{...settings,net_weight_kg:v}).body_appraisal_jpy,null,"invalid mass "+v);
- eq(api.preview({...context,components:[{...context.components[0],quantity:"1.001",replacement_rate:50}]},settings).components[0].appraisal_jpy,501,"integer scaled half-yen rounding");
+ eq(api.preview({...context,components:[{...context.components[0],quantity:"1.001",replacement_rate:50}]},settings).components[0].appraisal_jpy,194,"integer scaled quarter-base rounding");
+ eq(api.preview(context,{...settings,net_weight_kg:'4.303'}).components[0].base_jpy,387.25,'quarter yen preserved');
+ eq(api.preview(context,{...settings,net_weight_kg:'0.001'}).components[0].base_jpy,0,'rounded zero body has zero base');
+ eq(api.preview({...context,components:[]},settings).components.length,0,'no invented component rows');
  const changed={context,settings,saved:{components:plain(context.components)},stale:true};
  changed.context={...context,components:context.components.slice(0,3).map(c=>({...c}))};
  changed.context.components[1].component_position='NEW';
- eq(plain(api.draft(changed).component_bases),{101:1000,102:null,103:1000},'removed and changed identities never inherit base');
- eq(plain(api.draft({context,settings:{net_weight_kg:4.3,weight_source:'explicit'}}).component_bases),{101:null,102:null,103:null,104:null},'RPC settings may omit optional bases');
+ eq(plain(api.draft(changed).component_bases),{101:387,102:387,103:387},'current rows derive bases instead of inheriting historical manual values');
+ eq(plain(api.draft({context,settings:{net_weight_kg:4.3,weight_source:'explicit'}}).component_bases),{101:387,102:387,103:387,104:387},'RPC settings may omit derived bases');
  const emptyDraft={context,settings:null,saved:null};
  const autoDraft=api.draft(emptyDraft,4.3);
  eq(autoDraft.net_weight_kg,'4.3','registered product weight fills empty draft');
@@ -50,9 +55,9 @@ function fixture() {
   eq(api.draft(emptyDraft,weight).net_weight_kg,'','invalid or missing product weight remains empty');
  for(const qty of [null,"","0","1/2","-1","1001","00001","\t1","1\n","　1"])
   eq(api.preview({...context,components:[{...context.components[0],quantity:qty}]},settings).components[0].appraisal_jpy,null,"quantity not defaulted");
- eq(api.preview({...context,components:[{...context.components[0],quantity:' 1 '}]},settings).components[0].appraisal_jpy,1000,'quantity trims ASCII spaces only');
+ eq(api.preview({...context,components:[{...context.components[0],quantity:' 1 '}]},settings).components[0].appraisal_jpy,387,'quantity trims ASCII spaces only');
  for(const base of ['000000001',' 1','1 ','1\n'])
-  eq(api.preview(context,{...settings,component_bases:{101:base}}).components[0].appraisal_jpy,null,'base format matches SQL');
+  eq(api.preview(context,{...settings,component_bases:{101:base}}).components[0].appraisal_jpy,387,'untrusted supplied base never controls preview');
  for(const rate of [-1,101,"",null])
   eq(api.preview({...context,components:[{...context.components[0],replacement_rate:rate}]},settings).components[0].appraisal_jpy,null,"rate not defaulted");
  const f=fixture(); let requests=[],data={context,can_edit:true,revision:0,settings:null,saved:null,stale:false,history:[]};
@@ -65,6 +70,7 @@ function fixture() {
    saves++;
    if(mode==='uncertain') throw new Error('network failed');
    if(mode==='changed') return {error:{code:'40001',message:'CORE_CONTEXT_CHANGED'}};
+   if(mode==='reload') return {error:{code:'40001',message:'CORE_RULE_RELOAD_REQUIRED'}};
    data={...data,settings:args.payload.settings,revision:data.revision+1,saved:{...api.preview(context,args.payload.settings),saved_at:'2026-10-21T00:00:00Z'},history:[]};
    return {data:{state:'saved',saved:data.saved}};
   }};
@@ -74,13 +80,16 @@ function fixture() {
  mount();eq(requests.length,0,"collapsed panel makes no network request");await open();
  eq(requests.length,1,"one read on opening");
  eq(f.host.querySelector('[data-core-save]').disabled,true,"missing weight cannot save");
- input('[data-core-weight]','4.3');input('[data-core-source]','実測');input('[data-core-base="102"]','1000');
+ input('[data-core-weight]','4.3');input('[data-core-source]','実測');
+ eq(f.host.querySelector('[data-core-base="102"]').hasAttribute('readonly'),true,'automatic base is readonly');
+ eq(f.host.querySelector('[data-core-base="102"]').value,'387','automatic base populated');
  eq(f.host.querySelector('[data-core-body-value]').textContent,'¥1,548',"body preview");
- eq(f.host.querySelector('[data-core-part-value="102"]').textContent,'¥600',"part preview");
+ eq(f.host.querySelector('[data-core-part-value="102"]').textContent,'¥232',"part preview");
  const save=f.host.querySelector('[data-core-save]');save.click();save.click();await flush();
  eq(saves,1,"double click submitted once");
  eq(data.revision,1,"saved result re-read");
  eq(requests.find(r=>r.action==='save').payload.settings.net_weight_kg,'4.3',"explicit net mass, not packed mass");
+ eq(requests.find(r=>r.action==='save').payload.settings.component_bases['102'],387,'save carries derived base');
  eq(Object.keys(requests.find(r=>r.action==='save').payload).sort(),['dependency_hash','expected_revision','operation_id','settings'],"never sends authoritative total");
  options.canEdit=false;mount();
  eq(f.host.querySelector('[data-core-weight]').disabled,true,'same-generation edit revocation disables input');
@@ -94,6 +103,9 @@ function fixture() {
  eq(saves,2,"status never resubmits");
  mode='changed';f.host.querySelector('[data-core-save]').click();await flush();
  eq(f.host.querySelector('[data-core-message]').textContent.includes('変更'),true,"stale save has visible error");
+ mode='reload';f.host.querySelector('[data-core-save]').click();await flush();
+ eq(f.host.querySelector('[data-core-message]').textContent.includes('D-CATSの［更新］'),true,'mixed-version save requires application update');
+ eq(!!f.host.querySelector('[data-core-status]'),false,'explicit rule rejection is not an unknown write');
  options.allowed=false;mount();eq(f.host.hidden,true,"unauthorized hidden and cleared");eq(f.host.textContent,'',"no stale private content");
  options.allowed=true;options.generation++;data.can_edit=false;mount();await open();
  eq(!!f.host.querySelector('[data-core-save]'),false,"read-only no save");
@@ -143,9 +155,11 @@ function fixture() {
  eq(automatic.host.querySelector('[data-core-weight]').value,'4.3','registered product weight visible');
  eq(automatic.host.querySelector('[data-core-source]').value,autoDraft.weight_source,'automatic source visible');
  eq(automatic.host.querySelector('[data-core-body-value]').textContent,'¥1,548','automatic weight calculates preview');
+ eq(automatic.host.querySelector('[data-core-base="101"]').value,'387','product weight also auto fills quarter base');
  eq(automatic.host.querySelector('[data-core-save]').disabled,false,'valid automatic draft can be explicitly saved');
  eq(automaticSaves,0,'opening an automatic draft never saves');
  autoInput('[data-core-weight]','4.4');productWeight.shipping_weight_kg=4.5;automatic.api.mount(automatic.host,{...automaticOptions});
+ eq(automatic.host.querySelector('[data-core-base="101"]').value,'396','weight change updates quarter base immediately');
  eq(automatic.host.querySelector('[data-core-weight]').value,'4.4','same-context refresh preserves unsaved manual weight');
  eq(weightReads,1,'same-context refresh does not start a competing lookup');
  automaticData.settings={...settings,net_weight_kg:'3.2'};automaticOptions.generation++;await automaticOpen();
