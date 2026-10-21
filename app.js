@@ -983,6 +983,7 @@ var TRANSLATIONS = {
     inventory_kind_section: "在庫区分",
     product_kind_rebuilt: "リビルト",
     product_kind_aftermarket_new: "社外新品",
+    product_kind_new_short: "新品",
     customer_product_kind_rebuilt: "リビルト品",
     customer_product_kind_new: "新品",
     product_kind_used_core: "中古コア",
@@ -3709,6 +3710,7 @@ var TRANSLATIONS = {
     product_kind_rebuilt: "Rebuilt",
     customer_product_kind_rebuilt: "Rebuilt",
     product_kind_aftermarket_new: "Aftermarket New",
+    product_kind_new_short: "New",
     customer_product_kind_new: "New",
     product_kind_used_core: "Used Core",
     product_kind_catalog_spec: "Catalog",
@@ -6444,6 +6446,7 @@ var TRANSLATIONS = {
     inventory_kind_section: "库存区分",
     product_kind_rebuilt: "再制造",
     product_kind_aftermarket_new: "副厂新品",
+    product_kind_new_short: "新品",
     customer_product_kind_rebuilt: "再制造品",
     customer_product_kind_new: "新品",
     product_kind_used_core: "旧芯",
@@ -8303,7 +8306,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1240";
+var APP_VERSION       = "v1.1.1241";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -40997,7 +41000,20 @@ function renderProductKindPill(kind, meta, options) {
   if (options.detail && meta.slCount > 0) {
     extra += "<span class='product-kind-stock'>" + esc(t("product_kind_sl")) + " " + esc(String(meta.slCount)) + "</span>";
   }
-  return "<span class='product-kind-pill " + productKindClass(kind) + "'>" + esc(productKindLabel(kind)) + extra + "</span>";
+  var label = options.shortNew && kind === "aftermarket_new" ? t("product_kind_new_short") : productKindLabel(kind);
+  return "<span class='product-kind-pill " + productKindClass(kind) + "'>" + esc(label) + extra + "</span>";
+}
+
+function renderSearchCardImageKinds(product) {
+  var context = (isCustomerViewer() || isCustomerPortalSearchMode()) ? "customer" : "sales";
+  var info = product && product.search_image_kind_info;
+  var counts = info && info.context === context ? info.counts : {};
+  return "<div class='card-kind-images'>" + ["rebuilt", "aftermarket_new"].map(function(kind) {
+    var count = parseInt(counts && counts[kind] || 0, 10) || 0;
+    var label = kind === "aftermarket_new" ? t("product_kind_new_short") : productKindLabel(kind);
+    return "<span class='card-kind-image-slot' data-image-kind='" + kind + "'>" + (count > 0
+      ? "<span class='product-kind-pill " + productKindClass(kind) + "' title='" + esc(label + " / " + t("image_has") + " (" + count + ")") + "' aria-label='" + esc(label + " / " + t("image_has")) + "'>" + esc(t("image_has")) + "</span>" : "") + "</span>";
+  }).join("") + "</div>";
 }
 
 function renderProductKindPills(summary, options) {
@@ -41438,7 +41454,7 @@ function getProductImageThumbnail(p) {
 
 async function fetchProductImageCountMapForContext(products, context) {
   var ids = productSearchCardDkdIds(products || []);
-  var result = { counts: {}, thumbnails: {} };
+  var result = { counts: {}, thumbnails: {}, kindCounts: {} };
   var seenImages = {};
   if (!ids.length) return result;
   for (var i = 0; i < ids.length; i += 200) {
@@ -41472,6 +41488,8 @@ async function fetchProductImageCountMapForContext(products, context) {
       if (seenImages[identity]) return;
       seenImages[identity] = true;
       result.counts[key] = (result.counts[key] || 0) + 1;
+      if (!result.kindCounts[key]) result.kindCounts[key] = {};
+      result.kindCounts[key][kind] = (result.kindCounts[key][kind] || 0) + 1;
       if (!result.thumbnails[key]) result.thumbnails[key] = img.storage_path || img.image_url;
     });
   }
@@ -41481,10 +41499,14 @@ async function fetchProductImageCountMapForContext(products, context) {
 function applyProductImageCountMapForContext(products, imageInfo, context) {
   var counts = (imageInfo && imageInfo.counts) || {};
   var thumbs = (imageInfo && imageInfo.thumbnails) || {};
+  var kindCounts = (imageInfo && imageInfo.kindCounts) || {};
   (products || []).forEach(function(p) {
     var dkd = productDkdId(p);
     var key = dkd ? "dkd:" + String(dkd) : "";
     var count = key ? (parseInt(counts[key] || 0, 10) || 0) : 0;
+    if (context === "sales" || context === "customer") {
+      p.search_image_kind_info = { context: context, counts: Object.assign({}, key && kindCounts[key] || {}) };
+    }
     if (context === "production") {
       setProductionImageCache(p, count);
     } else if (context === "customer") {
@@ -42978,28 +43000,31 @@ function render() {
     html += "<div class='card-media'>";
     html += "<div class='card-thumb card-thumb-icon " + (cnt > 0 ? "has-image" : "no-image") + "'><span class='icon-image' aria-hidden='true'></span><span class='card-thumb-icon-label'>" + esc(cnt > 0 ? t("image_has") : t("image_none_short")) + "</span></div>";
     if (hasCatalogSpec) html += "<div class='card-media-catalog'><span class='badge-catalog'>" + esc(t("product_kind_catalog_spec")) + "</span></div>";
+    if (hasSL) html += "<div class='card-media-sl'><span class='badge-sl' title='" + esc(t("filter_sl")) + "'>SL</span></div>";
     html += "</div>";
     html += "<div class='card-left'>";
     html += "<div class='card-pn card-pn-primary' title='"+esc(cardPartNumber)+"'>"+esc(cardPartNumber)+"</div>";
     html += "<div class='card-category-row'><div class='card-name' title='"+esc(productCategoryLabel(p))+"'>"+esc(productCategoryLabel(p))+"</div>";
+    html += "<div class='card-reference-row'>";
+    if (p.genuine_part_number_2) html += "<span class='card-sub' title='純正2: "+esc(p.genuine_part_number_2)+"'>純正2: "+esc(p.genuine_part_number_2)+"</span>";
+    if (hasSL && slNums.length) html += "<span class='card-sl' title='"+esc("SL: " + slNums.join(" / "))+"'>SL: "+esc(slNums[0])+(slNums.length>1?" 他":"")+"</span>";
+    html += "</div>";
     html += renderResultBadgeSlots({
       className: "badges card-badges-inline",
       hasCatalogSpec: false,
-      hasSL: hasSL,
+      hasSL: false,
       hasKikan: hasKikan,
-      imageCount: cnt,
+      imageCount: 0,
       hideWhenEmpty: true
     });
     html += "</div>";
-    html += renderProductKindPills(kindSummary, { compact: true });
+    html += renderProductKindPills(kindSummary, { compact: true, shortNew: true });
     html += "<div class='card-mfr' title='"+esc([p.manufacturer, p.manufacturer_part_number].filter(Boolean).join(" / "))+"'>";
     if (p.manufacturer) html += esc(p.manufacturer);
     if (p.manufacturer && p.manufacturer_part_number) html += " / ";
     if (p.manufacturer_part_number) html += "<span data-dcats-inline-style='s-7b8c3df56487'>"+esc(p.manufacturer_part_number)+"</span>";
-    html += "</div><div class='card-reference-row'>";
-    if (p.genuine_part_number_2) html += "<span class='card-sub' title='純正2: "+esc(p.genuine_part_number_2)+"'>純正2: "+esc(p.genuine_part_number_2)+"</span>";
-    if (hasSL && slNums.length) html += "<span class='card-sl' title='"+esc("SL: " + slNums.join(" / "))+"'>SL: "+esc(slNums[0])+(slNums.length>1?" 他":"")+"</span>";
     html += "</div>";
+    html += renderSearchCardImageKinds(p);
     html += "</div>";
     html += "</div></div>";
   });
@@ -54526,6 +54551,12 @@ async function refreshSalesImageCacheForProduct(product) {
   }
   var rows = r.data || [];
   setProductImageCache(product, rows.length, rows.length ? (rows[0].storage_path || rows[0].image_url || "") : "");
+  var kindCounts = {};
+  uniqueCoreProductImageRows(rows).forEach(function(row) {
+    var kind = normalizeProductKind(row.product_kind || "rebuilt");
+    kindCounts[kind] = (kindCounts[kind] || 0) + 1;
+  });
+  product.search_image_kind_info = { context: "sales", counts: kindCounts };
 }
 
 async function refreshProductionImageCacheForProduct(product) {
