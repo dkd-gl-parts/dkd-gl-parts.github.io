@@ -8303,7 +8303,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1234";
+var APP_VERSION       = "v1.1.1235";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -49857,6 +49857,7 @@ function refreshCoreValuationPanel(loading) {
     needsSelection: variantChoice.needsSelection,
     generation: generation, canEdit: canManageComponentsInCurrentContext() && canEditManufacturingCostMgmt(),
     canEditNow: function() { return canManageComponentsInCurrentContext() && canEditManufacturingCostMgmt(); },
+    getProductWeight: function() { return fetchCoreProductShippingProfile(productId); },
     rpc: function(name, args) { return sb.rpc(name, args); },
     isCurrent: function() {
       return currentProduct === product && componentLoadRequestId === generation &&
