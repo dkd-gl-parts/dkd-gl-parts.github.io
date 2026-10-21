@@ -182,7 +182,7 @@ const estimateRender = sourceBetween("function renderSalesShippingEstimate", "as
   'id=\'sales-shipping-service\'',
   'id=\'sales-shipping-package-size\'',
   't("sales_shipping_manual_size_note")',
-  't("sales_shipping_weight_size_note")',
+  't("sales_shipping_size_only_note")',
   't("sales_shipping_weight_over")',
   "shippingFeeHtml(selectedRate.standard_fee_jpy, selectedRate.tax_type)",
   "shippingFeeHtml(selectedRate.remote_island_fee_jpy, selectedRate.tax_type)"
@@ -202,29 +202,67 @@ if (!estimateVisibility.includes('detailCustomerShippingChargeRule !== "free"') 
   throw new Error("free-shipping customers must not be shown a separate shipping estimate");
 }
 
-const weightPackageMatch = sourceBetween("function salesShippingPackageFromWeight", "function bindSalesShippingEstimateActions");
-[
-  "Number(row.max_weight_kg) >= weight",
-  "Number(a.max_weight_kg) - Number(b.max_weight_kg)",
-  "weightedPackages[weightedPackages.length - 1]"
-].forEach((fragment) => {
-  if (!weightPackageMatch.includes(fragment)) throw new Error(`weight-based package matching is incomplete: ${fragment}`);
-});
-const weightPackageFn = new Function(`${weightPackageMatch}\nreturn salesShippingPackageFromWeight;`)();
-const weightFixtures = [
-  { package_size_label: "100", max_size_cm: 100, max_weight_kg: 10 },
-  { package_size_label: "60", max_size_cm: 60, max_weight_kg: 2 },
-  { package_size_label: "80", max_size_cm: 80, max_weight_kg: 5 }
-];
-if (weightPackageFn(weightFixtures, 4.5).package_size_label !== "80" ||
-    weightPackageFn(weightFixtures, 1).package_size_label !== "60" ||
-    weightPackageFn(weightFixtures, 12).package_size_label !== "100") {
-  throw new Error("weight-based package matching must choose the smallest eligible tier and retain the largest tier for the overweight warning");
+const assert = require("node:assert/strict");
+const { parseHTML } = require("linkedom");
+const packageHelpers = sourceBetween("function shippingPackageKey", "async function fetchAllShippingRateRows");
+const estimateHelpers = sourceBetween("function salesShippingUniqueValues", "async function loadSalesShippingEstimateForCurrent");
+const runEstimate = new Function("parseHTML", `
+  var document = parseHTML("<section id='sales-shipping-estimate-section'><div id='sales-shipping-estimate-wrap'></div></section>").document;
+  var salesShippingRateRows, salesShippingProfile, salesShippingPrefectureCode, salesShippingCarrierName, salesShippingServiceName, salesShippingPackageKeyValue;
+  var detailCustomerShippingChargeRule = "separate";
+  function t(key) { return key; }
+  function esc(value) { return String(value == null ? "" : value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/'/g, "&#39;"); }
+  function shippingProfileText() { return "saved product profile"; }
+  function shippingPrefectureOptionsHtml() { return "<option value='13'>Tokyo</option>"; }
+  function shippingFeeHtml(fee, tax) { return "fee=" + fee + ";tax=" + tax; }
+  function shippingRateVisibleNote(note) { return note || ""; }
+  function canViewCustomerShippingRates() { return true; }
+  function setCspStyle() {}
+  ${packageHelpers}
+  ${estimateHelpers}
+  return function(profile, rows, options) {
+    options = options || {};
+    salesShippingRateRows = rows;
+    salesShippingProfile = profile;
+    salesShippingPrefectureCode = options.noDestination ? "" : "13";
+    salesShippingCarrierName = options.carrier || "";
+    salesShippingServiceName = options.service || "";
+    salesShippingPackageKeyValue = options.package ? shippingPackageKey(options.package) : "";
+    renderSalesShippingEstimate(options.error);
+    return { html: document.getElementById("sales-shipping-estimate-wrap").innerHTML,
+      package: salesShippingPackageKeyValue, service: salesShippingServiceName,
+      visible: salesShippingEstimateShouldShow() };
+  };
+`)(parseHTML);
+const estimateRates = [60, 80, 100, 120, 140, 160].map((size, i) => ({
+  carrier_name: "Test carrier", service_name: "Parcel", package_size_label: String(size),
+  max_size_cm: size, max_weight_kg: [2, 5, 10, 15, 20, 30][i], prefecture_code: 13,
+  standard_fee_jpy: size * 10, tax_type: "excluded", remote_island_fee_jpy: null
+}));
+for (const size of [60, 80, 100, 120, 140]) {
+  for (const weight of [null, 4.3, 999]) {
+    const result = runEstimate({ shipping_size_cm: size, shipping_package_size_label: String(size), shipping_weight_kg: weight }, estimateRates);
+    assert.match(result.html, new RegExp("fee=" + size * 10 + ";tax=excluded"));
+    assert.ok(!result.html.includes("sales_shipping_weight_over"));
+    assert.ok(result.package.includes("|" + size + "|" + size + "|"));
+  }
 }
-if (!estimateRender.includes("|| savedPackage || weightPackage") ||
-    !estimateRender.includes("!profileHasSize && profileWeight != null")) {
-  throw new Error("weight-only products must automatically select a compatible service and package size");
-}
+assert.match(runEstimate({ shipping_size_cm: 60, shipping_weight_kg: 4.3 }, estimateRates).html, /fee=600;/);
+assert.match(runEstimate({ shipping_size_cm: 160, shipping_weight_kg: 31 }, estimateRates).html, /sales_shipping_weight_over/);
+assert.match(runEstimate({ shipping_size_cm: 160, shipping_weight_kg: 30 }, estimateRates).html, /fee=1600;/);
+const missingSize = runEstimate({ shipping_weight_kg: 4.3 }, estimateRates);
+assert.equal(missingSize.package, "");
+assert.match(missingSize.html, /sales_shipping_manual_size_note/);
+assert.ok(!missingSize.html.includes("fee="));
+assert.match(runEstimate({ shipping_size_cm: 60 }, estimateRates, { noDestination: true }).html, /sales_shipping_select_prefecture/);
+assert.match(runEstimate({ shipping_size_cm: 60 }, [], {}).html, /shipping_no_rates/);
+assert.match(runEstimate(null, estimateRates, { error: true }).html, /sales_shipping_profile_load_error/);
+assert.match(runEstimate({ shipping_size_cm: 60, shipping_weight_kg: 99 }, estimateRates.map(row => ({ ...row, standard_fee_jpy: 0 }))).html, /fee=0;/);
+assert.match(runEstimate({ shipping_size_cm: 60 }, estimateRates.map(row => ({ ...row, prefecture_code: 27 }))).html, /sales_shipping_no_rate/);
+assert.equal(runEstimate({ shipping_size_cm: 200 }, estimateRates).package, "");
+const namedRate = { ...estimateRates[0], package_size_label: "BOX", max_size_cm: null };
+assert.match(runEstimate({ shipping_package_size_label: "BOX", shipping_weight_kg: 5 }, [namedRate]).html, /sales_shipping_weight_over/);
+assert.ok(!estimateRender.includes("weightPackage"), "Missing sizes must never fall back to weight");
 
 const panelRender = sourceBetween("function renderPanelStatic", "async function loadProductVariantsForCurrent");
 if (!panelRender.includes("loadSalesShippingEstimateForCurrent(detailSeq)")) {
@@ -238,7 +276,7 @@ if (!source.includes("productShippingSizeRows.push(selected)")) {
   throw new Error("saved package sizes must be retained when the current master no longer contains them");
 }
 
-["product_shipping_section", "product_shipping_weight", "product_shipping_loading", "product_shipping_unlinked", "product_shipping_load_failed", "product_weight_list_load_failed", "product_weight_sort_ascending", "product_weight_sort_descending", "product_weight_sort_ascending_action", "product_weight_sort_descending_action", "product_shipping_save_failed", "sales_shipping_estimate_title", "sales_shipping_manual_size_note", "sales_shipping_weight_size_note"].forEach((key) => {
+["product_shipping_section", "product_shipping_weight", "product_shipping_loading", "product_shipping_unlinked", "product_shipping_load_failed", "product_weight_list_load_failed", "product_weight_sort_ascending", "product_weight_sort_descending", "product_weight_sort_ascending_action", "product_weight_sort_descending_action", "product_shipping_save_failed", "sales_shipping_estimate_title", "sales_shipping_manual_size_note", "sales_shipping_size_only_note"].forEach((key) => {
   const count = (source.match(new RegExp(`${key}:`, "g")) || []).length;
   if (count !== 3) throw new Error(`${key} must be translated for all supported languages`);
 });
