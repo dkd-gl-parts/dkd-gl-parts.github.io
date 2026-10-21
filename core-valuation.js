@@ -72,6 +72,7 @@
   }
   function errorText(error) {
     var text = String(error && error.message || error || "");
+    if (/CORE_RULE_RELOAD_REQUIRED/.test(text)) return "CORE評価の算定方式が更新されています。D-CATSの［更新］後に画面を開き直してください。";
     if (/CORE_CONTEXT_CHANGED|40001/.test(text)) return "構成部品または評価条件が変更されています。最新の内容を確認してください。";
     if (/42501|CORE_ACCESS_DENIED|permission denied/i.test(text)) return "評価情報を操作する権限がありません。";
     if (/CORE_VARIANT_MISMATCH|CORE_PRODUCT_MISSING/.test(text)) return "商品または在庫区分が変更されています。画面を開き直してください。";

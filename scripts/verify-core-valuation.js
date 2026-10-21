@@ -70,6 +70,7 @@ function fixture() {
    saves++;
    if(mode==='uncertain') throw new Error('network failed');
    if(mode==='changed') return {error:{code:'40001',message:'CORE_CONTEXT_CHANGED'}};
+   if(mode==='reload') return {error:{code:'40001',message:'CORE_RULE_RELOAD_REQUIRED'}};
    data={...data,settings:args.payload.settings,revision:data.revision+1,saved:{...api.preview(context,args.payload.settings),saved_at:'2026-10-21T00:00:00Z'},history:[]};
    return {data:{state:'saved',saved:data.saved}};
   }};
@@ -102,6 +103,9 @@ function fixture() {
  eq(saves,2,"status never resubmits");
  mode='changed';f.host.querySelector('[data-core-save]').click();await flush();
  eq(f.host.querySelector('[data-core-message]').textContent.includes('変更'),true,"stale save has visible error");
+ mode='reload';f.host.querySelector('[data-core-save]').click();await flush();
+ eq(f.host.querySelector('[data-core-message]').textContent.includes('D-CATSの［更新］'),true,'mixed-version save requires application update');
+ eq(!!f.host.querySelector('[data-core-status]'),false,'explicit rule rejection is not an unknown write');
  options.allowed=false;mount();eq(f.host.hidden,true,"unauthorized hidden and cleared");eq(f.host.textContent,'',"no stale private content");
  options.allowed=true;options.generation++;data.can_edit=false;mount();await open();
  eq(!!f.host.querySelector('[data-core-save]'),false,"read-only no save");
