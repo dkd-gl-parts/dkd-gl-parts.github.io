@@ -3117,7 +3117,7 @@
 <!-- =============================================
    コアリスト管理画面
 ============================================= -->
-<div id="screen-core-list-mgmt" class="screen">
+<div id="screen-core-list-mgmt" class="screen dcats-ui-screen">
   <div class="page-header">
     <div class="page-header-left">
       <button class="back-btn" id="btn-back-core-list-mgmt" data-i18n="btn_back">← メニュー</button>
@@ -3129,22 +3129,29 @@
       <button class="btn-logout" id="btn-logout-core-list-mgmt" data-i18n="btn_logout">ログアウト</button>
     </div>
   </div>
-  <div class="mgmt-body">
-    <div class="core-list-mode-switch" role="tablist" aria-label="コア管理表示">
-      <button class="core-list-mode-btn active" id="btn-core-list-mode-collection" type="button" role="tab" aria-selected="true">収集リスト</button>
-      <button class="core-list-mode-btn" id="btn-core-list-mode-inventory" type="button" role="tab" aria-selected="false">現在庫</button>
+  <div class="mgmt-body core-workspace">
+    <div class="core-workspace-heading">
+      <div><h1>コアの収集・在庫</h1><p>必要なコアの収集状況と、保管中の在庫を確認できます。</p></div>
     </div>
-    <div class="mgmt-toolbar core-list-collection-toolbar" id="core-list-collection-toolbar">
-      <input class="mgmt-search" id="core-collection-search" type="search" placeholder="コア品番・純正品番・メーカー品番で検索">
-      <select class="form-select" id="core-collection-category" aria-label="カテゴリ">
+    <div class="core-list-mode-switch" role="tablist" aria-label="コア管理表示">
+      <button class="core-list-mode-btn active" id="btn-core-list-mode-collection" type="button" role="tab" aria-controls="core-management-panel" aria-selected="true" tabindex="0">収集リスト<span>集めるコアと不足数を確認</span></button>
+      <button class="core-list-mode-btn" id="btn-core-list-mode-inventory" type="button" role="tab" aria-controls="core-management-panel" aria-selected="false" tabindex="-1">現在庫<span>保管中のコアと置き場を確認</span></button>
+    </div>
+    <div id="core-management-panel" role="tabpanel" aria-labelledby="btn-core-list-mode-collection">
+      <div class="core-workspace-section-heading"><div><h2 id="core-workspace-title">収集リスト</h2><p id="core-workspace-help">目標数と現在庫を比べて、集める必要のあるコアを確認します。</p></div><span class="core-workspace-scope">集計は検索・絞り込み結果が対象</span></div>
+      <div class="mgmt-toolbar core-list-collection-toolbar" id="core-list-collection-toolbar">
+        <div class="core-workspace-filters">
+          <label class="core-workspace-search" for="core-collection-search"><span>品番・キーワード</span><input class="mgmt-search" id="core-collection-search" type="search" placeholder="コア品番・純正品番・メーカー品番で検索"></label>
+          <button class="btn-primary" id="btn-core-collection-search" type="button">検索</button>
+          <details class="core-workspace-filter-options" id="core-workspace-filter-options" open><summary>絞り込み条件 <span id="core-workspace-filter-count"></span></summary><div class="core-workspace-filter-fields">          <label for="core-collection-category"><span>カテゴリ</span>      <select class="form-select" id="core-collection-category" aria-label="カテゴリ">
         <option value="">すべてのカテゴリ</option>
         <option value="starter">スタータ</option>
         <option value="alternator">オルタネータ</option>
         <option value="ac_compressor">ACコンプレッサ</option>
         <option value="distributor">ディストリビュータ</option>
         <option value="other">その他</option>
-      </select>
-      <select class="form-select" id="core-collection-state" aria-label="収集状態">
+      </select></label>
+          <label for="core-collection-state"><span>収集状態・在庫</span>      <select class="form-select" id="core-collection-state" aria-label="収集状態">
         <option value="all">すべて</option>
         <option value="needed">不足あり</option>
         <option value="in_stock">在庫あり</option>
@@ -3152,27 +3159,26 @@
         <option value="collecting">収集中</option>
         <option value="completed">完了</option>
         <option value="paused">保留</option>
-      </select>
-      <select class="form-select" id="core-collection-priority" aria-label="優先度">
+      </select></label>
+          <label for="core-collection-priority"><span>優先度</span>      <select class="form-select" id="core-collection-priority" aria-label="優先度">
         <option value="">すべての優先度</option>
         <option value="high">高</option>
         <option value="normal">通常</option>
         <option value="low">低</option>
-      </select>
-      <button class="btn-primary" id="btn-core-collection-search" type="button">検索</button>
-      <button class="btn-primary" id="btn-add-core-collection" type="button">収集対象を追加</button>
-      <button class="btn-sm-edit" id="btn-create-core-list-from-ranking" type="button">製造ランキングから追加</button>
-      <button class="btn-sm-edit" id="btn-export-core-collection" type="button">CSV出力</button>
-    </div>
-    <div class="mgmt-toolbar core-list-inventory-toolbar hidden" id="core-list-inventory-toolbar">
-      <input class="mgmt-search" id="core-list-search" type="search" data-i18n-ph="core_list_search_ph">
-      <button class="btn-primary" id="btn-core-list-search" data-i18n="btn_search">検索</button>
-      <button class="btn-primary" id="btn-add-core-list" data-i18n="btn_add_core_list">コアを追加</button>
-    </div>
-    <div class="mgmt-count" id="core-list-count"></div>
-    <div id="core-list-list"><div class="loading" data-i18n="loading">読み込み中...</div></div>
-    <div class="load-more-wrap" id="core-list-load-more-wrap" data-dcats-inline-style="s-6aa34d7432e7">
-      <button class="btn-load-more" id="core-list-load-more" type="button" data-i18n="btn_load_more">さらに表示</button>
+      </select></label>
+
+          <button class="btn-sm-edit core-workspace-clear" id="btn-core-collection-clear" type="button">条件をクリア</button></div></details>
+        </div>
+        <div class="core-workspace-actions"><div class="core-workspace-create"><button class="btn-primary" id="btn-add-core-collection" type="button">収集対象を追加</button><button class="btn-sm-edit" id="btn-create-core-list-from-ranking" type="button">製造ランキングから追加</button></div><button class="btn-sm-edit" id="btn-export-core-collection" type="button">CSV出力</button></div>
+      </div>
+      <div class="mgmt-toolbar core-list-inventory-toolbar hidden" id="core-list-inventory-toolbar">
+        <div class="core-workspace-filters core-workspace-inventory-filters"><label class="core-workspace-search" for="core-list-search"><span>品番・キーワード</span><input class="mgmt-search" id="core-list-search" type="search" data-i18n-ph="core_list_search_ph"></label><button class="btn-primary" id="btn-core-list-search" type="button" data-i18n="btn_search">検索</button></div>
+        <div class="core-workspace-actions"><button class="btn-primary" id="btn-add-core-list" type="button" data-i18n="btn_add_core_list">コアを追加</button></div>
+      </div>
+      <div class="mgmt-count core-workspace-summary" id="core-list-count" role="status" aria-live="polite"></div>
+      <div class="core-workspace-results"><div class="core-workspace-results-heading"><h3>品番一覧</h3><span>数量はコアの台数です</span></div><div id="core-list-list" aria-live="polite"><div class="loading" data-i18n="loading">読み込み中...</div></div>
+        <div class="load-more-wrap" id="core-list-load-more-wrap" data-dcats-inline-style="s-6aa34d7432e7"><button class="btn-load-more" id="core-list-load-more" type="button" data-i18n="btn_load_more">さらに表示</button></div>
+      </div>
     </div>
   </div>
 </div>
