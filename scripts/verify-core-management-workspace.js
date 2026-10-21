@@ -51,6 +51,14 @@ async function main() {
     assert.doesNotMatch(get("core-list-count").innerHTML, /<script>|<img>/); checks++;
   }
   {
+    for (const manage of [true, false]) {
+      const { c, get } = fixture(); ready(c); c.coreListMode = "inventory"; c.canManageProductionRecords = () => manage;
+      await c.loadCoreListMgmt();
+      assert.match(get("core-list-count").innerHTML, /core-summary-item/); checks++;
+      assert.match(get("core-list-count").innerHTML, /3<small/); checks++;
+    }
+  }
+  {
     const { c, get } = fixture(); ready(c); c.bindCoreManagementTabs();
     get("btn-core-list-mode-collection").listeners.keydown({ key: "ArrowRight", preventDefault() {} });
     assert.equal(c.focused, "btn-core-list-mode-inventory"); checks++;

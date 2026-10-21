@@ -8303,7 +8303,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1236";
+var APP_VERSION       = "v1.1.1237";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -30540,7 +30540,6 @@ function renderCoreListMgmt() {
   if (coreListMode !== "inventory" || !coreManagementDataReady) return;
   var list = document.getElementById("core-list-list");
   var countEl = document.getElementById("core-list-count");
-  if (countEl) countEl.textContent = coreListMgmtRows.length + " 件";
   if (!list) return;
   renderCoreManagementSummary([
     { label: "在庫明細", value: coreListMgmtRows.length, unit: "件" },
@@ -30627,10 +30626,6 @@ function renderCoreListMgmt() {
   }
   if (!canManageProductionRecords()) {
     list.querySelectorAll("[data-core-edit], [data-core-del]").forEach(function(btn) { btn.remove(); });
-    if (countEl) {
-      var readonlyTotalQty = sumProductionCoreEntryQty(coreListMgmtRows);
-      countEl.innerHTML = esc(String(coreListMgmtRows.length)) + " 件 <span class='core-count-pill'>コア合計 " + esc(String(readonlyTotalQty)) + "</span>";
-    }
     return;
   }
 
@@ -30640,10 +30635,6 @@ function renderCoreListMgmt() {
   list.querySelectorAll("[data-core-del]").forEach(function(btn) {
     btn.addEventListener("click", function() { deleteCoreListRow(parseInt(btn.dataset.coreDel, 10)); });
   });
-  if (countEl) {
-    var totalQty = sumProductionCoreEntryQty(coreListMgmtRows);
-    countEl.innerHTML = esc(String(coreListMgmtRows.length)) + " 件 <span class='core-count-pill'>コア合計 " + esc(String(totalQty)) + "</span>";
-  }
 }
 
 function coreListRowAndProduct(rowId) {
