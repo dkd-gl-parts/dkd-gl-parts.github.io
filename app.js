@@ -38917,7 +38917,7 @@ function canDeleteUnusedCoreProduct() {
 function unusedProductDeletionScopeValid(state) {
   return !!state && state === unusedProductDeletionState && state.owner === currentUser &&
     state.profile === userProfile && canDeleteUnusedCoreProduct() &&
-    partFormSource === "core_products" && partFormMode === "edit" &&
+    partFormSource === "core_products" && partFormMode === "edit" && state.context === coreProductFormContext &&
     String(productDkdId(currentProduct)) === String(state.productId) &&
     document.getElementById("part-form-overlay").classList.contains("show");
 }
@@ -39014,7 +39014,7 @@ function startUnusedProductDeletion(product) {
   var id = Number(productDkdId(product));
   if (!Number.isSafeInteger(id) || id <= 0) return;
   var key = currentUser.id + ":" + id;
-  unusedProductDeletionState = { productId: id, owner: currentUser, profile: userProfile, key: key,
+  unusedProductDeletionState = { productId: id, owner: currentUser, profile: userProfile, key: key, context: coreProductFormContext,
     pending: unusedProductDeletionPending[key] || null, inspection: null, loading: false, busy: false, confirming: false };
   if (unusedProductDeletionState.pending) renderUnusedProductDeletion();
   else loadUnusedProductDeletion();
@@ -39040,11 +39040,30 @@ async function finishUnusedProductDeletion(state, result) {
   resetUnusedProductDeletion();
   document.getElementById("btn-part-form-save").disabled = false;
   document.getElementById("btn-part-form-cancel").disabled = false;
-  await enterPartsMgmt();
+  if (state.context === "sales") {
+    closePanel();
+    await runProductSearch();
+  } else if (state.context === "production") {
+    var previousCount = productionRows.length;
+    productionRows = productionRows.filter(function(p) { return String(productDkdId(p)) !== String(state.productId); });
+    var removedCount = previousCount - productionRows.length;
+    productionSearchFetchedCount = Math.max(0, productionSearchFetchedCount - removedCount);
+    if (productionSearchTotalCount !== null) productionSearchTotalCount = Math.max(0, productionSearchTotalCount - removedCount);
+    productionDetailRequestSeq += 1;
+    renderProductionList();
+    await renderProductionDetail(currentProductionRow);
+  } else {
+    await loadPartsMgmt();
+  }
   if (currentUser === state.owner && userProfile === state.profile) {
-    var notice = document.getElementById("parts-mgmt-deletion-notice");
-    notice.textContent = unusedProductDeletionText("deleted") + " " + unusedProductDeletionText("identity") + " " + state.productId;
-    notice.hidden = false;
+    var message = unusedProductDeletionText("deleted") + " " + unusedProductDeletionText("identity") + " " + state.productId;
+    if (state.context === "management") {
+      var notice = document.getElementById("parts-mgmt-deletion-notice");
+      notice.textContent = message;
+      notice.hidden = false;
+    } else {
+      showDcatsAutoNotice(message);
+    }
   }
   return true;
 }
