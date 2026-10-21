@@ -253,6 +253,7 @@ async function test(name, run) { await run(); checks++; }
       const c = sandbox(), d = defer(), calls = instrument(c);
       c.document.body.appendChild(c.document.createElement("div")).id = "component-wrap";
       c.currentProduct = { id: 1 }; c.componentCatalogCategoryCode = () => "alternator";
+      c.componentLoadRequestId = 0;
       c.loadComponentDisplayNameTranslations = async () => {}; c.resolveCurrentCoreDkdShohinId = () => d.promise;
       vm.runInContext(source.slice(loader.start, loader.end), c);
       const pending = c.loadAssemblyComponentsForCurrent();

@@ -8225,7 +8225,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1230";
+var APP_VERSION       = "v1.1.1231";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -8282,6 +8282,7 @@ var componentIllustrationRows = [];
 var componentIllustrationLoading = false;
 var componentIllustrationError = "";
 var componentIllustrationRequestId = 0;
+var componentLoadRequestId = 0;
 var componentIllustrationSignedUrlCache = null;
 var componentIllustrationLastTiming = null;
 if (sb.auth && typeof sb.auth.onAuthStateChange === "function") {
@@ -49344,7 +49345,14 @@ async function saveComponentAlternativeForm() {
   await loadAssemblyComponentsForCurrent();
 }
 
-async function loadComponentAlternativesForRows(rows) {
+async function loadComponentAlternativesForRows(rows, loadRequestId) {
+  var alternativeRequestId = loadRequestId === undefined ? componentLoadRequestId : loadRequestId;
+  var alternativeProduct = currentProduct;
+  var alternativeKind = selectedProductKind();
+  function alternativesAreStale() {
+    return alternativeRequestId !== componentLoadRequestId || currentProduct !== alternativeProduct || selectedProductKind() !== alternativeKind;
+  }
+  if (alternativesAreStale()) return;
   componentAlternativeRows = [];
   componentAlternativeMap = {};
   if (!canViewInternalComponents()) return;
@@ -49365,12 +49373,14 @@ async function loadComponentAlternativesForRows(rows) {
   var r = await rQuery
     .order("priority", { ascending: true })
     .order("id", { ascending: true });
+  if (alternativesAreStale()) return;
   if (r.error) {
     console.warn("component alternatives lookup failed", r.error);
     return;
   }
-  componentAlternativeRows = r.data || [];
-  var internalIds = componentAlternativeRows.map(function(row) { return row.internal_component_part_id; }).filter(function(id, index, arr) {
+  var alternativeRows = r.data || [];
+  var alternativeMap = {};
+  var internalIds = alternativeRows.map(function(row) { return row.internal_component_part_id; }).filter(function(id, index, arr) {
     return id != null && arr.indexOf(id) === index;
   });
   var supplierMap = {};
@@ -49381,6 +49391,7 @@ async function loadComponentAlternativesForRows(rows) {
       .eq("status", "active")
       .order("is_preferred", { ascending: false })
       .order("id", { ascending: true });
+    if (alternativesAreStale()) return;
     if (!sr.error) {
       (sr.data || []).forEach(function(row) {
         var key = String(row.internal_component_part_id);
@@ -49391,12 +49402,15 @@ async function loadComponentAlternativesForRows(rows) {
       console.warn("internal component suppliers lookup failed", sr.error);
     }
   }
-  componentAlternativeRows.forEach(function(row) {
+  alternativeRows.forEach(function(row) {
     row.internal_component_suppliers = supplierMap[String(row.internal_component_part_id)] || [];
     var key = String(row.catalog_component_id);
-    if (!componentAlternativeMap[key]) componentAlternativeMap[key] = [];
-    componentAlternativeMap[key].push(row);
+    if (!alternativeMap[key]) alternativeMap[key] = [];
+    alternativeMap[key].push(row);
   });
+  if (alternativesAreStale()) return;
+  componentAlternativeRows = alternativeRows;
+  componentAlternativeMap = alternativeMap;
 }
 
 async function disableComponentAlternative(altId) {
@@ -49751,26 +49765,69 @@ function catalogComponentRowsNeedDkdRecovery(rows, selectedKind) {
   return componentIsCurrentProductSelfReference(onlyRow) && !!onlyRow.has_child_catalog_components;
 }
 
-async function fetchCatalogComponentRowsByDkd(dkdId) {
-  var selectColumns = "id, dkd_component_id, dkd_shohin_id, product_kind, product_variant_id, assy_manufacturer, assy_manufacturer_part_number, normalized_assy_manufacturer_part_number, assy_genuine_part_number, normalized_assy_genuine_part_number, component_manufacturer_part_number, component_genuine_part_number, component_name, quantity, unit_price_jpy, replacement_rate, procurement_category, manufacturing_memo, interchange_code, effective_start, effective_end, component_position, component_manufacturer, component_part_name, source_code, is_catalog_evidence";
+async function fetchCatalogComponentRowsByDkd(dkdId, loadRequestId) {
+  var recoveryProduct = currentProduct;
+  var recoveryKind = selectedProductKind();
+  var recoveryRequestId = loadRequestId === undefined ? componentLoadRequestId : loadRequestId;
+  function recoveryIsStale() {
+    return recoveryRequestId !== componentLoadRequestId || currentProduct !== recoveryProduct || selectedProductKind() !== recoveryKind;
+  }
+  var manufacturer = String((recoveryProduct && recoveryProduct.manufacturer) || "").toUpperCase();
+  var manufacturerPartKeys = componentAssyLookupKeys(recoveryProduct);
+  var genuinePartKeys = componentCurrentProductGenuineKeys();
+  var selectColumns = "id, dkd_component_id, dkd_shohin_id, product_kind, product_variant_id, assy_manufacturer, assy_manufacturer_part_number, normalized_assy_manufacturer_part_number, assy_genuine_part_number, normalized_assy_genuine_part_number, component_manufacturer_part_number, component_genuine_part_number, component_name, quantity, unit_price_jpy, replacement_rate, procurement_category, manufacturing_memo, interchange_code, effective_start, effective_end, component_position, component_manufacturer, component_part_name, source_code, source_table, source_record_key, is_catalog_evidence";
   var r = await sb.from("assembly_component_usage_details")
     .select(selectColumns)
     .eq("dkd_shohin_id", dkdId)
     .eq("is_catalog_evidence", true)
     .order("component_position", { ascending: true, nullsFirst: false })
     .order("component_manufacturer_part_number", { ascending: true });
+  if (recoveryIsStale()) return { rows: [], error: null, stale: true };
   if (r.error) return { rows: [], error: r.error };
 
-  var manufacturer = String((currentProduct && currentProduct.manufacturer) || "").toUpperCase();
-  var manufacturerPartKeys = componentAssyLookupKeys(currentProduct);
-  var genuinePartKeys = componentCurrentProductGenuineKeys();
   var rows = (r.data || []).filter(function(row) {
     if (manufacturer && String(row.assy_manufacturer || "").toUpperCase() !== manufacturer) return false;
     var manufacturerPartKey = String(row.normalized_assy_manufacturer_part_number || normalizedPartKey(row.assy_manufacturer_part_number));
     if (manufacturerPartKeys.length && manufacturerPartKeys.indexOf(manufacturerPartKey) < 0) return false;
     var genuinePartKey = String(row.normalized_assy_genuine_part_number || normalizedPartKey(row.assy_genuine_part_number));
     return !genuinePartKey || !genuinePartKeys.length || genuinePartKeys.indexOf(genuinePartKey) >= 0;
-  }).map(function(row) {
+  });
+  var blankDensoRow = function(row) {
+    return row.source_code === "catalog_denso" && row.source_table === "TBLPARTSLIST" &&
+      !!row.source_record_key && !!row.dkd_component_id &&
+      !String(row.normalized_assy_genuine_part_number || normalizedPartKey(row.assy_genuine_part_number));
+  };
+  if (manufacturer === "DENSO" && rows.some(blankDensoRow)) {
+    // Preserve source conditions by using the server's verified representatives.
+    var selection;
+    try {
+      selection = await sb.rpc("get_catalog_assembly_components_by_part", {
+        target_manufacturer: "DENSO",
+        target_manufacturer_part_number: recoveryProduct.manufacturer_part_number,
+        target_genuine_part_number: null,
+        max_rows: 5000
+      });
+    } catch (error) {
+      if (recoveryIsStale()) return { rows: [], error: null, stale: true };
+      return { rows: [], error: error };
+    }
+    if (recoveryIsStale()) return { rows: [], error: null, stale: true };
+    if (selection && selection.error) return { rows: [], error: selection.error };
+    if (!selection || !Array.isArray(selection.data) || !selection.data.length || selection.data.length >= 5000 ||
+        !selection.data.every(function(row) {
+          return !!row && row.source_code === "catalog_denso" && !!row.dkd_component_id &&
+            !!row.source_table && !!row.source_record_key &&
+            String(row.parent_assy_manufacturer || "").toUpperCase() === manufacturer &&
+            manufacturerPartKeys.indexOf(normalizedPartKey(row.parent_assy_manufacturer_part_number)) >= 0 &&
+            row.catalog_match_basis === "catalog_manufacturer_part_blank_genuine";
+        })) return { rows: [], error: { message: "Catalog source selection unavailable" } };
+    var sourceKey = function(row) {
+      return JSON.stringify([String(row.dkd_component_id), row.source_table, row.source_record_key]);
+    };
+    var selectedSources = new Set(selection.data.map(sourceKey));
+    rows = rows.filter(function(row) { return !blankDensoRow(row) || selectedSources.has(sourceKey(row)); });
+  }
+  rows = rows.map(function(row) {
     return normalizeComponentTreeRow(row, null);
   });
   return { rows: rows, error: null };
@@ -49779,6 +49836,11 @@ async function fetchCatalogComponentRowsByDkd(dkdId) {
 async function loadAssemblyComponentsForCurrent() {
   var wrap = document.getElementById("component-wrap");
   if (!wrap) return;
+  var componentLoadProduct = currentProduct;
+  var loadRequestId = ++componentLoadRequestId;
+  function componentLoadIsStale() {
+    return loadRequestId !== componentLoadRequestId || currentProduct !== componentLoadProduct || selectedProductKind() !== selectedKind;
+  }
   assemblyComponentRows = [];
   componentAlternativeRows = [];
   componentAlternativeMap = {};
@@ -49814,13 +49876,15 @@ async function loadAssemblyComponentsForCurrent() {
       target_product_kind: selectedKind,
       target_product_variant_id: selectedKind === "catalog_spec" ? null : selectedComponentVariantId()
     });
+    if (componentLoadIsStale()) return;
     if (!rpc.error) {
       var rpcRows = (rpc.data || []).map(function(row) {
         return normalizeComponentTreeRow(row, null);
       });
       var recoveredCatalogRows = false;
       if (catalogComponentRowsNeedDkdRecovery(rpcRows, selectedKind)) {
-        var recovery = await fetchCatalogComponentRowsByDkd(dkdId);
+        var recovery = await fetchCatalogComponentRowsByDkd(dkdId, loadRequestId);
+        if (recovery.stale || componentLoadIsStale()) return;
         if (recovery.error) {
           console.warn("catalog component DKD recovery failed", recovery.error);
         } else if (recovery.rows.length > rpcRows.length) {
@@ -49832,9 +49896,11 @@ async function loadAssemblyComponentsForCurrent() {
         assemblyComponentRows = rpcRows;
         updateComponentTargetSummary(rpcRows.length);
         await translationPromise;
+        if (componentLoadIsStale()) return;
         renderAssemblyComponentRows();
         if (recoveredCatalogRows) {
-          await loadComponentAlternativesForRows(rpcRows);
+          await loadComponentAlternativesForRows(rpcRows, loadRequestId);
+          if (componentLoadIsStale()) return;
           renderAssemblyComponentRows();
         }
         return;
@@ -49848,6 +49914,7 @@ async function loadAssemblyComponentsForCurrent() {
     target_dkd_shohin_id: dkdId,
     target_product_kind: selectedKind
   });
+  if (componentLoadIsStale()) return;
   if (!treeFallbackRpc.error) {
     var treeFallbackRows = (treeFallbackRpc.data || []).map(function(row) {
       return normalizeComponentTreeRow(row, null);
@@ -49863,6 +49930,7 @@ async function loadAssemblyComponentsForCurrent() {
       assemblyComponentRows = treeFallbackRows;
       updateComponentTargetSummary(treeFallbackRows.length);
       await translationPromise;
+      if (componentLoadIsStale()) return;
       renderAssemblyComponentRows();
       return;
     }
@@ -49896,6 +49964,7 @@ async function loadAssemblyComponentsForCurrent() {
       .eq("dkd_shohin_id", dkdId);
   }
   var r = await query;
+  if (componentLoadIsStale()) return;
   if (r.error) {
     console.warn("assembly_component_usage_details failed", r.error);
     updateComponentTargetSummary(0);
@@ -49913,6 +49982,7 @@ async function loadAssemblyComponentsForCurrent() {
     });
   }
   await hydrateComponentChildCounts(rows);
+  if (componentLoadIsStale()) return;
 
   rows.sort(function(a, b) {
     var ap = String(a.component_position || "");
@@ -49922,8 +49992,9 @@ async function loadAssemblyComponentsForCurrent() {
   });
   assemblyComponentRows = rows;
   updateComponentTargetSummary(rows.length);
-  await loadComponentAlternativesForRows(rows);
+  await loadComponentAlternativesForRows(rows, loadRequestId);
   await translationPromise;
+  if (componentLoadIsStale()) return;
   renderAssemblyComponentRows();
 }
 
