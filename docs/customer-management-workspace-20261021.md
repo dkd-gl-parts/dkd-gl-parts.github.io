@@ -8,6 +8,8 @@ Search filters the loaded directory without resetting the selected customer's dr
 
 Directory rows show only the customer name and customer code. In customer management, HANBAIOU_URI_1 is displayed as 基準価格 (Base price); saved rank codes and other price classes remain unchanged.
 
+The dedicated development customer (DEV-ORDER-001) is always rendered after ordinary customers, including filtered and refreshed lists. Sales management excludes it from customer choices and clears a previously selected test customer. Shared portal data and the explicit test-order entry remain available for testing.
+
 Existing save APIs, authorization checks, category defaults, order publication rules, invitation actions and customer registration remain in place. No database migration or business-data update accompanies this release.
 
 Validation: the workflow's 150 local commands pass, including a new workspace verifier for keyboard tabs, permissions, draft retention, customer filtering, canonical rank values, stale responses and failed reads. Hidden browser QA covers desktop/mobile, three languages, 12 visual cases, loading/empty/error/retry/expired/limited-role states, account listing, registration entry and a synthetic multi-tab save. Production is checked read-only after publication.
