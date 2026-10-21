@@ -3062,8 +3062,8 @@
           <select class="form-input" id="sales-product-kind"></select>
         </div>
         <div class="form-row sales-pricing-base-field">
-          <label class="form-label" data-i18n="sales_base_price">基準価格(税抜)</label>
-          <input class="form-input" id="sales-base-price" type="number" min="0" step="1">
+          <label class="form-label" data-i18n="sales_rank1_price">売値区分1（税抜）</label>
+          <input class="form-input" id="sales-base-price" type="number" min="1" step="1">
         </div>
         <div class="form-row">
           <label class="form-label" data-i18n="sales_price_basis">価格根拠</label>
@@ -3095,15 +3095,6 @@
           <input class="form-input" id="sales-basis-note" type="text" data-i18n-ph="sales_basis_note_ph">
         </div>
       </div>
-      <section class="sales-rank1-override" aria-labelledby="sales-rank1-title">
-        <div class="sales-rank1-heading" id="sales-rank1-title" data-i18n="sales_rank1_only_title">販売価格区分1だけの価格（税抜）</div>
-        <p class="sales-rank1-help" data-i18n="sales_rank1_only_help">ここで保存した価格は区分1のみに適用します。共通基準価格と他の区分は変わりません。</p>
-        <div class="sales-rank1-controls">
-          <input class="form-input" id="sales-rank1-price" type="number" min="1" step="1" inputmode="numeric" aria-labelledby="sales-rank1-title">
-          <button class="btn-primary" id="btn-sales-rank1-save" type="button" data-i18n="sales_rank1_only_save">区分1だけ保存</button>
-        </div>
-        <div class="sales-rank1-status" id="sales-rank1-status" role="status"></div>
-      </section>
       <div class="sales-pricing-preview">
         <div class="sales-pricing-preview-head">
           <div class="sales-pricing-preview-title" data-i18n="sales_rank_preview">得意先ランク別の試算</div>

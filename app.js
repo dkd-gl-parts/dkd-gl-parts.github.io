@@ -2236,6 +2236,7 @@ var TRANSLATIONS = {
     sales_price_section: "販売価格",
     sales_pricing_title: "販売価格設定",
     sales_base_price: "基準価格",
+    sales_rank1_price: "売値区分1（税抜）",
     sales_base_price_help: "売値区分の掛率・金額調整をかける前の元価格です。",
     sales_reference_title: "販売価格の参考",
     sales_competitor_reference_title: "他社参考価格",
@@ -2285,7 +2286,7 @@ var TRANSLATIONS = {
     sales_no_base_price: "基準価格は未設定です",
     sales_no_ranks: "価格ランクがありません",
     sales_no_product_id: "対象商品のDKD商品IDを確認できません",
-    sales_base_price_required: "基準価格を入力してください",
+    sales_base_price_required: "売値区分1を1円以上で入力してください",
     sales_pricing_mgmt_hint: "品番を検索して販売価格を設定してください",
     sales_pricing_product_search: "品番から個別に設定",
     sales_pricing_product_search_ph: "品番・純正品番・DKD番号で検索",
@@ -4934,6 +4935,7 @@ var TRANSLATIONS = {
     sales_price_section: "Sales Price",
     sales_pricing_title: "Sales Pricing",
     sales_base_price: "Base Price",
+    sales_rank1_price: "Class 1 price (excl. tax)",
     sales_base_price_help: "Original price before rate, amount adjustment, and rounding by sales rank.",
     sales_reference_title: "Sales Price References",
     sales_competitor_reference_title: "Competitor Reference Prices",
@@ -4983,7 +4985,7 @@ var TRANSLATIONS = {
     sales_no_base_price: "Base price is not set",
     sales_no_ranks: "No price ranks",
     sales_no_product_id: "Could not confirm the target DKD product ID",
-    sales_base_price_required: "Enter a base price",
+    sales_base_price_required: "Enter a class 1 price of at least ¥1",
     sales_pricing_mgmt_hint: "Search a part number to set sales pricing.",
     sales_pricing_product_search: "Set an individual product price",
     sales_pricing_product_search_ph: "Search part number, genuine number or DKD ID",
@@ -7632,6 +7634,7 @@ var TRANSLATIONS = {
     sales_price_section: "销售价格",
     sales_pricing_title: "销售价格设置",
     sales_base_price: "基准价格",
+    sales_rank1_price: "等级1价格（未税）",
     sales_base_price_help: "应用销售等级倍率、金额调整和取整前的原始价格。",
     sales_reference_title: "销售价格参考",
     sales_competitor_reference_title: "其他公司参考价格",
@@ -7681,7 +7684,7 @@ var TRANSLATIONS = {
     sales_no_base_price: "尚未设置基准价格",
     sales_no_ranks: "没有价格等级",
     sales_no_product_id: "无法确认目标DKD商品ID",
-    sales_base_price_required: "请输入基准价格",
+    sales_base_price_required: "请输入至少1日元的等级1价格",
     sales_pricing_mgmt_hint: "搜索品番后设置销售价格。",
     sales_pricing_product_search: "按品号单独设置价格",
     sales_pricing_product_search_ph: "搜索品号、原厂品号或DKD编号",
@@ -50625,23 +50628,23 @@ function renderSalesRankPreview() {
   html += "</tr>";
   salesPricingRanks.forEach(function(rank) {
     var price = calculateSalesPriceClient(base, rank);
-    var rank1Input = document.getElementById("sales-rank1-price");
-    var rank1Draft = rank1Input ? parseInt(rank1Input.value, 10) : NaN;
-    var hasRank1Override = rank.rank_code === "HANBAIOU_URI_1" &&
-      ((rank1Input && rank1Input.value !== "" && Number.isInteger(rank1Draft) && rank1Draft > 0) || currentSalesRank1Row);
-    if (hasRank1Override) price = Number.isInteger(rank1Draft) && rank1Draft > 0
-      ? rank1Draft : currentSalesRank1Row.price_jpy;
+    var isRank1 = rank.rank_code === "HANBAIOU_URI_1";
+    if (isRank1) {
+      var rank1Value = Number(base);
+      price = Number.isSafeInteger(rank1Value) && rank1Value > 0 ? rank1Value : null;
+      rank = Object.assign({},rank,{rate_multiplier:1,amount_adjustment_jpy:0,rounding_unit_jpy:1,rounding_method:"round"});
+    }
     var adjust = "x" + Number(rank.rate_multiplier || 1).toFixed(4) + " / " + formatYen(rank.amount_adjustment_jpy || 0) + " / " + formatYen(rank.rounding_unit_jpy || 10);
     var code = esc(rank.rank_code || "");
     html += "<tr>";
     html += "<td data-label='" + esc(t("sales_rank")) + "'><div class='price-supplier'>" + esc(salesRankDisplayName(rank)) + "</div><div class='price-country'>" + esc(rank.rank_code || "") + "</div></td>";
-    html += "<td data-label='" + esc(t("sales_result_price")) + "'><div class='price-value sales-rank-price' data-dcats-inline-style='s-1024138906a0'>" + (price === null ? "-" : esc(formatYenCurrency(price))) + (hasRank1Override ? " <small>" + esc(t("sales_rank1_only_badge")) + "</small>" : "") + "</div></td>";
+    html += "<td data-label='" + esc(t("sales_result_price")) + "'><div class='price-value sales-rank-price' data-dcats-inline-style='s-1024138906a0'>" + (price === null ? "-" : esc(formatYenCurrency(price))) + "</div></td>";
     html += "<td data-label='" + esc(t("sales_customer_count")) + "'>" + esc(String(salesPricingCustomerCounts[rank.rank_code] || 0)) + "</td>";
     if (editable) {
-      html += "<td data-label='" + esc(t("sales_rate_multiplier")) + "'><input class='form-input sales-rank-rate' data-rank-code='" + code + "' type='number' min='0' step='0.0001' value='" + esc(String(rank.rate_multiplier || 1)) + "'></td>";
-      html += "<td data-label='" + esc(t("sales_amount_adjustment")) + "'><input class='form-input sales-rank-amount' data-rank-code='" + code + "' type='number' step='1' value='" + esc(String(rank.amount_adjustment_jpy || 0)) + "'></td>";
-      html += "<td data-label='" + esc(t("sales_rounding_unit")) + "'><select class='form-input sales-rank-unit' data-rank-code='" + code + "'>" + [1,10,100,1000].map(function(v){ return "<option value='" + v + "'" + (String(rank.rounding_unit_jpy || 10) === String(v) ? " selected" : "") + ">" + v + "</option>"; }).join("") + "</select></td>";
-      html += "<td data-label='" + esc(t("sales_rounding_method")) + "'><select class='form-input sales-rank-method' data-rank-code='" + code + "'>" + ["round","ceil","floor"].map(function(v){ return "<option value='" + v + "'" + (String(rank.rounding_method || "round") === v ? " selected" : "") + ">" + esc(t("sales_rounding_" + v)) + "</option>"; }).join("") + "</select></td>";
+      html += "<td data-label='" + esc(t("sales_rate_multiplier")) + "'><input class='form-input sales-rank-rate' data-rank-code='" + code + "'" + (isRank1 ? " disabled" : "") + " type='number' min='0' step='0.0001' value='" + esc(String(rank.rate_multiplier || 1)) + "'></td>";
+      html += "<td data-label='" + esc(t("sales_amount_adjustment")) + "'><input class='form-input sales-rank-amount' data-rank-code='" + code + "'" + (isRank1 ? " disabled" : "") + " type='number' step='1' value='" + esc(String(rank.amount_adjustment_jpy || 0)) + "'></td>";
+      html += "<td data-label='" + esc(t("sales_rounding_unit")) + "'><select class='form-input sales-rank-unit' data-rank-code='" + code + "'" + (isRank1 ? " disabled" : "") + ">" + [1,10,100,1000].map(function(v){ return "<option value='" + v + "'" + (String(rank.rounding_unit_jpy || 10) === String(v) ? " selected" : "") + ">" + v + "</option>"; }).join("") + "</select></td>";
+      html += "<td data-label='" + esc(t("sales_rounding_method")) + "'><select class='form-input sales-rank-method' data-rank-code='" + code + "'" + (isRank1 ? " disabled" : "") + ">" + ["round","ceil","floor"].map(function(v){ return "<option value='" + v + "'" + (String(rank.rounding_method || "round") === v ? " selected" : "") + ">" + esc(t("sales_rounding_" + v)) + "</option>"; }).join("") + "</select></td>";
     } else if (showAdjustment) {
       html += "<td data-label='" + esc(t("sales_rate_adjust")) + "'>" + esc(adjust) + "</td>";
     }
@@ -50654,6 +50657,7 @@ function renderSalesRankPreview() {
 function collectSalesRankSettingsFromForm() {
   return salesPricingRanks.map(function(rank) {
     var code = rank.rank_code;
+    if (code === "HANBAIOU_URI_1") return {rank_code:code,rate_multiplier:1,amount_adjustment_jpy:0,rounding_unit_jpy:1,rounding_method:"round"};
     var rateEl = document.querySelector(".sales-rank-rate[data-rank-code='" + CSS.escape(code) + "']");
     var amountEl = document.querySelector(".sales-rank-amount[data-rank-code='" + CSS.escape(code) + "']");
     var unitEl = document.querySelector(".sales-rank-unit[data-rank-code='" + CSS.escape(code) + "']");
@@ -51339,7 +51343,7 @@ function salesPricingProductVariantIdForKind(kind) {
 
 function applySalesPricingRowToForm(row) {
   currentSalesPricingRow = row || null;
-  document.getElementById("sales-base-price").value = currentSalesPricingRow ? currentSalesPricingRow.base_price_jpy : ((currentProduct && currentProduct.price_jpy) || "");
+  document.getElementById("sales-base-price").value = currentSalesPricingRow && currentSalesPricingRow.base_price_jpy > 0 ? currentSalesPricingRow.base_price_jpy : "";
   document.getElementById("sales-price-basis").value = currentSalesPricingRow ? (currentSalesPricingRow.price_basis || "manual") : "manual";
   document.getElementById("sales-effective-start").value = currentSalesPricingRow ? (currentSalesPricingRow.effective_start || salesPricingTodayIso()) : salesPricingTodayIso();
   document.getElementById("sales-basis-note").value = currentSalesPricingRow ? (currentSalesPricingRow.basis_note || "") : "";
@@ -51347,68 +51351,20 @@ function applySalesPricingRowToForm(row) {
 }
 
 async function loadSalesPricingRank1Row() {
-  var input = document.getElementById("sales-rank1-price");
-  var status = document.getElementById("sales-rank1-status");
   currentSalesRank1Row = null;
-  if (input) input.value = "";
-  if (status) { status.textContent = ""; status.classList.remove("error"); }
   if (!currentSalesPricingDkdId || !canViewBasePrice()) return;
   var targetId = currentSalesPricingDkdId;
   var targetKind = salesPricingCurrentProductKind();
-  var result = await sb.rpc("get_product_rank1_price", {
-    target_dkd_shohin_id: targetId,
-    target_product_kind: targetKind
-  });
+  var result = await sb.rpc("get_product_rank1_price", {target_dkd_shohin_id:targetId,target_product_kind:targetKind});
   if (result.error) throw result.error;
   if (targetId !== currentSalesPricingDkdId || targetKind !== salesPricingCurrentProductKind()) return;
   currentSalesRank1Row = (result.data || [])[0] || null;
-  if (input) input.value = currentSalesRank1Row ? String(currentSalesRank1Row.price_jpy) : "";
-  if (status && !currentSalesRank1Row) status.textContent = t("sales_rank1_only_unset");
+  if (currentSalesRank1Row) document.getElementById("sales-base-price").value = currentSalesRank1Row.price_jpy;
   renderSalesRankPreview();
 }
 
 async function saveSalesRank1Price() {
-  var status = document.getElementById("sales-rank1-status");
-  var input = document.getElementById("sales-rank1-price");
-  var button = document.getElementById("btn-sales-rank1-save");
-  if (!status || !input || salesRank1SavePending) return;
-  status.textContent = "";
-  status.classList.remove("error");
-  if (!canEditBasePrice()) { status.textContent = t("err_perm"); status.classList.add("error"); return; }
-  var price = Number(input.value);
-  if (!Number.isSafeInteger(price) || price < 1) {
-    status.textContent = t("sales_rank1_only_price_required");
-    status.classList.add("error");
-    return;
-  }
-  var targetId = currentSalesPricingDkdId;
-  var targetKind = salesPricingCurrentProductKind();
-  salesRank1SavePending = true;
-  if (button) button.disabled = true;
-  try {
-    var saved = await sb.rpc("save_product_rank1_price", {
-      target_dkd_shohin_id: targetId,
-      target_product_kind: targetKind,
-      target_price_jpy: price,
-      target_expected_updated_at: currentSalesRank1Row ? currentSalesRank1Row.updated_at : null,
-      target_note: null
-    });
-    if (saved.error) throw saved.error;
-    if (targetId !== currentSalesPricingDkdId || targetKind !== salesPricingCurrentProductKind()) return;
-    currentSalesRank1Row = saved.data || null;
-    if (input && currentSalesRank1Row) input.value = String(currentSalesRank1Row.price_jpy);
-    status.textContent = t("sales_rank1_only_saved");
-    renderSalesRankPreview();
-    if (targetKind === "rebuilt") salesPricingMgmtRank1Map[String(targetId)] = price;
-    renderSalesPricingMgmt();
-  } catch (error) {
-    console.warn("save class 1 price failed", error);
-    status.textContent = t("msg_save_err") + ": " + ((error && error.message) || String(error));
-    status.classList.add("error");
-  } finally {
-    salesRank1SavePending = false;
-    if (button) button.disabled = false;
-  }
+  return saveSalesPricing();
 }
 
 async function loadSalesPricingCurrentBaseRow() {
@@ -51540,8 +51496,8 @@ async function saveSalesPricing() {
   if (!dkdId) { if (errEl) errEl.textContent = t("sales_no_product_id"); return; }
   var productKind = salesPricingCurrentProductKind();
   var productVariantId = salesPricingProductVariantIdForKind(productKind);
-  var base = parseInt(document.getElementById("sales-base-price").value, 10);
-  if (isNaN(base) || base < 0) { if (errEl) errEl.textContent = t("sales_base_price_required"); return; }
+  var base = Number(document.getElementById("sales-base-price").value);
+  if (!Number.isSafeInteger(base) || base < 1) { if (errEl) errEl.textContent = t("sales_base_price_required"); return; }
   var updateCorePolicy = salesPricingCanEditCorePolicy();
   var corePolicy = updateCorePolicy ? salesPricingCorePolicyFormValue() : { required: null, charge: null };
   if (corePolicy.error) { if (errEl) errEl.textContent = corePolicy.error; return; }
@@ -51566,6 +51522,8 @@ async function saveSalesPricing() {
     var savedPrice = result.base_price || null;
     if (!savedPrice || !savedPrice.id) throw new Error(t("msg_save_err"));
     currentSalesPricingRow = savedPrice;
+    currentSalesRank1Row = result.rank1_price || null;
+    if (productKind === "rebuilt" && currentSalesRank1Row) salesPricingMgmtRank1Map[String(dkdId)] = currentSalesRank1Row.price_jpy;
     if (result.core_policy_updated) applySavedSalesPricingCorePolicy(result.core_policy || []);
     var gltekAutoIssueOutcome = await ensureGltekPartNumberIssuedForDkdId(dkdId, { context: "sales_pricing", product: currentProduct });
     if (productKind === "rebuilt") salesPricingMgmtPriceMap[String(dkdId)] = savedPrice;
@@ -51691,26 +51649,21 @@ function renderSalesPricingMgmt() {
     list.innerHTML = "<div class='empty'>" + esc(t(query.trim() ? "no_results" : "sales_pricing_mgmt_hint")) + "</div>";
     return;
   }
-  var showBasePrice = canViewBasePrice();
   var showManufacturingCost = canViewManufacturingCostMgmt();
-  var html = "<table class='mgmt-table'><tr><th>DKD</th><th>" + esc(t("f_genuine_pn")) + "</th><th>" + esc(t("f_mfr_pn")) + "</th><th>" + esc(t("f_manufacturer")) + "</th><th>" + esc(t("sales_price_section")) + "</th>";
+  var html = "<table class='mgmt-table'><tr><th>DKD</th><th>" + esc(t("f_genuine_pn")) + "</th><th>" + esc(t("f_mfr_pn")) + "</th><th>" + esc(t("f_manufacturer")) + "</th><th>" + esc(t("sales_rank1_price")) + "</th>";
   if (showManufacturingCost) html += "<th>" + esc(t("sales_manufacturing_cost")) + "</th>";
-  if (showBasePrice) html += "<th>" + esc(t("sales_base_price")) + "</th>";
   html += "<th></th></tr>";
   salesPricingMgmtRows.forEach(function(row) {
-    var price = salesPricingMgmtPriceMap[String(row.dkd_shohin_id)] || null;
     var rank1Price = salesPricingMgmtRank1Map[String(row.dkd_shohin_id)];
     var manufacturingCost = salesPricingMgmtManufacturingCostMap[String(row.dkd_shohin_id)] || null;
-    var priceText = rank1Price != null ? formatYenCurrency(rank1Price) :
-      (price ? formatYenCurrency(price.base_price_jpy) : "-");
+    var priceText = rank1Price != null ? formatYenCurrency(rank1Price) : "-";
     html += "<tr>";
     html += "<td data-label='DKD'><div class='sales-pricing-dkd-line'><span class='mgmt-pn'>" + esc(String(row.dkd_shohin_id || "-")) + "</span><span class='sales-pricing-category'>" + esc(tCat(row.category_code || row.category) || "") + "</span></div></td>";
     html += "<td data-label='" + esc(t("f_genuine_pn")) + "'><div class='mgmt-pn'>" + esc(row.genuine_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(row.genuine_part_number_2 || "") + "</div></td>";
     html += "<td data-label='" + esc(t("f_mfr_pn")) + "'><div class='mgmt-pn'>" + esc(row.manufacturer_part_number || "-") + "</div></td>";
     html += "<td data-label='" + esc(t("f_manufacturer")) + "'><div class='mgmt-sub'>" + esc(row.manufacturer || "-") + "</div></td>";
-    html += "<td data-label='" + esc(t("sales_price_section")) + "'><div class='price-value' data-dcats-inline-style='s-1024138906a0'>" + esc(priceText) + (rank1Price != null ? " <small>" + esc(t("sales_rank1_only_badge")) + "</small>" : "") + "</div></td>";
+    html += "<td data-label='" + esc(t("sales_rank1_price")) + "'><div class='price-value' data-dcats-inline-style='s-1024138906a0'>" + esc(priceText) + "</div></td>";
     if (showManufacturingCost) html += "<td data-label='" + esc(t("sales_manufacturing_cost")) + "'>" + salesPricingManufacturingCostCellHtml(manufacturingCost) + "</td>";
-    if (showBasePrice) html += "<td data-label='" + esc(t("sales_base_price")) + "'><div class='price-value'>" + esc(price ? formatYenCurrency(price.base_price_jpy) : "-") + "</div></td>";
     html += "<td><button class='btn-sm-edit' data-sales-price-dkd='" + esc(String(row.dkd_shohin_id || "")) + "'>" + esc(t("sales_pricing_title")) + "</button></td>";
     html += "</tr>";
   });
@@ -58292,8 +58245,6 @@ document.getElementById("user-permission-edit-overlay").addEventListener("click"
 document.getElementById("btn-user-auth-history-close").addEventListener("click", function(){ document.getElementById("user-auth-history-overlay").classList.remove("show"); });
 document.getElementById("btn-sales-pricing-cancel").addEventListener("click", closeSalesPricingOverlay);
 document.getElementById("btn-sales-pricing-save").addEventListener("click", saveSalesPricing);
-document.getElementById("btn-sales-rank1-save").addEventListener("click", saveSalesRank1Price);
-document.getElementById("sales-rank1-price").addEventListener("input", renderSalesRankPreview);
 document.getElementById("btn-sales-rank-save").addEventListener("click", saveSalesPriceRanks);
 document.querySelectorAll("input[name='sales-core-return-required']").forEach(function(input) {
   input.addEventListener("change", function() {
