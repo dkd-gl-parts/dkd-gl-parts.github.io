@@ -1,0 +1,35 @@
+.core-valuation { border-top: 1px solid #cdd7df; margin-top: 12px; padding: 12px 0; color: #172e3b; }
+.core-valuation > summary { font-weight: 700; cursor: pointer; }
+.core-valuation-content { padding-top: 12px; }
+.core-valuation-context-label { margin-bottom: 10px; font-size: 12px; color: #5f737e; }
+.core-valuation-body-fields { display: grid; grid-template-columns: minmax(140px, 1fr) minmax(120px, 1fr) minmax(160px, 1fr) minmax(200px, 2fr); gap: 14px; align-items: end; }
+.core-valuation-body-fields label, .core-valuation-body-fields span { display: block; font-size: 12px; font-weight: 600; }
+.core-valuation-body-fields strong { display: block; padding: 9px 0; font-size: 16px; }
+.core-valuation input { width: 100%; min-width: 0; box-sizing: border-box; height: 36px; padding: 6px 8px; border: 1px solid #adbdc8; border-radius: 4px; background: #fff; color: #172e3b; }
+.core-valuation input:disabled { background: #f0f3f5; color: #4c606d; }
+.core-valuation input:focus-visible, .core-valuation button:focus-visible, .core-valuation summary:focus-visible { outline: 2px solid #146b5d; outline-offset: 2px; }
+.core-valuation h4 { font-size: 13px; margin: 16px 0 6px; }
+.core-valuation-table { table-layout: fixed; width: 100%; border-collapse: collapse; font-size: 12px; }
+.core-valuation-table th, .core-valuation-table td { padding: 8px; border-bottom: 1px solid #dbe2e7; text-align: right; overflow-wrap: anywhere; }
+.core-valuation-table th:first-child { width: 28%; text-align: left; }
+.core-valuation-table thead { background: #edf2f5; }
+.core-valuation-table small { display: block; color: #5f737e; font-weight: 400; margin-top: 4px; }
+.core-valuation-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin: 12px 0; }
+.core-valuation button { border: 1px solid #809b9a; border-radius: 4px; background: #fff; color: #175c4f; padding: 8px 12px; cursor: pointer; }
+.core-valuation button[data-core-save] { background: #196c58; color: #fff; }
+.core-valuation button:disabled { background: #eef1f3; color: #73818a; cursor: default; }
+.core-valuation-message, .core-valuation-error { padding: 8px 0 12px; font-size: 13px; overflow-wrap: anywhere; }
+.core-valuation-error { color: #b02330; font-weight: 600; }
+.core-valuation-history { font-size: 12px; border-top: 1px solid #dbe2e7; padding-top: 10px; }
+.core-valuation-history details { padding: 8px 0; border-bottom: 1px solid #dbe2e7; }
+.core-valuation-history details div { padding: 4px 12px; }
+@media (max-width: 760px) {
+  .core-valuation-body-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .core-valuation-source { grid-column: 1 / -1; }
+  .core-valuation-table, .core-valuation-table tbody { display: block; }
+  .core-valuation-table thead { display: none; }
+  .core-valuation-table tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-bottom: 1px solid #cdd7df; padding: 8px 0; gap: 6px 12px; }
+  .core-valuation-table th:first-child { width: auto; grid-column: 1 / -1; padding: 4px 0; }
+  .core-valuation-table td { border: 0; padding: 4px 0; }
+  .core-valuation-table td::before { content: attr(data-label); display: block; text-align: left; color: #5f737e; margin-bottom: 4px; }
+}

@@ -302,6 +302,8 @@ jobs:
         run: node scripts/verify-concierge-images.js
       - name: Verify first-PC label printer setup
         run: node scripts/verify-label-printer-onboarding.js
+      - name: Verify isolated CORE appraisal
+        run: node scripts/verify-core-valuation.js
 
   deploy-cloudflare-pages:
     name: Deploy verified frontend to Cloudflare Pages
