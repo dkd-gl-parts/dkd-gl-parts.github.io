@@ -15,6 +15,11 @@
     return Number.isFinite(n) && n <= maximum && (positive ? n > 0 : n >= 0) ? n : null;
   }
   function yen(value) { return value == null ? "未算定" : "¥" + Number(value).toLocaleString("ja-JP"); }
+  function resolveVariant(selectedId, rows) {
+    if (selectedId != null) return { variantId: selectedId, needsSelection: false };
+    var ids = Array.from(new Set((rows || []).map(function(row) { return Number(row.product_variant_id); }).filter(function(id) { return Number.isSafeInteger(id) && id > 0; })));
+    return { variantId: ids.length === 1 ? ids[0] : null, needsSelection: ids.length > 1 };
+  }
   function draft(data) {
     var stored = data.settings || {};
     var bases = stored.component_bases || {};
@@ -92,6 +97,7 @@
     instance.renderedCanEdit = !!canEdit(instance);
     var disabled = editable ? "" : " disabled";
     var html = '<div class="core-valuation-content"><div data-core-message role="status" aria-live="polite"></div>';
+    if (data.context.variant) html += '<div class="core-valuation-context-label">対象在庫: ' + escape(data.context.variant.display_label || "区分標準") + '</div>';
     html += '<div class="core-valuation-body-fields">' +
       '<label>正味CORE重量 (kg)<input data-core-weight type="number" min="0.001" max="1000" step="0.001" value="' + escape(settings.net_weight_kg) + '"' + disabled + '></label>' +
       '<div><span>基準重量単価</span><strong>¥360 / kg</strong></div>' +
@@ -136,6 +142,10 @@
   }
   async function load(instance) {
     if (!valid(instance) || instance.busy) return;
+    if (instance.options.needsSelection) {
+      instance.content.innerHTML = '<div role="status" class="core-valuation-message">評価する対象在庫を選択してください。</div>';
+      return;
+    }
     instance.busy = true;
     instance.content.innerHTML = '<div role="status">評価情報を取得中...</div>';
     try {
@@ -213,7 +223,7 @@
   function mount(host, options) {
     if (!host) return;
     var scope = JSON.stringify([options.ownerId, options.productId, options.variantId]);
-    var key = scope + ":" + options.generation;
+    var key = scope + ":" + options.generation + ":" + !!options.needsSelection;
     if (!options.allowed) { active = null; host.replaceChildren(); host.hidden = true; return; }
     if (active && active.key === key && active.host === host) {
       active.options = options;
@@ -229,5 +239,5 @@
       if (event.target.open && !instance.data) load(instance);
     });
   }
-  root.DcatsCoreValuation = Object.freeze({ mount: mount, preview: preview, number: number, draft: draft });
+  root.DcatsCoreValuation = Object.freeze({ mount: mount, preview: preview, number: number, draft: draft, resolveVariant: resolveVariant });
 })(typeof window === "undefined" ? globalThis : window);

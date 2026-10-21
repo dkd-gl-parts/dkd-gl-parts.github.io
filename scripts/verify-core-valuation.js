@@ -22,6 +22,10 @@ function fixture() {
 }
 (async function(){
  const {api}=fixture();
+ eq(plain(api.resolveVariant(null,[{product_variant_id:11},{product_variant_id:'11'}])),{variantId:11,needsSelection:false},'kind default resolves only one CORE inventory');
+ eq(plain(api.resolveVariant(null,[{product_variant_id:11},{product_variant_id:12}])),{variantId:null,needsSelection:true},'multiple CORE inventories require selection');
+ eq(plain(api.resolveVariant(12,[{product_variant_id:11},{product_variant_id:12}])),{variantId:12,needsSelection:false},'explicit variant preserved');
+ eq(plain(api.resolveVariant(null,[{product_variant_id:null}])),{variantId:null,needsSelection:false},'common-only context preserved');
  let p=api.preview(context,settings);
  eq(p.body_appraisal_jpy,1548,"body weight rule");
  eq(plain(p.components.map(c=>c.appraisal_jpy)),[1000,600,0,null],"recovery direction and missing rate");
@@ -85,6 +89,10 @@ function fixture() {
  options.allowed=true;options.generation++;data.can_edit=false;mount();await open();
  eq(!!f.host.querySelector('[data-core-save]'),false,"read-only no save");
  eq(f.host.querySelector('[data-core-weight]').disabled,true,"read-only fields");
+ options.generation++;options.needsSelection=true;const countBefore=requests.length;mount();await open();
+ eq(f.host.textContent.includes('対象在庫を選択'),true,'ambiguous inventory has actionable state');
+ eq(requests.length,countBefore,'ambiguous inventory sends no valuation request');
+ options.needsSelection=false;
  options.generation++;options.rpc=async()=>({error:{code:'42501',message:'CORE_ACCESS_DENIED'}});mount();await open();
  eq(f.host.textContent.includes('権限がありません'),true,"direct API denial distinct");
  options.generation++;options.rpc=async()=>{throw Error('network')};mount();await open();
@@ -114,6 +122,20 @@ function fixture() {
  newSave({error:{code:'40001',message:'CORE_CONTEXT_CHANGED'}});await flush();
  eq(!!race.host.querySelector('[data-core-save]'),true,'matching rejected operation can clear itself');
  const app=fs.readFileSync('app.js','utf8');
+ let bridgeOptions,rawVariant=null;
+ const bridge={window:{DcatsCoreValuation:{resolveVariant:api.resolveVariant,mount:(host,o)=>{bridgeOptions=o;}}},
+  document:{getElementById:()=>({})},currentProduct:{dkd_shohin_id:1},userProfile:{id:'actor'},componentLoadRequestId:3,
+  currentCoreDkdShohinId:1,assemblyComponentRows:[{component_manufacturer_part_number:'CORE',product_variant_id:11,is_catalog_evidence:false}],
+  selectedComponentVariantId:()=>rawVariant,selectedProductKind:()=> 'rebuilt',normalizedComponentPartKey:v=>v,
+  canViewInternalComponents:()=>true,canUseManufacturingCost:()=>true,canManageComponentsInCurrentContext:()=>true,
+  canEditManufacturingCostMgmt:()=>true,sb:{rpc:()=>{}}};
+ vm.runInNewContext(app.slice(app.indexOf('function refreshCoreValuationPanel('),app.indexOf('function catalogComponentRowsNeedDkdRecovery(')),bridge);
+ bridge.refreshCoreValuationPanel(false);
+ eq(bridgeOptions.variantId,11,'active app bridge resolves default to source inventory');
+ eq(bridgeOptions.isCurrent(),true,'current guard compares raw selector rather than resolved ID');
+ rawVariant=12;eq(bridgeOptions.isCurrent(),false,'selector change rejects old request');
+ rawVariant=null;bridge.assemblyComponentRows.push({component_manufacturer_part_number:'CORE',product_variant_id:12,is_catalog_evidence:false});bridge.refreshCoreValuationPanel(false);
+ eq(bridgeOptions.needsSelection,true,'active app bridge rejects ambiguous inventory');
  const lastRender=app.slice(app.lastIndexOf('function renderAssemblyComponentRows()'),app.indexOf('async function loadAssemblyComponentsForCurrent()',app.lastIndexOf('function renderAssemblyComponentRows()')));
  eq(lastRender.includes('refreshCoreValuationPanel(false)'),true,'active renderer integrated');
  assert.match(app,/canViewInternalComponents\(\) && canUseManufacturingCost\(userProfile\)/);checks++;

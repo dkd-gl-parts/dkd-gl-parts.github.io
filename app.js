@@ -49843,21 +49843,24 @@ function refreshCoreValuationPanel(loading) {
   var product = currentProduct;
   var ownerId = userProfile && userProfile.id;
   var generation = componentLoadRequestId;
-  var variantId = selectedComponentVariantId();
+  var selectedVariantId = selectedComponentVariantId();
   var productId = parseInt(currentCoreDkdShohinId || (product && (product.dkd_shohin_id || product.id)), 10);
+  var coreRows = (assemblyComponentRows || []).filter(function(row) {
+    return !row.is_catalog_evidence && /^CORE(D[0-9A-Z]+)?$/.test(normalizedComponentPartKey(row.component_manufacturer_part_number));
+  });
+  var variantChoice = window.DcatsCoreValuation.resolveVariant(selectedVariantId, coreRows);
   var allowed = !loading && !!ownerId && !!productId && selectedProductKind() === "rebuilt" &&
     canViewInternalComponents() && canUseManufacturingCost(userProfile) &&
-    (assemblyComponentRows || []).some(function(row) {
-      return !row.is_catalog_evidence && /^CORE(D[0-9A-Z]+)?$/.test(normalizedComponentPartKey(row.component_manufacturer_part_number));
-    });
+    coreRows.length > 0;
   window.DcatsCoreValuation.mount(document.getElementById("core-valuation-wrap"), {
-    allowed: allowed, ownerId: ownerId, productId: productId, variantId: variantId,
+    allowed: allowed, ownerId: ownerId, productId: productId, variantId: variantChoice.variantId,
+    needsSelection: variantChoice.needsSelection,
     generation: generation, canEdit: canManageComponentsInCurrentContext() && canEditManufacturingCostMgmt(),
     canEditNow: function() { return canManageComponentsInCurrentContext() && canEditManufacturingCostMgmt(); },
     rpc: function(name, args) { return sb.rpc(name, args); },
     isCurrent: function() {
       return currentProduct === product && componentLoadRequestId === generation &&
-        selectedProductKind() === "rebuilt" && selectedComponentVariantId() === variantId &&
+        selectedProductKind() === "rebuilt" && selectedComponentVariantId() === selectedVariantId &&
         userProfile && userProfile.id === ownerId && canViewInternalComponents() && canUseManufacturingCost(userProfile);
     }
   });

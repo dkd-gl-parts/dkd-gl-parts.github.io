@@ -1,6 +1,7 @@
 .core-valuation { border-top: 1px solid #cdd7df; margin-top: 12px; padding: 12px 0; color: #172e3b; }
 .core-valuation > summary { font-weight: 700; cursor: pointer; }
 .core-valuation-content { padding-top: 12px; }
+.core-valuation-context-label { margin-bottom: 10px; font-size: 12px; color: #5f737e; }
 .core-valuation-body-fields { display: grid; grid-template-columns: minmax(140px, 1fr) minmax(120px, 1fr) minmax(160px, 1fr) minmax(200px, 2fr); gap: 14px; align-items: end; }
 .core-valuation-body-fields label, .core-valuation-body-fields span { display: block; font-size: 12px; font-weight: 600; }
 .core-valuation-body-fields strong { display: block; padding: 9px 0; font-size: 16px; }
