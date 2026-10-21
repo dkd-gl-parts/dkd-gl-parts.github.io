@@ -8303,7 +8303,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1233";
+var APP_VERSION       = "v1.1.1234";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -49638,6 +49638,7 @@ function renderAssemblyComponentRows() {
   var catalogMode = selectedProductKind() === "catalog_spec";
   var tableModeClass = catalogMode ? " component-table-catalog" : " component-table-manual";
   var colspan = 11 + (hasActions ? 1 : 0);
+  if (typeof refreshCoreValuationPanel === "function") refreshCoreValuationPanel(false);
   var html = "<table class='component-table component-table-tree" + tableModeClass + "'>";
   html += "<tr><th class='component-tree-col'>" + t("component_child") + "</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th>";
   if (catalogMode) {
@@ -49837,6 +49838,30 @@ async function loadAssemblyComponentsForCurrent() {
   renderAssemblyComponentRows();
 }
 
+function refreshCoreValuationPanel(loading) {
+  if (!window.DcatsCoreValuation) return;
+  var product = currentProduct;
+  var ownerId = userProfile && userProfile.id;
+  var generation = componentLoadRequestId;
+  var variantId = selectedComponentVariantId();
+  var productId = parseInt(currentCoreDkdShohinId || (product && (product.dkd_shohin_id || product.id)), 10);
+  var allowed = !loading && !!ownerId && !!productId && selectedProductKind() === "rebuilt" &&
+    canViewInternalComponents() && canUseManufacturingCost(userProfile) &&
+    (assemblyComponentRows || []).some(function(row) {
+      return !row.is_catalog_evidence && /^CORE(D[0-9A-Z]+)?$/.test(normalizedComponentPartKey(row.component_manufacturer_part_number));
+    });
+  window.DcatsCoreValuation.mount(document.getElementById("core-valuation-wrap"), {
+    allowed: allowed, ownerId: ownerId, productId: productId, variantId: variantId,
+    generation: generation, canEdit: canManageComponentsInCurrentContext() && canEditManufacturingCostMgmt(),
+    rpc: function(name, args) { return sb.rpc(name, args); },
+    isCurrent: function() {
+      return currentProduct === product && componentLoadRequestId === generation &&
+        selectedProductKind() === "rebuilt" && selectedComponentVariantId() === variantId &&
+        userProfile && userProfile.id === ownerId && canViewInternalComponents() && canUseManufacturingCost(userProfile);
+    }
+  });
+}
+
 function catalogComponentRowsNeedDkdRecovery(rows, selectedKind) {
   if (selectedKind !== "catalog_spec" || !Array.isArray(rows) || rows.length !== 1) return false;
   var onlyRow = rows[0] || {};
@@ -49916,6 +49941,7 @@ async function loadAssemblyComponentsForCurrent() {
   if (!wrap) return;
   var componentLoadProduct = currentProduct;
   var loadRequestId = ++componentLoadRequestId;
+  if (typeof refreshCoreValuationPanel === "function") refreshCoreValuationPanel(true);
   function componentLoadIsStale() {
     return loadRequestId !== componentLoadRequestId || currentProduct !== componentLoadProduct || selectedProductKind() !== selectedKind;
   }
