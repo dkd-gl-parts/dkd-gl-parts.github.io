@@ -8225,7 +8225,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1230";
+var APP_VERSION       = "v1.1.1231";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -8282,6 +8282,7 @@ var componentIllustrationRows = [];
 var componentIllustrationLoading = false;
 var componentIllustrationError = "";
 var componentIllustrationRequestId = 0;
+var componentLoadRequestId = 0;
 var componentIllustrationSignedUrlCache = null;
 var componentIllustrationLastTiming = null;
 if (sb.auth && typeof sb.auth.onAuthStateChange === "function") {
@@ -49751,9 +49752,13 @@ function catalogComponentRowsNeedDkdRecovery(rows, selectedKind) {
   return componentIsCurrentProductSelfReference(onlyRow) && !!onlyRow.has_child_catalog_components;
 }
 
-async function fetchCatalogComponentRowsByDkd(dkdId) {
+async function fetchCatalogComponentRowsByDkd(dkdId, loadRequestId) {
   var recoveryProduct = currentProduct;
   var recoveryKind = selectedProductKind();
+  var recoveryRequestId = loadRequestId === undefined ? componentLoadRequestId : loadRequestId;
+  function recoveryIsStale() {
+    return recoveryRequestId !== componentLoadRequestId || currentProduct !== recoveryProduct || selectedProductKind() !== recoveryKind;
+  }
   var manufacturer = String((recoveryProduct && recoveryProduct.manufacturer) || "").toUpperCase();
   var manufacturerPartKeys = componentAssyLookupKeys(recoveryProduct);
   var genuinePartKeys = componentCurrentProductGenuineKeys();
@@ -49764,7 +49769,7 @@ async function fetchCatalogComponentRowsByDkd(dkdId) {
     .eq("is_catalog_evidence", true)
     .order("component_position", { ascending: true, nullsFirst: false })
     .order("component_manufacturer_part_number", { ascending: true });
-  if (currentProduct !== recoveryProduct || selectedProductKind() !== recoveryKind) return { rows: [], error: null, stale: true };
+  if (recoveryIsStale()) return { rows: [], error: null, stale: true };
   if (r.error) return { rows: [], error: r.error };
 
   var rows = (r.data || []).filter(function(row) {
@@ -49790,10 +49795,10 @@ async function fetchCatalogComponentRowsByDkd(dkdId) {
         max_rows: 5000
       });
     } catch (error) {
-      if (currentProduct !== recoveryProduct || selectedProductKind() !== recoveryKind) return { rows: [], error: null, stale: true };
+      if (recoveryIsStale()) return { rows: [], error: null, stale: true };
       return { rows: [], error: error };
     }
-    if (currentProduct !== recoveryProduct || selectedProductKind() !== recoveryKind) return { rows: [], error: null, stale: true };
+    if (recoveryIsStale()) return { rows: [], error: null, stale: true };
     if (selection && selection.error) return { rows: [], error: selection.error };
     if (!selection || !Array.isArray(selection.data) || !selection.data.length || selection.data.length >= 5000 ||
         !selection.data.every(function(row) {
@@ -49819,6 +49824,10 @@ async function loadAssemblyComponentsForCurrent() {
   var wrap = document.getElementById("component-wrap");
   if (!wrap) return;
   var componentLoadProduct = currentProduct;
+  var loadRequestId = ++componentLoadRequestId;
+  function componentLoadIsStale() {
+    return loadRequestId !== componentLoadRequestId || currentProduct !== componentLoadProduct || selectedProductKind() !== selectedKind;
+  }
   assemblyComponentRows = [];
   componentAlternativeRows = [];
   componentAlternativeMap = {};
@@ -49854,15 +49863,15 @@ async function loadAssemblyComponentsForCurrent() {
       target_product_kind: selectedKind,
       target_product_variant_id: selectedKind === "catalog_spec" ? null : selectedComponentVariantId()
     });
-    if (currentProduct !== componentLoadProduct || selectedProductKind() !== selectedKind) return;
+    if (componentLoadIsStale()) return;
     if (!rpc.error) {
       var rpcRows = (rpc.data || []).map(function(row) {
         return normalizeComponentTreeRow(row, null);
       });
       var recoveredCatalogRows = false;
       if (catalogComponentRowsNeedDkdRecovery(rpcRows, selectedKind)) {
-        var recovery = await fetchCatalogComponentRowsByDkd(dkdId);
-        if (recovery.stale) return;
+        var recovery = await fetchCatalogComponentRowsByDkd(dkdId, loadRequestId);
+        if (recovery.stale || componentLoadIsStale()) return;
         if (recovery.error) {
           console.warn("catalog component DKD recovery failed", recovery.error);
         } else if (recovery.rows.length > rpcRows.length) {
@@ -49874,9 +49883,11 @@ async function loadAssemblyComponentsForCurrent() {
         assemblyComponentRows = rpcRows;
         updateComponentTargetSummary(rpcRows.length);
         await translationPromise;
+        if (componentLoadIsStale()) return;
         renderAssemblyComponentRows();
         if (recoveredCatalogRows) {
           await loadComponentAlternativesForRows(rpcRows);
+          if (componentLoadIsStale()) return;
           renderAssemblyComponentRows();
         }
         return;
@@ -49890,6 +49901,7 @@ async function loadAssemblyComponentsForCurrent() {
     target_dkd_shohin_id: dkdId,
     target_product_kind: selectedKind
   });
+  if (componentLoadIsStale()) return;
   if (!treeFallbackRpc.error) {
     var treeFallbackRows = (treeFallbackRpc.data || []).map(function(row) {
       return normalizeComponentTreeRow(row, null);
@@ -49905,6 +49917,7 @@ async function loadAssemblyComponentsForCurrent() {
       assemblyComponentRows = treeFallbackRows;
       updateComponentTargetSummary(treeFallbackRows.length);
       await translationPromise;
+      if (componentLoadIsStale()) return;
       renderAssemblyComponentRows();
       return;
     }
@@ -49938,6 +49951,7 @@ async function loadAssemblyComponentsForCurrent() {
       .eq("dkd_shohin_id", dkdId);
   }
   var r = await query;
+  if (componentLoadIsStale()) return;
   if (r.error) {
     console.warn("assembly_component_usage_details failed", r.error);
     updateComponentTargetSummary(0);
@@ -49955,6 +49969,7 @@ async function loadAssemblyComponentsForCurrent() {
     });
   }
   await hydrateComponentChildCounts(rows);
+  if (componentLoadIsStale()) return;
 
   rows.sort(function(a, b) {
     var ap = String(a.component_position || "");
@@ -49966,6 +49981,7 @@ async function loadAssemblyComponentsForCurrent() {
   updateComponentTargetSummary(rows.length);
   await loadComponentAlternativesForRows(rows);
   await translationPromise;
+  if (componentLoadIsStale()) return;
   renderAssemblyComponentRows();
 }
 

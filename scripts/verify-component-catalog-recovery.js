@@ -27,7 +27,7 @@ if (!fetchSource.includes('.eq("dkd_shohin_id", dkdId)') ||
 }
 
 const guardIndex = loadSource.indexOf("catalogComponentRowsNeedDkdRecovery(rpcRows, selectedKind)");
-const fetchIndex = loadSource.indexOf("await fetchCatalogComponentRowsByDkd(dkdId)", guardIndex);
+const fetchIndex = loadSource.indexOf("await fetchCatalogComponentRowsByDkd(dkdId, loadRequestId)", guardIndex);
 const replaceIndex = loadSource.indexOf("recovery.rows.length > rpcRows.length", fetchIndex);
 
 if (guardIndex < 0 || fetchIndex < guardIndex || replaceIndex < fetchIndex) {
@@ -76,6 +76,7 @@ function harness(options = {}) {
   const calls = [], filters = [];
   let kind = "catalog_spec";
   const context = {
+    componentLoadRequestId: 1,
     currentProduct: { manufacturer: options.manufacturer || "DENSO", manufacturer_part_number: "128000-1862" },
     selectedProductKind: () => kind,
     componentAssyLookupKeys: () => ["1280001862"],
@@ -127,8 +128,65 @@ async function verifyRecovery() {
   for (const change of [(c) => { c.currentProduct = {}; }, (c) => { c.currentProduct = null; }, (c, setKind) => setKind("rebuilt")]) {
     const stale = await harness({ duringSelection: change }).run();assert(stale.stale);assert.equal(stale.rows.length, 0); checks++;
   }
-  assert(loadSource.includes("if (recovery.stale) return;")); checks++;
+  assert(loadSource.includes("if (recovery.stale || componentLoadIsStale()) return;")); checks++;
   assert(loadSource.includes("currentProduct !== componentLoadProduct")); checks++;
+  const overlapping = harness({ duringSelection: c => { c.componentLoadRequestId++; } });
+  assert((await overlapping.run()).stale); checks++;
+  const overlappingRaw = harness({ afterRaw: c => { c.componentLoadRequestId++; } });
+  assert((await overlappingRaw.run()).stale);assert.equal(overlappingRaw.calls.length, 0); checks++;
+  assert(loadSource.includes("var loadRequestId = ++componentLoadRequestId")); checks++;
+  assert(loadSource.includes("loadRequestId !== componentLoadRequestId")); checks++;
+  await verifyOverlappingLoads(); checks++;
   console.log(JSON.stringify({ componentRecoveryCases: checks, passed: true }));
+}
+async function verifyOverlappingLoads() {
+  const loadFunction = source.slice(loadStart, source.indexOf("async function loadParallelCandidatesForCurrent", loadStart));
+  let firstSelectionResolve, firstSelectionStarted;
+  const selectionStarted = new Promise(resolve => { firstSelectionStarted = resolve; });
+  const deferredSelection = new Promise(resolve => { firstSelectionResolve = resolve; });
+  const wrap = { innerHTML: "" };
+  let rawCalls = 0, selectionCalls = 0, renders = 0;
+  const freshRows = [row(2, "a", { quantity: "99" }), row(4, "b"), row(5, "c")];
+  const representative = r => Object.assign({}, r, {
+    parent_assy_manufacturer: "DENSO", parent_assy_manufacturer_part_number: "128000-1862",
+    catalog_match_basis: "catalog_manufacturer_part_blank_genuine"
+  });
+  const c = {
+    console, document: { getElementById: () => wrap },
+    currentProduct: { manufacturer: "DENSO", manufacturer_part_number: "128000-1862" },
+    componentLoadRequestId: 0, componentIllustrationRequestId: 0, componentTreeRpcAvailable: true,
+    selectedProductKind: () => "catalog_spec", selectedComponentVariantId: () => null,
+    componentAssyLookupKeys: () => ["1280001862"], componentCurrentProductGenuineKeys: () => ["G1"],
+    normalizedPartKey: normalize, normalizeComponentTreeRow: r => Object.assign({}, r),
+    loadComponentDisplayNameTranslations: async () => {}, componentCatalogCategoryCode: () => "starter",
+    resolveCurrentCoreDkdShohinId: async () => 30844,
+    loadCatalogIllustrationsForCurrent: () => { c.componentIllustrationRequestId++; },
+    renderComponentIllustrationSlot: () => {}, updateComponentTargetSummary: () => {},
+    renderAssemblyComponentRows: () => { renders++; }, loadComponentAlternativesForRows: async () => {},
+    catalogComponentRowsNeedDkdRecovery: rows => rows.length === 1, t: key => key,
+    sb: {
+      from() {
+        const rows = ++rawCalls === 1 ? freshRows.slice(0, 2).map(r => Object.assign({}, r, { quantity: "1" })) : freshRows;
+        const q = { select: () => q, eq: () => q, order: () => q, then: (resolve, reject) => Promise.resolve({ data: rows }).then(resolve, reject) };
+        return q;
+      },
+      async rpc(name) {
+        if (name === "get_variant_catalog_components_for_ui") return { data: [{ id: 0, has_child_catalog_components: true }] };
+        assert.equal(name, "get_catalog_assembly_components_by_part");
+        if (++selectionCalls === 1) { firstSelectionStarted();return deferredSelection; }
+        return { data: freshRows.map(representative) };
+      }
+    }
+  };
+  vm.createContext(c);vm.runInContext(fetchSource + "\n" + loadFunction, c);
+  const oldLoad = c.loadAssemblyComponentsForCurrent();
+  await selectionStarted;
+  await c.loadAssemblyComponentsForCurrent();
+  const published = JSON.stringify(c.assemblyComponentRows), renderCount = renders;
+  assert.equal(c.assemblyComponentRows.length, 3);assert.equal(c.assemblyComponentRows[0].quantity, "99");
+  firstSelectionResolve({ data: freshRows.slice(0, 2).map(representative) });
+  await oldLoad;
+  assert.equal(JSON.stringify(c.assemblyComponentRows), published, "older recovery must not overwrite the newer same-product result");
+  assert.equal(renders, renderCount, "stale recovery must not render");
 }
 verifyRecovery().catch(error => { console.error(error); process.exitCode = 1; });
