@@ -8303,7 +8303,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1234";
+var APP_VERSION       = "v1.1.1236";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -49937,6 +49937,7 @@ function refreshCoreValuationPanel(loading) {
     needsSelection: variantChoice.needsSelection,
     generation: generation, canEdit: canManageComponentsInCurrentContext() && canEditManufacturingCostMgmt(),
     canEditNow: function() { return canManageComponentsInCurrentContext() && canEditManufacturingCostMgmt(); },
+    getProductWeight: function() { return fetchCoreProductShippingProfile(productId); },
     rpc: function(name, args) { return sb.rpc(name, args); },
     isCurrent: function() {
       return currentProduct === product && componentLoadRequestId === generation &&
@@ -51235,6 +51236,14 @@ async function loadCustomerPortalPreviewSalesPriceSummary(wrap, dkdId) {
   }
 }
 
+function isDevelopmentSalesCustomer(customer) {
+  return !!customer && String(customer.source_customer_code || "").trim().toUpperCase() === CUSTOMER_ACCESS_DEVELOPMENT_DEFAULT_CODE;
+}
+
+function salesManagementCustomerOptions() {
+  return detailSalesCustomerOptions.filter(function(customer) { return !isDevelopmentSalesCustomer(customer); });
+}
+
 async function loadDetailSalesCustomerOptions(isCurrent) {
   if (detailSalesCustomerOptions.length) return detailSalesCustomerOptions;
   var r = await sb.from("sales_customers")
@@ -51296,12 +51305,13 @@ function detailCustomerShippingRuleHtml(displaySettings) {
 
 function renderDetailCustomerInfoHtml(customer, priceInfo, canSelect, displaySettings) {
   priceInfo = priceInfo || {};
+  var selectableCustomers = salesManagementCustomerOptions();
   var html = "<div class='detail-customer-panel'>";
   if (canSelect) {
     html += "<div class='detail-customer-head'><label for='detail-sales-customer-select'>" + esc(t("sales_customer_label")) + "</label>";
     html += "<select class='detail-customer-select' id='detail-sales-customer-select'>";
     html += "<option value=''>" + esc(t("detail_customer_select_none")) + "</option>";
-    detailSalesCustomerOptions.forEach(function(row) {
+    selectableCustomers.forEach(function(row) {
       var selected = String(row.id) === String(detailSelectedSalesCustomerId || "") ? " selected" : "";
       html += "<option value='" + esc(String(row.id)) + "'" + selected + ">" + esc(detailCustomerOptionLabel(row)) + "</option>";
     });
@@ -51310,7 +51320,7 @@ function renderDetailCustomerInfoHtml(customer, priceInfo, canSelect, displaySet
     html += "<div class='detail-customer-head static'><span>" + esc(t("sales_customer_label")) + "</span><strong>" + esc(detailCustomerOptionLabel(customer)) + "</strong></div>";
   }
   if (!customer) {
-    if (!detailSalesCustomerOptions.length) {
+    if (!selectableCustomers.length) {
       html += "<div class='detail-customer-note'>" + esc(t("detail_customer_no_customers")) + "</div>";
     }
     html += "<div class='detail-customer-price-focus empty'><span>" + esc(t("sales_price_section")) + "</span><strong>" + esc(t("detail_customer_no_price")) + "</strong></div>";
@@ -51395,7 +51405,7 @@ async function loadDetailCustomerInfoForCurrent(seq) {
   var customer = null;
   if (canSelect) {
     await loadDetailSalesCustomerOptions();
-    customer = detailSalesCustomerOptions.find(function(row) { return String(row.id) === String(detailSelectedSalesCustomerId || ""); }) || null;
+    customer = salesManagementCustomerOptions().find(function(row) { return String(row.id) === String(detailSelectedSalesCustomerId || ""); }) || null;
     if (!customer && detailSelectedSalesCustomerId) detailSelectedSalesCustomerId = "";
   } else {
     var context = activeCustomerPortalContext();
@@ -53171,7 +53181,9 @@ function renderCustomerAccessList() {
     list.innerHTML = "<div class='empty'>" + esc(t("no_results")) + "</div>";
     return;
   }
-  list.innerHTML = customerAccessFilteredRows.map(function(row) {
+  list.innerHTML = customerAccessFilteredRows.slice().sort(function(a, b) {
+    return Number(isDevelopmentSalesCustomer(a)) - Number(isDevelopmentSalesCustomer(b));
+  }).map(function(row) {
     var selected = currentCustomerAccessCustomer && String(currentCustomerAccessCustomer.id) === String(row.id) ? " selected" : "";
     var inactive = row.is_active === false;
     return "<button type='button' class='customer-access-row" + selected + (inactive ? " inactive" : "") + "' data-customer-id='" + esc(String(row.id)) + "' aria-current='" + (selected ? "true" : "false") + "'>" +

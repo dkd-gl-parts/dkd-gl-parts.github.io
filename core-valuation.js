@@ -20,7 +20,7 @@
     var ids = Array.from(new Set((rows || []).map(function(row) { return Number(row.product_variant_id); }).filter(function(id) { return Number.isSafeInteger(id) && id > 0; })));
     return { variantId: ids.length === 1 ? ids[0] : null, needsSelection: ids.length > 1 };
   }
-  function draft(data) {
+  function draft(data, productWeight) {
     var stored = data.settings || {};
     var bases = stored.component_bases || {};
     var previous = (data.saved && data.saved.components) || [];
@@ -31,8 +31,13 @@
       var changed = data.stale && (!old || identityFields.some(function(k) { return old[k] !== c[k]; }));
       current[c.id] = changed || bases[c.id] == null || bases[c.id] === "" ? null : bases[c.id];
     });
-    return { net_weight_kg: stored.net_weight_kg == null ? "" : stored.net_weight_kg,
-      weight_source: stored.weight_source || "", component_bases: current };
+    var weight = stored.net_weight_kg == null ? "" : stored.net_weight_kg;
+    var source = stored.weight_source || "";
+    if (weight === "" && number(productWeight, 1000, 3, true, 4, false) != null) {
+      weight = String(Number(productWeight));
+      source = "品番に登録された商品重量（" + weight + " kg）";
+    }
+    return { net_weight_kg: weight, weight_source: source, component_bases: current };
   }
   function preview(context, settings) {
     var weight = number(settings.net_weight_kg, 1000, 3, true, 4, false);
@@ -139,6 +144,7 @@
     if (pending.get(instance.scope)) message(instance, "保存結果が未確認です。再保存せず、結果を確認してください。", true);
     else if (data.stale) message(instance, "保存後に構成部品または条件が変更されています。現在の条件で再確認してください。", true);
     else if (data.saved) message(instance, "保存済み: " + yen(data.saved.body_appraisal_jpy) + " / " + new Date(data.saved.saved_at).toLocaleString("ja-JP"));
+    else if (instance.weightLookupFailed) message(instance, "商品重量を取得できませんでした。正味CORE重量と確認元は手入力できます。", true);
   }
   async function load(instance) {
     if (!valid(instance) || instance.busy) return;
@@ -152,8 +158,21 @@
       var data = await rpc(instance, "get");
       if (!valid(instance)) return;
       if (!data.context || !Array.isArray(data.context.components) || !Array.isArray(data.history)) throw new Error("CORE_INVALID_RESPONSE");
+      var settings = draft(data);
+      instance.weightLookupFailed = false;
+      if (settings.net_weight_kg === "" && typeof instance.options.getProductWeight === "function") {
+        try {
+          var profile = await instance.options.getProductWeight();
+          if (!valid(instance)) return;
+          if (profile && String(profile.dkd_shohin_id) !== String(instance.options.productId)) throw new Error("CORE_WEIGHT_PRODUCT_MISMATCH");
+          settings = draft(data, profile && profile.shipping_weight_kg);
+        } catch (weightError) {
+          if (!valid(instance)) return;
+          instance.weightLookupFailed = true;
+        }
+      }
       instance.data = data;
-      instance.settings = draft(data);
+      instance.settings = settings;
       render(instance);
     } catch (error) {
       if (!valid(instance)) return;
