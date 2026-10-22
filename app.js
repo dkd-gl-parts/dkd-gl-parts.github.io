@@ -43049,7 +43049,6 @@ function render() {
   if (moreWrap) setCspStyle(moreWrap, "display", productSearchHasMore ? "block" : "none");
   var html = "";
   visibleItems.forEach(function(p, idx) {
-    var cnt   = getProductImageCount(p);
     var slNums = slPartLabelsForProduct(p);
     var hasSL  = productHasSlPart(p, slNums);
     var hasKikan = hasProductKikanCompatible(p);
@@ -43059,11 +43058,6 @@ function render() {
     var cardPartNumber = p.genuine_part_number || p.manufacturer_part_number || "-";
     var cardLabel = [cardPartNumber, productCategoryLabel(p)].filter(Boolean).join(" / ");
     html += "<div class='card"+sel+"' role='button' tabindex='0' aria-label='"+esc(cardLabel)+"' data-id='"+p.id+"' data-dkd-id='"+esc(productDkdId(p))+"' data-result-index='"+idx+"'><div class='card-top'>";
-    html += "<div class='card-media'>";
-    html += "<div class='card-thumb card-thumb-icon " + (cnt > 0 ? "has-image" : "no-image") + "'><span class='icon-image' aria-hidden='true'></span><span class='card-thumb-icon-label'>" + esc(cnt > 0 ? t("image_has") : t("image_none_short")) + "</span></div>";
-    if (hasCatalogSpec) html += "<div class='card-media-catalog'><span class='badge-catalog'>" + esc(t("product_kind_catalog_spec")) + "</span></div>";
-    if (hasSL) html += "<div class='card-media-sl'><span class='badge-sl' title='" + esc(t("filter_sl")) + "'>SL</span></div>";
-    html += "</div>";
     html += "<div class='card-left'>";
     html += "<div class='card-pn card-pn-primary' title='"+esc(cardPartNumber)+"'>"+esc(cardPartNumber)+"</div>";
     html += "<div class='card-category-row'><div class='card-name' title='"+esc(productCategoryLabel(p))+"'>"+esc(productCategoryLabel(p))+"</div>";
@@ -43085,8 +43079,15 @@ function render() {
     if (p.manufacturer && p.manufacturer_part_number) html += " / ";
     if (p.manufacturer_part_number) html += "<span data-dcats-inline-style='s-7b8c3df56487'>"+esc(p.manufacturer_part_number)+"</span>";
     html += "</div>";
+    html += "<div class='card-label-row'><div class='card-media-catalog" + (hasCatalogSpec ? "" : " slot-empty") + "'>";
+    if (hasCatalogSpec) html += "<span class='badge-catalog'>" + esc(t("product_kind_catalog_spec")) + "</span>";
+    html += "</div>";
     html += renderProductKindPills(kindSummary, { compact: true, shortNew: true });
+    html += "</div><div class='card-image-row'><div class='card-media-sl" + (hasSL ? "" : " slot-empty") + "'>";
+    if (hasSL) html += "<span class='badge-sl' title='" + esc(t("filter_sl")) + "'>SL</span>";
+    html += "</div>";
     html += renderSearchCardImageKinds(p);
+    html += "</div>";
     html += "</div>";
     html += "</div></div>";
   });

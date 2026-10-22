@@ -33,13 +33,15 @@ for(const language of ["ja","en","zh"]){
  const cards=[...document.querySelectorAll("#list .card")];eq(cards.length,64,"all state combinations render");
  cards.forEach((card,i)=>{
   const p=items[i],body=card.querySelector(".card-left");
-  eq([...body.children].map(e=>e.className),["card-pn card-pn-primary","card-category-row","card-mfr","product-kind-list compact","card-kind-images"],"manufacturer follows category before kind labels");
+  eq([...body.children].map(e=>e.className),["card-pn card-pn-primary","card-category-row","card-mfr","card-label-row","card-image-row"],"three full-width information tracks precede two fixed label rows");
+  eq(card.querySelectorAll('.card-media, .card-thumb').length,0,"left image indicator removed");
+  eq(card.querySelectorAll('.card-media-catalog, .card-media-sl').length,2,"catalog and SL slots always retained");
   eq(card.querySelectorAll(".card-category-row .badge-img").length,0,"total image badge replaced with kind-specific footer");
   eq(card.querySelectorAll(".card-media-sl .badge-sl").length,p.sl.length?1:0,"SL state below catalog");
   eq(card.querySelectorAll(".card-category-row .badge-kikan").length,p.kikan?1:0,"compatibility in category track");
   eq(card.querySelectorAll(".card-kind-images .product-kind-pill").length,p.image_count?2:0,"kind-specific images retained");
   if(p.both)eq(card.querySelector(".product-kind-list .aftermarket_new").textContent,labels.product_kind_new_short,"new label is short on search card");
-  eq(card.querySelectorAll(".card-media-catalog").length,p.catalog?1:0,"catalog marker retained");
+  eq(card.querySelectorAll(".card-media-catalog .badge-catalog").length,p.catalog?1:0,"catalog marker retained without moving empty slot");
   eq(card.querySelector(".card-pn").getAttribute("title"),p.genuine_part_number,"full primary part retained");
   eq(card.getAttribute("role"),"button","selection semantics retained");
   eq(card.getAttribute("tabindex"),"0","keyboard focus retained");
@@ -53,8 +55,8 @@ for(const language of ["ja","en","zh"]){
  eq(document.querySelector(".card-pn").title,items[0].genuine_part_number,"escaped full title retained");
  items[0].genuine_part_number="27060-E0000";
 }
-assert.match(css,/#screen-search \.card-left\s*\{[^}]*grid-template-rows:\s*21px 18px 17px 20px 17px/);checks++;
-assert.match(css,/#screen-search \.card-left > \.product-kind-list\.compact \.product-kind-pill\s*\{[^}]*height:\s*18px/);checks++;
+assert.match(css,/#screen-search \.card-left\s*\{[^}]*grid-template-rows:\s*21px 18px 17px 18px 19px/);checks++;
+assert.match(css,/#screen-search \.card-label-row \.product-kind-pill\s*\{[^}]*height:\s*18px/);checks++;
 assert.match(css,/#screen-search \.card-category-row \.badge-slot\.slot-empty\s*\{\s*display:\s*none/);checks++;
 assert.match(css,/#screen-search \.card-category-row \.card-badges-inline\s*\{[^}]*flex-direction:\s*row/);checks++;
 assert.match(css,/#screen-search \.card-reference-row > span\s*\{[^}]*text-overflow:\s*ellipsis/);checks++;
