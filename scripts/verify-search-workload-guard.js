@@ -149,7 +149,7 @@ const searchTypographyContracts = [
   [/\.filter-row \.form-select\s*\{[^}]*font-size:\s*var\(--dcats-type-body\)/s, "category select"],
   [/\.search-clear-btn\s*\{[^}]*font-size:\s*var\(--dcats-type-supporting\)[^}]*font-weight:\s*700/s, "clear action"],
   [/\.count-bar\s*\{[^}]*font-size:\s*13px[^}]*font-weight:\s*600/s, "result count"],
-  [/#screen-search \.card-pn-primary\s*\{[^}]*font-size:\s*15px[^}]*font-weight:\s*800/s, "result part number"],
+  [/#screen-search \.card-pn-primary\s*\{[^}]*font-size:\s*16px[^}]*font-weight:\s*800/s, "result part number"],
   [/#screen-search \.card-name\s*\{[^}]*font-size:\s*12px[^}]*font-weight:\s*700/s, "result category"],
   [/#screen-search \.card-mfr\s*\{[^}]*font-size:\s*12px/s, "result manufacturer"]
 ];

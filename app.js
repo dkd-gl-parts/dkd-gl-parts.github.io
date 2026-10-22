@@ -8306,7 +8306,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1247";
+var APP_VERSION       = "v1.1.1248";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -41004,15 +41004,18 @@ function renderProductKindPill(kind, meta, options) {
   return "<span class='product-kind-pill " + productKindClass(kind) + "'>" + esc(label) + extra + "</span>";
 }
 
-function renderSearchCardImageKinds(product) {
+function renderSearchCardKindSummary(product, summary) {
   var context = (isCustomerViewer() || isCustomerPortalSearchMode()) ? "customer" : "sales";
   var info = product && product.search_image_kind_info;
   var counts = info && info.context === context ? info.counts : {};
-  return "<div class='card-kind-images'>" + ["rebuilt", "aftermarket_new"].map(function(kind) {
+  return "<div class='card-kind-summary'>" + ["rebuilt", "aftermarket_new"].map(function(kind) {
     var count = parseInt(counts && counts[kind] || 0, 10) || 0;
     var label = kind === "aftermarket_new" ? t("product_kind_new_short") : productKindLabel(kind);
-    return "<span class='card-kind-image-slot' data-image-kind='" + kind + "'>" + (count > 0
-      ? "<span class='product-kind-pill " + productKindClass(kind) + "' title='" + esc(label + " / " + t("image_has") + " (" + count + ")") + "' aria-label='" + esc(label + " / " + t("image_has")) + "'>" + esc(t("image_has")) + "</span>" : "") + "</span>";
+    var visible = productKindSummaryHasKind(summary, kind) || count > 0;
+    return "<div class='card-kind-cell " + productKindClass(kind) + (visible ? "" : " slot-empty") + "' data-card-kind='" + kind + "'" + (visible ? "" : " aria-hidden='true'") + ">" +
+      "<span class='card-kind-name'>" + (visible ? esc(label) : "") + "</span>" +
+      "<span class='card-kind-photo-slot' data-image-kind='" + kind + "'>" + (count > 0
+      ? "<span class='card-kind-photo' title='" + esc(label + " / " + t("image_has") + " (" + count + ")") + "' aria-label='" + esc(label + " / " + t("image_has")) + "'><span class='icon-image' aria-hidden='true'></span>" + esc(t("image_has")) + "</span>" : "") + "</span></div>";
   }).join("") + "</div>";
 }
 
@@ -43059,7 +43062,12 @@ function render() {
     var cardLabel = [cardPartNumber, productCategoryLabel(p)].filter(Boolean).join(" / ");
     html += "<div class='card"+sel+"' role='button' tabindex='0' aria-label='"+esc(cardLabel)+"' data-id='"+p.id+"' data-dkd-id='"+esc(productDkdId(p))+"' data-result-index='"+idx+"'><div class='card-top'>";
     html += "<div class='card-left'>";
-    html += "<div class='card-pn card-pn-primary' title='"+esc(cardPartNumber)+"'>"+esc(cardPartNumber)+"</div>";
+    html += "<div class='card-pn-row'><div class='card-pn card-pn-primary' title='"+esc(cardPartNumber)+"'>"+esc(cardPartNumber)+"</div>";
+    html += "<div class='card-document-badges'><div class='card-media-catalog" + (hasCatalogSpec ? "" : " slot-empty") + "'>";
+    if (hasCatalogSpec) html += "<span class='badge-catalog'>" + esc(t("product_kind_catalog_spec")) + "</span>";
+    html += "</div><div class='card-media-sl" + (hasSL ? "" : " slot-empty") + "'>";
+    if (hasSL) html += "<span class='badge-sl' title='" + esc(t("filter_sl")) + "'>SL</span>";
+    html += "</div></div></div>";
     html += "<div class='card-category-row'><div class='card-name' title='"+esc(productCategoryLabel(p))+"'>"+esc(productCategoryLabel(p))+"</div>";
     html += "<div class='card-reference-row'>";
     if (p.genuine_part_number_2) html += "<span class='card-sub' title='純正2: "+esc(p.genuine_part_number_2)+"'>純正2: "+esc(p.genuine_part_number_2)+"</span>";
@@ -43079,15 +43087,7 @@ function render() {
     if (p.manufacturer && p.manufacturer_part_number) html += " / ";
     if (p.manufacturer_part_number) html += "<span data-dcats-inline-style='s-7b8c3df56487'>"+esc(p.manufacturer_part_number)+"</span>";
     html += "</div>";
-    html += "<div class='card-label-row'><div class='card-media-catalog" + (hasCatalogSpec ? "" : " slot-empty") + "'>";
-    if (hasCatalogSpec) html += "<span class='badge-catalog'>" + esc(t("product_kind_catalog_spec")) + "</span>";
-    html += "</div>";
-    html += renderProductKindPills(kindSummary, { compact: true, shortNew: true });
-    html += "</div><div class='card-image-row'><div class='card-media-sl" + (hasSL ? "" : " slot-empty") + "'>";
-    if (hasSL) html += "<span class='badge-sl' title='" + esc(t("filter_sl")) + "'>SL</span>";
-    html += "</div>";
-    html += renderSearchCardImageKinds(p);
-    html += "</div>";
+    html += renderSearchCardKindSummary(p, kindSummary);
     html += "</div>";
     html += "</div></div>";
   });
