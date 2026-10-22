@@ -89,7 +89,7 @@ if (visibilityApi.filterSalesVisibleProducts([
 }
 
 const searchResultSource = sourceBetween("function render()", "function openPanel");
-if (!searchResultSource.includes("renderProductKindPills(kindSummary, { compact: true, shortNew: true })")) {
+if (!searchResultSource.includes("renderSearchCardKindSummary(p, kindSummary)")) {
   throw new Error("search result product-kind labels must remain compact");
 }
 

@@ -4896,21 +4896,23 @@ body.app-install-dialog-open { overflow: hidden; }
 #screen-search .card { margin-bottom: 6px; border-color: var(--dcats-border); border-radius: var(--dcats-card-radius); padding: 9px 10px; }
 #screen-search .card.selected { border-color: #e58a96; box-shadow: inset 3px 0 0 var(--dcats-brand-red); }
 #screen-search .card:focus-visible { border-color: var(--dcats-focus); outline: 2px solid var(--dcats-focus); outline-offset: 2px; box-shadow: var(--dcats-focus-ring); }
-#screen-search .card-pn-primary { margin-top: 0; color: #172033; font-size: 15px; font-weight: 800; line-height: 1.35; letter-spacing: .01em; font-variant-numeric: tabular-nums; }
+#screen-search .card-pn-primary { margin-top: 0; color: #172033; font-size: 16px; font-weight: 800; line-height: 1.35; letter-spacing: .01em; font-variant-numeric: tabular-nums; }
 #screen-search .card-name { margin-top: 3px; color: #526173; font-size: 12px; font-weight: 700; line-height: 1.4; }
-#screen-search .card-mfr { color: #667085; font-size: 12px; line-height: 1.4; }
-#screen-search .card-left { display: grid; grid-template-rows: 21px 18px 17px 18px 19px; }
-#screen-search .card-left > .card-pn,
+#screen-search .card-mfr { color: #667085; font-size: 12px; line-height: 17px; }
+#screen-search .card-left { display: grid; grid-template-rows: 22px 18px 17px 36px; }
+#screen-search .card-pn-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+#screen-search .card-pn-row > .card-pn { flex: 1 1 auto; min-width: 0; margin-top: 0; }
 #screen-search .card-left > .card-mfr { margin-top: 0; }
-#screen-search .card-label-row,
-#screen-search .card-image-row { display: grid; grid-template-columns: 48px 119px; column-gap: 12px; height: 18px; align-items: start; }
-#screen-search .card-image-row { align-self: end; }
-#screen-search .card-label-row > .product-kind-list.compact { grid-template-columns: 58px 58px; width: 119px; max-width: 100%; height: 18px; margin-top: 0; }
-#screen-search .card-label-row .product-kind-slot { height: 18px; min-height: 18px; line-height: 16px; }
-#screen-search .card-label-row .product-kind-pill { height: 18px; padding: 0 5px; line-height: 16px; }
-#screen-search .card-kind-images { display: grid; grid-template-columns: 58px 58px; gap: 3px; width: 119px; height: 18px; }
-#screen-search .card-kind-image-slot { min-width: 0; display: flex; }
-#screen-search .card-kind-image-slot .product-kind-pill { width: 100%; height: 18px; justify-content: center; box-sizing: border-box; padding: 0 2px; font-size: 10px; line-height: 16px; }
+#screen-search .card-document-badges { display: grid; grid-template-columns: 54px 24px; gap: 4px; width: 82px; height: 18px; flex: 0 0 auto; }
+#screen-search .card-kind-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; height: 36px; padding-top: 4px; box-sizing: border-box; min-width: 0; }
+#screen-search .card-kind-cell { display: grid; grid-template-columns: minmax(0, 1fr) 64px; align-items: center; gap: 4px; min-width: 0; height: 32px; padding: 0 6px; box-sizing: border-box; border: 1px solid; border-radius: 5px; }
+#screen-search .card-kind-cell.rebuilt { background: var(--kind-rebuilt-bg); color: var(--kind-rebuilt-fg); border-color: var(--kind-rebuilt-border); }
+#screen-search .card-kind-cell.aftermarket_new { background: var(--kind-aftermarket-bg); color: var(--kind-aftermarket-fg); border-color: var(--kind-aftermarket-border); }
+#screen-search .card-kind-cell.slot-empty { visibility: hidden; }
+#screen-search .card-kind-name { height: 18px; line-height: 18px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+#screen-search .card-kind-photo-slot { width: 64px; height: 18px; }
+#screen-search .card-kind-photo { display: inline-flex; align-items: center; justify-content: center; gap: 2px; width: 64px; height: 18px; padding: 0 2px; box-sizing: border-box; border: 1px solid; border-color: inherit; border-radius: 3px; background: #fff; font-size: 10px; font-weight: 600; line-height: 16px; white-space: nowrap; }
+#screen-search .card-kind-photo .icon-image { width: 10px; height: 10px; }
 #screen-search .card-media-catalog,
 #screen-search .card-media-sl { display: flex; justify-content: center; height: 18px; }
 #screen-search .card-media-catalog .badge-catalog,
