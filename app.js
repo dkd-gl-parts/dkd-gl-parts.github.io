@@ -1970,7 +1970,7 @@ var TRANSLATIONS = {
     sales_shipping_charge_separate: "送料別途",
     sales_shipping_charge_free: "送料無料",
     sales_shipping_charge_loading: "送料条件を確認中",
-    sales_shipping_separate_note: "商品価格に送料は含まれていません。お届け先を選択して送料をご確認ください。",
+    sales_shipping_separate_note: "お届け先を選択して送料をご確認ください。",
     sales_shipping_free_note: "この得意先は送料無料です。",
     sales_shipping_estimate_title: "登録済み品番の送料試算",
     sales_shipping_destination: "お届け先",
@@ -4697,7 +4697,7 @@ var TRANSLATIONS = {
     sales_shipping_charge_separate: "Shipping charged separately",
     sales_shipping_charge_free: "Free shipping",
     sales_shipping_charge_loading: "Checking shipping terms",
-    sales_shipping_separate_note: "Shipping is not included in the product price. Select the destination to check the rate.",
+    sales_shipping_separate_note: "Select a destination to check shipping.",
     sales_shipping_free_note: "This customer receives free shipping.",
     sales_shipping_estimate_title: "Registered Product Shipping Estimate",
     sales_shipping_destination: "Destination",
@@ -7424,7 +7424,7 @@ var TRANSLATIONS = {
     sales_shipping_charge_separate: "运费另计",
     sales_shipping_charge_free: "免运费",
     sales_shipping_charge_loading: "正在确认运费条件",
-    sales_shipping_separate_note: "商品价格不含运费。请选择收货地区以确认运费。",
+    sales_shipping_separate_note: "请选择收货地区以确认运费。",
     sales_shipping_free_note: "此客户免运费。",
     sales_shipping_estimate_title: "已登记商品运费试算",
     sales_shipping_destination: "收货地区",
@@ -8309,7 +8309,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1249";
+var APP_VERSION       = "v1.1.1250";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -54379,7 +54379,7 @@ function renderKikanPartsList(parts_list, dkdShohinIdNum, product, wrap) {
     return;
   }
   var html = "<table class='kikan-table'>";
-  html += "<tr><th>" + t("f_genuine_pn") + "</th><th>" + t("f_mfr_pn") + "</th><th>" + t("product_kind_stock") + "</th><th></th></tr>";
+  html += "<thead><tr><th scope='col'>" + t("f_genuine_pn") + "</th><th scope='col'>" + t("f_mfr_pn") + "</th><th scope='col'>" + t("product_kind_stock") + "</th><th scope='col'></th></tr></thead><tbody>";
   parts_list.forEach(function(p) {
     var dkdId = String(p.dkd_shohin_id || p.id || "");
     html += "<tr class='kikan-other' data-dkd-id='" + esc(dkdId) + "'>";
@@ -54391,7 +54391,7 @@ function renderKikanPartsList(parts_list, dkdShohinIdNum, product, wrap) {
     html += "<td class='kikan-action'><button type='button' class='btn-sm-edit kikan-search-btn' data-dkd-id='" + esc(dkdId) + "'>" + esc(t("btn_search")) + "</button></td>";
     html += "</tr>";
   });
-  html += "</table>";
+  html += "</tbody></table>";
   targetWraps.forEach(function(targetWrap) {
     targetWrap.innerHTML = html;
     targetWrap.querySelectorAll(".kikan-search-btn[data-dkd-id]").forEach(function(btn) {
