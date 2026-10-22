@@ -8306,7 +8306,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1241";
+var APP_VERSION       = "v1.1.1242";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -43018,12 +43018,12 @@ function render() {
       hideWhenEmpty: true
     });
     html += "</div>";
-    html += renderProductKindPills(kindSummary, { compact: true, shortNew: true });
     html += "<div class='card-mfr' title='"+esc([p.manufacturer, p.manufacturer_part_number].filter(Boolean).join(" / "))+"'>";
     if (p.manufacturer) html += esc(p.manufacturer);
     if (p.manufacturer && p.manufacturer_part_number) html += " / ";
     if (p.manufacturer_part_number) html += "<span data-dcats-inline-style='s-7b8c3df56487'>"+esc(p.manufacturer_part_number)+"</span>";
     html += "</div>";
+    html += renderProductKindPills(kindSummary, { compact: true, shortNew: true });
     html += renderSearchCardImageKinds(p);
     html += "</div>";
     html += "</div></div>";
