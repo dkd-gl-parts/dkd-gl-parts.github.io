@@ -274,10 +274,10 @@ if (!compatibleLoadSource.includes('document.getElementById("sales-basic-compati
 }
 
 [
-  "grid-template-columns: minmax(0, 1fr) 320px",
+  "grid-template-rows: auto auto minmax(0, 1fr)",
   "#screen-search .sales-conditions-panel",
-  "position: sticky",
-  "justify-self: end",
+  "grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.4fr)",
+  "#screen-search .panel-scroll { overflow-y: auto; }",
   "grid-template-columns: 72px minmax(0, 1fr)",
   "grid-template-columns: 92px minmax(0, 1fr)",
   "font-variant-numeric: tabular-nums",

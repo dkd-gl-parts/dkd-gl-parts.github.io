@@ -1977,6 +1977,7 @@ var TRANSLATIONS = {
     sales_shipping_profile: "品番の配送設定",
     sales_shipping_manual_size_note: "出荷サイズが未設定です。確認するサイズを選択してください。",
     sales_shipping_size_only_note: "1個口・140サイズ以下は重量を判定せず、商品マスタのサイズで送料を試算します。",
+    sales_shipping_size_only_summary: "1個口・140サイズ以下：重量判定なし",
     sales_shipping_select_prefecture: "都道府県を選択",
     sales_shipping_select_size: "サイズを選択",
     sales_shipping_rate: "送料",
@@ -4703,6 +4704,7 @@ var TRANSLATIONS = {
     sales_shipping_profile: "Product Shipping Profile",
     sales_shipping_manual_size_note: "No package size is saved. Select a size to check the rate.",
     sales_shipping_size_only_note: "For one parcel up to size 140, shipping is estimated from the product master size without evaluating weight.",
+    sales_shipping_size_only_summary: "One parcel, size ≤140: weight not evaluated",
     sales_shipping_select_prefecture: "Select Prefecture",
     sales_shipping_select_size: "Select Size",
     sales_shipping_rate: "Shipping Rate",
@@ -7429,6 +7431,7 @@ var TRANSLATIONS = {
     sales_shipping_profile: "商品配送设置",
     sales_shipping_manual_size_note: "尚未设置出货尺寸。请选择要确认的尺寸。",
     sales_shipping_size_only_note: "单件包裹且尺寸不超过140时，按商品主数据中的尺寸估算运费，不评估重量。",
+    sales_shipping_size_only_summary: "单件包裹、尺寸≤140：不评估重量",
     sales_shipping_select_prefecture: "选择都道府县",
     sales_shipping_select_size: "选择尺寸",
     sales_shipping_rate: "运费",
@@ -8306,7 +8309,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1247";
+var APP_VERSION       = "v1.1.1248";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -22805,7 +22808,10 @@ function salesShippingEstimateShouldShow() {
 
 function updateSalesShippingEstimateVisibility() {
   var section = document.getElementById("sales-shipping-estimate-section");
-  if (section) setCspStyle(section, "display", salesShippingEstimateShouldShow() ? "block" : "none");
+  var show = salesShippingEstimateShouldShow();
+  if (section) setCspStyle(section, "display", show ? "block" : "none");
+  var conditions = document.getElementById("panel-right");
+  if (conditions) conditions.classList.toggle("sales-conditions-without-shipping", !show);
 }
 
 function bindSalesShippingEstimateActions() {
@@ -22867,7 +22873,7 @@ function renderSalesShippingEstimate(loadError) {
   if (!selectedPackage) salesShippingPackageKeyValue = "";
 
   var html = "<div class='sales-shipping-profile'><span>" + esc(t("sales_shipping_profile")) + "</span><strong>" + esc(shippingProfileText(salesShippingProfile)) + "</strong></div>";
-  html += "<div class='sales-shipping-message manual'>" + esc(t("sales_shipping_size_only_note")) + "</div>";
+  html += "<details class='sales-shipping-method'><summary>" + esc(t("sales_shipping_size_only_summary")) + "</summary><div class='sales-shipping-message manual'>" + esc(t("sales_shipping_size_only_note")) + "</div></details>";
   if (!profileHasSize) html += "<div class='sales-shipping-message manual'>" + esc(t("sales_shipping_manual_size_note")) + "</div>";
   html += "<div class='sales-shipping-controls'>";
   html += "<label><span>" + esc(t("sales_shipping_destination")) + "</span><select id='sales-shipping-prefecture'><option value=''>" + esc(t("sales_shipping_select_prefecture")) + "</option>" + shippingPrefectureOptionsHtml(salesShippingPrefectureCode, false) + "</select></label>";
@@ -22891,10 +22897,13 @@ function renderSalesShippingEstimate(loadError) {
   } else {
     var note = shippingRateVisibleNote(selectedRate.note);
     html += "<div class='sales-shipping-result'><span>" + esc(t("sales_shipping_rate")) + "</span><div>" + shippingFeeHtml(selectedRate.standard_fee_jpy, selectedRate.tax_type) + "</div></div>";
-    html += "<div class='sales-shipping-island'><span><b>" + esc(t("shipping_island_fee")) + ":</b> " + shippingFeeHtml(selectedRate.remote_island_fee_jpy, selectedRate.tax_type) + "</span>";
+    var hasIslandDetails = !!(selectedRate.remote_island_condition || note);
+    html += hasIslandDetails ? "<details class='sales-shipping-island'><summary>" : "<div class='sales-shipping-island'><span>";
+    html += "<b>" + esc(t("shipping_island_fee")) + ":</b> " + shippingFeeHtml(selectedRate.remote_island_fee_jpy, selectedRate.tax_type);
+    html += hasIslandDetails ? "</summary>" : "</span>";
     if (selectedRate.remote_island_condition) html += "<span><b>" + esc(t("shipping_island_condition")) + ":</b> " + esc(selectedRate.remote_island_condition) + "</span>";
     if (note) html += "<span><b>" + esc(t("shipping_note")) + ":</b> " + esc(note) + "</span>";
-    html += "</div>";
+    html += hasIslandDetails ? "</details>" : "</div>";
   }
   host.innerHTML = html;
   var prefectureSelect = document.getElementById("sales-shipping-prefecture");
@@ -41350,6 +41359,8 @@ function positionSalesConditionFields() {
   var kind = document.getElementById("product-kind-wrap");
   var stock = document.getElementById("product-kind-stock-wrap");
   if (!home || !host || !kind || !stock) return;
+  var conditions = document.getElementById("panel-right");
+  if (conditions) conditions.classList.toggle("sales-conditions-without-price", !canSeeSalesPrice());
   if (canSeeSalesPrice()) {
     var panel = host.querySelector(".detail-customer-panel") || host;
     var price = panel.querySelector(".detail-customer-price-focus");
@@ -43441,7 +43452,7 @@ function renderPanelStatic() {
   setCspStyle(document.getElementById("detail-customer-section"), "display", canSeeSalesPrice() ? "block" : "none");
   var customerWrap = document.getElementById("detail-customer-wrap");
   if (customerWrap) setDetailCustomerInfoContent(canSeeSalesPrice() ? "<div class='sales-detail-empty'>" + esc(t("loading")) + "</div>" : "");
-  setCspStyle(document.getElementById("sales-shipping-estimate-section"), "display", salesShippingEstimateShouldShow() ? "block" : "none");
+  updateSalesShippingEstimateVisibility();
   var shippingEstimateWrap = document.getElementById("sales-shipping-estimate-wrap");
   if (shippingEstimateWrap) shippingEstimateWrap.innerHTML = canViewCustomerShippingRates() ? "<div class='sales-detail-empty'>" + esc(t("loading")) + "</div>" : "";
   setCspStyle(document.getElementById("sales-conditions-market"), "display", canViewPriceResearchHistory() ? "block" : "none");
