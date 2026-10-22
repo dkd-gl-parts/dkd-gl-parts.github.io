@@ -8306,7 +8306,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1241";
+var APP_VERSION       = "v1.1.1242";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -41312,10 +41312,6 @@ function renderProductKindPanelHtml(summary) {
   summary = summary || productKindSummaryForProduct(currentProduct);
   var selected = ensureSelectedProductKind(summary);
   var options = currentProductKindOptions(summary);
-  var selectedMeta = summary.kinds && summary.kinds[selected] ? summary.kinds[selected] : null;
-  var stockText = productKindStockKindAllowed(selected) && selectedMeta && selectedMeta.stockKnown
-    ? String(selectedMeta.stockQty)
-    : "-";
   var html = "<div class='product-kind-control detail-sales-kind-control'>";
   html += "<div class='detail-sales-term-row detail-sales-kind-row'>";
   html += "<div class='detail-sales-term-label'>" + esc(t("product_kind_section")) + "</div>";
@@ -41324,25 +41320,85 @@ function renderProductKindPanelHtml(summary) {
   options.forEach(function(kind) {
     html += "<option class='" + productKindClass(kind) + "' value='" + esc(kind) + "'" + (kind === selected ? " selected" : "") + ">" + esc(productKindSelectLabel(kind, summary)) + "</option>";
   });
-  html += "</select></div></div>";
-  html += "<div class='product-kind-stock-grid'><div class='product-kind-stock-row detail-sales-term-row active " + productKindClass(selected) + "' data-product-kind-row='" + esc(selected) + "'>";
+  html += "</select></div></div></div>";
+  return html;
+}
+
+function renderProductKindStockHtml(summary) {
+  summary = summary || productKindSummaryForProduct(currentProduct);
+  var selected = ensureSelectedProductKind(summary);
+  var selectedMeta = summary.kinds && summary.kinds[selected] ? summary.kinds[selected] : null;
+  var stockText = productKindStockKindAllowed(selected) && selectedMeta && selectedMeta.stockKnown
+    ? String(selectedMeta.stockQty)
+    : "-";
+  var html = "<div class='product-kind-stock-grid'><div class='product-kind-stock-row detail-sales-term-row active " + productKindClass(selected) + "' data-product-kind-row='" + esc(selected) + "'>";
   html += "<div class='product-kind-stock-label detail-sales-term-label'>" + esc(t("product_kind_stock_qty")) + "</div>";
   html += "<div class='product-kind-stock-value detail-sales-term-value'>" + esc(stockText) + "</div>";
-  html += "</div></div></div>";
+  html += "</div></div>";
   return html;
+}
+
+function positionSalesConditionFields() {
+  var home = document.getElementById("sales-product-fields-home");
+  var host = document.getElementById("detail-customer-wrap");
+  var kind = document.getElementById("product-kind-wrap");
+  var stock = document.getElementById("product-kind-stock-wrap");
+  if (!home || !host || !kind || !stock) return;
+  if (canSeeSalesPrice()) {
+    var panel = host.querySelector(".detail-customer-panel") || host;
+    var price = panel.querySelector(".detail-customer-price-focus");
+    var shipping = panel.querySelector(".detail-customer-shipping-rule");
+    var kindBefore = price || panel.firstChild;
+    if (kindBefore !== kind && (kind.parentNode !== panel || kind.nextSibling !== kindBefore)) panel.insertBefore(kind, kindBefore);
+    var stockBefore = shipping || (price ? price.nextSibling : null);
+    if (stockBefore !== stock && (stock.parentNode !== panel || stock.nextSibling !== stockBefore)) panel.insertBefore(stock, stockBefore);
+  } else {
+    if (kind.parentNode !== home) home.appendChild(kind);
+    if (stock.parentNode !== home) home.appendChild(stock);
+  }
+  var terms = home.closest(".sales-conditions-terms");
+  var core = document.getElementById("core-return-policy-wrap");
+  if (terms) setCspStyle(terms, "display", home.children.length || (core && core.innerHTML.trim()) ? "" : "none");
+}
+
+function setDetailCustomerInfoContent(html) {
+  var host = document.getElementById("detail-customer-wrap");
+  var home = document.getElementById("sales-product-fields-home");
+  if (!host) return;
+  var focused = document.activeElement;
+  var preserveFocus = false;
+  // Preserve the live controls before replacing async customer/price content.
+  if (home) ["product-kind-wrap", "product-kind-stock-wrap"].forEach(function(id) {
+    var field = document.getElementById(id);
+    if (field && host.contains(field)) {
+      preserveFocus = preserveFocus || field.contains(focused);
+      home.appendChild(field);
+    }
+  });
+  host.innerHTML = html;
+  positionSalesConditionFields();
+  if (preserveFocus && focused && focused.isConnected) focused.focus({ preventScroll: true });
 }
 
 function renderProductKindWrapForCurrent() {
   var wrap = document.getElementById("product-kind-wrap");
   if (!wrap || !currentProduct) return;
-  wrap.innerHTML = renderProductKindPanelHtml(productKindSummaryForProduct(currentProduct));
+  var preserveFocus = wrap.contains(document.activeElement);
+  var summary = productKindSummaryForProduct(currentProduct);
+  wrap.innerHTML = renderProductKindPanelHtml(summary);
+  var stock = document.getElementById("product-kind-stock-wrap");
+  if (stock) stock.innerHTML = renderProductKindStockHtml(summary);
+  positionSalesConditionFields();
   bindProductKindPanelActions();
+  var select = document.getElementById("product-kind-select");
+  if (preserveFocus && select) select.focus({ preventScroll: true });
 }
 
 function renderCoreReturnPolicyWrapForCurrent() {
   var wrap = document.getElementById("core-return-policy-wrap");
   if (!wrap) return;
   wrap.innerHTML = renderCoreReturnPolicyHtml(selectedProductKind(), productKindRowsForCurrent(), { compact: true, vertical: true, showTitle: false });
+  positionSalesConditionFields();
 }
 
 function bindProductKindPanelActions() {
@@ -43372,13 +43428,12 @@ function renderPanelStatic() {
   setSalesKikanWrapContent(kikanWrap, showCompatibleParts
     ? "<div class='sales-detail-empty'>" + esc(t("loading")) + "</div>"
     : "");
-  var productKindWrap = document.getElementById("product-kind-wrap");
-  if (productKindWrap) productKindWrap.innerHTML = renderProductKindPanelHtml(productKindSummaryForProduct(p));
+  renderProductKindWrapForCurrent();
   renderCoreReturnPolicyWrapForCurrent();
   updateSalesProductStatusBadges();
   setCspStyle(document.getElementById("detail-customer-section"), "display", canSeeSalesPrice() ? "block" : "none");
   var customerWrap = document.getElementById("detail-customer-wrap");
-  if (customerWrap) customerWrap.innerHTML = canSeeSalesPrice() ? "<div class='sales-detail-empty'>" + esc(t("loading")) + "</div>" : "";
+  if (customerWrap) setDetailCustomerInfoContent(canSeeSalesPrice() ? "<div class='sales-detail-empty'>" + esc(t("loading")) + "</div>" : "");
   setCspStyle(document.getElementById("sales-shipping-estimate-section"), "display", salesShippingEstimateShouldShow() ? "block" : "none");
   var shippingEstimateWrap = document.getElementById("sales-shipping-estimate-wrap");
   if (shippingEstimateWrap) shippingEstimateWrap.innerHTML = canViewCustomerShippingRates() ? "<div class='sales-detail-empty'>" + esc(t("loading")) + "</div>" : "";
@@ -43467,7 +43522,6 @@ async function loadProductVariantsForCurrent(seq) {
   if (!currentProduct) return;
   var dkdId = parseInt(productDkdId(currentProduct), 10);
   if (isNaN(dkdId)) return;
-  var wrap = document.getElementById("product-kind-wrap");
   var rows = await fetchProductVariantsByDkdId(dkdId);
   if (seq !== detailSecondaryRequestSeq) return;
   currentProductVariants = rows;
@@ -43478,10 +43532,7 @@ async function loadProductVariantsForCurrent(seq) {
   var key = String(dkdId);
   productVariantSummaryMap[key] = summary;
   productVariantSummaryCache[key] = summary;
-  if (wrap) {
-    wrap.innerHTML = renderProductKindPanelHtml(productKindSummaryForProduct(currentProduct));
-    bindProductKindPanelActions();
-  }
+  renderProductKindWrapForCurrent();
   renderCoreReturnPolicyWrapForCurrent();
   updateSalesProductStatusBadges();
   updateSalesComponentTabCountForSelectedKind();
@@ -51416,7 +51467,7 @@ async function loadDetailCustomerInfoForCurrent(seq) {
     : (detailCustomerDisplaySettingsCache[customerId] || null);
   detailCustomerShippingChargeRule = customer ? (initialSettings ? normalizeCustomerShippingChargeRule(initialSettings) : null) : "separate";
   updateSalesShippingEstimateVisibility();
-  wrap.innerHTML = renderDetailCustomerInfoHtml(customer, null, canSelect, initialSettings);
+  setDetailCustomerInfoContent(renderDetailCustomerInfoHtml(customer, null, canSelect, initialSettings));
   bindDetailSalesCustomerSelect();
   if (!customer) return;
   try {
@@ -51434,14 +51485,14 @@ async function loadDetailCustomerInfoForCurrent(seq) {
     if (canSelect && String(detailSelectedSalesCustomerId || "") !== String(requestedCustomerId || "")) return;
     detailCustomerShippingChargeRule = normalizeCustomerShippingChargeRule(displaySettings);
     updateSalesShippingEstimateVisibility();
-    wrap.innerHTML = renderDetailCustomerInfoHtml(customer, priceInfo, canSelect, displaySettings);
+    setDetailCustomerInfoContent(renderDetailCustomerInfoHtml(customer, priceInfo, canSelect, displaySettings));
     bindDetailSalesCustomerSelect();
   } catch (e) {
     console.warn("detail customer sales price lookup failed", e);
     if (detailCustomerShippingChargeRule == null) {
       detailCustomerShippingChargeRule = "separate";
       updateSalesShippingEstimateVisibility();
-      wrap.innerHTML = renderDetailCustomerInfoHtml(customer, null, canSelect, defaultCustomerDisplaySettings());
+      setDetailCustomerInfoContent(renderDetailCustomerInfoHtml(customer, null, canSelect, defaultCustomerDisplaySettings()));
       bindDetailSalesCustomerSelect();
     }
   }
