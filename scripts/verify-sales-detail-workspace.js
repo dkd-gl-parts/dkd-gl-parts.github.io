@@ -319,6 +319,7 @@ const assert = require("node:assert/strict");
 const { parseHTML } = require("linkedom");
 const fieldsDocument = parseHTML(html).document;
 const fixtureSummary = { kinds: {
+  catalog_spec: { stockKnown: false, stockQty: 0 },
   rebuilt: { stockKnown: true, stockQty: 337 },
   aftermarket_new: { stockKnown: true, stockQty: 12 }
 } };
@@ -330,8 +331,9 @@ const fieldsContext = {
   t: key => key, esc: value => String(value == null ? "" : value),
   formatYen: value => String(value),
   productKindSummaryForProduct: () => fixtureSummary,
-  currentProductKindOptions: summary => Object.keys(summary.kinds),
-  selectedProductKind: () => fieldsContext.currentSelectedProductKind,
+  productDisplayKindAllowed: kind => ["rebuilt", "aftermarket_new", "catalog_spec"].includes(kind),
+  productKindSortValue: kind => ({ catalog_spec: 5, rebuilt: 10, aftermarket_new: 20 }[kind] || 90),
+  canSeeCatalogSpec: () => true,
   normalizeProductKind: kind => kind, productKindClass: kind => kind,
   productKindSelectLabel: kind => kind,
   productKindStockKindAllowed: () => true,
@@ -356,6 +358,8 @@ const fieldsContext = {
 };
 vm.createContext(fieldsContext);
 vm.runInContext(
+  sourceBetween("function currentProductKindOptions", "function selectedProductVariantId") +
+  sourceBetween("function componentProductKindOptions", "function componentVariantRowsForKind") +
   sourceBetween("function ensureSelectedProductKind", "async function fetchProductVariantSummaryMap") +
   sourceBetween("function detailCustomerShippingRuleHtml", "async function fetchDetailCustomerPriceInfo"),
   fieldsContext
@@ -364,6 +368,7 @@ fieldsContext.renderProductKindWrapForCurrent();
 const stableKindHost = fieldsDocument.getElementById("product-kind-wrap");
 const stableStockHost = fieldsDocument.getElementById("product-kind-stock-wrap");
 const firstSelect = fieldsDocument.getElementById("product-kind-select");
+assert.deepEqual(Array.from(firstSelect.querySelectorAll("option"), option => option.value), ["rebuilt", "aftermarket_new"], "Sales conditions must exclude the catalog option");
 fieldsContext.loadDetailCustomerInfoForCurrent();
 function assertFieldOrder() {
   const panel = fieldsDocument.querySelector("#detail-customer-wrap .detail-customer-panel");
@@ -408,5 +413,12 @@ fieldsContext.priceVisible = false;
 fieldsContext.setDetailCustomerInfoContent("");
 assert.equal(stableKindHost.parentNode.id, "sales-product-fields-home", "Kind remains available when sales price is hidden");
 assert.equal(stableStockHost.parentNode.id, "sales-product-fields-home", "Stock remains available when sales price is hidden");
+fieldsContext.currentSelectedProductKind = "catalog_spec";
+fieldsContext.renderProductKindWrapForCurrent();
+assert.equal(fieldsContext.currentSelectedProductKind, "rebuilt", "A stale catalog selection must fall back to a sales kind");
+assert.equal(stableStockHost.querySelector(".product-kind-stock-value").textContent, "337", "Fallback must show rebuilt stock");
+assert.equal(fieldsDocument.querySelector("#product-kind-select option[value='catalog_spec']"), null);
+assert.ok(fieldsContext.currentProductKindOptions(fixtureSummary).includes("catalog_spec"), "Catalog data remains available to other product-kind consumers");
+assert.ok(fieldsContext.componentProductKindOptions().includes("catalog_spec"), "Component catalog selection must remain available");
 
 console.log("sales detail workspace guard passed");

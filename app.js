@@ -8306,7 +8306,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1246";
+var APP_VERSION       = "v1.1.1247";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -41310,8 +41310,14 @@ function ensureSelectedProductKind(summary) {
 
 function renderProductKindPanelHtml(summary) {
   summary = summary || productKindSummaryForProduct(currentProduct);
+  var options = currentProductKindOptions(summary).filter(function(kind) {
+    return normalizeProductKind(kind) !== "catalog_spec";
+  });
   var selected = ensureSelectedProductKind(summary);
-  var options = currentProductKindOptions(summary);
+  if (options.indexOf(selected) < 0) {
+    selected = options[0] || "rebuilt";
+    currentSelectedProductKind = selected;
+  }
   var html = "<div class='product-kind-control detail-sales-kind-control'>";
   html += "<div class='detail-sales-term-row detail-sales-kind-row'>";
   html += "<div class='detail-sales-term-label'>" + esc(t("product_kind_section")) + "</div>";
