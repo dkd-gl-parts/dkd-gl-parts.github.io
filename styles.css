@@ -5196,6 +5196,55 @@ body.app-install-dialog-open { overflow: hidden; }
 .detail-customer-shipping-rule.separate > strong { background: #fff8e6; color: #9a6700; }
 .detail-customer-shipping-rule.free > strong { background: #eef9f1; color: #18743a; }
 .detail-customer-shipping-rule.loading > strong { border-color: #c7d0dc; background: #f5f7fa; color: #667085; }
+#sales-product-fields-home:empty { display: none; }
+#screen-search .detail-customer-panel #product-kind-wrap,
+#screen-search .detail-customer-panel #product-kind-stock-wrap { min-width: 0; }
+#screen-search .detail-customer-panel .detail-sales-term-row {
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  min-height: 34px;
+  border-bottom: 0;
+}
+#screen-search .detail-customer-panel .detail-sales-kind-row {
+  border-top: 1px solid var(--dcats-border);
+  padding-top: 5px;
+  margin-bottom: 4px;
+}
+#screen-search .detail-customer-panel .detail-sales-term-label {
+  color: #667085;
+  font-size: var(--dcats-type-supporting);
+  font-weight: 700;
+  line-height: 1.35;
+}
+#screen-search .detail-customer-panel .detail-sales-term-value { padding: 4px 0; }
+#screen-search .detail-customer-panel .product-kind-select {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 4px 20px 4px 0;
+  background-color: transparent;
+  font-size: var(--dcats-type-supporting);
+  text-align: left;
+  text-align-last: left;
+}
+#screen-search .detail-customer-panel .product-kind-stock-grid { max-width: none; margin: 0; }
+#screen-search .detail-customer-panel .product-kind-stock-value {
+  display: block;
+  width: auto;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 4px 0;
+  background: transparent;
+  color: var(--dcats-ink);
+  font-size: var(--dcats-type-body);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+#screen-search .detail-customer-panel .detail-customer-price-focus { grid-template-columns: 76px minmax(0, 1fr); padding-bottom: 4px; }
 #screen-search .sales-conditions-terms {
   width: 100%;
   margin-top: 6px;

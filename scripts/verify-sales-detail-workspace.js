@@ -313,4 +313,100 @@ if (salesScreenHtml.includes("見積に追加") || salesScreenHtml.includes("受
   throw new Error("sales workspace must not add unsupported quote or order actions");
 }
 
+// Customer/price responses replace their HTML independently of variant loading.
+// The existing kind selector and stock host must survive that replacement.
+const assert = require("node:assert/strict");
+const { parseHTML } = require("linkedom");
+const fieldsDocument = parseHTML(html).document;
+const fixtureSummary = { kinds: {
+  rebuilt: { stockKnown: true, stockQty: 337 },
+  aftermarket_new: { stockKnown: true, stockQty: 12 }
+} };
+const fixtureCustomer = { id: 1, customer_name: "Synthetic customer" };
+const fieldsContext = {
+  document: fieldsDocument, currentProduct: { dkd_shohin_id: 1 },
+  currentSelectedProductKind: "rebuilt", detailSelectedSalesCustomerId: "1",
+  detailSecondaryRequestSeq: 1, priceVisible: true,
+  t: key => key, esc: value => String(value == null ? "" : value),
+  formatYen: value => String(value),
+  productKindSummaryForProduct: () => fixtureSummary,
+  currentProductKindOptions: summary => Object.keys(summary.kinds),
+  selectedProductKind: () => fieldsContext.currentSelectedProductKind,
+  normalizeProductKind: kind => kind, productKindClass: kind => kind,
+  productKindSelectLabel: kind => kind,
+  productKindStockKindAllowed: () => true,
+  canSeeSalesPrice: () => fieldsContext.priceVisible,
+  salesManagementCustomerOptions: () => [fixtureCustomer],
+  detailCustomerOptionLabel: customer => customer.customer_name,
+  normalizeCustomerShippingChargeRule: settings => settings.shipping_charge_rule || "separate",
+  productKindRowsForCurrent: () => [], renderCoreReturnPolicyHtml: () => "",
+  updateSalesProductStatusBadges() {}, updateSalesComponentTabCountForSelectedKind() {},
+  setCspStyle(element, property, value) {
+    if (!element) return;
+    if (value) element.setAttribute("data-dcats-" + property, value);
+    else element.removeAttribute("data-dcats-" + property);
+  },
+  loadDetailCustomerInfoForCurrent() {
+    fieldsContext.setDetailCustomerInfoContent(fieldsContext.renderDetailCustomerInfoHtml(
+      fixtureCustomer,
+      { salesPrice: fieldsContext.currentSelectedProductKind === "rebuilt" ? 5000 : 9000, taxIncluded: false },
+      true, { shipping_charge_rule: "separate" }
+    ));
+  }
+};
+vm.createContext(fieldsContext);
+vm.runInContext(
+  sourceBetween("function ensureSelectedProductKind", "async function fetchProductVariantSummaryMap") +
+  sourceBetween("function detailCustomerShippingRuleHtml", "async function fetchDetailCustomerPriceInfo"),
+  fieldsContext
+);
+fieldsContext.renderProductKindWrapForCurrent();
+const stableKindHost = fieldsDocument.getElementById("product-kind-wrap");
+const stableStockHost = fieldsDocument.getElementById("product-kind-stock-wrap");
+const firstSelect = fieldsDocument.getElementById("product-kind-select");
+fieldsContext.loadDetailCustomerInfoForCurrent();
+function assertFieldOrder() {
+  const panel = fieldsDocument.querySelector("#detail-customer-wrap .detail-customer-panel");
+  const fields = Array.from(panel.children).map(node => node.id || node.className);
+  assert.ok(fields.indexOf("product-kind-wrap") < fields.findIndex(value => value.includes("detail-customer-price-focus")), "Kind must precede price");
+  assert.ok(fields.indexOf("product-kind-stock-wrap") < fields.findIndex(value => value.includes("detail-customer-shipping-rule")), "Stock must precede shipping terms");
+  for (const id of ["product-kind-wrap", "product-kind-stock-wrap", "product-kind-select"]) {
+    assert.equal(fieldsDocument.querySelectorAll("#" + id).length, 1, "Duplicate or missing live field " + id);
+  }
+}
+assertFieldOrder();
+assert.equal(fieldsDocument.getElementById("product-kind-select"), firstSelect, "Price rendering must preserve the existing selector");
+assert.equal(stableStockHost.textContent.includes("337"), true);
+for (const state of ["loading", "error", "expired-session"]) {
+  fieldsContext.setDetailCustomerInfoContent("<div class='sales-detail-empty'>" + state + "</div>");
+  assert.equal(fieldsDocument.getElementById("product-kind-wrap"), stableKindHost);
+  assert.equal(fieldsDocument.getElementById("product-kind-stock-wrap"), stableStockHost);
+  fieldsContext.loadDetailCustomerInfoForCurrent();
+  assertFieldOrder();
+}
+const kindSelect = fieldsDocument.getElementById("product-kind-select");
+kindSelect.querySelector("option[value='rebuilt']").removeAttribute("selected");
+kindSelect.querySelector("option[value='aftermarket_new']").setAttribute("selected", "");
+kindSelect.onchange();
+assert.equal(fieldsContext.currentSelectedProductKind, "aftermarket_new");
+assert.ok(stableStockHost.textContent.includes("12"));
+assert.ok(fieldsDocument.querySelector(".detail-customer-price-focus").textContent.includes("9000"));
+assertFieldOrder();
+fixtureSummary.kinds.aftermarket_new.stockQty = 0;
+fieldsContext.renderProductKindWrapForCurrent();
+assert.equal(stableStockHost.querySelector(".product-kind-stock-value").textContent, "0");
+fixtureSummary.kinds.aftermarket_new.stockKnown = false;
+fieldsContext.renderProductKindWrapForCurrent();
+assert.equal(stableStockHost.querySelector(".product-kind-stock-value").textContent, "-");
+fieldsContext.setDetailCustomerInfoContent(fieldsContext.renderDetailCustomerInfoHtml(fixtureCustomer, { salesPrice: null }, false, { shipping_charge_rule: "free" }));
+assertFieldOrder();
+assert.ok(fieldsDocument.querySelector(".detail-customer-shipping-rule.free"));
+fieldsContext.setDetailCustomerInfoContent(fieldsContext.renderDetailCustomerInfoHtml(null, null, true, null));
+assert.ok(fieldsDocument.getElementById("detail-customer-wrap").contains(stableKindHost));
+assert.ok(fieldsDocument.getElementById("detail-customer-wrap").contains(stableStockHost));
+fieldsContext.priceVisible = false;
+fieldsContext.setDetailCustomerInfoContent("");
+assert.equal(stableKindHost.parentNode.id, "sales-product-fields-home", "Kind remains available when sales price is hidden");
+assert.equal(stableStockHost.parentNode.id, "sales-product-fields-home", "Stock remains available when sales price is hidden");
+
 console.log("sales detail workspace guard passed");
