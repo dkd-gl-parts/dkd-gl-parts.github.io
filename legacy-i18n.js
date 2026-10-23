@@ -2,6 +2,9 @@
 // Runtime translation is local; this file makes no external requests.
 var DCATS_LEGACY_UI_TRANSLATIONS = {
   "en": {
+    "メーカー品番の表記": "Manufacturer Part Number Format",
+    "三菱品番の00を省略": "Omit 00 in Mitsubishi Part Numbers",
+    "登録どおり": "As Registered",
     "絞り込み条件": "Filters",
     "表示件数": "Displayed",
     "取得済みの絞り込み結果です。保留・完了の品番も含みます。": "Totals cover loaded, filtered results, including paused and completed items.",
@@ -3958,6 +3961,9 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "/ ALDK除外": "/ ALDK excluded"
   },
   "zh": {
+    "メーカー品番の表記": "制造商品号格式",
+    "三菱品番の00を省略": "省略三菱品号中的00",
+    "登録どおり": "按登记原样",
     "絞り込み条件": "筛选条件",
     "表示件数": "显示数量",
     "取得済みの絞り込み結果です。保留・完了の品番も含みます。": "汇总仅包含已加载的筛选结果，包括暂停和已完成品番。",
