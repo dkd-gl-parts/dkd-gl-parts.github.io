@@ -18,6 +18,7 @@ const ctx = { document, console, Date, Number, String, Object, Array, Blob, URL,
 ctx.window=ctx;vm.createContext(ctx);vm.runInContext(source,ctx);
 (async()=>{
  let checks=0;const eq=(a,b)=>{assert.deepEqual(a,b);checks++;};
+ eq(html.indexOf('src="recycle-orders.js')<html.indexOf('src="app.js'),true);
  for(const bad of ['=HYPERLINK("https://example.invalid")','+1','@SUM(1)','-1','\t=1'])eq(ctx.DcatsRecycleOrders.csvCell(bad).startsWith('"\''),true);
  eq(ctx.DcatsRecycleOrders.csvCell('正常"文字'),'"正常""文字"');
  ctx.DcatsRecycleOrders.configureEntryButton();eq(document.getElementById('sales-order-recycle-open').hidden,false);
@@ -35,6 +36,11 @@ ctx.window=ctx;vm.createContext(ctx);vm.runInContext(source,ctx);
  ctx.DcatsRecycleOrders.mountDetail({id:2},document.getElementById('detail'));
  eq(ctx.DcatsRecycleOrders.isBusy(),false);
  const before=calls;permission=false;await ctx.DcatsRecycleOrders.open();eq(calls,before);ctx.DcatsRecycleOrders.configureEntryButton();eq(document.getElementById('sales-order-recycle-open').hidden,true);
+ const earlyDocument=parseHTML('<html><body><button id="sales-order-recycle-open" hidden></button></body></html>').document;
+ const early={document:earlyDocument,console};early.window=early;vm.createContext(early);vm.runInContext(source,early);
+ eq(early.DcatsRecycleOrders.isBusy(),false);
+ early.canManageSalesOrders=()=>true;early.currentUser={id:'synthetic-late-auth'};early.DcatsRecycleOrders.configureEntryButton();
+ eq(earlyDocument.getElementById('sales-order-recycle-open').hidden,false);
  for(const asset of ['recycle-orders.js','recycle-orders.css']) {assert(html.includes(asset));assert(build.includes('"'+asset+'"'));checks+=2;}
  assert(app.includes('DcatsRecycleOrders.mountDetail(order, host)'));assert(app.includes('DcatsRecycleOrders.isBusy()'));checks+=2;
  console.log(JSON.stringify({feature:'recycle-orders',checks,passed:true}));
