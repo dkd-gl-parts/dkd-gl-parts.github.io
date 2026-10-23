@@ -76,7 +76,7 @@ const runtime = {
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   })[char])
 };
-vm.runInNewContext(report.replace(/\}\)\(\);\s*$/, "globalThis.renderCustomerPriceReport = printHtml;globalThis.renderCustomerPricePreview = renderPreview;globalThis.renderCustomerPriceDetail = renderDetail;globalThis.customerPriceState = state;globalThis.clearCustomerPricePreview = clearPreview;globalThis.loadVisibleCustomerPriceCategories = loadVisibleCategories;})();"), runtime);
+vm.runInNewContext(report.replace(/\}\)\(\);\s*$/, "globalThis.renderCustomerPriceReport = printHtml;globalThis.renderCustomerPricePreview = renderPreview;globalThis.renderCustomerPriceDetail = renderDetail;globalThis.customerPriceState = state;globalThis.clearCustomerPricePreview = clearPreview;globalThis.loadVisibleCustomerPriceCategories = loadVisibleCategories;globalThis.reopenCustomerPriceReport = reopen;})();"), runtime);
 runtime.renderCustomerPricePreview({
   summary: { candidate_count: 1, included_count: 1 },
   rows: [{ category_code: "alternator", category_label: "オルタネータ", gltek_part_number: "G0102-10001", genuine_part_number: "31100-RV4-004", manufacturer_part_number: "104210-1000", product_kind: "rebuilt", sales_price_jpy: 12000 }]
@@ -149,6 +149,59 @@ const escapedTitle = runtime.renderCustomerPriceReport({ issued_at: "2026-10-19T
 expect(escapedTitle.includes("<title>販売価格表 A&amp;B&lt;/title&gt;&lt;script&gt;_2026-10-20</title>"), "dated filename must preserve HTML escaping");
 const freeShipping = runtime.renderCustomerPriceReport({ customer: { name: "架空得意先", shipping_charge_rule: "free" }, rows: [] });
 expect(freeShipping.includes("送料は無料です。消費税は別途申し受けます。") && !freeShipping.includes("送料・消費税は別途申し受けます。"), "free-shipping customer must retain its shipping rule");
+
+expect(/id="cpr-part-number-format"[^>]*aria-describedby="cpr-part-number-format-help"/.test(html) &&
+  html.includes('<option value="short" selected>三菱品番の00を省略</option>') &&
+  html.includes('<option value="original">登録どおり</option>'), "output format must default to abbreviation and offer the original spelling with help");
+const partCases = [
+  ["MITSUBISHI", "A000T25271", "A0T25271"],
+  ["MITSUBISHI", "A001TA3891", "A1TA3891"],
+  ["MITSUBISHI", "M000T46071ZT", "M0T46071ZT"],
+  ["MITSUBISHI", "A007TG0391A", "A7TG0391A"],
+  ["MITSUBISHI", "T002T12300", "T2T12300"],
+  [" mitsubishi ", "A005T00100", "A5T00100"],
+  ["MITSUBISHI", "a001ta3891", "a1ta3891"],
+  ["MITSUBISHI", "A1TA3891", "A1TA3891"],
+  ["MITSUBISHI", "A010T00100", "A010T00100"],
+  ["MITSUBISHI", "A001X00100", "A001X00100"],
+  ["MITSUBISHI", "XA001T00100", "XA001T00100"],
+  ["MITSUBISHI", "A0000T00100", "A0000T00100"],
+  ["DENSO", "A001TA3891", "A001TA3891"],
+  ["MITSUBA", "M000T46071ZT", "M000T46071ZT"],
+  [undefined, "A001TA3891", "A001TA3891"],
+  ["MITSUBISHI", "", "—"],
+  ["MITSUBISHI", "A001T<&00", "A1T<&00"]
+];
+for (const [manufacturer, part, shortened] of partCases) {
+  const row = Object.freeze({ manufacturer, manufacturer_part_number: part, genuine_part_number: "A001T-OEM",
+    genuine_part_number_2: "M000T-OEM2", gltek_part_number: "A001T-G", sales_price_jpy: 12345 });
+  const payload = Object.freeze({ rows: Object.freeze([row]), summary: { candidate_count: 1, included_count: 1 } });
+  const before = JSON.stringify(payload);
+  for (const short of [true, false]) {
+    const expected = runtime.esc(short ? shortened : part || "—");
+    elements["cpr-part-number-format"].value = short ? "short" : "original";
+    runtime.renderCustomerPricePreview(payload);
+    const output = runtime.renderCustomerPriceReport(payload, { abbreviateMitsubishi: short });
+    expect(output.includes("<td>" + expected + "</td>") && elements["cpr-preview-rows"].innerHTML.includes("<td>" + expected + "</td>"),
+      "preview and PDF must agree for manufacturer/part/option: " + [manufacturer, part, short]);
+    expect(output.includes("A001T-OEM") && output.includes("M000T-OEM2") && output.includes("A001T-G") && output.includes("12,345円"),
+      "genuine numbers, G numbers and server price must remain unchanged");
+    expect(JSON.stringify(payload) === before, "display abbreviation must never mutate server rows or snapshots");
+  }
+}
+const sameDisplay = { rows: [
+  { dkd_shohin_id: 1, manufacturer: "MITSUBISHI", manufacturer_part_number: "A001TA3891", sales_price_jpy: 1000 },
+  { dkd_shohin_id: 2, manufacturer: "MITSUBISHI", manufacturer_part_number: "A1TA3891", sales_price_jpy: 2000 }
+], summary: { candidate_count: 2, included_count: 2 } };
+elements["cpr-part-number-format"].value = "short";
+runtime.renderCustomerPricePreview(sameDisplay);
+expect((elements["cpr-preview-rows"].innerHTML.match(/<td>A1TA3891<\/td>/g) || []).length === 2,
+  "matching display spellings must not merge distinct products or remove prices");
+const savedPreview = runtime.customerPriceState.preview;
+elements["cpr-part-number-format"].value = "original";
+listeners["cpr-part-number-format"].change();
+expect(runtime.customerPriceState.preview === savedPreview && elements["cpr-preview-rows"].innerHTML.includes("A001TA3891"),
+  "changing presentation must update existing preview without replacing the server snapshot");
 const singleCategory = runtime.renderCustomerPriceReport({
   customer: { name: "架空得意先" },
   rows: [{ category_code: "starter", category_label: "スタータ", genuine_part_number: "ONLY-1", product_kind: "rebuilt", sales_price_jpy: 5000 }]
@@ -227,5 +280,49 @@ runtime.sb = { from(table) {
   visibilityResult = { data: null, error: new Error("visibility unavailable") };
   await runtime.loadVisibleCustomerPriceCategories();
   expect(elements["cpr-category"].disabled && elements["cpr-preview-button"].disabled && elements["cpr-status"].classList, "visibility read errors must fail closed");
+
+  // Presentation is captured before each server wait; no formatting option enters the pricing RPC.
+  const issuedSnapshot = { issue_id: 42, customer: { id: 13, name: "架空得意先" }, filters: {},
+    rows: [{ manufacturer: "MITSUBISHI", manufacturer_part_number: "A001TA3891", sales_price_jpy: 12000 }] };
+  const savedSnapshot = JSON.stringify(issuedSnapshot);
+  const windows = [];
+  runtime.window.open = () => {
+    const win = { closed: false, document: { body: {}, open() {}, write(value) { win.output = value; }, close() {},
+      getElementById() { return { addEventListener() {} }; } }, close() { this.closed = true; } };
+    windows.push(win);
+    return win;
+  };
+  elements["cpr-category"].value = "";
+  elements["cpr-kind"].value = "";
+  elements["cpr-part-number"].value = "";
+  runtime.customerPriceState.preview = Object.assign({ preview_hash: "server-hash" }, issuedSnapshot);
+  runtime.customerPriceState.requestId = "same-request";
+  let completeRequest;
+  const calls = [];
+  runtime.sb.rpc = (name, args) => {
+    calls.push({ name, args });
+    return name === "list_customer_price_report_issues" ? Promise.resolve({ data: [] }) :
+      new Promise(resolve => { completeRequest = resolve; });
+  };
+  elements["cpr-part-number-format"].value = "short";
+  const issuing = listeners["cpr-issue-button"].click();
+  elements["cpr-part-number-format"].value = "original";
+  listeners["cpr-part-number-format"].change();
+  completeRequest({ data: issuedSnapshot });
+  await issuing;
+  expect(windows[0].output.includes("<td>A1TA3891</td>"), "issuance must use the format selected before its server request");
+  expect(calls[0].name === "issue_customer_price_report" && calls[0].args.p_preview_hash === "server-hash" &&
+    calls[0].args.p_request_id === "same-request" && Object.keys(calls[0].args).length === 6,
+    "issuance must preserve the server hash, idempotency key and existing RPC arguments");
+  for (const short of [false, true]) {
+    elements["cpr-part-number-format"].value = short ? "short" : "original";
+    const reopening = runtime.reopenCustomerPriceReport(42);
+    elements["cpr-part-number-format"].value = short ? "original" : "short";
+    completeRequest({ data: issuedSnapshot });
+    await reopening;
+    expect(windows[windows.length - 1].output.includes("<td>" + (short ? "A1TA3891" : "A001TA3891") + "</td>"),
+      "history must render saved original rows using the format selected before the read");
+  }
+  expect(JSON.stringify(issuedSnapshot) === savedSnapshot, "issue and history rendering must retain the original snapshot");
   console.log("customer price report guard passed");
 })().catch(error => { console.error(error); process.exitCode = 1; });

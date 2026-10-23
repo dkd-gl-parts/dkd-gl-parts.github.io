@@ -7,6 +7,17 @@
   var yen = function(value) { return Number(value).toLocaleString("ja-JP") + "円"; };
   var safe = function(value) { return esc(value == null ? "" : String(value)); };
 
+  function outputOptions() {
+    return { abbreviateMitsubishi: byId("cpr-part-number-format").value === "short" };
+  }
+
+  function manufacturerPartNumber(row, options) {
+    var part = row.manufacturer_part_number || "—";
+    if (!options || !options.abbreviateMitsubishi ||
+        String(row.manufacturer || "").trim().toUpperCase() !== "MITSUBISHI") return part;
+    return String(part).replace(/^([A-Z])00([0-9]T)/i, "$1$2");
+  }
+
   function setStatus(message, error) {
     var el = byId("cpr-status");
     el.textContent = message;
@@ -86,7 +97,7 @@
       return "<tr><td>" + safe(row.category_label || categoryLabel(row.category_code)) + "<small>" + safe(kindLabel(row.product_kind)) + "</small></td>" +
         "<td class='cpr-g-part-number'>" + safe(row.gltek_part_number || "—") + "</td>" +
         "<td>" + safe(row.genuine_part_number || "—") + "</td>" +
-        "<td>" + safe(row.manufacturer_part_number || "—") + "</td>" +
+        "<td>" + safe(manufacturerPartNumber(row, outputOptions())) + "</td>" +
         "<td class='cpr-vehicle-name'>" + safe(row.representative_vehicle_name) + "</td>" +
         "<td class='cpr-vehicle-model'>" + safe(row.representative_vehicle_model) + "</td>" +
         "<td>" + detail + "</td></tr>";
@@ -167,7 +178,7 @@
     }).join("-");
   }
 
-  function printHtml(issue) {
+  function printHtml(issue, options) {
     var customer = issue.customer || {};
     var issuedDate = filenameDate(issue.issued_at);
     var rows = Array.isArray(issue.rows) ? issue.rows : [];
@@ -189,7 +200,7 @@
           "<span class='secondary'>" + safe(kindLabel(row.product_kind)) + "</span></td><td class='g-part-number'>" +
           safe(row.gltek_part_number || "—") + "</td><td>" + safe(row.genuine_part_number || "—") +
           (row.genuine_part_number_2 ? "<span class='secondary'>" + safe(row.genuine_part_number_2) + "</span>" : "") +
-          "</td><td>" + safe(row.manufacturer_part_number || "—") + "</td>" +
+          "</td><td>" + safe(manufacturerPartNumber(row, options)) + "</td>" +
           "<td class='vehicle-name'>" + safe(row.representative_vehicle_name) + "</td>" +
           "<td class='vehicle-model'>" + safe(row.representative_vehicle_model) + "</td><td class='price'>" +
           safe(yen(row.sales_price_jpy)) + "</td></tr>";
@@ -212,10 +223,10 @@
       "</main></body></html>";
   }
 
-  function writePrintWindow(win, issue) {
+  function writePrintWindow(win, issue, options) {
     if (!win || win.closed) return false;
     win.document.open();
-    win.document.write(printHtml(issue));
+    win.document.write(printHtml(issue, options));
     win.document.close();
     try { win.opener = null; } catch (ignore) { /* Browser owns opener restrictions. */ }
     win.document.getElementById("cpr-print").addEventListener("click", function() { win.print(); });
@@ -225,6 +236,7 @@
 
   async function issue() {
     if (state.loading || !state.preview) return;
+    var options = outputOptions();
     var args = filters();
     var snapshotFilters = state.preview.filters || {};
     if (Number(state.preview.customer && state.preview.customer.id) !== args.p_sales_customer_id ||
@@ -246,7 +258,7 @@
       }));
       if (result.error) throw result.error;
       if (!result.data || !result.data.issue_id || !Array.isArray(result.data.rows)) throw new Error("発行結果が不正です");
-      writePrintWindow(win, result.data);
+      writePrintWindow(win, result.data, options);
       setStatus("販売価格表 No." + result.data.issue_id + " を発行しました。別ウィンドウから印刷・PDF保存できます。", false);
       await loadHistory();
     } catch (error) {
@@ -279,6 +291,7 @@
   }
 
   async function reopen(issueId) {
+    var options = outputOptions();
     var win = window.open("", "_blank");
     if (!win) { setStatus("ポップアップを許可して、もう一度お試しください。", true); return; }
     win.document.body.textContent = "保存済み価格表を読み込んでいます…";
@@ -288,7 +301,7 @@
       setStatus("発行履歴を開けませんでした。", true);
       return;
     }
-    writePrintWindow(win, result.data);
+    writePrintWindow(win, result.data, options);
   }
 
   async function loadSelectors(preselectedCustomerId) {
@@ -385,6 +398,7 @@
       });
     });
     byId("cpr-part-number").addEventListener("keydown", function(event) { if (event.key === "Enter") preview(); });
+    byId("cpr-part-number-format").addEventListener("change", renderDetail);
     byId("cpr-preview-button").addEventListener("click", preview);
     byId("cpr-summary").addEventListener("click", function(event) {
       var button = event.target.closest("[data-cpr-view]");
