@@ -10,6 +10,8 @@ const files = [
   "core-valuation.css",
   "ec-cost-list-targets.js",
   "ec-cost-list-targets.css",
+  "recycle-orders.js",
+  "recycle-orders.css",
   "sales-order-revision.js",
   "sales-pricing-lists.js",
   "sales-pricing-lists.css",

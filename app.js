@@ -436,6 +436,7 @@ var TRANSLATIONS = {
     sales_order_cancel_picking_warning: "ピッキングが記録されています。対象商品と照合済みシリアルを現物と確認してください。出荷確定済みの場合は取消後、在庫とシリアルを戻します。運送会社へ渡した後は、受注取消ではなく返品処理を行ってください。",
     sales_order_cancel_picking_confirm: "対象商品・シリアルを確認し、商品がまだ社内にあることを確認しました",
     sales_order_internal_entry: "FAX・メール注文入力",
+    sales_order_recycle_entry: "Recycle+受注・精算",
     sales_order_mgmt_desc: "得意先注文の受付、B2発送データ取込、製造シリアル照合を管理します。",
     sales_order_mgmt_note: "注文受付、B2発送データ取込、現場の製造シリアル照合を管理します。",
     business_workspace_open: "業務連携",
@@ -3163,6 +3164,7 @@ var TRANSLATIONS = {
     sales_order_cancel_picking_warning: "Picking is recorded. Check the physical products and verified serials. If shipment was confirmed, cancellation restores stock and serials. Use returns after carrier handover.",
     sales_order_cancel_picking_confirm: "I checked the products and serials and confirmed the goods are still on site.",
     sales_order_internal_entry: "FAX / Email Order Entry",
+    sales_order_recycle_entry: "Recycle+ Orders / Settlements",
     sales_order_mgmt_desc: "Manage customer orders, B2 shipping-data imports, and manufacturing-serial verification.",
     sales_order_mgmt_note: "Manage order acceptance, B2 shipping-data imports, and shop-floor serial verification.",
     business_workspace_open: "Shared Folder",
@@ -5834,6 +5836,7 @@ var TRANSLATIONS = {
     sales_order_cancel_picking_warning: "已有拣货记录。请核对实物和已核对的序列号。若已确认出货，取消时将恢复库存和序列号。已交承运商的商品请办理退货。",
     sales_order_cancel_picking_confirm: "已核对商品和序列号，确认商品仍在公司内。",
     sales_order_internal_entry: "传真・邮件订单录入",
+    sales_order_recycle_entry: "Recycle+订单・结算",
     sales_order_mgmt_desc: "管理客户订单、B2发货数据导入和制造序列号核对。",
     sales_order_mgmt_note: "管理订单受理、B2发货数据导入和现场序列号核对。",
     business_workspace_open: "业务协作",
@@ -8309,7 +8312,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1251";
+var APP_VERSION       = "v1.1.1252";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -11009,6 +11012,7 @@ document.addEventListener("freeze", function() {
 });
 
 function isAppSafeForAutoReload() {
+  if (window.DcatsRecycleOrders && window.DcatsRecycleOrders.isBusy()) return false;
   if (componentAddSaving) return false;
   if (finishedLabelPrintInProgress) return false;
   if (document.querySelector(".form-overlay.show")) return false;
@@ -16606,6 +16610,7 @@ async function enterSalesOrderMgmt(options) {
   } else if (orderStatus) orderStatus.value = "work_queue";
   var newOrderButton = document.getElementById("sales-order-new-internal-order");
   if (newOrderButton) newOrderButton.hidden = !canStartInternalCustomerOrderEntry();
+  if (window.DcatsRecycleOrders) window.DcatsRecycleOrders.configureEntryButton();
   updateAllHeaders();
   configureCustomerOrderPostalTest();
   renderSalesOrderB2Preflight(null);
@@ -21089,6 +21094,7 @@ function renderSalesOrderDetail() {
       setSalesOrderDetailView(tabs[index].dataset.salesOrderDetailView, true);
     });
   });
+  if (window.DcatsRecycleOrders) window.DcatsRecycleOrders.mountDetail(order, host);
   setSalesOrderDetailView(salesOrderDetailView, false);
   host.querySelectorAll("[data-sales-order-action]").forEach(function(button) {
     button.addEventListener("click", function() { updateSalesOrderStatus(button.dataset.salesOrderAction); });
