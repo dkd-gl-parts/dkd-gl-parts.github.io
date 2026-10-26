@@ -6,7 +6,13 @@
     en: {stopped:"Paused", title:"Fitment investigations", note:"Reservations and results are saved on this PC. Parts are collected one at a time while this PC and its bridge are running, even after closing D-CATS. Review results before importing.", parts:"Genuine parts (one per line, up to 50)", add:"Queue parts", empty:"No reservations or history.", refresh:"Refresh", queued:"Queued", running:"Collecting", completed:"Collected", blocked:"Human check required", requires_login:"Login check required", paused_budget:"Page limit reached", manual_review:"Review required", not_found:"No fitments", error:"Collection error", cancelled:"Cancelled", result:"Results / import", resume:"Review and resume", cancel:"Cancel reservation", status:"Collection", progress:"Progress / results", registration:"Import status", checking:"Checking", unregistered:"Not imported", registered:"Imported", partial:"Partially imported", different:"Existing data needs review", unknown:"Import status unavailable", connection:"Cannot connect to this PC's bridge. Check that it is running on this PC.", oldBridge:"Update the local bridge.", invalid:"Select a manufacturer and enter up to 50 parts, one per line.", added:"Queued. Existing investigations are reused. Open results to request a fresh collection.", paused:"Queue paused. Review the stopped investigation to resume.", saved:"History is saved on this PC.", pages:"pages checked", remaining:"pages pending", rows:"rows", updated:"Updated", unavailable:"Action failed. Refresh to check its status.", pauseFirst:"Review the stopped investigation first.", pending:"Checked after collection", failedImport:"Recheck the production data to confirm the import."},
     zh: {stopped:"已暂停", title:"适配调查列表", note:"预约和结果保存在本机。零件按顺序逐一获取；本机和连接运行期间，关闭D-CATS后仍会继续。核对结果后再导入。", parts:"原厂零件号（每行一个，最多50个）", add:"预约获取", empty:"暂无预约或历史记录。", refresh:"刷新", queued:"等待获取", running:"获取中", completed:"获取完成", blocked:"等待本人确认", requires_login:"等待登录确认", paused_budget:"达到获取上限", manual_review:"等待核对", not_found:"无适配信息", error:"获取错误", cancelled:"已取消", result:"结果／导入", resume:"确认并继续", cancel:"取消预约", status:"获取状态", progress:"进度／结果", registration:"导入状态", checking:"核对中", unregistered:"未导入", registered:"已导入", partial:"部分导入", different:"需要核对现有数据", unknown:"无法确认导入状态", connection:"无法连接本机。请检查连接是否已启动。", oldBridge:"请更新本机连接。", invalid:"请选择制造商并输入零件号，每行一个，最多50个。", added:"预约已受理；同一零件的历史将被复用。需重新获取时请打开结果。", paused:"预约已暂停。请确认停止的调查后继续。", saved:"历史记录保存在本机。", pages:"页已确认", remaining:"页待确认", rows:"行", updated:"更新", unavailable:"操作失败，请刷新确认状态。", pauseFirst:"请先确认停止的调查。", pending:"获取完成后核对", failedImport:"请重新核对生产数据以确认导入结果。"}
   };
-  var active = null, focusBefore = null, snapshot = null, loading = false, generation = 0;
+  Object.assign(words.ja, {updating:"更新中", updatePending:"自動更新待ち", updateDone:"更新完了", updateFailed:"更新内容の確認が必要", updateUnknown:"更新結果を確認してください", ownerWaiting:"依頼した管理者のログイン待ち"});
+  Object.assign(words.en, {updating:"Updating", updatePending:"Update pending", updateDone:"Updated", updateFailed:"Update needs review", updateUnknown:"Verify the update result", ownerWaiting:"Waiting for the requesting administrator"});
+  Object.assign(words.zh, {updating:"更新中", updatePending:"等待自动更新", updateDone:"更新完成", updateFailed:"需核对更新内容", updateUnknown:"请核对更新结果", ownerWaiting:"等待发起更新的管理员登录"});
+  words.ja.note = "複数品番を1件ずつ取得し、取得できた適合データは自動で更新します。取得できない項目は空欄のまま登録します。ダイアログを閉じても続行します。D-CATSを終了した場合、未登録分は次回ログイン後に更新します。";
+  words.en.note = "Collect parts one at a time and update available fitments automatically. Unavailable fields stay blank. Closing this dialog does not stop processing. If D-CATS is closed, pending updates continue after the requesting administrator signs in again.";
+  words.zh.note = "依次获取零件并自动更新已取得的适配数据，未取得的字段保留为空。关闭此对话框后继续处理；退出D-CATS时，未登记部分将在发起更新的管理员下次登录后继续。";
+  var active = null, focusBefore = null, snapshot = null, loading = false, generation = 0, updatingJob = null;
   var detailCache = {}, registrations = {}, timer = null, lastRender = "";
   function label(key) { return (words[root.currentLang] || words.ja)[key] || key; }
   function esc(value) { return String(value == null ? "" : value).replace(/[&<>"']/g, function(c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
@@ -20,8 +26,14 @@
   }
   function sameEvidence(a, b) {
     function text(v) { return v == null ? "" : String(v).trim(); }
-    return ["catalog_manufacturer", "normalized_genuine_part_number", "vehicle_manufacturer", "vehicle_type", "model", "engine", "effective_start", "effective_end", "production_period_text", "part_role"].every(function(key) { return text(a[key]) === text(b[key]); }) &&
-      ["chassis_range", "grade", "transmission", "production_period_basis"].every(function(key) { return text((a.raw_payload || {})[key]) === text((b.raw_payload || {})[key]); }) && !(b.raw_payload || {}).chassis_range_review;
+    function validStoredPeriod(row) {
+      var start = text(row.effective_start), end = text(row.effective_end), period = text(row.production_period_text), basis = text((row.raw_payload || {}).production_period_basis);
+      if (!start) return !end && !period && !basis;
+      return /^(19|20)\d{2}\/(0[1-9]|1[0-2])$/.test(start) && (!end || /^(19|20)\d{2}\/(0[1-9]|1[0-2])$/.test(end) && end >= start) && period === (start + " - " + end).trim() && /^(application_row|vehicle_model_page)$/.test(basis);
+    }
+    return ["catalog_manufacturer", "normalized_genuine_part_number", "vehicle_manufacturer", "vehicle_type", "model", "engine", "part_role"].every(function(key) { return text(a[key]) === text(b[key]); }) &&
+      ["chassis_range", "grade", "transmission"].every(function(key) { return text((a.raw_payload || {})[key]) === text((b.raw_payload || {})[key]); }) &&
+      ((!a.effective_start && validStoredPeriod(b)) || a.effective_start && ["effective_start", "effective_end", "production_period_text"].every(function(key) { return text(a[key]) === text(b[key]); }) && text((a.raw_payload || {}).production_period_basis) === text((b.raw_payload || {}).production_period_basis)) && !(b.raw_payload || {}).chassis_range_review;
   }
   function registrationState(rows, stored) {
     var byKey = {}, matched = 0, different = false;
@@ -57,6 +69,88 @@
       stored = stored.concat(result.data);
     }
     return registrationState(rows, stored);
+  }
+  function updateOwner() {
+    var owner = root.currentUser && root.currentUser.id;
+    return permitted() && /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(owner || "") ? owner : "";
+  }
+  async function updateRequest() {
+    var owner = updateOwner();
+    if (!owner) throw new Error("not_authorized");
+    var health = await api.request("/health");
+    if (!health || health.autoUpdateVersion !== 1) throw new Error("old_bridge");
+    if (updateOwner() !== owner) throw new Error("not_authorized");
+    return {auto_update_owner:owner};
+  }
+  function updateStatus(job) {
+    var update = job && job.autoUpdate;
+    if (!update) return "";
+    if (update.owner !== updateOwner()) return label("ownerWaiting");
+    return label({pending:"updatePending", submitting:"updating", registered:"updateDone", failed:"updateFailed", unknown:"updateUnknown"}[update.state] || "updateUnknown");
+  }
+  async function updateRegistration(job, value) {
+    return api.request("/jobs/" + job.jobId + "/registration", "POST", value);
+  }
+  async function runUpdate(job) {
+    var owner = updateOwner(), update = job && job.autoUpdate;
+    if (updatingJob || !owner || !update || update.owner !== owner || job.state !== "completed") return;
+    var reconcile = update.state === "unknown" || update.state === "submitting" && Date.now() - Date.parse(job.updatedAt) > 60000;
+    if (update.state !== "pending" && !reconcile) return;
+    updatingJob = job.jobId;
+    var attempt = update.attempt, claimed = false;
+    async function finish(state, reason) {
+      var result = await updateRegistration(job, {action:"finish", owner:owner, attempt:attempt, state:state, reason:reason});
+      detailCache[job.jobId] = result;
+      return result;
+    }
+    try {
+      if (reconcile) {
+        var prior = await checkRegistration(job);
+        if (updateOwner() !== owner) return;
+        if (prior.state === "registered") await finish("registered", null);
+        else if (update.state === "submitting") await finish("unknown", "registration_interrupted");
+        return;
+      }
+      if (!root.crypto || typeof root.crypto.randomUUID !== "function") throw new Error("update_claim_unavailable");
+      attempt = root.crypto.randomUUID();
+      var claim = await updateRegistration(job, {action:"claim", owner:owner, attempt:attempt});
+      if (!claim.claimed) return;
+      claimed = true;
+      job = claim; detailCache[job.jobId] = claim;
+      var full = await detail(job);
+      var rows = api.reviewRows(full.review, full.part, api.makers[api.makerCodes.indexOf(full.maker)]);
+      var before = await checkRegistration(job);
+      if (updateOwner() !== owner) { await finish("unknown", "permission_changed"); return; }
+      if (before.state !== "registered") await root.importPartsfanApplications(job.part, job.maker, rows);
+      if (updateOwner() !== owner) { await finish("unknown", "permission_changed"); return; }
+      var after = await checkRegistration(job);
+      if (after.state !== "registered") throw new Error("registration_unconfirmed");
+      await finish("registered", null);
+      registrations[job.jobId] = Object.assign(after, {version:(detailCache[job.jobId] || job).updatedAt});
+    } catch (error) {
+      if (claimed) {
+        try {
+          var verified = updateOwner() === owner ? await checkRegistration(job) : null;
+          if (verified && verified.state === "registered") await finish("registered", null);
+          else await finish(error && /^[0-9A-Z]{5}$/.test(error.code || "") ? "failed" : "unknown", "registration_failed");
+        } catch (_) { /* A lost response stays claimed; reconcile by reading, never resend. */ }
+      }
+    } finally { updatingJob = null; }
+  }
+  async function processUpdates(jobs) {
+    for (var job of jobs) {
+      if (!updateOwner()) return;
+      await runUpdate(job);
+    }
+  }
+  async function retryUpdate(jobId) {
+    var owner = updateOwner();
+    if (!owner) throw new Error("not_authorized");
+    var job = await api.request("/jobs/" + jobId);
+    if (!job.autoUpdate || job.autoUpdate.owner !== owner) throw new Error("update_owner_mismatch");
+    job = await updateRegistration(job, {action:"retry", owner:owner});
+    await runUpdate(job);
+    return api.request("/jobs/" + jobId);
   }
   function close() {
     generation++;
@@ -98,6 +192,7 @@
       var registration = registrations[job.jobId];
       if (registration && registration.version !== job.updatedAt) registration = null;
       var regLabel = job.state !== "completed" ? label("pending") : registration ? label(registration.state) + (registration.total ? " (" + registration.matched + "/" + registration.total + ")" : "") : label("checking");
+      if (job.autoUpdate && job.autoUpdate.state !== "registered") regLabel = updateStatus(job);
       var maker = api.makers[api.makerCodes.indexOf(job.maker)] || job.maker;
       var stamp = job.updatedAt || job.createdAt;
       var date = stamp && Number.isFinite(Date.parse(stamp)) ? new Date(stamp).toLocaleString(root.currentLang || "ja") : "";
@@ -117,6 +212,7 @@
       if (!result || result.schemaVersion !== 2 || !Array.isArray(result.jobs)) throw new Error("old_bridge");
       snapshot = result;
       updateEntries(); render();
+      await processUpdates(result.jobs);
       if (active) {
         for (var job of result.jobs) {
           if (!active || ticket !== generation || !permitted()) break;
@@ -170,9 +266,10 @@
       catch (_) { message(label("invalid")); return; }
       var button = host.querySelector("button[type=submit]"); button.disabled = true;
       try {
-        await api.request("/queue", "POST", {items:items});
+        var update = await updateRequest();
+        await api.request("/queue", "POST", Object.assign({items:items}, update));
         if (active === host && permitted()) { host.querySelector("#pfq-parts").value = ""; message(label("added")); await refresh(true); }
-      } catch (_) { if (active === host) message(label("unavailable")); }
+      } catch (error) { if (active === host) message(label(error.message === "old_bridge" ? "oldBridge" : "unavailable")); }
       finally { if (button.isConnected) button.disabled = false; }
     };
     active.addEventListener("click", function(event) { if (event.target === active) close(); });
@@ -188,9 +285,10 @@
     return true;
   }
   function invalidate() { registrations = {}; detailCache = {}; refresh(true); }
-  root.PartsfanQueue = {open:open, close:close, label:label, parseParts:parseParts, registrationState:registrationState, invalidate:invalidate};
+  root.PartsfanQueue = {open:open, close:close, label:label, parseParts:parseParts, registrationState:registrationState, invalidate:invalidate,
+    updateRequest:updateRequest, updateOwner:updateOwner, updateStatus:updateStatus, processUpdates:processUpdates, retryUpdate:retryUpdate};
   if (typeof document !== "undefined") {
-    function tick() { clearTimeout(timer); updateEntries(); if (!document.hidden) refresh(false); timer = setTimeout(tick, active ? 2000 : 5000); }
+    function tick() { clearTimeout(timer); updateEntries(); refresh(false); timer = setTimeout(tick, active ? 2000 : 5000); }
     tick();
   }
 })(typeof window !== "undefined" ? window : globalThis);

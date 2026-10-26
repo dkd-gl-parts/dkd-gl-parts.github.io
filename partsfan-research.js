@@ -7,6 +7,9 @@
     en: {button:"Update fitment", title:"Update PARTS FAN fitment", part:"Genuine part number", maker:"Vehicle manufacturer", choose:"Select a manufacturer", start:"Get data", retry:"Try again", resume:"Continue collection", humanResume:"Resume after checking", humanChecked:"I checked and closed the dedicated Chrome", openProfile:"Open dedicated Chrome", close:"Close", note:"Collect fitments for the selected manufacturer, then review the vehicles and sources before importing.", invalid:"Enter a genuine part number and select a vehicle manufacturer.", checking:"Checking the local connection.", running:"Collection is running on this PC. It continues if you close this dialog.", ready:"Collection completed. Review the results.", unavailable:"The local PARTS FAN bridge is not running. Start it and retry.", disconnected:"Connection to the PC was lost. Check the bridge and retry.", blocked:"PARTS FAN limited access. Check the dedicated Chrome, close it, then resume. No automatic retry occurs.", challenge:"Cloudflare verification did not pass automatically. Check the dedicated Chrome, close it, then resume.", captcha:"CAPTCHA or a daily limit appeared. Complete any required action yourself in the dedicated Chrome, close it, then resume.", budget:"The per-run page limit was reached. You can continue.", manual:"This part's site structure could not be verified automatically. Review the source manually.", notFound:"No fitment was found for this part.", failed:"Collection failed. Check the local bridge and dedicated Chrome, then retry.", profileOpened:"Dedicated Chrome opened. Close it after checking.", grade:"Grade", transmission:"Transmission", chassis:"Chassis range", source:"Source / collected at", period:"Model year (production period)", yearUnknown:"Year unverified", reviewed:"I checked the listed vehicles and sources", import:"Import reviewed fitments", imported:"Import completed", importConflict:"Existing chassis evidence conflicts with the new result. Nothing was imported. Review and resolve it, then retry.", importAmbiguous:"The existing fitment cannot be matched uniquely. Nothing was imported. An administrator must review the rows.", importFailed:"Import failed. Check the data and retry.", badResult:"The collection result could not be verified. Collect again.", adminOnly:"Only system administrators can import fitments.", vehicleType:"Vehicle", model:"Model", engine:"Engine", added:"added", updated:"updated"},
     zh: {button:"更新适配车辆", title:"更新PARTS FAN适配车辆", part:"原厂零件号", maker:"汽车制造商", choose:"请选择", start:"获取数据", retry:"重新获取", resume:"继续获取", humanResume:"确认后继续", humanChecked:"已检查并关闭专用Chrome", openProfile:"打开专用Chrome", close:"关闭", note:"指定制造商获取数据，核对车辆和来源后再导入。", invalid:"请输入原厂零件号并选择汽车制造商。", checking:"正在检查本机连接。", running:"本机正在获取数据。关闭此窗口后处理仍会继续。", ready:"获取完成，请核对内容。", unavailable:"本机PARTS FAN连接未启动。启动后重试。", disconnected:"与本机连接中断。检查后重试。", blocked:"PARTS FAN限制了访问。请检查专用Chrome，关闭后继续；不会自动重试。", challenge:"Cloudflare验证未自动通过。请检查专用Chrome，关闭后继续。", captcha:"出现CAPTCHA或访问上限。请自行在专用Chrome处理，关闭后继续。", budget:"达到单次访问上限，可以继续。", manual:"无法自动确认该零件的网站结构，请手动核对来源。", notFound:"未找到该零件的适配信息。", failed:"获取失败。检查本机连接及专用Chrome后重试。", profileOpened:"已打开专用Chrome，检查后请关闭。", grade:"配置", transmission:"变速箱", chassis:"车架号码范围", source:"来源／采集时间", period:"年款（生产期间）", yearUnknown:"年款未确认", reviewed:"已核对车辆及来源", import:"导入已核对的适配车辆", imported:"导入完成", importConflict:"现有车架号码证据与新结果冲突，未导入任何记录。请核对并解决后重试。", importAmbiguous:"无法唯一对应现有适配车辆，未导入任何记录。请管理员检查。", importFailed:"导入失败。请检查数据后重试。", badResult:"无法验证获取结果，请重新获取。", adminOnly:"仅系统管理员可导入。", vehicleType:"车型", model:"型号", engine:"发动机", added:"新增", updated:"更新"}
   };
+  Object.assign(words.ja, {start:"取得して更新", retry:"再取得して更新", note:"指定したメーカーの適合データを取得し、そのまま更新します。取得できない項目は空欄で登録します。D-CATSを終了した場合、未登録分は次回ログイン後に更新します。", updating:"取得したデータを適合車両へ更新しています。", oldBridge:"自動更新に対応したPC連携へ更新してください。"});
+  Object.assign(words.en, {start:"Collect and update", retry:"Collect again and update", note:"Collect fitments and update them automatically. Unavailable fields stay blank. Pending updates continue after the next sign-in if D-CATS is closed.", updating:"Updating fitments with the collected data.", oldBridge:"Update the local bridge to enable automatic updates."});
+  Object.assign(words.zh, {start:"获取并更新", retry:"重新获取并更新", note:"获取适配数据后自动更新，未取得的字段保留为空。退出D-CATS时，未登记部分将在下次登录后继续。", updating:"正在使用已取得的数据更新适配车辆。", oldBridge:"请更新本机连接以启用自动更新。"});
   var active = null, previousFocus = null, pollTimer = null;
   var bridgeBase = "http://127.0.0.1:37644";
   function label(key) { return (words[root.currentLang] || words.ja)[key] || key; }
@@ -232,6 +235,21 @@
           status.textContent = label("ready");
           startButton.hidden = false; startButton.disabled = false; startButton.textContent = label("retry");
           profileButton.hidden = true; humanWrap.hidden = true;
+          if (job.autoUpdate && root.PartsfanQueue) {
+            status.textContent = root.PartsfanQueue.updateStatus(job);
+            var automatic = job.autoUpdate.owner !== root.PartsfanQueue.updateOwner() || /^(pending|submitting|registered)$/.test(job.autoUpdate.state);
+            if (confirm) confirm.parentElement.hidden = automatic;
+            if (importButton) importButton.hidden = automatic;
+            if (/^(pending|submitting)$/.test(job.autoUpdate.state)) {
+              pollTimer = setTimeout(async function() {
+                try { renderJob(await bridgeRequest("/jobs/" + jobId), ticket); }
+                catch (_) { if (active === host && ticket === generation) status.textContent = label("disconnected"); }
+              }, 1500);
+            }
+          } else {
+            if (confirm) confirm.parentElement.hidden = false;
+            if (importButton) importButton.hidden = false;
+          }
         } catch (_) { status.textContent = label("badResult"); startButton.disabled = false; startButton.textContent = label("retry"); }
         return;
       }
@@ -254,13 +272,14 @@
       status.textContent = label("running");
       try {
         var resumeJob = savedJob && /^(blocked|requires_login|error|paused_budget)$/.test(savedJob.state);
-        var job = await bridgeRequest(resumeJob ? "/jobs/" + savedJob.jobId + "/resume" : "/jobs", "POST", resumeJob ? {after_human_check:checked} : {part: clean(part.value), maker: makerCodes[makers.indexOf(maker.value)], after_human_check: checked});
+        var update = await root.PartsfanQueue.updateRequest();
+        var job = await bridgeRequest(resumeJob ? "/jobs/" + savedJob.jobId + "/resume" : "/jobs", "POST", Object.assign(resumeJob ? {after_human_check:checked} : {part: clean(part.value), maker: makerCodes[makers.indexOf(maker.value)], after_human_check: checked}, update));
         if (active !== host || ticket !== generation) return;
         jobId = job.jobId;
         renderJob(job, ticket);
       } catch (error) {
         if (active !== host || ticket !== generation) return;
-        status.textContent = error && error.message === "another_collection_running" ? label("running") : label("unavailable");
+        status.textContent = error && error.message === "old_bridge" ? label("oldBridge") : error && error.message === "another_collection_running" ? label("running") : label("unavailable");
         startButton.disabled = false; startButton.textContent = label("retry");
       } finally { busy = false; }
     }
@@ -277,6 +296,11 @@
       if (busy || !readyRows || !confirm.checked || !permitted() || !root.canImportPartsfanFitments()) return;
       busy = true; importButton.disabled = true;
       try {
+        if (savedJob && savedJob.autoUpdate) {
+          var updatedJob = await root.PartsfanQueue.retryUpdate(savedJob.jobId);
+          renderJob(updatedJob, generation);
+          return;
+        }
         var summary = await root.importPartsfanApplications(clean(part.value), makerCodes[makers.indexOf(maker.value)], readyRows);
         status.textContent = label("imported") + "：" + summary.inserted + " " + label("added") + "、" + summary.updated + " " + label("updated");
         resetReview();
