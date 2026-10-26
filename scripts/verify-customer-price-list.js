@@ -241,6 +241,14 @@ expect(elements["cpr-preview-rows"].innerHTML.includes("<td class='cpr-vehicle-n
 expect(screenCss.includes('.cpr-table td:nth-child(5)::before { content: "代表車名"; }')
   && screenCss.includes('.cpr-table td:nth-child(6)::before { content: "型式"; }'),
   "mobile cards must label the representative pair");
+expect(/\.cpr-table\s*\{[^}]*table-layout:\s*fixed/.test(screenCss), "preview columns must not expand based on a row's content");
+const previewColumnWidths = [...screenCss.matchAll(/\.cpr-table th:nth-child\((\d)\)\s*\{\s*width:\s*(\d+)%;/g)];
+expect(previewColumnWidths.length === 7 && previewColumnWidths.reduce((sum, match) => sum + Number(match[2]), 0) === 100,
+  "the seven semantic column widths must fill the preview without overflow");
+expect(!/\.cpr-vehicle-name\s*\{[^}]*min-width:\s*180px/.test(screenCss), "vehicle names must not force other preview columns aside");
+expect(screenCss.includes("container: cpr-preview / inline-size") && screenCss.includes("@container cpr-preview (max-width: 740px)"),
+  "compact layout must follow the actual preview width, including a narrow desktop panel");
+expect(/\.cpr-table th:nth-child\(7\)\s*\{[^}]*text-align:\s*right/.test(screenCss), "price headings and amounts must share the right edge");
 
 const defaults = app.match(/var DEFAULT_CUSTOMER_VISIBLE_CATEGORY_CODES = \[[^\]]+\];/);
 const categoryVisible = app.match(/function customerCategoryIsVisible\(categoryCode, visibilityRows\) \{[\s\S]*?\n\}/);
