@@ -28,4 +28,11 @@
 #recycle-message.error,#recycle-detail-message { color: #a52d2d; overflow-wrap: anywhere; }
 #recycle-totals { margin: 14px 0; line-height: 1.8; font-weight: 600; }
 .recycle-detail { margin: 12px 0; }
+.recycle-accounting { margin-top: 20px; padding-top: 16px; border-top: 2px solid #cbd5e1; overflow-wrap: anywhere; }
+.recycle-accounting details { margin-top: 12px; }
+.recycle-accounting button { margin: 6px 8px 6px 0; }
+.recycle-accounting [data-ra-message] { color: #8b3227; }
+.recycle-accounting-check { display: flex !important; align-items: center; }
+.recycle-accounting-check input { width: 18px; min-height: 18px; }
+.recycle-accounting select { width: 100%; min-width: 0; min-height: 40px; padding: 8px; box-sizing: border-box; }
 @media(max-width:700px) { .recycle-dialog { padding: 14px; } .recycle-grid { grid-template-columns: 1fr; } .recycle-line { grid-template-columns: 76px minmax(0,1fr); } .recycle-line>strong { grid-column: 1/-1; } .recycle-order-row { grid-template-columns: minmax(0,1fr); gap: 10px; } .recycle-line>label:nth-of-type(3) { grid-column: 1/-1; } .recycle-summary { align-items: flex-start; flex-direction: column; } }
