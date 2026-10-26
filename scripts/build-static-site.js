@@ -27,6 +27,7 @@ const files = [
   "product-data-research.js",
   "product-data-research.css",
   "partsfan-research.js",
+  "partsfan-queue.js",
   "partsfan-research.css",
   "index.html",
   "label-print-window.js",

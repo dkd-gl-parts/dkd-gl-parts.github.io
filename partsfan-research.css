@@ -24,4 +24,16 @@
 .partsfan-vehicle-detail-list { display: grid; gap: 5px; margin-top: 7px; min-width: 180px; }
 .partsfan-vehicle-detail-list > div { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 6px; overflow-wrap: anywhere; }
 .partsfan-vehicle-detail-list > div > span:first-child { color: #64748b; }
+.partsfan-queue-entry { white-space: normal; max-width: 250px; }
+.partsfan-queue-dialog { width: min(1050px, 100%); }
+.partsfan-queue-inputs { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(200px, 2fr); gap: 16px; }
+.partsfan-queue-dialog textarea { width: 100%; box-sizing: border-box; resize: vertical; min-height: 80px; max-height: 200px; padding: 10px 12px; border: 1px solid var(--border, #d1d5db); border-radius: 6px; font: inherit; background: var(--bg, #fff); color: inherit; }
+.partsfan-queue-row { display: grid; grid-template-columns: minmax(150px, 1.2fr) minmax(150px, 1fr) minmax(130px, 1fr) auto; gap: 14px; padding: 16px 0; border-top: 1px solid var(--border, #d1d5db); align-items: center; font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
+.partsfan-queue-row small { color: var(--text-sub, #64748b); }
+.partsfan-queue-state { font-weight: 700; }
+.partsfan-queue-state[data-state=completed] { color: #14713d; }
+.partsfan-queue-state[data-state=running] { color: #1d4ed8; }
+.partsfan-queue-state[data-state=error], .partsfan-queue-state[data-state=blocked], .partsfan-queue-state[data-state=requires_login] { color: #a33c00; }
+.partsfan-queue-row-actions button { white-space: normal; }
+@media (max-width: 700px) { .partsfan-queue-inputs { grid-template-columns: 1fr; gap: 0; } .partsfan-queue-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; } .partsfan-queue-row-actions { text-align: right; } }
 @media (max-width: 480px) { .partsfan-research-overlay { padding: 12px; } .partsfan-research-dialog { padding: 18px; max-height: calc(100dvh - 24px); } .partsfan-research-dialog h2 { font-size: 17px; } .partsfan-research-actions > button { max-width: 100%; white-space: normal; } }

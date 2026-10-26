@@ -30,6 +30,7 @@
     } finally { clearTimeout(timeout); }
   }
   function stopLabel(job) {
+    if (job && job.state === "queued") return root.PartsfanQueue ? root.PartsfanQueue.label("queued") : "予約待ち";
     var reason = job && job.reason || "";
     if (reason === "cloudflare_verification_pending") return label("challenge");
     if (/^captcha|^http_block_(403|429|5\d\d)$|human_check_required/.test(reason)) return label("captcha");
@@ -108,12 +109,15 @@
     return html;
   }
   function buttonHtml() {
-    return permitted() ? "<div class='partsfan-research-actions'><button class='btn-sm-edit' type='button' data-partsfan-research>" + esc(label("button")) + "</button></div>" : "";
+    return permitted() ? "<div class='partsfan-research-actions'><button class='btn-sm-edit' type='button' data-partsfan-research>" + esc(label("button")) + "</button><button class='btn-sm-edit' type='button' data-partsfan-queue>" + esc(root.PartsfanQueue ? root.PartsfanQueue.label("title") : "適合調査一覧") + "</button></div>" : "";
   }
   function bind(host, product) {
     if (!host) return;
     Array.prototype.forEach.call(host.querySelectorAll("[data-partsfan-research]"), function(button) {
       button.onclick = function() { if (permitted()) open(product); };
+    });
+    Array.prototype.forEach.call(host.querySelectorAll("[data-partsfan-queue]"), function(button) {
+      button.onclick = function() { if (permitted() && root.PartsfanQueue) root.PartsfanQueue.open(); };
     });
   }
   function close() {
@@ -124,7 +128,7 @@
     if (previousFocus && previousFocus.isConnected) previousFocus.focus();
     previousFocus = null;
   }
-  function open(product) {
+  function open(product, savedJob) {
     if (!permitted()) return false;
     close();
     previousFocus = document.activeElement;
@@ -167,7 +171,10 @@
       if (validPart(part.value) && makers.indexOf(maker.value) >= 0) {
         var ticket = generation;
         status.textContent = label("checking"); startButton.disabled = true;
-        Promise.all([bridgeRequest("/current").catch(function() { return null; }),
+        Promise.all([bridgeRequest("/jobs").then(function(value) {
+                       var match = (value.jobs || []).find(function(job) { return normalized(job.part) === normalized(part.value) && job.maker === makerCodes[makers.indexOf(maker.value)]; });
+                       return match ? bridgeRequest("/jobs/" + match.jobId) : null;
+                     }).catch(function() { return null; }),
                      bridgeRequest("/access").catch(function() { return null; })]).then(function(results) {
           if (active !== host || ticket !== generation) return;
           var job = results[0], access = results[1];
@@ -197,12 +204,13 @@
     }
     function renderJob(job, ticket) {
       if (active !== host || ticket !== generation) return;
-      if (!job || job.jobId !== jobId || job.part !== clean(part.value) || job.maker !== makerCodes[makers.indexOf(maker.value)]) {
+      if (!permitted()) { close(); return; }
+      if (!job || job.jobId !== jobId || normalized(job.part) !== normalized(part.value) || job.maker !== makerCodes[makers.indexOf(maker.value)]) {
         status.textContent = label("badResult"); startButton.disabled = false; startButton.textContent = label("retry"); return;
       }
       resetReview();
-      if (job.state === "running") {
-        status.textContent = label("running");
+      if (job.state === "running" || job.state === "queued") {
+        status.textContent = job.state === "queued" ? stopLabel(job) + " (" + job.queuePosition + ")" : label("running");
         humanWrap.hidden = true; profileButton.hidden = true; humanConfirm.checked = false;
         startButton.hidden = false; startButton.disabled = true;
         pollTimer = setTimeout(async function() {
@@ -244,7 +252,8 @@
       var ticket = ++generation;
       status.textContent = label("running");
       try {
-        var job = await bridgeRequest("/jobs", "POST", {part: clean(part.value), maker: makerCodes[makers.indexOf(maker.value)], after_human_check: checked});
+        var resumeJob = savedJob && /^(blocked|requires_login|error|paused_budget)$/.test(savedJob.state);
+        var job = await bridgeRequest(resumeJob ? "/jobs/" + savedJob.jobId + "/resume" : "/jobs", "POST", resumeJob ? {after_human_check:checked} : {part: clean(part.value), maker: makerCodes[makers.indexOf(maker.value)], after_human_check: checked});
         if (active !== host || ticket !== generation) return;
         jobId = job.jobId;
         renderJob(job, ticket);
@@ -270,6 +279,7 @@
         var summary = await root.importPartsfanApplications(clean(part.value), makerCodes[makers.indexOf(maker.value)], readyRows);
         status.textContent = label("imported") + "：" + summary.inserted + " " + label("added") + "、" + summary.updated + " " + label("updated");
         resetReview();
+        if (root.PartsfanQueue) root.PartsfanQueue.invalidate();
       } catch (error) { status.textContent = importErrorLabel(error); importButton.disabled = false; }
       finally { busy = false; }
     };
@@ -278,13 +288,26 @@
     host.addEventListener("keydown", function(event) {
       if (event.key === "Escape") { event.preventDefault(); close(); return; }
       if (event.key !== "Tab") return;
-      var fields = Array.prototype.slice.call(host.querySelectorAll("button,input,select,a[href]")).filter(function(x) { return !x.disabled; });
+      var fields = Array.prototype.slice.call(host.querySelectorAll("button,input,select,a[href]")).filter(function(x) { return !x.disabled && x.getClientRects().length; });
       var first = fields[0], last = fields[fields.length-1];
       if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     });
+    var listButton = document.createElement("button");
+    listButton.type = "button"; listButton.className = "btn-sm-edit";
+    listButton.textContent = root.PartsfanQueue ? root.PartsfanQueue.label("title") : "適合調査一覧";
+    listButton.onclick = function() { close(); if (root.PartsfanQueue) root.PartsfanQueue.open(); };
+    host.querySelector(".partsfan-research-actions").appendChild(listButton);
+    if (savedJob) {
+      maker.value = makers[makerCodes.indexOf(savedJob.maker)] || "";
+      maker.disabled = true;
+      jobId = savedJob.jobId;
+      renderJob(savedJob, generation);
+    }
     part.focus();
     return true;
   }
-  root.PartsfanResearch = {label:label, reviewRows:reviewRows, details:details, sourceHtml:sourceHtml, buttonHtml:buttonHtml, bind:bind, open:open, close:close, stopLabel:stopLabel, importErrorLabel:importErrorLabel};
+  root.PartsfanResearch = {label:label, reviewRows:reviewRows, details:details, sourceHtml:sourceHtml, buttonHtml:buttonHtml, bind:bind, open:open, close:close, stopLabel:stopLabel, importErrorLabel:importErrorLabel,
+    request:bridgeRequest, permitted:permitted, makers:makers, makerCodes:makerCodes,
+    openSaved:function(job) { return open({genuine_part_number:job.part}, job); }};
 })(typeof window !== "undefined" ? window : globalThis);
