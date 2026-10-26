@@ -160,28 +160,17 @@
     focusBefore = null;
   }
   function message(text) { if (active) active.querySelector("[data-pfq-message]").textContent = text; }
-  function updateEntries() {
+  function checkAccess() {
     var allowed = permitted();
-    document.querySelectorAll(".page-header-right").forEach(function(header) {
-      var button = header.querySelector("[data-pfq-entry]");
-      if (!button && allowed) {
-        button = document.createElement("button"); button.type = "button"; button.className = "btn-sm-edit partsfan-queue-entry";
-        button.setAttribute("data-pfq-entry", ""); button.onclick = open; header.classList.add("partsfan-queue-header"); header.prepend(button);
-      }
-      if (button) {
-        button.hidden = !allowed;
-        var jobs = snapshot && snapshot.jobs || [];
-        var running = jobs.filter(function(j) { return j.state === "running"; }).length;
-        var waiting = jobs.filter(function(j) { return j.state === "queued"; }).length;
-        var suffix = snapshot && snapshot.paused ? label("stopped") : running ? label("running") : "";
-        button.textContent = label("title") + (suffix ? " · " + suffix : "") + (waiting ? " · " + label("queued") + " " + waiting : "");
-      }
-    });
     if (!allowed) { if (active) close(); if (api) api.close(); }
     if (!allowed) { snapshot = null; detailCache = {}; registrations = {}; }
   }
   function render() {
     if (!active || !snapshot || !permitted()) return;
+    var running = snapshot.jobs.filter(function(job) { return job.state === "running"; }).length;
+    var waiting = snapshot.jobs.filter(function(job) { return job.state === "queued"; }).length;
+    var suffix = snapshot.paused ? label("stopped") : running ? label("running") : "";
+    active.querySelector("#pfq-title").textContent = label("title") + (suffix ? " · " + suffix : "") + (waiting ? " · " + label("queued") + " " + waiting : "");
     active.querySelector("[data-pfq-summary]").textContent = snapshot.paused ? label("paused") + " " + api.stopLabel({state:"blocked", reason:snapshot.pauseReason}) : label("saved");
     var body = active.querySelector("[data-pfq-jobs]");
     var signature = JSON.stringify([root.currentLang, snapshot.jobs, snapshot.jobs.map(function(job) { var r = registrations[job.jobId]; return r && r.version === job.updatedAt ? [r.state,r.matched,r.total] : null; })]);
@@ -202,7 +191,7 @@
     if (focusedId) Array.from(body.querySelectorAll("[data-job]")).some(function(button) { if (button.getAttribute("data-job") !== focusedId) return false; button.focus({preventScroll:true}); return true; });
   }
   async function refresh(force) {
-    updateEntries();
+    checkAccess();
     if (!permitted() || loading) return;
     loading = true;
     var ticket = generation;
@@ -211,7 +200,7 @@
       if (!permitted()) return;
       if (!result || result.schemaVersion !== 2 || !Array.isArray(result.jobs)) throw new Error("old_bridge");
       snapshot = result;
-      updateEntries(); render();
+      checkAccess(); render();
       await processUpdates(result.jobs);
       if (active) {
         for (var job of result.jobs) {
@@ -288,7 +277,7 @@
   root.PartsfanQueue = {open:open, close:close, label:label, parseParts:parseParts, registrationState:registrationState, invalidate:invalidate,
     updateRequest:updateRequest, updateOwner:updateOwner, updateStatus:updateStatus, processUpdates:processUpdates, retryUpdate:retryUpdate};
   if (typeof document !== "undefined") {
-    function tick() { clearTimeout(timer); updateEntries(); refresh(false); timer = setTimeout(tick, active ? 2000 : 5000); }
+    function tick() { clearTimeout(timer); checkAccess(); refresh(false); timer = setTimeout(tick, active ? 2000 : 5000); }
     tick();
   }
 })(typeof window !== "undefined" ? window : globalThis);
