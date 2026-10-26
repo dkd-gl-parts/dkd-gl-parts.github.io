@@ -194,7 +194,7 @@
         });
       }
     }
-    part.addEventListener("input", changed); maker.addEventListener("change", changed); changed();
+    part.addEventListener("input", changed); maker.addEventListener("change", function() { savedJob = null; changed(); }); changed();
     function showAccessBlock(access, keepReview) {
       if (!keepReview) resetReview();
       status.textContent = (keepReview ? label("ready") + " " : "") + stopLabel({state: "blocked", reason: access.reason});
@@ -208,6 +208,7 @@
       if (!job || job.jobId !== jobId || normalized(job.part) !== normalized(part.value) || job.maker !== makerCodes[makers.indexOf(maker.value)]) {
         status.textContent = label("badResult"); startButton.disabled = false; startButton.textContent = label("retry"); return;
       }
+      savedJob = job;
       resetReview();
       if (job.state === "running" || job.state === "queued") {
         status.textContent = job.state === "queued" ? stopLabel(job) + " (" + job.queuePosition + ")" : label("running");
