@@ -80,7 +80,7 @@
   function renderWorkspace() {
     var cfg = state.settings, body = document.getElementById("recycle-body"); if (!body) return;
     body.innerHTML = "<div class='recycle-summary'><strong>売上先：ブロードリーフ</strong><span>手数料 " + e(cfg.fee_rate_percent) + "%" + (cfg.provisional ? "（暫定・見込）" : "") + "</span><span>" + (cfg.sales_customer_id ? "集約先登録済み" : "集約先の初回登録が必要です") + "</span></div>" +
-      "<p class='recycle-note'>決済完了を確認してから発送します。販売王は得意先・決済済み精算方式の確認待ちです。通常の掛売CSVへは出力しません。</p>" + settingsHtml(cfg) +
+      "<p class='recycle-note'>決済完了を確認してから発送します。販売王への専用連携は受注詳細から行います。通常の掛売CSVへは出力しません。</p>" + settingsHtml(cfg) +
       "<details id='recycle-entry'" + (cfg.sales_customer_id ? " open" : "") + "><summary>新しいRecycle+受注</summary>" + entryHtml(cfg) + "</details>" +
       "<section class='recycle-month'><h3>受注日で確認する精算一覧</h3><div class='recycle-grid'>" + input("開始日", "from", "date", monthDate(false)) + input("終了日", "to", "date", monthDate(true)) + "</div><div class='recycle-actions'>" + button("一覧を更新", "list") + button("確認用CSV", "csv") + "</div><div id='recycle-totals'></div><div id='recycle-list'></div><div class='recycle-actions'>" + button("前の100件", "previous") + button("次の100件", "next") + "</div></section>";
     state.cart = []; state.dirty = false; state.offset = 0; renderCart(); setButtons(); status(""); loadList();
@@ -194,9 +194,9 @@
       (r.payment_status === "confirmed" && ["accepted", "submitted"].includes(order.status) ? "<details><summary>決済確認を解除</summary>" + input("解除理由", "clear-reason", "text", "", "maxlength='500'") + button("確認を解除", "clear_payment", "data-recycle-detail-write") + "</details>" : "") +
       "<details><summary>精算明細の確定手数料を記録</summary><div class='recycle-grid'>" + input("確定手数料（控除額合計）", "actual-fee", "number", r.actual_fee_jpy, "min='0' step='1'") + input("うち税額（不明なら空欄）", "fee-tax", "number", r.actual_fee_tax_jpy, "min='0' step='1'") + input("精算明細番号・根拠", "settlement-reference", "text", r.settlement_reference, "maxlength='120'") + "</div>" + button("手数料を確定", "settle", "data-recycle-detail-write") + "</details>" +
       (r.payment_status === "refund_pending" ? "<details><summary>外部での返金完了を確認</summary>" + input("返金参照番号", "refund-reference", "text", "", "maxlength='120'") + button("返金確認を記録", "confirm_refund", "data-recycle-detail-write") + "</details>" : "") +
-      "<p class='recycle-note'>" + e(r.accounting_note) + "</p><p id='recycle-detail-message' role='status'></p>" + button("処理結果を確認", "detail_result", "id='recycle-detail-result'");
+      "<p class='recycle-note'>販売王へは下の専用連携を使います。通常の掛売CSVへは混入させません。</p><p id='recycle-detail-message' role='status'></p>" + button("処理結果を確認", "detail_result", "id='recycle-detail-result'");
     var panels = host.querySelector(".sales-order-detail-navigation"); if (panels) panels.before(section); else host.prepend(section);
-    section.addEventListener("input", function () { state.actor = actor(); state.detailDirty = true; });
+    section.addEventListener("input", function (event) { if (event.target.closest(".recycle-accounting")) return; state.actor = actor(); state.detailDirty = true; });
     section.addEventListener("click", async function (event) {
       var b = event.target.closest("[data-recycle-action]"); if (!b) return;
       if (b.dataset.recycleAction === "detail_result") { await checkResult(); return; }
@@ -211,8 +211,9 @@
       } catch (error) { var el = document.getElementById("recycle-detail-message"); if (el) el.textContent = error.message; }
     });
     if (r.payment_status !== "confirmed") host.querySelectorAll("#sales-order-issue-dispatch,#sales-order-print-dispatch,#sales-order-open-shipping-documents,[data-sales-order-action='prepare_shipping']").forEach(function (b) { b.disabled = true; b.title = "Recycle+の決済完了確認が必要です。"; });
+    if (window.DcatsRecycleAccounting) window.DcatsRecycleAccounting.mount(order, section);
     setButtons();
   }
   function configureEntryButton() { var b = document.getElementById("sales-order-recycle-open"); if (b) { b.hidden = !allowed(); b.onclick = open; } }
-  window.DcatsRecycleOrders = Object.freeze({ open: open, mountDetail: mountDetail, configureEntryButton: configureEntryButton, isBusy: function () { return ownerCurrent() && (state.busy || !!state.pending || state.dirty || state.detailDirty); }, csvCell: csvCell });
+  window.DcatsRecycleOrders = Object.freeze({ open: open, mountDetail: mountDetail, configureEntryButton: configureEntryButton, isBusy: function () { return (ownerCurrent() && (state.busy || !!state.pending || state.dirty || state.detailDirty)) || !!(window.DcatsRecycleAccounting && window.DcatsRecycleAccounting.isBusy()); }, csvCell: csvCell });
 }());
