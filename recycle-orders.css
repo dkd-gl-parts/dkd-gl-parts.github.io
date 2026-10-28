@@ -1,4 +1,4 @@
-.recycle-dialog { width: min(1120px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); padding: 24px; border: 1px solid #cbd5e1; border-radius: 16px; color: #172f38; background: #f8fafc; overflow: auto; box-sizing: border-box; }
+.recycle-dialog { width: min(1320px, calc(100vw - 32px)); max-width: none; max-height: calc(100dvh - 32px); margin: auto; padding: 24px; border: 1px solid var(--dcats-border, #d8e0dd); border-radius: var(--dcats-card-radius, 10px); color: var(--dcats-ink, #25362e); background: #f5f7f6; overflow: auto; box-sizing: border-box; font: inherit; }
 .recycle-dialog::backdrop { background: rgb(10 30 40 / 45%); }
 .recycle-dialog header,.recycle-summary,.recycle-actions,.recycle-product { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .recycle-dialog h2,.recycle-dialog h3,.recycle-dialog h4 { margin: 8px 0 14px; }
@@ -28,4 +28,54 @@
 #recycle-message.error,#recycle-detail-message { color: #a52d2d; overflow-wrap: anywhere; }
 #recycle-totals { margin: 14px 0; line-height: 1.8; font-weight: 600; }
 .recycle-detail { margin: 12px 0; }
+.recycle-dialog [hidden] { display: none !important; }
+.recycle-header { padding-bottom: 14px; border-bottom: 1px solid #d8e0dd; }
+.recycle-header h2 { margin-bottom: 0; font-size: 24px; color: #17231f; }
+.recycle-header nav { justify-content: flex-end; }
+.recycle-dialog button { border-color: #9fafaa; color: #31433b; border-radius: var(--dcats-control-radius, 6px); font: inherit; font-weight: 700; }
+.recycle-dialog button:hover { background: #f1f5f3; }
+.recycle-dialog input,.recycle-dialog select,.recycle-dialog textarea { border-color: var(--dcats-border, #d8e0dd); border-radius: var(--dcats-control-radius, 6px); color: #1b2923; font: inherit; font-size: 14px; }
+.recycle-dialog textarea { width: 100%; min-width: 0; padding: 8px 10px; box-sizing: border-box; border: 1px solid #d8e0dd; resize: vertical; background: #fff; }
+.recycle-dialog input:focus-visible,.recycle-dialog select:focus-visible,.recycle-dialog textarea:focus-visible { outline: 2px solid var(--dcats-focus, #27734f); outline-offset: 1px; }
+.recycle-customer { margin-top: 16px; justify-content: space-between; border-color: #d8e0dd; background: #fff; }
+.recycle-customer>div { display: grid; gap: 4px; }
+.recycle-customer>div>span { color: #6c7973; font-size: 12px; }
+.recycle-customer strong { font-size: 20px; color: #1d6544; }
+.recycle-customer>span { color: #51625a; font-size: 13px; }
+.recycle-dialog #recycle-entry-fields { padding: 0; margin: 0; }
+.recycle-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.recycle-workspace { grid-template-columns: minmax(0, 1.2fr) minmax(340px, .85fr); padding-top: 18px; padding-bottom: 0; }
+.recycle-workspace .customer-order-shipping-pane { position: static; }
+.recycle-workspace h3 { margin: 0; font-size: 18px; }
+.recycle-workspace .recycle-grid { gap: 10px 14px; }
+.recycle-workspace label { margin: 0; color: #526159; font-weight: 600; }
+.recycle-workspace .recycle-wide,.recycle-workspace label:has(#recycle-company),.recycle-workspace label:has(#recycle-address1),.recycle-workspace label:has(#recycle-address2),.recycle-workspace label:has(#recycle-carrier),#recycle-return-field { grid-column: 1/-1; }
+.recycle-product-picker { padding-top: 12px; border-top: 1px solid #dce3e0; margin-top: 18px; }
+.recycle-product-picker h4 { margin-bottom: 12px; font-size: 15px; }
+.recycle-search { align-items: flex-end; margin-bottom: 14px; }
+.recycle-search button { flex-shrink: 0; }
+.recycle-product { gap: 10px; }
+.recycle-product>span:first-child { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.recycle-line { grid-template-columns: 76px minmax(0,1fr) auto; gap: 12px; padding: 16px 0; }
+.recycle-line>strong { grid-column: 1/-1; }
+.recycle-line>label:nth-of-type(3) { grid-column: 1/3; }
+.recycle-line>button { grid-column: 3; grid-row: 2; }
+.recycle-line>span { grid-column: 1/3; font-size: 13px; color: #607080; }
+.recycle-fees { padding-top: 16px; border-top: 1px solid #dce3e0; }
+.recycle-preview { background: #edf7f1; color: #17613f; border-top: 2px solid #ccd7d2; padding: 14px; line-height: 1.7; }
+.recycle-postal-row { display: flex; gap: 6px; }
+.recycle-postal-row input { flex: 1; width: 80px; }
+.recycle-postal-row button { flex-shrink: 0; padding: 8px; }
+.recycle-postal-field { min-width: 0; }
+.recycle-postal-field>label { margin-bottom: 6px; }
+#recycle-postal-status { display: block; margin-top: 4px; line-height: 1.6; }
+#recycle-postal-results { display: grid; gap: 6px; margin-top: 6px; }
+.recycle-payment-note { color: #51625a; line-height: 1.7; font-size: 13px; margin: 18px 0 10px; }
+.recycle-dialog .customer-order-submit-button { width: 100%; border-color: var(--dcats-customer-green, #1d6544); background: var(--dcats-customer-green, #1d6544); color: #fff; }
+.recycle-dialog .customer-order-submit-button:hover { background: var(--dcats-customer-green-hover, #174f36); }
+.recycle-settings { margin-top: 18px; padding: 20px; border: 1px solid #d8e0dd; border-radius: var(--dcats-card-radius, 10px); background: #fff; }
+#recycle-message { margin: 10px 0; line-height: 1.7; }
+#recycle-message:empty { display: none; }
+@media(max-width:1000px) { .recycle-workspace { grid-template-columns: minmax(0,1fr); gap: 16px; } .recycle-workspace .customer-order-cart-pane,.recycle-workspace .customer-order-shipping-pane { border: 1px solid #d8e0dd; border-radius: var(--dcats-card-radius, 10px); } }
 @media(max-width:700px) { .recycle-dialog { padding: 14px; } .recycle-grid { grid-template-columns: 1fr; } .recycle-line { grid-template-columns: 76px minmax(0,1fr); } .recycle-line>strong { grid-column: 1/-1; } .recycle-order-row { grid-template-columns: minmax(0,1fr); gap: 10px; } .recycle-line>label:nth-of-type(3) { grid-column: 1/-1; } .recycle-summary { align-items: flex-start; flex-direction: column; } }
+@media(max-width:700px) { .recycle-dialog { width: calc(100vw - 16px); max-height: calc(100dvh - 16px); padding: 12px; } .recycle-header h2 { font-size: 21px; } .recycle-header nav { justify-content: flex-start; gap: 8px; } .recycle-workspace .customer-order-cart-pane,.recycle-workspace .customer-order-shipping-pane { padding: 14px; } .recycle-workspace .recycle-grid { grid-template-columns: minmax(0,1fr); } .recycle-line { grid-template-columns: 66px minmax(0,1fr); } .recycle-line>button { grid-column: 1/-1; grid-row: auto; justify-self: end; } .recycle-search { flex-wrap: wrap; } .recycle-search label { flex-basis: 100%; } }
