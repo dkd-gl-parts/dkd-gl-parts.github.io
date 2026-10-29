@@ -5459,24 +5459,24 @@ details.sales-shipping-island > span { display: block; margin-top: 6px; }
   min-height: 0;
   margin-top: 0;
   border: 1px solid #cbd8e8;
-  border-radius: 6px;
-  padding: 0 12px;
+  border-radius: 4px;
+  padding: 0 8px;
   background: #fff;
 }
-#screen-search .sales-conditions-market .detail-block-title { color: #344054; font-size: 14px; }
-#screen-search .sales-conditions-market > summary { max-width: 100%; padding: 9px 0; }
-#screen-search .sales-conditions-market[open] { padding-bottom: 10px; }
-#screen-search .sales-conditions-market[open] > summary { margin-bottom: 10px; border-bottom: 1px solid #edf0f5; }
-#screen-search .sales-conditions-market .ec-mall-detail-list { grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 10px; font-size: 14px; line-height: 1.6; }
-#screen-search .sales-conditions-market .ec-mall-detail-row { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; align-content: start; min-width: 0; max-width: 420px; border: 1px solid #e5edf8; border-radius: 5px; padding: 9px 10px; background: #f8fbff; }
-#screen-search .sales-conditions-market .ec-mall-detail-row:first-child { padding-top: 9px; }
+#screen-search .sales-conditions-market .detail-block-title { color: #344054; font-size: 12px; }
+#screen-search .sales-conditions-market > summary { max-width: 100%; padding: 4px 0; font-size: 12px; line-height: 1.4; }
+#screen-search .sales-conditions-market[open] { padding-bottom: 4px; }
+#screen-search .sales-conditions-market[open] > summary { margin-bottom: 4px; border-bottom: 1px solid #edf0f5; }
+#screen-search .sales-conditions-market .ec-mall-detail-list { grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 4px; font-size: 12px; line-height: 1.35; }
+#screen-search .sales-conditions-market .ec-mall-detail-row { grid-template-columns: minmax(0, 1fr) auto; gap: 2px 6px; align-content: start; min-width: 0; max-width: 420px; border: 1px solid #e5edf8; border-radius: 3px; padding: 3px 6px; background: #f8fbff; }
+#screen-search .sales-conditions-market .ec-mall-detail-row:first-child { padding-top: 3px; }
 #screen-search .sales-conditions-market .ec-mall-detail-price { grid-column: 2; grid-row: 1; }
 #screen-search .sales-conditions-market .ec-mall-detail-seller { grid-column: 1 / -1; grid-row: 2; }
 #screen-search .sales-conditions-market .ec-mall-detail-type,
 #screen-search .sales-conditions-market .ec-mall-detail-seller { overflow: visible; white-space: normal; overflow-wrap: anywhere; }
 #screen-search .sales-conditions-market .ec-mall-detail-seller a { color: #1a6fd4; text-underline-offset: 2px; }
-#screen-search .sales-conditions-market .ec-mall-detail-price { font-size: 18px; font-variant-numeric: tabular-nums; text-align: right; }
-#screen-search .sales-conditions-market .ec-mall-detail-meta { margin-top: 10px; border-top: 1px solid #edf0f5; padding-top: 8px; color: #667085; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+#screen-search .sales-conditions-market .ec-mall-detail-price { font-size: 14px; font-variant-numeric: tabular-nums; text-align: right; }
+#screen-search .sales-conditions-market .ec-mall-detail-meta { margin-top: 4px; color: #667085; font-size: 11px; line-height: 1.4; overflow-wrap: anywhere; }
 #screen-search .sales-conditions-without-shipping .sales-conditions-terms { grid-column: 2; grid-row: 2; }
 #screen-search .sales-conditions-without-shipping .sales-conditions-market { grid-column: 1 / -1; grid-row: 4; }
 #screen-search .sales-conditions-without-price .sales-conditions-terms { grid-column: 1 / -1; grid-row: 2; }
