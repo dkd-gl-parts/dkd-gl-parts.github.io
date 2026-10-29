@@ -2304,7 +2304,7 @@ var TRANSLATIONS = {
     sales_rank: "ランク",
     sales_customer_count: "得意先数",
     sales_rate_adjust: "掛率 / 調整 / 丸め",
-    sales_rate_multiplier: "掛率",
+    sales_factoring_auto: "売値区分1から自動算出。「計算条件」ボタンから設定します。",    sales_rate_multiplier: "掛率",
     sales_amount_adjustment: "金額調整",
     sales_rounding_unit: "丸め単位",
     sales_rounding_method: "丸め方法",
@@ -5032,7 +5032,7 @@ var TRANSLATIONS = {
     sales_rank: "Rank",
     sales_customer_count: "Customers",
     sales_rate_adjust: "Rate / Adjustment / Rounding",
-    sales_rate_multiplier: "Rate",
+    sales_factoring_auto: "Calculated from price class 1. Open the calculation settings to adjust.",    sales_rate_multiplier: "Rate",
     sales_amount_adjustment: "Amount Adjustment",
     sales_rounding_unit: "Rounding Unit",
     sales_rounding_method: "Rounding Method",
@@ -7760,7 +7760,7 @@ var TRANSLATIONS = {
     sales_rank: "等级",
     sales_customer_count: "客户数",
     sales_rate_adjust: "倍率 / 调整 / 取整",
-    sales_rate_multiplier: "倍率",
+    sales_factoring_auto: "按售价分类1自动计算。请点击计算条件按钮进行设置。",    sales_rate_multiplier: "倍率",
     sales_amount_adjustment: "金额调整",
     sales_rounding_unit: "取整单位",
     sales_rounding_method: "取整方式",
@@ -8312,7 +8312,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1259";
+var APP_VERSION       = "v1.1.1260";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -11013,6 +11013,7 @@ document.addEventListener("freeze", function() {
 
 function isAppSafeForAutoReload() {
   if (window.DcatsRecycleOrders && window.DcatsRecycleOrders.isBusy()) return false;
+  if (window.DcatsFactoringPricing && window.DcatsFactoringPricing.isBusy()) return false;
   if (componentAddSaving) return false;
   if (finishedLabelPrintInProgress) return false;
   if (document.querySelector(".form-overlay.show")) return false;
@@ -12462,6 +12463,11 @@ async function fetchInternalRank1PriceMap(ids) {
   return map;
 }
 
+async function fetchInternalFactoringPriceMap(ids) {
+  if (!window.DcatsFactoringPricing) throw new Error("ファクタリング価格を読み込めません。");
+  return window.DcatsFactoringPricing.prices(ids);
+}
+
 async function fetchCustomerCatalogPriceMap(products) {
   var map = {};
   var rows = products || [];
@@ -12487,6 +12493,15 @@ async function fetchCustomerCatalogPriceMap(products) {
   }
   var ids = rows.map(function(product) { return parseInt(productDkdId(product), 10); }).filter(function(id) { return !isNaN(id); });
   if (!ids.length) return map;
+  if ((customerCatalogContext().customer || {}).price_rank_code === "RECYCLE_FACTORING") {
+    var factoringMap = await fetchInternalFactoringPriceMap(ids);
+    rows.forEach(function(product) {
+      var id = productDkdId(product);
+      var price = factoringMap[id + "|" + customerCatalogProductKind(product)];
+      map[id] = price == null ? null : price;
+    });
+    return map;
+  }
   var baseResult = await sb.from("product_base_prices")
     .select("dkd_shohin_id,product_kind,base_price_jpy")
     .in("dkd_shohin_id", ids)
@@ -50885,6 +50900,10 @@ async function loadSalesPricingCurrentEcReference() {
 }
 
 function calculateSalesPriceClient(basePrice, rank) {
+  if (rank && rank.rank_code === "RECYCLE_FACTORING") {
+    var factoring = window.DcatsFactoringPricing && window.DcatsFactoringPricing.preview(basePrice);
+    return factoring ? factoring.sales_price_jpy : null;
+  }
   var base = parseInt(basePrice, 10);
   if (isNaN(base)) return null;
   var rate = Number(rank && rank.rate_multiplier);
@@ -50931,7 +50950,9 @@ function renderSalesRankPreview() {
     html += "<td data-label='" + esc(t("sales_rank")) + "'><div class='price-supplier'>" + esc(salesRankDisplayName(rank)) + "</div><div class='price-country'>" + esc(rank.rank_code || "") + "</div></td>";
     html += "<td data-label='" + esc(t("sales_result_price")) + "'><div class='price-value sales-rank-price' data-dcats-inline-style='s-1024138906a0'>" + (price === null ? "-" : esc(formatYenCurrency(price))) + "</div></td>";
     html += "<td data-label='" + esc(t("sales_customer_count")) + "'>" + esc(String(salesPricingCustomerCounts[rank.rank_code] || 0)) + "</td>";
-    if (editable) {
+    if (rank.rank_code === "RECYCLE_FACTORING") {
+      if (showAdjustment) html += "<td colspan='" + (editable ? "4" : "1") + "' data-label='" + esc(t("sales_rate_adjust")) + "'>" + esc(t("sales_factoring_auto")) + "</td>";
+    } else if (editable) {
       html += "<td data-label='" + esc(t("sales_rate_multiplier")) + "'><input class='form-input sales-rank-rate' data-rank-code='" + code + "'" + (isRank1 ? " disabled" : "") + " type='number' min='0' step='0.0001' value='" + esc(String(rank.rate_multiplier || 1)) + "'></td>";
       html += "<td data-label='" + esc(t("sales_amount_adjustment")) + "'><input class='form-input sales-rank-amount' data-rank-code='" + code + "'" + (isRank1 ? " disabled" : "") + " type='number' step='1' value='" + esc(String(rank.amount_adjustment_jpy || 0)) + "'></td>";
       html += "<td data-label='" + esc(t("sales_rounding_unit")) + "'><select class='form-input sales-rank-unit' data-rank-code='" + code + "'" + (isRank1 ? " disabled" : "") + ">" + [1,10,100,1000].map(function(v){ return "<option value='" + v + "'" + (String(rank.rounding_unit_jpy || 10) === String(v) ? " selected" : "") + ">" + v + "</option>"; }).join("") + "</select></td>";
@@ -50943,10 +50964,11 @@ function renderSalesRankPreview() {
   });
   html += "</table></div>";
   wrap.innerHTML = html;
+  if (salesPricingRanks.some(function(rank) { return rank.rank_code === "RECYCLE_FACTORING"; }) && window.DcatsFactoringPricing) window.DcatsFactoringPricing.syncPreview();
 }
 
 function collectSalesRankSettingsFromForm() {
-  return salesPricingRanks.map(function(rank) {
+  return salesPricingRanks.filter(function(rank) { return rank.rank_code !== "RECYCLE_FACTORING"; }).map(function(rank) {
     var code = rank.rank_code;
     if (code === "HANBAIOU_URI_1") return {rank_code:code,rate_multiplier:1,amount_adjustment_jpy:0,rounding_unit_jpy:1,rounding_method:"round"};
     var rateEl = document.querySelector(".sales-rank-rate[data-rank-code='" + CSS.escape(code) + "']");
@@ -51430,6 +51452,13 @@ async function fetchDetailCustomerPriceInfo(customer, dkdId) {
     if (row && typeof row.tax_included === "boolean") info.taxIncluded = row.tax_included;
     return info;
   }
+  if (customer.price_rank_code === "RECYCLE_FACTORING") {
+    var factoringMap = await fetchInternalFactoringPriceMap([id]);
+    var factoringPrice = factoringMap[String(id) + "|" + selectedProductKind()];
+    info.salesPrice = factoringPrice == null ? null : factoringPrice;
+    info.taxIncluded = false;
+    return info;
+  }
   var baseR = await sb.from("product_base_prices")
     .select("base_price_jpy,tax_included")
     .eq("dkd_shohin_id", id)
@@ -51531,6 +51560,7 @@ function setSalesPricingBaseFieldsVisible(visible) {
 }
 
 function closeSalesPricingOverlay() {
+  if (window.DcatsFactoringPricing && !window.DcatsFactoringPricing.close()) return;
   var overlay = document.getElementById("sales-pricing-overlay");
   if (overlay) overlay.classList.remove("show");
   resetReadonlyGltekPartNumber("sales-g-part-number", "gltek_part_number_unavailable");
@@ -51742,6 +51772,7 @@ async function openSalesPricingForCurrent() {
       .eq("is_active", true);
     if (customersR.error) throw customersR.error;
     salesPricingRanks = ranksR.data || [];
+    if (window.DcatsFactoringPricing && salesPricingRanks.some(function(rank) { return rank.rank_code === "RECYCLE_FACTORING"; })) await window.DcatsFactoringPricing.open();
     salesPricingCustomerCounts = salesPricingRankCountMap(customersR.data || []);
     await loadSalesPricingCurrentBaseRow();
     await Promise.all([
@@ -53461,7 +53492,11 @@ async function loadCustomerPriceListRows(customer, context) {
   await ensureCustomerAccessPriceRanks();
   var priceRows = await loadCustomerPriceListBaseRows();
   var rank1Rows = [];
-  if (customer && customer.price_rank_code === "HANBAIOU_URI_1") {
+  var isFactoring = customer && customer.price_rank_code === "RECYCLE_FACTORING";
+  if (isFactoring) {
+    var factoringMap = await fetchInternalFactoringPriceMap(null);
+    rank1Rows = Object.keys(factoringMap).map(function(key) { var parts = key.split("|"); return { dkd_shohin_id: Number(parts[0]), product_kind: parts[1], price_jpy: factoringMap[key] }; });
+  } else if (customer && customer.price_rank_code === "HANBAIOU_URI_1") {
     var overrides = await sb.rpc("get_product_rank1_prices", { target_ids: null });
     if (overrides.error) throw overrides.error;
     rank1Rows = overrides.data || [];
@@ -53493,7 +53528,7 @@ async function loadCustomerPriceListRows(customer, context) {
     if (!customerCategoryIsVisible(category, visibilityRows)) return;
     var key = String(price.dkd_shohin_id) + "|" + normalizeProductKind(price.product_kind);
     var salesPrice = rank1Map[key] != null ? rank1Map[key]
-      : (price.base_price_jpy == null ? null : calculateSalesPriceClient(price.base_price_jpy, rank));
+      : (isFactoring || price.base_price_jpy == null ? null : calculateSalesPriceClient(price.base_price_jpy, rank));
     if (salesPrice === null || (salesPrice === 0 && !settings.show_zero_price)) return;
     var previous = grouped[key];
     if (!previous || (previous.price.product_variant_id && !price.product_variant_id)) {

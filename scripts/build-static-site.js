@@ -11,6 +11,7 @@ const files = [
   "ec-cost-list-targets.js",
   "ec-cost-list-targets.css",
   "recycle-orders.js",
+  "factoring-pricing.js",
   "recycle-orders.css",
   "sales-order-revision.js",
   "sales-pricing-lists.js",
