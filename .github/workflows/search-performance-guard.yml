@@ -37,6 +37,8 @@ jobs:
           node --check assets/concierge-pet/concierge-pet.js
       - name: Verify Recycle+ order and settlement workspace
         run: node scripts/verify-recycle-orders.js
+      - name: Verify configurable factoring sale prices
+        run: node scripts/verify-factoring-pricing.js
       - name: Verify sales order revision workflow
         run: node scripts/verify-sales-order-revision.js
       - name: Verify animated concierge pets
