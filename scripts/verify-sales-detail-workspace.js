@@ -276,7 +276,7 @@ if (!compatibleLoadSource.includes('document.getElementById("sales-basic-compati
 [
   "grid-template-rows: auto auto minmax(0, 1fr)",
   "#screen-search .sales-conditions-panel",
-  "grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.4fr)",
+  "grid-template-columns: minmax(280px, 1.3fr) minmax(0, 1fr)",
   "#screen-search .panel-scroll { overflow-y: auto; }",
   "grid-template-columns: 72px minmax(0, 1fr)",
   "grid-template-columns: 92px minmax(0, 1fr)",
