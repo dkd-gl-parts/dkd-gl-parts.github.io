@@ -54,6 +54,10 @@ const uniformModel = api.buildModel(rows.map(row => ({ ...row, standard_fee_jpy:
 assert.equal(uniformModel.lines.length, 1, "source model remains unchanged; regions are separated when printing");
 for (const [languageIndex, lang] of ["ja", "en", "zh"].entries()) {
   const grouped = api.documentHtml(uniformModel, { baseUrl: "https://dcats.example/", version: "test", lang });
+  const customerTitles = ["お客様向け送料のご案内", "Shipping Charges for Customers", "客户运费说明"];
+  assert(grouped.includes(`<h1>${customerTitles[languageIndex]}</h1>`), `${lang}: customer-facing title`);
+  assert(!/社内用|Internal Use|内部使用/.test(grouped), `${lang}: no internal-use label in customer handout`);
+  if (lang === "ja") assert(grouped.includes("当社から商品を発送する際に、お客様へご請求する送料です。"));
   const regions = [...grouped.matchAll(/<span class='destination-region'><strong class='region-heading'>([^<]+)<\/strong><span class='region-prefectures'>(.*?)<\/span><\/span>/g)];
   assert.equal(regions.length, 12, `${lang}: all twelve region headings`);
   const printedRows = grouped.match(/<tr><th scope='row'.*?<\/tr>/g) || [];
@@ -70,6 +74,15 @@ assert.equal((splitRegionHtml.match(/class='prefecture'/g) || []).length, 47, "d
 const differentRateRows = splitRegionHtml.match(/<tr><th scope='row'.*?<\/tr>/g) || [];
 assert.equal(differentRateRows.length, 47, "different rates within a region remain separate");
 differentRateRows.forEach(row => assert.equal((row.match(/class='region-heading'/g) || []).length, 1, "different rates never merge regions"));
+const customerNoteRows = [{ ...rows[0], note: "関西発・契約運賃（税抜）", remote_island_condition: "お客様向け運賃は要確認" }];
+const customerNoteSnapshot = JSON.stringify(customerNoteRows);
+const customerNoteModel = api.buildModel(customerNoteRows, prefectures);
+const customerNoteHtml = api.documentHtml(customerNoteModel, { baseUrl: "https://dcats.example/", version: "test", lang: "ja" });
+assert(customerNoteHtml.includes("関西発・お客様向け送料（税抜）"));
+assert(customerNoteHtml.includes("お客様向け送料は要確認"));
+assert(!customerNoteHtml.includes("契約運賃"));
+assert.equal(customerNoteModel.notes[0].text, "関西発・契約運賃（税抜）", "display wording never changes stored rate notes");
+assert.equal(JSON.stringify(customerNoteRows), customerNoteSnapshot);
 const inactive = { ...rows[0], is_active: false, standard_fee_jpy: 999999 };
 assert.equal(api.buildModel([...rows, inactive], prefectures).sourceCount, 846);
 assert.throws(() => api.buildModel([inactive], prefectures), /EMPTY/);
