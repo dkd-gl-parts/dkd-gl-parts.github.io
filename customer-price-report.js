@@ -2,10 +2,36 @@
 (function() {
   "use strict";
 
-  var state = { preview: null, requestId: null, loading: false, generation: 0, categories: {}, categoryOptions: [], categoryLoad: 0, view: "included" };
+  var state = { preview: null, requestId: null, loading: false, generation: 0, categories: {}, categoryOptions: [], categoryLoad: 0, historyLoad: 0, pendingIssue: null, pendingByActor: {}, view: "included" };
   var byId = function(id) { return document.getElementById(id); };
   var yen = function(value) { return Number(value).toLocaleString("ja-JP") + "円"; };
   var safe = function(value) { return esc(value == null ? "" : String(value)); };
+
+  function isRecycle() { return byId("cpr-report-type").value === "recycle_plus"; }
+  function reportActor() { return typeof currentUser !== "undefined" && currentUser ? currentUser.id : ""; }
+  function recycleFilters(args) {
+    return { category_code: args.p_category_code, product_kind: args.p_product_kind, part_number: args.p_part_number };
+  }
+  function applyReportType() {
+    var recycle = isRecycle();
+    byId("cpr-customer-field").hidden = recycle;
+    byId("cpr-recycle-brand").hidden = !recycle;
+    byId("cpr-title").textContent = recycle ? "Recycle＋向け販売価格表" : "得意先向け販売価格表";
+    byId("cpr-description").textContent = recycle ?
+      "ファクタリング価格で販売価格表を作成します。発行時点の品番と価格は履歴に保存されます。" :
+      "得意先に現在適用される価格だけを掲載します。発行時点の品番と価格は履歴に保存されます。";
+    byId("cpr-output-help").textContent = recycle ?
+      "現行の基準価格がある商品が対象です。ファクタリング価格未設定・0円は掲載しません。Recycle＋へ掲載する品番を確認してください。" :
+      "価格未設定、非公開、0円の品番はPDFに掲載しません。";
+  }
+  function lockIssueControls(locked) {
+    ["cpr-report-type", "cpr-customer", "cpr-category", "cpr-kind", "cpr-part-number", "cpr-part-number-format"].forEach(function(id) {
+      byId(id).disabled = locked;
+    });
+    byId("cpr-preview-button").disabled = locked || (!isRecycle() && !Number(byId("cpr-customer").value));
+    byId("cpr-issue-button").disabled = locked || !(state.preview && state.preview.rows.length);
+    byId("cpr-receipt-button").hidden = !state.pendingIssue;
+  }
 
   function outputOptions() {
     return { abbreviateMitsubishi: byId("cpr-part-number-format").value === "short" };
@@ -105,7 +131,7 @@
       (view === "excluded" ? "除外された品番はありません。" : view === "candidate" ? "候補品番はありません。" : "掲載できる価格がありません。") + "</td></tr>";
     setStatus(view === "excluded" ? "PDFに掲載しない品番と理由を表示しています。" :
       view === "candidate" ? "候補の品番と掲載判定を表示しています。" :
-      rows.length ? "得意先に適用される販売価格を確認してください。" : "掲載できる品番がありません。", false);
+      rows.length ? (payload.report_type === "recycle_plus" ? "Recycle＋向けのファクタリング価格を確認してください。" : "得意先に適用される販売価格を確認してください。") : "掲載できる品番がありません。", false);
   }
 
   function renderPreview(payload) {
@@ -136,17 +162,24 @@
   }
 
   async function preview() {
+    if (state.loading || state.pendingIssue) return;
+    if (!canManageCustomerAccess()) { clearPreview("価格表を参照する権限がありません。"); return; }
     var args = filters();
-    if (!args.p_sales_customer_id) { clearPreview("得意先を選択してください。"); return; }
+    var recycle = isRecycle();
+    if (!recycle && !args.p_sales_customer_id) { clearPreview("得意先を選択してください。"); return; }
+    var actor = reportActor();
     clearPreview("価格を確認しています…");
     var generation = state.generation;
     var button = byId("cpr-preview-button");
     button.disabled = true;
     try {
-      var result = await sb.rpc("get_customer_price_report_preview", args);
+      var result = recycle ? await sb.rpc("recycle_price_report", { action: "preview", payload: recycleFilters(args) }) :
+        await sb.rpc("get_customer_price_report_preview", args);
       if (result.error) throw result.error;
-      if (generation !== state.generation || !isScreenActive("customer-price-report")) return;
+      if (generation !== state.generation || actor !== reportActor() || !isScreenActive("customer-price-report")) return;
+      if (!canManageCustomerAccess()) { clearPreview("価格表を参照する権限がありません。"); return; }
       if (!result.data || !Array.isArray(result.data.rows) || !Array.isArray(result.data.excluded_rows) ||
+          (recycle && result.data.report_type !== "recycle_plus") ||
           !result.data.preview_hash || result.data.rows.length !== Number(result.data.summary && result.data.summary.included_count) ||
           result.data.rows.length + result.data.excluded_rows.length !== Number(result.data.summary && result.data.summary.candidate_count)) {
         throw new Error("価格表の明細と件数が一致しません。画面を更新してください");
@@ -157,7 +190,7 @@
     } catch (error) {
       if (generation === state.generation) setStatus("プレビューに失敗しました：" + (error.message || error), true);
     } finally {
-      button.disabled = byId("cpr-category").disabled || !Number(byId("cpr-customer").value);
+      button.disabled = byId("cpr-category").disabled || (!isRecycle() && !Number(byId("cpr-customer").value));
     }
   }
 
@@ -179,14 +212,19 @@
   }
 
   function printHtml(issue, options) {
+    var recycle = issue.report_type === "recycle_plus";
     var customer = issue.customer || {};
     var filenameCustomerName = String(customer.name || "").trim();
     if (filenameCustomerName && !/様$/.test(filenameCustomerName)) filenameCustomerName += "様";
+    var reportName = recycle ? "Recycle＋向け販売価格表" : "販売価格表";
+    var logoUrl = new URL("assets/recycle-plus-logo.png", window.location.href).href;
+    var headingHtml = "<div><p class='document-eyebrow'>PRICE LIST</p><h1>" + safe(reportName) + "</h1></div>";
+    if (recycle) headingHtml = "<div class='recycle-brand'><img src='" + safe(logoUrl) + "' alt='Recycle＋' width='79' height='79'>" + headingHtml + "</div>";
     var issuedDate = filenameDate(issue.issued_at);
     var rows = Array.isArray(issue.rows) ? issue.rows : [];
     var stylesheetUrl = new URL("customer-price-report-print.css", window.location.href).href +
       "?dcats_version=" + encodeURIComponent(APP_VERSION);
-    var shipping = customer.shipping_charge_rule === "free" ?
+    var shipping = recycle ? "送料・コア代・取引条件は別途ご確認ください。" : customer.shipping_charge_rule === "free" ?
       "送料は無料です。消費税は別途申し受けます。" : "送料・消費税は別途申し受けます。";
     var groups = new Map();
     rows.forEach(function(row) {
@@ -212,13 +250,14 @@
         body + "</tbody></table></section>";
     }).join("");
     return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>" +
-      "<title>販売価格表 " + safe(filenameCustomerName) + (issuedDate ? "_" + issuedDate : "") + "</title>" +
-      "<link rel='stylesheet' href='" + safe(stylesheetUrl) + "'></head><body>" +
+      "<title>" + safe(reportName) + (recycle ? "" : " " + safe(filenameCustomerName)) + (issuedDate ? "_" + issuedDate : "") + "</title>" +
+      "<link rel='stylesheet' href='" + safe(stylesheetUrl) + "'></head><body" + (recycle ? " class='recycle-document'" : "") + ">" +
       "<div class='print-toolbar'><span class='print-help'>PDF保存時は印刷設定の「ヘッダーとフッター」をオフにしてください。</span><button type='button' id='cpr-print'>印刷・PDF保存</button><button type='button' id='cpr-close'>閉じる</button></div>" +
-      "<main class='document'><div class='document-intro'><header class='document-head'><div><p class='document-eyebrow'>PRICE LIST</p><h1>販売価格表</h1></div>" +
+      "<main class='document'><div class='document-intro'><header class='document-head'>" + headingHtml +
       "<dl class='document-meta'><div><dt>発行日時</dt><dd>" + safe(dateLabel(issue.issued_at)) +
       "</dd></div><div><dt>発行者</dt><dd>" + safe(issue.issued_by_name || "—") + "</dd></div></dl></header>" +
-      "<div class='customer'><span class='customer-label'>得意先</span><strong>" + safe(customer.name || "—") + "</strong></div>" +
+      (recycle ? "<div class='customer'><span class='customer-label'>適用価格</span><strong>ファクタリング</strong></div>" :
+      "<div class='customer'><span class='customer-label'>得意先</span><strong>" + safe(customer.name || "—") + "</strong></div>") +
       "<div class='report-notes'><div class='report-note'><strong>価格・送料</strong><p>本書の価格は発行日時点の税抜価格です。" + safe(shipping) + "</p></div>" +
       "<div class='report-note'><strong>ご注文前の確認</strong><p>価格・在庫状況は変動する場合があります。ご注文前に最新の価格と在庫状況をご確認ください。</p></div></div></div>" +
       categorySections +
@@ -237,11 +276,14 @@
   }
 
   async function issue() {
-    if (state.loading || !state.preview) return;
+    if (state.loading || state.pendingIssue || !state.preview) return;
+    if (!canManageCustomerAccess()) { clearPreview("価格表を発行する権限がありません。"); return; }
+    var recycle = isRecycle();
     var options = outputOptions();
     var args = filters();
     var snapshotFilters = state.preview.filters || {};
-    if (Number(state.preview.customer && state.preview.customer.id) !== args.p_sales_customer_id ||
+    if ((recycle ? state.preview.report_type !== "recycle_plus" :
+        state.preview.report_type === "recycle_plus" || Number(state.preview.customer && state.preview.customer.id) !== args.p_sales_customer_id) ||
         (snapshotFilters.category_code || null) !== args.p_category_code ||
         (snapshotFilters.product_kind || null) !== args.p_product_kind ||
         (snapshotFilters.part_number || null) !== args.p_part_number) {
@@ -252,14 +294,19 @@
     if (!win) { setStatus("ポップアップを許可して、もう一度お試しください。", true); return; }
     win.document.body.textContent = "価格表を発行しています…";
     state.loading = true;
-    byId("cpr-issue-button").disabled = true;
+    lockIssueControls(true);
+    var operation = { requestId: state.requestId, options: options, actor: reportActor() };
     try {
-      var result = await sb.rpc("issue_customer_price_report", Object.assign({}, args, {
+      var result = recycle ? await sb.rpc("recycle_price_report", { action: "issue", payload: Object.assign(recycleFilters(args), {
+        preview_hash: state.preview.preview_hash, request_id: state.requestId
+      }) }) : await sb.rpc("issue_customer_price_report", Object.assign({}, args, {
         p_preview_hash: state.preview.preview_hash,
         p_request_id: state.requestId
       }));
       if (result.error) throw result.error;
       if (!result.data || !result.data.issue_id || !Array.isArray(result.data.rows)) throw new Error("発行結果が不正です");
+      if (recycle && result.data.report_type !== "recycle_plus") throw new Error("発行結果が不正です");
+      if (operation.actor !== reportActor() || !canManageCustomerAccess() || !isScreenActive("customer-price-report")) { win.close(); return; }
       writePrintWindow(win, result.data, options);
       setStatus("販売価格表 No." + result.data.issue_id + " を発行しました。別ウィンドウから印刷・PDF保存できます。", false);
       await loadHistory();
@@ -267,43 +314,96 @@
       if (!win.closed) win.close();
       var stale = /preview changed/i.test(error.message || "");
       if (stale) clearPreview("価格が変わりました。プレビューを更新してください。");
+      else if (recycle && ["22023", "40001", "42501"].indexOf(error.code) < 0) {
+        state.pendingByActor[operation.actor] = operation;
+        if (operation.actor === reportActor()) {
+          state.pendingIssue = operation;
+          setStatus("発行結果を確認できませんでした。「発行結果を確認」で保存済みか照会してください。", true);
+        }
+      }
       else setStatus("発行に失敗しました：" + (error.message || error), true);
     } finally {
       state.loading = false;
-      byId("cpr-issue-button").disabled = !(state.preview && state.preview.rows && state.preview.rows.length);
+      lockIssueControls(!!state.pendingIssue);
+    }
+  }
+
+  async function checkIssueReceipt() {
+    if (!state.pendingIssue || state.pendingIssue.actor !== reportActor() || state.loading) return;
+    if (!canManageCustomerAccess()) { setStatus("発行結果を確認する権限がありません。", true); return; }
+    var pending = state.pendingIssue;
+    var win = window.open("", "_blank");
+    if (!win) { setStatus("ポップアップを許可して、もう一度お試しください。", true); return; }
+    win.document.body.textContent = "発行結果を確認しています…";
+    state.loading = true;
+    byId("cpr-receipt-button").disabled = true;
+    try {
+      var result = await sb.rpc("recycle_price_report", { action: "receipt", payload: { request_id: pending.requestId } });
+      if (result.error) throw result.error;
+      if (!result.data || typeof result.data.saved !== "boolean" || (result.data.saved &&
+          (!result.data.issue || result.data.issue.report_type !== "recycle_plus" || !result.data.issue.issue_id || !Array.isArray(result.data.issue.rows)))) throw new Error("発行結果が不正です");
+      if (pending.actor !== reportActor() || !canManageCustomerAccess() || !isScreenActive("customer-price-report")) { win.close(); return; }
+      delete state.pendingByActor[pending.actor];
+      state.pendingIssue = null;
+      if (result.data.saved) {
+        writePrintWindow(win, result.data.issue, pending.options);
+        setStatus("発行済みのRecycle＋向け販売価格表を開きました。", false);
+        await loadHistory();
+      } else { win.close(); clearPreview("未発行を確認しました。プレビューを更新してください。"); }
+    } catch (error) {
+      if (!win.closed) win.close();
+      setStatus("発行結果を確認できませんでした。時間をおいて再度照会してください。", true);
+    } finally {
+      state.loading = false;
+      byId("cpr-receipt-button").disabled = false;
+      lockIssueControls(!!state.pendingIssue);
     }
   }
 
   async function loadHistory() {
+    var load = ++state.historyLoad;
+    var recycle = isRecycle();
+    var actor = reportActor();
     var host = byId("cpr-history-list");
     host.textContent = "履歴を読み込んでいます…";
-    var result = await sb.rpc("list_customer_price_report_issues", {
+    try {
+    var result = recycle ? await sb.rpc("recycle_price_report", { action: "history", payload: { limit: 20 } }) :
+      await sb.rpc("list_customer_price_report_issues", {
       p_sales_customer_id: Number(byId("cpr-customer").value) || null,
       p_limit: 20
     });
+    if (load !== state.historyLoad || recycle !== isRecycle() || actor !== reportActor()) return;
+    if (!canManageCustomerAccess()) { host.textContent = "発行履歴を参照する権限がありません。"; return; }
     if (result.error) { host.textContent = "履歴を読み込めませんでした。"; return; }
     var rows = Array.isArray(result.data) ? result.data : [];
     if (!rows.length) { host.innerHTML = "<p class='cpr-history-empty'>発行履歴はありません。</p>"; return; }
     host.innerHTML = rows.map(function(row) {
-      return "<div class='cpr-history-item'><div><strong>No." + safe(row.issue_id) + "　" + safe(row.customer_name) +
+      return "<div class='cpr-history-item'><div><strong>No." + safe(row.issue_id) + "　" + safe(recycle ? "Recycle＋向け販売価格表" : row.customer_name) +
         "</strong><small>" + safe(dateLabel(row.issued_at)) + " / " + safe(row.item_count) + "件 / " +
         safe(row.issued_by_name || "—") + "</small></div><button class='cpr-secondary' type='button' data-cpr-issue-id='" +
-        safe(row.issue_id) + "'>再表示</button></div>";
+        safe(row.issue_id) + "' data-cpr-report-type='" + (recycle ? "recycle_plus" : "customer") + "'>再表示</button></div>";
     }).join("");
+    } catch (error) { if (load === state.historyLoad) host.textContent = "履歴を読み込めませんでした。"; }
   }
 
-  async function reopen(issueId) {
+  async function reopen(issueId, reportType) {
+    if (!canManageCustomerAccess()) { setStatus("発行履歴を参照する権限がありません。", true); return; }
     var options = outputOptions();
+    var actor = reportActor();
     var win = window.open("", "_blank");
     if (!win) { setStatus("ポップアップを許可して、もう一度お試しください。", true); return; }
     win.document.body.textContent = "保存済み価格表を読み込んでいます…";
-    var result = await sb.rpc("get_customer_price_report_issue", { p_issue_id: issueId });
+    try {
+    var result = reportType === "recycle_plus" ? await sb.rpc("recycle_price_report", { action: "reopen", payload: { issue_id: issueId } }) :
+      await sb.rpc("get_customer_price_report_issue", { p_issue_id: issueId });
     if (result.error || !result.data || !Array.isArray(result.data.rows)) {
       win.close();
       setStatus("発行履歴を開けませんでした。", true);
       return;
     }
+    if (actor !== reportActor() || !canManageCustomerAccess() || !isScreenActive("customer-price-report")) { win.close(); return; }
     writePrintWindow(win, result.data, options);
+    } catch (error) { if (!win.closed) win.close(); setStatus("発行履歴を開けませんでした。", true); }
   }
 
   async function loadSelectors(preselectedCustomerId) {
@@ -326,7 +426,7 @@
     });
     categorySelect.innerHTML = "<option value=''>すべて</option>";
     categorySelect.disabled = true;
-    if (customerSelect.value) await loadVisibleCategories();
+    await loadVisibleCategories();
   }
 
   async function loadVisibleCategories() {
@@ -339,6 +439,15 @@
     previewButton.disabled = true;
     categorySelect.innerHTML = "<option value=''>すべて</option>";
     categorySelect.value = "";
+    if (isRecycle()) {
+      categorySelect.innerHTML += state.categoryOptions.map(function(code) {
+        return "<option value='" + safe(code) + "'>" + safe(state.categories[code]) + "</option>";
+      }).join("");
+      if (state.categoryOptions.indexOf(previous) >= 0) categorySelect.value = previous;
+      categorySelect.disabled = false;
+      previewButton.disabled = false;
+      return;
+    }
     if (!customerId) return;
     try {
       var result = await sb.from("customer_product_visibility")
@@ -346,7 +455,7 @@
         .eq("sales_customer_id", customerId)
         .in("visibility_scope", ["all", "category"])
         .limit(2000);
-      if (load !== state.categoryLoad || Number(byId("cpr-customer").value) !== customerId) return;
+      if (load !== state.categoryLoad || isRecycle() || Number(byId("cpr-customer").value) !== customerId) return;
       if (result.error) throw result.error;
       var rows = result.data || [];
       var visible = state.categoryOptions.filter(function(code) { return customerCategoryIsVisible(code, rows); });
@@ -375,7 +484,18 @@
   async function enterCustomerPriceReport(preselectedCustomerId) {
     if (!canManageCustomerAccess()) { alert(t("err_perm")); return; }
     showScreen("customer-price-report");
-    clearPreview("得意先を選択してください。");
+    state.pendingIssue = state.pendingByActor[reportActor()] || null;
+    if (state.pendingIssue) {
+      byId("cpr-report-type").value = "recycle_plus";
+      applyReportType();
+      lockIssueControls(true);
+      setStatus("前回の発行結果を確認してください。", true);
+      return;
+    }
+    lockIssueControls(false);
+    if (preselectedCustomerId) byId("cpr-report-type").value = "customer";
+    applyReportType();
+    clearPreview(isRecycle() ? "条件を指定してプレビューを更新してください。" : "得意先を選択してください。");
     try {
       await loadSelectors(preselectedCustomerId);
       await loadHistory();
@@ -390,10 +510,11 @@
     byId("report-hub-open-price").addEventListener("click", function() { enterCustomerPriceReport(); });
     byId("report-hub-open-ranking").addEventListener("click", enterManufacturingRankingReport);
     byId("btn-logout-customer-price-report").addEventListener("click", doLogout);
-    ["cpr-customer", "cpr-category", "cpr-kind", "cpr-part-number"].forEach(function(id) {
+    ["cpr-report-type", "cpr-customer", "cpr-category", "cpr-kind", "cpr-part-number"].forEach(function(id) {
       byId(id).addEventListener(id === "cpr-part-number" ? "input" : "change", function() {
         clearPreview();
-        if (id === "cpr-customer") {
+        if (id === "cpr-report-type") applyReportType();
+        if (id === "cpr-customer" || id === "cpr-report-type") {
           loadVisibleCategories();
           loadHistory();
         }
@@ -409,10 +530,11 @@
       renderDetail();
     });
     byId("cpr-issue-button").addEventListener("click", issue);
+    byId("cpr-receipt-button").addEventListener("click", checkIssueReceipt);
     byId("cpr-history-refresh").addEventListener("click", loadHistory);
     byId("cpr-history-list").addEventListener("click", function(event) {
       var button = event.target.closest("[data-cpr-issue-id]");
-      if (button) reopen(Number(button.dataset.cprIssueId));
+      if (button) reopen(Number(button.dataset.cprIssueId), button.dataset.cprReportType);
     });
   }
 
