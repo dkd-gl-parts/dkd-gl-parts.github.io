@@ -138,7 +138,34 @@ async function verifyRecovery() {
   assert(loadSource.includes("loadRequestId !== componentLoadRequestId")); checks++;
   await verifyOverlappingLoads(); checks++;
   await verifyOverlappingAlternatives(); checks += 2;
+  checks += await verifyExactSourceRecovery();
+  checks += await verifyFailedVerifiedReaders();
   console.log(JSON.stringify({ componentRecoveryCases: checks, passed: true }));
+}
+async function verifyExactSourceRecovery() {
+  const raw = [row(20, "1022115960|004|1214002320|assyec:1022115961", { assy_genuine_part_number: "G-1", normalized_assy_genuine_part_number: "G1", component_genuine_part_number: null, effective_end: "1101" }), row(21, "1022115960|004|1214002320|catfull:0123456789ab|assyec:1022115961", { assy_genuine_part_number: "G-1", normalized_assy_genuine_part_number: "G1", component_genuine_part_number: "31580-75F00", effective_end: null })];
+  const canonical = Object.assign({}, raw[1], { parent_assy_manufacturer: "DENSO", parent_assy_manufacturer_part_number: "128000-1862", parent_assy_genuine_part_number: "G-1", catalog_match_basis: "catalog_exact_pair", effective_end: "1101" });
+  const run = async options => { const h = harness(Object.assign({ raw: { data: raw }, selection: { data: [canonical] } }, options));h.context.currentProduct.genuine_part_number = "G-1";return { h, result: await h.run() }; };
+  let checks = 0;
+  const { h, result } = await run();assert.equal(result.rows.length, 1);assert.equal(result.rows[0].effective_end, "1101");assert.equal(result.rows[0].component_genuine_part_number, "31580-75F00");assert.equal(h.calls[0].args.target_genuine_part_number, "G-1");checks += 4;
+  for (const selection of [null, { data: [] }, { data: {} }, { data: [null] }, { data: Array(5000).fill(canonical) }, { error: { message: "denied" } }, { data: [Object.assign({}, canonical, { parent_assy_genuine_part_number: "G-2" })] }, { data: [Object.assign({}, canonical, { catalog_match_basis: "catalog_manufacturer_part_only" })] }]) { const { result } = await run({ selection });assert(result.error);assert.equal(result.rows.length, 0);checks++; }
+  for (const change of [c => { c.currentProduct = {}; }, c => { c.componentLoadRequestId++; }]) { const { result } = await run({ duringSelection: change });assert(result.stale);assert.equal(result.rows.length, 0);checks++; }
+  assert((await run({ throwSelection: true })).result.error);return checks + 1;
+}
+async function verifyFailedVerifiedReaders() {
+  const loadFunction = source.slice(loadStart, source.indexOf("async function loadParallelCandidatesForCurrent", loadStart));
+  const wrap = { innerHTML: "" };let rawCalls = 0;
+  const c = { console: { warn() {} }, document: { getElementById: () => wrap }, currentProduct: { manufacturer: "DENSO", manufacturer_part_number: "102211-5961" },
+    componentLoadRequestId: 0, componentIllustrationRequestId: 0, componentTreeRpcAvailable: true,
+    selectedProductKind: () => "catalog_spec", selectedComponentVariantId: () => null,
+    loadComponentDisplayNameTranslations: async () => {}, componentCatalogCategoryCode: () => "alternator", loadComponentCatalogNameCandidates: async () => {},
+    resolveCurrentCoreDkdShohinId: async () => 28970, loadCatalogIllustrationsForCurrent: () => {},
+    renderComponentIllustrationSlot: () => {}, updateComponentTargetSummary: () => {}, esc: value => value, t: key => key,
+    sb: { rpc: async () => ({ error: { message: "reader unavailable" } }), from() { rawCalls++;throw Error("must not fall back to unverified raw DENSO rows"); } }
+  };
+  vm.createContext(c);vm.runInContext(loadFunction, c);await c.loadAssemblyComponentsForCurrent();
+  assert.equal(rawCalls, 0);assert(wrap.innerHTML.includes("component_catalog_load_failed"));assert.equal(c.assemblyComponentRows.length, 0);
+  return 3;
 }
 async function verifyOverlappingLoads() {
   const loadFunction = source.slice(loadStart, source.indexOf("async function loadParallelCandidatesForCurrent", loadStart));

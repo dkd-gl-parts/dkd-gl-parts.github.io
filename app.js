@@ -2668,6 +2668,7 @@ var TRANSLATIONS = {
     component_child: "子構成",
     component_child_loading: "子構成を読み込み中...",
     component_child_load_failed: "子構成の読み込みに失敗しました",
+    component_catalog_load_failed: "カタログ構成部品を読み込めませんでした。商品を開き直してください。",
     component_child_empty: "子構成を取得できませんでした。画面を更新して再度お試しください。",
     component_variant_required_for_alternative: "代替品を登録する対象在庫を選択してください。",
     component_edit: "修正",
@@ -5396,6 +5397,7 @@ var TRANSLATIONS = {
     component_child: "Child",
     component_child_loading: "Loading child components...",
     component_child_load_failed: "Failed to load child components",
+    component_catalog_load_failed: "Catalog components could not be loaded. Reopen the product to try again.",
     component_child_empty: "Could not load child components. Refresh the page and try again.",
     component_variant_required_for_alternative: "Select a target stock variant before adding an alternative part.",
     component_edit: "Edit",
@@ -8121,6 +8123,7 @@ var TRANSLATIONS = {
     component_child: "子构成",
     component_child_loading: "正在读取子构成...",
     component_child_load_failed: "子构成读取失败",
+    component_catalog_load_failed: "无法读取目录构成部件。请重新打开商品后重试。",
     component_child_empty: "无法取得子构成。请刷新页面后重试。",
     component_variant_required_for_alternative: "请选择要登记替代部件的对象库存。",
     component_edit: "修改",
@@ -8312,7 +8315,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1264";
+var APP_VERSION       = "v1.1.1265";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -50073,6 +50076,36 @@ async function fetchCatalogComponentRowsByDkd(dkdId, loadRequestId) {
       !!row.source_record_key && !!row.dkd_component_id &&
       !String(row.normalized_assy_genuine_part_number || normalizedPartKey(row.assy_genuine_part_number));
   };
+  if (manufacturer === "DENSO" && genuinePartKeys.length && rows.some(function(row) {
+    return row.source_code === "catalog_denso" && row.source_table === "TBLPARTSLIST" &&
+      genuinePartKeys.indexOf(String(row.normalized_assy_genuine_part_number || normalizedPartKey(row.assy_genuine_part_number))) >= 0;
+  })) {
+    // Raw initial/full-gap imports can disagree on OEM numbers and periods.
+    // Use the complete verified server projection, including restored fields.
+    var exactSelection;
+    try {
+      exactSelection = await sb.rpc("get_catalog_assembly_components_by_part", {
+        target_manufacturer: manufacturer,
+        target_manufacturer_part_number: recoveryProduct.manufacturer_part_number,
+        target_genuine_part_number: recoveryProduct.genuine_part_number,
+        max_rows: 5000
+      });
+    } catch (error) {
+      if (recoveryIsStale()) return { rows: [], error: null, stale: true };
+      return { rows: [], error: error };
+    }
+    if (recoveryIsStale()) return { rows: [], error: null, stale: true };
+    if (exactSelection && exactSelection.error) return { rows: [], error: exactSelection.error };
+    if (!exactSelection || !Array.isArray(exactSelection.data) || !exactSelection.data.length || exactSelection.data.length >= 5000 ||
+        !exactSelection.data.every(function(row) {
+          return !!row && row.source_code === "catalog_denso" && !!row.dkd_component_id &&
+            String(row.parent_assy_manufacturer || "").toUpperCase() === manufacturer &&
+            manufacturerPartKeys.indexOf(normalizedPartKey(row.parent_assy_manufacturer_part_number)) >= 0 &&
+            genuinePartKeys.indexOf(normalizedPartKey(row.parent_assy_genuine_part_number)) >= 0 &&
+            row.catalog_match_basis === "catalog_exact_pair";
+        })) return { rows: [], error: { message: "Catalog source selection unavailable" } };
+    return { rows: exactSelection.data.map(function(row) { return normalizeComponentTreeRow(row, null); }), error: null };
+  }
   if (manufacturer === "DENSO" && rows.some(blankDensoRow)) {
     // Preserve source conditions by using the server's verified representatives.
     var selection;
@@ -50213,6 +50246,14 @@ async function loadAssemblyComponentsForCurrent() {
     }
   } else {
     console.warn("get_assembly_components_with_children failed; fallback to legacy component query", treeFallbackRpc.error);
+  }
+
+  if (selectedKind === "catalog_spec" && String((currentProduct && currentProduct.manufacturer) || "").toUpperCase() === "DENSO") {
+    // Raw DENSO imports may contain overlapping rows and incomplete periods.
+    // A failed verified reader must not restore those rows as a successful list.
+    updateComponentTargetSummary(0);
+    wrap.innerHTML = "<div class='component-empty'>" + esc(t("component_catalog_load_failed")) + "</div>";
+    return;
   }
 
   var mfr = String((currentProduct && currentProduct.manufacturer) || "").toUpperCase();
