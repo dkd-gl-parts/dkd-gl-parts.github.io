@@ -127,7 +127,7 @@ expect(!printed.includes("円表示です。") && !printed.includes("本書に�
 expect(printed.includes("<strong>価格・送料</strong>") && printed.includes("<strong>ご注文前の確認</strong>"), "price conditions and pre-order check must have separate labels");
 expect(printed.includes("本書の価格は発行日時点の税抜価格です。送料・消費税は別途申し受けます。"), "separate-shipping report must explain tax-exclusive price and charges");
 expect(printed.includes("価格・在庫状況は変動する場合があります。ご注文前に最新の価格と在庫状況をご確認ください。"), "pre-order check must state what may change");
-expect(printed.includes("<title>販売価格表 架空得意先_2026-09-25</title>"), "PDF filename must include the saved issue date");
+expect(printed.includes("<title>販売価格表 架空得意先様_2026-09-25</title>"), "PDF filename must include the customer honorific and saved issue date");
 [
   ["2026-10-19T14:59:59Z", "2026-10-19"],
   ["2026-10-19T15:00:00Z", "2026-10-20"],
@@ -137,16 +137,30 @@ expect(printed.includes("<title>販売価格表 架空得意先_2026-09-25</titl
 ].forEach(([issuedAt, expectedDate]) => {
   const savedIssue = { issued_at: issuedAt, customer: { name: "架空得意先" }, rows: [] };
   const firstTitle = runtime.renderCustomerPriceReport(savedIssue).match(/<title>(.*?)<\/title>/)[1];
-  expect(firstTitle === "販売価格表 架空得意先_" + expectedDate, "PDF filename must use the Japan issue date: " + issuedAt);
+  expect(firstTitle === "販売価格表 架空得意先様_" + expectedDate, "PDF filename must use the Japan issue date: " + issuedAt);
   const reopenedTitle = runtime.renderCustomerPriceReport(JSON.parse(JSON.stringify(savedIssue))).match(/<title>(.*?)<\/title>/)[1];
   expect(reopenedTitle === firstTitle, "reopening saved history must retain the original issue date");
 });
 [undefined, null, "", "invalid-date"].forEach(issuedAt => {
   const oldSnapshot = runtime.renderCustomerPriceReport({ issued_at: issuedAt, customer: { name: "架空得意先" }, rows: [] });
-  expect(oldSnapshot.includes("<title>販売価格表 架空得意先</title>"), "missing or invalid issue dates must not invent a filename date");
+  expect(oldSnapshot.includes("<title>販売価格表 架空得意先様</title>"), "missing or invalid issue dates must not invent a filename date");
 });
 const escapedTitle = runtime.renderCustomerPriceReport({ issued_at: "2026-10-19T15:00:00Z", customer: { name: "A&B</title><script>" }, rows: [] });
-expect(escapedTitle.includes("<title>販売価格表 A&amp;B&lt;/title&gt;&lt;script&gt;_2026-10-20</title>"), "dated filename must preserve HTML escaping");
+expect(escapedTitle.includes("<title>販売価格表 A&amp;B&lt;/title&gt;&lt;script&gt;様_2026-10-20</title>"), "dated filename must preserve HTML escaping");
+[
+  ["有限会社サンプル", "有限会社サンプル様"],
+  ["有限会社サンプル様", "有限会社サンプル様"],
+  ["　有限会社サンプル様　", "有限会社サンプル様"],
+  ["", ""],
+  [undefined, ""]
+].forEach(([name, expectedName]) => {
+  const savedIssue = { issued_at: "2026-10-29T00:00:00Z", customer: { name }, rows: [] };
+  const before = JSON.stringify(savedIssue);
+  const output = runtime.renderCustomerPriceReport(savedIssue);
+  expect(output.includes("<title>販売価格表 " + expectedName + "_2026-10-29</title>"), "PDF filename must append 様 once for a nonempty customer name");
+  expect(output.includes("<strong>" + runtime.esc(name || "—") + "</strong>"), "printed customer name must retain its saved spelling");
+  expect(JSON.stringify(savedIssue) === before, "filename honorific must not modify the saved issue");
+});
 const freeShipping = runtime.renderCustomerPriceReport({ customer: { name: "架空得意先", shipping_charge_rule: "free" }, rows: [] });
 expect(freeShipping.includes("送料は無料です。消費税は別途申し受けます。") && !freeShipping.includes("送料・消費税は別途申し受けます。"), "free-shipping customer must retain its shipping rule");
 

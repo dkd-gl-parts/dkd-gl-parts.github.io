@@ -180,6 +180,8 @@
 
   function printHtml(issue, options) {
     var customer = issue.customer || {};
+    var filenameCustomerName = String(customer.name || "").trim();
+    if (filenameCustomerName && !/様$/.test(filenameCustomerName)) filenameCustomerName += "様";
     var issuedDate = filenameDate(issue.issued_at);
     var rows = Array.isArray(issue.rows) ? issue.rows : [];
     var stylesheetUrl = new URL("customer-price-report-print.css", window.location.href).href +
@@ -210,7 +212,7 @@
         body + "</tbody></table></section>";
     }).join("");
     return "<!doctype html><html lang='ja'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>" +
-      "<title>販売価格表 " + safe(customer.name) + (issuedDate ? "_" + issuedDate : "") + "</title>" +
+      "<title>販売価格表 " + safe(filenameCustomerName) + (issuedDate ? "_" + issuedDate : "") + "</title>" +
       "<link rel='stylesheet' href='" + safe(stylesheetUrl) + "'></head><body>" +
       "<div class='print-toolbar'><span class='print-help'>PDF保存時は印刷設定の「ヘッダーとフッター」をオフにしてください。</span><button type='button' id='cpr-print'>印刷・PDF保存</button><button type='button' id='cpr-close'>閉じる</button></div>" +
       "<main class='document'><div class='document-intro'><header class='document-head'><div><p class='document-eyebrow'>PRICE LIST</p><h1>販売価格表</h1></div>" +
