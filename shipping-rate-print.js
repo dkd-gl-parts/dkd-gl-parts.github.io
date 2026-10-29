@@ -7,9 +7,9 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function() {
   "use strict";
   var TEXT = {
-    ja: { title: "送料一覧（社内用）", scope: "有効な送料・全都道府県・全サイズ", help: "A4・横向き・倍率100%・ヘッダーとフッターなし", print: "印刷 / PDF保存", close: "閉じる", destination: "お届け先", origin: "発", excluded: "税抜", included: "税込", unknown: "税区分未設定", island: "離島送料", inquiry: "要確認", missing: "—：設定なし（無料ではありません）", grouping: "同一料金・条件の都道府県をまとめています。金額単位：円。", created: "作成日時", overflow: "A4一枚に収まりません。送料の登録内容を確認してください。" },
-    en: { title: "Shipping Rate List (Internal Use)", scope: "Active rates · all prefectures and sizes", help: "A4 · Landscape · Scale 100% · No headers or footers", print: "Print / Save PDF", close: "Close", destination: "Destination", origin: " origin", excluded: "Tax excluded", included: "Tax included", unknown: "Tax unspecified", island: "Remote islands", inquiry: "Confirm rate", missing: "—: Not configured (not free)", grouping: "Prefectures with identical rates and conditions are grouped. Amounts in JPY.", created: "Created", overflow: "This list does not fit one A4 page. Review the shipping master." },
-    zh: { title: "运费一览（内部使用）", scope: "有效运费・全部都道府县・全部尺寸", help: "A4・横向・缩放100%・无页眉页脚", print: "打印 / 保存PDF", close: "关闭", destination: "目的地", origin: "发", excluded: "未税", included: "含税", unknown: "税区分未设置", island: "离岛运费", inquiry: "请确认", missing: "—：未设置（并非免费）", grouping: "运费及条件相同的都道府县合并显示。金额单位：日元。", created: "生成时间", overflow: "无法排在一张A4纸上。请检查运费登记内容。" }
+    ja: { title: "送料一覧（社内用）", scope: "有効な送料・全都道府県・全サイズ", help: "A4・横向き・倍率100%・ヘッダーとフッターなし", print: "印刷 / PDF保存", close: "閉じる", destination: "お届け先", origin: "発", excluded: "税抜", included: "税込", unknown: "税区分未設定", island: "離島送料", inquiry: "要確認", missing: "—：設定なし（無料ではありません）", grouping: "地域ごとに分け、地域内で同一料金・条件の都道府県をまとめています。金額単位：円。", created: "作成日時", overflow: "A4一枚に収まりません。送料の登録内容を確認してください。" },
+    en: { title: "Shipping Rate List (Internal Use)", scope: "Active rates · all prefectures and sizes", help: "A4 · Landscape · Scale 100% · No headers or footers", print: "Print / Save PDF", close: "Close", destination: "Destination", origin: " origin", excluded: "Tax excluded", included: "Tax included", unknown: "Tax unspecified", island: "Remote islands", inquiry: "Confirm rate", missing: "—: Not configured (not free)", grouping: "Regions are shown separately. Within each region, prefectures with identical rates and conditions are grouped. Amounts in JPY.", created: "Created", overflow: "This list does not fit one A4 page. Review the shipping master." },
+    zh: { title: "运费一览（内部使用）", scope: "有效运费・全部都道府县・全部尺寸", help: "A4・横向・缩放100%・无页眉页脚", print: "打印 / 保存PDF", close: "关闭", destination: "目的地", origin: "发", excluded: "未税", included: "含税", unknown: "税区分未设置", island: "离岛运费", inquiry: "请确认", missing: "—：未设置（并非免费）", grouping: "各地区分别显示，地区内运费及条件相同的都道府县合并显示。金额单位：日元。", created: "生成时间", overflow: "无法排在一张A4纸上。请检查运费登记内容。" }
   };
   var SERVICES = ["宅急便", "宅急便タイムサービス", "宅急便コンパクト", "ネコポス"];
   var REGIONS = [
@@ -98,18 +98,18 @@
       var numeric = /^(\d+)サイズ$/.exec(column.size);
       return "<th scope='col'>" + (numeric ? "<span class='size-value'>" + numeric[1] + "</span>" : safe(column.size)) + (column.weight != null ? "<small>" + safe(column.weight) + "kg</small>" : "") + "</th>";
     }).join("");
-    var body = model.lines.map(function(line) {
-      var destinations = REGIONS.map(function(region) {
+    var body = REGIONS.map(function(region) {
+      return model.lines.map(function(line) {
         var prefectures = line.prefectures.filter(function(pref) { return region.codes.indexOf(pref.code) >= 0; });
         if (!prefectures.length) return "";
-        return "<span class='destination-region'><strong class='region-heading'>" + safe(region.labels[lang === "en" ? 1 : lang === "zh" ? 2 : 0]) +
+        var destinations = "<span class='destination-region'><strong class='region-heading'>" + safe(region.labels[lang === "en" ? 1 : lang === "zh" ? 2 : 0]) +
           "</strong><span class='region-prefectures'>" + prefectures.map(function(pref) { return "<span class='prefecture'>" + safe(pref.label) + "</span>"; }).join("・") + "</span></span>";
+        return "<tr><th scope='row' class='destinations'>" + destinations + "</th>" +
+          line.cells.map(function(cell, index) {
+            var group = model.groups.find(function(g) { return g.key === model.columns[index].groupKey; });
+            return "<td>" + (cell ? safe(amount(cell.fee, text.inquiry)) + (group.noteIds.size > 1 ? "<sup>" + cell.noteId + "</sup>" : "") : "—") + "</td>";
+          }).join("") + "</tr>";
       }).join("");
-      return "<tr><th scope='row' class='destinations'>" + destinations + "</th>" +
-        line.cells.map(function(cell, index) {
-          var group = model.groups.find(function(g) { return g.key === model.columns[index].groupKey; });
-          return "<td>" + (cell ? safe(amount(cell.fee, text.inquiry)) + (group.noteIds.size > 1 ? "<sup>" + cell.noteId + "</sup>" : "") : "—") + "</td>";
-        }).join("") + "</tr>";
     }).join("");
     var notes = model.notes.map(function(note, index) {
       return "<li><b>" + (index + 1) + "</b> " + safe(text.island + ": " + amount(note.island, text.inquiry)) +

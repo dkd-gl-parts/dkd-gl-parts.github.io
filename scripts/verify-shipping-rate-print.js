@@ -51,11 +51,14 @@ const regionCases = [
   ["沖縄", "Okinawa", "冲绳", [47]]
 ];
 const uniformModel = api.buildModel(rows.map(row => ({ ...row, standard_fee_jpy: 1000 })), prefectures);
-assert.equal(uniformModel.lines.length, 1, "region headings preserve identical-rate grouping");
+assert.equal(uniformModel.lines.length, 1, "source model remains unchanged; regions are separated when printing");
 for (const [languageIndex, lang] of ["ja", "en", "zh"].entries()) {
   const grouped = api.documentHtml(uniformModel, { baseUrl: "https://dcats.example/", version: "test", lang });
   const regions = [...grouped.matchAll(/<span class='destination-region'><strong class='region-heading'>([^<]+)<\/strong><span class='region-prefectures'>(.*?)<\/span><\/span>/g)];
   assert.equal(regions.length, 12, `${lang}: all twelve region headings`);
+  const printedRows = grouped.match(/<tr><th scope='row'.*?<\/tr>/g) || [];
+  assert.equal(printedRows.length, 12, `${lang}: identical fees still print one row per region`);
+  printedRows.forEach(row => assert.equal((row.match(/class='region-heading'/g) || []).length, 1, `${lang}: regions never share a printed row`));
   regions.forEach((region, index) => {
     assert.equal(region[1], regionCases[index][languageIndex]);
     assert.deepEqual([...region[2].matchAll(/Prefecture (\d+)/g)].map(match => Number(match[1])), regionCases[index][3], `${lang}: prefectures under the correct region`);
@@ -64,6 +67,9 @@ for (const [languageIndex, lang] of ["ja", "en", "zh"].entries()) {
 }
 const splitRegionHtml = api.documentHtml(model, { baseUrl: "https://dcats.example/", version: "test", lang: "ja" });
 assert.equal((splitRegionHtml.match(/class='prefecture'/g) || []).length, 47, "different rates retain every prefecture under its own region heading");
+const differentRateRows = splitRegionHtml.match(/<tr><th scope='row'.*?<\/tr>/g) || [];
+assert.equal(differentRateRows.length, 47, "different rates within a region remain separate");
+differentRateRows.forEach(row => assert.equal((row.match(/class='region-heading'/g) || []).length, 1, "different rates never merge regions"));
 const inactive = { ...rows[0], is_active: false, standard_fee_jpy: 999999 };
 assert.equal(api.buildModel([...rows, inactive], prefectures).sourceCount, 846);
 assert.throws(() => api.buildModel([inactive], prefectures), /EMPTY/);
