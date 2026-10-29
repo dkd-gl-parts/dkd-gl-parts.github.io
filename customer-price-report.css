@@ -33,6 +33,11 @@
 .cpr-workspace { display: grid; grid-template-columns: minmax(250px, 300px) minmax(0, 1fr); gap: 16px; align-items: start; }
 .cpr-panel { border: 1px solid #dce4ec; border-radius: 13px; background: #fff; box-shadow: 0 4px 18px rgba(8, 31, 58, .04); }
 .cpr-filters { padding: 20px; }
+.cpr-filters [hidden], .cpr-page [hidden] { display: none; }
+.cpr-recycle-brand { display: flex; align-items: center; gap: 12px; margin-top: 17px; padding: 12px; border: 1px solid #c9e2cd; border-radius: 8px; background: #f5faf5; }
+.cpr-recycle-brand img { flex: none; object-fit: contain; }
+.cpr-recycle-brand strong { display: block; color: #24723c; font-size: 16px; }
+.cpr-recycle-brand span { display: block; margin-top: 5px; color: #40564a; font-size: 11px; line-height: 1.5; }
 .cpr-filters h2,
 .cpr-panel-head h2 { color: var(--dcats-ink); font-size: 17px; }
 .cpr-filters label { display: block; margin-top: 17px; }
