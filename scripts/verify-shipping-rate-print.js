@@ -36,6 +36,53 @@ for (const line of model.lines) for (const pref of line.prefectures) model.colum
 });
 assert.equal(represented, 846, "grouped table represents every input rate exactly");
 assert.equal(JSON.stringify(rows), snapshot, "printing never changes master rows");
+const regionCases = [
+  ["北海道", "Hokkaido", "北海道", [1]],
+  ["北東北", "Northern Tohoku", "北东北", [2, 3, 5]],
+  ["南東北", "Southern Tohoku", "南东北", [4, 6, 7]],
+  ["関東", "Kanto", "关东", [8, 9, 10, 11, 12, 13, 14, 19]],
+  ["信越", "Shinetsu", "信越", [15, 20]],
+  ["北陸", "Hokuriku", "北陆", [16, 17, 18]],
+  ["中部", "Chubu", "中部", [21, 22, 23, 24]],
+  ["関西", "Kansai", "关西", [25, 26, 27, 28, 29, 30]],
+  ["中国", "Chugoku", "中国地方", [31, 32, 33, 34, 35]],
+  ["四国", "Shikoku", "四国", [36, 37, 38, 39]],
+  ["九州", "Kyushu", "九州", [40, 41, 42, 43, 44, 45, 46]],
+  ["沖縄", "Okinawa", "冲绳", [47]]
+];
+const uniformModel = api.buildModel(rows.map(row => ({ ...row, standard_fee_jpy: 1000 })), prefectures);
+assert.equal(uniformModel.lines.length, 1, "source model remains unchanged; regions are separated when printing");
+for (const [languageIndex, lang] of ["ja", "en", "zh"].entries()) {
+  const grouped = api.documentHtml(uniformModel, { baseUrl: "https://dcats.example/", version: "test", lang });
+  const customerTitles = ["お客様向け送料のご案内", "Shipping Charges for Customers", "客户运费说明"];
+  assert(grouped.includes(`<h1>${customerTitles[languageIndex]}</h1>`), `${lang}: customer-facing title`);
+  assert(!/社内用|Internal Use|内部使用/.test(grouped), `${lang}: no internal-use label in customer handout`);
+  if (lang === "ja") assert(grouped.includes("当社から商品を発送する際に、お客様へご請求する送料です。"));
+  const regions = [...grouped.matchAll(/<span class='destination-region'><strong class='region-heading'>([^<]+)<\/strong><span class='region-prefectures'>(.*?)<\/span><\/span>/g)];
+  assert.equal(regions.length, 12, `${lang}: all twelve region headings`);
+  const printedRows = grouped.match(/<tr><th scope='row'.*?<\/tr>/g) || [];
+  assert.equal(printedRows.length, 12, `${lang}: identical fees still print one row per region`);
+  printedRows.forEach(row => assert.equal((row.match(/class='region-heading'/g) || []).length, 1, `${lang}: regions never share a printed row`));
+  regions.forEach((region, index) => {
+    assert.equal(region[1], regionCases[index][languageIndex]);
+    assert.deepEqual([...region[2].matchAll(/Prefecture (\d+)/g)].map(match => Number(match[1])), regionCases[index][3], `${lang}: prefectures under the correct region`);
+  });
+  assert.equal((grouped.match(/class='prefecture'/g) || []).length, 47, `${lang}: each prefecture appears once`);
+}
+const splitRegionHtml = api.documentHtml(model, { baseUrl: "https://dcats.example/", version: "test", lang: "ja" });
+assert.equal((splitRegionHtml.match(/class='prefecture'/g) || []).length, 47, "different rates retain every prefecture under its own region heading");
+const differentRateRows = splitRegionHtml.match(/<tr><th scope='row'.*?<\/tr>/g) || [];
+assert.equal(differentRateRows.length, 47, "different rates within a region remain separate");
+differentRateRows.forEach(row => assert.equal((row.match(/class='region-heading'/g) || []).length, 1, "different rates never merge regions"));
+const customerNoteRows = [{ ...rows[0], note: "関西発・契約運賃（税抜）", remote_island_condition: "お客様向け運賃は要確認" }];
+const customerNoteSnapshot = JSON.stringify(customerNoteRows);
+const customerNoteModel = api.buildModel(customerNoteRows, prefectures);
+const customerNoteHtml = api.documentHtml(customerNoteModel, { baseUrl: "https://dcats.example/", version: "test", lang: "ja" });
+assert(customerNoteHtml.includes("関西発・お客様向け送料（税抜）"));
+assert(customerNoteHtml.includes("お客様向け送料は要確認"));
+assert(!customerNoteHtml.includes("契約運賃"));
+assert.equal(customerNoteModel.notes[0].text, "関西発・契約運賃（税抜）", "display wording never changes stored rate notes");
+assert.equal(JSON.stringify(customerNoteRows), customerNoteSnapshot);
 const inactive = { ...rows[0], is_active: false, standard_fee_jpy: 999999 };
 assert.equal(api.buildModel([...rows, inactive], prefectures).sourceCount, 846);
 assert.throws(() => api.buildModel([inactive], prefectures), /EMPTY/);
@@ -53,6 +100,10 @@ const edgeRows = [
 const html = api.documentHtml(api.buildModel(edgeRows, prefectures), { baseUrl: "https://dcats.example/", version: "test", lang: "ja", createdAt: "2026-10-15T00:00:00Z" });
 assert(html.includes("&lt;script&gt;bad()&lt;/script&gt;"));
 assert(!html.includes("<img src=x"));
+const unsafePrefectures = { ...prefectures, 16: "<img src=x onerror=alert(1)>" };
+const unsafeDestinationHtml = api.documentHtml(api.buildModel(rows, unsafePrefectures), { baseUrl: "https://dcats.example/", version: "test", lang: "ja" });
+assert(unsafeDestinationHtml.includes("&lt;img src=x onerror=alert(1)&gt;"));
+assert(!unsafeDestinationHtml.includes("<img src=x"));
 assert(html.includes("<td>0</td>"));
 assert(html.includes("要確認") && html.includes("設定なし（無料ではありません）"));
 for (const tax of ["税抜", "税込", "税区分未設定"]) assert(html.includes(tax));
@@ -101,4 +152,4 @@ const index = fs.readFileSync(path.join(root, "index.html"), "utf8");
 assert(/id="shipping-rate-print"[^>]*disabled/.test(index));
 for (const asset of ["shipping-rate-print.js", "shipping-rate-print.css"]) assert(fs.readFileSync(path.join(root, "scripts/build-static-site.js"), "utf8").includes(`"${asset}"`));
 assert.equal((source.match(/shipping_print_scope:/g) || []).length, 3);
-console.log("shipping rate print passed: 846 exact rates, grouping, size order, tax/conditions, missing/zero fees, escaping, permission/loading/popup guards and A4 assets");
+console.log("shipping rate print passed: 846 exact rates, 12 region headings and 47 prefecture mappings in 3 languages, grouping, size order, tax/conditions, missing/zero fees, escaping, permission/loading/popup guards and A4 assets");
