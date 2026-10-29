@@ -1118,11 +1118,11 @@ for (const fragment of [
 ]) requireFragment(i18n, fragment, `B2 reissue translation is missing: ${fragment}`);
 
 for (const fragment of [
-  'content="v1.1.1262"',
-  'styles.css?v=1.1.1262',
-  'app.js?v=1.1.1262'
+  'content="v1.1.1263"',
+  'styles.css?v=1.1.1263',
+  'app.js?v=1.1.1263'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.1262"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.1263"');
 requireFragment(source, 'sales_management_registered: "売上登録済"');
 requireFragment(source, 'sales_management_unknown: "売上確認不可"');
 

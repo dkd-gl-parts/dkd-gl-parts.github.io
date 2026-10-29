@@ -5448,6 +5448,7 @@ details.sales-shipping-island > span { display: block; margin-top: 6px; }
 #screen-search .sales-conditions-market {
   grid-column: 1;
   grid-row: 4;
+  min-width: 0;
   min-height: 0;
   margin-top: 0;
   border: 0;
@@ -5456,9 +5457,18 @@ details.sales-shipping-island > span { display: block; margin-top: 6px; }
   padding: 4px 0 0;
   background: transparent;
 }
-#screen-search .sales-conditions-market .detail-block-title { color: #344054; font-size: 12px; }
-#screen-search .sales-conditions-market .ec-mall-detail-row { grid-template-columns: 48px minmax(0, 1fr) auto; gap: 6px; }
-#screen-search .sales-conditions-market .ec-mall-detail-price { font-variant-numeric: tabular-nums; }
+#screen-search .sales-conditions-market .detail-block-title { color: #344054; font-size: 13px; }
+#screen-search .sales-conditions-market > summary { width: fit-content; max-width: 100%; padding: 4px 0; }
+#screen-search .sales-conditions-market[open] { border: 1px solid #cbd8e8; border-radius: 6px; padding: 8px 12px; background: #fff; }
+#screen-search .sales-conditions-market[open] > summary { margin-bottom: 8px; }
+#screen-search .sales-conditions-market .ec-mall-detail-list { gap: 10px; font-size: 13px; line-height: 1.6; }
+#screen-search .sales-conditions-market .ec-mall-detail-row { grid-template-columns: 88px minmax(0, 1fr) auto; gap: 6px 12px; padding-top: 10px; }
+#screen-search .sales-conditions-market .ec-mall-detail-row:first-child { padding-top: 0; }
+#screen-search .sales-conditions-market .ec-mall-detail-type,
+#screen-search .sales-conditions-market .ec-mall-detail-seller { overflow: visible; white-space: normal; overflow-wrap: anywhere; }
+#screen-search .sales-conditions-market .ec-mall-detail-seller a { color: #1a6fd4; text-underline-offset: 2px; }
+#screen-search .sales-conditions-market .ec-mall-detail-price { font-size: 15px; font-variant-numeric: tabular-nums; text-align: right; }
+#screen-search .sales-conditions-market .ec-mall-detail-meta { margin-top: 10px; border-top: 1px solid #edf0f5; padding-top: 8px; color: #667085; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
 #screen-search .sales-conditions-without-shipping .sales-conditions-terms { grid-column: 2; grid-row: 2; }
 #screen-search .sales-conditions-without-shipping .sales-conditions-market { grid-column: 2; grid-row: 3; }
 #screen-search .sales-conditions-without-price .sales-conditions-terms { grid-column: 1 / -1; grid-row: 2; }
@@ -5472,7 +5482,7 @@ details.sales-shipping-island > span { display: block; margin-top: 6px; }
   #screen-search .detail-customer-shipping-rule > small { grid-column: 1 / -1; text-align: left; }
   #screen-search .detail-customer-shipping-rule { margin-top: 4px; padding-top: 4px; }
   #screen-search .sales-conditions-market { grid-row: 1; grid-column: 2; align-self: center; justify-self: end; border: 0; padding: 0; }
-  #screen-search .sales-conditions-market[open] { grid-row: 4; grid-column: 1 / -1; justify-self: stretch; }
+  #screen-search .sales-conditions-market[open] { grid-row: 5; grid-column: 1 / -1; justify-self: stretch; }
   #screen-search .sales-conditions-terms .core-return-policy-panel.vertical .core-return-policy-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #screen-search .sales-conditions-terms .core-return-policy-panel.vertical .core-return-policy-item { grid-template-columns: auto minmax(0, 1fr); border-bottom: 0; }
   #sales-shipping-estimate-wrap { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 8px; align-items: start; }
@@ -5556,6 +5566,9 @@ details.sales-shipping-island > span { display: block; margin-top: 6px; }
   #screen-search .sales-conditions-terms { order: 1; }
   #screen-search .sales-shipping-estimate { order: 2; }
   #screen-search .sales-conditions-market { order: 3; }
+  #screen-search .sales-conditions-market .ec-mall-detail-row { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; }
+  #screen-search .sales-conditions-market .ec-mall-detail-price { grid-column: 2; grid-row: 1; }
+  #screen-search .sales-conditions-market .ec-mall-detail-seller { grid-column: 1 / -1; grid-row: 2; }
   #screen-search .panel-left { grid-column: 1; grid-row: 3; overflow: visible; }
   .customer-shipping-rule-options { grid-template-columns: minmax(0, 1fr); }
   .sales-detail-tabs { position: sticky; top: 0; }
