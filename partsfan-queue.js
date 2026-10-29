@@ -172,11 +172,19 @@
     var suffix = snapshot.paused ? label("stopped") : running ? label("running") : "";
     active.querySelector("#pfq-title").textContent = label("title") + (suffix ? " · " + suffix : "") + (waiting ? " · " + label("queued") + " " + waiting : "");
     active.querySelector("[data-pfq-summary]").textContent = snapshot.paused ? label("paused") + " " + api.stopLabel({state:"blocked", reason:snapshot.pauseReason}) : label("saved");
+    var stoppedJob = snapshot.paused && snapshot.jobs.find(function(job) { return job.jobId === snapshot.pauseJobId; });
+    var pauseAction = active.querySelector("[data-pfq-pause]");
+    pauseAction.hidden = !stoppedJob;
+    pauseAction.querySelector("strong").textContent = stoppedJob ? (api.makers[api.makerCodes.indexOf(stoppedJob.maker)] || stoppedJob.maker) + " " + stoppedJob.part : "";
+    var pauseButton = pauseAction.querySelector("button");
+    pauseButton.disabled = !stoppedJob;
+    if (stoppedJob) pauseButton.setAttribute("data-job", stoppedJob.jobId);
+    else pauseButton.removeAttribute("data-job");
     var body = active.querySelector("[data-pfq-jobs]");
     var signature = JSON.stringify([root.currentLang, snapshot.jobs, snapshot.jobs.map(function(job) { var r = registrations[job.jobId]; return r && r.version === job.updatedAt ? [r.state,r.matched,r.total] : null; })]);
     if (signature === lastRender) return;
     lastRender = signature;
-    var focusedId = document.activeElement && document.activeElement.getAttribute("data-job");
+    var focusedId = body.contains(document.activeElement) && document.activeElement.getAttribute("data-job");
     body.innerHTML = snapshot.jobs.length ? snapshot.jobs.map(function(job) {
       var registration = registrations[job.jobId];
       if (registration && registration.version !== job.updatedAt) registration = null;
@@ -242,11 +250,12 @@
     api.close(); close(); focusBefore = document.activeElement; lastRender = "";
     active = document.createElement("div");
     active.className = "form-overlay show partsfan-research-overlay";
-    active.innerHTML = "<section class='partsfan-research-dialog partsfan-queue-dialog' role='dialog' aria-modal='true' aria-labelledby='pfq-title'><header><h2 id='pfq-title'>" + esc(label("title")) + "</h2><button type='button' data-pfq-close aria-label='" + esc(api.label("close")) + "'>×</button></header><p>" + esc(label("note")) + "</p><form data-pfq-form><div class='partsfan-queue-inputs'><div><label for='pfq-maker'>" + esc(api.label("maker")) + "</label><select id='pfq-maker' required><option value=''>" + esc(api.label("choose")) + "</option>" + api.makers.map(function(maker, index) { return "<option value='" + api.makerCodes[index] + "'>" + esc(maker) + "</option>"; }).join("") + "</select></div><div><label for='pfq-parts'>" + esc(label("parts")) + "</label><textarea id='pfq-parts' rows='3' maxlength='3300' required></textarea></div></div><div class='partsfan-research-actions'><button type='submit' class='btn-primary'>" + esc(label("add")) + "</button><button type='button' class='btn-sm-edit' data-pfq-refresh>" + esc(label("refresh")) + "</button></div></form><p data-pfq-message role='status' aria-live='polite'></p><p data-pfq-summary></p><div data-pfq-jobs aria-label='" + esc(label("title")) + "'></div></section>";
+    active.innerHTML = "<section class='partsfan-research-dialog partsfan-queue-dialog' role='dialog' aria-modal='true' aria-labelledby='pfq-title'><header><h2 id='pfq-title'>" + esc(label("title")) + "</h2><button type='button' data-pfq-close aria-label='" + esc(api.label("close")) + "'>×</button></header><p>" + esc(label("note")) + "</p><p data-pfq-summary></p><div class='partsfan-research-actions' data-pfq-pause hidden><strong></strong><button type='button' class='btn-sm-edit' data-pfq-action='resume' disabled>" + esc(label("resume")) + "</button></div><form data-pfq-form><div class='partsfan-queue-inputs'><div><label for='pfq-maker'>" + esc(api.label("maker")) + "</label><select id='pfq-maker' required><option value=''>" + esc(api.label("choose")) + "</option>" + api.makers.map(function(maker, index) { return "<option value='" + api.makerCodes[index] + "'>" + esc(maker) + "</option>"; }).join("") + "</select></div><div><label for='pfq-parts'>" + esc(label("parts")) + "</label><textarea id='pfq-parts' rows='3' maxlength='3300' required></textarea></div></div><div class='partsfan-research-actions'><button type='submit' class='btn-primary'>" + esc(label("add")) + "</button><button type='button' class='btn-sm-edit' data-pfq-refresh>" + esc(label("refresh")) + "</button></div></form><p data-pfq-message role='status' aria-live='polite'></p><div data-pfq-jobs aria-label='" + esc(label("title")) + "'></div></section>";
     document.body.appendChild(active);
     active.querySelector("[data-pfq-close]").onclick = close;
     active.querySelector("[data-pfq-refresh]").onclick = function() { message(""); refresh(true); };
     active.querySelector("[data-pfq-jobs]").onclick = action;
+    active.querySelector("[data-pfq-pause]").onclick = action;
     active.querySelector("[data-pfq-form]").onsubmit = async function(event) {
       event.preventDefault();
       if (!permitted()) return;

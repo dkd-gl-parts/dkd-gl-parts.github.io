@@ -91,3 +91,40 @@ async function verifyAutomaticUpdates() {
   console.log("PARTS FAN automatic update: blanks, ownership, closed dialogs, duplicate claims, lost responses and readback verified");
 }
 verifyAutomaticUpdates().catch(error=>{console.error(error);process.exitCode=1;});
+
+async function verifyPausedEntry() {
+  const {document, window:domWindow} = require("linkedom").parseHTML("<html><body></body></html>");
+  const queued = {jobId:"a".repeat(32),part:"1910016130",maker:"toyota",state:"queued"};
+  const stopped = {jobId:"b".repeat(32),part:"23300-AX001",maker:"nissan",state:"blocked",reason:"cloudflare_verification_pending"};
+  const snapshot = {schemaVersion:2,paused:true,pauseJobId:stopped.jobId,pauseReason:stopped.reason,jobs:[queued,stopped]};
+  const calls = [], opened = [];
+  let allowed = true;
+  domWindow.HTMLElement.prototype.focus = function() {};
+  const window = {currentLang:"ja",canManageProductSpecs:()=>allowed,canImportPartsfanFitments:()=>allowed,
+    PartsfanResearch:{permitted:()=>allowed,close:()=>{},makers:["トヨタ","日産"],makerCodes:["toyota","nissan"],label:x=>x,stopLabel:()=>"Cloudflare",
+      request:async(path,method)=>{calls.push([path,method]);if(path==="/jobs")return structuredClone(snapshot);assert.equal(path,"/jobs/"+stopped.jobId);return structuredClone(stopped);},
+      openSaved:job=>opened.push(job)}};
+  vm.runInNewContext(source,{window,document,URL,Date,setTimeout:()=>0,clearTimeout:()=>{}});
+  const flush = async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
+  await flush();
+  assert.equal(window.PartsfanQueue.open(),true);await flush();
+  let entry=document.querySelector("[data-pfq-pause]"), button=entry.querySelector("button");
+  assert.equal(entry.hidden,false);
+  assert.equal(entry.querySelector("strong").textContent,"日産 23300-AX001");
+  assert.equal(button.getAttribute("data-job"),stopped.jobId,"recovery must target the paused history, not the newest reservation");
+  assert(entry.compareDocumentPosition(document.querySelector("[data-pfq-form]")) & 4,"recovery must precede the reservation form");
+  await entry.onclick({target:button});
+  assert.equal(opened.length,1);assert.equal(opened[0].jobId,stopped.jobId);
+  assert(calls.every(([,method])=>!method),"opening recovery must not resume, import, or open Chrome automatically");
+  snapshot.pauseJobId="c".repeat(32);
+  window.PartsfanQueue.open();await flush();
+  entry=document.querySelector("[data-pfq-pause]");button=entry.querySelector("button");
+  assert.equal(entry.hidden,true);assert.equal(button.disabled,true);assert.equal(button.hasAttribute("data-job"),false);
+  snapshot.pauseJobId=stopped.jobId;snapshot.paused=false;
+  window.PartsfanQueue.invalidate();await flush();
+  assert.equal(entry.hidden,true,"a stale pause ID must not show recovery after resume");
+  allowed=false;window.PartsfanQueue.invalidate();await flush();
+  assert.equal(document.querySelector(".partsfan-queue-dialog"),null,"permission loss must close recovery");
+  console.log("PARTS FAN paused history entry: exact target, no automatic retry, missing history and permission loss verified");
+}
+verifyPausedEntry().catch(error=>{console.error(error);process.exitCode=1;});
