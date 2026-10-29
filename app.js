@@ -50076,35 +50076,42 @@ async function fetchCatalogComponentRowsByDkd(dkdId, loadRequestId) {
       !!row.source_record_key && !!row.dkd_component_id &&
       !String(row.normalized_assy_genuine_part_number || normalizedPartKey(row.assy_genuine_part_number));
   };
-  if (manufacturer === "DENSO" && genuinePartKeys.length && rows.some(function(row) {
-    return row.source_code === "catalog_denso" && row.source_table === "TBLPARTSLIST" &&
-      genuinePartKeys.indexOf(String(row.normalized_assy_genuine_part_number || normalizedPartKey(row.assy_genuine_part_number))) >= 0;
-  })) {
+  var exactDensoGenuineKeys = [];
+  if (manufacturer === "DENSO") rows.forEach(function(row) {
+    var key = String(row.normalized_assy_genuine_part_number || normalizedPartKey(row.assy_genuine_part_number));
+    if (row.source_code === "catalog_denso" && row.source_table === "TBLPARTSLIST" &&
+        genuinePartKeys.indexOf(key) >= 0 && exactDensoGenuineKeys.indexOf(key) < 0) exactDensoGenuineKeys.push(key);
+  });
+  if (exactDensoGenuineKeys.length) {
     // Raw initial/full-gap imports can disagree on OEM numbers and periods.
     // Use the complete verified server projection, including restored fields.
-    var exactSelection;
-    try {
-      exactSelection = await sb.rpc("get_catalog_assembly_components_by_part", {
-        target_manufacturer: manufacturer,
-        target_manufacturer_part_number: recoveryProduct.manufacturer_part_number,
-        target_genuine_part_number: recoveryProduct.genuine_part_number,
-        max_rows: 5000
-      });
-    } catch (error) {
+    var exactSelection, exactRows = [];
+    for (var exactIndex = 0; exactIndex < exactDensoGenuineKeys.length; exactIndex++) {
+      var exactGenuineKey = exactDensoGenuineKeys[exactIndex];
+      try {
+        exactSelection = await sb.rpc("get_catalog_assembly_components_by_part", {
+          target_manufacturer: manufacturer,
+          target_manufacturer_part_number: recoveryProduct.manufacturer_part_number,
+          target_genuine_part_number: exactGenuineKey,
+          max_rows: 5000
+        });
+      } catch (error) {
+        if (recoveryIsStale()) return { rows: [], error: null, stale: true };
+        return { rows: [], error: error };
+      }
       if (recoveryIsStale()) return { rows: [], error: null, stale: true };
-      return { rows: [], error: error };
+      if (exactSelection && exactSelection.error) return { rows: [], error: exactSelection.error };
+      if (!exactSelection || !Array.isArray(exactSelection.data) || !exactSelection.data.length || exactSelection.data.length >= 5000 ||
+          !exactSelection.data.every(function(row) {
+            return !!row && row.source_code === "catalog_denso" && !!row.dkd_component_id &&
+              String(row.parent_assy_manufacturer || "").toUpperCase() === manufacturer &&
+              manufacturerPartKeys.indexOf(normalizedPartKey(row.parent_assy_manufacturer_part_number)) >= 0 &&
+              normalizedPartKey(row.parent_assy_genuine_part_number) === exactGenuineKey &&
+              row.catalog_match_basis === "catalog_exact_pair";
+          })) return { rows: [], error: { message: "Catalog source selection unavailable" } };
+      exactRows = exactRows.concat(exactSelection.data);
     }
-    if (recoveryIsStale()) return { rows: [], error: null, stale: true };
-    if (exactSelection && exactSelection.error) return { rows: [], error: exactSelection.error };
-    if (!exactSelection || !Array.isArray(exactSelection.data) || !exactSelection.data.length || exactSelection.data.length >= 5000 ||
-        !exactSelection.data.every(function(row) {
-          return !!row && row.source_code === "catalog_denso" && !!row.dkd_component_id &&
-            String(row.parent_assy_manufacturer || "").toUpperCase() === manufacturer &&
-            manufacturerPartKeys.indexOf(normalizedPartKey(row.parent_assy_manufacturer_part_number)) >= 0 &&
-            genuinePartKeys.indexOf(normalizedPartKey(row.parent_assy_genuine_part_number)) >= 0 &&
-            row.catalog_match_basis === "catalog_exact_pair";
-        })) return { rows: [], error: { message: "Catalog source selection unavailable" } };
-    return { rows: exactSelection.data.map(function(row) { return normalizeComponentTreeRow(row, null); }), error: null };
+    return { rows: exactRows.map(function(row) { return normalizeComponentTreeRow(row, null); }), error: null };
   }
   if (manufacturer === "DENSO" && rows.some(blankDensoRow)) {
     // Preserve source conditions by using the server's verified representatives.
