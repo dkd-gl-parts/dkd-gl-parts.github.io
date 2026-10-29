@@ -28,9 +28,9 @@ thead small { display: block; font-size: 6.5pt; font-weight: 500; }
 .size-value { font-size: 9pt; white-space: nowrap; }
 .prefecture { display: inline-block; white-space: nowrap; }
 tbody td { font-size: 9pt; white-space: nowrap; font-weight: 600; }
-.destinations { font-size: 8pt; font-weight: 500; text-align: left; line-height: 1.65; overflow-wrap: anywhere; }
+.destinations { padding: 1.1mm 1.2mm; background: #eaf3f3; font-size: 8pt; font-weight: 500; text-align: left; line-height: 1.4; overflow-wrap: anywhere; }
 .destination-region { display: block; }
-.region-heading { display: block; color: #176b72; font-size: 8pt; line-height: 1.35; }
+.region-heading { display: inline-block; margin-bottom: .6mm; padding: .35mm 1.7mm; border: .25mm solid #145f66; border-radius: 1mm; background: #176b72; color: #fff; font-size: 8pt; font-weight: 700; line-height: 1.2; }
 .region-prefectures { display: block; }
 tbody tr:nth-child(even) { background: #f7f9fa; }
 sup { margin-left: .4mm; font-size: 6pt; font-weight: 500; }
