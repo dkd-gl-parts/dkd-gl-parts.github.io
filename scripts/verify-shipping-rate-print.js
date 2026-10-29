@@ -36,6 +36,34 @@ for (const line of model.lines) for (const pref of line.prefectures) model.colum
 });
 assert.equal(represented, 846, "grouped table represents every input rate exactly");
 assert.equal(JSON.stringify(rows), snapshot, "printing never changes master rows");
+const regionCases = [
+  ["北海道", "Hokkaido", "北海道", [1]],
+  ["北東北", "Northern Tohoku", "北东北", [2, 3, 5]],
+  ["南東北", "Southern Tohoku", "南东北", [4, 6, 7]],
+  ["関東", "Kanto", "关东", [8, 9, 10, 11, 12, 13, 14, 19]],
+  ["信越", "Shinetsu", "信越", [15, 20]],
+  ["北陸", "Hokuriku", "北陆", [16, 17, 18]],
+  ["中部", "Chubu", "中部", [21, 22, 23, 24]],
+  ["関西", "Kansai", "关西", [25, 26, 27, 28, 29, 30]],
+  ["中国", "Chugoku", "中国地方", [31, 32, 33, 34, 35]],
+  ["四国", "Shikoku", "四国", [36, 37, 38, 39]],
+  ["九州", "Kyushu", "九州", [40, 41, 42, 43, 44, 45, 46]],
+  ["沖縄", "Okinawa", "冲绳", [47]]
+];
+const uniformModel = api.buildModel(rows.map(row => ({ ...row, standard_fee_jpy: 1000 })), prefectures);
+assert.equal(uniformModel.lines.length, 1, "region headings preserve identical-rate grouping");
+for (const [languageIndex, lang] of ["ja", "en", "zh"].entries()) {
+  const grouped = api.documentHtml(uniformModel, { baseUrl: "https://dcats.example/", version: "test", lang });
+  const regions = [...grouped.matchAll(/<span class='destination-region'><strong class='region-heading'>([^<]+)<\/strong><span class='region-prefectures'>(.*?)<\/span><\/span>/g)];
+  assert.equal(regions.length, 12, `${lang}: all twelve region headings`);
+  regions.forEach((region, index) => {
+    assert.equal(region[1], regionCases[index][languageIndex]);
+    assert.deepEqual([...region[2].matchAll(/Prefecture (\d+)/g)].map(match => Number(match[1])), regionCases[index][3], `${lang}: prefectures under the correct region`);
+  });
+  assert.equal((grouped.match(/class='prefecture'/g) || []).length, 47, `${lang}: each prefecture appears once`);
+}
+const splitRegionHtml = api.documentHtml(model, { baseUrl: "https://dcats.example/", version: "test", lang: "ja" });
+assert.equal((splitRegionHtml.match(/class='prefecture'/g) || []).length, 47, "different rates retain every prefecture under its own region heading");
 const inactive = { ...rows[0], is_active: false, standard_fee_jpy: 999999 };
 assert.equal(api.buildModel([...rows, inactive], prefectures).sourceCount, 846);
 assert.throws(() => api.buildModel([inactive], prefectures), /EMPTY/);
@@ -53,6 +81,10 @@ const edgeRows = [
 const html = api.documentHtml(api.buildModel(edgeRows, prefectures), { baseUrl: "https://dcats.example/", version: "test", lang: "ja", createdAt: "2026-10-15T00:00:00Z" });
 assert(html.includes("&lt;script&gt;bad()&lt;/script&gt;"));
 assert(!html.includes("<img src=x"));
+const unsafePrefectures = { ...prefectures, 16: "<img src=x onerror=alert(1)>" };
+const unsafeDestinationHtml = api.documentHtml(api.buildModel(rows, unsafePrefectures), { baseUrl: "https://dcats.example/", version: "test", lang: "ja" });
+assert(unsafeDestinationHtml.includes("&lt;img src=x onerror=alert(1)&gt;"));
+assert(!unsafeDestinationHtml.includes("<img src=x"));
 assert(html.includes("<td>0</td>"));
 assert(html.includes("要確認") && html.includes("設定なし（無料ではありません）"));
 for (const tax of ["税抜", "税込", "税区分未設定"]) assert(html.includes(tax));
@@ -101,4 +133,4 @@ const index = fs.readFileSync(path.join(root, "index.html"), "utf8");
 assert(/id="shipping-rate-print"[^>]*disabled/.test(index));
 for (const asset of ["shipping-rate-print.js", "shipping-rate-print.css"]) assert(fs.readFileSync(path.join(root, "scripts/build-static-site.js"), "utf8").includes(`"${asset}"`));
 assert.equal((source.match(/shipping_print_scope:/g) || []).length, 3);
-console.log("shipping rate print passed: 846 exact rates, grouping, size order, tax/conditions, missing/zero fees, escaping, permission/loading/popup guards and A4 assets");
+console.log("shipping rate print passed: 846 exact rates, 12 region headings and 47 prefecture mappings in 3 languages, grouping, size order, tax/conditions, missing/zero fees, escaping, permission/loading/popup guards and A4 assets");

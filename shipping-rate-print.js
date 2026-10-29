@@ -12,6 +12,20 @@
     zh: { title: "运费一览（内部使用）", scope: "有效运费・全部都道府县・全部尺寸", help: "A4・横向・缩放100%・无页眉页脚", print: "打印 / 保存PDF", close: "关闭", destination: "目的地", origin: "发", excluded: "未税", included: "含税", unknown: "税区分未设置", island: "离岛运费", inquiry: "请确认", missing: "—：未设置（并非免费）", grouping: "运费及条件相同的都道府县合并显示。金额单位：日元。", created: "生成时间", overflow: "无法排在一张A4纸上。请检查运费登记内容。" }
   };
   var SERVICES = ["宅急便", "宅急便タイムサービス", "宅急便コンパクト", "ネコポス"];
+  var REGIONS = [
+    { labels: ["北海道", "Hokkaido", "北海道"], codes: [1] },
+    { labels: ["北東北", "Northern Tohoku", "北东北"], codes: [2, 3, 5] },
+    { labels: ["南東北", "Southern Tohoku", "南东北"], codes: [4, 6, 7] },
+    { labels: ["関東", "Kanto", "关东"], codes: [8, 9, 10, 11, 12, 13, 14, 19] },
+    { labels: ["信越", "Shinetsu", "信越"], codes: [15, 20] },
+    { labels: ["北陸", "Hokuriku", "北陆"], codes: [16, 17, 18] },
+    { labels: ["中部", "Chubu", "中部"], codes: [21, 22, 23, 24] },
+    { labels: ["関西", "Kansai", "关西"], codes: [25, 26, 27, 28, 29, 30] },
+    { labels: ["中国", "Chugoku", "中国地方"], codes: [31, 32, 33, 34, 35] },
+    { labels: ["四国", "Shikoku", "四国"], codes: [36, 37, 38, 39] },
+    { labels: ["九州", "Kyushu", "九州"], codes: [40, 41, 42, 43, 44, 45, 46] },
+    { labels: ["沖縄", "Okinawa", "冲绳"], codes: [47] }
+  ];
   function safe(value) {
     return String(value == null ? "" : value).replace(/[&<>"']/g, function(c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]; });
   }
@@ -85,7 +99,13 @@
       return "<th scope='col'>" + (numeric ? "<span class='size-value'>" + numeric[1] + "</span>" : safe(column.size)) + (column.weight != null ? "<small>" + safe(column.weight) + "kg</small>" : "") + "</th>";
     }).join("");
     var body = model.lines.map(function(line) {
-      return "<tr><th scope='row' class='destinations'>" + line.prefectures.map(function(pref) { return "<span class='prefecture'>" + safe(pref.label) + "</span>"; }).join("・") + "</th>" +
+      var destinations = REGIONS.map(function(region) {
+        var prefectures = line.prefectures.filter(function(pref) { return region.codes.indexOf(pref.code) >= 0; });
+        if (!prefectures.length) return "";
+        return "<span class='destination-region'><strong class='region-heading'>" + safe(region.labels[lang === "en" ? 1 : lang === "zh" ? 2 : 0]) +
+          "</strong><span class='region-prefectures'>" + prefectures.map(function(pref) { return "<span class='prefecture'>" + safe(pref.label) + "</span>"; }).join("・") + "</span></span>";
+      }).join("");
+      return "<tr><th scope='row' class='destinations'>" + destinations + "</th>" +
         line.cells.map(function(cell, index) {
           var group = model.groups.find(function(g) { return g.key === model.columns[index].groupKey; });
           return "<td>" + (cell ? safe(amount(cell.fee, text.inquiry)) + (group.noteIds.size > 1 ? "<sup>" + cell.noteId + "</sup>" : "") : "—") + "</td>";
