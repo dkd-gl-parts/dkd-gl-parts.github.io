@@ -141,7 +141,7 @@
     host.innerHTML = state.cart.length ? state.cart.map(function (p, i) {
       return "<div class='recycle-line'><strong>" + e(p.genuine_part_number || p.manufacturer_part_number) + "<small>" + e(p.manufacturer + " / " + p.manufacturer_part_number + " / " + kind(p.product_kind)) + "</small></strong>" + input("数量", "quantity-" + i, "number", p.quantity, "min='1' max='99' step='1'") + input("成立単価（税抜・コア代別）", "price-" + i, "number", p.price, "min='0' max='99999999' step='1'") +
         (p.core_return_required ? "<label><span>コア対応</span><select id='recycle-core-" + i + "'>"+option("standard","返却あり・コア代請求なし",p.handling||"standard") + (p.core_charge_jpy > 0 ? option("charge_with_return","コア代請求・後日返却",p.handling)+option("charge_no_return","コア代請求・返却なし",p.handling) : "") + "</select></label>" : "<span>コア返却不要</span>") + button("削除", "remove", "data-index='" + i + "'") + "</div>";
-    }).join("") : "<p>商品を検索して追加してください。得意先の通常価格は使用しません。</p>";
+    }).join("") : "<p>商品を検索するとファクタリング候補を表示します。追加後、実際の成立単価を確認してください。</p>";
     updateReturnField();
     setButtons();
   }
@@ -189,9 +189,13 @@
     var seq = ++state.search, epoch = state.epoch; status("商品を検索しています。");
     try {
       var data = await rpc("products", { query: field("product-query") }); if (seq !== state.search || epoch !== state.epoch || !ownerCurrent()) return;
-      state.products = data.rows || [];
-      document.getElementById("recycle-products").innerHTML = state.products.map(function (p, i) { return "<div class='recycle-product'><span><strong>" + e(p.genuine_part_number || p.manufacturer_part_number) + "</strong><small>" + e(p.manufacturer + " / " + p.manufacturer_part_number + " / " + kind(p.product_kind)) + "</small></span><span>販売可能 " + e(p.available_qty) + "</span>" + button("追加", "add", "data-index='" + i + "'" + (Number(p.available_qty) <= 0 ? " disabled" : "")) + "</div>"; }).join("") || "<p>該当商品がありません。</p>";
-      if (state.view === "entry") status("最大30件を表示しています。表示されない場合は品番を詳しく指定してください。");
+      var products = data.rows || [], priceMap = {}, priceWarning = "";
+      try { if (window.DcatsFactoringPricing) priceMap = await window.DcatsFactoringPricing.prices(products.map(function(p) { return p.dkd_shohin_id; })); }
+      catch (_) { priceWarning = " ファクタリング候補を取得できませんでした。成立単価を確認して入力してください。"; }
+      if (seq !== state.search || epoch !== state.epoch || !ownerCurrent()) return;
+      state.products = products.map(function(p) { var price = priceMap[p.dkd_shohin_id + "|" + p.product_kind]; return Object.assign({}, p, { factoring_price: Number.isSafeInteger(price) && price > 0 && price <= 99999999 ? price : null }); });
+      document.getElementById("recycle-products").innerHTML = state.products.map(function (p, i) { return "<div class='recycle-product'><span><strong>" + e(p.genuine_part_number || p.manufacturer_part_number) + "</strong><small>" + e(p.manufacturer + " / " + p.manufacturer_part_number + " / " + kind(p.product_kind)) + "</small></span><span>販売可能 " + e(p.available_qty) + "<small>ファクタリング候補 " + (p.factoring_price == null ? "未登録" : e(yen(p.factoring_price))) + "</small></span>" + button("追加", "add", "data-index='" + i + "'" + (Number(p.available_qty) <= 0 ? " disabled" : "")) + "</div>"; }).join("") || "<p>該当商品がありません。</p>";
+      if (state.view === "entry") status("最大30件を表示しています。表示されない場合は品番を詳しく指定してください。" + priceWarning);
     } catch (error) { if (seq === state.search && epoch === state.epoch && ownerCurrent() && state.view === "entry") status(error.message, true); }
   }
   async function place() {
@@ -244,7 +248,7 @@
       else if (action === "products") await searchProducts();
       else if (action === "postal") await lookupPostal();
       else if (action === "postal_select") { var row = state.postalRows[Number(b.dataset.index)]; if (row && row.postal_code.replace(/[^0-9]/g, "") === field("postal").replace(/[^0-9]/g, "")) applyPostal(row); }
-      else if (action === "add") { rememberCart(); state.cart.push(Object.assign({}, state.products[Number(b.dataset.index)], { quantity: 1, price: "" })); state.dirty = true; renderCart(); }
+      else if (action === "add") { var product = state.products[Number(b.dataset.index)]; if (!product || Number(product.available_qty) <= 0) return; rememberCart(); state.cart.push(Object.assign({}, product, { quantity: 1, price: product.factoring_price == null ? "" : String(product.factoring_price) })); state.dirty = true; renderCart(); }
       else if (action === "remove") { rememberCart(); state.cart.splice(Number(b.dataset.index), 1); state.dirty = true; renderCart(); }
       else if (action === "place") await place();
       else if (action === "list" || action === "next" || action === "previous") { state.offset = action === "list" ? 0 : Math.max(0, state.offset + (action === "next" ? 100 : -100)); await loadList(); }
