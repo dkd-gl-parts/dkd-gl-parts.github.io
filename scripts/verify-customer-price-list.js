@@ -67,6 +67,8 @@ const listeners = {};
 const runtime = {
   URL,
   APP_VERSION: "v-test",
+  canManageCustomerAccess: () => true,
+  isScreenActive: () => true,
   doLogout: () => {},
   enterManufacturingRankingReport: () => {},
   window: { location: { href: "https://example.test/index.html" } },

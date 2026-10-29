@@ -143,6 +143,8 @@ jobs:
         run: node scripts/verify-password-reset-permission-overview.js
       - name: Verify customer price list
         run: node scripts/verify-customer-price-list.js
+      - name: Verify Recycle＋ price reports
+        run: node scripts/verify-recycle-price-report.js
       - name: Verify customer order and manual B2 workflow
         run: node scripts/verify-customer-order-workflow.js
       - name: Verify compatible stock ordering and remaining inventory

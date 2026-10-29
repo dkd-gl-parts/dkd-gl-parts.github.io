@@ -11,6 +11,10 @@ body { margin: 0; color: #24343d; background: #fff; font-family: "Noto Sans JP",
 .document-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10mm; border-top: 3px solid #176b72; padding-top: 4mm; }
 .document-eyebrow { margin: 0 0 1.5mm; color: #176b72; font-size: 9px; font-weight: 700; letter-spacing: .18em; }
 .document-head h1 { margin: 0; color: #182e38; font-size: 27px; font-weight: 800; letter-spacing: .06em; line-height: 1.3; }
+.recycle-document .document-head { border-top-color: #278440; }
+.recycle-brand { display: flex; align-items: center; gap: 4mm; }
+.recycle-brand img { width: 17mm; height: 17mm; object-fit: contain; flex: none; }
+.recycle-document .document-head h1 { font-size: 23px; letter-spacing: .02em; }
 .document-meta { min-width: 0; max-width: 55%; margin: 1mm 0 0; font-variant-numeric: tabular-nums; }
 .document-meta > div { display: grid; grid-template-columns: 14mm minmax(0, 1fr); gap: 4mm; align-items: baseline; }
 .document-meta > div + div { margin-top: 1mm; }
