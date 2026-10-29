@@ -8,6 +8,6 @@
 
 発行時はサーバーで価格と設定版を再確認し、プレビューが古ければ更新を求める。通信切断などで発行結果が不明な場合、条件変更や再送を止め、「発行結果を確認」で保存済みの結果を照会する。履歴は発行時の価格を維持し、別の利用者へ切り替わった場合はその利用者の結果だけを扱う。
 
-依存する私有サーバー変更: dcats-security の 20261029074424_recycle_plus_price_report.sql。サーバー変更の適用を確認してから画面を公開する。既存の得意先向けAPIと履歴は維持する。
+依存する私有サーバー変更: dcats-security の 20261029083906_recycle_plus_price_report.sql。サーバー変更の適用を確認してから画面を公開する。既存の得意先向けAPIと履歴は維持する。
 
 自動検証: scripts/verify-recycle-price-report.js と既存 scripts/verify-customer-price-list.js、正式search/header両workflow。非表示IABが利用できないため、専用headless shell・架空アカウント・隔離PostgresでPC1280/mobile390の画面操作とA4 PDFを補完検証した。通常ブラウザの認証情報は使用しない。実認証による本番発行・OS保存ダイアログは対象外。
