@@ -10,7 +10,7 @@ body { margin: 0; color: #18262c; background: #edf1f3; font-family: "Yu Gothic",
 .print-toolbar p { width: 100%; margin: 0; color: #ad1125; }
 [hidden] { display: none !important; }
 #shipping-print-page-probe { position: absolute; top: 0; left: 0; visibility: hidden; pointer-events: none; width: 281mm; height: 194mm; }
-.shipping-print-sheet { width: 281mm; margin: 6mm auto; padding: 0; background: #fff; }
+.shipping-print-sheet { width: calc(281mm * var(--shipping-print-width-factor, 1)); margin: 6mm auto; padding: 0; background: #fff; }
 header { display: flex; justify-content: space-between; align-items: flex-end; gap: 10mm; padding: 3mm 0; border-top: 1mm solid #176b72; border-bottom: .3mm solid #83999e; }
 .eyebrow { margin: 0 0 1mm; color: #176b72; font-size: 8pt; font-weight: 700; letter-spacing: .12em; }
 h1 { margin: 0; font-size: 21pt; line-height: 1.2; }
@@ -27,7 +27,7 @@ thead th { background: #edf3f3; font-size: 8pt; font-weight: 700; overflow-wrap:
 thead small { display: block; font-size: 6.5pt; font-weight: 500; }
 .size-value { font-size: 9pt; white-space: nowrap; }
 .prefecture { display: inline-block; white-space: nowrap; }
-tbody td { font-size: 9pt; white-space: nowrap; font-weight: 600; }
+tbody td { font-size: 10pt; white-space: nowrap; font-weight: 600; }
 .destinations { padding: 1.1mm 1.2mm; background: #eaf3f3; font-size: 8pt; font-weight: 500; text-align: left; line-height: 1.4; overflow-wrap: anywhere; }
 .destination-region { display: block; }
 .region-heading { display: inline-block; margin-bottom: .6mm; padding: .35mm 1.7mm; border: .25mm solid #145f66; border-radius: 1mm; background: #176b72; color: #fff; font-size: 8pt; font-weight: 700; line-height: 1.2; }
@@ -40,7 +40,8 @@ footer p { margin: 0 0 1mm; }
 .rate-notes li { margin-top: .7mm; overflow-wrap: anywhere; }
 .rate-notes b { display: inline-block; min-width: 3mm; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-.fit-100 { zoom: 1; }.fit-95 { zoom: .95; }.fit-90 { zoom: .9; }.fit-85 { zoom: .85; }.fit-80 { zoom: .8; }.fit-75 { zoom: .75; }.fit-70 { zoom: .7; }.fit-65 { zoom: .65; }.fit-60 { zoom: .6; }.fit-55 { zoom: .55; }.fit-50 { zoom: .5; }.fit-45 { zoom: .45; }.fit-40 { zoom: .4; }
+/* Retain the full printable width when fitting a tall sheet with zoom. */
+.fit-100 { zoom: 1; --shipping-print-width-factor: 1; }.fit-95 { zoom: .95; --shipping-print-width-factor: 1.05263158; }.fit-90 { zoom: .9; --shipping-print-width-factor: 1.11111111; }.fit-85 { zoom: .85; --shipping-print-width-factor: 1.17647059; }.fit-80 { zoom: .8; --shipping-print-width-factor: 1.25; }.fit-75 { zoom: .75; --shipping-print-width-factor: 1.33333333; }.fit-70 { zoom: .7; --shipping-print-width-factor: 1.42857143; }.fit-65 { zoom: .65; --shipping-print-width-factor: 1.53846154; }.fit-60 { zoom: .6; --shipping-print-width-factor: 1.66666667; }.fit-55 { zoom: .55; --shipping-print-width-factor: 1.81818182; }.fit-50 { zoom: .5; --shipping-print-width-factor: 2; }.fit-45 { zoom: .45; --shipping-print-width-factor: 2.22222222; }.fit-40 { zoom: .4; --shipping-print-width-factor: 2.5; }
 @media screen and (max-width: 1100px) { .shipping-print-sheet { margin: 5mm; } }
 @media print {
   body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
