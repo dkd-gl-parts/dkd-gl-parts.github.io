@@ -44,7 +44,9 @@ function fn(name){const n=ast.body.find(n=>n.type==="FunctionDeclaration"&&n.id.
  input("shipping_allocation_rate_percent","2");handler=async()=>{throw new TypeError("Network lost");};await ui.save();
  eq(node("receipt").hidden,false);eq(node("save").disabled,true);eq(ui.close(),false);eq(storage.size,1);
  const sent=rpcLog.findLast(r=>r.action==="save"),calls=rpcLog.length;await ui.save();eq(rpcLog.length,calls,"unknown result never automatically replays");
- handler=async(action)=>action==="receipt"?{saved:false,settings:null}:null;await ui.receipt();eq(node("retry").hidden,false);
+ editable=false;ui.refresh();eq(ui.close(),true,"view-only users can leave unresolved settings");eq(storage.size,1,"closing preserves the unresolved receipt");
+ const viewOnlyCalls=rpcLog.length;await ui.open();eq(rpcLog.length,viewOnlyCalls,"view-only reopen does not send or query a privileged operation");eq(ui.close(),true);editable=true;
+ handler=async(action)=>action==="receipt"?{saved:false,settings:null}:null;await ui.open();eq(node("retry").hidden,false);
  handler=async(action,payload)=>{assert.equal(action,"save");eq(payload.request_id,sent.payload.request_id);server={...payload.settings,revision:3};return server;};
  node("retry").dispatchEvent(new dom.Event("click"));await tick();eq(node("receipt").hidden,true);eq(storage.size,0);
  input("tax_rate_percent","8");handler=async()=>{throw {code:"40001",message:"他の操作で更新されています"};};await ui.save();eq(node("receipt").hidden,true);eq(node("status").textContent.includes("他の操作"),true);

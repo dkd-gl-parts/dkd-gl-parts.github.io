@@ -168,7 +168,7 @@
       } else await load();
     }
     function close() {
-      if (current(state.epoch, state.owner) && (state.busy || state.pending)) { message("計算条件の処理結果を確認してから閉じてください。"); return false; }
+      if (current(state.epoch, state.owner) && options.editable() && (state.busy || state.pending)) { message("計算条件の処理結果を確認してから閉じてください。"); return false; }
       if (state.dirty && !options.confirm("未保存の計算条件を破棄して閉じますか。")) return false;
       invalidate(); return true;
     }
