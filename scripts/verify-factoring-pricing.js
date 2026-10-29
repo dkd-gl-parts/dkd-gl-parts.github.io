@@ -2,8 +2,10 @@
 const assert = require("node:assert/strict"), fs = require("node:fs"), path = require("node:path"), vm = require("node:vm"), crypto = require("node:crypto");
 const {parseHTML} = require("linkedom"), acorn = require("acorn");
 const root = path.resolve(__dirname, ".."), moduleSource = fs.readFileSync(path.join(root, "factoring-pricing.js"), "utf8"), app = fs.readFileSync(path.join(root, "app.js"), "utf8"), html = fs.readFileSync(path.join(root, "index.html"), "utf8");
-const panel = html.slice(html.indexOf('<section id="factoring-pricing-panel"'), html.indexOf("</section>", html.indexOf('<section id="factoring-pricing-panel"')) + 10);
-const {document, window: dom} = parseHTML('<html><body><input id="sales-base-price" value="5800"><div id="sales-rank-preview"></div>'+panel+"</body></html>");
+const panel = html.slice(html.indexOf('<dialog id="factoring-dialog"'), html.indexOf("</dialog>", html.indexOf('<dialog id="factoring-dialog"')) + 9);
+const launcher = html.match(/<button[^>]*id="factoring-open"[^>]*>[\s\S]*?<\/button>/)[0];
+const {document, window: dom} = parseHTML('<html><body><input id="sales-base-price" value="5800"><div id="sales-rank-preview"></div>'+launcher+panel+"</body></html>");
+const dialog=document.getElementById("factoring-dialog");dialog.open=false;dialog.showModal=()=>{dialog.open=true;};dialog.close=()=>{dialog.open=false;};
 const unit = document.getElementById("factoring-rounding_unit_jpy");let unitValue = "";
 Object.defineProperty(unit, "value", {configurable:true,get:()=>unitValue,set:v=>{unitValue=String(v);}});
 const storage = new Map(), sessionStorage = {getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)};
@@ -35,6 +37,9 @@ function fn(name){const n=ast.body.find(n=>n.type==="FunctionDeclaration"&&n.id.
  rpc:async(action,payload)=>{rpcLog.push({action,payload});if(handler)return handler(action,payload);if(action==="get")return {...server};if(action==="save"){server={...payload.settings,revision:server.revision+1};return {...server};}throw new Error("Unexpected "+action);}};
  const ui=api.createController(options);
  eq(ui.preview(5800),null);await ui.open();eq(ui.preview(5800).sales_price_jpy,7100);
+ eq(dialog.open,false,"conditions stay separate when the main pricing screen opens");eq(node("open").hidden,false);
+ node("open").dispatchEvent(new dom.Event("click"));eq(dialog.open,true);
+ node("close").dispatchEvent(new dom.Event("click"));eq(dialog.open,false);
  eq(node("tax_rate_percent").value,"10");eq(node("save").disabled,true);
  const input=(key,value)=>{node(key).value=String(value);node(key).dispatchEvent(new dom.Event("input",{bubbles:true}));};
  input("factoring_rate_percent","95");eq(ui.preview(5800),null);const before=rpcLog.length;await ui.save();eq(rpcLog.length,before);
@@ -56,6 +61,10 @@ function fn(name){const n=ast.body.find(n=>n.type==="FunctionDeclaration"&&n.id.
  actor="actor-1";handler=null;await ui.open();
  input("tax_rate_percent","8");let resolveSave;handler=()=>new Promise(resolve=>{resolveSave=resolve;});const saving=ui.save();allowed=false;resolveSave({...config,revision:100});await saving;eq(ui.preview(5800),null);eq(storage.size,1,"lost permission keeps operation receipt for its actor");
  allowed=true;handler=async(action)=>{assert.equal(action,"receipt");return {saved:true,settings:{...config,tax_rate_percent:8,revision:100}};};await ui.open();eq(ui.preview(5800).sales_price_jpy,7100);eq(storage.size,0);
+ node("open").dispatchEvent(new dom.Event("click"));input("factoring_rate_percent","7");confirm=false;node("close").dispatchEvent(new dom.Event("click"));eq(dialog.open,true);
+ confirm=true;node("close").dispatchEvent(new dom.Event("click"));eq(dialog.open,false);eq(node("factoring_rate_percent").value,"6");eq(ui.isBusy(),false);
+ node("open").dispatchEvent(new dom.Event("click"));const cancel=new dom.Event("cancel",{cancelable:true});dialog.dispatchEvent(cancel);eq(cancel.defaultPrevented,true);eq(dialog.open,false);
+ node("open").dispatchEvent(new dom.Event("click"));ui.invalidate();eq(dialog.open,false);eq(node("open").hidden,true);
  // Reopening never accepts a response from an earlier open.
  server={...config,revision:101};ui.invalidate();let resolveOld;handler=()=>new Promise(resolve=>{resolveOld=resolve;});const old=ui.open();ui.invalidate();handler=null;await ui.open();resolveOld({...config,revision:999,tax_rate_percent:0});await old;eq(node("tax_rate_percent").value,"10");
  // Existing app consumers must use final server prices and never fall back to base/DKS values.

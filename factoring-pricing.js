@@ -156,25 +156,50 @@
       el("save").addEventListener("click", save); el("reload").addEventListener("click", load);
       el("receipt").addEventListener("click", receipt);
       el("retry").addEventListener("click", function () { if (state.retry) sendPending(); });
+      if (el("open")) el("open").addEventListener("click", showConditions);
+      if (el("close")) el("close").addEventListener("click", hideConditions);
+      if (el("dialog")) {
+        el("dialog").addEventListener("cancel", function (event) { event.preventDefault(); event.stopPropagation(); hideConditions(); });
+        el("dialog").addEventListener("keydown", function (event) { if (event.key === "Escape") event.stopPropagation(); });
+      }
     }
     async function open() {
       if (!options.allowed()) { invalidate(); return; }
       if (state.owner === options.owner() && (state.busy || state.pending)) { if (el("pricing-panel")) el("pricing-panel").hidden = false; return; }
       state.epoch++; state.owner = options.owner(); state.settings = null; state.dirty = false; state.busy = false; state.retry = false;
       state.pending = restore(); mount();
+      if (el("open")) el("open").hidden = false;
       if (el("pricing-panel")) el("pricing-panel").hidden = false;
       if (state.pending) {
         fields(state.pending.settings); message("前回の保存結果を確認してください。"); refresh(); await receipt();
       } else await load();
     }
-    function close() {
-      if (current(state.epoch, state.owner) && options.editable() && (state.busy || state.pending)) { message("計算条件の処理結果を確認してから閉じてください。"); return false; }
+    function showConditions() {
+      if (!current(state.epoch, state.owner) || !el("dialog") || el("dialog").open) return;
+      el("dialog").showModal();
+      if (el("dialog-title")) el("dialog-title").focus();
+    }
+    function canClose() {
+      if (current(state.epoch, state.owner) && options.editable() && (state.busy || state.pending)) { message("計算条件の処理結果を確認してから閉じてください。"); showConditions(); return false; }
       if (state.dirty && !options.confirm("未保存の計算条件を破棄して閉じますか。")) return false;
+      return true;
+    }
+    function hideConditions() {
+      if (!canClose()) return false;
+      if (state.dirty) { state.dirty = false; fields(state.settings); message("未保存の計算条件を破棄しました。"); refresh(); }
+      if (el("dialog") && el("dialog").open) el("dialog").close();
+      if (el("open") && !el("open").hidden) el("open").focus();
+      return true;
+    }
+    function close() {
+      if (!canClose()) return false;
       invalidate(); return true;
     }
     function invalidate() {
       state.epoch++; state.settings = null; state.owner = ""; state.busy = false; state.pending = null; state.dirty = false; state.retry = false;
       fields(null); if (el("pricing-panel")) el("pricing-panel").hidden = true; message("");
+      if (el("dialog") && el("dialog").open) el("dialog").close();
+      if (el("open")) el("open").hidden = true;
       options.changed();
     }
     return Object.freeze({ open: open, close: close, invalidate: invalidate, load: load, save: save, receipt: receipt, refresh: refresh, syncPreview: syncPreview, preview: preview,

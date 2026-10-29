@@ -3,6 +3,7 @@
 var DCATS_LEGACY_UI_TRANSLATIONS = {
   "en": {
     "ファクタリングの計算条件": "Factoring price calculation",
+    "販売価格設定へ戻る": "Back to sales pricing",
     "売値区分1を基準に、業販とモールそれぞれの必要価格を計算し、高い方を共通の販売単価にします。": "Calculate trade and marketplace prices from price class 1, then use the higher amount as the common sale price.",
     "消費税率（%）": "Consumption tax (%)",
     "ファクタリング手数料率（%）": "Factoring fee (%)",
@@ -3974,6 +3975,7 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
   },
   "zh": {
     "ファクタリングの計算条件": "保理售价计算条件",
+    "販売価格設定へ戻る": "返回销售价格设置",
     "売値区分1を基準に、業販とモールそれぞれの必要価格を計算し、高い方を共通の販売単価にします。": "以售价分类1为基准，分别计算批发及商城所需售价，并采用较高者作为统一售价。",
     "消費税率（%）": "消费税率（%）",
     "ファクタリング手数料率（%）": "保理手续费率（%）",

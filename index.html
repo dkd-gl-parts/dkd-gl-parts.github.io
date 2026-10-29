@@ -3103,11 +3103,23 @@
       <div class="sales-pricing-preview">
         <div class="sales-pricing-preview-head">
           <div class="sales-pricing-preview-title" data-i18n="sales_rank_preview">得意先ランク別の試算</div>
+          <button class="btn-sm-edit" id="factoring-open" type="button" aria-haspopup="dialog" aria-controls="factoring-dialog" hidden>ファクタリングの計算条件</button>
           <button class="btn-sm-edit" id="btn-sales-rank-save" type="button" data-i18n="sales_rank_save">ランク設定を保存</button>
         </div>
         <div id="sales-rank-preview"><div class="component-empty" data-i18n="loading">読み込み中...</div></div>
-        <section id="factoring-pricing-panel" class="factoring-pricing-panel" hidden>
-          <details open><summary>ファクタリングの計算条件</summary>
+      </div>
+      <div class="sales-pricing-error" id="sales-pricing-error" role="alert"></div>
+    </div>
+    <div class="form-footer sales-pricing-footer">
+      <button class="btn-cancel" id="btn-sales-pricing-cancel" data-i18n="btn_back">キャンセル</button>
+      <button class="btn-primary" id="btn-sales-pricing-save" data-i18n="btn_save_part">保存</button>
+    </div>
+  </div>
+</div>
+
+<dialog id="factoring-dialog" class="factoring-dialog" aria-labelledby="factoring-dialog-title">
+  <div class="factoring-dialog-head"><h2 id="factoring-dialog-title" tabindex="-1">ファクタリングの計算条件</h2></div>
+  <section id="factoring-pricing-panel" class="factoring-pricing-panel" hidden>
             <p>売値区分1を基準に、業販とモールそれぞれの必要価格を計算し、高い方を共通の販売単価にします。</p>
             <div class="factoring-pricing-fields">
               <label for="factoring-tax_rate_percent">消費税率（%）<input class="form-input" id="factoring-tax_rate_percent" data-factoring-input type="number" min="0" max="99.9999" step="0.0001" disabled></label>
@@ -3120,17 +3132,9 @@
             <output id="factoring-breakdown" class="factoring-pricing-breakdown"></output>
             <div class="factoring-pricing-actions"><button class="btn-sm-edit" id="factoring-save" type="button" disabled>計算条件を保存</button><button class="btn-sm-edit" id="factoring-reload" type="button">再読込</button><button class="btn-sm-edit" id="factoring-receipt" type="button" hidden>保存結果を確認</button><button class="btn-sm-edit" id="factoring-retry" type="button" hidden>同じ内容で再試行</button></div>
             <p id="factoring-status" role="status" aria-live="polite"></p>
-          </details>
-        </section>
-      </div>
-      <div class="sales-pricing-error" id="sales-pricing-error" role="alert"></div>
-    </div>
-    <div class="form-footer sales-pricing-footer">
-      <button class="btn-cancel" id="btn-sales-pricing-cancel" data-i18n="btn_back">キャンセル</button>
-      <button class="btn-primary" id="btn-sales-pricing-save" data-i18n="btn_save_part">保存</button>
-    </div>
-  </div>
-</div>
+  </section>
+  <div class="factoring-dialog-footer"><button class="btn-cancel" id="factoring-close" type="button">販売価格設定へ戻る</button></div>
+</dialog>
 
 <!-- =============================================
    コアリスト管理画面

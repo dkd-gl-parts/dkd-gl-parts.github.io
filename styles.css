@@ -11566,13 +11566,18 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 }
 
 /* Dedicated factoring price conditions retain readable labels on narrow screens. */
-.factoring-pricing-panel { margin-top: 18px; padding: 16px; border: 1px solid #d7e1ed; border-radius: 8px; background: #f7f9fc; }
+.factoring-dialog { box-sizing: border-box; width: min(920px,calc(100vw - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 0; border: 1px solid #d7e1ed; border-radius: 12px; color: #1e2336; background: #fff; overflow: auto; }
+.factoring-dialog::backdrop { background: rgba(20,26,40,.45); }
+.factoring-dialog-head { padding: 20px 20px 0; }
+.factoring-dialog-head h2 { margin: 0; font-size: 18px; }
+.factoring-dialog-footer { position: sticky; bottom: 0; padding: 14px 20px; display: flex; justify-content: flex-end; border-top: 1px solid #d7e1ed; background: #fff; }
+.factoring-pricing-panel { padding: 20px; background: #fff; }
 .factoring-pricing-panel[hidden] { display: none; }
-.factoring-pricing-panel summary { cursor: pointer; font-weight: 700; }
+#factoring-open[hidden] { display: none; }
 .factoring-pricing-fields { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; margin: 14px 0; }
 .factoring-pricing-fields label { display: grid; gap: 6px; font-size: 12px; min-width: 0; }
 .factoring-pricing-panel p { line-height: 1.65; font-size: 12px; margin: 10px 0; }
 .factoring-pricing-help { color: #59697c; }
 .factoring-pricing-breakdown { display: block; font-weight: 700; line-height: 1.7; }
 .factoring-pricing-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-@media(max-width:560px) { .factoring-pricing-fields { grid-template-columns: 1fr; } .factoring-pricing-panel { padding: 12px; } }
+@media(max-width:560px) { .factoring-pricing-fields { grid-template-columns: 1fr; } .factoring-pricing-panel { padding: 16px; } .factoring-dialog-head { padding: 16px 16px 0; } .factoring-dialog-footer { padding: 12px 16px; } }
