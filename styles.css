@@ -11018,6 +11018,8 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-sales-order-mgmt .sales-order-toolbar { display: block; padding: 10px 16px; }
   #screen-sales-order-mgmt .sales-order-title-block { display: none; }
   #screen-sales-order-mgmt .sales-order-filter-row { grid-template-columns: auto minmax(360px, 1fr) auto auto; }
+  #screen-sales-order-mgmt .sales-order-data-actions { grid-column: 1 / -1; justify-self: start; }
+  #screen-sales-order-mgmt .sales-order-data-actions > div { right: auto; left: 0; }
   #screen-sales-order-mgmt .sales-order-auto-print,
   #screen-sales-order-mgmt .sales-order-dashboard { min-height: 56px; }
   #screen-sales-order-mgmt .sales-order-auto-print { gap: 8px; padding: 5px 10px; }
