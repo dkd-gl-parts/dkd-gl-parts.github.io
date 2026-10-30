@@ -112,7 +112,7 @@ if (productReturnStart < 0 || productReturnEnd < productReturnStart ||
     productReturnSource.includes("returnToMenuFresh();") ||
     productReturnSource.includes("resetProductSearchForMenu();") ||
     productReturnSource.includes("window.location.reload()")) {
-  throw new Error("sales management must preserve its in-memory search view and return directly to the authenticated menu");
+  throw new Error("sales management must return directly to the authenticated menu without reloading the application");
 }
 
 const stockFetchStart = source.indexOf("async function fetchProductAvailableStockMap");

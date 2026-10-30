@@ -8315,7 +8315,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1265";
+var APP_VERSION       = "v1.1.1266";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -11203,6 +11203,7 @@ function resetScreenControlState(control) {
 }
 
 function resetScreenRuntimeStateForMenu(screenId) {
+  if (screenId === "search") resetProductSearchForMenu();
   if (screenId === "sales-pricing-mgmt") {
     collapseSalesPricingMgmtResults();
     salesPricingMgmtRows = [];
@@ -11243,7 +11244,7 @@ function showScreen(id) {
   if (previousScreenId === "sales-order-mgmt" && id !== previousScreenId) {
     setSalesOrderDetailView("overview", false);
   }
-  if (id === "menu" && previousScreenId && previousScreenId !== "search") {
+  if (id === "menu" && previousScreenId) {
     resetScreenStateForMenu(previousScreenId);
   }
   syncInstallAppAccess();
@@ -22486,6 +22487,50 @@ async function importSalesOrderB2Shipments() {
   if (salesOrderSelectedId) await loadSalesOrderDetail(salesOrderSelectedId);
 }
 
+function resetProductSearchForMenu() {
+  searchRequestSeq++;
+  productAuxSeq++;
+  detailSecondaryRequestSeq++;
+  detailCustomerPriceSeq++;
+  productSearchDetailReadyPromise = Promise.resolve();
+  currentFilter = "all";
+  searchSlOnly = false;
+  productSearchLimit = SEARCH_INITIAL_LIMIT;
+  productSearchFetchedCount = 0;
+  productSearchTotalCount = null;
+  productSearchHasMore = false;
+  productSearchPageKey = "";
+  allProducts = [];
+  imageCountMap = {};
+  imageThumbnailMap = {};
+  customerImageCountMap = {};
+  customerImageThumbnailMap = {};
+  productionImageCountMap = {};
+  slPartsMap = {};
+  slPresenceMap = {};
+  componentUsageCountMap = {};
+  productionComponentKindCountMap = {};
+  coreStockQtyMap = {};
+  kikanCompatibleMap = {};
+  productAvailableStockMap = {};
+  productVariantSummaryMap = {};
+  currentSelectedProductKind = "rebuilt";
+  currentVehicleApplicationRows = [];
+  detailSelectedSalesCustomerId = "";
+  salesShippingProfile = null;
+  salesShippingProfileDkdId = null;
+  salesShippingPrefectureCode = "";
+  salesShippingCarrierName = "";
+  salesShippingServiceName = "";
+  salesShippingPackageKeyValue = "";
+  var query = document.getElementById("q");
+  if (query) query.value = "";
+  closePanel();
+  activateSalesDetailTab("basic");
+  syncSearchFilterControls();
+  render();
+}
+
 function returnFromProductSearch() {
   if (customerPortalSearchActive || isCustomerViewer()) {
     closePanel();
@@ -23677,6 +23722,7 @@ async function enterSearch(options) {
   }
   customerPortalSearchActive = false;
   if (!canViewProductSearch()) { showPermissionDenied("open_product_search", "core_products"); return; }
+  resetScreenStateForMenu("search");
   showScreen("search");
   configureCustomerSearchShell();
   configureSalesProductAddButton();
@@ -43206,12 +43252,14 @@ function openPanel(id, options) {
 }
 
 async function openProductByDkdId(dkdId) {
+  var requestSeq = searchRequestSeq;
   var id = parseInt(dkdId, 10);
   if (isNaN(id)) return;
   var foundProduct = allProducts.find(function(p) { return parseInt(productDkdId(p), 10) === id; }) || null;
   if (foundProduct && isSalesHiddenDaikoProduct(foundProduct)) return;
   if (!foundProduct) {
     var r = await sb.from("core_product_search_view").select("*").eq("dkd_shohin_id", id).maybeSingle();
+    if (requestSeq !== searchRequestSeq) return;
     if (!r.error && r.data) {
       var fetchedProduct = normalizeCoreProductFastRows([r.data])[0];
       if (isSalesHiddenDaikoProduct(fetchedProduct)) return;
