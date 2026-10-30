@@ -71,11 +71,11 @@
 }
 
 .dcats-concierge-sprite.is-suzuto {
-  background-image: url("./suzuto/spritesheet.webp?v=1.1.1267");
+  background-image: url("./suzuto/spritesheet.webp?v=1.1.1268");
 }
 
 .dcats-concierge-sprite.is-rinna {
-  background-image: url("./rinna/spritesheet.webp?v=1.1.1267");
+  background-image: url("./rinna/spritesheet.webp?v=1.1.1268");
 }
 
 .dcats-concierge-hit-target {
@@ -323,6 +323,18 @@
   gap: 14px;
   padding: 16px 16px 12px;
   background: linear-gradient(135deg, #fff 0%, #f7e5e0 100%);
+}
+
+.dcats-concierge-panel.is-question-view .dcats-concierge-panel-head {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.dcats-concierge-panel.is-question-dragging .dcats-concierge-panel-head { cursor: grabbing; }
+.dcats-concierge-panel.is-question-view .dcats-concierge-panel-head:focus-visible {
+  outline: 3px solid #91c8ce;
+  outline-offset: -3px;
 }
 
 .dcats-concierge-panel-kicker {

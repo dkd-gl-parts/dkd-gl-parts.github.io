@@ -549,6 +549,7 @@ assert(documentObject.activeElement === aiQuestionInput, "Character question vie
 assert(hitTarget.getAttribute("aria-expanded") === "true" && launcher.getAttribute("aria-expanded") === "false", "Character question view exposed the wrong expanded trigger");
 assert(mover.getBoundingClientRect().left === beforeCharacterQuestion.left && mover.getBoundingClientRect().top === beforeCharacterQuestion.top, "Opening a question must keep the character where it was clicked");
 const questionTail = byClass("dcats-concierge-question-tail")[0];
+const questionHead = byClass("dcats-concierge-panel-head")[0];
 assert(questionTail && !questionTail.hidden && questionTail.getAttribute("aria-hidden") === "true", "Character question did not display its decorative speech tail");
 dispatch(panelClose.listeners, "click", { target: panelClose });
 assert(panel.hidden && documentObject.activeElement === hitTarget, "Closing the question view did not restore character focus");
@@ -556,6 +557,7 @@ launcher.focus();
 dispatch(launcher.listeners, "click", { target: launcher });
 assert(!panel.hidden && !panel.classList.contains("is-question-view"), "Header launcher did not preserve the settings view");
 assert(documentObject.activeElement === panelClose && launcher.getAttribute("aria-expanded") === "true", "Settings view did not focus its close control");
+assert(questionHead.getAttribute("tabindex") === "-1" && !questionHead.getAttribute("aria-label"), "Settings heading retained question movement controls");
 dispatch(panelClose.listeners, "click", { target: panelClose });
 assert(panel.hidden && documentObject.activeElement === launcher, "Closing settings did not restore launcher focus");
 
@@ -587,16 +589,83 @@ const beforeRepeatLayout = animations.length;
 panelSizeObserver.callback([]);
 assert(animations.length === beforeRepeatLayout, "Unchanged speech geometry restarted layout animations/resize observation");
 panel.questionNaturalHeight = 600;
+// Only the heading moves a question, without touching its answer, input, character or API.
+const dragCallsBefore = aiRequests.length;
+aiQuestionInput.value = "移動中も残す質問"; aiAnswer.textContent = "移動中も残す回答"; aiAnswer.hidden = false;
+const questionCharacterBefore = mover.getBoundingClientRect();
+function questionPointerDown(target = questionHead, overrides = {}) {
+  const r = panel.getBoundingClientRect();
+  dispatch(questionHead.listeners, "pointerdown", { target, pointerId: 301, button: 0,
+    clientX: r.left + 24, clientY: r.top + 18, preventDefault() {}, ...overrides });
+}
+function dragQuestion(dx, dy, surface = documentObject) {
+  const r = panel.getBoundingClientRect();
+  questionPointerDown();
+  dispatch(surface.listeners, "pointermove", { target: questionHead, pointerId: 301,
+    clientX: r.left + 24 + dx, clientY: r.top + 18 + dy, preventDefault() {} });
+  dispatch(surface.listeners, "pointerup", { target: questionHead, pointerId: 301 });
+}
+questionPointerDown(); assert(questionHead.capturedPointerId === null, "Hidden document started a panel drag");
+documentObject.hidden = false;
+questionPointerDown(panelClose); assert(questionHead.capturedPointerId === null, "Close button started a panel drag");
+questionPointerDown(aiQuestionInput); assert(questionHead.capturedPointerId === null, "Body input started a panel drag");
+questionPointerDown(questionHead, { button: 2 }); assert(questionHead.capturedPointerId === null, "Right click started a panel drag");
+questionPointerDown(questionHead, { isPrimary: false }); assert(questionHead.capturedPointerId === null, "Secondary pointer started a panel drag");
+questionPointerDown();
+assert(questionHead.capturedPointerId === 301 && documentObject.activeElement === questionHead, "Heading failed to capture/focus the drag");
+const beforePanelDrag = panel.getBoundingClientRect();
+dispatch(documentObject.listeners, "pointermove", { pointerId: 999, clientX: 1000, clientY: 100 });
+dispatch(documentObject.listeners, "pointermove", { pointerId: 301, clientX: NaN, clientY: 100 });
+assert(!panel.classList.contains("is-question-detached"), "Invalid/other pointer detached the question");
+dispatch(documentObject.listeners, "pointermove", { pointerId: 301, clientX: beforePanelDrag.left + 26, clientY: beforePanelDrag.top + 20 });
+assert(!panel.classList.contains("is-question-detached"), "A heading click detached the question");
+dispatch(documentObject.listeners, "pointermove", { pointerId: 301,
+  clientX: beforePanelDrag.left + 174, clientY: beforePanelDrag.top + 48, preventDefault() {} });
+dispatch(documentObject.listeners, "pointerup", { pointerId: 301 });
+const draggedQuestion = panel.getBoundingClientRect();
+assert(draggedQuestion.left === beforePanelDrag.left + 150 && draggedQuestion.top === beforePanelDrag.top + 30, "Question did not follow the heading drag");
+assert(draggedQuestion.width === beforePanelDrag.width && draggedQuestion.height === beforePanelDrag.height, "Dragging unexpectedly resized the question");
+assert(questionTail.hidden && panel.classList.contains("is-question-detached") && !panel.classList.contains("is-question-dragging") && questionHead.capturedPointerId === null, "Dropped question retained capture or a misleading speech tail");
+assertQuestionFits("manual position");
+panelSizeObserver.callback([]); dispatch(windowListeners, "scroll"); flushAnimationFrames(); notifyObservers();
+assert(panel.getBoundingClientRect().left === draggedQuestion.left && panel.getBoundingClientRect().top === draggedQuestion.top, "Automatic placement snapped a dragged question back");
+assert(aiQuestionInput.value === "移動中も残す質問" && aiAnswer.textContent === "移動中も残す回答" && !aiAnswer.hidden && aiRequests.length === dragCallsBefore, "Moving the panel changed a question/answer or called AI");
+assert(mover.getBoundingClientRect().left === questionCharacterBefore.left && mover.getBoundingClientRect().top === questionCharacterBefore.top, "Dragging the question moved the character");
+questionPointerDown(); dispatch(documentObject.listeners, "pointercancel", { pointerId: 301 });
+assert(questionHead.capturedPointerId === null && !panel.classList.contains("is-question-dragging"), "Cancellation retained pointer capture");
+questionPointerDown(); dispatch(questionHead.listeners, "lostpointercapture", { pointerId: 301 });
+assert(questionHead.capturedPointerId === null, "Lost capture left a stale drag");
+questionPointerDown(); dispatch(windowListeners, "blur"); assert(questionHead.capturedPointerId === null, "Window blur left a stale drag");
+questionPointerDown(); documentObject.hidden = true; dispatch(documentObject.listeners, "visibilitychange");
+assert(questionHead.capturedPointerId === null, "Hidden question retained pointer capture");
+documentObject.hidden = false; dispatch(documentObject.listeners, "visibilitychange");
+const dragOwner = windowObject.currentUser;
+questionPointerDown(); windowObject.currentUser = { id: "changed-during-question-drag" };
+dispatch(documentObject.listeners, "pointermove", { pointerId: 301, clientX: 900, clientY: 100 });
+assert(questionHead.capturedPointerId === null, "Owner mismatch did not cancel the question drag");
+windowObject.currentUser = dragOwner;
+const keyboardStart = panel.getBoundingClientRect();
+dispatch(questionHead.listeners, "keydown", { target: questionHead, key: "ArrowRight", preventDefault() {} });
+assert(panel.getBoundingClientRect().left === keyboardStart.left + 16, "Keyboard heading move failed");
+dispatch(questionHead.listeners, "keydown", { target: panelClose, key: "ArrowLeft", preventDefault() { throw new Error("Child keyboard event was consumed"); } });
+dispatch(questionHead.listeners, "keydown", { target: questionHead, key: "Home", preventDefault() {} });
+assert(!panel.classList.contains("is-question-detached") && !questionTail.hidden, "Home did not restore character anchoring");
+dragQuestion(10000, -10000); assertQuestionFits("manual far top-right");
+dragQuestion(-10000, 10000); assertQuestionFits("manual far bottom-left");
 windowObject.visualViewport.testRect = {left:0,top:220,width:1200,height:450};
 windowObject.visualViewport.dispatchForTest("resize");
 assertQuestionFits("keyboard",{left:0,top:220,right:1200,bottom:670});
 windowObject.visualViewport.testRect = null;
 windowObject.visualViewport.dispatchForTest("scroll");
 assertQuestionFits("visual viewport restored");
+questionPointerDown(); dispatch(panelClose.listeners, "click", { target: panelClose });
+assert(questionHead.capturedPointerId === null && !panel.classList.contains("is-question-detached"), "Closing did not release/reset manual placement");
+openQuestionAt(40,600); assert(!questionTail.hidden, "Reopening did not restore the default speech placement");
 dispatch(panelClose.listeners,"click",{target:panelClose});
 windowObject.innerWidth = 390;
 openQuestionAt(274,600); assertQuestionFits("narrow screen above");
 assert(questionTail.classList.contains("is-above") && panel.getBoundingClientRect().bottom === mover.getBoundingClientRect().top - 16, "Narrow screen did not stack the speech panel above the character");
+dragQuestion(1000, 1000); assertQuestionFits("narrow manual move");
 dispatch(panelClose.listeners,"click",{target:panelClose});
 openQuestionAt(274,46); assertQuestionFits("narrow screen below");
 assert(questionTail.classList.contains("is-below"), "Narrow screen did not use the available space below the character");
@@ -604,8 +673,14 @@ dispatch(panelClose.listeners,"click",{target:panelClose});
 windowObject.innerWidth = windowObject.innerHeight = 120;
 openQuestionAt(8,8); assertQuestionFits("tiny screen compact");
 assert(questionTail.hidden && panel.classList.contains("is-compact-question"), "Tiny window did not use the tail-free compact fallback");
+dragQuestion(30, 30); assertQuestionFits("tiny manual move");
+assert(panel.classList.contains("is-compact-question"), "Tiny manual move lost compact heading styling");
+questionPointerDown(); windowObject.currentUser = { id: "new-question-owner" }; notifyObservers();
+assert(questionHead.capturedPointerId === null && !panel.classList.contains("is-question-detached") && !aiQuestionInput.value && aiAnswer.hidden, "Account switch retained a drag, manual placement or old content");
+windowObject.currentUser = dragOwner; notifyObservers();
 dispatch(panelClose.listeners,"click",{target:panelClose});
 windowObject.innerWidth = 1200; windowObject.innerHeight = 800;
+documentObject.hidden = true;
 aiQuestionInput.value = "受注データはどの画面で確認しますか？";
 dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
 dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
@@ -627,6 +702,8 @@ for (const [language, heading, breakdown] of [["en", "Answer", "Input 100 / Outp
   documentObject.documentElement.lang = language;
   notifyObservers();
   assert(aiStatus.textContent === heading && aiUsage.title.includes(breakdown) && aiUsage.children.length === 2, "Localized answer/compact meter did not refresh correctly");
+  api.openSettings("question");
+  assert(questionHead.getAttribute("tabindex") === "0" && questionHead.getAttribute("aria-label") === questionHead.title && questionHead.title.includes(language === "ja" ? "ドラッグ" : language === "en" ? "Drag" : "拖动"), "Question movement instructions were not localized/accessibly named");
 }
 const originalAiResponseFactory = aiResponseFactory;
 let finishPendingAi;
@@ -779,6 +856,13 @@ dispatch(aiScreenButton.listeners, "click", { target: aiScreenButton }); dispatc
 assert(screenOpenRequests.length === beforeScreenOpenCount + 1 && aiScreenButton.disabled && aiAskButton.disabled && screenOpenRequests.at(-1).options.contextKey === "qa-context", "Screen click must bind context and suppress duplicates/questions while checking");
 finishScreenOpen({ data: { ok: true, screen_id: "sales-order-mgmt" }, error: null }); await new Promise(resolve => setImmediate(resolve));
 assert(aiScreenButton.hidden && aiStatus.textContent.includes("D-CATS本体") && aiRequests.length === beforeScreenClicks, "Screen assistance must not call AI again or claim a write");
+documentObject.hidden = false;
+const screenAnswer = aiAnswer.textContent; dragQuestion(120, 20);
+activeScreen.id = "screen-sales-order-mgmt"; notifyObservers();
+assert(panel.classList.contains("is-question-detached") && !panel.hidden && aiAnswer.textContent === screenAnswer, "Navigation removed or reanchored the movable answer");
+dragQuestion(-70, -20); assertQuestionFits("after guided navigation");
+documentObject.hidden = true;
+activeScreen.id = "screen-menu"; notifyObservers();
 for (const code of ["screen_open_draft", "screen_open_forbidden", "screen_open_stale", "screen_open_unavailable"]) {
   aiQuestionInput.value = "画面の案内"; dispatch(aiAskButton.listeners, "click", { target: aiAskButton }); await new Promise(resolve => setImmediate(resolve));
   screenOpenFactory = async () => ({ error: new Error(code) }); dispatch(aiScreenButton.listeners, "click", { target: aiScreenButton }); await new Promise(resolve => setImmediate(resolve));
@@ -1172,6 +1256,11 @@ const beforeFloatingScreen = screenOpenRequests.length, beforeFloatingAi = aiReq
 dispatch(aiScreenButton.listeners, "click", { target: aiScreenButton });
 await new Promise(resolve => setImmediate(resolve));
 assert(screenOpenRequests.length === beforeFloatingScreen + 1 && aiRequests.length === beforeFloatingAi && aiScreenButton.hidden && aiStatus.textContent.includes("D-CATS本体"), "Floating screen assistance did not use the original main-window API without another AI call");
+const beforeFloatingQuestionDrag = panel.getBoundingClientRect();
+dragQuestion(80, -80, firstFloatingWindow.document);
+assert(panel.classList.contains("is-question-detached") && questionHead.capturedPointerId === null, "Floating document did not release a moved question");
+assert(panel.getBoundingClientRect().height === beforeFloatingQuestionDrag.height, "Floating question expanded instead of following the drag");
+assertQuestionFits("floating question drag", { left: 0, top: 0, right: firstFloatingWindow.innerWidth, bottom: firstFloatingWindow.innerHeight });
 assert(api.isFloating() && root.ownerDocument === firstFloatingWindow.document, "Screen assistance unexpectedly closed or moved the floating concierge");
 aiQuestionInput.value = "小窓で閉じる質問";
 dispatch(firstFloatingWindow.document.listeners, "keydown", { key: "Escape" });
