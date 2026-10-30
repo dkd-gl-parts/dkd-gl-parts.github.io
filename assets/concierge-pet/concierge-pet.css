@@ -71,11 +71,11 @@
 }
 
 .dcats-concierge-sprite.is-suzuto {
-  background-image: url("./suzuto/spritesheet.webp?v=1.1.1268");
+  background-image: url("./suzuto/spritesheet.webp?v=1.1.1269");
 }
 
 .dcats-concierge-sprite.is-rinna {
-  background-image: url("./rinna/spritesheet.webp?v=1.1.1268");
+  background-image: url("./rinna/spritesheet.webp?v=1.1.1269");
 }
 
 .dcats-concierge-hit-target {
@@ -547,6 +547,7 @@
 }
 
 .dcats-concierge-ai-conversation-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.dcats-concierge-panel.is-question-view .dcats-concierge-ai-feedback .dcats-concierge-ai-button { position: static; box-shadow: none; }
 .dcats-concierge-ai-secondary { min-height: 40px; padding: 8px 12px; border: 1px solid #b8bec8; border-radius: 8px; background: #fff; color: #42506b; font: inherit; cursor: pointer; }
 .dcats-concierge-ai-secondary:disabled { cursor: wait; opacity: .55; }
 .dcats-concierge-ai-secondary:focus-visible { outline: 3px solid #91c8ce; outline-offset: 2px; }
