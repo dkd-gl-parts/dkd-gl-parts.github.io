@@ -11593,6 +11593,27 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-core-list-mgmt .core-workspace-inventory-toolbar .core-workspace-actions { display: flex; }
 }
 
+/* Paused product 3D stays absent even before scripts run or after a stale UI insertion. */
+html[data-product-3d-paused] :is(
+  [data-product-media="model"],
+  [data-product-media-pane="model"],
+  [data-product-3d-media-shell][data-no-photos="true"],
+  [data-product-3d-control],
+  .product-3d-action-heading,
+  .product-3d-has-badge,
+  .product-3d-capture-overlay,
+  .product-3d-viewer-overlay,
+  .product-3d-tripo-overlay,
+  [data-create-3d],
+  [data-upload-3d],
+  [data-local-glb],
+  [data-open-model],
+  [data-publish-model],
+  [data-tripo-3d],
+  [data-tripo-readiness],
+  [data-hunyuan-readiness]
+) { display: none !important; }
+
 /* Dedicated factoring price conditions retain readable labels on narrow screens. */
 .factoring-dialog { box-sizing: border-box; width: min(920px,calc(100vw - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 0; border: 1px solid #d7e1ed; border-radius: 12px; color: #1e2336; background: #fff; overflow: auto; }
 .factoring-dialog::backdrop { background: rgba(20,26,40,.45); }

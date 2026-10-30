@@ -1,6 +1,20 @@
 (function () {
   "use strict";
 
+  // Keep the existing implementation dormant until development is explicitly resumed.
+  if (typeof PRODUCT_3D_DEVELOPMENT_PAUSED === "undefined" || PRODUCT_3D_DEVELOPMENT_PAUSED) {
+    var noAction = function () {};
+    window.DcatsProduct3D = Object.freeze({
+      paused: true,
+      openCapture: noAction,
+      renderMediaPane: noAction,
+      fetchPublishedModels: function () { return Promise.resolve([]); },
+      refreshListBadges: noAction,
+      refreshMediaAvailability: noAction
+    });
+    return;
+  }
+
   var BUCKET = "product-3d";
   var MIN_CAPTURES = 6;
   var RECOMMENDED_CAPTURES = 12;
@@ -2140,7 +2154,7 @@
     elements["product-3d-viewer-autorotate"].setAttribute("aria-pressed", "false");
     try {
       if (viewer) { viewer.dispose(); viewer = null; }
-      var module = await import("./product-3d-viewer.js?v=1.1.1269");
+      var module = await import("./product-3d-viewer.js?v=1.1.1270");
       if (!targetStillSelected()) {
         if (requestId === viewerRequestId) closeViewer();
         return;
