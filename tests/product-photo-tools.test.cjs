@@ -173,3 +173,20 @@ test('delayed recovery cannot enable new operations or overwrite the held reques
   assert.equal(JSON.parse(f.window.sessionStorage.getItem('dcats-product-photo-pending:'+actor)).operation.payload.request_id,request);
   resolve({data:[]});await opening;assert.equal(f.test.active.uncertain.payload.request_id,request);assert.equal(e(f,'query').disabled,true);
 });
+test('partial batch success refreshes registered photos without resending successful files',async()=>{
+  const f=setup();await f.api.open(product);await pending(f);await pending(f);f.test.active.queue[1].caption='失敗';
+  f.context.fail=(a,p)=>a==='register'&&p.caption==='失敗'?{error:{message:'invalid fixture variant',code:'22023'}}:null;
+  await f.test.register(f.test.active);
+  assert.equal(f.saved.length,1);assert.equal(f.test.active.images.length,1);assert.equal(f.test.active.queue.length,1);
+  assert.equal(f.test.active.queue[0].caption,'失敗');assert.match(e(f,'status').textContent,/登録済み 1 \/ 2/);
+  assert.equal(f.calls.filter(c=>c[0]==='register'&&c[1].caption==='正面').length,1);
+});
+test('partial batch refresh retains the uncertain request and blocks further registration',async()=>{
+  const f=setup();await f.api.open(product);await pending(f);await pending(f);f.test.active.queue[1].caption='不明';
+  f.context.fail=(a,p)=>a==='register'&&p.caption==='不明'?{error:{message:'lost response'}}:null;
+  await f.test.register(f.test.active);const op=f.test.active.uncertain;
+  assert.equal(f.saved.length,1);assert.equal(f.test.active.images.length,1);assert.equal(f.test.active.queue.length,1);
+  assert.equal(JSON.parse(f.window.sessionStorage.getItem('dcats-product-photo-pending:'+actor)).operation.payload.request_id,op.payload.request_id);
+  const before=f.calls.filter(c=>c[0]==='register').length;await f.test.register(f.test.active);assert.equal(f.calls.filter(c=>c[0]==='register').length,before);
+  assert.match(e(f,'status').textContent,/登録済み 1 \/ 2/);
+});

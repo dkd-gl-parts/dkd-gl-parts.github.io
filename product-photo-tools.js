@@ -279,7 +279,10 @@
         s.queue.splice(s.queue.indexOf(q),1);URL.revokeObjectURL(q.url);done++;renderQueue();
       }
       await refresh(s);status(tr("done")+" "+done+" / "+items.length);
-    }catch(e){if(current(s)&&!s.uncertain)status(e.message,true);}
+    }catch(e){
+      if(current(s)&&done){try{await refresh(s);}catch(ignore){/* Keep the original failure and pending receipt. */}}
+      if(current(s))status((s.uncertain?tr("uncertain"):e.message)+(done?" · "+tr("registered")+" "+done+" / "+items.length:""),true);
+    }
     finally{if(current(s)){s.busy=false;renderQueue();updateControls();}}
   }
   function selectedRows(s) {return s.images.filter(function(i){return s.selection.has(String(i.id));}).map(function(i){return {id:i.id,revision:i.revision};});}
