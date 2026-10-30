@@ -1406,6 +1406,9 @@ var TRANSLATIONS = {
     screen_product_kind_stock_title: "在庫管理",
     img_section: "画像",
     image_actions_title: "画像操作",
+    product_photo_tools_title: "商品撮影・画像整理",
+    product_photo_tools_desc: "",
+    product_photo_download: "画像を選択して保存",
     btn_upload: "写真を追加する",
     sales_copy_production_images: "製造管理からコピー",
     sales_copy_production_images_done: "{n} 枚の製造画像を販売管理へコピーしました",
@@ -4135,6 +4138,9 @@ var TRANSLATIONS = {
     screen_product_kind_stock_title: "Stock Management",
     img_section: "Images",
     image_actions_title: "Image Actions",
+    product_photo_tools_title: "Product Photos",
+    product_photo_tools_desc: "",
+    product_photo_download: "Select Photos to Download",
     btn_upload: "Add Photos",
     sales_copy_production_images: "Copy from Production",
     sales_copy_production_images_done: "Copied {n} production images to sales",
@@ -6875,6 +6881,9 @@ var TRANSLATIONS = {
     screen_product_kind_stock_title: "库存管理",
     img_section: "图片",
     image_actions_title: "图片操作",
+    product_photo_tools_title: "商品拍摄与图片整理",
+    product_photo_tools_desc: "",
+    product_photo_download: "选择图片并下载",
     btn_upload: "添加照片",
     sales_copy_production_images: "从生产管理复制",
     sales_copy_production_images_done: "已复制 {n} 张生产图片到销售管理",
@@ -8315,7 +8324,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1270";
+var APP_VERSION       = "v1.1.1271";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -9446,6 +9455,15 @@ function canIssueGltekPartNumber() {
 function canManageAllImages() {
   if (!userProfile || isExternalViewer() || isCustomerPortalSearchMode()) return false;
   return userPermissionAllowed(userProfile, "image.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "sales_staff", "production_editor"]));
+}
+function canUseProductPhotoTools() {
+  if (!userProfile || isExternalViewer() || isCustomerPortalSearchMode()) return false;
+  return hasAccessRole(userProfile, ["master_editor", "dept_admin"]) && userPermissionAllowed(userProfile, "image.manage", true);
+}
+function openProductPhotoTools(product, context, tab) {
+  if (!canUseProductPhotoTools()) { showPermissionDenied("open_product_photo_tools", "core_product_images"); return; }
+  if (context !== "sales" && context !== "production") context = hasAccessRole(userProfile, ["dept_admin"]) ? "production" : "sales";
+  if (window.DcatsProductPhotoTools) return window.DcatsProductPhotoTools.open(product, context, tab);
 }
 function canManageProduct3D() {
   if (PRODUCT_3D_DEVELOPMENT_PAUSED) return false;
@@ -11250,6 +11268,7 @@ function resetScreenStateForMenu(screenId) {
 
 function showScreen(id) {
   var previousScreenId = activeAppScreenName();
+  if ((id === "login" || id === "boot") && window.DcatsProductPhotoTools) window.DcatsProductPhotoTools.forceClose();
   if ((id === "login" || id === "boot") && typeof conciergeNavigation !== "undefined" && conciergeNavigation) conciergeNavigation.clear();
   if (id !== "concierge-admin") closeConciergeAdmin();
   if (previousScreenId === "sales-order-mgmt" && id !== previousScreenId) {
@@ -11834,6 +11853,7 @@ function renderMenu() {
     { icon: "&#x1F5A8;", titleKey: "shipping_document_mgmt_title", descKey: "shipping_document_mgmt_desc", action: "shipping-document-mgmt", available: canManageSalesOrders(), tag: null },
     { icon: "&#x21A9;", titleKey: "core_return_mgmt_title", descKey: "core_return_mgmt_desc", action: "core-return-mgmt", available: canManageSalesOrders(), tag: null },
     { icon: "&#x1F3ED;", titleKey: "mi_production_title", descKey: "mi_production_desc", action: "production-search", available: canViewProductionFeatures(), tag: null },
+    { icon: "<span class='icon-image' aria-hidden='true'></span>", titleKey: "product_photo_tools_title", descKey: "product_photo_tools_desc", action: "product-photo-tools", available: canUseProductPhotoTools(), tag: null },
     { icon: "&#x1F3F7;", titleKey: "mi_finished_label_title", descKey: "mi_finished_label_desc", action: "finished-label-mgmt", available: canViewFinishedLabelMgmt(), tag: null },
     { icon: "&#x1F69A;", titleKey: "mi_finished_shipping_title", descKey: "mi_finished_shipping_desc", action: "finished-product-shipping", available: canManageFinishedProductShipping(), tag: null },
     { icon: "&#x1F4E6;", titleKey: "mi_core_list_title", descKey: "mi_core_list_desc", action: "core-list-mgmt", available: canViewCoreManagement(), tag: null },
@@ -11921,6 +11941,7 @@ function renderMenu() {
       else if (card.dataset.action === "shipping-document-mgmt") enterShippingDocumentMgmt();
       else if (card.dataset.action === "core-return-mgmt") enterCoreReturnManagement();
       else if (card.dataset.action === "production-search") enterProductionSearch();
+      else if (card.dataset.action === "product-photo-tools") openProductPhotoTools();
       else if (card.dataset.action === "finished-label-mgmt") enterFinishedLabelMgmt();
       else if (card.dataset.action === "finished-product-shipping") enterFinishedProductShipping();
       else if (card.dataset.action === "users") enterUsers();
@@ -25411,6 +25432,7 @@ async function renderProductionDetail(row) {
   if (canViewFinishedLabelMgmt()) html += "<button class='btn-sm-edit production-action-secondary' id='production-open-finished-label'>" + esc(t("mi_finished_label_title")) + "</button>";
   if (canEdit()) html += "<button class='btn-sm-edit production-action-secondary' id='production-edit-core'>" + esc(t("btn_edit_part")) + "</button>";
   if (canManageAllImages() || canManageProduct3D()) html += "<button class='btn-sm-edit production-action-secondary' id='production-open-image-actions'>" + esc(t("image_actions_title")) + "</button>";
+  if (canUseProductPhotoTools()) html += "<button class='btn-sm-edit production-action-secondary' id='production-open-photo-tools'>" + esc(t("product_photo_tools_title")) + "</button>";
   html += "</div></div>";
   html += "<div class='production-workspace'>";
   html += "<div class='production-master-column'>";
@@ -25469,6 +25491,8 @@ async function renderProductionDetail(row) {
   if (editBtn) editBtn.addEventListener("click", openProductionCoreEdit);
   var imageActionsBtn = document.getElementById("production-open-image-actions");
   if (imageActionsBtn) imageActionsBtn.addEventListener("click", openProductionImageActionsDialog);
+  var photoToolsBtn = document.getElementById("production-open-photo-tools");
+  if (photoToolsBtn) photoToolsBtn.addEventListener("click", function() { openProductPhotoTools(row, "production"); });
   var addCoreEntryBtn = document.getElementById("production-core-entry-add");
   if (addCoreEntryBtn) addCoreEntryBtn.addEventListener("click", addProductionCoreEntry);
   el.querySelectorAll("[data-core-entry-delete]").forEach(function(btn) {
@@ -55137,6 +55161,10 @@ function product3DSupportedKind(kind) {
 }
 
 function syncProductMediaActionAccess(context) {
+  var photoTools = document.getElementById(context === "production" ? "production-image-action-photo-tools" : "btn-image-action-photo-tools");
+  var photoDownload = document.getElementById(context === "production" ? "production-image-action-download" : "btn-image-action-download");
+  if (photoTools) photoTools.hidden = !canUseProductPhotoTools();
+  if (photoDownload) photoDownload.hidden = !canUseProductPhotoTools();
   var production = context === "production";
   var kind = selectedImageActionKind(production ? "production" : "sales");
   var canManageImages = canManageAllImages();
@@ -56409,6 +56437,12 @@ function permissionOverviewScreenGroups(context) {
             { label: "画面", permissionKey: "product_management.view", state: screenState(roleCanViewManagement) },
             { label: "商品登録・修正", permissionKey: "product.manage", state: yesNo(roleCanEdit, "可", "不可") },
             { label: "商品削除", permissionKey: "product.delete", state: yesNo(roleCanManageCompany, "可", "不可") }
+          ]
+        },
+        {
+          title: "商品撮影・画像整理",
+          items: [
+            { label: "撮影・登録・整理・選択ダウンロード", state: yesNo(roleIsInternal && permissionOverviewRoleIn(role, ["master_editor", "dept_admin"]), "責任者のみ利用可（画像管理の拒否設定を優先）", "利用不可") }
           ]
         },
         {
@@ -59738,6 +59772,15 @@ document.getElementById("panel").addEventListener("click", function(e){
 });
 document.getElementById("btn-open-image-actions").addEventListener("click", openImageActionsDialog);
 document.getElementById("btn-image-actions-cancel").addEventListener("click", closeImageActionsDialog);
+document.getElementById("btn-image-action-photo-tools").addEventListener("click", function() { closeImageActionsDialog(); openProductPhotoTools(currentProduct, "sales"); });
+document.getElementById("btn-image-action-download").addEventListener("click", function() { closeImageActionsDialog(); openProductPhotoTools(currentProduct, "sales", "images"); });
+document.getElementById("production-image-action-photo-tools").addEventListener("click", function() { closeProductionImageActionsDialog(); openProductPhotoTools(currentProductionRow, "production"); });
+document.getElementById("production-image-action-download").addEventListener("click", function() { closeProductionImageActionsDialog(); openProductPhotoTools(currentProductionRow, "production", "images"); });
+window.addEventListener("dcats:product-photos-changed", function(event) {
+  var id = event.detail && event.detail.productId;
+  if (currentProduct && String(currentProduct.dkd_shohin_id) === String(id)) loadImages(null, detailSecondaryRequestSeq).then(function() { return refreshSalesImageCacheForProduct(currentProduct); }).catch(function() {});
+  if (currentProductionRow && String(currentProductionRow.dkd_shohin_id) === String(id)) loadProductionImagesForRow(currentProductionRow, productionDetailRequestSeq).then(function() { return refreshProductionImageCacheForProduct(currentProductionRow); }).catch(function() {});
+});
 document.getElementById("image-actions-overlay").addEventListener("click", function(e){ if(e.target===this) closeImageActionsDialog(); });
 document.getElementById("btn-image-action-upload").addEventListener("click", triggerSalesImageUpload);
 document.getElementById("image-upload-review-cancel").addEventListener("click", closeImageUploadReview);

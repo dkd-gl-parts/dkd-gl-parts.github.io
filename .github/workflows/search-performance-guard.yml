@@ -294,6 +294,8 @@ jobs:
         run: node scripts/verify-product-3d-workflow.js
       - name: Exercise product 3D Viewer and GLB flows
         run: node scripts/verify-product-3d-tests.js
+      - name: Verify product photo tools
+        run: node scripts/verify-product-photo-tools.js
       - name: Verify static deployment assets
         run: node scripts/build-static-site.js
       - name: Verify security response headers

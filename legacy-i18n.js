@@ -2,6 +2,9 @@
 // Runtime translation is local; this file makes no external requests.
 var DCATS_LEGACY_UI_TRANSLATIONS = {
   "en": {
+    "商品撮影・画像整理": "Product Photos",
+    "撮影・登録・整理・選択ダウンロード": "Capture, registration, organization and selected downloads",
+    "責任者のみ利用可（画像管理の拒否設定を優先）": "Managers only; image-management denials take priority",
     "ファクタリングの計算条件": "Factoring price calculation",
     "販売価格設定へ戻る": "Back to sales pricing",
     "売値区分1を基準に、業販とモールそれぞれの必要価格を計算し、高い方を共通の販売単価にします。": "Calculate trade and marketplace prices from price class 1, then use the higher amount as the common sale price.",
@@ -3990,6 +3993,9 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "発行履歴を参照する権限がありません。": "You do not have permission to view issue history."
   },
   "zh": {
+    "商品撮影・画像整理": "商品拍摄与图片整理",
+    "撮影・登録・整理・選択ダウンロード": "拍摄、登记、整理及所选图片下载",
+    "責任者のみ利用可（画像管理の拒否設定を優先）": "仅限负责人，优先执行图片管理拒绝设置",
     "ファクタリングの計算条件": "保理售价计算条件",
     "販売価格設定へ戻る": "返回销售价格设置",
     "売値区分1を基準に、業販とモールそれぞれの必要価格を計算し、高い方を共通の販売単価にします。": "以售价分类1为基准，分别计算批发及商城所需售价，并采用较高者作为统一售价。",
