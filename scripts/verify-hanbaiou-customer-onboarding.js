@@ -85,3 +85,4 @@ for (const key of [
 }
 
 console.log("Sales King customer onboarding UI verification passed.");
+require("../tests/customer-screen-registration.test.cjs");

@@ -2732,6 +2732,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .customer-register-flow em { min-width: 0; color: #31445a; font-size: 11px; font-style: normal; font-weight: 800; line-height: 1.4; }
 .customer-register-confirm { margin: 12px 20px 0; min-height: 42px; padding: 9px 12px; display: flex; align-items: center; gap: 9px; border-left: 4px solid #d49a28; background: #fff8e6; color: #6d4c0f; font-size: 12px; font-weight: 800; line-height: 1.4; cursor: pointer; }
 .customer-register-confirm input { flex: 0 0 auto; }
+.customer-register-read-panel { margin: 12px 20px 0; padding: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid #cbddee; border-radius: 6px; background: #f3f8fd; color: #31445a; }
+.customer-register-read-panel[hidden] { display: none; }
+.customer-register-read-panel strong { font-size: 13px; }
+.customer-register-read-panel p { margin: 4px 0 0; font-size: 12px; line-height: 1.5; }
+.customer-register-read-panel button { flex: 0 0 auto; min-height: 40px; white-space: normal; }
+@media (max-width: 600px) { .customer-register-read-panel { align-items: stretch; flex-direction: column; margin: 12px 14px 0; } }
 .customer-register-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; padding: 14px 20px 4px; }
 .customer-register-field { min-width: 0; display: grid; align-content: start; gap: 5px; }
 .customer-register-field > span { color: #475467; font-size: 11px; font-weight: 800; line-height: 1.35; }

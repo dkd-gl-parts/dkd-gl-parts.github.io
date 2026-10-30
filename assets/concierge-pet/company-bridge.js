@@ -4,7 +4,7 @@
   var commands = Object.freeze({ products: "prepare_hanbaioh_products", customers: "prepare_hanbaioh_customers", sales: "prepare_hanbaioh_sales" });
   var exportCommands = Object.freeze({ products: "export_hanbaioh_products", customers: "export_hanbaioh_customers", sales: "export_hanbaioh_sales" });
   var exportFields = Object.freeze({ products: 67, customers: 118, sales: 55 });
-  var active = false, cancel, loginAttempts = new Set(), verifiedLogins = new Set(), exportAttempts = new Map();
+  var active = false, cancel, customerScreenActive = false, loginAttempts = new Set(), verifiedLogins = new Set(), exportAttempts = new Map();
   var uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   function actorKey(record) { return record.actor_id + ":" + record.device_id; }
   function validRecord(record) { return record && uuid.test(record.actor_id) && uuid.test(record.device_id); }
@@ -89,6 +89,9 @@
         if (response && options.isCurrent() && response.ok === true && response.command === request.command && (!isBackupSetup || opened)) resolve(response.data);
         else {
           var code = response && response.error && response.error.code;
+          if (request.command === "read_hanbaioh_customer_screen" && options.isCurrent()) {
+            reject(new Error(code === "REQUEST_REJECTED" ? "company_extension_update_required" : code === "EXTENSION_CONTEXT_INVALIDATED" ? "company_extension_reload_required" : "customer_screen_unavailable")); return;
+          }
           if (isDeviceDiscovery && timedOut && options.isCurrent()) { reject(new Error("company_device_read_timeout")); return; }
           if (code === "EXTENSION_CONTEXT_INVALIDATED" && options.isCurrent() && (request.command === "read_hanbaioh_company_device" || isBackupSetup && !opened)) { reject(new Error("company_extension_reload_required")); return; }
           if (isBackupSetup && code === "REQUEST_REJECTED" && options.isCurrent()) { reject(new Error("company_extension_update_required")); return; }
@@ -113,7 +116,7 @@
              // Older extensions reject this new discovery command without an
              // ID. Accept that rejection only as a failure of this preflight;
              // it cannot authorize or complete any native operation.
-             (request.command === "read_hanbaioh_company_device" || isBackupSetup) && !message.response.id && message.response.ok === false && message.response.error && message.response.error.code === "REQUEST_REJECTED")) finish(message.response);
+             (request.command === "read_hanbaioh_company_device" || request.command === "read_hanbaioh_customer_screen" || isBackupSetup) && !message.response.id && message.response.ok === false && message.response.error && message.response.error.code === "REQUEST_REJECTED")) finish(message.response);
       }
       function stop() { finish(null); }
       cancel = stop;
@@ -420,7 +423,46 @@
       return verifiedExport(data,category,original);
     } finally { if(request)request.capability="";active=false; }
   }
+  function customerScreenFields(value) {
+    var limits = { code:13, name:120, billingCode:13, closingCode:2, kana:120, contact:120, email:254, phone:40, fax:40, postal:12, address1:240, address2:240 }, fields = {};
+    if (!value || typeof value !== "object" || Array.isArray(value) || !Object.hasOwn(value,"code") || !Object.hasOwn(value,"name")) throw new Error("customer_screen_unavailable");
+    Object.keys(value).forEach(function (key) {
+      var text = value[key];
+      if (!Object.hasOwn(limits,key) || typeof text !== "string" || text.length > limits[key] || text !== text.trim() || /[\x00-\x1f\x7f]/.test(text) ||
+          ["code","billingCode"].includes(key) && (!/^[!-~]{1,13}$/.test(text) || /[,\"]/.test(text)) ||
+          key === "closingCode" && !/^(0|[1-9]|[12][0-9]|3[01])$/.test(text)) throw new Error("customer_screen_unavailable");
+      fields[key] = text;
+    });
+    if (!fields.code || !fields.name) throw new Error("customer_screen_unavailable");
+    return fields;
+  }
+  async function readCustomerScreenFromPc(options) {
+    if (active || !options || !uuid.test(options.actorId) || typeof options.isCurrent !== "function" || !options.isCurrent()) throw new Error("company_operation_unavailable");
+    active = true; customerScreenActive = true;
+    var request;
+    try {
+      var record = await nativeRequest({id:window.crypto.randomUUID(),command:"read_hanbaioh_company_device",actorId:options.actorId},options);
+      if (!validRecord(record) || record.actor_id !== options.actorId || !options.isCurrent()) throw new Error("company_device_unavailable");
+      var api = window.DcatsHanbaiohCompanyApi;
+      if (!api || typeof api.issue !== "function") throw new Error("company_issuer_unavailable");
+      var body = {command:"read_hanbaioh_customer_screen",request_id:window.crypto.randomUUID(),device_id:record.device_id};
+      var capability = await issueEnrollmentTicket(api,record,body,options);
+      if (!options.isCurrent()) throw new Error("company_session_changed");
+      request = {id:body.request_id,command:body.command,deviceId:record.device_id,capability:capability};
+      var data = await nativeRequest(request,options);
+      if (!options.isCurrent()) throw new Error("company_session_changed");
+      if (data && Object.keys(data).sort().join(",") === "code,status" && data.status === "stopped" &&
+          ["customer_screen_authorization_unverified","customer_screen_session_unverified","customer_screen_unavailable","customer_screen_changed"].includes(data.code)) throw new Error(data.code);
+      if (!data || Object.keys(data).sort().join(",") !== "actorId,deviceId,fields,observedAt,requestId,status,targetSha256" ||
+          data.status !== "customer_screen_read" || data.requestId !== request.id || data.actorId !== options.actorId || data.deviceId !== record.device_id ||
+          data.targetSha256 !== "975d8e446b7dd638ef46ba90dcf3baf4fa9f77c4f22ae9187fbb7913a0029a37" ||
+          !Number.isSafeInteger(data.observedAt) || data.observedAt > Date.now()+1000 || data.observedAt < Date.now()-30000) throw new Error("customer_screen_unavailable");
+      return { fields: customerScreenFields(data.fields) };
+    } finally { if (request) request.capability = ""; customerScreenActive = false; active = false; }
+  }
   window.DcatsHanbaiohCompanyBridge = Object.freeze({
+    readCustomerScreenFromPc: readCustomerScreenFromPc,
+    cancelCustomerScreen: function () { if (customerScreenActive && cancel) cancel(); },
     loginOnce: function (options) { return run(options, "account"); },
     prepareCsv: function (options) { return run(options, options.category); },
     backupBeforePrepare: function (options) { return run(options, options.category, true); },

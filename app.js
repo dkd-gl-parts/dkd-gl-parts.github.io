@@ -57,6 +57,20 @@ var CORE_AI_CAMERA_TEST_URL = "https://script.google.com/macros/s/AKfycbxlaPJSNT
 var TRANSLATIONS = {
 
   ja: {
+    customer_register_read_title: "販売王から入力",
+    customer_register_read_help: "販売王の「基本1」で名称・住所などを取得できます。同じ得意先の「売上／回収」に切り替えて再取得すると、請求先・締め情報を追加できます。内容を確認して登録してください。",
+    customer_register_read: "販売王の画面から取得",
+    customer_register_reading: "販売王の得意先画面を読み取っています…",
+    customer_register_read_success: "読み取った内容を入力しました。販売王での登録済み確認と内容確認後に、得意先を登録してください。",
+    customer_register_read_missing: "画面から取得できなかった必須項目：",
+    customer_register_read_changed: "画面または入力内容が変わったため、取得内容を反映しませんでした。対象を確認して再度取得してください。",
+    customer_register_read_session: "販売王との連携セッションを確認できません。業務連携で接続状態を確認してください。",
+    customer_register_read_unavailable: "得意先画面を読み取れませんでした。このPCの販売王で対象の得意先を表示し、Windows連携の接続状態を確認してください。",
+    customer_register_read_update: "Windows連携の更新が必要です。更新後に、この画面を開き直してください。",
+    customer_register_read_reload: "Windows連携が更新されています。D-CATSを更新してから、この画面を開き直してください。",
+    customer_register_read_duplicate: "この得意先コードはD-CATSに登録済みです。得意先一覧から確認してください。",
+    customer_register_read_overwrite: "入力済みの内容を販売王の読取内容に置き換えますか？別の得意先の場合、未取得の項目は空欄に戻ります。",
+    customer_register_read_cancelled: "入力済みの内容を保持しました。",
     app_sub: "Daiko Catalog &amp; Search System",
     login_system_subtitle: "自動車部品検索・受発注システム",
     login_heading: "ログイン",
@@ -2789,6 +2803,20 @@ var TRANSLATIONS = {
   },
 
   en: {
+    customer_register_read_title: "Fill from Sales King",
+    customer_register_read_help: "Read the customer's name and address from Basic 1 in Sales King. Switch the same customer to Sales / Collection and read again to add billing and closing details. Review before registering.",
+    customer_register_read: "Read Sales King screen",
+    customer_register_reading: "Reading the Sales King customer screen…",
+    customer_register_read_success: "Retrieved details filled in. Confirm that the customer is saved in Sales King, review the details, then register.",
+    customer_register_read_missing: "Required fields not retrieved:",
+    customer_register_read_changed: "The screen or form changed. Nothing was filled in. Check the customer and read again.",
+    customer_register_read_session: "The Sales King connection session could not be verified. Check the connection in Business integrations.",
+    customer_register_read_unavailable: "The customer screen could not be read. Display the customer in Sales King on this PC and check the Windows connection.",
+    customer_register_read_update: "Update the Windows integration, then reopen this form.",
+    customer_register_read_reload: "The Windows integration has changed. Refresh D-CATS, then reopen this form.",
+    customer_register_read_duplicate: "This customer code is already registered in D-CATS. Check the customer list.",
+    customer_register_read_overwrite: "Replace the entered details with the retrieved details? For a different customer, fields not retrieved will be cleared.",
+    customer_register_read_cancelled: "Your entered details were kept.",
     app_sub: "Daiko Catalog &amp; Search System",
     login_system_subtitle: "Automotive Parts Search & Ordering System",
     login_heading: "Login",
@@ -5521,6 +5549,20 @@ var TRANSLATIONS = {
   },
 
   zh: {
+    customer_register_read_title: "从销售王填写",
+    customer_register_read_help: "在销售王的“基本1”页读取客户名称、地址等。切换同一客户的“销售／回款”页后再次读取，可补充开票客户和结算信息。确认内容后再登记。",
+    customer_register_read: "读取销售王画面",
+    customer_register_reading: "正在读取销售王客户画面…",
+    customer_register_read_success: "已填写读取内容。请确认客户已在销售王中保存，核对内容后登记。",
+    customer_register_read_missing: "未能读取的必填项目：",
+    customer_register_read_changed: "画面或输入内容已更改，未填入读取结果。请确认客户后重新读取。",
+    customer_register_read_session: "无法确认销售王连接会话。请在业务联动中检查连接状态。",
+    customer_register_read_unavailable: "无法读取客户画面。请在本电脑的销售王中显示目标客户，并检查Windows连接状态。",
+    customer_register_read_update: "请更新Windows联动程序后重新打开此表单。",
+    customer_register_read_reload: "Windows联动程序已更新。请刷新D-CATS后重新打开此表单。",
+    customer_register_read_duplicate: "此客户代码已登记到D-CATS，请在客户列表中确认。",
+    customer_register_read_overwrite: "是否用读取内容替换已输入的内容？若为其他客户，未读取的项目将清空。",
+    customer_register_read_cancelled: "已保留输入内容。",
     menu_section_main_title: "主要功能",
     menu_section_main_note: "常用操作",
     menu_section_admin_title: "管理画面",
@@ -8324,7 +8366,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1273";
+var APP_VERSION       = "v1.1.1274";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -8783,6 +8825,8 @@ var customerAccessVisibilityRows = [];
 var customerAccessSavedDisplayDraft = null;
 var customerAccessSettingsSaving = false;
 var customerAccessRegistrationSaving = false;
+var customerAccessRegistrationReading = false;
+var customerAccessRegistrationReadSeq = 0;
 var customerAccessRuleProductMap = {};
 var customerAccessProductCandidates = [];
 var customerAccessSelectedProduct = null;
@@ -9045,7 +9089,7 @@ window.DcatsHanbaiohLoginApi = Object.freeze({ issue: issueConciergePilotLogin }
 async function issueConciergeCompanyOperation(record, request) {
   if (!currentUser || !isSystemAdmin()) return { data: null, error: new Error("system_admin_required") };
   var uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  var commands = { enroll_hanbaioh_company_account: false, login_hanbaioh_company: false, prepare_hanbaioh_products: true, prepare_hanbaioh_customers: true, prepare_hanbaioh_sales: true,
+  var commands = { read_hanbaioh_customer_screen: false, enroll_hanbaioh_company_account: false, login_hanbaioh_company: false, prepare_hanbaioh_products: true, prepare_hanbaioh_customers: true, prepare_hanbaioh_sales: true,
     export_hanbaioh_products: false, export_hanbaioh_customers: false, export_hanbaioh_sales: false };
   if (!record || Array.isArray(record) || Object.keys(record).sort().join(",") !== "actor_id,device_id,public_key_sha256,public_key_spki" ||
       record.actor_id !== currentUser.id || !uuid.test(record.device_id) ||
@@ -9113,7 +9157,7 @@ function conciergeNavigationProfileStamp(profile) {
 function conciergeNavigationBusy() {
   if (customerOrderSaving || customerOrderCart.length || salesOrderSaving || salesOrderPricingSaving || salesOrderB2ImportSaving || salesOrderB2ExportSaving || salesOrderB2ContractSettingsSaving || salesOrderPrintSettingsSaving ||
       salesAccountingExportSaving || salesAccountingExportCodeSavingKey || salesAccountingProductOnboardingSaving || shippingDocumentSaving || shippingDocumentBatchSelectionDirty || coreReturnManagementSaving ||
-      shippingWaybillLayoutSaving || shippingHandwrittenWaybillSaving || shippingRateFormSaving || shippingServiceVisibilitySavingKey || customerAccessSettingsSaving || customerAccessRegistrationSaving ||
+      shippingWaybillLayoutSaving || shippingHandwrittenWaybillSaving || shippingRateFormSaving || shippingServiceVisibilitySavingKey || customerAccessSettingsSaving || customerAccessRegistrationSaving || customerAccessRegistrationReading ||
       componentAddSaving || componentNameMasterSaving || finishedShipmentSaving || finishedWarrantyPolicySaving || finishedShipmentReplacementSaving || salesPricingSavePending || salesRank1SavePending ||
       Object.keys(productKindStockDirtyMap).some(function (key) { return !!productKindStockDirtyMap[key]; })) return true;
   return Array.from(document.querySelectorAll('.modal.show,.modal-overlay.show,[role="dialog"]')).some(function (node) {
@@ -53161,17 +53205,84 @@ function setCustomerRegistrationSaving(saving) {
   customerAccessRegistrationSaving = !!saving;
   var saveButton = document.getElementById("btn-customer-register-save");
   if (saveButton) {
-    saveButton.disabled = customerAccessRegistrationSaving;
+    saveButton.disabled = customerAccessRegistrationSaving || customerAccessRegistrationReading;
     saveButton.textContent = customerAccessRegistrationSaving ? t("customer_access_saving") : t("customer_register_save");
   }
   document.querySelectorAll("#customer-register-overlay input, #customer-register-overlay select, #customer-register-overlay button").forEach(function(element) {
-    if (element.id !== "btn-customer-register-save") element.disabled = customerAccessRegistrationSaving;
+    if (element.id !== "btn-customer-register-save") element.disabled = customerAccessRegistrationSaving ||
+      customerAccessRegistrationReading && (element.tagName !== "BUTTON" || element.id === "btn-customer-register-read");
   });
+}
+
+function customerRegistrationReadSnapshot() {
+  return JSON.stringify(Array.from(document.querySelectorAll("#customer-register-overlay input, #customer-register-overlay select"), function (el) { return [el.id, el.value, el.checked]; }));
+}
+
+function setCustomerRegistrationReading(reading) {
+  customerAccessRegistrationReading = !!reading;
+  setCustomerRegistrationSaving(customerAccessRegistrationSaving);
+  var button = document.getElementById("btn-customer-register-read");
+  if (button) button.textContent = t(reading ? "customer_register_reading" : "customer_register_read");
+  var panel = document.getElementById("customer-register-read-panel");
+  if (panel) panel.setAttribute("aria-busy", reading ? "true" : "false");
+}
+
+async function readHanbaiohCustomerScreen() {
+  if (!canManageCustomerAccess() || !isSystemAdmin() || !currentUser || customerAccessRegistrationReading || customerAccessRegistrationSaving) return;
+  var bridge = window.DcatsHanbaiohCompanyBridge;
+  if (!bridge || typeof bridge.readCustomerScreenFromPc !== "function" || bridge.isBusy()) {
+    setCustomerRegistrationMessage(t("customer_register_read_unavailable"), true); return;
+  }
+  var overlay = document.getElementById("customer-register-overlay"), actor = currentUser.id;
+  if (!overlay || !overlay.classList.contains("show")) return;
+  var seq = ++customerAccessRegistrationReadSeq, snapshot = customerRegistrationReadSnapshot();
+  function current() { return seq === customerAccessRegistrationReadSeq && overlay.classList.contains("show") && currentUser && currentUser.id === actor && isSystemAdmin() && canManageCustomerAccess(); }
+  setCustomerRegistrationReading(true);
+  setCustomerRegistrationMessage(t("customer_register_reading"), false);
+  try {
+    var result = await bridge.readCustomerScreenFromPc({ actorId: actor, isCurrent: current });
+    if (!current()) return;
+    if (customerRegistrationReadSnapshot() !== snapshot) { setCustomerRegistrationMessage(t("customer_register_read_changed"), true); return; }
+    var fields = result.fields;
+    var duplicate = await sb.from("sales_customers").select("id").eq("source_code", "hanbaiou").eq("source_customer_code", fields.code).limit(1);
+    if (!current()) return;
+    if (customerRegistrationReadSnapshot() !== snapshot) { setCustomerRegistrationMessage(t("customer_register_read_changed"), true); return; }
+    if (duplicate.error) { setCustomerRegistrationMessage(t("customer_register_read_unavailable"), true); return; }
+    if (duplicate.data && duplicate.data.length) { setCustomerRegistrationMessage(t("customer_register_read_duplicate"), true); return; }
+    var ids = { code:"code", name:"name", billingCode:"billing-code", closingCode:"closing-code", kana:"kana", contact:"contact", email:"email", phone:"phone", fax:"fax", postal:"postal", address1:"address1", address2:"address2" };
+    var keys = Object.keys(fields), differentCustomer = customerRegistrationFieldValue("customer-register-code") !== fields.code;
+    var conflict = Object.keys(ids).some(function (key) {
+      var el = document.getElementById("customer-register-" + ids[key]);
+      return el && el.value && (differentCustomer || Object.hasOwn(fields,key) && el.value !== fields[key]);
+    });
+    if (conflict && !window.confirm(t("customer_register_read_overwrite"))) { setCustomerRegistrationMessage(t("customer_register_read_cancelled"), false); return; }
+    if (!current() || customerRegistrationReadSnapshot() !== snapshot) return;
+    Object.keys(ids).forEach(function (key) {
+      var el = document.getElementById("customer-register-" + ids[key]);
+      if (el && (differentCustomer || Object.hasOwn(fields,key))) el.value = Object.hasOwn(fields,key) ? fields[key] : "";
+    });
+    document.getElementById("customer-register-confirmed").checked = false;
+    // A read does not prove a vendor save. Confirmation and price rank remain
+    // explicit user choices; the existing atomic RPC performs the registration.
+    var missing = ["code","name","billingCode","closingCode"].filter(function (key) { return !customerRegistrationFieldValue("customer-register-" + ids[key]); });
+    var missingLabels = missing.map(function (key) { return t({code:"customer_register_hanbaiou_code",name:"customer_register_name",billingCode:"customer_register_billing_code",closingCode:"customer_register_closing_code"}[key]); });
+    setCustomerRegistrationMessage(t("customer_register_read_success") + (missingLabels.length ? " " + t("customer_register_read_missing") + " " + missingLabels.join(" / ") : ""), false);
+  } catch (error) {
+    if (current()) {
+      var key = {customer_screen_changed:"customer_register_read_changed",customer_screen_session_unverified:"customer_register_read_session",company_binding_unavailable:"customer_register_read_session",company_extension_update_required:"customer_register_read_update",company_extension_reload_required:"customer_register_read_reload"}[error && error.message];
+      setCustomerRegistrationMessage(t(key || "customer_register_read_unavailable"), true);
+    }
+  } finally { if (seq === customerAccessRegistrationReadSeq) setCustomerRegistrationReading(false); }
 }
 
 async function openCustomerRegistration() {
   if (!canManageCustomerAccess()) { alert(t("err_perm")); return; }
+  if (customerAccessRegistrationSaving) return;
+  var openSeq = ++customerAccessRegistrationReadSeq;
+  if (customerAccessRegistrationReading && window.DcatsHanbaiohCompanyBridge) window.DcatsHanbaiohCompanyBridge.cancelCustomerScreen();
+  setCustomerRegistrationReading(false);
   await ensureCustomerAccessPriceRanks();
+  if (openSeq !== customerAccessRegistrationReadSeq || !canManageCustomerAccess()) return;
   [
     "customer-register-code", "customer-register-name", "customer-register-kana",
     "customer-register-billing-code",
@@ -53190,6 +53301,8 @@ async function openCustomerRegistration() {
   if (closingCode) closingCode.innerHTML = hanbaiouClosingCodeOptionsHtml("", true);
   setCustomerRegistrationMessage("", false);
   setCustomerRegistrationSaving(false);
+  var readPanel = document.getElementById("customer-register-read-panel");
+  if (readPanel) readPanel.hidden = !isSystemAdmin();
   var overlay = document.getElementById("customer-register-overlay");
   if (overlay) overlay.classList.add("show");
   var code = document.getElementById("customer-register-code");
@@ -53198,13 +53311,16 @@ async function openCustomerRegistration() {
 
 function closeCustomerRegistration() {
   if (customerAccessRegistrationSaving) return;
+  customerAccessRegistrationReadSeq += 1;
+  if (customerAccessRegistrationReading && window.DcatsHanbaiohCompanyBridge) window.DcatsHanbaiohCompanyBridge.cancelCustomerScreen();
+  setCustomerRegistrationReading(false);
   var overlay = document.getElementById("customer-register-overlay");
   if (overlay) overlay.classList.remove("show");
   setCustomerRegistrationMessage("", false);
 }
 
 async function registerHanbaiouCustomer() {
-  if (!canManageCustomerAccess() || customerAccessRegistrationSaving) return;
+  if (!canManageCustomerAccess() || customerAccessRegistrationSaving || customerAccessRegistrationReading) return;
   var confirmed = !!((document.getElementById("customer-register-confirmed") || {}).checked);
   var codeInput = document.getElementById("customer-register-code");
   var nameInput = document.getElementById("customer-register-name");
@@ -59368,6 +59484,7 @@ document.getElementById("btn-customer-access-add").addEventListener("click", ope
 document.getElementById("btn-customer-register-close").addEventListener("click", closeCustomerRegistration);
 document.getElementById("btn-customer-register-cancel").addEventListener("click", closeCustomerRegistration);
 document.getElementById("btn-customer-register-save").addEventListener("click", registerHanbaiouCustomer);
+document.getElementById("btn-customer-register-read").addEventListener("click", readHanbaiohCustomerScreen);
 document.getElementById("customer-register-code").addEventListener("blur", function() {
   this.value = normalizeHanbaiouCustomerCode(this.value);
 });
