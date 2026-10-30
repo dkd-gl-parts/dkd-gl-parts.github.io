@@ -34,6 +34,10 @@ const conciergeStyleVersion = "v" + requiredMatch(html, /<link\s+rel="stylesheet
 const manifestVersion = "v" + requiredMatch(html, /<link\s+rel="manifest"\s+href="site\.webmanifest\?v=([^&\"]+)/, "manifest cache version");
 
 const reviewedStaticScripts = new Map([
+  ["vendor/fflate-0.8.2.js", {
+    integrity: "sha384-DT0Ls0mO7JmjTnT+oBuMhEJzYJO1zUqzuuMXNdnOmOQRIpN2BgSjvBV/j50NngIT",
+    crossorigin: "anonymous",
+  }],
   ["vendor/supabase-js-2.115.0.js", {
     integrity: "sha384-CLZeq1dk8+Uzrs7TVvBUdlFoV5F0DMqgRoeHa8g5wJcuPe5SkVfEvdxB0ZuzlnBQ",
     crossorigin: "anonymous",

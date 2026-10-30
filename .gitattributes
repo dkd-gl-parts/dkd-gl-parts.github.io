@@ -1,4 +1,6 @@
 /vendor/supabase-js-2.115.0.js -text -diff
+/vendor/fflate-0.8.2.js -text -diff
+/vendor/fflate-0.8.2-LICENSE -text -diff
 /vendor/jsbarcode-3.12.3.all.min.js -text -diff
 /vendor/zxing-browser-0.2.0.min.js -text -diff
 /vendor/xlsx-0.20.3.full.min.js -text -diff

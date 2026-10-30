@@ -6,6 +6,8 @@ const output = path.join(root, "dist");
 const files = [
   "_headers",
   "app.js",
+  "product-photo-tools.js",
+  "product-photo-tools.css",
   "core-valuation.js",
   "core-valuation.css",
   "ec-cost-list-targets.js",
