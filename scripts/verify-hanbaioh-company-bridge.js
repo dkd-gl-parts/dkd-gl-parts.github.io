@@ -21,8 +21,11 @@ function harness(options = {}) {
     postMessage(message, origin) {
       assert.equal(origin, win.location.origin); if(!message.request)return;const req = structuredClone(message.request); posts.push(req);
       if (options.noReply) return;
+      if (options.rejectScreen && req.command === "read_hanbaioh_customer_screen") {
+        queueMicrotask(() => { for (const cb of listeners) cb({source:win,origin,data:{channel:message.channel,type:"response",response:{ok:false,error:{code:"REQUEST_REJECTED"}}}}); }); return;
+      }
       const category=req.category||req.command.split("_").at(-1),resultId=req.originalRequestId||req.id;
-      const data = req.command === "read_hanbaioh_company_device" ? record : req.command === "login_hanbaioh_company" ? { status: "ui_login_verified", code: "HANBAIOH_CONTROLLED_UI_LOGIN_VERIFIED", sessionRecorded: true } : req.command.startsWith("export_hanbaioh_") || req.command === "read_hanbaioh_company_export" ?
+      const data = req.command === "read_hanbaioh_company_device" ? record : req.command === "read_hanbaioh_customer_screen" ? { status:"customer_screen_read",actorId:actor,deviceId:device,requestId:req.id,targetSha256:"975d8e446b7dd638ef46ba90dcf3baf4fa9f77c4f22ae9187fbb7913a0029a37",observedAt:Date.now(),fields:{code:"SYNTH",name:"合成得意先"},...options.screenOverride } : req.command === "login_hanbaioh_company" ? { status: "ui_login_verified", code: "HANBAIOH_CONTROLLED_UI_LOGIN_VERIFIED", sessionRecorded: true } : req.command.startsWith("export_hanbaioh_") || req.command === "read_hanbaioh_company_export" ?
         { status: "company_export_csv_verified", direction: "export", category, requestId: resultId, reused: false, cleanup: "closed",
           artifact: { fileName: category + "-" + resultId + ".csv", encoding: "cp932", bytes: 2000, rowCount: 1, entityCount: 1,
             fieldCount: { products: 67, customers: 118, sales: 55 }[category], sha256: "a".repeat(64), headerSha256: "b".repeat(64) }, ...options.exportOverride } :
@@ -169,5 +172,15 @@ function discoveryClock(){
   await assert.rejects(lost.bridge.exportCsvOnce({...lost.options,category:"sales"}));assert.equal(lost.posts.length,1);
   const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
   assert(html.indexOf("company-bridge.js?") < html.indexOf("concierge-pet.js?"));
-  console.log("Company bridge: owner/admin/exact requests, 180 seconds, three isolated preparations/exports, full-schema result metadata, same-origin results, single login/export, cancellation, no secrets: OK");
+  const screen=harness();
+  const details=await screen.bridge.readCustomerScreenFromPc({actorId:actor,isCurrent:screen.options.isCurrent});
+  assert.equal(details.fields.code,"SYNTH");assert(!Object.hasOwn(details.fields,"billingCode"));assert(!Object.hasOwn(details.fields,"closingCode"));
+  assert.deepEqual(screen.posts.map(p=>p.command),["read_hanbaioh_company_device","read_hanbaioh_customer_screen"]);
+  assert.equal(screen.issued[0].command,"read_hanbaioh_customer_screen");
+  for(const screenOverride of [{actorId:device},{deviceId:actor},{observedAt:Date.now()-60000},{fields:{code:"SYNTH",name:"x",password:"PRIVATE"}},{fields:{code:"SYNTH",name:"x",closingCode:"末日"}},{fields:{code:'A"B',name:"x"}},{status:"saved"}]){
+    const bad=harness({screenOverride});await assert.rejects(bad.bridge.readCustomerScreenFromPc({actorId:actor,isCurrent:bad.options.isCurrent}),e=>!e.message.includes("PRIVATE"));assert(!bad.bridge.isBusy());
+  }
+  const screenLate=harness({changedDuringIssue:true});await assert.rejects(screenLate.bridge.readCustomerScreenFromPc({actorId:actor,isCurrent:screenLate.options.isCurrent}));assert.equal(screenLate.posts.length,1);
+  const oldScreen=harness({rejectScreen:true});await assert.rejects(oldScreen.bridge.readCustomerScreenFromPc({actorId:actor,isCurrent:oldScreen.options.isCurrent}),e=>e.message==="company_extension_update_required");assert.equal(oldScreen.listeners.size,0);assert(!oldScreen.bridge.isBusy());
+  console.log("Company bridge: dedicated customer read, owner/device/expiry/schema checks, no inferred billing, three isolated preparations/exports, cancellation, no secrets: OK");
 })().catch(error => { console.error(error); process.exitCode = 1; });
