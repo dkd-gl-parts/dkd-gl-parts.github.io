@@ -99,6 +99,12 @@
       aiTokenHint: "APIから返された直近の質問のトークン内訳です。契約の残量・残高ではありません。",
       aiTokenUnknown: "トークン数は取得できませんでした。",
       aiIdle: "内容を入力して送信してください。",
+      aiFollowup: "続けて質問する",
+      aiNewQuestion: "新しい質問",
+      aiHistory: "これまでの会話",
+      aiHistoryQuestion: "質問",
+      aiHistoryAnswer: "回答",
+      aiConversationHint: "追加質問では直近の会話文も送信します（画像は引き継ぎません）。窓を閉じると会話を区切ります。",
       aiWorking: "回答を確認しています。",
       aiDone: "回答",
       aiInvalidQuestion: "1～800文字で質問を入力してください。",
@@ -306,6 +312,12 @@
       aiTokenHint: "Tokens returned by the API for the latest question, not your account balance or remaining quota.",
       aiTokenUnknown: "Token count is unavailable.",
       aiIdle: "No question has been asked yet.",
+      aiFollowup: "Ask a follow-up",
+      aiNewQuestion: "New question",
+      aiHistory: "Earlier conversation",
+      aiHistoryQuestion: "Question",
+      aiHistoryAnswer: "Answer",
+      aiConversationHint: "Follow-ups also send recent conversation text, not earlier images. Closing this window starts a new conversation.",
       aiWorking: "Checking the answer.",
       aiDone: "Answer",
       aiInvalidQuestion: "Enter a question between 1 and 800 characters.",
@@ -512,6 +524,12 @@
       aiTokenHint: "最近问题的API返回token明细，不代表账户余额或剩余额度。",
       aiTokenUnknown: "无法取得token数量。",
       aiIdle: "尚未提问。",
+      aiFollowup: "继续提问",
+      aiNewQuestion: "新问题",
+      aiHistory: "之前的对话",
+      aiHistoryQuestion: "问题",
+      aiHistoryAnswer: "回答",
+      aiConversationHint: "追问也会发送最近的对话文字，不包含之前的图片。关闭窗口后会开始新对话。",
       aiWorking: "正在确认回答。",
       aiDone: "回答",
       aiInvalidQuestion: "请输入1至800个字符的问题。",
@@ -693,6 +711,8 @@
   var aiGuide;
   var aiScreenButton, aiScreenProposal = null, aiScreenPending = false;
   var aiUsage;
+  var aiConversation = [], aiHistory, aiHistoryBody, aiHistoryKey = "";
+  var aiFollowupButton, aiNewQuestionButton, aiLastQuestion = "", aiLastImage = "";
   var aiOrderAction, aiOrderNote, aiOrderButton, aiOrderProposal = null, aiOrderPending = false;
   var aiImageFile, aiImagePreview, aiImageRemove;
   var aiImageData = "", aiImageToken = 0, aiImagePending = false, aiLastUsage = null;
@@ -849,6 +869,7 @@
     var owner = currentSettingsOwner();
     if (owner === settingsOwner) return;
     clearQuestionPlacement();
+    clearAiConversation();
     clearBackupEnrollment();
     aiRequestToken += 1;
     aiRequestPending = false;
@@ -998,6 +1019,28 @@
     aiAskButton = createCopyElement("button", "dcats-concierge-ai-button", "aiAsk");
     aiAskButton.type = "button";
     aiAskButton.setAttribute("aria-describedby", "dcats-concierge-ai-help dcats-concierge-ai-privacy dcats-concierge-ai-status");
+    aiHistory = createElement("details", "dcats-concierge-ai-history");
+    aiHistory.hidden = true;
+    aiHistory.appendChild(createCopyElement("summary", "", "aiHistory"));
+    aiHistoryBody = createElement("div");
+    aiHistory.appendChild(aiHistoryBody);
+    aiFollowupButton = createCopyElement("button", "dcats-concierge-ai-secondary", "aiFollowup");
+    aiFollowupButton.type = "button";
+    aiFollowupButton.hidden = true;
+    aiFollowupButton.addEventListener("click", function () {
+      if (aiFollowupButton.disabled || !isSystemAdminSession()) return;
+      if (aiQuestionInput.value.trim() === aiLastQuestion) aiQuestionInput.value = "";
+      if (aiImageData === aiLastImage) clearAiImage();
+      aiQuestionInput.focus();
+    });
+    aiNewQuestionButton = createCopyElement("button", "dcats-concierge-ai-secondary", "aiNewQuestion");
+    aiNewQuestionButton.type = "button";
+    aiNewQuestionButton.hidden = true;
+    aiNewQuestionButton.addEventListener("click", function () {
+      if (aiNewQuestionButton.disabled || !isSystemAdminSession()) return;
+      resetAiQuestion();
+      aiQuestionInput.focus();
+    });
     var aiPrivacy = createCopyElement("p", "dcats-concierge-ai-privacy", "aiPrivacy");
     aiPrivacy.id = "dcats-concierge-ai-privacy";
     aiImageFile = createElement("input", "dcats-concierge-ai-image-file");
@@ -1053,8 +1096,14 @@
     aiFeedback.appendChild(aiScreenButton);
     aiFeedback.appendChild(aiOrderAction);
     aiFeedback.appendChild(aiUsage);
+    var aiConversationActions = createElement("div", "dcats-concierge-ai-conversation-actions");
+    aiConversationActions.appendChild(aiFollowupButton);
+    aiConversationActions.appendChild(aiNewQuestionButton);
+    aiFeedback.appendChild(aiConversationActions);
     aiCard.appendChild(aiTitle);
     aiCard.appendChild(aiHelp);
+    aiCard.appendChild(createCopyElement("p", "dcats-concierge-ai-conversation-hint", "aiConversationHint"));
+    aiCard.appendChild(aiHistory);
     aiCard.appendChild(aiQuestionLabel);
     aiCard.appendChild(aiQuestionInput);
     aiCard.appendChild(aiImageLabel);
@@ -1490,6 +1539,32 @@
     aiUsage.hidden = false;
   }
 
+  function clearAiConversation() {
+    aiConversation = [];
+    aiLastQuestion = aiLastImage = "";
+    aiHistoryKey = "";
+    if (aiHistory) { aiHistory.open = false; aiHistory.hidden = true; }
+    if (aiHistoryBody) while (aiHistoryBody.children.length) aiHistoryBody.removeChild(aiHistoryBody.children[0]);
+  }
+
+  function renderAiConversation() {
+    if (!aiHistoryBody) return;
+    var earlier = aiAnswer.hidden ? aiConversation : aiConversation.slice(0, -1);
+    aiHistory.hidden = !earlier.length;
+    var key = JSON.stringify([activeLanguage(), earlier]);
+    if (key === aiHistoryKey) return;
+    aiHistoryKey = key;
+    while (aiHistoryBody.children.length) aiHistoryBody.removeChild(aiHistoryBody.children[0]);
+    earlier.forEach(function (turn) {
+      var item = createElement("section", "dcats-concierge-ai-history-turn");
+      item.appendChild(createElement("strong", "", copy("aiHistoryQuestion")));
+      item.appendChild(createElement("p", "", turn.question));
+      item.appendChild(createElement("strong", "", copy("aiHistoryAnswer")));
+      item.appendChild(createElement("p", "", turn.answer));
+      aiHistoryBody.appendChild(item);
+    });
+  }
+
   function clearAiResult() {
     aiScreenProposal = null;
     aiScreenPending = false;
@@ -1517,6 +1592,7 @@
     aiRequestToken += 1;
     aiRequestPending = false;
     aiStatusState = "aiIdle";
+    clearAiConversation();
     if (requestUi) requestUi.resetDraft();
     if (aiQuestionInput) aiQuestionInput.value = "";
     clearAiImage();
@@ -1527,6 +1603,11 @@
   function updateAiStatus() {
     if (!aiAskButton || !aiQuestionInput || !aiStatus) return;
     var reviewing = !!(requestUi && requestUi.pending());
+    var conversationBusy = aiRequestPending || aiImagePending || reviewing || aiOrderPending || aiScreenPending;
+    aiFollowupButton.disabled = aiNewQuestionButton.disabled = conversationBusy;
+    aiFollowupButton.hidden = !aiConversation.length || aiAnswer.hidden;
+    aiNewQuestionButton.hidden = !aiConversation.length;
+    renderAiConversation();
     aiAskButton.disabled = aiRequestPending || aiImagePending || reviewing || aiOrderPending || aiScreenPending;
     aiAskButton.textContent = copy(aiRequestPending ? "aiWorking" : "aiAsk");
     aiAskButton.setAttribute("aria-busy", String(aiRequestPending));
@@ -1605,6 +1686,7 @@
       return;
     }
     aiRequestToken += 1;
+    clearAiConversation();
     aiRequestPending = false;
     aiStatusState = "aiIdle";
     if (aiQuestionInput) aiQuestionInput.value = "";
@@ -1662,6 +1744,7 @@
     revealAiFeedback();
     var requestToken = ++aiRequestToken, owner = currentSettingsOwner();
     var submitted = { question: question, language: activeLanguage(), screenId: currentAiScreenId(api), image: aiImageData || undefined, classify: true };
+    if (aiConversation.length) submitted.history = aiConversation.map(function (turn) { return { question: turn.question, answer: turn.answer }; });
     try {
       var result = await api.ask(submitted);
       if (requestToken !== aiRequestToken || owner !== currentSettingsOwner() || !isSystemAdminSession()) return;
@@ -1691,6 +1774,10 @@
         }
       }
       aiLastUsage = data.usage || {};
+      aiLastQuestion = submitted.question;
+      aiLastImage = submitted.image || "";
+      aiConversation.push({ question: submitted.question, answer: data.answer.trim().slice(0, 3200) });
+      while (aiConversation.length > 3 || aiConversation.reduce(function (sum, turn) { return sum + turn.question.length + turn.answer.length; }, 0) > 4000) aiConversation.shift();
       renderAiUsage(aiLastUsage);
       aiStatusState = "aiDone";
     } catch (error) {

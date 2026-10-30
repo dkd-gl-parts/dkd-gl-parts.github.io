@@ -546,6 +546,17 @@
   font-weight: 700;
 }
 
+.dcats-concierge-ai-conversation-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.dcats-concierge-ai-secondary { min-height: 40px; padding: 8px 12px; border: 1px solid #b8bec8; border-radius: 8px; background: #fff; color: #42506b; font: inherit; cursor: pointer; }
+.dcats-concierge-ai-secondary:disabled { cursor: wait; opacity: .55; }
+.dcats-concierge-ai-secondary:focus-visible { outline: 3px solid #91c8ce; outline-offset: 2px; }
+.dcats-concierge-ai-history { color: #42506b; overflow-wrap: anywhere; }
+.dcats-concierge-ai-history summary { cursor: pointer; padding: 8px 0; font-size: 13px; }
+.dcats-concierge-ai-history-turn { border-left: 3px solid #d9c7c1; padding: 8px 10px; margin: 8px 0; background: #fff; }
+.dcats-concierge-ai-history-turn p { white-space: pre-wrap; font-size: 16px; line-height: 1.8; }
+.dcats-concierge-ai-history-turn strong { font-size: 12px; }
+.dcats-concierge-ai-conversation-hint { font-size: 11px; line-height: 1.5; color: #687286; }
+
 .dcats-concierge-ai-usage {
   display: flex;
   flex-wrap: wrap;

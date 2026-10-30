@@ -706,6 +706,42 @@ for (const [language, heading, breakdown] of [["en", "Answer", "Input 100 / Outp
   assert(questionHead.getAttribute("tabindex") === "0" && questionHead.getAttribute("aria-label") === questionHead.title && questionHead.title.includes(language === "ja" ? "ドラッグ" : language === "en" ? "Drag" : "拖动"), "Question movement instructions were not localized/accessibly named");
 }
 const originalAiResponseFactory = aiResponseFactory;
+// Follow-up uses the successful conversation, without automatic requests or hidden image reuse.
+const aiFollowup = byClass("dcats-concierge-ai-secondary")[0];
+const aiNewQuestion = byClass("dcats-concierge-ai-secondary")[1];
+const aiHistory = byClass("dcats-concierge-ai-history")[0];
+assert(aiFollowup && !aiFollowup.hidden && aiNewQuestion && !aiNewQuestion.hidden, "Successful answer lacks conversation controls");
+const followupCallsBefore = aiRequests.length;
+dispatch(aiFollowup.listeners, "click", { target: aiFollowup });
+assert(!aiQuestionInput.value && !aiAnswer.hidden && documentObject.activeElement === aiQuestionInput && aiRequests.length === followupCallsBefore, "Follow-up must focus an empty composer, retain answer and not auto-send");
+aiQuestionInput.value = "その場合は？";
+dispatch(aiFollowup.listeners, "click", { target: aiFollowup });
+assert(aiQuestionInput.value === "その場合は？", "Follow-up overwrote an edited draft");
+dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
+await new Promise(resolve => setImmediate(resolve));
+assert(aiRequests.at(-1).history.length === 1 && aiRequests.at(-1).history[0].question === "受注データはどの画面で確認しますか？" && aiRequests.at(-1).history[0].answer === "受注・出荷管理画面で確認できます。" && !aiRequests.at(-1).image, "Additional question lost earlier context or reused an image");
+assert(!aiHistory.hidden && aiHistory.children[1].children.length === 1, "Previous conversation is not reviewable");
+for (let turn = 0; turn < 5; turn++) {
+  aiQuestionInput.value = "追加質問" + turn;
+  dispatch(aiAskButton.listeners, "click", { target: aiAskButton }); await new Promise(resolve => setImmediate(resolve));
+  assert(aiRequests.at(-1).history.length <= 3 && aiRequests.at(-1).history.every(item => Object.keys(item).join() === "question,answer"), "History exceeded its text-only turn limit");
+}
+aiResponseFactory = () => ({ data: { ...originalAiResponseFactory().data, answer: "長".repeat(4000) } });
+for (let turn = 0; turn < 2; turn++) {
+  aiQuestionInput.value = String(turn).repeat(800);
+  dispatch(aiAskButton.listeners, "click", { target: aiAskButton }); await new Promise(resolve => setImmediate(resolve));
+}
+aiResponseFactory = originalAiResponseFactory;
+aiQuestionInput.value = "長い回答の続き";
+dispatch(aiAskButton.listeners, "click", { target: aiAskButton }); await new Promise(resolve => setImmediate(resolve));
+const boundedHistory = aiRequests.at(-1).history;
+assert(boundedHistory.length === 1 && boundedHistory[0].question === "1".repeat(800) && boundedHistory[0].answer.length === 3200 && boundedHistory[0].question.length + boundedHistory[0].answer.length === 4000, "Context length cap did not retain the newest bounded turn");
+dispatch(aiNewQuestion.listeners, "click", { target: aiNewQuestion });
+assert(!aiQuestionInput.value && aiAnswer.hidden && aiGuide.hidden && aiUsage.hidden, "New-question button did not reset question/results");
+assert(aiHistory.hidden && aiHistory.children[1].children.length === 0 && aiFollowup.hidden && aiNewQuestion.hidden, "New question retained history/controls");
+aiQuestionInput.value = "独立した新しい質問";
+dispatch(aiAskButton.listeners, "click", { target: aiAskButton }); await new Promise(resolve => setImmediate(resolve));
+assert(!aiRequests.at(-1).history, "New question sent old conversation");
 let finishPendingAi;
 aiResponseFactory = () => new Promise(resolve => { finishPendingAi = resolve; });
 api.openSettings("question");
@@ -781,6 +817,7 @@ dispatch(panelClose.listeners, "click", { target: panelClose });
 const questionBody = byClass("dcats-concierge-panel-body")[0];
 const imageFile = aiCard.descendants().find(element => element.type === "file");
 function assertBlankQuestion(label) {
+  assert(aiHistory.hidden && !aiHistory.children[1].children.length && aiFollowup.hidden && aiNewQuestion.hidden, label + ": prior conversation controls/content survived");
   assert(aiQuestionInput.value === "" && aiPreview.hidden && !aiPreview.getAttribute("src") && imageFile.value === "", label + ": input or image survived");
   assert(aiAnswer.hidden && aiAnswer.textContent === "" && aiGuide.hidden && aiGuide.textContent === "" && aiUsage.hidden, label + ": old results survived");
   assert(aiScreenButton.hidden, label + ": old navigation proposal survived");

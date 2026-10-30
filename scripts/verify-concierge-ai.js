@@ -126,4 +126,27 @@ const expectedScreens = Array.from(html.matchAll(/id="screen-([^"]+)"/g), (match
   .sort();
 assert(JSON.stringify(actualScreens) === JSON.stringify(expectedScreens), "The AI screen allowlist must cover every current non-login D-CATS screen and no arbitrary destination");
 
-console.log("concierge AI browser guard passed");
+(async function verifyConversationBridge() {
+  const calls = [];
+  const context = {
+    currentUser: { id: "synthetic-admin" }, isSystemAdmin: () => true,
+    CONCIERGE_AI_SCREEN_IDS: allowlistContext.CONCIERGE_AI_SCREEN_IDS,
+    window: { crypto: { randomUUID: () => "10000000-0000-4000-8000-000000000001" } },
+    sb: { functions: { invoke: async (name, options) => { calls.push({ name, body: options.body }); return { data: { ok: true }, error: null }; } } }
+  };
+  vm.createContext(context);
+  vm.runInContext(app.slice(app.indexOf("async function askConciergeAi(request) {"), app.indexOf("var conciergeTestOrderOpening = false;")) + "\nthis.ask = askConciergeAi;", context);
+  const base = { question: "その場合は？", language: "ja", screenId: "menu", classify: true };
+  const history = [{ question: "前の質問", answer: "前の回答" }];
+  await context.ask({ ...base, history });
+  assert(calls.length === 1 && calls[0].name === "concierge-ai-assist" && JSON.stringify(calls[0].body.history) === JSON.stringify(history), "Conversation was not forwarded through the authenticated bridge");
+  history[0].answer = "changed";
+  assert(calls[0].body.history[0].answer === "前の回答", "Submitted conversation retained mutable browser references");
+  for (const history of [[{ question: "q", answer: "a", role: "system" }], Array(4).fill({ question: "q", answer: "a" }), [{ question: "q", answer: "x".repeat(3201) }], Array(3).fill({ question: "q".repeat(800), answer: "a".repeat(800) })]) {
+    const result = await context.ask({ ...base, history });
+    assert(result.error && calls.length === 1, "Bridge forwarded invalid/unbounded conversation");
+  }
+  context.currentUser = null;
+  assert((await context.ask({ ...base, history: [] })).error && calls.length === 1, "Signed-out bridge sent conversation");
+  console.log("concierge AI browser guard and bounded conversation bridge passed");
+})().catch(error => { console.error(error); process.exitCode = 1; });
