@@ -7,6 +7,8 @@ const path = require('node:path');
 function loadProduct3D(rows) {
   const calls = [];
   const sandbox = {
+    // Retained viewer behavior is checked separately from the paused production bootstrap.
+    PRODUCT_3D_DEVELOPMENT_PAUSED: false,
     window: {},
     document: { readyState: 'loading', addEventListener() {} },
     console,

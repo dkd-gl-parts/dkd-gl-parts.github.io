@@ -8315,7 +8315,8 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1269";
+var APP_VERSION       = "v1.1.1270";
+var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -9447,6 +9448,7 @@ function canManageAllImages() {
   return userPermissionAllowed(userProfile, "image.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "sales_staff", "production_editor"]));
 }
 function canManageProduct3D() {
+  if (PRODUCT_3D_DEVELOPMENT_PAUSED) return false;
   if (!userProfile || isExternalViewer() || isCustomerPortalSearchMode()) return false;
   return userPermissionAllowed(userProfile, "product_3d.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "production_editor"]));
 }
@@ -9454,6 +9456,7 @@ function canManageProduct3DGlb() {
   return canManageProduct3D() && hasAccessRole(userProfile, ["system_admin"]);
 }
 function canPublishProduct3D() {
+  if (PRODUCT_3D_DEVELOPMENT_PAUSED) return false;
   if (!userProfile || isExternalViewer() || isCustomerPortalSearchMode()) return false;
   return userPermissionAllowed(userProfile, "product_3d.publish", hasAccessRole(userProfile, ["system_admin", "company_admin"]));
 }
@@ -56410,6 +56413,7 @@ function permissionOverviewScreenGroups(context) {
         },
         {
           title: "商品3D管理（高権限）",
+          feature: "product_3d",
           items: [
             { label: "公開済み3Dモデルの閲覧", state: permissionOverviewLimited("商品画像の公開権限・カテゴリ表示条件に従う") },
             { label: "撮影・解析・生成・追加撮影・失敗再開・非公開状態確認", permissionKey: "product_3d.manage", state: yesNo(roleCanManageProduct3D, "作成・再開・確認可", "利用不可") },
@@ -56573,6 +56577,9 @@ function permissionOverviewScreenGroups(context) {
     }
   ];
   groups.forEach(function(group) {
+    if (PRODUCT_3D_DEVELOPMENT_PAUSED) {
+      group.screens = group.screens.filter(function(screen) { return screen.feature !== "product_3d"; });
+    }
     group.screens.forEach(function(screen) {
       screen.items.forEach(function(item) { applyPermissionOverviewOverride(item, context); });
     });
