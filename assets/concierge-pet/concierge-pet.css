@@ -71,11 +71,11 @@
 }
 
 .dcats-concierge-sprite.is-suzuto {
-  background-image: url("./suzuto/spritesheet.webp?v=1.1.1272");
+  background-image: url("./suzuto/spritesheet.webp?v=1.1.1273");
 }
 
 .dcats-concierge-sprite.is-rinna {
-  background-image: url("./rinna/spritesheet.webp?v=1.1.1272");
+  background-image: url("./rinna/spritesheet.webp?v=1.1.1273");
 }
 
 .dcats-concierge-hit-target {
@@ -238,6 +238,14 @@
   width: min(420px, calc(100% - 28px));
 }
 
+.dcats-concierge-panel.is-answer-only .dcats-concierge-panel-head { padding: 10px 12px; align-items: center; }
+.dcats-concierge-panel.is-answer-only .dcats-concierge-panel-kicker { display: none; }
+.dcats-concierge-panel.is-answer-only h2 { font-size: 15px; }
+.dcats-concierge-panel.is-answer-only .dcats-concierge-panel-body { padding: 10px 12px; gap: 0; }
+.dcats-concierge-panel.is-answer-only .dcats-concierge-ai-card > :not(.dcats-concierge-ai-feedback),
+.dcats-concierge-panel.is-answer-only .dcats-concierge-request-card,
+.dcats-concierge-panel.is-answer-only .dcats-concierge-ai-guide { display: none; }
+
 .dcats-concierge-panel.is-question-anchored .dcats-concierge-panel-body {
   max-height: none;
 }
@@ -320,10 +328,28 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 14px;
+  gap: 8px;
   padding: 16px 16px 12px;
   background: linear-gradient(135deg, #fff 0%, #f7e5e0 100%);
 }
+
+.dcats-concierge-panel-head > div:first-child { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.dcats-concierge-panel-answer-toggle {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 42%;
+  min-height: 34px;
+  padding: 6px 8px;
+  border: 1px solid #b9a19c;
+  border-radius: 8px;
+  background: #fff;
+  color: #42506b;
+  font: 600 12px/1.3 system-ui, -apple-system, "Segoe UI", sans-serif;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.dcats-concierge-panel-answer-toggle:disabled { opacity: .55; cursor: wait; }
+.dcats-concierge-panel-answer-toggle:focus-visible { outline: 3px solid #527ba8; outline-offset: 2px; }
 
 .dcats-concierge-panel.is-question-view .dcats-concierge-panel-head {
   cursor: grab;
