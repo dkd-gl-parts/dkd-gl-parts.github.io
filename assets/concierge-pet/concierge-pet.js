@@ -51,6 +51,7 @@
       closeSettings: "設定を閉じる",
       questionTitle: "{name}に質問",
       closeQuestion: "質問画面を閉じる",
+      moveQuestion: "見出しをドラッグして移動。矢印キーでも移動できます。Homeキーでキャラの横に戻します。",
       chooseCharacter: "コンシェルジュを選ぶ（1体のみ表示）",
       suzuto: "スズト",
       rinna: "リンナ",
@@ -256,6 +257,7 @@
       settingsTitle: "Concierge settings",
       closeSettings: "Close settings",
       questionTitle: "Ask {name}",
+      moveQuestion: "Drag the heading or use arrow keys to move. Press Home to return beside the character.",
       closeQuestion: "Close question window",
       chooseCharacter: "Choose a concierge (only one appears)",
       suzuto: "Suzuto",
@@ -461,6 +463,7 @@
       settingsTitle: "礼宾助手设置",
       closeSettings: "关闭设置",
       questionTitle: "向{name}提问",
+      moveQuestion: "拖动标题或使用方向键移动。按Home键返回角色旁边。",
       closeQuestion: "关闭提问窗口",
       chooseCharacter: "选择礼宾助手（仅显示一位）",
       suzuto: "Suzuto",
@@ -672,12 +675,14 @@
   var launcher;
   var launcherLabel;
   var panel;
+  var panelHead;
   var panelTitle;
   var panelBody;
   var panelClose;
   var questionTail;
   var questionPanelAnimation = null, questionTailAnimation = null;
   var questionMeasureKey = "", questionPanelLayoutKey = "", questionTailLayoutKey = "";
+  var questionPosition = null, questionDragState = null;
   var floatingButton;
   var floatingStatus;
   var aiCard;
@@ -843,6 +848,7 @@
   function syncSettingsOwner() {
     var owner = currentSettingsOwner();
     if (owner === settingsOwner) return;
+    clearQuestionPlacement();
     clearBackupEnrollment();
     aiRequestToken += 1;
     aiRequestPending = false;
@@ -917,7 +923,11 @@
     panel.setAttribute("aria-modal", "false");
     panel.setAttribute("aria-labelledby", "dcats-concierge-title");
 
-    var panelHead = createElement("div", "dcats-concierge-panel-head");
+    panelHead = createElement("div", "dcats-concierge-panel-head");
+    panelHead.setAttribute("role", "group");
+    panelHead.addEventListener("pointerdown", onQuestionPointerDown);
+    panelHead.addEventListener("lostpointercapture", onQuestionPointerEnd);
+    panelHead.addEventListener("keydown", onQuestionMoveKeyDown);
     var headingWrap = createElement("div");
     headingWrap.appendChild(createElement("span", "dcats-concierge-panel-kicker", "D-CATS OFFICIAL CONCIERGE"));
     panelTitle = createCopyElement("h2", "", "settingsTitle");
@@ -2585,6 +2595,10 @@
       ? copy("questionTitle", { name: petName(settings.character) })
       : copy("settingsTitle");
     panelClose.setAttribute("aria-label", copy(questionView ? "closeQuestion" : "closeSettings"));
+    panelHead.setAttribute("tabindex", questionView ? "0" : "-1");
+    panelHead.title = questionView ? copy("moveQuestion") : "";
+    if (questionView) panelHead.setAttribute("aria-label", copy("moveQuestion"));
+    else panelHead.removeAttribute("aria-label");
     hitTarget.setAttribute("aria-expanded", String(questionView));
     launcher.setAttribute("aria-expanded", String(panelOpen && panelView === "settings"));
     if (!questionView) clearQuestionPlacement();
@@ -2599,8 +2613,10 @@
   }
 
   function clearQuestionPlacement() {
+    endQuestionDrag();
+    questionPosition = null;
     if (!panel || !questionTail) return;
-    panel.classList.remove("is-question-anchored", "is-compact-question");
+    panel.classList.remove("is-question-anchored", "is-compact-question", "is-question-detached");
     if (questionPanelAnimation) questionPanelAnimation.cancel();
     if (questionTailAnimation) questionTailAnimation.cancel();
     questionPanelAnimation = questionTailAnimation = null;
@@ -2615,6 +2631,71 @@
     next.currentTime = 1;
     if (previous) previous.cancel();
     return next;
+  }
+
+  function canMoveQuestion() {
+    return panelOpen && panelView === "question" && visible && !isPresentationHidden() && isSystemAdminSession();
+  }
+
+  function onQuestionPointerDown(event) {
+    if (!canMoveQuestion() || questionDragState || event.isPrimary === false ||
+        Number.isFinite(event.button) && event.button !== 0 || !panelHead.contains(event.target) || panelClose.contains(event.target)) return;
+    var clientX = Number(event.clientX), clientY = Number(event.clientY);
+    if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return;
+    var rect = panel.getBoundingClientRect();
+    questionDragState = { pointerId: event.pointerId, startX: clientX, startY: clientY,
+      x: rect.left, y: rect.top, width: rect.width, height: rect.height, owner: currentSettingsOwner(), document: panel.ownerDocument };
+    panelHead.focus({ preventScroll: true });
+    if (event.preventDefault) event.preventDefault();
+    if (panelHead.setPointerCapture && event.pointerId != null) {
+      try { panelHead.setPointerCapture(event.pointerId); } catch (error) { /* Synthetic pointers may not capture. */ }
+    }
+  }
+
+  function onQuestionPointerMove(event) {
+    if (!questionDragState || event.pointerId !== questionDragState.pointerId) return;
+    if (!canMoveQuestion() || currentSettingsOwner() !== questionDragState.owner || panel.ownerDocument !== questionDragState.document) {
+      endQuestionDrag();
+      return;
+    }
+    var dx = Number(event.clientX) - questionDragState.startX, dy = Number(event.clientY) - questionDragState.startY;
+    if (!Number.isFinite(dx) || !Number.isFinite(dy) || Math.hypot(dx, dy) < 5 && !questionDragState.moved) return;
+    questionDragState.moved = true;
+    if (event.preventDefault) event.preventDefault();
+    questionPosition = { x: questionDragState.x + dx, y: questionDragState.y + dy, width: questionDragState.width, height: questionDragState.height };
+    panel.classList.add("is-question-dragging");
+    syncQuestionPlacement();
+  }
+
+  function onQuestionPointerEnd(event) {
+    if (questionDragState && event.pointerId === questionDragState.pointerId) endQuestionDrag();
+  }
+
+  function endQuestionDrag() {
+    if (!questionDragState) return;
+    var pointerId = questionDragState.pointerId;
+    questionDragState = null;
+    panel.classList.remove("is-question-dragging");
+    if (panelHead.releasePointerCapture && pointerId != null) {
+      try {
+        if (!panelHead.hasPointerCapture || panelHead.hasPointerCapture(pointerId)) panelHead.releasePointerCapture(pointerId);
+      } catch (error) { /* Capture may already be released by the browser. */ }
+    }
+  }
+
+  function onQuestionMoveKeyDown(event) {
+    if (event.target !== panelHead || !canMoveQuestion() || event.altKey || event.ctrlKey || event.metaKey) return;
+    var directions = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+    var direction = directions[event.key];
+    if (!direction && event.key !== "Home") return;
+    event.preventDefault();
+    endQuestionDrag();
+    if (event.key === "Home") questionPosition = null;
+    else {
+      var rect = panel.getBoundingClientRect(), step = event.shiftKey ? 48 : 16;
+      questionPosition = { x: rect.left + direction[0] * step, y: rect.top + direction[1] * step, width: rect.width, height: rect.height };
+    }
+    syncQuestionPlacement();
   }
 
   function syncQuestionPlacement() {
@@ -2637,7 +2718,11 @@
     var side = "compact";
     var panelWidth = fullWidth;
     var maxHeight = Math.max(1, bottomEdge - topEdge);
-    if (anchor.width > 0 && anchor.height > 0 && settings.mode !== "off") {
+    if (questionPosition) {
+      side = "manual";
+      panelWidth = Math.min(fullWidth, questionPosition.width);
+      maxHeight = Math.min(maxHeight, questionPosition.height);
+    } else if (anchor.width > 0 && anchor.height > 0 && settings.mode !== "off") {
       if (rightRoom >= fullWidth) side = "right";
       else if (leftRoom >= fullWidth) side = "left";
       else if (Math.max(rightRoom, leftRoom) >= 300) {
@@ -2649,7 +2734,8 @@
       }
     }
     panel.classList.add("is-question-anchored");
-    panel.classList.toggle("is-compact-question", side === "compact");
+    panel.classList.toggle("is-question-detached", !!questionPosition);
+    panel.classList.toggle("is-compact-question", side === "compact" || side === "manual" && (panelWidth < 300 || maxHeight < 200));
     var dimensions = { right: "auto", bottom: "auto", width: panelWidth + "px", maxHeight: maxHeight + "px" };
     var measureKey = JSON.stringify(dimensions);
     if (measureKey !== questionMeasureKey) {
@@ -2660,8 +2746,10 @@
     var panelHeight = Math.min(maxHeight, panel.getBoundingClientRect().height);
     var x = side === "right" ? anchor.right + gap : side === "left" ? anchor.left - gap - panelWidth : anchor.left + anchor.width / 2 - panelWidth / 2;
     var y = side === "above" ? anchor.top - gap - panelHeight : side === "below" ? anchor.bottom + gap : anchor.bottom - panelHeight;
+    if (questionPosition) { x = questionPosition.x; y = questionPosition.y; }
     x = Math.max(leftEdge, Math.min(x, rightEdge - panelWidth));
     y = Math.max(topEdge, Math.min(y, bottomEdge - panelHeight));
+    if (questionPosition) { questionPosition.x = x; questionPosition.y = y; }
     dimensions.left = x + "px";
     dimensions.top = y + "px";
     var panelKey = JSON.stringify(dimensions);
@@ -2670,7 +2758,8 @@
       questionPanelLayoutKey = panelKey;
     }
     questionTail.className = "dcats-concierge-question-tail is-" + side;
-    questionTail.hidden = side === "compact";
+    questionTail.hidden = side === "compact" || side === "manual";
+    if (side === "manual") return;
     var tailPosition;
     if (side === "right" || side === "left") {
       tailPosition = {
@@ -2775,6 +2864,7 @@
       return;
     }
     if (!visible || isPresentationHidden() || settings.mode === "off") {
+      endQuestionDrag();
       clearDragState();
       stopActivity();
       return;
@@ -3253,6 +3343,12 @@
     surface.addEventListener("pointermove", onDragPointerMove, { passive: false });
     surface.addEventListener("pointerup", onDragPointerEnd);
     surface.addEventListener("pointercancel", onDragPointerEnd);
+    surface.addEventListener("pointermove", onQuestionPointerMove, { passive: false });
+    surface.addEventListener("pointerup", onQuestionPointerEnd);
+    surface.addEventListener("pointercancel", onQuestionPointerEnd);
+    surface.defaultView.addEventListener("blur", function () {
+      if (questionDragState && questionDragState.document === surface) endQuestionDrag();
+    });
   }
 
   function onDragPointerDown(event) {

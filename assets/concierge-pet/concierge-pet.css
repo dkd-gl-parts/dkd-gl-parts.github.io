@@ -325,6 +325,18 @@
   background: linear-gradient(135deg, #fff 0%, #f7e5e0 100%);
 }
 
+.dcats-concierge-panel.is-question-view .dcats-concierge-panel-head {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.dcats-concierge-panel.is-question-dragging .dcats-concierge-panel-head { cursor: grabbing; }
+.dcats-concierge-panel.is-question-view .dcats-concierge-panel-head:focus-visible {
+  outline: 3px solid #91c8ce;
+  outline-offset: -3px;
+}
+
 .dcats-concierge-panel-kicker {
   display: block;
   margin-bottom: 3px;
