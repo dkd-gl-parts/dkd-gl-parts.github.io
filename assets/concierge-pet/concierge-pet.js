@@ -50,6 +50,8 @@
       settingsTitle: "コンシェルジュ設定",
       closeSettings: "設定を閉じる",
       questionTitle: "{name}に質問",
+      answerOnly: "回答だけ",
+      showQuestion: "質問欄",
       closeQuestion: "質問画面を閉じる",
       moveQuestion: "見出しをドラッグして移動。矢印キーでも移動できます。Homeキーでキャラの横に戻します。",
       chooseCharacter: "コンシェルジュを選ぶ（1体のみ表示）",
@@ -263,6 +265,8 @@
       settingsTitle: "Concierge settings",
       closeSettings: "Close settings",
       questionTitle: "Ask {name}",
+      answerOnly: "Answer only",
+      showQuestion: "Question",
       moveQuestion: "Drag the heading or use arrow keys to move. Press Home to return beside the character.",
       closeQuestion: "Close question window",
       chooseCharacter: "Choose a concierge (only one appears)",
@@ -475,6 +479,8 @@
       settingsTitle: "礼宾助手设置",
       closeSettings: "关闭设置",
       questionTitle: "向{name}提问",
+      answerOnly: "仅看回答",
+      showQuestion: "提问栏",
       moveQuestion: "拖动标题或使用方向键移动。按Home键返回角色旁边。",
       closeQuestion: "关闭提问窗口",
       chooseCharacter: "选择礼宾助手（仅显示一位）",
@@ -697,6 +703,7 @@
   var panelTitle;
   var panelBody;
   var panelClose;
+  var panelAnswerToggle, questionAnswerOnly = false;
   var questionTail;
   var questionPanelAnimation = null, questionTailAnimation = null;
   var questionMeasureKey = "", questionPanelLayoutKey = "", questionTailLayoutKey = "";
@@ -957,7 +964,14 @@
     panelClose = createElement("button", "dcats-concierge-panel-close", "×");
     panelClose.type = "button";
     panelClose.setAttribute("aria-label", copy("closeSettings"));
+    panelAnswerToggle = createElement("button", "dcats-concierge-panel-answer-toggle");
+    panelAnswerToggle.type = "button";
+    panelAnswerToggle.hidden = true;
+    panelAnswerToggle.addEventListener("click", function () {
+      if (!panelAnswerToggle.disabled && isSystemAdminSession()) setQuestionAnswerOnly(!questionAnswerOnly);
+    });
     panelHead.appendChild(headingWrap);
+    panelHead.appendChild(panelAnswerToggle);
     panelHead.appendChild(panelClose);
 
     panelBody = createElement("div", "dcats-concierge-panel-body");
@@ -1029,6 +1043,7 @@
     aiFollowupButton.hidden = true;
     aiFollowupButton.addEventListener("click", function () {
       if (aiFollowupButton.disabled || !isSystemAdminSession()) return;
+      setQuestionAnswerOnly(false);
       if (aiQuestionInput.value.trim() === aiLastQuestion) aiQuestionInput.value = "";
       if (aiImageData === aiLastImage) clearAiImage();
       aiQuestionInput.focus();
@@ -1566,6 +1581,7 @@
   }
 
   function clearAiResult() {
+    if (questionAnswerOnly) setQuestionAnswerOnly(false);
     aiScreenProposal = null;
     aiScreenPending = false;
     if (aiScreenButton) aiScreenButton.hidden = true;
@@ -1608,6 +1624,7 @@
     aiFollowupButton.hidden = !aiConversation.length || aiAnswer.hidden;
     aiNewQuestionButton.hidden = !aiConversation.length;
     renderAiConversation();
+    syncQuestionAnswerMode();
     aiAskButton.disabled = aiRequestPending || aiImagePending || reviewing || aiOrderPending || aiScreenPending;
     aiAskButton.textContent = copy(aiRequestPending ? "aiWorking" : "aiAsk");
     aiAskButton.setAttribute("aria-busy", String(aiRequestPending));
@@ -1804,6 +1821,7 @@
       if (!isCurrent()) return;
       if (!result || result.error || !result.data || result.data.ok !== true || result.data.screen_id !== proposal.screenId) throw result && result.error || new Error("screen_open_unavailable");
       aiScreenProposal = null; aiScreenButton.hidden = true; aiStatusState = "aiScreenOpened";
+      setQuestionAnswerOnly(true);
     } catch (error) {
       if (!isCurrent()) return;
       var code = String(error && error.message);
@@ -1830,6 +1848,7 @@
       aiOrderProposal = null;
       aiOrderAction.hidden = true;
       aiStatusState = "aiTestOrderOpened";
+      setQuestionAnswerOnly(true);
     } catch (error) {
       if (!isCurrent()) return;
       aiStatusState = String(error && error.message) === "test_order_cart_busy" ? "aiTestOrderCartBusy" : "aiTestOrderFailed";
@@ -2688,7 +2707,32 @@
     else panelHead.removeAttribute("aria-label");
     hitTarget.setAttribute("aria-expanded", String(questionView));
     launcher.setAttribute("aria-expanded", String(panelOpen && panelView === "settings"));
+    syncQuestionAnswerMode();
     if (!questionView) clearQuestionPlacement();
+  }
+
+  function syncQuestionAnswerMode() {
+    if (!panel || !panelAnswerToggle) return;
+    var available = panelOpen && panelView === "question" && isSystemAdminSession() &&
+      aiAnswer && !aiAnswer.hidden && !!aiAnswer.textContent && !(requestUi && requestUi.pending());
+    if (!available) questionAnswerOnly = false;
+    panel.classList.toggle("is-answer-only", questionAnswerOnly);
+    panelAnswerToggle.hidden = !available;
+    panelAnswerToggle.disabled = aiRequestPending || aiImagePending || aiOrderPending || aiScreenPending;
+    panelAnswerToggle.textContent = copy(questionAnswerOnly ? "showQuestion" : "answerOnly");
+    panelAnswerToggle.setAttribute("aria-expanded", String(!questionAnswerOnly));
+    panelAnswerToggle.setAttribute("aria-controls", "dcats-concierge-ai-question");
+  }
+
+  function setQuestionAnswerOnly(enabled) {
+    endQuestionDrag();
+    questionAnswerOnly = !!enabled;
+    syncQuestionAnswerMode();
+    // Keep the user's location, but remeasure size when switching between reading and composing.
+    if (questionPosition) questionPosition = { x: questionPosition.x, y: questionPosition.y };
+    questionMeasureKey = "";
+    if (panelBody) panelBody.scrollTop = 0;
+    syncQuestionPlacement();
   }
 
   function bindQuestionViewport(targetWindow, enabled) {
@@ -2726,7 +2770,7 @@
 
   function onQuestionPointerDown(event) {
     if (!canMoveQuestion() || questionDragState || event.isPrimary === false ||
-        Number.isFinite(event.button) && event.button !== 0 || !panelHead.contains(event.target) || panelClose.contains(event.target)) return;
+        Number.isFinite(event.button) && event.button !== 0 || !panelHead.contains(event.target) || panelClose.contains(event.target) || panelAnswerToggle.contains(event.target)) return;
     var clientX = Number(event.clientX), clientY = Number(event.clientY);
     if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return;
     var rect = panel.getBoundingClientRect();
@@ -2797,7 +2841,7 @@
     var leftEdge = startX + margin, rightEdge = startX + width - margin;
     var topEdge = startY + margin, bottomEdge = startY + height - margin;
     var anchor = mover.getBoundingClientRect();
-    var fullWidth = Math.max(1, Math.min(420, rightEdge - leftEdge));
+    var fullWidth = Math.max(1, Math.min(questionAnswerOnly ? 360 : 420, rightEdge - leftEdge));
     var rightRoom = rightEdge - anchor.right - gap;
     var leftRoom = anchor.left - gap - leftEdge;
     var aboveRoom = anchor.top - gap - topEdge;
@@ -2807,8 +2851,8 @@
     var maxHeight = Math.max(1, bottomEdge - topEdge);
     if (questionPosition) {
       side = "manual";
-      panelWidth = Math.min(fullWidth, questionPosition.width);
-      maxHeight = Math.min(maxHeight, questionPosition.height);
+      panelWidth = Math.min(fullWidth, questionPosition.width || fullWidth);
+      maxHeight = Math.min(maxHeight, questionPosition.height || maxHeight);
     } else if (anchor.width > 0 && anchor.height > 0 && settings.mode !== "off") {
       if (rightRoom >= fullWidth) side = "right";
       else if (leftRoom >= fullWidth) side = "left";
@@ -2820,6 +2864,7 @@
         maxHeight = side === "above" ? aboveRoom : belowRoom;
       }
     }
+    if (questionAnswerOnly) maxHeight = Math.min(maxHeight, Math.max(160, Math.min(360, height * .5)));
     panel.classList.add("is-question-anchored");
     panel.classList.toggle("is-question-detached", !!questionPosition);
     panel.classList.toggle("is-compact-question", side === "compact" || side === "manual" && (panelWidth < 300 || maxHeight < 200));
@@ -2920,7 +2965,8 @@
     stopActivity();
     syncPanelPresentation();
     syncRunningState();
-    if (panelView === "question" && aiQuestionInput) aiQuestionInput.focus();
+    if (panelView === "question" && questionAnswerOnly) panelAnswerToggle.focus();
+    else if (panelView === "question" && aiQuestionInput) aiQuestionInput.focus();
     else panelClose.focus();
   }
 
