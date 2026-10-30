@@ -58,7 +58,7 @@ var TRANSLATIONS = {
 
   ja: {
     customer_register_read_title: "販売王から入力",
-    customer_register_read_help: "このPCの販売王で対象の得意先を表示し、読み取った内容を確認して登録します。",
+    customer_register_read_help: "販売王の「基本1」で名称・住所などを取得できます。同じ得意先の「売上／回収」に切り替えて再取得すると、請求先・締め情報を追加できます。内容を確認して登録してください。",
     customer_register_read: "販売王の画面から取得",
     customer_register_reading: "販売王の得意先画面を読み取っています…",
     customer_register_read_success: "読み取った内容を入力しました。販売王での登録済み確認と内容確認後に、得意先を登録してください。",
@@ -2804,7 +2804,7 @@ var TRANSLATIONS = {
 
   en: {
     customer_register_read_title: "Fill from Sales King",
-    customer_register_read_help: "Display the customer in Sales King on this PC, then review the retrieved details before registering.",
+    customer_register_read_help: "Read the customer's name and address from Basic 1 in Sales King. Switch the same customer to Sales / Collection and read again to add billing and closing details. Review before registering.",
     customer_register_read: "Read Sales King screen",
     customer_register_reading: "Reading the Sales King customer screen…",
     customer_register_read_success: "Retrieved details filled in. Confirm that the customer is saved in Sales King, review the details, then register.",
@@ -5550,7 +5550,7 @@ var TRANSLATIONS = {
 
   zh: {
     customer_register_read_title: "从销售王填写",
-    customer_register_read_help: "在本电脑的销售王中显示目标客户，读取后确认内容再登记。",
+    customer_register_read_help: "在销售王的“基本1”页读取客户名称、地址等。切换同一客户的“销售／回款”页后再次读取，可补充开票客户和结算信息。确认内容后再登记。",
     customer_register_read: "读取销售王画面",
     customer_register_reading: "正在读取销售王客户画面…",
     customer_register_read_success: "已填写读取内容。请确认客户已在销售王中保存，核对内容后登记。",
@@ -53264,7 +53264,7 @@ async function readHanbaiohCustomerScreen() {
     document.getElementById("customer-register-confirmed").checked = false;
     // A read does not prove a vendor save. Confirmation and price rank remain
     // explicit user choices; the existing atomic RPC performs the registration.
-    var missing = ["code","name","billingCode","closingCode"].filter(function (key) { return !Object.hasOwn(fields,key); });
+    var missing = ["code","name","billingCode","closingCode"].filter(function (key) { return !customerRegistrationFieldValue("customer-register-" + ids[key]); });
     var missingLabels = missing.map(function (key) { return t({code:"customer_register_hanbaiou_code",name:"customer_register_name",billingCode:"customer_register_billing_code",closingCode:"customer_register_closing_code"}[key]); });
     setCustomerRegistrationMessage(t("customer_register_read_success") + (missingLabels.length ? " " + t("customer_register_read_missing") + " " + missingLabels.join(" / ") : ""), false);
   } catch (error) {

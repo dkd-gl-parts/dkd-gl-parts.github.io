@@ -49,6 +49,16 @@ test("declined overwrite and duplicates preserve all inputs",async()=>{
     assert.equal(h.get("code").value,"MANUAL");assert.equal(h.get("name").value,"入力中");assert.equal(h.context.customerAccessRegistrationReading,false);
   }
 });
+
+test("reading both tabs of the same customer accumulates fields and reports remaining form requirements",async()=>{
+  const h=harness({fields:{code:"SYNTH-001",name:"合成得意先",phone:"000-0000-0000"}});
+  await h.read();assert(h.notes.at(-1).text.includes("customer_register_read_missing"));
+  h.context.window.DcatsHanbaiohCompanyBridge.readCustomerScreenFromPc=async()=>({fields:{code:"SYNTH-001",name:"合成得意先",billingCode:"BILL-001",closingCode:"0"}});
+  await h.read();assert.equal(h.get("phone").value,"000-0000-0000");assert.equal(h.get("billing-code").value,"BILL-001");assert.equal(h.get("closing-code").value,"0");
+  assert(!h.notes.at(-1).text.includes("customer_register_read_missing"));
+  h.context.window.DcatsHanbaiohCompanyBridge.readCustomerScreenFromPc=async()=>({fields:{code:"SYNTH-001",name:"合成得意先"}});
+  await h.read();assert.equal(h.get("billing-code").value,"BILL-001");assert(!h.notes.at(-1).text.includes("customer_register_read_missing"));assert.equal(h.count().confirmed,0);
+});
 test("closing/reopening, editing, actor changes and revoked permissions discard delayed results",async()=>{
   for(const change of [h=>h.context.closeCustomerRegistration(),h=>{h.context.closeCustomerRegistration();h.overlay.classList.add("show");},h=>{h.get("name").value="変更";},h=>{h.context.currentUser={id:"another"};},h=>h.allowed(false),h=>h.admin(false)]){
     const pending=deferred(),h=harness({pending});const operation=h.read();
