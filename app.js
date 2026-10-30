@@ -8315,7 +8315,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1268";
+var APP_VERSION       = "v1.1.1269";
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
 // Tab-local UX containment only; account status is still loaded from Auth.
@@ -9222,6 +9222,7 @@ async function askConciergeAi(request) {
   var language = request && ["ja", "en", "zh"].indexOf(request.language) >= 0 ? request.language : "";
   var screenId = request && typeof request.screenId === "string" ? request.screenId : "";
   var image = request && request.image;
+  var history = request && request.history;
   if (!question || question.length > 800 || !language || !CONCIERGE_AI_SCREEN_IDS[screenId]) {
     return { data: null, error: new Error("invalid_concierge_ai_request") };
   }
@@ -9230,6 +9231,13 @@ async function askConciergeAi(request) {
   }
   var owner = currentUser.id;
   var body = { question: question, language: language, screen_id: screenId };
+  if (history !== undefined) {
+    if (!Array.isArray(history) || history.length > 3 || history.some(function (turn) {
+      return !turn || typeof turn !== "object" || Array.isArray(turn) || Object.keys(turn).some(function (key) { return key !== "question" && key !== "answer"; }) ||
+        typeof turn.question !== "string" || !turn.question.trim() || turn.question.length > 800 || typeof turn.answer !== "string" || !turn.answer.trim() || turn.answer.length > 3200 || (turn.question + turn.answer).includes("\0");
+    }) || history.reduce(function (sum, turn) { return sum + turn.question.length + turn.answer.length; }, 0) > 4000) return { data: null, error: new Error("invalid_concierge_ai_request") };
+    if (history.length) body.history = history.map(function (turn) { return { question: turn.question, answer: turn.answer }; });
+  }
   if (window.crypto && typeof window.crypto.randomUUID === "function") body.submission_id = window.crypto.randomUUID();
   if (request.classify !== undefined) {
     if (typeof request.classify !== "boolean") return { data: null, error: new Error("invalid_concierge_ai_request") };
