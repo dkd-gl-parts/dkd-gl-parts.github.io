@@ -167,6 +167,8 @@ jobs:
         run: node scripts/verify-print-settings-screen-ownership.js
       - name: Verify order fulfillment document workflow
         run: node scripts/verify-order-fulfillment-documents.js
+      - name: Verify shipping packing boxes and document rows
+        run: node scripts/verify-shipping-packing.js
       - name: Verify readable A5 document typography
         run: node scripts/verify-readable-print-typography.js
       - name: Verify opaque order and core-return references

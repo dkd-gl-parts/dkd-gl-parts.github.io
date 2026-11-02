@@ -22,6 +22,14 @@ const runtimeScriptPaths = [
 ];
 const curatedTranslations = {
   en: {
+    "コア返却が不要な注文は発行不要": "Not required for orders without a core return",
+    "同じ帳票はすでに印刷待ち、印刷中、または発行不要です。": "The document is already queued, printing, or not required.",
+    "対応箱 未登録": "Matching box not registered",
+    "候補が複数あります（箱マスタで確認）": "Multiple matching boxes (check Packing boxes)",
+    "/ 受注1件": "/ one order",
+    " / 受注1件": " / one order",
+    "帳票セット明細（受注全体）": "Document set (entire order)",
+    "枚数・発送方法": "Copies and shipping method",
     "1～4枚を重複なく選択してください。複数枚では正面が必須です。": "Select 1 to 4 distinct images. A front view is required when using multiple images.",
     "拡大表示を閉じる": "Close enlarged image",
     "保存済み画像からTripoで3D作成": "Generate 3D with Tripo from saved images",
@@ -567,6 +575,14 @@ const curatedTranslations = {
     "本書、対象製品、製造シリアル、車両・取付情報をご提示ください。": "Present this document, the covered product, the manufacturing serial number, and the vehicle and installation information."
   },
   zh: {
+    "コア返却が不要な注文は発行不要": "无需返还旧件的订单无需发行",
+    "同じ帳票はすでに印刷待ち、印刷中、または発行不要です。": "该单据已在打印队列中、正在打印或无需发行。",
+    "対応箱 未登録": "尚未登记对应包装箱",
+    "候補が複数あります（箱マスタで確認）": "有多个匹配的包装箱（请在箱主数据中确认）",
+    "/ 受注1件": "/ 一份订单",
+    " / 受注1件": " / 一份订单",
+    "帳票セット明細（受注全体）": "单据组合明细（整个订单）",
+    "枚数・発送方法": "份数及发货方式",
     "1～4枚を重複なく選択してください。複数枚では正面が必須です。": "请选择1至4张不同图片。使用多张图片时必须包含正面。",
     "拡大表示を閉じる": "关闭放大图片",
     "保存済み画像からTripoで3D作成": "使用已保存图片通过Tripo生成3D",
