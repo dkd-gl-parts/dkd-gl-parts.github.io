@@ -1389,12 +1389,11 @@ dispatch(hitTarget.listeners, "click", { target: hitTarget });
 assert(panel.hidden, "A completed drag was mistaken for a click and opened settings");
 sandboxMath.random = () => 0;
 const expectedFixedActivities = [
-  { name: "waving", duration: 1500 },
-  { name: "bow", column: 1, duration: 1530 },
-  { name: "escort", column: 2, duration: 1660 },
-  { name: "handshake", column: 3, duration: 1780 },
-  { name: "shy", column: 4, duration: 1750 },
-  { name: "welcome", column: 5, duration: 1630 }
+  { name: "greeting", row: 1, duration: 1400 },
+  { name: "bow", row: 2, duration: 1980 },
+  { name: "guide", row: 3, duration: 2080 },
+  { name: "review", row: 4, duration: 2200 },
+  { name: "writing", row: 5, duration: 2000 }
 ];
 function assertFixedIgnoresPointer(message) {
   const before = lastAnimationFor(sprite), count = animations.length;
@@ -1407,13 +1406,16 @@ for (const character of ["suzuto", "rinna"]) {
   api.setState("greeting", { duration: 1300 });
   while (Array.from(pendingTimers.values()).some(timer => timer.delay === 1300)) runTimerWithDelay(1300);
   api.setMode("fixed");
+  assert(root.classList.contains("is-front-desk") && lastAnimationFor(sprite).keyframes.every(frame => frame.backgroundSize === "400% 600%"), `${character} did not use the seated atlas`);
+  // The welcome bubble expires before the 2600ms idle wait; do not confuse it with a later 2200ms action timer.
+  while (Array.from(pendingTimers.values()).some(timer => timer.delay === 2200)) runTimerWithDelay(2200);
   const anchor = mover.getBoundingClientRect(), count = animations.length;
   for (const expected of expectedFixedActivities) {
     assertFixedIgnoresPointer(`${character} followed the pointer during fixed idle`);
     runTimerWithDelay(2600); await new Promise(resolve => setImmediate(resolve));
     const action = lastAnimationFor(sprite);
-    if (expected.name === "waving") assert(animationRowPercent(action) === 30 && action.options.iterations === 2 && action.keyframes.length === 5, `${character} did not play the animated wave`);
-    else assert(action.options.iterations === 1 && Math.abs(animationColumnPercent(action) - expected.column * 100 / 7) < .001, `${character} repeated or used the wrong ${expected.name} pose`);
+    assert(action.options.iterations === 1 && action.keyframes.length === 5 && action.keyframes.every(frame => frame.backgroundSize === "400% 600%" && frame.backgroundPosition.endsWith("% " + expected.row * 20 + "%")), `${character} repeated or used the wrong seated ${expected.name} frames`);
+    assert(new Set(action.keyframes.map(frame => frame.backgroundPosition.split(" ")[0])).size === 4, `${character}'s ${expected.name} did not animate four distinct frames`);
     assertFixedIgnoresPointer(`${character}'s ${expected.name} was interrupted by pointer movement`);
     assert(mover.getBoundingClientRect().left === anchor.left && mover.getBoundingClientRect().top === anchor.top, `${character} walked during fixed ${expected.name}`);
     runTimerWithDelay(expected.duration); await new Promise(resolve => setImmediate(resolve));
@@ -1426,6 +1428,7 @@ for (const character of ["suzuto", "rinna"]) {
   assert(Array.from(pendingTimers.values()).some(timer => timer.delay === 2600), "Closing the panel did not resume the fixed cycle");
   reduceMotionQuery.matches = true; reduceMotionListeners.forEach(listener => listener({ matches: true }));
   assert(!Array.from(pendingTimers.values()).some(timer => timer.delay === 2600) && !liveInfiniteAnimations().length, "Reduced motion did not stop fixed gestures");
+  assert(lastAnimationFor(sprite).keyframes.every(frame => frame.backgroundPosition === "0% 0%" && frame.backgroundSize === "400% 600%") && mover.getBoundingClientRect().left === anchor.left && mover.getBoundingClientRect().top === anchor.top, "Reduced motion must retain a seated still frame at the user's fixed position");
   reduceMotionQuery.matches = false; reduceMotionListeners.forEach(listener => listener({ matches: false }));
   const fixedTimerAfterResume = Array.from(pendingTimers.entries()).find(([, timer]) => timer.delay === 2600)[0];
   documentObject.hidden = true; dispatch(documentObject.listeners, "visibilitychange");
@@ -1438,7 +1441,7 @@ fixedBlocker.customRect = { left: 40, top: 60, right: 180, bottom: 180, width: 1
 activeScreen.appendChild(fixedBlocker);
 api.setMode("fixed");
 const fixedBlockedAnchor = mover.getBoundingClientRect();
-assert(root.classList.contains("is-blocked") && animationRowPercent(lastAnimationFor(sprite)) === 60, "A blocking dialog did not pause the fixed gesture cycle");
+assert(root.classList.contains("is-blocked") && animationRowPercent(lastAnimationFor(sprite)) === 0 && animationBackgroundWidthPercent(lastAnimationFor(sprite)) === 400, "A blocking dialog did not pause the fixed gesture cycle at the seated waiting state");
 runTimerWithDelay(700); await new Promise(resolve => setImmediate(resolve));
 assert(mover.getBoundingClientRect().left === fixedBlockedAnchor.left && mover.getBoundingClientRect().top === fixedBlockedAnchor.top, "A blocking dialog relocated the fixed concierge");
 fixedBlocker.hidden = true;
@@ -1451,6 +1454,7 @@ api.setMode("fixed");
 api.setCharacter("suzuto");
 while (Array.from(pendingTimers.values()).some(timer => timer.delay === 1300)) runTimerWithDelay(1300);
 api.setMode("active");
+assert(!root.classList.contains("is-front-desk"), "Walking modes retained the seated atlas");
 
 documentObject.hidden = false;
 dispatch(documentObject.listeners, "visibilitychange");
@@ -1895,7 +1899,7 @@ activeScreen.id = "screen-login";
 notifyObservers();
 assert(root.hidden, "Concierge must be hidden on the login screen");
 
-console.log("Concierge runtime behavior verification passed (system-admin AI guidance, explicit image preview/remove/send and expiry, token meter, system-admin gate, always-on-top floating display, pointer-captured drag and viewport clamping, 5 movement modes, move-stop cycle, 6 distinct one-shot stop gestures, fixed-mode six-action cycle without pointer tracking or travel, one sprite, user-scoped preferences, i18n, gaze, card avoidance, scroll-stable viewport revalidation, reduced motion, focus, and inactive cancellation).");
+console.log("Concierge runtime behavior verification passed (system-admin AI guidance, explicit image preview/remove/send and expiry, token meter, system-admin gate, always-on-top floating display, pointer-captured drag and viewport clamping, 5 movement modes, move-stop cycle, 6 distinct standing stop gestures, six seated front-desk states without pointer tracking or travel, one sprite, user-scoped preferences, i18n, gaze, card avoidance, scroll-stable viewport revalidation, reduced motion, focus, and inactive cancellation).");
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

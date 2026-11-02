@@ -72,7 +72,12 @@ assert(html.indexOf("concierge-pet.js") > html.indexOf("app.js"), "Concierge run
   'saved && MODES[saved.mode]',
   'createChoice("modeHorizontal", "horizontal", "mode")',
   'createChoice("modeVertical", "vertical", "mode")',
-  'FIXED_ACTIVITY_ORDER = ["waving", "bow", "escort", "handshake", "shy", "welcome"]',
+  'FIXED_ACTIVITY_ORDER = ["greeting", "bow", "guide", "review", "writing"]',
+  'root.classList.toggle("is-front-desk", settings.mode === "fixed")',
+  'if (settings.mode === "fixed") return playDeskRow(DESK_STATE_ROWS[name] || "idle", iterations)',
+  'if (settings.mode === "fixed") return showDeskFrame(0, 0)',
+  'function playDeskRow(name, iterations)',
+  'backgroundSize: "400% 600%"',
   'async function runFixedActivity(token)',
   'if (dragState || settings.mode === "fixed") return;',
   'var horizontalOnly = settings.mode === "horizontal"',
@@ -304,4 +309,19 @@ for (const expected of expectedPets) {
   assert(size.width === 1536 && size.height === 2288, `${expected.dir} spritesheet must be 1536x2288`);
 }
 
-console.log(`Concierge pet verification passed (${appVersion}; one selected character, 5 movement modes, move-stop cycle, 6 distinct one-shot stop gestures, always-on-top floating display, 9 motion states, 16 gaze directions).`);
+for (const expected of [
+  { name: "suzuto", sha: "9FC399F70DED004CA112E0E4CF6C524A8A2B919C323A396F4BD2818C550CD580" },
+  { name: "rinna", sha: "8FBD4903204AB59325BEAFBB75B2A2E92158ED3008C76941E0FAF80731A3C1BB" }
+]) {
+  const dir = path.join(root, "assets/concierge-pet", expected.name);
+  const manifest = JSON.parse(fs.readFileSync(path.join(dir, "front-desk.json"), "utf8"));
+  const buffer = fs.readFileSync(path.join(dir, "front-desk.webp"));
+  assert(buffer.length < 3 * 1024 * 1024 && crypto.createHash("sha256").update(buffer).digest("hex").toUpperCase() === expected.sha, "Front desk asset changed or exceeds its budget: " + expected.name);
+  assert(manifest.sha256 === expected.sha && manifest.path === "front-desk.webp", "Desk manifest hash/path mismatch");
+  const size = readLosslessWebpSize(buffer);
+  assert(size.width === 1040 && size.height === 1560 && manifest.width === size.width && manifest.height === size.height && manifest.columns === 4 && manifest.rows === 6 && manifest.frameWidth === 260 && manifest.frameHeight === 260, "Desk atlas grid mismatch");
+  assert(manifest.transparent === true && manifest.seated === true && manifest.states.join(",") === "idle,greeting,bow,guide,review,writing", "Desk asset states or transparency contract missing");
+  requireFragment(css, `./${expected.name}/front-desk.webp?v=${appVersion.slice(1)}`);
+}
+
+console.log(`Concierge pet verification passed (${appVersion}; one selected character, 5 movement modes, six seated front-desk states, move-stop cycle, 6 distinct standing stop gestures, always-on-top floating display, 16 gaze directions).`);
