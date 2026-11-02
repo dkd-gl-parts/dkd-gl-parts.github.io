@@ -8456,7 +8456,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1282";
+var APP_VERSION       = "v1.1.1283";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -11982,7 +11982,7 @@ function renderMenu() {
 
   var mainItems = [
     { icon: "&#x1F50D;", titleKey: "mi_search_title", descKey: "mi_search_desc", action: "search", available: canViewProductSearch(), tag: null },
-    { icon: "&#x1F6CD;", titleKey: "customer_portal_title", descKey: "customer_portal_preview_desc", action: "customer-portal", available: canPreviewCustomerPortal(), tag: null },
+    { icon: "&#x1F6CD;", titleKey: "customer_portal_title", descKey: "customer_portal_preview_desc", action: "customer-portal", available: canPreviewCustomerPortal() && !hasAccessRole(userProfile, ["sales_editor"]), tag: null },
     { icon: "&#x1F4E5;", titleKey: "sales_order_mgmt_title", descKey: "sales_order_mgmt_desc", action: "sales-order-mgmt", available: canManageSalesOrders(), tag: null },
     { icon: "&#x1F5A8;", titleKey: "shipping_document_mgmt_title", descKey: "shipping_document_mgmt_desc", action: "shipping-document-mgmt", available: canManageSalesOrders(), tag: null },
     { icon: "&#x21A9;", titleKey: "core_return_mgmt_title", descKey: "core_return_mgmt_desc", action: "core-return-mgmt", available: canManageSalesOrders(), tag: null },

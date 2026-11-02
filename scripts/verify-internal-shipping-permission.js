@@ -73,14 +73,17 @@ function menuForRole(roleCode, shippingAllowed = true) {
 }
 const managerMenu = menuForRole("sales_editor");
 assert(managerMenu.actions[0] === "finished-product-shipping", "Shipping Manager must see picking first");
+assert(!managerMenu.actions.includes("customer-portal"), "Shipping Manager must not see the customer portal menu");
 assert(managerMenu.openFirst() === 1, "First menu card must open shipping verification");
 const normalMenu = menuForRole("company_admin");
-assert(JSON.stringify(managerMenu.actions.slice(1)) === JSON.stringify(normalMenu.actions.filter(action => action !== "finished-product-shipping")), "Other menu items must retain their order");
+assert(JSON.stringify(managerMenu.actions.slice(1)) === JSON.stringify(normalMenu.actions.filter(action => !["finished-product-shipping", "customer-portal"].includes(action))), "Other menu items must retain their order");
 for (const role of ["system_admin", "master_editor", "shipping_staff", "production_editor", "sales_viewer"]) {
   assert(JSON.stringify(menuForRole(role).actions) === JSON.stringify(normalMenu.actions), role + " menu order must remain unchanged");
+  assert(menuForRole(role).actions.includes("customer-portal"), role + " customer portal menu must remain available");
 }
 const deniedMenu = menuForRole("sales_editor", false);
 assert(!deniedMenu.actions.includes("finished-product-shipping"), "Picking must remain hidden without permission");
+assert(!deniedMenu.actions.includes("customer-portal"), "Hiding picking must not reveal the customer portal to Shipping Manager");
 assert(deniedMenu.actions[0] === "search", "Missing picking permission must preserve the remaining order");
 
 console.log("Internal shipping permission verification passed.");
