@@ -2,6 +2,7 @@
 // Runtime translation is local; this file makes no external requests.
 var DCATS_LEGACY_UI_TRANSLATIONS = {
   "en": {
+    "決済手数料は税抜の取引代金、MP販売手数料は税込の商品代金を基準に計算します。": "The payment fee is calculated on the transaction amount before tax; the MP sales fee is calculated on the product amount including tax.",
     "商品撮影・画像整理": "Product Photos",
     "撮影・登録・整理・選択ダウンロード": "Capture, registration, organization and selected downloads",
     "責任者のみ利用可（画像管理の拒否設定を優先）": "Managers only; image-management denials take priority",
@@ -3993,6 +3994,7 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "発行履歴を参照する権限がありません。": "You do not have permission to view issue history."
   },
   "zh": {
+    "決済手数料は税抜の取引代金、MP販売手数料は税込の商品代金を基準に計算します。": "支付手续费以未税交易金额为基准，MP销售手续费以含税商品金额为基准计算。",
     "商品撮影・画像整理": "商品拍摄与图片整理",
     "撮影・登録・整理・選択ダウンロード": "拍摄、登记、整理及所选图片下载",
     "責任者のみ利用可（画像管理の拒否設定を優先）": "仅限负责人，优先执行图片管理拒绝设置",
