@@ -681,7 +681,9 @@ windowObject.currentUser = dragOwner; notifyObservers();
 dispatch(panelClose.listeners,"click",{target:panelClose});
 windowObject.innerWidth = 1200; windowObject.innerHeight = 800;
 documentObject.hidden = true;
+api.openSettings("question");
 aiQuestionInput.value = "受注データはどの画面で確認しますか？";
+aiAskButton.focus();
 dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
 dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
 await new Promise((resolve) => setImmediate(resolve));
@@ -690,6 +692,7 @@ assert(aiRequests.length === 1, "A pending AI question was submitted more than o
 assert(aiRequests[0].question === "受注データはどの画面で確認しますか？" && aiRequests[0].language === "ja" && aiRequests[0].screenId === "menu" && aiRequests[0].classify === true && Object.keys(aiRequests[0]).every(key => ["question", "language", "screenId", "image", "classify"].includes(key)), "AI received data outside the reviewed unified context");
 assert(aiStatus.textContent === "回答" && aiStatus.classList.contains("is-success"), "AI success heading must be concise");
 assert(aiAnswer.textContent === "受注・出荷管理画面で確認できます。" && !aiAnswer.hidden, "AI answer was not presented as text");
+assert(documentObject.activeElement === aiAnswer, "A submitted question must focus its completed answer when the user remains in the composer");
 assert(aiGuide.textContent.includes("案内先：受注・出荷管理") && !aiGuide.hidden, "Fixed-screen guidance was not presented");
 const aiScreenButton = byClass("dcats-concierge-ai-screen-button")[0];
 assert(aiScreenButton && !aiScreenButton.hidden && aiScreenButton.textContent === "受注・出荷管理を開く" && screenOpenRequests.length === 0, "A trusted destination must offer a button without opening automatically");
@@ -703,6 +706,7 @@ for (const [language, heading, breakdown] of [["en", "Answer", "Input 100 / Outp
   notifyObservers();
   assert(aiStatus.textContent === heading && aiUsage.title.includes(breakdown) && aiUsage.children.length === 2, "Localized answer/compact meter did not refresh correctly");
   api.openSettings("question");
+  assert(panel.classList.contains("is-answer-only") && questionHead.descendants().some(node => node.tagName === "H2" && node.textContent === (language === "ja" ? "スズトからの回答" : language === "en" ? "Answer from Suzuto" : "Suzuto的回答")), "Answer view must preserve its response identity across language changes");
   assert(questionHead.getAttribute("tabindex") === "0" && questionHead.getAttribute("aria-label") === questionHead.title && questionHead.title.includes(language === "ja" ? "ドラッグ" : language === "en" ? "Drag" : "拖动"), "Question movement instructions were not localized/accessibly named");
 }
 const originalAiResponseFactory = aiResponseFactory;
@@ -711,7 +715,13 @@ const aiFollowup = byClass("dcats-concierge-ai-secondary")[0];
 const aiNewQuestion = byClass("dcats-concierge-ai-secondary")[1];
 const answerToggle = byClass("dcats-concierge-panel-answer-toggle")[0];
 const beforeReadingCalls = aiRequests.length, readingAnswer = aiAnswer.textContent, readingDraft = aiQuestionInput.value;
-assert(answerToggle && !answerToggle.hidden && answerToggle.textContent === "回答だけ", "An answer must offer the localized reading-mode control");
+const answeredQuestion = byClass("dcats-concierge-ai-answered-question")[0];
+assert(answerToggle && !answerToggle.hidden && answerToggle.textContent === "質問欄" && panel.classList.contains("is-answer-only"), "A successful answer must automatically replace the composer with reading mode");
+assert(byClass("dcats-concierge-panel-head")[0].descendants().some(node => node.tagName === "H2" && node.textContent === "スズトからの回答"), "Reading mode must name the response, not a question");
+assert(!answeredQuestion.hidden && !answeredQuestion.open && answeredQuestion.children[1].textContent === readingDraft, "Reading mode must retain the submitted question as a collapsed read-only reference");
+assert(aiAnswer.getAttribute("tabindex") === "-1", "The answer must support accessible focus without joining the tab order");
+dispatch(answerToggle.listeners, "click", { target: answerToggle });
+assert(answerToggle.textContent === "回答だけ" && answeredQuestion.hidden, "Composer mode must hide the read-only question reference");
 dispatch(answerToggle.listeners, "click", { target: answerToggle });
 assert(panel.classList.contains("is-answer-only") && answerToggle.getAttribute("aria-expanded") === "false" && answerToggle.textContent === "質問欄", "Reading mode did not expose a reversible, accessible state");
 assert(aiAnswer.textContent === readingAnswer && aiQuestionInput.value === readingDraft && aiRequests.length === beforeReadingCalls, "Resizing sent another question or discarded the draft/answer");
@@ -773,7 +783,7 @@ assert(aiStatus.textContent.includes("再ログイン"), "Gateway 401 without a 
 aiResponseFactory = () => ({ data: null, error: new Error("ai_provider_failed") });
 dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
 await new Promise(resolve => setImmediate(resolve));
-assert(aiStatus.textContent.includes("AIから回答を取得できませんでした") && !aiAskButton.disabled,
+assert(aiStatus.textContent.includes("AIから回答を取得できませんでした") && !aiAskButton.disabled && !panel.classList.contains("is-answer-only") && answeredQuestion.hidden,
   "AI provider failure must be visible and recoverable");
 aiQuestionInput.value = " ";
 const beforeEmptyAi = aiRequests.length;
@@ -949,7 +959,7 @@ for (const routeKind of ["bug", "suggestion"]) {
   const before = intakeCalls.length;
   dispatch(aiAskButton.listeners, "click", { target: aiAskButton });
   await tick();
-  assert(!confirmForm().hidden && aiAskButton.disabled && aiQuestionInput.disabled && intakeCalls.length === before, "Classification must preview, not persist");
+  assert(!confirmForm().hidden && aiAskButton.disabled && aiQuestionInput.disabled && intakeCalls.length === before && !panel.classList.contains("is-answer-only"), "Classification must keep the confirmation visible, not persist or hide it as an answer");
   assert(!confirmForm().descendants().some(n => ["SELECT", "TEXTAREA", "INPUT"].includes(n.tagName)), "Unified intake must not introduce a second composer or type choice");
   assert(confirmForm().descendants().some(n => n.textContent === source), "Preview must retain original text, not an AI rewrite");
   dispatch(findCopy("editMessage").listeners, "click");
