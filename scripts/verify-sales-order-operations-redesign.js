@@ -212,7 +212,7 @@ const notApplicableHtml = waybillContext.salesOrderWaybillProgressHtml({
   core_return_required: false,
   outbound_waybill: { handling_method: "b2_cloud" }
 });
-for (const fragment of ["sales-order-waybill-progress-grid", "data-waybill-purpose='outbound'", "data-waybill-purpose='core_return'", "返却用送り状", "対象外", "<dt>送り状番号</dt><dd>対象外</dd>"]) {
+for (const fragment of ["sales-order-waybill-progress-grid", "data-waybill-purpose='outbound'", "data-waybill-purpose='core_return'", "返却用送り状", "不要", "<dt>送り状番号</dt><dd>不要</dd>"]) {
   requireFragment(notApplicableHtml, fragment, `Framed non-applicable return state is missing: ${fragment}`);
 }
 if (notApplicableHtml.indexOf("data-waybill-purpose='outbound'") > notApplicableHtml.indexOf("data-waybill-purpose='core_return'")) {

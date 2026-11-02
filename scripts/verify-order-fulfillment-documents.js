@@ -562,7 +562,7 @@ for (const fragment of [
   'ready: coreReturnReady',
   '保証書・コア返却シートは発行できます。',
   'warrantyRequired ? shippingDocumentPrintStateView(warrantyJob, "未発行")',
-  'label: "対象外", tone: "neutral", note: "交換品"',
+  'label: "不要", tone: "neutral", note: "交換品"',
   'shippingDocumentPrintStateView(coreJob, "未発行")',
   "今回のみ:",
   'carrierCode: outboundWaybill.carrier_code || "yamato_prepaid"',
@@ -922,9 +922,9 @@ for (const fragment of [
   'format: "CODE39"',
   "buildSalesOrderDispatchDocumentHtml",
   "buildSalesOrderDispatchPage",
-  "items.slice(index * 5, index * 5 + 5)",
+  "items.slice(index * 4, index * 4 + 4)",
   "dispatch-sheet",
-  "帳票セット明細（商品別）",
+  "帳票セット明細（受注全体）",
   "buildSalesOrderWarrantyDocumentHtml",
   "hydrateSalesOrderWarrantyPrintData",
   'sb.rpc("get_product_warranty_policies")',
@@ -1118,11 +1118,11 @@ for (const fragment of [
 ]) requireFragment(i18n, fragment, `B2 reissue translation is missing: ${fragment}`);
 
 for (const fragment of [
-  'content="v1.1.1287"',
-  'styles.css?v=1.1.1287',
-  'app.js?v=1.1.1287'
+  'content="v1.1.1289"',
+  'styles.css?v=1.1.1289',
+  'app.js?v=1.1.1289'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.1287"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.1289"');
 requireFragment(source, 'sales_management_registered: "売上登録済"');
 requireFragment(source, 'sales_management_unknown: "売上確認不可"');
 

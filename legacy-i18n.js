@@ -2,6 +2,14 @@
 // Runtime translation is local; this file makes no external requests.
 var DCATS_LEGACY_UI_TRANSLATIONS = {
   "en": {
+    "コア返却が不要な注文は発行不要": "Not required for orders without a core return",
+    "同じ帳票はすでに印刷待ち、印刷中、または発行不要です。": "The document is already queued, printing, or not required.",
+    "対応箱 未登録": "Matching box not registered",
+    "候補が複数あります（箱マスタで確認）": "Multiple matching boxes (check Packing boxes)",
+    "/ 受注1件": "/ one order",
+    " / 受注1件": " / one order",
+    "帳票セット明細（受注全体）": "Document set (entire order)",
+    "枚数・発送方法": "Copies and shipping method",
     "決済手数料は税抜の取引代金、MP販売手数料は税込の商品代金を基準に計算します。": "The payment fee is calculated on the transaction amount before tax; the MP sales fee is calculated on the product amount including tax.",
     "商品撮影・画像整理": "Product Photos",
     "撮影・登録・整理・選択ダウンロード": "Capture, registration, organization and selected downloads",
@@ -3994,6 +4002,14 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "発行履歴を参照する権限がありません。": "You do not have permission to view issue history."
   },
   "zh": {
+    "コア返却が不要な注文は発行不要": "无需返还旧件的订单无需发行",
+    "同じ帳票はすでに印刷待ち、印刷中、または発行不要です。": "该单据已在打印队列中、正在打印或无需发行。",
+    "対応箱 未登録": "尚未登记对应包装箱",
+    "候補が複数あります（箱マスタで確認）": "有多个匹配的包装箱（请在箱主数据中确认）",
+    "/ 受注1件": "/ 一份订单",
+    " / 受注1件": " / 一份订单",
+    "帳票セット明細（受注全体）": "单据组合明细（整个订单）",
+    "枚数・発送方法": "份数及发货方式",
     "決済手数料は税抜の取引代金、MP販売手数料は税込の商品代金を基準に計算します。": "支付手续费以未税交易金额为基准，MP销售手续费以含税商品金额为基准计算。",
     "商品撮影・画像整理": "商品拍摄与图片整理",
     "撮影・登録・整理・選択ダウンロード": "拍摄、登记、整理及所选图片下载",

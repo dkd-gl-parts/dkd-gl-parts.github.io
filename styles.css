@@ -11694,3 +11694,24 @@ html[data-product-3d-paused] :is(
 .factoring-pricing-breakdown { display: block; font-weight: 700; line-height: 1.7; }
 .factoring-pricing-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 @media(max-width:560px) { .factoring-pricing-fields { grid-template-columns: 1fr; } .factoring-pricing-panel { padding: 16px; } .factoring-dialog-head { padding: 16px 16px 0; } .factoring-dialog-footer { padding: 12px 16px; } }
+
+.packing-box-overlay { position: fixed; inset: 0; z-index: 6000; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgb(0 0 0 / 45%); }
+.packing-box-overlay[hidden] { display: none; }
+.packing-box-dialog { width: min(960px, 100%); max-height: 94vh; overflow: auto; padding: 20px; border-radius: 8px; background: #fff; color: #18304a; }
+.packing-box-dialog header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.packing-box-dialog h2 { margin: 0; }
+.packing-box-dialog p { line-height: 1.6; }
+.packing-box-dialog button { min-height: 36px; padding: 6px 12px; border: 1px solid #96a8b8; border-radius: 4px; color: #18304a; background: #fff; cursor: pointer; }
+.packing-box-dialog button:disabled { opacity: .55; cursor: wait; }
+.packing-box-table { overflow-x: auto; }
+.packing-box-table table { width: 100%; min-width: 610px; border-collapse: collapse; font-size: 14px; }
+.packing-box-table th, .packing-box-table td { padding: 10px 8px; border-bottom: 1px solid #d4dde5; text-align: left; overflow-wrap: anywhere; }
+.packing-box-tools { display: flex; gap: 8px; margin: 16px 0; }
+.packing-box-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; border-top: 1px solid #d4dde5; padding-top: 16px; }
+.packing-box-form label { display: grid; gap: 6px; min-width: 0; font-size: 14px; }
+.packing-box-form input:not([type=checkbox]) { width: 100%; min-height: 38px; border: 1px solid #96a8b8; border-radius: 4px; padding: 7px; font: inherit; }
+.packing-box-form .packing-box-active { display: flex; align-items: center; gap: 8px; }
+.packing-box-form button[type=submit] { background: #287255; color: #fff; border-color: #287255; }
+.packing-box-message { margin: 10px 0; color: #216449; overflow-wrap: anywhere; }
+.packing-box-message.error { color: #b4203a; }
+@media(max-width: 600px) { .packing-box-overlay { padding: 8px; } .packing-box-dialog { padding: 14px; } .packing-box-form { grid-template-columns: 1fr; } }
