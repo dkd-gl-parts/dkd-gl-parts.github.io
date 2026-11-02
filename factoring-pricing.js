@@ -15,7 +15,7 @@
       rate(settings.sales_fee_rate_percent, 99.9999), rate(settings.shipping_allocation_rate_percent, 100)];
     var unit = Number(settings.rounding_unit_jpy);
     if (![1, 10, 100, 1000].includes(unit)) throw new Error("切上げ単位を選択してください。");
-    if (1000000000000n - values[1] * (1000000n + values[0]) - values[2] * 1000000n <= 0n) throw new Error("手数料率が高すぎるため販売価格を計算できません。");
+    if (1000000000000n - values[1] * 1000000n - values[2] * (1000000n + values[0]) <= 0n) throw new Error("手数料率が高すぎるため販売価格を計算できません。");
     var result = {};
     keys.slice(0, 4).forEach(function (key, index) { result[key] = Number(values[index]) / 10000; });
     result.rounding_unit_jpy = unit;
@@ -28,7 +28,7 @@
     var scale = 1000000n, t = rate(s.tax_rate_percent, 99.9999), f = rate(s.factoring_rate_percent, 99.9999),
       fee = rate(s.sales_fee_rate_percent, 99.9999), allocation = rate(s.shipping_allocation_rate_percent, 100), unit = BigInt(s.rounding_unit_jpy);
     var numerator = BigInt(base) * (scale + allocation) * scale;
-    var tradeDenominator = scale * scale - f * (scale + t), marketDenominator = tradeDenominator - fee * scale;
+    var tradeDenominator = scale * scale - f * scale, marketDenominator = tradeDenominator - fee * (scale + t);
     function rounded(denominator) {
       var divisor = denominator * unit, result = (numerator / divisor + (numerator % divisor ? 1n : 0n)) * unit;
       if (result > 2147483647n) throw new Error("計算後の販売価格が上限を超えています。");
