@@ -582,8 +582,13 @@
   }
 
   async function handleFile(file) {
+    if (!file || state.isReading) return;
     state.isReading = true;
     elements.search.disabled = true;
+    elements.choose.disabled = true;
+    elements.config.inert = true;
+    elements.dropzone.classList.add("is-reading");
+    elements.dropzone.setAttribute("aria-busy", "true");
     if (elements.fileName) elements.fileName.textContent = file ? file.name : "";
     try {
       var sheets = await readFile(file);
@@ -603,20 +608,43 @@
       setStatus((error && error.message) || String(error), "error");
     } finally {
       state.isReading = false;
-      if (state.sheets.length) updateSearchButton();
+      elements.choose.disabled = false;
+      elements.file.value = "";
+      elements.config.inert = false;
+      elements.dropzone.classList.remove("is-reading");
+      elements.dropzone.classList.toggle("has-file", !!state.sheets.length);
+      elements.dropzone.setAttribute("aria-busy", "false");
+      updateSearchButton();
     }
+  }
+
+  function handleFiles(files) {
+    if (state.isReading || !files || !files.length) return;
+    if (files.length !== 1) {
+      setStatus(tr("manufacturing_cost_import_one_file"), "error");
+      return;
+    }
+    handleFile(files[0]);
+  }
+
+  function isFileDrag(event) {
+    var transfer = event.dataTransfer;
+    return !!transfer && (Array.prototype.indexOf.call(transfer.types || [], "Files") >= 0 || !!(transfer.files && transfer.files.length));
   }
 
   function openDialog() {
     if (!elements.overlay) return;
     elements.overlay.classList.add("show");
-    setStatus(tr("manufacturing_cost_import_initial"), "");
+    if (!state.isReading) {
+      setStatus(state.sheets.length ? trf("manufacturing_cost_import_ready", { n: currentCombinedRows().length }) : tr("manufacturing_cost_import_initial"), state.sheets.length ? "success" : "");
+    }
     if (elements.choose) elements.choose.focus();
   }
 
   function closeDialog() {
     if (!elements.overlay) return;
     elements.overlay.classList.remove("show");
+    elements.dropzone.classList.remove("is-dragover");
     var opener = document.getElementById("btn-manufacturing-cost-import-open");
     if (opener) opener.focus();
   }
@@ -641,6 +669,7 @@
   }
 
   function searchSelectedParts() {
+    if (state.isReading) return;
     var selected = currentCombinedRows().filter(function(row) { return state.selectedParts[row.key]; });
     if (!selected.length) {
       setStatus(tr("manufacturing_cost_import_selected_required"), "error");
@@ -687,6 +716,7 @@
       choose: document.getElementById("btn-manufacturing-cost-import-choose"),
       file: document.getElementById("manufacturing-cost-import-file"),
       fileName: document.getElementById("manufacturing-cost-import-file-name"),
+      dropzone: document.getElementById("manufacturing-cost-import-dropzone"),
       status: document.getElementById("manufacturing-cost-import-status"),
       config: document.getElementById("manufacturing-cost-import-config"),
       sheet: document.getElementById("manufacturing-cost-import-sheet"),
@@ -706,7 +736,38 @@
     document.getElementById("btn-manufacturing-cost-import-open").addEventListener("click", openDialog);
     document.getElementById("btn-manufacturing-cost-import-close").addEventListener("click", closeDialog);
     elements.choose.addEventListener("click", function() { elements.file.click(); });
-    elements.file.addEventListener("change", function() { handleFile(elements.file.files && elements.file.files[0]); });
+    elements.file.addEventListener("change", function() { handleFiles(elements.file.files); });
+    elements.dropzone.addEventListener("dragenter", function(event) {
+      if (!isFileDrag(event)) return;
+      event.preventDefault();
+      elements.dropzone.classList.toggle("is-dragover", !state.isReading);
+    });
+    elements.dropzone.addEventListener("dragover", function(event) {
+      if (!isFileDrag(event)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      event.dataTransfer.dropEffect = state.isReading ? "none" : "copy";
+      elements.dropzone.classList.toggle("is-dragover", !state.isReading);
+    });
+    elements.dropzone.addEventListener("dragleave", function(event) {
+      if (event.relatedTarget && elements.dropzone.contains(event.relatedTarget)) return;
+      elements.dropzone.classList.remove("is-dragover");
+    });
+    elements.dropzone.addEventListener("drop", function(event) {
+      if (!isFileDrag(event)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      elements.dropzone.classList.remove("is-dragover");
+      handleFiles(event.dataTransfer.files);
+    });
+    ["dragover", "drop"].forEach(function(type) {
+      elements.overlay.addEventListener(type, function(event) {
+        if (!isFileDrag(event)) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "none";
+        elements.dropzone.classList.remove("is-dragover");
+      });
+    });
     elements.sheet.addEventListener("change", function() { state.selectedSheet = elements.sheet.value || "*"; renderPreview(true); });
     elements.headerRow.addEventListener("change", function() { applyMappingChange("headerRow", elements.headerRow.value); });
     elements.partColumn.addEventListener("change", function() { applyMappingChange("partColumn", elements.partColumn.value); });

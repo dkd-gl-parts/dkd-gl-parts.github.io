@@ -46,7 +46,7 @@
 #screen-manufacturing-cost-mgmt .manufacturing-cost-target-grid .manufacturing-cost-field { flex-direction: row; align-items: center; gap: 8px; }
 #screen-manufacturing-cost-mgmt .manufacturing-cost-target-grid label { flex-shrink: 0; }
 #screen-manufacturing-cost-mgmt .manufacturing-cost-target-grid select { min-width: 0; }
-#screen-manufacturing-cost-mgmt .manufacturing-cost-query-row { display: grid; grid-template-columns: minmax(140px, 1fr) auto auto auto; align-items: center; gap: 8px; margin-top: 4px; }
+#screen-manufacturing-cost-mgmt .manufacturing-cost-query-row { display: grid; grid-template-columns: minmax(140px, 1fr) auto auto; align-items: center; gap: 8px; margin-top: 4px; }
 #screen-manufacturing-cost-mgmt .manufacturing-cost-query-row .mgmt-search { width: 100%; min-width: 0; max-width: none; }
 #screen-manufacturing-cost-mgmt .manufacturing-cost-target-grid { grid-template-columns: minmax(0, 1fr) minmax(0, .75fr); gap: 12px; }
 .manufacturing-cost-list-options { padding: 0; }
