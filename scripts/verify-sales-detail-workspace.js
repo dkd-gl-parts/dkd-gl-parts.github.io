@@ -278,13 +278,14 @@ if (!compatibleLoadSource.includes('document.getElementById("sales-basic-compati
   "#screen-search .sales-conditions-panel",
   "grid-template-columns: minmax(280px, 1.3fr) minmax(0, 1fr)",
   "#screen-search .panel-scroll { overflow-y: auto; }",
-  "grid-template-columns: 72px minmax(0, 1fr)",
-  "grid-template-columns: 92px minmax(0, 1fr)",
+  "--sales-condition-label-width: 76px",
+  "--sales-condition-field-gap: 8px",
+  "grid-template-columns: var(--sales-condition-label-width) minmax(0, 1fr)",
+  "grid-template-columns: var(--sales-condition-label-width) minmax(0, max-content) max-content",
   "font-variant-numeric: tabular-nums",
   ".detail-customer-price-focus:not(.empty) > strong",
   ".detail-customer-shipping-rule.separate > strong",
   ".detail-customer-shipping-rule.free > strong",
-  "white-space: nowrap; overflow-wrap: normal; word-break: keep-all",
   ".sales-detail-tab-panel[hidden]",
   ".sales-basic-compatible",
   "align-items: stretch",
@@ -301,6 +302,21 @@ if (!compatibleLoadSource.includes('document.getElementById("sales-basic-compati
 });
 if (css.includes(".sales-basic-compatible-count")) {
   throw new Error("the lower compatibility section must not style a count badge");
+}
+const stockLayout = css.match(/#screen-search \.detail-customer-section \.product-kind-stock-value\s*\{([^}]+)\}/);
+if (!stockLayout || !stockLayout[1].includes("text-align: left")) {
+  throw new Error("sales stock must start beside its label, not at the far edge");
+}
+const shippingLayout = css.match(/#screen-search \.sales-conditions-panel \.detail-customer-shipping-rule > strong\s*\{([^}]+)\}/);
+if (!shippingLayout || !shippingLayout[1].includes("justify-self: start")) {
+  throw new Error("sales shipping condition must stay next to its label");
+}
+const pendingShippingLayout = css.match(/#screen-search \.sales-conditions-panel \.detail-customer-shipping-rule\.loading\s*\{([^}]+)\}/);
+if (!pendingShippingLayout || !pendingShippingLayout[1].includes("padding: 4px 0")) {
+  throw new Error("pending shipping terms must not inherit generic loading placeholder padding");
+}
+if (css.includes(".detail-customer-panel .detail-customer-price-focus:not(.empty) > span { grid-column: 1 / -1; }")) {
+  throw new Error("responsive sales price must retain the shared label/value columns");
 }
 
 const salesScreenStart = html.indexOf('<div id="screen-search"');
