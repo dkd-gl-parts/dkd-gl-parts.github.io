@@ -8456,7 +8456,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1286";
+var APP_VERSION       = "v1.1.1287";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -9257,7 +9257,7 @@ function conciergeNavigationBusy() {
 function createConciergeScreenRoutes() { return Object.freeze({
   menu: { allowed: function () { return true; }, open: function () { showAuthenticatedHome(); } },
   search: { allowed: canViewProductSearch, open: function () { return enterSearch(); } },
-  "customer-portal": { allowed: canPreviewCustomerPortal, open: function () { return enterCustomerPortal(); } },
+  "customer-portal": { allowed: canShowCustomerPortalMenu, open: function () { return enterCustomerPortal(); } },
   "sales-order-mgmt": { allowed: canManageSalesOrders, feature: "internal_management", open: function () { return enterSalesOrderMgmt(); } },
   "shipping-document-mgmt": { allowed: canManageSalesOrders, feature: "internal_management", open: function () { return enterShippingDocumentMgmt(); } },
   "core-return-mgmt": { allowed: canManageSalesOrders, feature: "internal_management", open: function () { return enterCoreReturnManagement(); } },
@@ -9729,6 +9729,13 @@ function isCustomerViewer() {
 function canPreviewCustomerPortal(profile) {
   profile = profile || userProfile;
   return !!profile && !isCustomerViewerProfile(profile) && !isExternalViewerProfile(profile);
+}
+function customerPortalDefaultEnabled(roleCode) {
+  return ["system_admin", "company_admin", "master_editor", "business_admin"].indexOf(roleCode) >= 0;
+}
+function canShowCustomerPortalMenu(profile) {
+  profile = profile || userProfile;
+  return canPreviewCustomerPortal(profile) && customerPortalDefaultEnabled(accessRoleCode(profile));
 }
 function isCustomerPortalSearchMode() {
   return !!customerPortalSearchActive;
@@ -11982,7 +11989,7 @@ function renderMenu() {
 
   var mainItems = [
     { icon: "&#x1F50D;", titleKey: "mi_search_title", descKey: "mi_search_desc", action: "search", available: canViewProductSearch(), tag: null },
-    { icon: "&#x1F6CD;", titleKey: "customer_portal_title", descKey: "customer_portal_preview_desc", action: "customer-portal", available: canPreviewCustomerPortal() && !hasAccessRole(userProfile, ["sales_editor", "shipping_staff", "dept_admin", "production_editor"]), tag: null },
+    { icon: "&#x1F6CD;", titleKey: "customer_portal_title", descKey: "customer_portal_preview_desc", action: "customer-portal", available: canShowCustomerPortalMenu(), tag: null },
     { icon: "&#x1F4E5;", titleKey: "sales_order_mgmt_title", descKey: "sales_order_mgmt_desc", action: "sales-order-mgmt", available: canManageSalesOrders(), tag: null },
     { icon: "&#x1F5A8;", titleKey: "shipping_document_mgmt_title", descKey: "shipping_document_mgmt_desc", action: "shipping-document-mgmt", available: canManageSalesOrders(), tag: null },
     { icon: "&#x21A9;", titleKey: "core_return_mgmt_title", descKey: "core_return_mgmt_desc", action: "core-return-mgmt", available: canManageSalesOrders(), tag: null },
@@ -56611,6 +56618,7 @@ function applyPermissionOverviewOverride(item, context) {
 
 function permissionOverviewScreenGroups(context) {
   var role = context.roleCode;
+  var portalPreviewEnabled = customerPortalDefaultEnabled(role);
   var editors = ["system_admin", "company_admin", "dept_admin", "master_editor", "sales_staff", "production_editor"];
   var productionEditors = ["system_admin", "company_admin", "dept_admin", "production_editor"];
   var productionViewers = productionEditors.slice();
@@ -56726,16 +56734,16 @@ function permissionOverviewScreenGroups(context) {
           items: [
             { label: "専用ホーム・商品カタログ", state: isCustomer
               ? permissionOverviewAllowed("利用可")
-              : (roleIsInternal ? permissionOverviewLimited("得意先として表示可") : permissionOverviewDenied("対象外")) },
-            { label: "得意先の商品検索", permissionKey: (isCustomer || roleIsInternal) ? "product_search.view" : null, state: isCustomer
+              : (portalPreviewEnabled ? permissionOverviewLimited("得意先として表示可") : permissionOverviewDenied("対象外")) },
+            { label: "得意先の商品検索", permissionKey: (isCustomer || portalPreviewEnabled) ? "product_search.view" : null, state: isCustomer
               ? permissionOverviewLimited("紐づいた得意先設定範囲のみ")
-              : (roleIsInternal ? permissionOverviewLimited("選択した得意先設定範囲") : permissionOverviewDenied("対象外")) },
-            { label: "商品詳細", permissionKey: (isCustomer || roleIsInternal) ? "product_info.view" : null, state: isCustomer
+              : (portalPreviewEnabled ? permissionOverviewLimited("選択した得意先設定範囲") : permissionOverviewDenied("対象外")) },
+            { label: "商品詳細", permissionKey: (isCustomer || portalPreviewEnabled) ? "product_info.view" : null, state: isCustomer
               ? permissionOverviewLimited("紐づいた得意先設定範囲のみ")
-              : (roleIsInternal ? permissionOverviewLimited("選択した得意先設定範囲") : permissionOverviewDenied("対象外")) },
-            { label: "得意先販売価格", permissionKey: (isCustomer || roleIsInternal) ? "sales_price.view" : null, state: isCustomer
+              : (portalPreviewEnabled ? permissionOverviewLimited("選択した得意先設定範囲") : permissionOverviewDenied("対象外")) },
+            { label: "得意先販売価格", permissionKey: (isCustomer || portalPreviewEnabled) ? "sales_price.view" : null, state: isCustomer
               ? permissionOverviewLimited("得意先表示設定に従う")
-              : (roleIsInternal ? permissionOverviewLimited("選択した得意先の表示設定に従う") : permissionOverviewDenied("対象外")) },
+              : (portalPreviewEnabled ? permissionOverviewLimited("選択した得意先の表示設定に従う") : permissionOverviewDenied("対象外")) },
             { label: "担当者管理画面", state: isCustomer
               ? permissionOverviewLimited("得意先管理者のみ表示")
               : (customerAccountManageable ? permissionOverviewLimited("得意先管理から管理") : permissionOverviewDenied("表示なし")) },
@@ -56747,7 +56755,7 @@ function permissionOverviewScreenGroups(context) {
               : (customerAccountManageable ? permissionOverviewAllowed("有効なメンバーへ移行可") : permissionOverviewDenied("利用不可")) },
             { label: "社内向け画面・編集操作", state: isCustomer
               ? permissionOverviewDenied("表示なし")
-              : (roleIsInternal ? permissionOverviewLimited("得意先として表示中は表示なし") : permissionOverviewDenied("対象外")) },
+              : (portalPreviewEnabled ? permissionOverviewLimited("得意先として表示中は表示なし") : permissionOverviewDenied("対象外")) },
             { label: "発注", state: permissionOverviewDenied("注文基盤未設定") }
           ]
         }

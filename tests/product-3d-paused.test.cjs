@@ -86,7 +86,7 @@ test("pause applies to every 3D role and explicit grant while photo permissions 
 test("3D permission descriptions disappear without changing saved overrides or other permission rows", () => {
   const context = { PRODUCT_3D_DEVELOPMENT_PAUSED: true, manufacturingCostOptionalAllowedFor: () => false };
   vm.createContext(context);
-  vm.runInContext(["permissionOverviewState", "permissionOverviewAllowed", "permissionOverviewLimited", "permissionOverviewOptional", "permissionOverviewDenied", "permissionOverviewRoleIn", "permissionOverviewCanOverride", "applyPermissionOverviewOverride", "permissionOverviewScreenGroups"].map(functionSource).join("\n"), context);
+  vm.runInContext(["customerPortalDefaultEnabled", "permissionOverviewState", "permissionOverviewAllowed", "permissionOverviewLimited", "permissionOverviewOptional", "permissionOverviewDenied", "permissionOverviewRoleIn", "permissionOverviewCanOverride", "applyPermissionOverviewOverride", "permissionOverviewScreenGroups"].map(functionSource).join("\n"), context);
   for (const role of ["system_admin", "company_admin", "production_editor", "sales_staff", "customer_viewer", "external_viewer"]) {
     const overrides = { "product_3d.manage": true, "product_3d.publish": true, "image.manage": true };
     const before = JSON.stringify(overrides);
