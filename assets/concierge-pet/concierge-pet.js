@@ -28,7 +28,16 @@
     review: { row: 8, durations: [150, 150, 150, 150, 150, 280] }
   };
   var STOP_GESTURE_ORDER = ["settle", "bow", "escort", "handshake", "shy", "welcome"];
-  var FIXED_ACTIVITY_ORDER = ["waving", "bow", "escort", "handshake", "shy", "welcome"];
+  var FIXED_ACTIVITY_ORDER = ["greeting", "bow", "guide", "review", "writing"];
+  var DESK_ROWS = {
+    idle: { row: 0, durations: [1400, 120, 160, 1320] },
+    greeting: { row: 1, durations: [260, 300, 300, 440] },
+    bow: { row: 2, durations: [300, 440, 700, 440] },
+    guide: { row: 3, durations: [280, 400, 900, 400] },
+    review: { row: 4, durations: [400, 500, 800, 400] },
+    writing: { row: 5, durations: [360, 500, 600, 440] }
+  };
+  var DESK_STATE_ROWS = { idle: "idle", waiting: "idle", waving: "greeting", jumping: "greeting", failed: "bow", running: "writing", review: "review" };
   var STOP_GESTURES = {
     settle: { column: 0, enter: 180, hold: 620, exit: 260 },
     bow: { column: 1, enter: 260, hold: 850, exit: 320 },
@@ -71,7 +80,7 @@
       activeMessage: "元気にご案内します。",
       horizontalMessage: "横方向に歩いてご案内します。",
       verticalMessage: "縦方向に歩いてご案内します。",
-      fixedMessage: "この場所で、いろいろなしぐさをお見せします。",
+      fixedMessage: "案内デスクに座って、お迎えします。",
       floatingLegend: "画面外表示",
       floatingOpen: "常に前面の小窓で表示",
       floatingReturn: "D-CATS画面に戻す",
@@ -286,7 +295,7 @@
       activeMessage: "I will guide you actively.",
       horizontalMessage: "I will move horizontally.",
       verticalMessage: "I will move vertically.",
-      fixedMessage: "I will stay here and show different gestures.",
+      fixedMessage: "I will welcome you from my reception desk.",
       floatingLegend: "Floating display",
       floatingOpen: "Show in an always-on-top window",
       floatingReturn: "Return to the D-CATS window",
@@ -500,7 +509,7 @@
       activeMessage: "我会积极为您引导。",
       horizontalMessage: "我会横向移动为您引导。",
       verticalMessage: "我会纵向移动为您引导。",
-      fixedMessage: "我会留在这里，展示不同的动作。",
+      fixedMessage: "我会坐在服务台为您提供接待。",
       floatingLegend: "屏幕外显示",
       floatingOpen: "在置顶小窗中显示",
       floatingReturn: "返回D-CATS画面",
@@ -2683,6 +2692,7 @@
     sprite.classList.remove("is-suzuto", "is-rinna");
     sprite.classList.add(PETS[settings.character].className);
     root.classList.toggle("is-off", settings.mode === "off");
+    root.classList.toggle("is-front-desk", settings.mode === "fixed");
     hitTarget.setAttribute("aria-label", copy("openQuestion", { name: name }));
     launcher.setAttribute("aria-label", copy("openSettings", { name: name }));
     launcherLabel.textContent = settings.mode === "off" ? copy("launcherOff") : name;
@@ -3014,7 +3024,8 @@
     }
     if (isReducedMotion()) {
       stopActivity();
-      parkAtSafeCorner();
+      if (settings.mode === "fixed") holdMoverAt(clampToViewport(position, petSize(), viewportWindow()));
+      else parkAtSafeCorner();
       showFrame(0, 0);
       return;
     }
@@ -3115,14 +3126,8 @@
     if (hasBlockingDialog()) { runActivityLoop(token); return; }
     var name = FIXED_ACTIVITY_ORDER[fixedActivityIndex % FIXED_ACTIVITY_ORDER.length];
     fixedActivityIndex += 1;
-    var duration;
-    if (name === "waving") {
-      playRow("waving", 2);
-      duration = ROWS.waving.durations.reduce(function (sum, value) { return sum + value; }, 0) * 2;
-    } else {
-      playStopGesture(STOP_GESTURES[name]);
-      duration = stopGestureDuration(STOP_GESTURES[name]);
-    }
+    playDeskRow(name, 1);
+    var duration = DESK_ROWS[name].durations.reduce(function (sum, value) { return sum + value; }, 0);
     if (await delay(duration + 100, token)) runActivityLoop(token);
   }
 
@@ -3399,6 +3404,7 @@
   }
 
   function playRow(name, iterations) {
+    if (settings.mode === "fixed") return playDeskRow(DESK_STATE_ROWS[name] || "idle", iterations);
     var rowName = ROWS[name] ? name : "idle";
     var row = ROWS[rowName];
     if (!sprite || typeof sprite.animate !== "function") return null;
@@ -3422,6 +3428,7 @@
   }
 
   function showFrame(row, column, scale) {
+    if (settings.mode === "fixed") return showDeskFrame(0, 0);
     if (!sprite || typeof sprite.animate !== "function") return null;
     var resolvedScale = Number(scale) > 0 ? Number(scale) : 1;
     var visualKey = "frame:" + row + ":" + column + ":" + resolvedScale;
@@ -3434,6 +3441,35 @@
       { backgroundPosition: value, backgroundSize: size },
       { backgroundPosition: value, backgroundSize: size }
     ], { duration: 1, fill: "forwards" });
+    return spriteAnimation;
+  }
+
+  function showDeskFrame(row, column) {
+    if (!sprite || typeof sprite.animate !== "function") return null;
+    var visualKey = "desk-frame:" + row + ":" + column;
+    if (currentVisualKey === visualKey && spriteAnimation) return spriteAnimation;
+    if (spriteAnimation) spriteAnimation.cancel();
+    var frame = { backgroundPosition: (column * 100 / 3) + "% " + (row * 20) + "%", backgroundSize: "400% 600%" };
+    currentVisualKey = visualKey;
+    spriteAnimation = sprite.animate([frame, frame], { duration: 1, fill: "forwards" });
+    return spriteAnimation;
+  }
+
+  function playDeskRow(name, iterations) {
+    if (!sprite || typeof sprite.animate !== "function") return null;
+    if (isReducedMotion()) return showDeskFrame(0, 0);
+    var rowName = DESK_ROWS[name] ? name : "idle", row = DESK_ROWS[rowName];
+    var visualKey = "desk-row:" + rowName + ":" + String(iterations == null ? 1 : iterations);
+    if (currentVisualKey === visualKey && spriteAnimation && spriteAnimation.playState === "running") return spriteAnimation;
+    if (spriteAnimation) spriteAnimation.cancel();
+    var total = row.durations.reduce(function (sum, value) { return sum + value; }, 0), elapsed = 0, frames = [];
+    row.durations.forEach(function (duration, column) {
+      frames.push({ offset: elapsed / total, backgroundPosition: (column * 100 / 3) + "% " + (row.row * 20) + "%", backgroundSize: "400% 600%", easing: "steps(1, end)" });
+      elapsed += duration;
+    });
+    frames.push({ offset: 1, backgroundPosition: "100% " + (row.row * 20) + "%", backgroundSize: "400% 600%", easing: "steps(1, end)" });
+    currentVisualKey = visualKey;
+    spriteAnimation = sprite.animate(frames, { duration: total, iterations: iterations == null ? 1 : iterations, fill: "forwards" });
     return spriteAnimation;
   }
 

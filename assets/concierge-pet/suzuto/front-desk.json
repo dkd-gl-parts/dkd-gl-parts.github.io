@@ -1,0 +1,23 @@
+{
+  "character": "suzuto",
+  "path": "front-desk.webp",
+  "sha256": "9FC399F70DED004CA112E0E4CF6C524A8A2B919C323A396F4BD2818C550CD580",
+  "width": 1040,
+  "height": 1560,
+  "columns": 4,
+  "rows": 6,
+  "frameWidth": 260,
+  "frameHeight": 260,
+  "states": [
+    "idle",
+    "greeting",
+    "bow",
+    "guide",
+    "review",
+    "writing"
+  ],
+  "transparent": true,
+  "seated": true,
+  "generation": "built-in image_gen; identity reference from existing approved first frame",
+  "packing": "2px clear padding; no repainting or frame scaling"
+}

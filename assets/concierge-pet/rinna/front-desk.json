@@ -1,0 +1,23 @@
+{
+  "character": "rinna",
+  "path": "front-desk.webp",
+  "sha256": "8FBD4903204AB59325BEAFBB75B2A2E92158ED3008C76941E0FAF80731A3C1BB",
+  "width": 1040,
+  "height": 1560,
+  "columns": 4,
+  "rows": 6,
+  "frameWidth": 260,
+  "frameHeight": 260,
+  "states": [
+    "idle",
+    "greeting",
+    "bow",
+    "guide",
+    "review",
+    "writing"
+  ],
+  "transparent": true,
+  "seated": true,
+  "generation": "built-in image_gen; identity reference from existing approved first frame",
+  "packing": "2px clear padding; no repainting or frame scaling"
+}
