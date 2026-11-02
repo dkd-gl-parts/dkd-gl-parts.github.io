@@ -59,6 +59,8 @@
       settingsTitle: "コンシェルジュ設定",
       closeSettings: "設定を閉じる",
       questionTitle: "{name}に質問",
+      answerTitle: "{name}からの回答",
+      answeredQuestion: "今回の質問を見る",
       answerOnly: "回答だけ",
       showQuestion: "質問欄",
       closeQuestion: "質問画面を閉じる",
@@ -274,6 +276,8 @@
       settingsTitle: "Concierge settings",
       closeSettings: "Close settings",
       questionTitle: "Ask {name}",
+      answerTitle: "Answer from {name}",
+      answeredQuestion: "View your question",
       answerOnly: "Answer only",
       showQuestion: "Question",
       moveQuestion: "Drag the heading or use arrow keys to move. Press Home to return beside the character.",
@@ -488,6 +492,8 @@
       settingsTitle: "礼宾助手设置",
       closeSettings: "关闭设置",
       questionTitle: "向{name}提问",
+      answerTitle: "{name}的回答",
+      answeredQuestion: "查看本次问题",
       answerOnly: "仅看回答",
       showQuestion: "提问栏",
       moveQuestion: "拖动标题或使用方向键移动。按Home键返回角色旁边。",
@@ -723,6 +729,7 @@
   var aiQuestionInput;
   var aiAskButton;
   var aiStatus;
+  var aiAnsweredQuestion, aiAnsweredQuestionText;
   var aiAnswer;
   var aiGuide;
   var aiScreenButton, aiScreenProposal = null, aiScreenPending = false;
@@ -1097,6 +1104,12 @@
     aiStatus.setAttribute("aria-live", "polite");
     aiAnswer = createElement("p", "dcats-concierge-ai-answer");
     aiAnswer.hidden = true;
+    aiAnswer.setAttribute("tabindex", "-1");
+    aiAnsweredQuestion = createElement("details", "dcats-concierge-ai-answered-question");
+    aiAnsweredQuestion.hidden = true;
+    aiAnsweredQuestion.appendChild(createCopyElement("summary", "", "answeredQuestion"));
+    aiAnsweredQuestionText = createElement("p");
+    aiAnsweredQuestion.appendChild(aiAnsweredQuestionText);
     aiGuide = createElement("p", "dcats-concierge-ai-guide");
     aiGuide.hidden = true;
     aiScreenButton = createElement("button", "dcats-concierge-ai-button dcats-concierge-ai-screen-button");
@@ -1114,6 +1127,7 @@
     aiUsage = createElement("div", "dcats-concierge-ai-usage");
     aiUsage.hidden = true;
     var aiFeedback = createElement("div", "dcats-concierge-ai-feedback");
+    aiFeedback.appendChild(aiAnsweredQuestion);
     aiFeedback.appendChild(aiStatus);
     aiFeedback.appendChild(aiAnswer);
     aiFeedback.appendChild(aiGuide);
@@ -1602,6 +1616,11 @@
       aiAnswer.textContent = "";
       aiAnswer.hidden = true;
     }
+    if (aiAnsweredQuestion) {
+      aiAnsweredQuestion.open = false;
+      aiAnsweredQuestion.hidden = true;
+      aiAnsweredQuestionText.textContent = "";
+    }
     if (aiGuide) {
       aiGuide.textContent = "";
       aiGuide.hidden = true;
@@ -1665,6 +1684,7 @@
 
   function revealAiFeedback() {
     if (!panelOpen || !panelBody || !aiStatus) return;
+    if (questionAnswerOnly) { panelBody.scrollTop = 0; return; }
     var focused = presentationDocument().activeElement;
     if (focused && panel.contains(focused) && !aiCard.contains(focused)) return;
     var bounds = panelBody.getBoundingClientRect();
@@ -1813,6 +1833,12 @@
     } finally {
       if (requestToken === aiRequestToken) {
         aiRequestPending = false;
+        if (aiStatusState === "aiDone" && panelOpen && panelView === "question" && !(requestUi && requestUi.pending())) {
+          var focusAnswer = aiCard.contains(presentationDocument().activeElement);
+          aiAnsweredQuestion.open = false;
+          setQuestionAnswerOnly(true);
+          if (focusAnswer) aiAnswer.focus({ preventScroll: true });
+        }
         updateAiStatus();
         revealAiFeedback();
       }
@@ -2732,6 +2758,13 @@
     panelAnswerToggle.textContent = copy(questionAnswerOnly ? "showQuestion" : "answerOnly");
     panelAnswerToggle.setAttribute("aria-expanded", String(!questionAnswerOnly));
     panelAnswerToggle.setAttribute("aria-controls", "dcats-concierge-ai-question");
+    if (panelOpen && panelView === "question") {
+      panelTitle.textContent = copy(questionAnswerOnly ? "answerTitle" : "questionTitle", { name: petName(settings.character) });
+    }
+    if (aiAnsweredQuestion) {
+      aiAnsweredQuestion.hidden = !questionAnswerOnly;
+      aiAnsweredQuestionText.textContent = questionAnswerOnly ? aiLastQuestion : "";
+    }
   }
 
   function setQuestionAnswerOnly(enabled) {
