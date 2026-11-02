@@ -2108,6 +2108,27 @@ var TRANSLATIONS = {
     customer_access_hanbaiou_billing_help: "請求先と締め日を指定します。売上データの請求先・請求予定日に反映されます。",
     customer_access_hanbaiou_billing_code: "請求得意先コード",
     customer_access_hanbaiou_closing_code: "得意先締めコード",
+    customer_collection_title: "回収条件",
+    customer_collection_method: "回収方法",
+    customer_collection_month: "回収予定月（締め月から）",
+    customer_collection_day: "回収予定日",
+    customer_collection_unset: "未設定",
+    customer_collection_cash: "現金",
+    customer_collection_cheque: "小切手",
+    customer_collection_transfer: "振込",
+    customer_collection_bill: "手形",
+    customer_collection_this_month: "当月",
+    customer_collection_next_month: "翌月",
+    customer_collection_second_month: "翌々月",
+    customer_collection_months_after: "{months}ヶ月後",
+    customer_collection_day_label: "{day}日",
+    customer_collection_month_end: "末日",
+    customer_collection_summary: "{month}{day}払い{method}",
+    customer_collection_help: "月指定の回収条件です。31日は各月の末日として扱います。未設定の条件は推測しません。",
+    customer_collection_invalid_method: "回収方法を確認してください。",
+    customer_collection_invalid_month: "回収予定月を0から99ヶ月後で入力してください。",
+    customer_collection_invalid_day: "回収予定日を1から31で選択してください。",
+    customer_collection_invalid_pair: "回収予定月と回収予定日は両方設定してください。",
     hanbaiou_closing_select: "選択してください",
     hanbaiou_closing_on_demand: "0（随時／売上日）",
     hanbaiou_closing_month_end: "31（末日）",
@@ -4859,6 +4880,27 @@ var TRANSLATIONS = {
     customer_access_hanbaiou_billing_help: "Choose the billing customer and closing date. They determine the billing party and scheduled invoice date in sales data.",
     customer_access_hanbaiou_billing_code: "Billing customer code",
     customer_access_hanbaiou_closing_code: "Closing code",
+    customer_collection_title: "Collection terms",
+    customer_collection_method: "Collection method",
+    customer_collection_month: "Months after billing month",
+    customer_collection_day: "Collection day",
+    customer_collection_unset: "Not set",
+    customer_collection_cash: "Cash",
+    customer_collection_cheque: "Cheque",
+    customer_collection_transfer: "Bank transfer",
+    customer_collection_bill: "Bill of exchange",
+    customer_collection_this_month: "This month, ",
+    customer_collection_next_month: "Next month, ",
+    customer_collection_second_month: "Second following month, ",
+    customer_collection_months_after: "{months} months later, ",
+    customer_collection_day_label: "day {day}",
+    customer_collection_month_end: "month end",
+    customer_collection_summary: "{month}{day}{method}",
+    customer_collection_help: "Fixed month and day. Day 31 means the end of each month. Unset terms are not inferred.",
+    customer_collection_invalid_method: "Check the collection method.",
+    customer_collection_invalid_month: "Enter a whole number from 0 to 99 months.",
+    customer_collection_invalid_day: "Select a collection day from 1 to 31.",
+    customer_collection_invalid_pair: "Set both the collection month and day.",
     hanbaiou_closing_select: "Select",
     hanbaiou_closing_on_demand: "0 (on demand / sale date)",
     hanbaiou_closing_month_end: "31 (month end)",
@@ -7610,6 +7652,27 @@ var TRANSLATIONS = {
     customer_access_hanbaiou_billing_help: "指定账单客户与结账日，用于销售数据中的开票客户与计划开票日期。",
     customer_access_hanbaiou_billing_code: "请款客户代码",
     customer_access_hanbaiou_closing_code: "客户结算代码",
+    customer_collection_title: "收款条件",
+    customer_collection_method: "收款方式",
+    customer_collection_month: "收款月份（结算月之后）",
+    customer_collection_day: "收款日期",
+    customer_collection_unset: "未设置",
+    customer_collection_cash: "现金",
+    customer_collection_cheque: "支票",
+    customer_collection_transfer: "银行转账",
+    customer_collection_bill: "票据",
+    customer_collection_this_month: "当月",
+    customer_collection_next_month: "次月",
+    customer_collection_second_month: "隔月",
+    customer_collection_months_after: "{months}个月后",
+    customer_collection_day_label: "{day}日",
+    customer_collection_month_end: "月末",
+    customer_collection_summary: "{month}{day}付款{method}",
+    customer_collection_help: "按固定月份和日期收款。31日表示每月月末。未设置的条件不会自动推断。",
+    customer_collection_invalid_method: "请确认收款方式。",
+    customer_collection_invalid_month: "请输入0至99个月的整数。",
+    customer_collection_invalid_day: "请选择1至31日。",
+    customer_collection_invalid_pair: "请同时设置收款月份和日期。",
     hanbaiou_closing_select: "请选择",
     hanbaiou_closing_on_demand: "0（随时／销售日）",
     hanbaiou_closing_month_end: "31（月末）",
@@ -8381,7 +8444,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1277";
+var APP_VERSION       = "v1.1.1278";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -53478,7 +53541,7 @@ async function loadCustomerAccessMgmt() {
   if (list) list.innerHTML = "<div class='empty'>" + esc(t("loading")) + "</div>";
   var includeInactive = !!(document.getElementById("customer-access-include-inactive") || {}).checked;
   var customerQuery = sb.from("sales_customers")
-    .select("id,source_code,source_customer_code,customer_name,customer_kana,price_rank_code,billing_customer_code,closing_code,fax,email,contact_name,contact_email,is_active")
+    .select("id,source_code,source_customer_code,customer_name,customer_kana,price_rank_code,billing_customer_code,closing_code,collection_method_code,collection_month_offset,collection_day,fax,email,contact_name,contact_email,is_active")
     .order("source_customer_code", { ascending: true })
     .limit(2000);
   if (!includeInactive) customerQuery = customerQuery.eq("is_active", true);
@@ -53949,6 +54012,14 @@ function renderCustomerAccessDetail() {
     html += "<label class='customer-hanbaiou-billing-field'><span>" + esc(t("customer_access_hanbaiou_closing_code")) + "</span><select id='customer-hanbaiou-closing-code'>" + hanbaiouClosingCodeOptionsHtml(customer.closing_code, true) + "</select></label>";
     html += "</div>";
     html += "<div class='customer-hanbaiou-billing-help'>" + esc(t("customer_access_hanbaiou_billing_help")) + "</div>";
+    html += "<div class='component-section-title'>" + esc(t("customer_collection_title")) + "</div>";
+    html += "<div class='customer-hanbaiou-billing-grid'>";
+    html += "<label class='customer-hanbaiou-billing-field'><span>" + esc(t("customer_collection_method")) + "</span><select id='customer-collection-method'>" + customerCollectionMethodOptionsHtml(customer.collection_method_code) + "</select></label>";
+    html += "<label class='customer-hanbaiou-billing-field'><span>" + esc(t("customer_collection_month")) + "</span><input id='customer-collection-month' type='number' min='0' max='99' step='1' inputmode='numeric' value='" + esc(customer.collection_month_offset == null ? "" : String(customer.collection_month_offset)) + "'></label>";
+    html += "<label class='customer-hanbaiou-billing-field'><span>" + esc(t("customer_collection_day")) + "</span><select id='customer-collection-day'>" + customerCollectionDayOptionsHtml(customer.collection_day) + "</select></label>";
+    html += "</div><div id='customer-collection-summary' class='customer-hanbaiou-billing-help customer-collection-summary' aria-live='polite'>" + esc(customerCollectionSummary(customer)) + "</div>";
+    html += "<div class='customer-hanbaiou-billing-help'>" + esc(t("customer_collection_help")) + "</div>";
+
     html += "</div>";
   }
   html += "<details class='customer-workspace-maintenance'><summary>" + esc(t("customer_workspace_maintenance")) + "</summary><p>" + esc(t("customer_workspace_maintenance_help")) + "</p><div class='customer-access-management-actions'>";
@@ -54076,8 +54147,10 @@ function bindCustomerAccessDetailEvents() {
   detail.querySelectorAll("[data-customer-default-shipping]").forEach(function(el) {
     el.addEventListener("change", updateCustomerAccessSaveState);
   });
-  detail.querySelectorAll("#customer-hanbaiou-billing-code, #customer-hanbaiou-closing-code").forEach(function(el) {
-    el.addEventListener(el.tagName === "INPUT" ? "input" : "change", updateCustomerAccessSaveState);
+  detail.querySelectorAll("#customer-hanbaiou-billing-code, #customer-hanbaiou-closing-code, #customer-collection-method, #customer-collection-month, #customer-collection-day").forEach(function(el) {
+    function changed() { syncCustomerCollectionSummary(); updateCustomerAccessSaveState(); }
+    el.addEventListener("change", changed);
+    el.addEventListener("input", changed);
   });
   detail.querySelectorAll("[data-customer-category]").forEach(function(el) {
     el.addEventListener("change", function() {
@@ -54194,6 +54267,53 @@ function collectCustomerAccessCategoryVisibility() {
   return visibility;
 }
 
+
+function customerCollectionMethodOptionsHtml(selected) {
+  var rows = [["", "unset"], ["1", "cash"], ["2", "cheque"], ["3", "transfer"], ["4", "bill"]];
+  return rows.map(function(row) { return "<option value='" + row[0] + "'" + (row[0] === String(selected || "") ? " selected" : "") + ">" + esc(t("customer_collection_" + row[1])) + "</option>"; }).join("");
+}
+
+function customerCollectionDayOptionsHtml(selected) {
+  var rows = [{ value: "", label: t("customer_collection_unset") }];
+  for (var day = 1; day <= 31; day += 1) rows.push({ value: String(day), label: day === 31 ? t("customer_collection_month_end") : tf("customer_collection_day_label", { day: day }) });
+  return rows.map(function(row) { return "<option value='" + row.value + "'" + (row.value === String(selected == null ? "" : selected) ? " selected" : "") + ">" + esc(row.label) + "</option>"; }).join("");
+}
+
+function collectHanbaiouCustomerCollectionSettings() {
+  var method = document.getElementById("customer-collection-method");
+  var month = document.getElementById("customer-collection-month");
+  var day = document.getElementById("customer-collection-day");
+  if (!method && !month && !day) return null;
+  return {
+    collection_method_code: String(method && method.value || "").trim() || null,
+    collection_month_offset: !month || month.value === "" ? null : Number(month.value),
+    collection_day: !day || day.value === "" ? null : Number(day.value)
+  };
+}
+
+function validateHanbaiouCustomerCollectionSettings(settings) {
+  if (!settings) return null;
+  if (settings.collection_method_code != null && !/^[1-4]$/.test(settings.collection_method_code)) return { message: t("customer_collection_invalid_method"), fieldId: "customer-collection-method" };
+  if (settings.collection_month_offset != null && (!Number.isInteger(settings.collection_month_offset) || settings.collection_month_offset < 0 || settings.collection_month_offset > 99)) return { message: t("customer_collection_invalid_month"), fieldId: "customer-collection-month" };
+  if (settings.collection_day != null && (!Number.isInteger(settings.collection_day) || settings.collection_day < 1 || settings.collection_day > 31)) return { message: t("customer_collection_invalid_day"), fieldId: "customer-collection-day" };
+  if ((settings.collection_month_offset == null) !== (settings.collection_day == null)) return { message: t("customer_collection_invalid_pair"), fieldId: settings.collection_month_offset == null ? "customer-collection-month" : "customer-collection-day" };
+  return null;
+}
+
+function customerCollectionSummary(customer) {
+  if (!customer || validateHanbaiouCustomerCollectionSettings(customer) || customer.collection_month_offset == null || customer.collection_day == null) return t("customer_collection_unset");
+  var months = customer.collection_month_offset;
+  var month = months === 0 ? t("customer_collection_this_month") : months === 1 ? t("customer_collection_next_month") : months === 2 ? t("customer_collection_second_month") : tf("customer_collection_months_after", { months: months });
+  var day = customer.collection_day === 31 ? t("customer_collection_month_end") : tf("customer_collection_day_label", { day: customer.collection_day });
+  var methodKey = { "1": "cash", "2": "cheque", "3": "transfer", "4": "bill" }[customer.collection_method_code];
+  return tf("customer_collection_summary", { month: month, day: day, method: methodKey ? " (" + t("customer_collection_" + methodKey) + ")" : "" });
+}
+
+function syncCustomerCollectionSummary() {
+  var target = document.getElementById("customer-collection-summary");
+  if (target) target.textContent = customerCollectionSummary(collectHanbaiouCustomerCollectionSettings());
+}
+
 function collectHanbaiouCustomerBillingSettings() {
   var billingCodeInput = document.getElementById("customer-hanbaiou-billing-code");
   var closingCodeInput = document.getElementById("customer-hanbaiou-closing-code");
@@ -54223,6 +54343,7 @@ function customerAccessDisplayDraftSignature() {
     customerId: String(currentCustomerAccessCustomer.id || ""),
     priceRankCode: rankSelect ? (rankSelect.value || "") : (currentCustomerAccessCustomer.price_rank_code || ""),
     hanbaiouBilling: collectHanbaiouCustomerBillingSettings(),
+    hanbaiouCollection: collectHanbaiouCustomerCollectionSettings(),
     settings: collectCustomerDisplaySettings(),
     categories: collectCustomerAccessCategoryVisibility()
   });
@@ -54381,6 +54502,14 @@ async function saveCustomerAccessSettings() {
     if (invalidField) invalidField.focus();
     return;
   }
+  var hanbaiouCollection = collectHanbaiouCustomerCollectionSettings();
+  var collectionError = validateHanbaiouCustomerCollectionSettings(hanbaiouCollection);
+  if (collectionError) {
+    alert(collectionError.message);
+    var collectionField = document.getElementById(collectionError.fieldId);
+    if (collectionField) collectionField.focus();
+    return;
+  }
   customerAccessSettingsSaving = true;
   updateCustomerAccessSaveState();
   var customerId = currentCustomerAccessCustomer.id;
@@ -54394,16 +54523,28 @@ async function saveCustomerAccessSettings() {
     var customerR = await sb.from("sales_customers")
       .update({ price_rank_code: nextRankCode || null, updated_at: new Date().toISOString() })
       .eq("id", customerId)
-      .select("id,source_code,source_customer_code,customer_name,customer_kana,price_rank_code,billing_customer_code,closing_code,is_active")
+      .select("id,source_code,source_customer_code,customer_name,customer_kana,price_rank_code,billing_customer_code,closing_code,collection_method_code,collection_month_offset,collection_day,is_active")
       .maybeSingle();
     if (customerR.error) throw customerR.error;
     var billingResult = null;
     if (hanbaiouBilling) {
-      var billingR = await sb.rpc("save_hanbaiou_customer_billing_settings", {
-        target_sales_customer_id: customerId,
-        target_billing_customer_code: hanbaiouBilling.billing_customer_code,
-        target_closing_code: hanbaiouBilling.closing_code
-      });
+      var billingR;
+      if (hanbaiouCollection) {
+        billingR = await sb.rpc("save_hanbaiou_customer_collection_settings", {
+          target_sales_customer_id: customerId,
+          target_collection_method_code: hanbaiouCollection.collection_method_code,
+          target_collection_month_offset: hanbaiouCollection.collection_month_offset,
+          target_collection_day: hanbaiouCollection.collection_day,
+          target_billing_customer_code: hanbaiouBilling.billing_customer_code,
+          target_closing_code: hanbaiouBilling.closing_code
+        });
+      } else {
+        billingR = await sb.rpc("save_hanbaiou_customer_billing_settings", {
+          target_sales_customer_id: customerId,
+          target_billing_customer_code: hanbaiouBilling.billing_customer_code,
+          target_closing_code: hanbaiouBilling.closing_code
+        });
+      }
       if (billingR.error) throw billingR.error;
       billingResult = Array.isArray(billingR.data) ? (billingR.data[0] || {}) : (billingR.data || {});
     }
@@ -54411,6 +54552,7 @@ async function saveCustomerAccessSettings() {
     var r = await sb.from("customer_display_settings").upsert(data, { onConflict: "sales_customer_id" });
     if (r.error) throw r.error;
     await saveCustomerAccessCategoryVisibility(customerId, categoryVisibility);
+    if (!currentCustomerAccessCustomer || String(currentCustomerAccessCustomer.id) !== String(customerId)) return;
     currentCustomerAccessCustomer = updatedCustomer;
     customerAccessRows = customerAccessRows.map(function(row) {
       return String(row.id) === String(customerId) ? Object.assign({}, row, updatedCustomer) : row;
