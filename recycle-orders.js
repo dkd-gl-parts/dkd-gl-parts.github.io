@@ -1,17 +1,26 @@
 (function () {
   "use strict";
-  var state = { dialog: null, settings: null, cart: [], dirty: false, detailDirty: false, busy: false, pending: null, bindingReview: null, settingsSeq: 0, epoch: 0, search: 0, postal: 0, list: 0, view: "entry", actor: "", rows: [], offset: 0 };
+  var state = { dialog: null, settings: null, cart: [], dirty: false, detailDirty: false, busy: false, pending: null, bindingReview: null, settingsSeq: 0, epoch: 0, search: 0, postal: 0, list: 0, view: "entry", actor: "", rows: [], listQuery: null, offset: 0 };
   function actor() { return typeof currentUser !== "undefined" && currentUser ? String(currentUser.id || currentUser.email || "") : ""; }
   function allowed() { return typeof canManageSalesOrders === "function" && canManageSalesOrders(); }
   function e(value) { return String(value == null ? "" : value).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function yen(value) { return value == null ? "未確定" : Number(value).toLocaleString("ja-JP") + "円"; }
   function kind(value) { return typeof productKindLabel === "function" ? productKindLabel(value) : ({ rebuilt: "リビルト品", aftermarket_new: "社外新品", used_core: "中古コア" }[value] || value); }
-  function field(id) { var el = document.getElementById("recycle-" + id); return el ? el.value.trim() : ""; }
+  function field(id) { var el = document.getElementById("recycle-" + id); return el ? String(el.value == null ? "" : el.value).trim() : ""; }
   function checked(id) { var el = document.getElementById("recycle-" + id); return !!(el && el.checked); }
+  function feeReady() { var p = state.settings && state.settings.fee_conditions; return !!(state.settings && state.settings.fee_policy_version === 2 && p && p.policy_version === 2 && Number.isFinite(p.factoring_rate_percent) && Number.isFinite(p.sales_fee_rate_percent)); }
+  function routeLabel(route) { return route === "normal" ? "通常受注" : route === "marketplace" ? "MP経由" : "未区分（従来方式）"; }
+  function feeConditions(cfg) { var p = cfg.fee_policy_version === 2 && cfg.fee_conditions; return p ? "決済 " + p.factoring_rate_percent + "％ ／ MP " + p.sales_fee_rate_percent + "％（MP経由のみ）" : "従来方式 " + cfg.fee_rate_percent + "％"; }
+  function feeBreakdownText(r) { return r.order_route === "normal" || r.order_route === "marketplace" ? "決済 " + yen(r.estimated_factoring_fee_jpy) + " ／ MP " + yen(r.estimated_marketplace_fee_jpy) : "従来方式・内訳未区分 " + yen(r.estimated_fee_jpy); }
+  function updateRouteSummary() {
+    var el = document.getElementById("recycle-route-summary"); if (!el) return;
+    var p = state.settings && state.settings.fee_conditions;
+    el.textContent = p ? routeLabel(checked("marketplace") ? "marketplace" : "normal") + " ／ 決済 " + p.factoring_rate_percent + "％・" + (checked("marketplace") ? "MP " + p.sales_fee_rate_percent + "％" : "MP手数料なし") : "手数料条件を確認できません。";
+  }
   function uuid() { return crypto.randomUUID(); }
   function localTime() { var d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); }
   function monthDate(last) { var d = new Date(); return new Date(Date.UTC(d.getFullYear(), d.getMonth() + (last ? 1 : 0), last ? 0 : 1)).toISOString().slice(0, 10); }
-  function status(text, error) { ["recycle-message","recycle-detail-message"].forEach(function(id){var el=document.getElementById(id);if(el){el.textContent=text;el.classList.toggle("error",!!error);if(error&&id==="recycle-message"&&state.view==="settings"&&el.scrollIntoView)el.scrollIntoView({block:"nearest"});}}); }
+  function status(text, error) { ["recycle-message","recycle-detail-message"].forEach(function(id){var el=document.getElementById(id);if(el){el.textContent=text;el.classList.toggle("error",!!error);if(error&&id==="recycle-message"&&state.dialog&&state.dialog.open&&el.scrollIntoView)el.scrollIntoView({block:"nearest"});}}); }
   function input(label, id, type, value, extra) { return "<label><span>" + e(label) + "</span><input id='recycle-" + id + "' type='" + (type || "text") + "' value='" + e(value == null ? "" : value) + "' " + (extra || "") + "></label>"; }
   function button(text, action, extra) { return "<button type='button' data-recycle-action='" + action + "' " + (extra || "") + ">" + e(text) + "</button>"; }
   function option(value, label, selected) { return "<option value='" + e(value) + "'" + (value === selected ? " selected" : "") + ">" + e(label) + "</option>"; }
@@ -42,10 +51,12 @@
   }
   function setButtons() {
     if (state.dialog) state.dialog.querySelectorAll("[data-recycle-write]").forEach(function (b) { b.disabled = state.busy || !!state.pending || (b.dataset.recycleAction === "place" && !state.cart.length); });
-    var entry = document.getElementById("recycle-entry-fields"); if (entry) entry.disabled = !state.settings || !state.settings.sales_customer_id || state.busy || !!state.pending;
+    var entry = document.getElementById("recycle-entry-fields"); if (entry) entry.disabled = !state.settings || !state.settings.sales_customer_id || !feeReady() || state.busy || !!state.pending;
     ["recycle-back", "recycle-list-open", "recycle-settings-open"].forEach(function (id) { var b = document.getElementById(id); if (b) b.disabled = !entry || state.busy || !!state.pending; });
     document.querySelectorAll("[data-recycle-detail-write]").forEach(function (b) { b.disabled = state.busy || !!state.pending; });
     var check = document.getElementById("recycle-check-result"); if (check) check.hidden = !state.pending;
+    var csv = state.dialog && state.dialog.querySelector("[data-recycle-action='csv']"); if (csv) csv.disabled = !state.rows.length;
+    ["from","to","list-route"].forEach(function (id) { var el = document.getElementById("recycle-" + id); if (el) el.disabled = state.busy || !!state.pending; });
     var settings = document.getElementById("recycle-settings-view"), locked = state.busy || !!state.pending || !!state.bindingReview;
     if (settings) {
       settings.querySelectorAll("input,select,textarea").forEach(function (el) { if (!el.closest("#recycle-binding-confirm")) el.disabled = locked; });
@@ -80,8 +91,8 @@
     if (!state.dialog) {
       state.dialog = document.createElement("dialog"); state.dialog.className = "recycle-dialog"; state.dialog.setAttribute("aria-labelledby", "recycle-title"); document.body.appendChild(state.dialog);
       state.dialog.addEventListener("cancel", function (event) { event.preventDefault(); if (state.view !== "entry" && !state.busy && !state.pending) showView("entry"); else close(); });
-      state.dialog.addEventListener("input", function (event) { if (event.target.closest("#recycle-entry")) state.dirty = true; if (event.target.closest("#recycle-settings-view")) settingsEdited(event); });
-      state.dialog.addEventListener("change", function (event) { if (event.target.id.indexOf("recycle-core-") === 0) { rememberCart(); updateReturnField(); } if (event.target.closest("#recycle-settings-view")) settingsEdited(event); });
+      state.dialog.addEventListener("input", function (event) { if (event.target.closest("#recycle-entry")) state.dirty = true; if (event.target.closest("#recycle-settings-view")) settingsEdited(event); if (["recycle-from","recycle-to"].includes(event.target.id)) clearList(); });
+      state.dialog.addEventListener("change", function (event) { if (event.target.id.indexOf("recycle-core-") === 0) { rememberCart(); updateReturnField(); } if (event.target.id === "recycle-marketplace") { state.dirty = true; updateRouteSummary(); document.getElementById("recycle-preview").textContent = "受注区分が変更されています。"; } if (event.target.id === "recycle-list-route") { state.offset = 0; loadList(); } if (event.target.closest("#recycle-settings-view")) settingsEdited(event); });
       state.dialog.addEventListener("keydown", function (event) { if (event.key === "Enter" && event.target.id === "recycle-product-query") { event.preventDefault(); runAction("products"); } });
       state.dialog.addEventListener("click", function (event) { var b = event.target.closest("[data-recycle-action]"); if (b) runAction(b.dataset.recycleAction, b); });
     }
@@ -97,18 +108,18 @@
     body.innerHTML = "<div id='recycle-customer-summary'></div><div id='recycle-setup-note'></div>" +
       "<section id='recycle-entry' aria-label='受注入力'>" + entryHtml(cfg) + "</section>" +
       "<section id='recycle-settings-view' aria-label='集約先・手数料の設定' hidden>" + settingsHtml(cfg) + "</section>" +
-      "<section id='recycle-settlements-view' class='recycle-month' aria-label='精算一覧' hidden><h3>受注日で確認する精算一覧</h3><p>受注日で集計します。精算月・売上月とは分けて確認してください。</p><div class='recycle-grid'>" + input("開始日", "from", "date", monthDate(false)) + input("終了日", "to", "date", monthDate(true)) + "</div><div class='recycle-actions'>" + button("一覧を更新", "list") + button("確認用CSV", "csv") + "</div><div id='recycle-totals'></div><div id='recycle-list'></div><div class='recycle-actions'>" + button("前の100件", "previous") + button("次の100件", "next") + "</div></section>";
-    state.cart = []; state.products = []; state.dirty = false; state.offset = 0; state.rows = []; refreshSettings(); renderCart(); setButtons(); status(""); showView("entry", false);
+      "<section id='recycle-settlements-view' class='recycle-month' aria-label='精算一覧' hidden><h3>受注日で確認する精算一覧</h3><div class='recycle-list-filters'>" + input("開始日", "from", "date", monthDate(false)) + input("終了日", "to", "date", monthDate(true)) + "<label><span>受注区分</span><select id='recycle-list-route'><option value='all'>すべて</option><option value='normal'>通常受注</option><option value='marketplace'>MP経由</option><option value='unknown'>未区分（従来方式）</option></select></label></div><div class='recycle-actions'>" + button("一覧を更新", "list") + button("確認用CSV", "csv") + "</div><div id='recycle-totals'></div><div id='recycle-list'></div><div class='recycle-actions'>" + button("前の100件", "previous") + button("次の100件", "next") + "</div></section>";
+    state.cart = []; state.products = []; state.dirty = false; state.offset = 0; state.rows = []; state.listQuery = null; refreshSettings(); renderCart(); setButtons(); status(""); showView("entry", false);
     document.getElementById(cfg.sales_customer_id ? "recycle-external" : "recycle-title").focus({ preventScroll: true });
   }
   function refreshSettings() {
     var cfg = state.settings;
     clearBindingReview();
-    document.getElementById("recycle-customer-summary").innerHTML = "<div class='recycle-summary recycle-customer'><div><span>受注先</span><strong>" + e(cfg.sales_customer_id ? cfg.customer_name || "得意先を確認してください" : "未設定") + "</strong>" + (cfg.customer_code ? "<small>得意先コード " + e(cfg.customer_code) + "</small>" : "") + "</div><span>Recycle+成立価格で登録 ／ 手数料 " + e(cfg.fee_rate_percent) + "%" + (cfg.provisional ? "（暫定・見込）" : "") + "</span></div>";
-    document.getElementById("recycle-setup-note").innerHTML = cfg.sales_customer_id ? "" : "<div class='recycle-note'><p>受注先が未設定です。登録済みのブロードリーフの得意先を選択してください。</p>" + button("設定を開く", "settings") + "</div>";
+    document.getElementById("recycle-customer-summary").innerHTML = "<div class='recycle-summary recycle-customer'><div><span>受注先</span><strong>" + e(cfg.sales_customer_id ? cfg.customer_name || "得意先を確認してください" : "未設定") + "</strong>" + (cfg.customer_code ? "<small>得意先コード " + e(cfg.customer_code) + "</small>" : "") + "</div><span>共通単価 ／ " + e(feeConditions(cfg)) + (cfg.provisional ? "（見込）" : "") + "</span></div>";
+    document.getElementById("recycle-setup-note").innerHTML = !cfg.sales_customer_id ? "<div class='recycle-note'><p>受注先が未設定です。登録済みのブロードリーフの得意先を選択してください。</p>" + button("設定を開く", "settings") + "</div>" : !feeReady() ? "<p class='recycle-note' role='alert'>受注区分ごとの手数料条件を確認できません。最新の設定を確認してください。</p>" : "";
     document.getElementById("recycle-settings-view").innerHTML = settingsHtml(cfg);
     document.getElementById("recycle-entry-fields").disabled = !cfg.sales_customer_id;
-    updateCustomerInfo(); setButtons();
+    updateCustomerInfo(); updateRouteSummary(); setButtons();
   }
   function showView(view, focus) {
     clearBindingReview();
@@ -124,17 +135,20 @@
     if (focus !== false) document.getElementById("recycle-title").focus();
   }
   function settingsHtml(cfg) {
-    var conditions = cfg.fee_basis === "transaction_total" ? "取引税込総額" : "商品税抜額" + (cfg.include_shipping ? "＋送料" : "・送料除外") + (cfg.include_core ? "＋コア代" : "・コア代除外");
+    var currentFees = cfg.fee_policy_version === 2 && cfg.fee_conditions;
+    var conditions = currentFees ? "決済：取引税抜額 ／ MP：商品税込額（送料・コア代を除外、MP経由のみ）" : cfg.fee_basis === "transaction_total" ? "取引税込総額" : "商品税抜額" + (cfg.include_shipping ? "＋送料" : "・送料除外") + (cfg.include_core ? "＋コア代" : "・コア代除外");
     var html = "<div class='recycle-settings'><h3>集約先・手数料条件</h3><p>現在：" + e(conditions) + "</p><p>変更は新しい受注に適用します。過去受注は登録時の条件を保持します。</p>";
     if (!cfg.can_configure) return html + "<p>設定の変更はシステム管理者へ依頼してください。</p></div>";
     var candidates = Array.isArray(cfg.customer_candidates) ? cfg.customer_candidates : [];
     html += "<p class='recycle-binding-policy'>通常は初回に一度設定します。変更しても過去の受注先は変更しません。</p>";
     if (cfg.customer_binding_guard_version !== 1) html += "<p class='recycle-note' role='alert'>紐付けの安全確認を利用できません。最新の設定を確認してください。</p>";
     else if (!candidates.length) html += "<p class='recycle-note' role='alert'>紐付けできる得意先がありません。得意先管理で販売王コードと登録内容を確認してください。</p>";
-    html += "<div class='recycle-grid'><label><span>受注先（登録済み候補）</span><select id='recycle-customer-id'><option value=''>得意先を選択してください</option>" + candidates.map(function (c) { return option(String(c.id), c.code + " ／ " + c.name, String(cfg.sales_customer_id || "")); }).join("") + "</select></label>" + input("手数料率（％）", "rate", "number", cfg.fee_rate_percent, "min='0' max='100' step='0.0001'") + "</div><div id='recycle-customer-info' class='recycle-binding-info'></div><div class='recycle-grid'>" +
-      "<label><span>算定対象</span><select id='recycle-basis'>" + option("product_net", "値引後の商品税抜額", cfg.fee_basis) + option("transaction_total", "取引税込総額", cfg.fee_basis) + "</select></label>" +
-      "<label><span>円未満の端数</span><select id='recycle-rounding'>" + option("floor", "切捨", cfg.rounding) + option("round", "四捨五入", cfg.rounding) + option("ceil", "切上", cfg.rounding) + "</select></label></div>" +
-      "<div class='recycle-checks'><label><input id='recycle-include-shipping' type='checkbox'" + (cfg.include_shipping ? " checked" : "") + ">商品額に送料を含む</label><label><input id='recycle-include-core' type='checkbox'" + (cfg.include_core ? " checked" : "") + ">商品額にコア代を含む</label><label><input id='recycle-provisional' type='checkbox'" + (cfg.provisional ? " checked" : "") + ">暫定条件</label></div>" + input("条件・確認根拠", "policy-note", "text", cfg.note, "maxlength='1000'") + "<div class='recycle-actions'>" + button("設定内容を確認して保存", "save_settings", "data-recycle-write") + button("最新の設定を確認", "reload_settings") + "</div><div id='recycle-binding-confirm' hidden></div><p class='recycle-note'>通常の掛売CSVへは出力しません。締め日以降の受注確認は、請求機能が整うまでの暫定チェックです。</p></div>";
+    html += "<div class='recycle-grid'><label><span>受注先（登録済み候補）</span><select id='recycle-customer-id'><option value=''>得意先を選択してください</option>" + candidates.map(function (c) { return option(String(c.id), c.code + " ／ " + c.name, String(cfg.sales_customer_id || "")); }).join("") + "</select></label>" + (currentFees ? "<dl class='recycle-fee-rates'><div><dt>決済手数料率</dt><dd>" + e(currentFees.factoring_rate_percent) + "％</dd></div><div><dt>MP販売手数料率</dt><dd>" + e(currentFees.sales_fee_rate_percent) + "％</dd></div></dl>" : input("手数料率（％）", "rate", "number", cfg.fee_rate_percent, "min='0' max='100' step='0.0001'")) + "</div><div id='recycle-customer-info' class='recycle-binding-info'></div><div class='recycle-grid'>";
+    if (!currentFees) html += "<label><span>算定対象</span><select id='recycle-basis'>" + option("product_net", "値引後の商品税抜額", cfg.fee_basis) + option("transaction_total", "取引税込総額", cfg.fee_basis) + "</select></label>";
+    html += "<label><span>円未満の端数（見込）</span><select id='recycle-rounding'>" + option("floor", "切捨", cfg.rounding) + option("round", "四捨五入", cfg.rounding) + option("ceil", "切上", cfg.rounding) + "</select></label></div><div class='recycle-checks'>";
+    if (!currentFees) html += "<label><input id='recycle-include-shipping' type='checkbox'" + (cfg.include_shipping ? " checked" : "") + ">商品額に送料を含む</label><label><input id='recycle-include-core' type='checkbox'" + (cfg.include_core ? " checked" : "") + ">商品額にコア代を含む</label>";
+    var note = currentFees && /^暫定10%。商品税抜額/.test(cfg.note || "") ? currentFees.note : cfg.note;
+    html += "<label><input id='recycle-provisional' type='checkbox'" + (cfg.provisional ? " checked" : "") + ">暫定条件</label></div>" + input("条件・確認根拠", "policy-note", "text", note, "maxlength='1000'") + "<div class='recycle-actions'>" + button("設定内容を確認して保存", "save_settings", "data-recycle-write") + button("最新の設定を確認", "reload_settings") + "</div><div id='recycle-binding-confirm' hidden></div><p class='recycle-note'>通常の掛売CSVへは出力しません。締め日以降の受注確認は、請求機能が整うまでの暫定チェックです。</p></div>";
     return html;
   }
   function selectedCustomer() {
@@ -157,7 +171,7 @@
     setButtons();
   }
   function settingsPayload() {
-    return { revision: state.settings.revision, sales_customer_id: field("customer-id") || null, fee_rate_percent: field("rate"), fee_basis: field("basis"), rounding: field("rounding"), include_shipping: checked("include-shipping"), include_core: checked("include-core"), provisional: checked("provisional"), note: field("policy-note") };
+    return { revision: state.settings.revision, sales_customer_id: field("customer-id") || null, fee_rate_percent: feeReady() ? state.settings.fee_rate_percent : field("rate"), fee_basis: feeReady() ? state.settings.fee_basis : field("basis"), rounding: field("rounding"), include_shipping: feeReady() ? state.settings.include_shipping : checked("include-shipping"), include_core: feeReady() ? state.settings.include_core : checked("include-core"), provisional: checked("provisional"), note: field("policy-note") };
   }
   async function settingsSaved() {
     var epoch = state.epoch, seq = ++state.settingsSeq, savingActor = state.actor, cfg = await rpc("settings");
@@ -201,7 +215,7 @@
     var prefs = typeof SHIPPING_PREFECTURES !== "undefined" ? SHIPPING_PREFECTURES : [];
     return "<fieldset id='recycle-entry-fields'" + (!cfg.sales_customer_id ? " disabled" : "") + "><legend class='recycle-sr-only'>ブロードリーフの受注入力</legend><div class='customer-order-workspace recycle-workspace'><div class='customer-order-cart-pane'><div class='customer-order-section-head'><div><h3>注文内容</h3><p>Recycle+で成立した商品・数量・税抜単価を入力してください。</p></div></div><div class='recycle-grid'>" +
       input("Recycle+注文番号（必須）", "external", "text", "", "maxlength='120' required") + input("元の発注会社（参考）", "buyer", "text", "", "maxlength='200'") +
-      "</div><section class='recycle-product-picker' aria-labelledby='recycle-products-title'><h4 id='recycle-products-title'>商品を追加</h4><div class='recycle-search'>" + input("純正品番・メーカー品番", "product-query", "search", "", "maxlength='80' placeholder='品番を入力して検索'") + button("商品を検索", "products") + "</div><div id='recycle-products' aria-live='polite'></div></section><div id='recycle-cart' class='customer-order-cart-list'></div><div class='recycle-grid recycle-fees'>" +
+      "</div><div class='recycle-route'><label><input id='recycle-marketplace' type='checkbox'>マーケットプレイス経由</label><span id='recycle-route-summary' aria-live='polite'></span></div><section class='recycle-product-picker' aria-labelledby='recycle-products-title'><h4 id='recycle-products-title'>商品を追加</h4><div class='recycle-search'>" + input("純正品番・メーカー品番", "product-query", "search", "", "maxlength='80' placeholder='品番を入力して検索'") + button("商品を検索", "products") + "</div><div id='recycle-products' aria-live='polite'></div></section><div id='recycle-cart' class='customer-order-cart-list'></div><div class='recycle-grid recycle-fees'>" +
       input("成立した送料", "shipping", "number", 0, "min='0' max='9999999' step='1'") +
       "<label><span>送料の税</span><select id='recycle-shipping-tax'><option value='excluded'>税別</option><option value='included'>税込</option></select></label></div><p id='recycle-preview' class='recycle-preview' role='status'>登録前に価格・在庫・合計を確認します。</p></div><aside class='customer-order-shipping-pane'><div class='customer-order-section-head compact'><div><h3>お届け先</h3><p>注文ごとの直送先を入力してください。</p></div></div><div class='recycle-grid'>" +
       input("直送先会社名", "company", "text", "", "maxlength='120' autocomplete='organization'") + input("宛名・担当者", "recipient", "text", "", "maxlength='80' autocomplete='name'") +
@@ -226,10 +240,11 @@
   function updateReturnField() { document.getElementById("recycle-return-field").hidden = !hasCoreReturn(); }
   function rememberCart() { state.cart.forEach(function (p, i) { p.quantity = field("quantity-" + i); p.price = field("price-" + i); p.handling = field("core-" + i) || "standard"; }); }
   function orderPayload() {
+    if (!feeReady()) throw new Error("受注区分ごとの手数料条件を確認できません。最新の設定を確認してください。");
     rememberCart();
     if (!field("external") || !state.cart.length || (!field("company") && !field("recipient"))) throw new Error("注文番号・宛名・商品を入力してください。");
     var carrier = field("carrier").split("|"), returnCarrier = field("return-carrier").split("|");
-    return { external_order_number: field("external"), buyer_reference: field("buyer"), items: state.cart.map(function (p) { return { dkd_shohin_id: p.dkd_shohin_id, product_kind: p.product_kind, quantity: money(p.quantity, "数量"), unit_price_jpy: money(p.price, "成立単価"), core_return_handling: p.handling }; }),
+    return { external_order_number: field("external"), buyer_reference: field("buyer"), is_marketplace: checked("marketplace"), items: state.cart.map(function (p) { return { dkd_shohin_id: p.dkd_shohin_id, product_kind: p.product_kind, quantity: money(p.quantity, "数量"), unit_price_jpy: money(p.price, "成立単価"), core_return_handling: p.handling }; }),
       shipping_address: { destination_type: "address", company_name: field("company"), recipient_name: field("recipient"), phone_number: field("phone"), postal_code: field("postal"), prefecture_code: field("prefecture"), prefecture_name: document.getElementById("recycle-prefecture").selectedOptions[0].text, address_line_1: field("address1"), address_line_2: field("address2") },
       shipping_method: { carrier_name: carrier[0], service_name: carrier[1] }, core_return_shipping_method: hasCoreReturn() && returnCarrier[0] ? { carrier_name: returnCarrier[0], service_name: returnCarrier[1] } : null, shipping_fee_jpy: money(field("shipping"), "送料"), shipping_tax_type: field("shipping-tax"), requested_delivery_date: field("delivery-date") || null, delivery_time: field("delivery-time"), note: field("note") };
   }
@@ -283,32 +298,45 @@
     try { quote = await rpc("preview", payload); if (epoch !== state.epoch || !ownerCurrent()) return; }
     catch (error) { status(error.message, true); return; }
     finally { state.busy = false; setButtons(); }
-    document.getElementById("recycle-preview").textContent = "商品 " + yen(quote.subtotal_jpy) + " ／ 送料 " + yen(quote.shipping_fee_jpy) + " ／ 消費税 " + yen(quote.tax_jpy) + " ／ 合計 " + yen(quote.total_jpy);
-    if (!window.confirm("ブロードリーフのRecycle+受注として合計 " + yen(quote.total_jpy) + " で登録します。決済完了は登録後に別途確認します。")) return;
+    var fees = quote.fee_breakdown, route = payload.is_marketplace ? "marketplace" : "normal";
+    if (!fees || !quote.recycle_policy || quote.recycle_policy.policy_version !== 2 || fees.is_marketplace !== payload.is_marketplace || fees.order_route !== route ||
+      ![quote.total_jpy,fees.estimated_factoring_fee_jpy,fees.estimated_marketplace_fee_jpy,fees.estimated_fee_jpy].every(Number.isSafeInteger) ||
+      fees.estimated_factoring_fee_jpy < 0 || fees.estimated_marketplace_fee_jpy < 0 || fees.estimated_fee_jpy !== fees.estimated_factoring_fee_jpy + fees.estimated_marketplace_fee_jpy) throw new Error("受注区分と手数料の確認結果が一致しません。最新の設定を確認してください。");
+    var confirmation = routeLabel(route) + " ／ 合計 " + yen(quote.total_jpy) + "\n手数料見込：" + feeBreakdownText(fees) + " ／ 合計 " + yen(fees.estimated_fee_jpy) + "\n差引受取見込 " + yen(quote.total_jpy - fees.estimated_fee_jpy);
+    document.getElementById("recycle-preview").textContent = confirmation;
+    if (!window.confirm(confirmation + "\nこの区分・金額でブロードリーフのRecycle+受注を登録します。決済完了は登録後に別途確認します。")) { status("受注は登録していません。入力内容を確認できます。"); return; }
     await mutate("place", { order: payload, preview_token: quote.preview_token }, async function (data) {
       state.dirty = false; state.cart = []; state.dialog.close(); state.epoch++;
       await enterSalesOrderMgmt(); await loadSalesOrderDetail(data.id);
     });
   }
+  function clearList() {
+    state.list++; state.rows = []; state.listQuery = null; state.offset = 0;
+    var totals = document.getElementById("recycle-totals"), list = document.getElementById("recycle-list");
+    if (totals) totals.textContent = ""; if (list) list.textContent = "集計条件が変更されています。"; setButtons();
+  }
   async function loadList() {
     var epoch = state.epoch, seq = ++state.list; state.rows = []; status("精算一覧を読み込んでいます。");
+    state.listQuery = null; setButtons();
+    var query = { from: field("from"), to: field("to"), route: field("list-route") || "all", offset: state.offset };
     document.getElementById("recycle-totals").textContent = "";
     document.getElementById("recycle-list").textContent = "精算一覧を読み込んでいます。";
     try {
-      var data = await rpc("list", { from: field("from"), to: field("to"), offset: state.offset }); if (seq !== state.list || epoch !== state.epoch || !ownerCurrent()) return;
-      state.rows = data.rows || [];
-      document.getElementById("recycle-totals").textContent = "取消を除く " + data.count + "件 ／ 取引総額 " + yen(data.gross_jpy) + " ／ 手数料見込 " + yen(data.estimated_fee_jpy) + " ／ 確定手数料 " + yen(data.actual_fee_jpy) + " ／ 手数料未確定 " + data.unconfirmed_fee_count + "件";
-      document.getElementById("recycle-list").innerHTML = state.rows.map(function (o) { var r = o.recycle; return "<article class='recycle-order-row'><div><strong>" + e(r.external_order_number) + "</strong><span>" + e(o.shipping_address.company_name || o.shipping_address.recipient_name || "-") + "</span><small>" + e(o.order_number) + " / " + e(r.payment_status === "confirmed" ? "決済確認済み" : r.payment_status === "unconfirmed" ? "決済確認待ち" : r.payment_status === "refunded" ? "返金確認済み" : "返金確認待ち") + " / " + e(o.status) + "</small></div><div>取引 " + e(yen(o.total_jpy)) + "<small>手数料 " + e(yen(r.actual_fee_jpy == null ? r.estimated_fee_jpy : r.actual_fee_jpy)) + (r.actual_fee_jpy == null ? "（見込）" : "（確定）") + "</small><small>差引受取 " + e(yen(r.actual_receipt_jpy == null ? r.estimated_receipt_jpy : r.actual_receipt_jpy)) + "</small></div>" + button("受注を開く", "open_order", "data-id='" + o.id + "'") + "</article>"; }).join("") || "<p>この期間の受注はありません。</p>";
+      var data = await rpc("list", query); if (seq !== state.list || epoch !== state.epoch || !ownerCurrent() || query.from !== field("from") || query.to !== field("to") || query.route !== (field("list-route") || "all")) return;
+      state.rows = data.rows || []; state.listQuery = query;
+      document.getElementById("recycle-totals").innerHTML = "<p>取消を除く " + e(data.count) + "件 ／ 通常 " + e(data.normal_count || 0) + "件・MP " + e(data.marketplace_count || 0) + "件・未区分 " + e(data.unknown_count || 0) + "件</p><dl class='recycle-totals-grid'><div><dt>取引総額</dt><dd>" + e(yen(data.gross_jpy)) + "</dd></div><div><dt>手数料見込</dt><dd>" + e(yen(data.estimated_fee_jpy)) + "</dd></div><div><dt>確定手数料</dt><dd>" + e(yen(data.actual_fee_jpy)) + "</dd></div><div><dt>手数料未確定</dt><dd>" + e(data.unconfirmed_fee_count) + "件</dd></div></dl><p class='recycle-fee-subtotals'>見込内訳：決済 " + e(yen(data.estimated_factoring_fee_jpy)) + " ／ MP " + e(yen(data.estimated_marketplace_fee_jpy)) + (data.unknown_count ? " ／ 従来方式・未区分 " + e(yen(data.estimated_legacy_fee_jpy)) : "") + "</p>";
+      document.getElementById("recycle-list").innerHTML = state.rows.map(function (o) { var r = o.recycle; return "<article class='recycle-order-row'><div><strong>" + e(r.external_order_number) + "</strong><span class='recycle-route-label'>" + e(routeLabel(r.order_route)) + "</span><span>" + e(o.shipping_address.company_name || o.shipping_address.recipient_name || "-") + "</span><small>" + e(o.order_number) + " / " + e(r.payment_status === "confirmed" ? "決済確認済み" : r.payment_status === "unconfirmed" ? "決済確認待ち" : r.payment_status === "refunded" ? "返金確認済み" : "返金確認待ち") + " / " + e(o.status) + "</small></div><div>取引 " + e(yen(o.total_jpy)) + "<small>手数料 " + e(yen(r.actual_fee_jpy == null ? r.estimated_fee_jpy : r.actual_fee_jpy)) + (r.actual_fee_jpy == null ? "（見込）" : "（確定）") + "</small><small>見込内訳：" + e(feeBreakdownText(r)) + "</small><small>差引受取 " + e(yen(r.actual_receipt_jpy == null ? r.estimated_receipt_jpy : r.actual_receipt_jpy)) + (r.actual_receipt_jpy == null ? "（見込）" : "（確定）") + "</small></div>" + button("受注を開く", "open_order", "data-id='" + o.id + "'") + "</article>"; }).join("") || "<p>この条件の受注はありません。</p>";
+      setButtons();
       if (state.view === "settlements") status("受注日で集計しています。精算月・売上月とは分けて確認してください。");
     } catch (error) { if (seq === state.list && epoch === state.epoch && ownerCurrent()) { document.getElementById("recycle-list").textContent = "精算一覧を取得できませんでした。「一覧を更新」から再度読み込んでください。"; if (state.view === "settlements") status(error.message, true); } }
   }
   function csvCell(v) { var s = String(v == null ? "" : v); if (/^[=+@\-\t\r]/.test(s)) s = "'" + s; return '"' + s.replace(/"/g, '""') + '"'; }
   function downloadCsv() {
-    if (!state.rows.length) { status("先に一覧を読み込んでください。", true); return; }
-    var rows = [["D-CATS注文番号", "Recycle+注文番号", "直送先", "取引総額", "手数料見込", "手数料確定", "差引受取確定", "決済状態"]];
-    state.rows.forEach(function (o) { var r = o.recycle; rows.push([o.order_number, r.external_order_number, o.shipping_address.company_name || o.shipping_address.recipient_name, o.total_jpy, r.estimated_fee_jpy, r.actual_fee_jpy, r.actual_receipt_jpy, r.payment_status]); });
+    if (!state.rows.length || !state.listQuery) { status("先に一覧を読み込んでください。", true); return; }
+    var rows = [["D-CATS注文番号", "Recycle+注文番号", "受注区分", "直送先", "取引総額", "決済手数料見込", "MP手数料見込", "従来方式手数料見込", "手数料合計見込", "差引受取見込", "手数料確定（控除額合計）", "差引受取確定", "決済状態"]];
+    state.rows.forEach(function (o) { var r = o.recycle; rows.push([o.order_number, r.external_order_number, routeLabel(r.order_route), o.shipping_address.company_name || o.shipping_address.recipient_name, o.total_jpy, r.estimated_factoring_fee_jpy, r.estimated_marketplace_fee_jpy, r.estimated_legacy_fee_jpy, r.estimated_fee_jpy, r.estimated_receipt_jpy, r.actual_fee_jpy, r.actual_receipt_jpy, r.payment_status]); });
     var url = URL.createObjectURL(new Blob(["\ufeff" + rows.map(function (r) { return r.map(csvCell).join(","); }).join("\r\n")], { type: "text/csv;charset=utf-8" }));
-    var a = document.createElement("a"); a.href = url; a.download = "recycle-confirmation-" + field("from") + "-page-" + (state.offset / 100 + 1) + ".csv"; a.click(); setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    var a = document.createElement("a"); a.href = url; a.download = "recycle-confirmation-" + state.listQuery.from + "-" + state.listQuery.route + "-page-" + (state.listQuery.offset / 100 + 1) + ".csv"; a.click(); setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
     status("表示中の最大100件を確認用CSVへ出力しました。販売王の取込用CSVではありません。");
   }
   async function runAction(action, b) {
@@ -339,7 +367,8 @@
     state.detailDirty = false;
     var r = order && order.recycle; if (!r || !allowed()) return;
     var section = document.createElement("section"); section.className = "recycle-detail";
-    section.innerHTML = "<h3>Recycle+決済・手数料</h3><p><strong>売上先：ブロードリーフ</strong> ／ 外部注文番号 " + e(r.external_order_number) + "</p><div class='recycle-summary'><span>手数料率 " + e(r.policy_snapshot.fee_rate_percent) + "%" + (r.policy_snapshot.provisional ? "（暫定）" : "") + "</span><span>見込手数料 " + e(yen(r.estimated_fee_jpy)) + "</span><span>確定手数料 " + e(yen(r.actual_fee_jpy)) + "</span><span>差引受取 " + e(yen(r.actual_receipt_jpy == null ? r.estimated_receipt_jpy : r.actual_receipt_jpy)) + "</span></div><p>" + e(r.policy_snapshot.note) + "</p><p>" + e(r.payment_status === "confirmed" ? "決済確認済み。既存の出荷工程へ進めます。" : r.payment_status === "unconfirmed" ? "決済確認待ち。出荷指示・送り状発行・出荷確定はできません。" : r.payment_status === "refunded" ? "返金確認済み" : "取消済み・返金確認待ち") + "</p>" +
+    var confirmationNote = r.policy_snapshot.confirmation_note;
+    section.innerHTML = "<h3>Recycle+決済・手数料</h3><p><strong>売上先：ブロードリーフ</strong> ／ 外部注文番号 " + e(r.external_order_number) + " ／ <strong>" + e(routeLabel(r.order_route)) + "</strong></p><div class='recycle-summary'><span>見込内訳：" + e(feeBreakdownText(r)) + "</span><span>見込手数料合計 " + e(yen(r.estimated_fee_jpy)) + "</span><span>確定手数料 " + e(yen(r.actual_fee_jpy)) + "</span><span>差引受取 " + e(yen(r.actual_receipt_jpy == null ? r.estimated_receipt_jpy : r.actual_receipt_jpy)) + (r.actual_receipt_jpy == null ? "（見込）" : "（確定）") + "</span></div><p>" + e(r.policy_snapshot.note) + "</p>" + (confirmationNote && !/^暫定10%。商品税抜額/.test(confirmationNote) ? "<p>条件・確認根拠：" + e(confirmationNote) + "</p>" : "") + "<p>" + e(r.payment_status === "confirmed" ? "決済確認済み。既存の出荷工程へ進めます。" : r.payment_status === "unconfirmed" ? "決済確認待ち。出荷指示・送り状発行・出荷確定はできません。" : r.payment_status === "refunded" ? "返金確認済み" : "取消済み・返金確認待ち") + "</p>" +
       (r.payment_status === "unconfirmed" && order.status !== "cancelled" ? "<details><summary>決済完了を確認</summary><div class='recycle-grid'>" + input("決済金額", "paid-amount", "number", order.total_jpy, "min='0' step='1'") + input("決済完了日時", "paid-at", "datetime-local", localTime()) + input("決済参照番号", "payment-reference", "text", "", "maxlength='120'") + input("確認した画面・明細などの根拠", "payment-evidence", "text", "", "maxlength='1000'") + "</div>" + button("決済完了を記録", "confirm_payment", "data-recycle-detail-write") + "</details>" : "") +
       (r.payment_status === "confirmed" && ["accepted", "submitted"].includes(order.status) ? "<details><summary>決済確認を解除</summary>" + input("解除理由", "clear-reason", "text", "", "maxlength='500'") + button("確認を解除", "clear_payment", "data-recycle-detail-write") + "</details>" : "") +
       "<details><summary>精算明細の確定手数料を記録</summary><div class='recycle-grid'>" + input("確定手数料（控除額合計）", "actual-fee", "number", r.actual_fee_jpy, "min='0' step='1'") + input("うち税額（不明なら空欄）", "fee-tax", "number", r.actual_fee_tax_jpy, "min='0' step='1'") + input("精算明細番号・根拠", "settlement-reference", "text", r.settlement_reference, "maxlength='120'") + "</div>" + button("手数料を確定", "settle", "data-recycle-detail-write") + "</details>" +
