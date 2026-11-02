@@ -17,7 +17,7 @@ function requireFragment(source, fragment, message) {
 }
 
 function rule(selector) {
-  const start = css.indexOf(selector + " {");
+  const start = css.indexOf("\n" + selector + " {");
   assert(start >= 0, `Missing presentation rule: ${selector}`);
   return css.slice(start, css.indexOf("}", start));
 }
@@ -30,6 +30,9 @@ assert(questionSize >= 16 && answerSize >= questionSize && answerStyle.includes(
 assert(Number(meterStyle.match(/font-size:\s*(\d+)px/)[1]) <= 10 && meterStyle.includes("justify-content: flex-end") && rule(".dcats-token-bar").includes("height: 3px"), "Token telemetry must remain a tiny, right-aligned secondary indicator");
 assert(!runtime.includes('aiUsage.appendChild(createElement("strong"') && !runtime.includes('createElement("span", "dcats-token-parts"'), "Token heading and breakdown must not dominate the answer");
 assert(!runtime.includes("回答しました。操作は実行していません。") && runtime.includes('aiDone: "回答"') && runtime.includes('aiDone: "Answer"'), "Success heading must be concise and localized");
+assert(rule(".dcats-concierge-panel.is-answer-only .dcats-concierge-panel-head").includes("background: #e5f3ef") &&
+  rule(".dcats-concierge-panel.is-answer-only .dcats-concierge-ai-answer").includes("border-left: 4px solid"),
+  "Reading mode needs a distinct header and answer surface beyond color-only status text");
 
 [
   "window.DcatsConciergeAiApi = Object.freeze",
@@ -87,6 +90,7 @@ const revealEnd = runtime.indexOf("\n  function ", revealStart + 5);
 assert(revealStart >= 0 && revealEnd > revealStart, "Scoped feedback reveal helper missing");
 const feedbackBody = { scrollTop: 120, getBoundingClientRect: () => ({ top: 20, height: 180 }) };
 const feedbackContext = {
+  questionAnswerOnly: false,
   requestUi: null,
   panelOpen: true, panelBody: feedbackBody,
   aiStatus: { getBoundingClientRect: () => ({ top: 320 }) },
