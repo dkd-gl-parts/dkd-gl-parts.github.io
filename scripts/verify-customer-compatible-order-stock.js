@@ -97,8 +97,8 @@ if (!styles.includes(".customer-catalog-stock-breakdown") ||
     !styles.includes(".customer-order-line-metric small.compatible-stock")) {
   throw new Error("compatible-stock detail styles are missing");
 }
-if (!styles.includes("grid-template-columns: minmax(210px, 1fr) 76px 128px 112px 112px 28px") ||
-    !styles.includes("grid-template-columns: minmax(180px, 1fr) 70px 120px 104px 28px") ||
+if (!styles.includes("grid-template-columns: minmax(68px, .7fr) repeat(3, minmax(0, 1fr))") ||
+    !styles.includes("grid-template-columns: repeat(2, minmax(0, 1fr))") ||
     !styles.includes("overflow-wrap: normal") ||
     !styles.includes("word-break: keep-all")) {
   throw new Error("compatible-stock allocation text must not wrap mid-phrase");
