@@ -437,6 +437,7 @@ var TRANSLATIONS = {
     customer_order_unit_price: "単価",
     customer_order_internal_price_note: "空欄で標準単価に戻ります。コア代金は別計上です。",
     customer_order_internal_price_error: "商品単価は0～2,147,483,647円の整数で入力してください。",
+    customer_order_internal_price_not_applied: "変更した商品単価を保存側で確認できません。画面を更新して、もう一度確認してください。",
     customer_order_remove: "削除",
     customer_order_product_unit_price: "商品単価",
     customer_order_product_subtotal: "商品小計",
@@ -3212,6 +3213,7 @@ var TRANSLATIONS = {
     customer_order_unit_price: "Unit Price",
     customer_order_internal_price_note: "Leave blank for the standard price. Core charges are separate.",
     customer_order_internal_price_error: "Enter a whole product price from 0 to 2,147,483,647 yen.",
+    customer_order_internal_price_not_applied: "The server did not confirm the edited product price. Refresh the app and check again.",
     customer_order_remove: "Remove",
     customer_order_product_unit_price: "Product unit price",
     customer_order_product_subtotal: "Product subtotal",
@@ -5931,6 +5933,7 @@ var TRANSLATIONS = {
     customer_order_unit_price: "单价",
     customer_order_internal_price_note: "留空恢复标准单价。旧件费另计。",
     customer_order_internal_price_error: "商品单价请输入0至2,147,483,647日元的整数。",
+    customer_order_internal_price_not_applied: "服务器未确认修改后的商品单价。请刷新画面后重试。",
     customer_order_remove: "删除",
     customer_order_product_unit_price: "商品单价",
     customer_order_product_subtotal: "商品小计",
@@ -15158,6 +15161,19 @@ async function previewCustomerOrder(options) {
   }
   var data = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
   customerOrderPreview = data && typeof data === "object" ? data : null;
+  if (internalRegistration && customerOrderPreview && customerOrderPreview.valid === true) {
+    var confirmedPrices = customerOrderPreviewItemMap();
+    var manualPriceNotApplied = customerOrderCart.some(function(item) {
+      var manualPrice = customerOrderManualProductPrice(item);
+      return manualPrice !== null && (!confirmedPrices[item.key] || Number(confirmedPrices[item.key].unit_price_jpy) - customerOrderBilledCoreChargePerUnit(confirmedPrices[item.key]) !== manualPrice);
+    });
+    if (manualPriceNotApplied) {
+      customerOrderPreview = null;
+      customerOrderSetStatus(t("customer_order_internal_price_not_applied"), true);
+      renderCustomerOrderCart();
+      return;
+    }
+  }
   if (customerOrderPreview && customerOrderPreview.shipping_address) applyCustomerOrderAddress(customerOrderPreview.shipping_address, false);
   customerOrderSetStatus(customerOrderPreview && customerOrderPreview.valid === true ? "価格と在庫を確認しました。" : t("customer_order_preview_error"), !(customerOrderPreview && customerOrderPreview.valid === true));
   renderCustomerOrderCart();
