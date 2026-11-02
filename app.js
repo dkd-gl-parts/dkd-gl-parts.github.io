@@ -435,6 +435,9 @@ var TRANSLATIONS = {
     customer_order_core_charge_total: "コア代金",
     customer_order_quantity: "数量",
     customer_order_unit_price: "単価",
+    customer_order_internal_price_note: "空欄で標準単価に戻ります。コア代金は別計上です。",
+    customer_order_internal_price_error: "商品単価は0～2,147,483,647円の整数で入力してください。",
+    customer_order_remove: "削除",
     customer_order_product_unit_price: "商品単価",
     customer_order_product_subtotal: "商品小計",
     customer_order_line_total: "明細計",
@@ -3207,6 +3210,9 @@ var TRANSLATIONS = {
     customer_order_core_charge_total: "Core charge",
     customer_order_quantity: "Qty",
     customer_order_unit_price: "Unit Price",
+    customer_order_internal_price_note: "Leave blank for the standard price. Core charges are separate.",
+    customer_order_internal_price_error: "Enter a whole product price from 0 to 2,147,483,647 yen.",
+    customer_order_remove: "Remove",
     customer_order_product_unit_price: "Product unit price",
     customer_order_product_subtotal: "Product subtotal",
     customer_order_line_total: "Line total",
@@ -5923,6 +5929,9 @@ var TRANSLATIONS = {
     customer_order_core_charge_total: "旧件费",
     customer_order_quantity: "数量",
     customer_order_unit_price: "单价",
+    customer_order_internal_price_note: "留空恢复标准单价。旧件费另计。",
+    customer_order_internal_price_error: "商品单价请输入0至2,147,483,647日元的整数。",
+    customer_order_remove: "删除",
     customer_order_product_unit_price: "商品单价",
     customer_order_product_subtotal: "商品小计",
     customer_order_line_total: "明细合计",
@@ -8444,7 +8453,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1278";
+var APP_VERSION       = "v1.1.1280";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -14008,7 +14017,7 @@ function clearPersistedCustomerOrderCart() {
 }
 
 function addCustomerCatalogProductToOrder(product, productKind, availability, price, variantRows) {
-  if (!canOpenCustomerOrdering() || !product || !productDkdId(product)) return false;
+  if (customerOrderSaving || !canOpenCustomerOrdering() || !product || !productDkdId(product)) return false;
   var kind = normalizeProductKind(productKind || "rebuilt");
   var key = customerOrderCartKey(productDkdId(product), kind);
   var existing = customerOrderCart.find(function(item) { return item.key === key; });
@@ -14043,9 +14052,24 @@ function addCustomerCatalogProductToOrder(product, productKind, availability, pr
   return true;
 }
 
+function customerOrderManualProductPrice(item) {
+  var raw = item && item.manual_product_unit_price_jpy;
+  if (raw === undefined || raw === null || String(raw).trim() === "") return null;
+  var text = String(raw).trim();
+  var value = Number(text);
+  return /^[0-9]+$/.test(text) && Number.isSafeInteger(value) && value <= 2147483647 ? value : NaN;
+}
+
+function customerOrderHasInvalidManualPrices() {
+  return canRegisterInternalCustomerOrder() && customerOrderCart.some(function(item) {
+    return Number.isNaN(customerOrderManualProductPrice(item));
+  });
+}
+
 function customerOrderPayloadItems() {
+  var internalRegistration = canRegisterInternalCustomerOrder();
   return customerOrderCart.map(function(item) {
-    return {
+    var payload = {
       dkd_shohin_id: parseInt(item.dkd_shohin_id, 10),
       product_kind: normalizeProductKind(item.product_kind),
       quantity: Math.max(1, Math.min(99, parseInt(item.quantity, 10) || 1)),
@@ -14053,6 +14077,12 @@ function customerOrderPayloadItems() {
         ? item.core_return_handling
         : "standard"
     };
+    if (internalRegistration) {
+      var manualPrice = customerOrderManualProductPrice(item);
+      if (Number.isNaN(manualPrice)) throw new Error(t("customer_order_internal_price_error"));
+      if (manualPrice !== null) payload.product_unit_price_jpy = manualPrice;
+    }
+    return payload;
   });
 }
 
@@ -14899,9 +14929,11 @@ function renderCustomerOrderCart() {
       ? customerOrderBilledCoreChargePerUnit(confirmed)
       : displayedCoreCharge;
     var billedCoreChargeTotal = billedCoreCharge * Number(item.quantity || 1);
+    var manualPrice = canRegisterInternalCustomerOrder() ? customerOrderManualProductPrice(item) : null;
+    var displayProductPrice = manualPrice === null ? item.display_unit_price : manualPrice;
     var effectiveUnitPrice = confirmed
       ? confirmed.unit_price_jpy
-      : (item.display_unit_price == null ? null : Number(item.display_unit_price) + displayedCoreCharge);
+      : (displayProductPrice == null || Number.isNaN(displayProductPrice) ? null : Number(displayProductPrice) + displayedCoreCharge);
     var productUnitPrice = effectiveUnitPrice == null ? null : Math.max(0, Number(effectiveUnitPrice) - billedCoreCharge);
     var stockQty = confirmed ? confirmed.available_stock_qty : item.display_stock_qty;
     var exactStockQty = confirmed ? confirmed.exact_available_stock_qty : item.display_exact_stock_qty;
@@ -14942,41 +14974,66 @@ function renderCustomerOrderCart() {
             esc(configuredCoreCharge > 0 ? tf("customer_order_core_charge_no_return_option", { amount: customerOrderCurrency(configuredCoreCharge) }) : t("customer_order_core_charge_unset")) +
           "</option></select><small>" + esc(t("customer_order_core_handling_note")) + "</small>" + (configuredCoreCharge > 0 ? "" : "<small class='setup-required'>" + esc(t("customer_order_core_charge_setup")) + "</small>") + "</label>"
       : "";
+    var priceControl = canRegisterInternalCustomerOrder()
+      ? "<label class='customer-order-price-editor'><span>" + esc(t("customer_order_unit_price")) + "</span><input type='number' min='0' max='2147483647' step='1' inputmode='numeric' data-order-unit-price='" + esc(item.key) + "' value='" + esc(manualPrice === null ? "" : item.manual_product_unit_price_jpy) + "' placeholder='" + esc(item.display_unit_price == null ? "" : item.display_unit_price) + "' aria-label='" + esc(t("customer_order_unit_price") + " " + (product.genuine_part_number || product.manufacturer_part_number || "")) + "'" + (Number.isNaN(manualPrice) ? " aria-invalid='true'" : "") + (customerOrderSaving ? " disabled" : "") + "><small>" + esc(t("customer_order_internal_price_note")) + "</small></label>"
+      : "<span>" + esc(t("customer_order_unit_price")) + "</span><strong>" + esc(customerOrderCurrency(productUnitPrice)) + "</strong>";
     return "<div class='customer-order-line' data-order-key='" + esc(item.key) + "'>" +
       "<div class='customer-order-product'><span>" + esc(productCategoryLabel(product) || product.category || "-") + "</span><strong>" + esc(product.genuine_part_number || product.manufacturer_part_number || "-") + "</strong><small>" + esc([product.manufacturer, product.manufacturer_part_number].filter(Boolean).join(" / ") || "-") + "</small>" + coreBadge + coreChoice + "</div>" +
       "<label class='customer-order-qty'><span>" + esc(t("customer_order_quantity")) + "</span><input type='number' min='1' max='99' step='1' value='" + esc(item.quantity) + "' data-order-quantity='" + esc(item.key) + "'></label>" +
-      "<div class='customer-order-line-metric'><span>" + esc(t("customer_order_unit_price")) + "</span><strong>" + esc(customerOrderCurrency(productUnitPrice)) + "</strong><small>" + esc(stockMeta) + "</small>" + (usesCompatibleStock ? "<small class='compatible-stock'>" + esc(t("customer_order_compatible_stock_allocated")) + "</small>" : "") + "</div>" +
+      "<div class='customer-order-line-metric product-price'>" + priceControl + "<small>" + esc(stockMeta) + "</small>" + (usesCompatibleStock ? "<small class='compatible-stock'>" + esc(t("customer_order_compatible_stock_allocated")) + "</small>" : "") + "</div>" +
       "<div class='customer-order-line-metric core-charge'><span>" + esc(t("customer_order_core_charge_total")) + "</span><strong>" + esc(billedCoreChargeTotal > 0 ? customerOrderCurrency(billedCoreChargeTotal) : "-") + "</strong></div>" +
       "<div class='customer-order-line-metric total'><span>" + esc(t("customer_order_line_total")) + "</span><strong>" + esc(customerOrderCurrency(lineTotal)) + "</strong></div>" +
-      "<button class='customer-order-remove' type='button' data-order-remove='" + esc(item.key) + "' aria-label='削除'>×</button>" +
+      "<button class='customer-order-remove' type='button' data-order-remove='" + esc(item.key) + "' aria-label='" + esc(t("customer_order_remove") + " " + (product.genuine_part_number || product.manufacturer_part_number || "")) + "'" + (customerOrderSaving ? " disabled" : "") + "><span aria-hidden='true'>×</span> " + esc(t("customer_order_remove")) + "</button>" +
     "</div>";
   }).join("");
-  host.querySelectorAll("[data-order-quantity]").forEach(function(input) {
+  host.querySelectorAll("[data-order-unit-price]").forEach(function(input) {
     input.addEventListener("change", function() {
+      if (customerOrderSaving || !canRegisterInternalCustomerOrder()) return;
+      var item = customerOrderCart.find(function(row) { return row.key === input.dataset.orderUnitPrice; });
+      if (!item) return;
+      if (String(item.manual_product_unit_price_jpy == null ? "" : item.manual_product_unit_price_jpy) === input.value) return;
+      item.manual_product_unit_price_jpy = input.value;
+      customerOrderPreview = null;
+      customerOrderPreviewSeq += 1;
+      persistCustomerOrderCart();
+      customerOrderSetStatus(Number.isNaN(customerOrderManualProductPrice(item)) ? t("customer_order_internal_price_error") : "", Number.isNaN(customerOrderManualProductPrice(item)));
+      renderCustomerOrderCart();
+    });
+  });
+  host.querySelectorAll("[data-order-quantity]").forEach(function(input) {
+    input.disabled = customerOrderSaving;
+    input.addEventListener("change", function() {
+      if (customerOrderSaving) return;
       var item = customerOrderCart.find(function(row) { return row.key === input.dataset.orderQuantity; });
       if (!item) return;
       item.quantity = Math.max(1, Math.min(99, parseInt(input.value, 10) || 1));
       customerOrderPreview = null;
+      customerOrderPreviewSeq += 1;
       persistCustomerOrderCart();
       renderCustomerOrderCart();
     });
   });
   host.querySelectorAll("[data-order-core-handling]").forEach(function(select) {
+    select.disabled = customerOrderSaving;
     select.addEventListener("change", function() {
+      if (customerOrderSaving) return;
       var item = customerOrderCart.find(function(row) { return row.key === select.dataset.orderCoreHandling; });
       if (!item) return;
       item.core_return_handling = ["charge_no_return", "charge_with_return"].indexOf(select.value) >= 0
         ? select.value
         : "standard";
       customerOrderPreview = null;
+      customerOrderPreviewSeq += 1;
       persistCustomerOrderCart();
       renderCustomerOrderCart();
     });
   });
   host.querySelectorAll("[data-order-remove]").forEach(function(button) {
     button.addEventListener("click", function() {
+      if (customerOrderSaving) return;
       customerOrderCart = customerOrderCart.filter(function(row) { return row.key !== button.dataset.orderRemove; });
       customerOrderPreview = null;
+      customerOrderPreviewSeq += 1;
       persistCustomerOrderCart();
       renderCustomerOrderCart();
     });
@@ -15002,7 +15059,7 @@ function renderCustomerOrderCart() {
       summary.innerHTML = "<p>" + esc(t("customer_order_review_on_submit")) + "</p>";
     }
   }
-  if (submit) submit.disabled = customerOrderSaving ||
+  if (submit) submit.disabled = customerOrderSaving || customerOrderHasInvalidManualPrices() ||
     (!canUseCustomerOrdering() && !canRegisterInternalCustomerOrder()) ||
     !customerOrderCart.length;
   configureCustomerOrderDevelopmentPreview();
@@ -15072,6 +15129,12 @@ async function previewCustomerOrder(options) {
   if (destinationError) {
     customerOrderPreview = null;
     customerOrderSetStatus(destinationError, true);
+    renderCustomerOrderCart();
+    return;
+  }
+  if (customerOrderHasInvalidManualPrices()) {
+    customerOrderPreview = null;
+    customerOrderSetStatus(t("customer_order_internal_price_error"), true);
     renderCustomerOrderCart();
     return;
   }
