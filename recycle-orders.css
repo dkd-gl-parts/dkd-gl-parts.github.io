@@ -74,6 +74,15 @@
 .recycle-dialog .customer-order-submit-button { width: 100%; border-color: var(--dcats-customer-green, #1d6544); background: var(--dcats-customer-green, #1d6544); color: #fff; }
 .recycle-dialog .customer-order-submit-button:hover { background: var(--dcats-customer-green-hover, #174f36); }
 .recycle-settings { margin-top: 18px; padding: 20px; border: 1px solid #d8e0dd; border-radius: var(--dcats-card-radius, 10px); background: #fff; }
+.recycle-binding-policy,.recycle-binding-info { color: #526159; line-height: 1.7; font-size: 13px; overflow-wrap: anywhere; }
+.recycle-binding-info:empty { display: none; }
+.recycle-binding-confirm { margin-top: 18px; padding-top: 16px; border-top: 2px solid #c6d6cf; overflow-wrap: anywhere; }
+.recycle-binding-confirm h4 { font-size: 16px; }
+.recycle-dialog .recycle-binding-ack { display: flex; align-items: flex-start; gap: 8px; font-weight: 700; line-height: 1.6; }
+.recycle-binding-ack input { flex: 0 0 18px; width: 18px; min-height: 18px; margin: 2px 0 0; }
+.recycle-customer small { color: #526159; }
+.recycle-customer>div { min-width: 0; max-width: 100%; grid-template-columns: minmax(0,1fr); }
+.recycle-customer strong,.recycle-customer small,.recycle-customer>span { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 #recycle-message { margin: 10px 0; line-height: 1.7; }
 #recycle-message:empty { display: none; }
 @media(max-width:1000px) { .recycle-workspace { grid-template-columns: minmax(0,1fr); gap: 16px; } .recycle-workspace .customer-order-cart-pane,.recycle-workspace .customer-order-shipping-pane { border: 1px solid #d8e0dd; border-radius: var(--dcats-card-radius, 10px); } }

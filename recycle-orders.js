@@ -1,6 +1,6 @@
 (function () {
   "use strict";
-  var state = { dialog: null, settings: null, cart: [], dirty: false, detailDirty: false, busy: false, pending: null, epoch: 0, search: 0, postal: 0, list: 0, view: "entry", actor: "", rows: [], offset: 0 };
+  var state = { dialog: null, settings: null, cart: [], dirty: false, detailDirty: false, busy: false, pending: null, bindingReview: null, settingsSeq: 0, epoch: 0, search: 0, postal: 0, list: 0, view: "entry", actor: "", rows: [], offset: 0 };
   function actor() { return typeof currentUser !== "undefined" && currentUser ? String(currentUser.id || currentUser.email || "") : ""; }
   function allowed() { return typeof canManageSalesOrders === "function" && canManageSalesOrders(); }
   function e(value) { return String(value == null ? "" : value).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -11,7 +11,7 @@
   function uuid() { return crypto.randomUUID(); }
   function localTime() { var d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); }
   function monthDate(last) { var d = new Date(); return new Date(Date.UTC(d.getFullYear(), d.getMonth() + (last ? 1 : 0), last ? 0 : 1)).toISOString().slice(0, 10); }
-  function status(text, error) { ["recycle-message","recycle-detail-message"].forEach(function(id){var el=document.getElementById(id);if(el){el.textContent=text;el.classList.toggle("error",!!error);}}); }
+  function status(text, error) { ["recycle-message","recycle-detail-message"].forEach(function(id){var el=document.getElementById(id);if(el){el.textContent=text;el.classList.toggle("error",!!error);if(error&&id==="recycle-message"&&state.view==="settings"&&el.scrollIntoView)el.scrollIntoView({block:"nearest"});}}); }
   function input(label, id, type, value, extra) { return "<label><span>" + e(label) + "</span><input id='recycle-" + id + "' type='" + (type || "text") + "' value='" + e(value == null ? "" : value) + "' " + (extra || "") + "></label>"; }
   function button(text, action, extra) { return "<button type='button' data-recycle-action='" + action + "' " + (extra || "") + ">" + e(text) + "</button>"; }
   function option(value, label, selected) { return "<option value='" + e(value) + "'" + (value === selected ? " selected" : "") + ">" + e(label) + "</option>"; }
@@ -42,10 +42,19 @@
   }
   function setButtons() {
     if (state.dialog) state.dialog.querySelectorAll("[data-recycle-write]").forEach(function (b) { b.disabled = state.busy || !!state.pending || (b.dataset.recycleAction === "place" && !state.cart.length); });
-    var entry = document.getElementById("recycle-entry-fields"); if (entry) entry.disabled = !state.settings.sales_customer_id || state.busy || !!state.pending;
+    var entry = document.getElementById("recycle-entry-fields"); if (entry) entry.disabled = !state.settings || !state.settings.sales_customer_id || state.busy || !!state.pending;
     ["recycle-back", "recycle-list-open", "recycle-settings-open"].forEach(function (id) { var b = document.getElementById(id); if (b) b.disabled = !entry || state.busy || !!state.pending; });
     document.querySelectorAll("[data-recycle-detail-write]").forEach(function (b) { b.disabled = state.busy || !!state.pending; });
     var check = document.getElementById("recycle-check-result"); if (check) check.hidden = !state.pending;
+    var settings = document.getElementById("recycle-settings-view"), locked = state.busy || !!state.pending || !!state.bindingReview;
+    if (settings) {
+      settings.querySelectorAll("input,select,textarea").forEach(function (el) { if (!el.closest("#recycle-binding-confirm")) el.disabled = locked; });
+      settings.querySelectorAll("[data-recycle-action='save_settings'],[data-recycle-action='reload_settings']").forEach(function (el) { el.disabled = locked || !state.settings || !state.settings.can_configure; });
+      var save = settings.querySelector("[data-recycle-action='save_settings']");
+      if (save) save.disabled = save.disabled || state.settings.customer_binding_guard_version !== 1 || !selectedCustomer();
+      var confirm = settings.querySelector("[data-recycle-action='binding_confirm']");
+      if (confirm) confirm.disabled = state.busy || !!state.pending || !state.bindingReview || !checked("binding-ack");
+    }
   }
   async function checkResult() {
     var pending = state.pending; if (!pending || state.busy || pending.actor !== actor()) return;
@@ -61,27 +70,27 @@
   function close() {
     if (state.busy || state.pending) { status("処理結果の確認が終わるまで画面を閉じられません。", true); return; }
     if (state.dirty && !window.confirm("入力中のRecycle+受注を閉じますか。未保存の入力は残りません。")) return;
-    state.epoch++; state.dirty = false; state.cart = []; state.dialog.close();
+    clearBindingReview(); state.settingsSeq++; state.epoch++; state.dirty = false; state.cart = []; state.dialog.close();
   }
   async function open() {
     if (!allowed()) return;
     if(state.dialog && state.dialog.open) return;
     if (state.actor && state.actor !== actor()) { state.cart = []; state.pending = null; state.dirty = false; }
-    state.actor = actor(); state.epoch++; state.view = "entry";
+    clearBindingReview(); state.actor = actor(); state.epoch++; state.settingsSeq++; state.view = "entry";
     if (!state.dialog) {
       state.dialog = document.createElement("dialog"); state.dialog.className = "recycle-dialog"; state.dialog.setAttribute("aria-labelledby", "recycle-title"); document.body.appendChild(state.dialog);
       state.dialog.addEventListener("cancel", function (event) { event.preventDefault(); if (state.view !== "entry" && !state.busy && !state.pending) showView("entry"); else close(); });
-      state.dialog.addEventListener("input", function (event) { if (event.target.closest("#recycle-entry")) state.dirty = true; });
-      state.dialog.addEventListener("change", function (event) { if (event.target.id.indexOf("recycle-core-") === 0) { rememberCart(); updateReturnField(); } });
+      state.dialog.addEventListener("input", function (event) { if (event.target.closest("#recycle-entry")) state.dirty = true; if (event.target.closest("#recycle-settings-view")) settingsEdited(event); });
+      state.dialog.addEventListener("change", function (event) { if (event.target.id.indexOf("recycle-core-") === 0) { rememberCart(); updateReturnField(); } if (event.target.closest("#recycle-settings-view")) settingsEdited(event); });
       state.dialog.addEventListener("keydown", function (event) { if (event.key === "Enter" && event.target.id === "recycle-product-query") { event.preventDefault(); runAction("products"); } });
       state.dialog.addEventListener("click", function (event) { var b = event.target.closest("[data-recycle-action]"); if (b) runAction(b.dataset.recycleAction, b); });
     }
     if (!state.dialog.open) state.dialog.showModal();
     state.dialog.innerHTML = "<header class='recycle-header'><div><p>Partsman.c Recycle+</p><h2 id='recycle-title' tabindex='-1'>Recycle+受注入力</h2></div><nav class='recycle-actions' aria-label='Recycle+画面'>" + button("受注入力に戻る", "entry", "id='recycle-back' hidden") + button("精算一覧", "settlements", "id='recycle-list-open'") + button("設定", "settings", "id='recycle-settings-open'") + button("閉じる", "close") + "</nav></header><p id='recycle-message' role='status' aria-live='polite'>読み込んでいます。</p>" + button("結果を確認", "result", "id='recycle-check-result' hidden") + "<div id='recycle-body'></div>";
     setButtons();
-    var epoch = state.epoch;
-    try { state.settings = await rpc("settings"); if (epoch === state.epoch && ownerCurrent()) renderWorkspace(); }
-    catch (error) { if (epoch === state.epoch) status(error.message, true); }
+    var epoch = state.epoch, seq = state.settingsSeq, openingActor = state.actor;
+    try { var cfg = await rpc("settings"); if (epoch === state.epoch && seq === state.settingsSeq && openingActor === actor() && ownerCurrent()) { state.settings = cfg; renderWorkspace(); } }
+    catch (error) { if (epoch === state.epoch && seq === state.settingsSeq && openingActor === actor() && ownerCurrent()) status(error.message, true); }
   }
   function renderWorkspace() {
     var cfg = state.settings, body = document.getElementById("recycle-body"); if (!body) return;
@@ -94,31 +103,99 @@
   }
   function refreshSettings() {
     var cfg = state.settings;
-    document.getElementById("recycle-customer-summary").innerHTML = "<div class='recycle-summary recycle-customer'><div><span>得意先（固定）</span><strong>ブロードリーフ</strong></div><span>Recycle+成立価格で登録 ／ 手数料 " + e(cfg.fee_rate_percent) + "%" + (cfg.provisional ? "（暫定・見込）" : "") + "</span></div>";
-    document.getElementById("recycle-setup-note").innerHTML = cfg.sales_customer_id ? "" : "<div class='recycle-note'><p>受注入力を始めるには、システム管理者によるブロードリーフの初回登録が必要です。</p>" + button("設定を開く", "settings") + "</div>";
+    clearBindingReview();
+    document.getElementById("recycle-customer-summary").innerHTML = "<div class='recycle-summary recycle-customer'><div><span>受注先</span><strong>" + e(cfg.sales_customer_id ? cfg.customer_name || "得意先を確認してください" : "未設定") + "</strong>" + (cfg.customer_code ? "<small>得意先コード " + e(cfg.customer_code) + "</small>" : "") + "</div><span>Recycle+成立価格で登録 ／ 手数料 " + e(cfg.fee_rate_percent) + "%" + (cfg.provisional ? "（暫定・見込）" : "") + "</span></div>";
+    document.getElementById("recycle-setup-note").innerHTML = cfg.sales_customer_id ? "" : "<div class='recycle-note'><p>受注先が未設定です。登録済みのブロードリーフの得意先を選択してください。</p>" + button("設定を開く", "settings") + "</div>";
     document.getElementById("recycle-settings-view").innerHTML = settingsHtml(cfg);
     document.getElementById("recycle-entry-fields").disabled = !cfg.sales_customer_id;
+    updateCustomerInfo(); setButtons();
   }
   function showView(view, focus) {
+    clearBindingReview();
     state.view = view;
+    var setupNote = document.getElementById("recycle-setup-note"); if (setupNote) setupNote.hidden = view !== "entry";
     [["entry", "recycle-entry"], ["settings", "recycle-settings-view"], ["settlements", "recycle-settlements-view"]].forEach(function (pair) { document.getElementById(pair[1]).hidden = pair[0] !== view; });
     document.getElementById("recycle-title").textContent = view === "settings" ? "Recycle+設定" : view === "settlements" ? "Recycle+精算一覧" : "Recycle+受注入力";
     document.getElementById("recycle-back").hidden = view === "entry";
     document.getElementById("recycle-settings-open").hidden = view === "settings";
     document.getElementById("recycle-list-open").hidden = view === "settlements";
     status(""); state.dialog.scrollTop = 0;
+    setButtons();
     if (focus !== false) document.getElementById("recycle-title").focus();
   }
   function settingsHtml(cfg) {
     var conditions = cfg.fee_basis === "transaction_total" ? "取引税込総額" : "商品税抜額" + (cfg.include_shipping ? "＋送料" : "・送料除外") + (cfg.include_core ? "＋コア代" : "・コア代除外");
     var html = "<div class='recycle-settings'><h3>集約先・手数料条件</h3><p>現在：" + e(conditions) + "</p><p>変更は新しい受注に適用します。過去受注は登録時の条件を保持します。</p>";
     if (!cfg.can_configure) return html + "<p>設定の変更はシステム管理者へ依頼してください。</p></div>";
-    if (!cfg.sales_customer_id) html += "<p>販売王の得意先とは別に、D-CATS内の集約先を1件登録します。社内コードBROADLEAFは販売王コードとして使用しません。</p>" + button("D-CATSにブロードリーフを登録", "create_customer", "data-recycle-write");
-    html += "<div class='recycle-grid'>" + input("集約先D-CATS ID", "customer-id", "number", cfg.sales_customer_id, "min='1'") + input("手数料率（％）", "rate", "number", cfg.fee_rate_percent, "min='0' max='100' step='0.0001'") +
+    var candidates = Array.isArray(cfg.customer_candidates) ? cfg.customer_candidates : [];
+    html += "<p class='recycle-binding-policy'>通常は初回に一度設定します。変更しても過去の受注先は変更しません。</p>";
+    if (cfg.customer_binding_guard_version !== 1) html += "<p class='recycle-note' role='alert'>紐付けの安全確認を利用できません。最新の設定を確認してください。</p>";
+    else if (!candidates.length) html += "<p class='recycle-note' role='alert'>紐付けできる得意先がありません。得意先管理で販売王コードと登録内容を確認してください。</p>";
+    html += "<div class='recycle-grid'><label><span>受注先（登録済み候補）</span><select id='recycle-customer-id'><option value=''>得意先を選択してください</option>" + candidates.map(function (c) { return option(String(c.id), c.code + " ／ " + c.name, String(cfg.sales_customer_id || "")); }).join("") + "</select></label>" + input("手数料率（％）", "rate", "number", cfg.fee_rate_percent, "min='0' max='100' step='0.0001'") + "</div><div id='recycle-customer-info' class='recycle-binding-info'></div><div class='recycle-grid'>" +
       "<label><span>算定対象</span><select id='recycle-basis'>" + option("product_net", "値引後の商品税抜額", cfg.fee_basis) + option("transaction_total", "取引税込総額", cfg.fee_basis) + "</select></label>" +
       "<label><span>円未満の端数</span><select id='recycle-rounding'>" + option("floor", "切捨", cfg.rounding) + option("round", "四捨五入", cfg.rounding) + option("ceil", "切上", cfg.rounding) + "</select></label></div>" +
-      "<div class='recycle-checks'><label><input id='recycle-include-shipping' type='checkbox'" + (cfg.include_shipping ? " checked" : "") + ">商品額に送料を含む</label><label><input id='recycle-include-core' type='checkbox'" + (cfg.include_core ? " checked" : "") + ">商品額にコア代を含む</label><label><input id='recycle-provisional' type='checkbox'" + (cfg.provisional ? " checked" : "") + ">暫定条件</label></div>" + input("条件・確認根拠", "policy-note", "text", cfg.note, "maxlength='1000'") + button("新しい条件を保存", "save_settings", "data-recycle-write") + "<p class='recycle-note'>販売王は得意先・決済済み精算方式の確認待ちです。通常の掛売CSVへは出力しません。</p></div>";
+      "<div class='recycle-checks'><label><input id='recycle-include-shipping' type='checkbox'" + (cfg.include_shipping ? " checked" : "") + ">商品額に送料を含む</label><label><input id='recycle-include-core' type='checkbox'" + (cfg.include_core ? " checked" : "") + ">商品額にコア代を含む</label><label><input id='recycle-provisional' type='checkbox'" + (cfg.provisional ? " checked" : "") + ">暫定条件</label></div>" + input("条件・確認根拠", "policy-note", "text", cfg.note, "maxlength='1000'") + "<div class='recycle-actions'>" + button("設定内容を確認して保存", "save_settings", "data-recycle-write") + button("最新の設定を確認", "reload_settings") + "</div><div id='recycle-binding-confirm' hidden></div><p class='recycle-note'>通常の掛売CSVへは出力しません。締め日以降の受注確認は、請求機能が整うまでの暫定チェックです。</p></div>";
     return html;
+  }
+  function selectedCustomer() {
+    var candidates = state.settings && state.settings.customer_candidates;
+    if (!Array.isArray(candidates)) return null;
+    var matches = candidates.filter(function (c) { return String(c.id) === field("customer-id"); });
+    return matches.length === 1 ? matches[0] : null;
+  }
+  function closingLabel(code) { return String(code) === "31" ? "末日締め" : String(code) === "0" ? "都度（締め日なし）" : /^([1-9]|[12][0-9]|30)$/.test(String(code)) ? code + "日締め" : "締め日未確認"; }
+  function updateCustomerInfo() {
+    var host = document.getElementById("recycle-customer-info"), customer = selectedCustomer();
+    if (host) host.textContent = customer ? "得意先コード " + customer.code + " ／ 請求先コード " + customer.billing_customer_code + " ／ " + closingLabel(customer.closing_code) : "";
+  }
+  function clearBindingReview() {
+    state.bindingReview = null;
+    var host = document.getElementById("recycle-binding-confirm"); if (host) { host.hidden = true; host.innerHTML = ""; }
+  }
+  function settingsEdited(event) {
+    if (!event.target.closest("#recycle-binding-confirm")) { clearBindingReview(); updateCustomerInfo(); }
+    setButtons();
+  }
+  function settingsPayload() {
+    return { revision: state.settings.revision, sales_customer_id: field("customer-id") || null, fee_rate_percent: field("rate"), fee_basis: field("basis"), rounding: field("rounding"), include_shipping: checked("include-shipping"), include_core: checked("include-core"), provisional: checked("provisional"), note: field("policy-note") };
+  }
+  async function settingsSaved() {
+    var epoch = state.epoch, seq = ++state.settingsSeq, savingActor = state.actor, cfg = await rpc("settings");
+    if (epoch === state.epoch && seq === state.settingsSeq && savingActor === actor() && ownerCurrent()) { state.settings = cfg; refreshSettings(); status("設定を保存しました。"); }
+  }
+  async function prepareSettings() {
+    if (!state.settings.can_configure || state.settings.customer_binding_guard_version !== 1) throw new Error("紐付けの安全確認を利用できません。最新の設定を確認してください。");
+    if (!selectedCustomer()) throw new Error("表示された候補から得意先を選択してください。");
+    var payload = settingsPayload();
+    if (String(state.settings.sales_customer_id || "") === payload.sales_customer_id) { await mutate("save_settings", payload, settingsSaved); return; }
+    var epoch = state.epoch, seq = ++state.settingsSeq;
+    state.busy = true; setButtons(); status("紐付け先と締め日以降の受注を確認しています。");
+    try {
+      var preview = await rpc("binding_preview", { sales_customer_id: payload.sales_customer_id });
+      if (epoch !== state.epoch || seq !== state.settingsSeq || !ownerCurrent()) return;
+      if (JSON.stringify(settingsPayload()) !== JSON.stringify(payload)) throw new Error("設定内容が変わりました。もう一度確認してください。");
+      if (!preview || typeof preview.token !== "string" || !preview.next_customer || String(preview.next_customer.id) !== payload.sales_customer_id) throw new Error("紐付けの確認結果を取得できませんでした。");
+      state.bindingReview = { payload: payload, preview: preview };
+      var host = document.getElementById("recycle-binding-confirm"), previous = preview.previous_customer, next = preview.next_customer;
+      host.hidden = false; host.className = "recycle-binding-confirm";
+      host.innerHTML = "<h4 id='recycle-binding-title'>受注先の紐付けを確認</h4><p>" + e(previous ? previous.code + " ／ " + previous.name : "未設定") + " → <strong>" + e(next.code + " ／ " + next.name) + "</strong></p>" +
+        (Number(preview.affected_order_count) > 0 ? "<div class='recycle-note' role='alert'><strong>締め処理への影響を確認してください。</strong><p>締め日以降など、確認が必要な受注が " + e(preview.affected_order_count) + " 件あります。</p>" + (Array.isArray(preview.warnings) ? preview.warnings : []).filter(function (w) { return Number(w.order_count) > 0; }).map(function (w) { return "<p>" + e(w.customer_code + " ／ " + w.customer_name) + "<br>" + e(w.closing_date ? w.closing_date + " 以降（締め日を含む・日本時間）" : "都度・締め日未設定のため全受注を確認") + " ／ " + e(w.order_count) + " 件" + (w.first_order_date && w.last_order_date ? "<br>受注日 " + e(w.first_order_date) + " ～ " + e(w.last_order_date) : "") + "</p>"; }).join("") + "</div>" : "") +
+        "<p>変更は今後の受注に適用します。過去の受注先は変更しません。</p><label class='recycle-binding-ack'><input id='recycle-binding-ack' type='checkbox'>得意先コード・名称と注意事項を確認しました</label><div class='recycle-actions'>" + button("戻って確認", "binding_cancel") + button("この得意先に紐付ける", "binding_confirm", "data-recycle-write disabled") + "</div>";
+      host.setAttribute("role", "region"); host.setAttribute("aria-labelledby", "recycle-binding-title");
+      host.setAttribute("tabindex", "-1"); host.focus({ preventScroll: true }); if (host.scrollIntoView) host.scrollIntoView({ block: "start" }); status("");
+    } finally { state.busy = false; setButtons(); }
+  }
+  async function confirmBinding() {
+    var review = state.bindingReview;
+    if (!review || !checked("binding-ack")) throw new Error("紐付け先と注意事項を確認してください。");
+    if (!selectedCustomer() || JSON.stringify(settingsPayload()) !== JSON.stringify(review.payload)) { clearBindingReview(); throw new Error("設定内容が変わりました。もう一度確認してください。"); }
+    var payload = Object.assign({}, review.payload, { binding_confirmation: review.preview.token, binding_confirmed: true });
+    clearBindingReview(); await mutate("save_settings", payload, settingsSaved);
+  }
+  async function reloadSettings() {
+    var epoch = state.epoch, seq = ++state.settingsSeq; state.busy = true; setButtons(); status("設定を確認しています。");
+    try { var cfg = await rpc("settings"); if (epoch === state.epoch && seq === state.settingsSeq && ownerCurrent()) { state.settings = cfg; refreshSettings(); status("最新の設定を確認しました。"); } }
+    finally { state.busy = false; setButtons(); }
   }
   function entryHtml(cfg) {
     var prefs = typeof SHIPPING_PREFECTURES !== "undefined" ? SHIPPING_PREFECTURES : [];
@@ -243,8 +320,10 @@
       if (action === "result") await checkResult();
       else if (action === "entry" || action === "settings") showView(action);
       else if (action === "settlements") { showView(action); await loadList(); }
-      else if (action === "create_customer") await mutate(action, {}, async function () { state.settings = await rpc("settings"); refreshSettings(); status("ブロードリーフを登録しました。「受注入力に戻る」から入力できます。"); });
-      else if (action === "save_settings") await mutate(action, { revision: state.settings.revision, sales_customer_id: field("customer-id") || null, fee_rate_percent: field("rate"), fee_basis: field("basis"), rounding: field("rounding"), include_shipping: checked("include-shipping"), include_core: checked("include-core"), provisional: checked("provisional"), note: field("policy-note") }, async function () { state.settings = await rpc("settings"); refreshSettings(); });
+      else if (action === "save_settings") await prepareSettings();
+      else if (action === "binding_confirm") await confirmBinding();
+      else if (action === "binding_cancel") { clearBindingReview(); setButtons(); }
+      else if (action === "reload_settings") await reloadSettings();
       else if (action === "products") await searchProducts();
       else if (action === "postal") await lookupPostal();
       else if (action === "postal_select") { var row = state.postalRows[Number(b.dataset.index)]; if (row && row.postal_code.replace(/[^0-9]/g, "") === field("postal").replace(/[^0-9]/g, "")) applyPostal(row); }
