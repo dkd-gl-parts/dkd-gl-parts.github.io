@@ -8456,7 +8456,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1281";
+var APP_VERSION       = "v1.1.1282";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -11996,6 +11996,11 @@ function renderMenu() {
     { icon: "&#x1F4C8;", titleKey: "mi_rakuten_title", descKey: "mi_rakuten_desc", action: canUseRakutenResearch() ? "rakuten-price" : "rakuten-price-list", available: canUseRakutenResearch() || canViewPriceResearchHistory(), tag: null },
     { icon: "&#x1F512;", titleKey: "mi_changepw_title", descKey: "mi_changepw_desc", action: "change-pw", available: true, tag: null }
   ].filter(function(item) { return item.available; });
+
+  if (hasAccessRole(userProfile, ["sales_editor"])) {
+    var shippingIndex = mainItems.findIndex(function(item) { return item.action === "finished-product-shipping"; });
+    if (shippingIndex > 0) mainItems.unshift(mainItems.splice(shippingIndex, 1)[0]);
+  }
 
   var adminItems = [
     { icon: "&#x1F465;", titleKey: "mi_users_title",  descKey: "mi_users_desc",  action: "users",  available: canManageUsers },

@@ -1,5 +1,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
+const vm = require("node:vm");
+const { parseHTML } = require("linkedom");
 
 const root = path.resolve(__dirname, "..");
 const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
@@ -43,5 +45,42 @@ assert(app.includes('var roleCanManageStock = permissionOverviewRoleIn(role, pro
 
 const editorDefaults = app.match(/var editors = \[([^\]]+)\]/);
 assert(editorDefaults && !editorDefaults[1].includes("sales_editor"), "Shipping role must not inherit product editing");
+
+const menuSource = functionSource("renderMenu", "customerPortalValue");
+function menuForRole(roleCode, shippingAllowed = true) {
+  const { document } = parseHTML('<div id="menu-grid"></div>');
+  let shippingOpened = 0;
+  const context = {
+    document,
+    userProfile: { role_code: roleCode, role: "price_viewer", group_name: "daiko" },
+    syncDcatsIntegrationReadinessContext() {},
+    refreshConciergeMenuBadge: async () => {},
+    t: key => key,
+    enterFinishedProductShipping() { shippingOpened++; }
+  };
+  for (const name of menuSource.match(/\bcan\w+(?=\()/g) || []) context[name] = () => true;
+  context.isSystemAdmin = () => roleCode === "system_admin";
+  context.canManageFinishedProductShipping = () => shippingAllowed;
+  vm.runInNewContext(
+    functionSource("userAccessRoleCode", "userDepartmentCode") +
+    functionSource("accessRoleCode", "userPermissionOverrides") + menuSource + ";renderMenu();",
+    context
+  );
+  return {
+    actions: Array.from(document.querySelectorAll(".menu-card"), card => card.dataset.action),
+    openFirst() { document.querySelector(".menu-card").click(); return shippingOpened; }
+  };
+}
+const managerMenu = menuForRole("sales_editor");
+assert(managerMenu.actions[0] === "finished-product-shipping", "Shipping Manager must see picking first");
+assert(managerMenu.openFirst() === 1, "First menu card must open shipping verification");
+const normalMenu = menuForRole("company_admin");
+assert(JSON.stringify(managerMenu.actions.slice(1)) === JSON.stringify(normalMenu.actions.filter(action => action !== "finished-product-shipping")), "Other menu items must retain their order");
+for (const role of ["system_admin", "master_editor", "shipping_staff", "production_editor", "sales_viewer"]) {
+  assert(JSON.stringify(menuForRole(role).actions) === JSON.stringify(normalMenu.actions), role + " menu order must remain unchanged");
+}
+const deniedMenu = menuForRole("sales_editor", false);
+assert(!deniedMenu.actions.includes("finished-product-shipping"), "Picking must remain hidden without permission");
+assert(deniedMenu.actions[0] === "search", "Missing picking permission must preserve the remaining order");
 
 console.log("Internal shipping permission verification passed.");
