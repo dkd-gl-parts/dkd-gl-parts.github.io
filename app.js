@@ -1612,6 +1612,11 @@ var TRANSLATIONS = {
     manufacturing_cost_query_label: "品番入力",
     manufacturing_cost_query_ph: "品番を複数指定（空白・カンマ区切り）",
     manufacturing_cost_import_open: "パレットリスト取込",
+    manufacturing_cost_import_entry_title: "ファイルから品番を追加",
+    manufacturing_cost_import_entry_note: "Excel・CSV・PDFのパレットリストをまとめて取り込めます。",
+    manufacturing_cost_import_drop_title: "ここにパレットリストをドロップ",
+    manufacturing_cost_import_drop_or: "または、ファイルを選択してください",
+    manufacturing_cost_import_one_file: "ファイルは1つずつドロップしてください。",
     manufacturing_cost_import_title: "パレットリストから品番を取り込む",
     manufacturing_cost_import_note: "Excel、CSV、PDFをブラウザ内で解析します。自動推定した列は取込前に補正できます。",
     manufacturing_cost_import_choose: "ファイルを選択",
@@ -4358,6 +4363,11 @@ var TRANSLATIONS = {
     manufacturing_cost_query_label: "Part Number Input",
     manufacturing_cost_query_ph: "Multiple part numbers separated by spaces or commas",
     manufacturing_cost_import_open: "Import Pallet List",
+    manufacturing_cost_import_entry_title: "Add part numbers from a file",
+    manufacturing_cost_import_entry_note: "Import part numbers together from an Excel, CSV or PDF pallet list.",
+    manufacturing_cost_import_drop_title: "Drop your pallet list here",
+    manufacturing_cost_import_drop_or: "Or choose a file",
+    manufacturing_cost_import_one_file: "Please drop one file at a time.",
     manufacturing_cost_import_title: "Import part numbers from a pallet list",
     manufacturing_cost_import_note: "Excel, CSV, and PDF files are analyzed in your browser. You can correct the detected columns before importing.",
     manufacturing_cost_import_choose: "Choose File",
@@ -7114,6 +7124,11 @@ var TRANSLATIONS = {
     manufacturing_cost_query_label: "品番输入",
     manufacturing_cost_query_ph: "多个品番用空格或逗号分隔",
     manufacturing_cost_import_open: "导入托盘清单",
+    manufacturing_cost_import_entry_title: "从文件添加品番",
+    manufacturing_cost_import_entry_note: "从 Excel、CSV 或 PDF 托盘清单批量导入品番。",
+    manufacturing_cost_import_drop_title: "将托盘清单拖放到此处",
+    manufacturing_cost_import_drop_or: "或选择文件",
+    manufacturing_cost_import_one_file: "请每次拖放一个文件。",
     manufacturing_cost_import_title: "从托盘清单导入品番",
     manufacturing_cost_import_note: "在浏览器内解析Excel、CSV和PDF。导入前可以修正自动推定的列。",
     manufacturing_cost_import_choose: "选择文件",
@@ -8366,7 +8381,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1274";
+var APP_VERSION       = "v1.1.1275";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
