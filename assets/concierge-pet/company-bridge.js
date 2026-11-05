@@ -430,7 +430,7 @@
       var text = value[key];
       if (!Object.hasOwn(limits,key) || typeof text !== "string" || text.length > limits[key] || text !== text.trim() || /[\x00-\x1f\x7f]/.test(text) ||
           ["code","billingCode"].includes(key) && (!/^[!-~]{1,13}$/.test(text) || /[,\"]/.test(text)) ||
-          key === "closingCode" && !/^(0|[1-9]|[12][0-9]|3[01])$/.test(text)) throw new Error("customer_screen_unavailable");
+          key === "closingCode" && !/^(0|[1-9]|[12][0-9]|3[01]|50)$/.test(text)) throw new Error("customer_screen_unavailable");
       fields[key] = text;
     });
     if (!fields.code || !fields.name) throw new Error("customer_screen_unavailable");
