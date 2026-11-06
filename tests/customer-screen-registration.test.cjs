@@ -11,23 +11,23 @@ function deferred() { let resolve; const promise = new Promise(r=>{resolve=r;});
 function harness({fields={code:"SYNTH-001",name:"合成得意先",billingCode:"SYNTH-001",closingCode:"31"},pending,duplicate=false,queryError=false,overwrite=true}={}) {
   const {document}=parseHTML(html), overlay=document.getElementById("customer-register-overlay");
   overlay.classList.add("show");
-  document.getElementById("customer-register-closing-code").innerHTML="<option value=''></option><option value='0'>0</option><option value='31'>31</option>";
   document.getElementById("customer-register-rank").innerHTML="<option value='SPECIAL'>SPECIAL</option>";
   // linkedom has no HTMLSelectElement.value setter. Model the standard
   // browser property here; the non-visible browser QA checks the real DOM.
   for (const select of document.querySelectorAll("#customer-register-overlay select")) {
     let value = select.options[0] ? select.options[0].getAttribute("value") : "";
-    Object.defineProperty(select,"value",{configurable:true,get:()=>value,set:v=>{value=String(v);}});
+    Object.defineProperty(select,"value",{configurable:true,get:()=>value,set:v=>{value=Array.from(select.options).some(o=>o.getAttribute("value")===String(v))?String(v):"";}});
   }
   const notes=[],calls=[],queries=[];let cancelled=0,confirmed=0,allowed=true,admin=true;
   const query={select(){return this;},eq(k,v){queries.push([k,v]);return this;},limit:async()=>({data:duplicate?[{id:"existing"}]:[],error:queryError?{}:null})};
   const window={confirm(){confirmed++;return overwrite;},setTimeout(){},DcatsHanbaiohCompanyBridge:{isBusy:()=>false,
     readCustomerScreenFromPc:async o=>{calls.push(o);return pending?pending.promise:{fields};},cancelCustomerScreen(){cancelled++;}}};
   const context={window,document,currentUser:{id:"synthetic-actor"},customerAccessRegistrationReadSeq:0,customerAccessRegistrationReading:false,customerAccessRegistrationSaving:false,
-    canManageCustomerAccess:()=>allowed,isSystemAdmin:()=>admin,t:k=>k,
+    canManageCustomerAccess:()=>allowed,isSystemAdmin:()=>admin,t:k=>k,tf:(k,v)=>k+v.day,esc:v=>String(v),
     setCustomerRegistrationMessage:(text,error)=>notes.push({text,error}),sb:{from:name=>{assert.equal(name,"sales_customers");return query;},rpc:()=>{throw new Error("read_must_not_write");}}};
   vm.createContext(context);
-  for(const name of ["customerRegistrationFieldValue","customerRegistrationReadSnapshot","setCustomerRegistrationSaving","setCustomerRegistrationReading","readHanbaiohCustomerScreen","closeCustomerRegistration"])vm.runInContext(fn(name),context);
+  for(const name of ["customerRegistrationFieldValue","customerRegistrationReadSnapshot","hanbaiouClosingCodeOptionsHtml","setCustomerRegistrationSaving","setCustomerRegistrationReading","readHanbaiohCustomerScreen","closeCustomerRegistration"])vm.runInContext(fn(name),context);
+  document.getElementById("customer-register-closing-code").innerHTML=context.hanbaiouClosingCodeOptionsHtml('',true);
   return {context,document,overlay,notes,calls,queries,read:()=>context.readHanbaiohCustomerScreen(),get:id=>document.getElementById("customer-register-"+id),
     count:()=>({cancelled,confirmed}),allowed:v=>{allowed=v;},admin:v=>{admin=v;}};
 }
@@ -42,6 +42,19 @@ test("partial screen read does not invent billing/closing; another customer cann
   const h=harness({fields:{code:"NEXT",name:"別の合成得意先"}});h.get("code").value="OLD";h.get("phone").value="old-phone";h.get("billing-code").value="OLD";await h.read();
   assert.equal(h.count().confirmed,1);assert.equal(h.get("phone").value,"");assert.equal(h.get("billing-code").value,"");assert.equal(h.get("closing-code").value,"");
   assert(h.notes.at(-1).text.includes("customer_register_read_missing"));
+});
+test("closing code 50 survives the real option list; unsupported values cannot become selected",async()=>{
+  for(const closingCode of ['0','15','31','50','32','51']){
+    const h=harness({fields:{code:'SYNTH-001',name:'合成得意先',billingCode:'SYNTH-001',closingCode}});
+    await h.read();assert.equal(h.get('closing-code').value,['32','51'].includes(closingCode)?'':closingCode);
+  }
+});
+test("browser bridge accepts 0 through 31 and 50, rejecting other closing codes",()=>{
+  const source=fs.readFileSync(path.join(root,'assets/concierge-pet/company-bridge.js'),'utf8');
+  const start=source.indexOf('function customerScreenFields('),end=source.indexOf('async function readCustomerScreenFromPc(',start);
+  assert(start>=0&&end>start);const c={};vm.createContext(c);vm.runInContext(source.slice(start,end),c);
+  for(const closingCode of [...Array.from({length:32},(_,i)=>String(i)),'50'])assert.equal(c.customerScreenFields({code:'SYNTH',name:'Synthetic',closingCode}).closingCode,closingCode);
+  for(const closingCode of ['-1','32','49','51','050','50x','50\n',''])assert.throws(()=>c.customerScreenFields({code:'SYNTH',name:'Synthetic',closingCode}));
 });
 test("declined overwrite and duplicates preserve all inputs",async()=>{
   for(const settings of [{overwrite:false},{duplicate:true},{queryError:true}]){
