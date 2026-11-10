@@ -150,7 +150,9 @@ const expectedAuxiliaryWorkflows = new Map([
         "styles.css",
         "index.html",
         "scripts/qa-sales-product-warranty.js",
-        ".github/workflows/category-warranty-ui.yml"
+        ".github/workflows/category-warranty-ui.yml",
+        "category-warranty-settings.js",
+        "scripts/qa-category-warranty-admin.js"
       ]
     }
   },
@@ -188,7 +190,7 @@ const expectedAuxiliaryWorkflows = new Map([
             "WARRANTY_PLAYWRIGHT_MODULE": "${{ runner.temp }}/warranty-browser/node_modules/playwright",
             "WARRANTY_QA_OUTPUT": "${{ runner.temp }}/warranty-qa-results"
           },
-          "run": "node scripts/qa-sales-product-warranty.js"
+          "run": "node scripts/qa-sales-product-warranty.js\nnode scripts/qa-category-warranty-admin.js"
         },
         {
           "uses": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",

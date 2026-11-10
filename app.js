@@ -2846,6 +2846,42 @@ var TRANSLATIONS = {
     "unused_product_delete_production_instruction_candidates": "製造指示候補",
     "unused_product_delete_rebuilt_sales_top_parts": "出荷実績分析",
     "unused_product_delete_operation_logs": "G品番の発行履歴"
+  ,
+    cw_title: "カテゴリ・保証設定",
+    cw_desc: "カテゴリ名と、リビルト品・新品の保証期間・走行距離をまとめて設定します。",
+    cw_menuDesc: "カテゴリの追加・名称変更と、商品区分ごとの保証条件を設定します。",
+    cw_add: "カテゴリを追加",
+    cw_reload: "再読み込み",
+    cw_save: "設定を保存",
+    cw_ja: "日本語名",
+    cw_en: "英語名",
+    cw_zh: "中国語名",
+    cw_new: "新しいカテゴリ",
+    cw_remove: "追加を取り消す",
+    cw_required: "日本語名を入力してください。",
+    cw_nameInvalid: "カテゴリ名は100文字以内で入力してください。",
+    cw_duplicate: "同じ名前のカテゴリがあります。",
+    cw_monthsInvalid: "保証期間は1〜120か月の整数で入力してください。",
+    cw_distanceInvalid: "走行距離は1〜10000000kmの整数で入力してください。空欄は距離指定なしです。",
+    cw_unset: "未設定",
+    cw_loading: "設定を読み込んでいます…",
+    cw_loadError: "設定を読み込めませんでした。再読み込みしてください。",
+    cw_saving: "設定を保存しています…",
+    cw_saved: "設定を保存しました。保証条件は次の出荷から適用します。",
+    cw_unchanged: "変更はありません。",
+    cw_conflict: "他の利用者が設定を変更しました。再読み込みしてから変更してください。",
+    cw_unknown: "保存結果を確認できません。再送せず、再読み込みで保存済みの内容を確認してください。",
+    cw_denied: "この設定を変更する権限がありません。",
+    cw_reloadConfirm: "編集中の変更を破棄して再読み込みしますか？",
+    cw_closeConfirm: "保存していない変更を破棄して閉じますか？",
+    cw_help: "英語名・中国語名が空欄の場合は日本語名を使用します。既存カテゴリの商品との紐付けは維持されます。",
+    cw_empty: "カテゴリがありません。「カテゴリを追加」から登録できます。",
+    cw_namesReadonly: "カテゴリ名は閲覧のみです。",
+    cw_warrantyReadonly: "保証条件は閲覧のみです。",
+    cw_count: "カテゴリ",
+    cw_missingPolicy: "保証条件を入力してください。",
+    cw_noChange: "変更なし",
+    cw_category: "カテゴリ"
   },
 
   en: {
@@ -5638,6 +5674,42 @@ var TRANSLATIONS = {
     "unused_product_delete_production_instruction_candidates": "Production instruction candidates",
     "unused_product_delete_rebuilt_sales_top_parts": "Shipment analysis",
     "unused_product_delete_operation_logs": "G-number issuance history"
+  ,
+    cw_title: "Categories & warranty",
+    cw_desc: "Manage category names and warranty periods and mileage for rebuilt and new products together.",
+    cw_menuDesc: "Add or rename categories and set warranty terms for each product kind.",
+    cw_add: "Add category",
+    cw_reload: "Reload",
+    cw_save: "Save settings",
+    cw_ja: "Japanese name",
+    cw_en: "English name",
+    cw_zh: "Chinese name",
+    cw_new: "New category",
+    cw_remove: "Remove new category",
+    cw_required: "Enter a Japanese name.",
+    cw_nameInvalid: "Category names must be 100 characters or fewer.",
+    cw_duplicate: "A category with the same name already exists.",
+    cw_monthsInvalid: "Enter a whole number from 1 to 120 months.",
+    cw_distanceInvalid: "Enter a whole number from 1 to 10000000 km, or leave blank for no mileage limit.",
+    cw_unset: "Not set",
+    cw_loading: "Loading settings…",
+    cw_loadError: "Could not load settings. Please reload.",
+    cw_saving: "Saving settings…",
+    cw_saved: "Settings saved. Warranty changes apply to future shipments.",
+    cw_unchanged: "No changes to save.",
+    cw_conflict: "Another user updated these settings. Reload before editing.",
+    cw_unknown: "The save result is unknown. Do not resend. Reload to check the saved settings.",
+    cw_denied: "You do not have permission to change these settings.",
+    cw_reloadConfirm: "Discard your edits and reload?",
+    cw_closeConfirm: "Discard unsaved changes and close?",
+    cw_help: "The Japanese name is used when English or Chinese is blank. Existing product links are preserved.",
+    cw_empty: "No categories. Choose Add category to create one.",
+    cw_namesReadonly: "Category names are read-only.",
+    cw_warrantyReadonly: "Warranty terms are read-only.",
+    cw_count: "categories",
+    cw_missingPolicy: "Enter the warranty terms.",
+    cw_noChange: "No change",
+    cw_category: "Category"
   },
 
   zh: {
@@ -8430,6 +8502,42 @@ var TRANSLATIONS = {
     "unused_product_delete_production_instruction_candidates": "生产指示候选",
     "unused_product_delete_rebuilt_sales_top_parts": "出货实绩分析",
     "unused_product_delete_operation_logs": "G品号发行历史"
+  ,
+    cw_title: "类别与保修设置",
+    cw_desc: "统一设置类别名称以及翻新品和新品的保修期限与行驶里程。",
+    cw_menuDesc: "添加或修改类别名称，并设置各商品类型的保修条件。",
+    cw_add: "添加类别",
+    cw_reload: "重新加载",
+    cw_save: "保存设置",
+    cw_ja: "日语名称",
+    cw_en: "英语名称",
+    cw_zh: "中文名称",
+    cw_new: "新类别",
+    cw_remove: "取消添加",
+    cw_required: "请输入日语名称。",
+    cw_nameInvalid: "类别名称不得超过100个字符。",
+    cw_duplicate: "已存在相同名称的类别。",
+    cw_monthsInvalid: "请输入1至120个月的整数。",
+    cw_distanceInvalid: "请输入1至10000000km的整数。留空表示不限定里程。",
+    cw_unset: "未设置",
+    cw_loading: "正在加载设置…",
+    cw_loadError: "无法加载设置。请重新加载。",
+    cw_saving: "正在保存设置…",
+    cw_saved: "设置已保存。保修条件将从下次出货起适用。",
+    cw_unchanged: "没有需要保存的更改。",
+    cw_conflict: "其他用户已修改设置。请重新加载后再编辑。",
+    cw_unknown: "无法确认保存结果。请勿重新提交，请重新加载以确认已保存的内容。",
+    cw_denied: "您无权修改此设置。",
+    cw_reloadConfirm: "放弃编辑并重新加载吗？",
+    cw_closeConfirm: "放弃未保存的更改并关闭吗？",
+    cw_help: "类别的英语名或中文名为空时使用日语名称。现有商品关联将保持不变。",
+    cw_empty: "暂无类别。可通过“添加类别”登记。",
+    cw_namesReadonly: "类别名称仅供查看。",
+    cw_warrantyReadonly: "保修条件仅供查看。",
+    cw_count: "个类别",
+    cw_missingPolicy: "请输入保修条件。",
+    cw_noChange: "无更改",
+    cw_category: "类别"
   },
 
   // タガログ語（Tagalog）— 準備中
@@ -8504,7 +8612,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1294";
+var APP_VERSION       = "v1.1.1295";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -12019,6 +12127,7 @@ async function doLogout() {
   finishedShipmentCandidateOrderItemId = null;
   finishedShipmentCandidateRows = [];
   finishedWarrantyPolicyRows = [];
+  if (window.DcatsCategoryWarrantySettings) window.DcatsCategoryWarrantySettings.reset();
   salesProductWarrantyState = null;
   finishedWarrantyPolicySaving = false;
   finishedShipmentReplacementTargetId = null;
@@ -12061,6 +12170,7 @@ function renderMenu() {
   }
 
   var adminItems = [
+    { icon: "&#x2699;", titleKey: "cw_title", descKey: "cw_menuDesc", action: "category-warranty-settings", available: canManageSharedSettings() || canManageFinishedProductShipping() },
     { icon: "&#x1F465;", titleKey: "mi_users_title",  descKey: "mi_users_desc",  action: "users",  available: canManageUsers },
     { icon: "&#x1F6AA;", titleKey: "mi_customer_access_title", descKey: "mi_customer_access_desc", action: "customer-access-mgmt", available: canManageCustomerAccess() },
     { icon: "&#x1F69A;", titleKey: "mi_shipping_title", descKey: "mi_shipping_desc", action: "shipping-rate-mgmt", available: canManageShippingRates() },
@@ -12160,6 +12270,7 @@ function renderMenu() {
       else if (card.dataset.action === "rakuten-bulk") enterRakutenBulk();
       else if (card.dataset.action === "rakuten-price-list") enterRakutenPriceList();
       else if (card.dataset.action === "business-workspace-settings") openDcatsBusinessWorkspaceSettings(event);
+      else if (card.dataset.action === "category-warranty-settings") openFinishedWarrantyPolicySettings();
       else if (card.dataset.action === "api-settings") enterApiSettings();
       else if (card.dataset.action === "logs") enterLogs();
       else if (card.dataset.action === "concierge-admin") enterConciergeAdmin();
@@ -29937,7 +30048,7 @@ function renderPartsMgmt() {
     html += "<td><div class='mgmt-pn'>" + esc(p.manufacturer_part_number || "-") + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(p.gltek_part_number || "-") + "</div></td>";
     html += "<td><div class='mgmt-sub'>" + esc(p.manufacturer || "-") + "</div></td>";
-    html += "<td><div class='mgmt-sub'>" + tCat(p.category) + "</div></td>";
+    html += "<td><div class='mgmt-sub'>" + esc(tCat(p.category)) + "</div></td>";
     html += "<td class='parts-mgmt-weight'><div class='mgmt-pn'>" + esc(partsMgmtWeightText(p.shipping_weight_kg)) + "</div></td>";
     html += "<td><div class='mgmt-actions'>";
     if (p._coreManaged) {
@@ -37249,6 +37360,10 @@ async function loadFinishedWarrantyPolicies(force) {
 }
 
 function renderFinishedWarrantyPolicyTable() {
+  if (typeof window !== "undefined" && window.DcatsCategoryWarrantySettings && window.DcatsCategoryWarrantySettings.isOpen()) {
+    window.DcatsCategoryWarrantySettings.render();
+    return;
+  }
   var body = document.getElementById("finished-warranty-policy-body");
   if (!body) return;
   var categories = [];
@@ -37279,29 +37394,42 @@ function renderFinishedWarrantyPolicyTable() {
       return "<div class='finished-warranty-policy-kind'>" + esc(productKindLabel(kind)) + "</div><div class='finished-warranty-policy-inputs'><label><span>" + esc(t("sales_warranty_periodInput")) + "</span><input type='number' min='1' max='120' step='1' value='" + esc(String(row.warranty_months || 12)) + "' aria-label='" + esc(name + t("sales_warranty_periodInput")) + "' data-finished-warranty-category='" + esc(category.category_code) + "' data-finished-warranty-kind='" + esc(kind) + "'></label>" +
         "<label><span>" + esc(t("sales_warranty_distanceInput")) + "</span><input type='number' min='1' max='10000000' step='1' inputmode='numeric' value='" + esc(row.warranty_distance_km == null ? "" : String(row.warranty_distance_km)) + "' aria-label='" + esc(name + t("sales_warranty_distanceInput")) + "' data-finished-warranty-distance-category='" + esc(category.category_code) + "' data-finished-warranty-distance-kind='" + esc(kind) + "'></label></div>";
     }
-    return "<tr><th scope='row'><strong>" + esc(finishedWarrantyCategoryLabel(category)) + "</strong></th><td class='finished-warranty-policy-cell rebuilt'>" + input(rebuilt, "rebuilt") + "</td><td class='finished-warranty-policy-cell aftermarket_new'>" + input(fresh, "aftermarket_new") + "</td></tr>";
+    return "<tr><th scope='row'><strong>" + esc(finishedWarrantyCategoryLabel(category)) + "</strong></th><td>" + input(rebuilt, "rebuilt") + "</td><td>" + input(fresh, "aftermarket_new") + "</td></tr>";
   }).join("") || "<tr><td colspan='3'>保証期間を読み込めませんでした。</td></tr>";
 }
 
 async function openFinishedWarrantyPolicySettings() {
-  if (!canManageFinishedProductShipping()) return;
-  var overlay = document.getElementById("finished-warranty-policy-overlay");
-  if (!overlay) return;
-  overlay.classList.add("show");
-  setFinishedShipmentMessage("finished-warranty-policy-message", t("loading"), false);
-  if (await loadFinishedWarrantyPolicies(true)) {
-    renderFinishedWarrantyPolicyTable();
-    setFinishedShipmentMessage("finished-warranty-policy-message", "", false);
-  }
+  if (!userProfile || (!canManageSharedSettings() && !canManageFinishedProductShipping())) return;
+  if (!window.DcatsCategoryWarrantySettings) return;
+  await window.DcatsCategoryWarrantySettings.open({
+    actor: userProfile,
+    currentActor: function() { return userProfile; },
+    allowed: function() { return !!userProfile && (canManageSharedSettings() || canManageFinishedProductShipping()); },
+    rpc: function(name, args) { return sb.rpc(name, args); },
+    t: function(key) { return t(key); },
+    onSaved: function(settings) {
+      categoryOptions = settings.categories.filter(function(cat) { return cat.category_code !== "car_air_conditioner"; });
+      finishedWarrantyPolicyRows = settings.policies.map(function(policy) {
+        return Object.assign({}, settings.categories.find(function(cat) { return cat.category_code === policy.category_code; }), policy);
+      });
+      salesOrderWarrantyPolicies = finishedWarrantyPolicyRows.slice();
+      renderCategoryChips();
+      refreshCategorySelectLabels();
+      renderFinishedShipmentOrderContext();
+      if (currentProduct) { renderSalesProductIdentity(currentProduct); loadSalesProductWarrantyForCurrent(detailSecondaryRequestSeq); }
+    }
+  });
 }
 
 function closeFinishedWarrantyPolicySettings() {
-  if (finishedWarrantyPolicySaving) return;
-  var overlay = document.getElementById("finished-warranty-policy-overlay");
-  if (overlay) overlay.classList.remove("show");
+  if (window.DcatsCategoryWarrantySettings) window.DcatsCategoryWarrantySettings.close();
 }
 
 async function saveFinishedWarrantyPolicies() {
+  if (typeof window !== "undefined" && window.DcatsCategoryWarrantySettings) {
+    await window.DcatsCategoryWarrantySettings.save();
+    return;
+  }
   if (finishedWarrantyPolicySaving) return;
   var inputs = Array.from(document.querySelectorAll("[data-finished-warranty-category][data-finished-warranty-kind]"));
   var policies = [];
@@ -38892,7 +39020,7 @@ function formValueFromCategoryCode(code) {
     throttle_body: "Throttle Body",
     blower_motor: "Blower Motor"
   };
-  return map[code] || map[String(code || "").toLowerCase()] || "Alternator";
+  return map[code] || map[String(code || "").toLowerCase()] || ((typeof categoryOptions !== "undefined" && categoryOptions.some(function(cat) { return cat.category_code === code; })) ? code : "Alternator");
 }
 
 function normalizeManualManufacturerSelection(value) {
@@ -39700,6 +39828,10 @@ async function executeUnusedProductDeletion() {
 async function openCoreProductForm(mode, product, context) {
   resetUnusedProductDeletion();
   if (!canEdit()) { alert(t("err_perm")); return; }
+  var categoryFormActor = userProfile;
+  await ensureCustomerAccessCategories();
+  if (userProfile !== categoryFormActor || !canEdit()) return;
+  refreshCategorySelectLabels();
   var formProduct = mode === "add" ? (product || null) : product;
   if (mode === "edit" && product && productDkdId(product)) {
     try {
@@ -40646,6 +40778,7 @@ async function initSearch() {
   allProducts = [];
 
   renderCategoryChips();
+  refreshCategorySelectLabels();
   render();
 }
 
@@ -41059,6 +41192,8 @@ function categoryTranslationSource(category) {
 }
 function tCat(category) {
   if (!category) return "-";
+  var master = typeof categoryOptions !== "undefined" && categoryOptions.find(function(cat) { return cat.category_code === category; });
+  if (master) return master["label_" + currentLang] || master.label_ja || master.label_en || String(category);
   var source = categoryTranslationSource(category);
   var key = "cat_" + source.replace(/ /g, "_");
   var val = t(key);
@@ -41078,6 +41213,8 @@ function categoryOptionLabel(cat) {
 }
 function productCategoryLabel(p) {
   if (!p) return "-";
+  var master = typeof categoryOptions !== "undefined" && categoryOptions.find(function(cat) { return cat.category_code === (p.category_code || p.category); });
+  if (master) return categoryOptionLabel(master);
   var code = p.category_code || p.category || "";
   var rawCode = String(code || "").trim().toLowerCase();
   var label = "";
@@ -41088,8 +41225,20 @@ function productCategoryLabel(p) {
   return tCat(code || label);
 }
 function refreshCategorySelectLabels() {
-  document.querySelectorAll("#pf-category option").forEach(function(opt) {
-    opt.textContent = tCat(opt.value);
+  var select = document.getElementById("pf-category");
+  if (!select) return;
+  var cats = typeof categoryOptions !== "undefined" ? categoryOptions : [];
+  cats.forEach(function(cat) {
+    var code = cat.category_code;
+    var value = formValueFromCategoryCode(code);
+    if (value === "Alternator" && code !== "alternator") value = code;
+    if (!Array.from(select.options).some(function(opt) { return opt.value === value; })) {
+      var opt = document.createElement("option"); opt.value = value; opt.dataset.categoryMaster = "true"; select.appendChild(opt);
+    }
+  });
+  Array.from(select.options).forEach(function(opt) {
+    var cat = cats.find(function(row) { return row.category_code === categoryCodeFromForm(opt.value); });
+    opt.textContent = cat && (opt.dataset.categoryMaster || formValueFromCategoryCode(cat.category_code) === opt.value) ? categoryOptionLabel(cat) : tCat(opt.value);
   });
 }
 function getProductEngine(p) {

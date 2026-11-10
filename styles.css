@@ -11826,3 +11826,28 @@ html[data-product-3d-paused] :is(
     box-shadow: 0 0 0 4px var(--warranty-kind-bg);
   }
 }
+
+/* Unified category names and warranty terms. */
+.category-warranty-toolbar { display:flex; align-items:center; gap:12px; padding:14px 24px 8px; flex:0 0 auto; flex-wrap:wrap; }
+.category-warranty-toolbar button { min-height:44px; padding:8px 16px; font:inherit; }
+#category-warranty-count { color:#526174; font-size:14px; margin-right:auto; }
+.category-warranty-help { margin:0; padding:0 24px 12px; color:#526174; font-size:13px; line-height:1.6; flex:0 0 auto; }
+.finished-warranty-policy-card .finished-warranty-policy-table thead th:first-child { width:32%; }
+.category-warranty-names { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:8px; text-align:left; font-weight:400; }
+.category-warranty-names > label { display:grid; gap:4px; min-width:0; }
+.category-warranty-names > label:first-child { grid-column:1 / -1; }
+.category-warranty-names label > span { font-size:12px; color:#526174; line-height:1.4; }
+.finished-warranty-policy-table .category-warranty-names input { box-sizing:border-box; width:100%; min-width:0; min-height:40px; padding:8px 10px; border:1px solid #b9c9db; border-radius:7px; background:#fff; color:#172033; font-size:16px; font-family:inherit; }
+.category-warranty-names input:focus-visible { outline:2px solid #3979d3; outline-offset:2px; }
+.category-warranty-remove { margin-top:8px; padding:6px 8px; min-height:36px; border:1px solid #b9c9db; border-radius:6px; background:#fff; color:#a32635; cursor:pointer; font:inherit; font-size:13px; }
+#finished-warranty-policy-overlay input:disabled { background:#f2f4f7; color:#526174; cursor:default; }
+
+
+
+
+@media(max-width:679px) {
+  .category-warranty-toolbar { gap:8px; padding:10px 16px 8px; }
+  .category-warranty-toolbar button { padding:8px 10px; font-size:14px; }
+  .category-warranty-help { padding:0 16px 10px; font-size:12px; }
+  .finished-warranty-policy-card .finished-warranty-policy-table tbody td.category-warranty-kind { padding:10px; border-radius:7px; }
+}
