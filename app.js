@@ -1994,7 +1994,8 @@ var TRANSLATIONS = {
     detail_customer_no_price: "販売価格は未設定です",
     sales_detail_title: "商品詳細",
     sales_warranty_prefix: "保証期間：",
-    sales_warranty_settingsDescription: "商品カテゴリと商品区分ごとに保証期間と走行距離を設定します。24か月・40000kmは「2年または40000km」と表示します。走行距離は空欄にできます。変更後の出荷から適用し、出荷済み商品の期限は変わりません。",
+    sales_warranty_settingsDescription: "リビルト品・新品の保証期間と走行距離をカテゴリ別に設定します。期間は月、走行距離はkmで入力し、距離の指定がない場合は空欄にしてください。",
+    sales_warranty_applyNote: "変更は次の出荷から適用されます。出荷済み商品の保証期限は変わりません。",
     sales_warranty_loading: "保証期間を確認中",
     sales_warranty_error: "保証期間を取得できませんでした",
     sales_warranty_unset: "保証期間未設定",
@@ -4785,7 +4786,8 @@ var TRANSLATIONS = {
     detail_customer_no_price: "Sales price is not set",
     sales_detail_title: "Product Details",
     sales_warranty_prefix: "Warranty: ",
-    sales_warranty_settingsDescription: "Set warranty periods and optional distance limits by category and product kind. For example, 24 months and 40000 km is shown as 2 years or 40000 km. Changes apply to future shipments; existing shipment expiry dates remain unchanged.",
+    sales_warranty_settingsDescription: "Set warranty periods and distance limits for each category and product kind. Enter months and kilometres; leave distance blank when no limit is specified.",
+    sales_warranty_applyNote: "Changes apply to future shipments. Existing shipment expiry dates remain unchanged.",
     sales_warranty_loading: "Checking warranty",
     sales_warranty_error: "Warranty unavailable",
     sales_warranty_unset: "Warranty not configured",
@@ -7576,7 +7578,8 @@ var TRANSLATIONS = {
     detail_customer_no_price: "尚未设置销售价格",
     sales_detail_title: "商品详情",
     sales_warranty_prefix: "保修期：",
-    sales_warranty_settingsDescription: "按商品分类和商品类型设置保修期限及可选里程上限。例如24个月和40000公里显示为2年或40000公里。更改适用于之后的出货，已出货商品的期限保持不变。",
+    sales_warranty_settingsDescription: "按分类分别设置再制造品和新品的保修期限及里程上限。期限以月、里程以公里输入；没有里程限制时请留空。",
+    sales_warranty_applyNote: "更改适用于之后的出货。已出货商品的保修截止日期保持不变。",
     sales_warranty_loading: "正在确认保修期",
     sales_warranty_error: "无法获取保修期",
     sales_warranty_unset: "尚未设置保修期",
@@ -8501,7 +8504,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1292";
+var APP_VERSION       = "v1.1.1293";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -37273,10 +37276,10 @@ function renderFinishedWarrantyPolicyTable() {
     var fresh = category.policies.aftermarket_new || {};
     function input(row, kind) {
       var name = finishedWarrantyCategoryLabel(category) + " " + productKindLabel(kind) + " ";
-      return "<div class='finished-warranty-policy-inputs'><label><span>" + esc(t("sales_warranty_periodInput")) + "</span><input type='number' min='1' max='120' step='1' value='" + esc(String(row.warranty_months || 12)) + "' aria-label='" + esc(name + t("sales_warranty_periodInput")) + "' data-finished-warranty-category='" + esc(category.category_code) + "' data-finished-warranty-kind='" + esc(kind) + "'></label>" +
+      return "<div class='finished-warranty-policy-kind'>" + esc(productKindLabel(kind)) + "</div><div class='finished-warranty-policy-inputs'><label><span>" + esc(t("sales_warranty_periodInput")) + "</span><input type='number' min='1' max='120' step='1' value='" + esc(String(row.warranty_months || 12)) + "' aria-label='" + esc(name + t("sales_warranty_periodInput")) + "' data-finished-warranty-category='" + esc(category.category_code) + "' data-finished-warranty-kind='" + esc(kind) + "'></label>" +
         "<label><span>" + esc(t("sales_warranty_distanceInput")) + "</span><input type='number' min='1' max='10000000' step='1' inputmode='numeric' value='" + esc(row.warranty_distance_km == null ? "" : String(row.warranty_distance_km)) + "' aria-label='" + esc(name + t("sales_warranty_distanceInput")) + "' data-finished-warranty-distance-category='" + esc(category.category_code) + "' data-finished-warranty-distance-kind='" + esc(kind) + "'></label></div>";
     }
-    return "<tr><th><strong>" + esc(finishedWarrantyCategoryLabel(category)) + "</strong><small>" + esc(category.category_code) + "</small></th><td>" + input(rebuilt, "rebuilt") + "</td><td>" + input(fresh, "aftermarket_new") + "</td></tr>";
+    return "<tr><th scope='row'><strong>" + esc(finishedWarrantyCategoryLabel(category)) + "</strong></th><td>" + input(rebuilt, "rebuilt") + "</td><td>" + input(fresh, "aftermarket_new") + "</td></tr>";
   }).join("") || "<tr><td colspan='3'>保証期間を読み込めませんでした。</td></tr>";
 }
 
