@@ -8714,7 +8714,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1302";
+var APP_VERSION       = "v1.1.1303";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -36930,8 +36930,12 @@ function renderFinishedLabelHistory() {
       }
     }
     html += "<div class='finished-label-history-row" + (finishedLabelPrintMode === "box" && String(row.id) === String(finishedLabelSelectedHistoryId || "") ? " active" : "") + "'>";
-    html += "<div class='finished-label-history-main'><span>" + esc(row.issue_code || "-") + "</span><div class='finished-label-history-actions'>" + actionHtml + "</div></div>";
-    html += "<div class='finished-label-history-serial'>" + esc(serialText) + "</div>";
+    var genuineNumbers = [row.genuine_part_number, row.genuine_part_number_2].map(function(value) {
+      return String(value || "").trim();
+    }).filter(function(value, index, values) { return value && values.indexOf(value) === index; });
+    html += "<div class='finished-label-history-main'><span class='finished-label-history-serial'>" + esc(serialText) + "</span><div class='finished-label-history-actions'>" + actionHtml + "</div></div>";
+    html += "<dl class='finished-label-history-part-numbers'><div><dt>" + esc(t("f_genuine_pn")) + "</dt><dd>" + esc(genuineNumbers.join(" / ") || "-") + "</dd></div>" +
+      "<div><dt>" + esc(t("f_mfr_pn")) + "</dt><dd>" + esc(String(row.manufacturer_part_number || "").trim() || "-") + "</dd></div></dl>";
     html += "<div class='finished-label-history-sub'>" + esc([formatDateTime(row.issued_at), row.product_category ? tCat(row.product_category) : "", productKindLabel(row.product_kind), tf("finished_label_history_units", { n: row.quantity }), tf("finished_label_history_parts", { n: comps })].filter(Boolean).join(" / ")) + "</div>";
     html += statusHtml;
     html += "</div>";
