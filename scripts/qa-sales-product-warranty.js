@@ -14,6 +14,3 @@ const server=http.createServer((req,res)=>{const pathname=new URL(req.url,'http:
 // The unified settings UI is exercised with its actual module in qa-category-warranty-admin.js.
 }
 assert.deepEqual(errors,[]);await page.close();}fs.writeFileSync(path.join(output,'ui-verification.json'),JSON.stringify({synthetic:true,productionAuth:false,evidence},null,2));console.log('Warranty browser QA: '+evidence.length+' PC/mobile views passed');}finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}})().catch(e=>{console.error(e);process.exitCode=1;});
-
-// Temporary visual verification, removed before release.
-require("./qa-label-search-hint.js");
