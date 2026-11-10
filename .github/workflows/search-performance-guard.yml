@@ -32,10 +32,11 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check app.js
-          node scripts/test-claim-cases.js
           node --check sales-order-revision.js
           node --check install-app.js
           node --check assets/concierge-pet/concierge-pet.js
+      - name: Verify claim case workspace
+        run: node scripts/verify-claim-cases.js
       - name: Verify Recycle+ order and settlement workspace
         run: node scripts/verify-recycle-orders.js
       - name: Verify configurable factoring sale prices
