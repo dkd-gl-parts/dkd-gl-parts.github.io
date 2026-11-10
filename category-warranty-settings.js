@@ -185,7 +185,7 @@
     if(event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();close();}
     if(event.key==='Tab'){
       var nodes=Array.from(el('finished-warranty-policy-overlay').querySelectorAll('button:not([disabled]),input:not([disabled])')).filter(function(n){return n.getClientRects().length;});
-      var first=nodes[0],last=nodes[nodes.length-1];if(!first)return;
+      var first=nodes[0],last=nodes[nodes.length-1];if(!first){event.preventDefault();return;}
       if(event.shiftKey && document.activeElement===first){event.preventDefault();last.focus();}
       else if(!event.shiftKey && document.activeElement===last){event.preventDefault();first.focus();}
     }
