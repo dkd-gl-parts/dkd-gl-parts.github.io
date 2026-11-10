@@ -30048,7 +30048,7 @@ function renderPartsMgmt() {
     html += "<td><div class='mgmt-pn'>" + esc(p.manufacturer_part_number || "-") + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(p.gltek_part_number || "-") + "</div></td>";
     html += "<td><div class='mgmt-sub'>" + esc(p.manufacturer || "-") + "</div></td>";
-    html += "<td><div class='mgmt-sub'>" + tCat(p.category) + "</div></td>";
+    html += "<td><div class='mgmt-sub'>" + esc(tCat(p.category)) + "</div></td>";
     html += "<td class='parts-mgmt-weight'><div class='mgmt-pn'>" + esc(partsMgmtWeightText(p.shipping_weight_kg)) + "</div></td>";
     html += "<td><div class='mgmt-actions'>";
     if (p._coreManaged) {
@@ -39828,6 +39828,10 @@ async function executeUnusedProductDeletion() {
 async function openCoreProductForm(mode, product, context) {
   resetUnusedProductDeletion();
   if (!canEdit()) { alert(t("err_perm")); return; }
+  var categoryFormActor = userProfile;
+  await ensureCustomerAccessCategories();
+  if (userProfile !== categoryFormActor || !canEdit()) return;
+  refreshCategorySelectLabels();
   var formProduct = mode === "add" ? (product || null) : product;
   if (mode === "edit" && product && productDkdId(product)) {
     try {
