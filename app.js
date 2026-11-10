@@ -452,6 +452,8 @@ var TRANSLATIONS = {
     customer_order_subtotal: "小計",
     customer_order_total: "合計",
     sales_order_id_label: "受注ID",
+    claim_case_mgmt_title: "クレーム受付・対応",
+    claim_case_mgmt_desc: "受付・代替受注・発送・旧品返却・検査を案件ごとに管理します。",
     sales_order_mgmt_title: "受注・出荷管理",
     sales_order_internal_print_timing: "受注書（出荷指示書）は、保証書などと一緒に印刷時に発行します。",
     sales_order_documents_queued: "受注書を含む{n}件の帳票を印刷待ちに登録しました。",
@@ -3312,6 +3314,8 @@ var TRANSLATIONS = {
     customer_order_subtotal: "Subtotal",
     customer_order_total: "Total",
     sales_order_id_label: "Order ID",
+    claim_case_mgmt_title: "Claim cases",
+    claim_case_mgmt_desc: "Track reception, replacements, shipping, returns and inspection by case.",
     sales_order_mgmt_title: "Orders / Shipping",
     sales_order_internal_print_timing: "The order / shipment instruction is issued with the warranty and other documents when printing.",
     sales_order_documents_queued: "Queued {n} documents, including the order / shipment instruction, for printing.",
@@ -6116,6 +6120,8 @@ var TRANSLATIONS = {
     customer_order_subtotal: "小计",
     customer_order_total: "合计",
     sales_order_id_label: "订单ID",
+    claim_case_mgmt_title: "投诉受理与处理",
+    claim_case_mgmt_desc: "按案件分别跟踪受理、替换订单、发货、旧品退回和检验。",
     sales_order_mgmt_title: "订单・出货管理",
     sales_order_internal_print_timing: "订单（出货指示书）将在打印时与保修书等一起签发。",
     sales_order_documents_queued: "已将包含订单在内的{n}份单据加入打印队列。",
@@ -8708,7 +8714,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1302";
+var APP_VERSION       = "v1.1.1303";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -9516,6 +9522,7 @@ function createConciergeScreenRoutes() { return Object.freeze({
   "customer-portal": { allowed: canShowCustomerPortalMenu, open: function () { return enterCustomerPortal(); } },
   "sales-order-mgmt": { allowed: canManageSalesOrders, feature: "internal_management", open: function () { return enterSalesOrderMgmt(); } },
   "shipping-document-mgmt": { allowed: canManageSalesOrders, feature: "internal_management", open: function () { return enterShippingDocumentMgmt(); } },
+  "claim-case-mgmt": { allowed: canManageSalesOrders, feature: "internal_management", open: function () { return enterClaimCaseMgmt(); } },
   "core-return-mgmt": { allowed: canManageSalesOrders, feature: "internal_management", open: function () { return enterCoreReturnManagement(); } },
   "production-search": { allowed: canViewProductionFeatures, open: function () { return enterProductionSearch(); } },
   "finished-label-mgmt": { allowed: canViewFinishedLabelMgmt, open: function () { return enterFinishedLabelMgmt(); } },
@@ -9575,6 +9582,7 @@ function getConciergeNavigation() {
   return conciergeNavigation;
 }
 var CONCIERGE_AI_SCREEN_IDS = Object.freeze({
+  "claim-case-mgmt": true,
   menu: true,
   search: true,
   "customer-portal": true,
@@ -11662,6 +11670,7 @@ function resetScreenStateForMenu(screenId) {
 
 function showScreen(id) {
   var previousScreenId = activeAppScreenName();
+  if (typeof claimCaseWorkspace !== "undefined" && claimCaseWorkspace && id !== "claim-case-mgmt") claimCaseWorkspace.reset();
   if ((id === "login" || id === "boot") && window.DcatsProductPhotoTools) window.DcatsProductPhotoTools.forceClose();
   if ((id === "login" || id === "boot") && typeof conciergeNavigation !== "undefined" && conciergeNavigation) conciergeNavigation.clear();
   if (id !== "concierge-admin") closeConciergeAdmin();
@@ -12033,7 +12042,7 @@ function updateAllHeaders() {
   var cls   = roleClass(userProfile.role);
   var greet = tf("greeting", { name: name });
 
-  ["menu","customer-portal","customer-shipping","customer-catalog","customer-orders","sales-order-mgmt","shipping-document-mgmt","core-return-mgmt","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","component-name-master-mgmt","component-compat-mgmt","product-kind-stock-mgmt","manufacturing-cost-mgmt","finished-label-mgmt","finished-product-shipping","production-ranking-mgmt","report-hub","customer-price-report","manufacturing-ranking-report","sales-pricing-mgmt","purchase-mgmt","customer-access-mgmt","shipping-rate-mgmt","logs"].forEach(function(sc) {
+  ["menu","customer-portal","customer-shipping","customer-catalog","customer-orders","claim-case-mgmt","sales-order-mgmt","shipping-document-mgmt","core-return-mgmt","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","component-name-master-mgmt","component-compat-mgmt","product-kind-stock-mgmt","manufacturing-cost-mgmt","finished-label-mgmt","finished-product-shipping","production-ranking-mgmt","report-hub","customer-price-report","manufacturing-ranking-report","sales-pricing-mgmt","purchase-mgmt","customer-access-mgmt","shipping-rate-mgmt","logs"].forEach(function(sc) {
     var nameEl  = document.getElementById(sc + "-username");
     var badgeEl = document.getElementById(sc + "-role-badge");
     if (nameEl)  nameEl.textContent = name;
@@ -12095,6 +12104,8 @@ async function signOutAllDevices() {
 }
 
 async function doLogout() {
+  if (typeof claimCaseWorkspace !== "undefined" && claimCaseWorkspace) claimCaseWorkspace.reset();
+  claimCaseReturnContext = null;
   if (packingBoxesController) packingBoxesController.close();
   resetUnusedProductDeletion();
   clearAppRestoreState();
@@ -12248,6 +12259,7 @@ function renderMenu() {
     { icon: "&#x1F6CD;", titleKey: "customer_portal_title", descKey: "customer_portal_preview_desc", action: "customer-portal", available: canShowCustomerPortalMenu(), tag: null },
     { icon: "&#x1F4E5;", titleKey: "sales_order_mgmt_title", descKey: "sales_order_mgmt_desc", action: "sales-order-mgmt", available: canManageSalesOrders(), tag: null },
     { icon: "&#x1F5A8;", titleKey: "shipping_document_mgmt_title", descKey: "shipping_document_mgmt_desc", action: "shipping-document-mgmt", available: canManageSalesOrders(), tag: null },
+    { icon: "&#x1F4CB;", titleKey: "claim_case_mgmt_title", descKey: "claim_case_mgmt_desc", action: "claim-case-mgmt", available: canManageSalesOrders(), tag: null },
     { icon: "&#x21A9;", titleKey: "core_return_mgmt_title", descKey: "core_return_mgmt_desc", action: "core-return-mgmt", available: canManageSalesOrders(), tag: null },
     { icon: "&#x1F3ED;", titleKey: "mi_production_title", descKey: "mi_production_desc", action: "production-search", available: canViewProductionFeatures(), tag: null },
     { icon: "<span class='icon-image' aria-hidden='true'></span>", titleKey: "product_photo_tools_title", descKey: "product_photo_tools_desc", action: "product-photo-tools", available: canUseProductPhotoTools(), tag: null },
@@ -12341,6 +12353,7 @@ function renderMenu() {
       if (card.dataset.action === "search") enterSearch();
       else if (card.dataset.action === "customer-portal") enterCustomerPortal();
       else if (card.dataset.action === "sales-order-mgmt") enterSalesOrderMgmt();
+      else if (card.dataset.action === "claim-case-mgmt") enterClaimCaseMgmt();
       else if (card.dataset.action === "shipping-document-mgmt") enterShippingDocumentMgmt();
       else if (card.dataset.action === "core-return-mgmt") enterCoreReturnManagement();
       else if (card.dataset.action === "production-search") enterProductionSearch();
@@ -18989,6 +19002,24 @@ function coreReturnManagementSetMessage(message, isError) {
   host.className = "core-return-mgmt-message" + (isError ? " error" : "");
 }
 
+var claimCaseWorkspace = null;
+var claimCaseReturnContext = null;
+async function enterClaimCaseMgmt(options) {
+  if (!canManageSalesOrders()) { showPermissionDenied("open_claim_cases", "customer_claim_cases"); return; }
+  if (!window.DcatsClaimCases) return;
+  showScreen("claim-case-mgmt");
+  updateAllHeaders();
+  if (!claimCaseWorkspace) claimCaseWorkspace = window.DcatsClaimCases.create({
+    host: document.getElementById("claim-case-workspace"),
+    rpc: function(name, payload) { return sb.rpc(name, payload); },
+    currentUserId: function() { return currentUser && currentUser.id; },
+    canManage: canManageSalesOrders,
+    canShip: canManageFinishedProductShipping,
+    active: function() { return isScreenActive("claim-case-mgmt"); },
+    openOrder: function(id, claim) { claimCaseReturnContext = claim || null; return enterSalesOrderMgmt({orderId:id}); }
+  });
+  await claimCaseWorkspace.enter(options || {});
+}
 async function enterCoreReturnManagement() {
   if (!canManageSalesOrders()) {
     showPermissionDenied("open_core_return_management", "customer_order_core_return_units");
@@ -19010,6 +19041,11 @@ async function refreshCoreReturnManagement(options) {
   var seq = ++coreReturnManagementListSeq;
   var status = String((document.getElementById("core-return-mgmt-status") || {}).value || "awaiting_return");
   var search = String((document.getElementById("core-return-mgmt-search") || {}).value || "").trim();
+  var claimReference = search.normalize("NFKC").toUpperCase().replace(/[-\s]/g, "");
+  if (/^C(?:R)?[0-9]{9}$/.test(claimReference)) {
+    await enterClaimCaseMgmt({search:claimReference,state:"all",openSingle:true});
+    return;
+  }
   var reload = document.getElementById("core-return-mgmt-reload");
   if (reload) reload.disabled = true;
   coreReturnManagementSetMessage("返却対象を読み込んでいます。", false);
@@ -21562,6 +21598,7 @@ function renderSalesOrderDetail() {
   var actions = allowed.filter(function(action) { return action !== "cancel" && action !== "cancel_after_picking"; }).map(function(action) {
     return "<button type='button' class='sales-order-action " + esc(action) + "' data-sales-order-action='" + esc(action) + "'>" + esc(actionLabels[action] || action) + "</button>";
   }).join("");
+  actions += "<button type='button' data-sales-order-claim-open>クレーム案件を開く</button>";
   var purgeStatus = order.development_test_order_purge || {};
   var cancellationAction = salesOrderCancellationAction(order);
   var secondaryButtons = cancellationAction
@@ -60731,3 +60768,8 @@ window.addEventListener('load',startDcatsExtensionUpdate);
 getConciergeNavigation(); // Track edits before the first AI answer, without reading Auth or navigating.
 
 document.getElementById("shipping-packing-boxes-open").addEventListener("click", function(event) { openPackingBoxes(event.currentTarget); });
+
+document.getElementById("btn-back-claim-case-mgmt").addEventListener("click",returnToMenuFresh);
+document.getElementById("btn-logout-claim-case-mgmt").addEventListener("click",doLogout);
+document.getElementById("core-return-claim-cases").addEventListener("click",function(){enterClaimCaseMgmt({state:"awaiting_return"});});
+document.addEventListener("click",function(event){var button=event.target.closest("[data-sales-order-claim-open]");if(!button||!salesOrderDetail||!canManageSalesOrders())return;var c=claimCaseReturnContext;var same=c&&[String(c.original_order_id),String(c.replacement_order_id)].indexOf(String(salesOrderDetail.id))>=0;enterClaimCaseMgmt(same?{caseId:c.id}:{search:salesOrderDetail.order_number,state:"all"});});
