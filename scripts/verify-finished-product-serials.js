@@ -227,6 +227,9 @@ const saveButton = {
   setAttribute(name, value) { if (name === "aria-disabled") this.ariaDisabled = value; }
 };
 const saveButtonSandbox = {
+  finishedLabelPrintMode: "product",
+  finishedLabelComponentsLoading: false,
+  finishedLabelComponentError: "",
   document: { getElementById(id) { return id === "btn-finished-label-save" ? saveButton : null; } },
   finishedLabelUsesRemotePrintQueue() { return false; },
   t(key) { return key; }
@@ -237,6 +240,14 @@ saveButtonSandbox.updateSave({ gltek_part_number: "" });
 assert(!saveButton.disabled && saveButton.textContent === "finished_label_g_number_missing_value" && saveButtonClasses.has("missing-g-number"), "missing G part number is not presented as an actionable explanation");
 saveButtonSandbox.updateSave({ gltek_part_number: "G0101-00001" });
 assert(!saveButton.disabled && saveButton.textContent === "finished_label_issue_save" && !saveButtonClasses.has("missing-g-number"), "valid G part number does not restore register-and-print");
+saveButtonSandbox.finishedLabelComponentsLoading = true;
+saveButtonSandbox.updateSave({ gltek_part_number: "G0101-00001" });
+assert(saveButton.disabled, "register-and-print must wait for the component reader");
+saveButtonSandbox.finishedLabelComponentsLoading = false;
+saveButtonSandbox.finishedLabelComponentError = "synthetic read failure";
+saveButtonSandbox.updateSave({ gltek_part_number: "G0101-00001" });
+assert(saveButton.disabled, "register-and-print must stop after component read failure");
+saveButtonSandbox.finishedLabelComponentError = "";
 saveButtonSandbox.updateSave(null);
 assert(saveButton.disabled && saveButton.ariaDisabled === "true", "register-and-print is enabled before a product is selected");
 
