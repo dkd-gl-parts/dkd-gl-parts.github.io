@@ -10163,9 +10163,9 @@ function customerCanShowVehicleInfo() {
 function customerCanShowCompatibleParts() {
   return customerViewerSetting("show_compatible_parts", true);
 }
-function customerCategoryIsVisible(categoryCode, visibilityRows) {
+function customerCategoryIsVisible(categoryCode, visibilityRows, categories) {
   var code = String(categoryCode || "");
-  var category = (categoryOptions || []).find(function(cat) { return String(cat.category_code || cat.category || "") === code; });
+  var category = (categories || categoryOptions || []).find(function(cat) { return String(cat.category_code || cat.category || "") === code; });
   return !!category && category.show_to_customers === true && !(visibilityRows || []).some(function(row) {
     return row.visibility_scope === "category" && String(row.category_code || "") === code && row.is_visible === false;
   });

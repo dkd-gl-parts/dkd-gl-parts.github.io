@@ -435,6 +435,7 @@
     var customerId = Number(byId("cpr-customer").value) || null;
     var previous = categorySelect.value;
     var load = ++state.categoryLoad;
+    var actor = reportActor();
     categorySelect.disabled = true;
     previewButton.disabled = true;
     categorySelect.innerHTML = "<option value=''>すべて</option>";
@@ -450,15 +451,14 @@
     }
     if (!customerId) return;
     try {
-      var result = await sb.from("customer_product_visibility")
-        .select("visibility_scope,category_code,is_visible")
-        .eq("sales_customer_id", customerId)
-        .in("visibility_scope", ["all", "category"])
-        .limit(2000);
-      if (load !== state.categoryLoad || isRecycle() || Number(byId("cpr-customer").value) !== customerId) return;
+      var result = await sb.rpc("get_customer_category_settings", { target_sales_customer_id: customerId });
+      if (actor !== reportActor() || load !== state.categoryLoad || isRecycle() || Number(byId("cpr-customer").value) !== customerId) return;
       if (result.error) throw result.error;
-      var rows = result.data || [];
-      var visible = state.categoryOptions.filter(function(code) { return customerCategoryIsVisible(code, rows); });
+      var payload = result.data;
+      if (!payload || String(payload.sales_customer_id) !== String(customerId) || !Array.isArray(payload.categories) || !Array.isArray(payload.excluded_category_codes) || payload.categories.some(function(cat) { return !cat || typeof cat.category_code !== "string" || typeof cat.show_to_customers !== "boolean"; })) throw Error("Invalid category settings");
+      var rows = payload.excluded_category_codes.map(function(code) { return { visibility_scope: "category", category_code: code, is_visible: false }; });
+      var categories = payload.categories;
+      var visible = categories.filter(function(cat) { return customerCategoryIsVisible(cat.category_code, rows, categories); }).map(function(cat) { state.categories[cat.category_code] = cat.label_ja || cat.category_code; return cat.category_code; });
       categorySelect.innerHTML = "<option value=''>すべて</option>" + visible.map(function(code) {
         return "<option value='" + safe(code) + "'>" + safe(state.categories[code]) + "</option>";
       }).join("");
