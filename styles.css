@@ -6008,7 +6008,11 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .finished-label-history-row { border: 1px solid #edf0f4; border-radius: 8px; background: #fff; padding: 9px 10px; }
 .finished-label-history-row.active { border-color: #4f8ef7; box-shadow: 0 0 0 2px rgba(79, 142, 247, .12); background: #f7faff; }
 .finished-label-history-main { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 12px; font-weight: 700; }
-.finished-label-history-main > span:first-child { font-family: Consolas, "SFMono-Regular", monospace; white-space: nowrap; }
+.finished-label-history-main > span:first-child { min-width: 0; font-family: Consolas, "SFMono-Regular", monospace; white-space: normal; overflow-wrap: anywhere; }
+.finished-label-history-part-numbers { display: grid; gap: 3px; margin: 6px 0 0; font-size: 11px; line-height: 1.45; }
+.finished-label-history-part-numbers > div { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 6px; }
+.finished-label-history-part-numbers dt { color: #667085; overflow-wrap: anywhere; }
+.finished-label-history-part-numbers dd { min-width: 0; margin: 0; color: #344054; font-weight: 600; overflow-wrap: anywhere; }
 .finished-label-history-sub { font-size: 11px; color: #7c8492; margin-top: 4px; line-height: 1.45; word-break: break-word; }
 .finished-label-history-print-state { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; border-left: 3px solid #4876a8; padding: 7px 8px; background: #f3f7fb; color: #344054; font-size: 11px; line-height: 1.45; }
 .finished-label-history-print-state > div { min-width: 0; }
@@ -6106,7 +6110,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .finished-label-issued-meta { margin-top: 4px; color: #547061; font-size: 11px; }
 .finished-label-serial-list { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 9px; }
 .finished-label-serial-chip { border: 1px solid #bad7c4; border-radius: 5px; padding: 4px 7px; background: #fff; color: #183f29; font-family: Consolas, "SFMono-Regular", monospace; font-size: 11px; font-weight: 800; letter-spacing: .02em; }
-.finished-label-history-serial { margin-top: 5px; color: #173f2a; font-family: Consolas, "SFMono-Regular", monospace; font-size: 11px; font-weight: 800; word-break: break-word; }
+.finished-label-history-serial { margin: 0; color: #173f2a; font-family: Consolas, "SFMono-Regular", monospace; font-size: 12px; font-weight: 800; word-break: break-word; }
 .finished-box-label-print-status { display: inline-flex; align-items: center; min-height: 22px; border-radius: 999px; padding: 3px 8px; background: #e8f6ed; color: #17603a; font-size: 9px; font-weight: 900; white-space: nowrap; }
 .finished-box-label-print-status.reprint { background: #fff3dd; color: #8a4b08; }
 .finished-label-mode-card.station { border-color: #b9cbe1; background: #f5f8fc; }

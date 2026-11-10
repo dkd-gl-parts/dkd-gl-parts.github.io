@@ -85,3 +85,6 @@ async function run(){
  fs.writeFileSync(path.join(output,'category-admin-results.json'),JSON.stringify(results,null,2));console.log('Category warranty admin browser QA: '+results.length+' cases passed');
 }
 run().catch(error=>{console.error(error);process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();if(server)await new Promise(r=>server.close(r));});
+
+// Temporary acceptance capture for the finished-label history layout.
+require("./qa-finished-label-history.js");
