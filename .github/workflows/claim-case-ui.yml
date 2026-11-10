@@ -1,0 +1,43 @@
+{
+  "name": "Claim case UI verification",
+  "on": {
+    "push": {
+      "branches": [
+        "codex/claim-case-workflow-20261110"
+      ]
+    },
+    "pull_request": {
+      "paths": [
+        "claim-cases.js",
+        "claim-cases.css",
+        "claim-return-print.js",
+        "scripts/test-claim-cases.js",
+        "app.js",
+        "index.html",
+        ".github/workflows/claim-case-ui.yml"
+      ]
+    }
+  },
+  "permissions": {
+    "contents": "read"
+  },
+  "jobs": {
+    "claims": {
+      "runs-on": "ubuntu-latest",
+      "steps": [
+        {
+          "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1"
+        },
+        {
+          "uses": "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
+          "with": {
+            "node-version": 22
+          }
+        },
+        {
+          "run": "node --check claim-cases.js\nnode --check claim-return-print.js\nnode scripts/test-claim-cases.js"
+        }
+      ]
+    }
+  }
+}

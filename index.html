@@ -22,6 +22,7 @@
 <link rel="preconnect" href="https://jqoeqximtwfpqwzngutj.supabase.co" crossorigin>
 <script src="vendor/supabase-js-2.115.0.js" integrity="sha384-CLZeq1dk8+Uzrs7TVvBUdlFoV5F0DMqgRoeHa8g5wJcuPe5SkVfEvdxB0ZuzlnBQ" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="styles.css?v=1.1.1301&amp;ranking=9&amp;brand=4">
+<link rel="stylesheet" href="claim-cases.css?v=1.1.1301">
 <link rel="stylesheet" href="sales-pricing-lists.css?v=1.1.1301">
 <link rel="stylesheet" href="core-valuation.css?v=1.1.1301">
 <link rel="stylesheet" href="ec-cost-list-targets.css?v=1.1.1301">
@@ -858,6 +859,10 @@
 <!-- =============================================
    コア返却管理
 ============================================= -->
+<div id="screen-claim-case-mgmt" class="screen">
+ <div class="page-header"><div class="page-header-left"><button class="back-btn" id="btn-back-claim-case-mgmt" data-i18n="btn_back">← メニュー</button><span class="logo-text" data-i18n="claim_case_mgmt_title">クレーム受付・対応</span><span class="app-version-wrap"><span class="app-version">v1.1.1301</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span></div><div class="page-header-right"><span class="header-username" id="claim-case-mgmt-username"></span><span class="role-badge" id="claim-case-mgmt-role-badge"></span><button class="btn-logout" id="btn-logout-claim-case-mgmt" data-i18n="btn_logout">ログアウト</button></div></div>
+ <main id="claim-case-workspace" class="claim-body"></main>
+</div>
 <div id="screen-core-return-mgmt" class="screen">
   <div class="page-header">
     <div class="page-header-left">
@@ -876,6 +881,7 @@
       <div class="core-return-mgmt-title-block">
         <span>CORE RETURN OPERATIONS</span>
         <h1>コア返却管理</h1>
+        <button type="button" id="core-return-claim-cases">クレーム旧品の返却・検査を開く</button>
         <p>返却シート、送り状、受注情報から対象を照合し、受付・検品・修正履歴を管理します。</p>
       </div>
       <div class="core-return-mgmt-search-row">
@@ -5947,6 +5953,7 @@
 <div id="packing-boxes-overlay" class="packing-box-overlay" hidden><section id="packing-boxes-content" class="packing-box-dialog" role="dialog" aria-modal="true" aria-labelledby="packing-boxes-title"></section></div>
 <script src="packing-boxes.js?v=1.1.1301"></script>
 <script src="category-warranty-settings.js?v=1.1.1301"></script>
+<script src="claim-cases.js?v=1.1.1301"></script>
 <script src="app.js?v=1.1.1301"></script>
 <script src="vendor/fflate-0.8.2.js" integrity="sha384-DT0Ls0mO7JmjTnT+oBuMhEJzYJO1zUqzuuMXNdnOmOQRIpN2BgSjvBV/j50NngIT" crossorigin="anonymous"></script>
 <script src="product-photo-tools.js?v=1.1.1301"></script>
