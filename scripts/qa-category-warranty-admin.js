@@ -1,4 +1,6 @@
 'use strict';
+// Temporary cloud-only printer guide QA hook, removed before release.
+require('node:child_process').execFileSync(process.execPath,[require('node:path').join(__dirname,'qa-td4420tn-setup-guide.js')],{stdio:'inherit',timeout:180000});
 const fs=require('fs'),path=require('path'),http=require('http'),assert=require('assert/strict'),acorn=require('acorn');
 const {chromium}=require(process.env.WARRANTY_PLAYWRIGHT_MODULE || 'playwright');
 const root=path.resolve(__dirname,'..'),app=fs.readFileSync(path.join(root,'app.js'),'utf8'),html=fs.readFileSync(path.join(root,'index.html'),'utf8');

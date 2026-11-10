@@ -5920,8 +5920,8 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .finished-label-setup-guide-tabs button[aria-selected="true"] { background: #1c5c43; color: #fff; }
 .finished-label-setup-guide-panel { margin-top: 15px; }
 .finished-label-setup-guide-steps { margin: 0; padding: 0; list-style: none; }
-.finished-label-setup-guide-steps li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; border-top: 1px solid #e1e6eb; padding: 13px 0; }
-.finished-label-setup-guide-steps li:first-child { border-top: 0; padding-top: 3px; }
+.finished-label-setup-guide-steps > li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; border-top: 1px solid #e1e6eb; padding: 13px 0; }
+.finished-label-setup-guide-steps > li:first-child { border-top: 0; padding-top: 3px; }
 .finished-label-setup-guide-step-number { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; background: #e6f1ec; color: #18543d; font-size: 13px; font-weight: 900; }
 .finished-label-setup-guide-steps strong { display: block; color: #1c2c42; font-size: 14px; }
 .finished-label-setup-guide-steps p { margin: 4px 0 0; color: #657185; font-size: 12px; line-height: 1.65; }
@@ -5939,6 +5939,17 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .finished-label-setup-guide-fallback button { justify-self: start; margin-top: 6px; }
 .finished-label-setup-guide-footer { display: flex; justify-content: flex-end; margin-top: 18px; border-top: 1px solid #e1e6eb; padding-top: 14px; }
 .finished-label-setup-guide button:focus-visible, .finished-label-setup-guide a:focus-visible { outline: 3px solid rgba(47, 111, 237, .32); outline-offset: 2px; }
+
+.finished-label-setup-guide-driver { margin-top: 10px; border-top: 1px dashed #cbd5df; padding-top: 4px; }
+.finished-label-setup-guide-driver > a { color: #185995; font-size: 13px; font-weight: 700; text-decoration: underline; overflow-wrap: anywhere; }
+.finished-label-setup-guide-checklist { margin: 10px 0; padding-left: 22px; color: #405168; font-size: 13px; line-height: 1.7; }
+.finished-label-setup-guide-checklist > li { display: list-item; margin: 8px 0; padding: 0; border: 0; }
+.finished-label-setup-guide-window { margin-top: 10px; border-left: 4px solid #3677b7; padding: 8px 10px; background: #f1f6fb; color: #1f3f60; font-size: 13px; font-weight: 800; overflow-wrap: anywhere; }
+.finished-label-setup-guide-help { margin-top: 12px; border: 1px solid #cbd5df; border-radius: 6px; padding: 10px 12px; background: #f8fafc; }
+.finished-label-setup-guide-help > summary { min-height: 28px; color: #1f4f7a; font-size: 13px; font-weight: 800; cursor: pointer; line-height: 1.6; }
+.finished-label-setup-guide-help > summary:focus-visible { outline: 3px solid rgba(47, 111, 237, .32); outline-offset: 3px; }
+.finished-label-setup-guide-steps .finished-label-setup-guide-help a { display: inline; min-height: 0; margin: 0; color: #185995; text-decoration: underline; overflow-wrap: anywhere; }
+.finished-label-setup-guide-steps .finished-label-setup-guide-file-note { overflow-wrap: anywhere; }
 body.finished-label-setup-guide-open { overflow: hidden; }
 .finished-label-workspace { display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; }
 .finished-label-workspace[hidden], [data-finished-label-product-only][hidden], [data-finished-label-box-only][hidden] { display: none !important; }
@@ -6192,7 +6203,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   .finished-label-setup-guide-card > h2 { font-size: 19px; }
   .finished-label-setup-guide-card > p { font-size: 12px; }
   .finished-label-setup-guide-tabs button { min-height: 48px; padding: 8px 9px; font-size: 12px; }
-  .finished-label-setup-guide-steps li { grid-template-columns: 30px minmax(0, 1fr); gap: 9px; padding: 11px 0; }
+  .finished-label-setup-guide-steps > li { grid-template-columns: 30px minmax(0, 1fr); gap: 9px; padding: 11px 0; }
   .finished-label-setup-guide-step-number { width: 28px; height: 28px; }
   .finished-label-setup-guide-steps a, .finished-label-setup-guide-panel > .btn-primary { width: 100%; }
   .finished-label-setup-detection { grid-template-columns: 12px minmax(0, 1fr); }
