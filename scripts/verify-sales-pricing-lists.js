@@ -32,6 +32,44 @@ async function fixture(lang='ja'){
  return {window,doc,calls,edgeCalls,individual,gCalls,setGHandler(fn){gHandler=fn;},setReceipt(fn){receiptHandler=fn;},setPreview(fn){previewHandler=fn;},setCommitFailure(error){commitFailure=error;},setReview(reason){configured=true;reviewFailure=reason;},async enableEc(){ecEnabled=true;await window.DcatsSalesPricingLists.enter();},completeEc(){ecComplete=true;},blockEc(){ecBlocked=true;},loseEcResponse(){ecLost=true;},async pollEc(){for(const [id,fn] of [...timers]){timers.delete(id);await fn();}await tick();await tick();},async advanceTime(ms){clockOffset+=ms;for(const [id,fn] of [...timers]){timers.delete(id);await fn();}await tick();},timerCount(){return timers.size;},loseCredentialResponse(){credentialLost=true;},setUnknown(){unknown=true;},deny(){allowed=false;},rows};
 }
 (async()=>{
+ // The unavailable filter follows both displayed unavailable statuses, independently of review/configured states.
+ for(const lang of ['ja','en','zh']){
+  const f=await fixture(lang),doc=f.doc,Event=f.window.Event;
+  const labels={ja:'設定不可',en:'Cannot set price',zh:'不可设置'};
+  const template={...f.rows[0]};
+  f.rows.push(...[
+   {item_id:4,registered_component_count:0,state:'cost_review',manufacturer_part_number:'ZERO-A'},
+   {item_id:5,registered_component_count:0,state:'ready',manufacturer_part_number:'ZERO-B'},
+   {item_id:6,registered_component_count:0,state:'dks_missing',manufacturer_part_number:'ZERO-C'},
+   {item_id:7,registered_component_count:0,state:'configured',current_rank1_jpy:9000},
+   {item_id:8,registered_component_count:null,state:'cost_review'},
+   {item_id:9,registered_component_count:0,state:'oem_review'},
+   {item_id:10,registered_component_count:2,cost_incomplete:true},
+   {item_id:11,registered_component_count:-1,state:'cost_review'}
+  ].map(r=>({...template,dkd_shohin_id:100+Number(r.item_id),genuine_part_number:null,...r})));
+  doc.getElementById('spl-refresh').click();await tick();await tick();
+  const filter=doc.getElementById('spl-filter'),tab=doc.querySelector('[data-spl-filter="unavailable"]');
+  assert.equal(filter.querySelector('[value="unavailable"]').textContent,labels[lang]);
+  assert.equal(tab.querySelector('strong').textContent,'5');
+  filter.value='unavailable';filter.dispatchEvent(new Event('change'));
+  assert.deepEqual(Array.from(doc.querySelectorAll('[data-spl-row]'),n=>n.dataset.splRow),['4','5','6','8','11']);
+  assert.equal(tab.getAttribute('aria-pressed'),'true');
+  assert.equal(doc.querySelectorAll('[data-spl-price]').length,0);
+  selectVisible(f);assert.equal(doc.getElementById('spl-bulk').disabled,true);
+  const query=doc.getElementById('spl-query');query.value='ZERO-B';query.dispatchEvent(new Event('input'));
+  assert.deepEqual(Array.from(doc.querySelectorAll('[data-spl-row]'),n=>n.dataset.splRow),['5']);
+  doc.getElementById('spl-refresh').click();await tick();await tick();
+  assert.equal(doc.getElementById('spl-filter').value,'unavailable');
+  assert.equal(doc.getElementById('spl-query').value,'ZERO-B');
+  assert.equal(doc.querySelectorAll('[data-spl-row]').length,1);
+  doc.getElementById('spl-query').value='NOT-FOUND';doc.getElementById('spl-query').dispatchEvent(new Event('input'));
+  assert.equal(doc.querySelectorAll('[data-spl-row]').length,0);assert.ok(doc.querySelector('.spl-empty'));
+  doc.getElementById('spl-query').value='';doc.getElementById('spl-query').dispatchEvent(new Event('input'));
+  doc.querySelector('[data-spl-filter="ready"]').click();assert.ok(doc.querySelector('[data-spl-price="10"]'),'partial costs remain priceable');
+  doc.querySelector('[data-spl-filter="unavailable"]').click();assert.equal(doc.querySelectorAll('[data-spl-row]').length,5);
+  assert.equal(f.calls.filter(c=>c.action==='commit').length,0);assert.equal(f.edgeCalls.length,0);f.window.DcatsSalesPricingLists.reset();
+ }
+
  let f=await fixture();
  assert.equal(Number(f.doc.querySelector('[data-spl-planned]').textContent.replace(/[^0-9]/g,'')),11500,'planned price includes the margin floor rather than the lower reference target');
  var plannedInput=f.doc.querySelector('[data-spl-price]');plannedInput.value='12000';plannedInput.dispatchEvent(new f.window.Event('input'));assert.equal(Number(f.doc.querySelector('[data-spl-planned]').textContent.replace(/[^0-9]/g,'')),12000,'planned amount follows the edited candidate');plannedInput.value='11500';plannedInput.dispatchEvent(new f.window.Event('input'));
