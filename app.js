@@ -2858,6 +2858,7 @@ var TRANSLATIONS = {
     customer_category_reload_required: "設定を再読み込みして保存結果と全体設定を確認してください。確認するまで再保存できません。",
     cw_customer_publication: "得意先に公開（全体ON）",
     cw_publication_help: "得意先への公開は全体ONが必須です。得意先ごとに追加でOFFにできます。新しいカテゴリは全体OFFで作成します。",
+    cw_apply_note: "カテゴリ名・公開設定は保存後に反映します。保証条件は次の出荷から適用し、出荷済み商品の保証期限は変わりません。",
     cw_ja: "日本語名",
     cw_en: "英語名",
     cw_zh: "中国語名",
@@ -5691,6 +5692,7 @@ var TRANSLATIONS = {
     customer_category_reload_required: "Reload settings to confirm the saved result and global settings before saving again.",
     cw_customer_publication: "Publish to customers (global ON)",
     cw_publication_help: "Global ON is required for customer publication. Each customer can exclude additional categories. New categories start globally OFF.",
+    cw_apply_note: "Category names and publication apply after saving. Warranty changes apply to future shipments; existing shipment warranties stay unchanged.",
     cw_ja: "Japanese name",
     cw_en: "English name",
     cw_zh: "Chinese name",
@@ -8524,6 +8526,7 @@ var TRANSLATIONS = {
     customer_category_reload_required: "请重新加载设置，确认保存结果与全局设置后再保存。",
     cw_customer_publication: "向客户公开（全局开启）",
     cw_publication_help: "向客户公开必须全局开启。可为每位客户额外关闭类别。新类别默认全局关闭。",
+    cw_apply_note: "类别名称与公开设置在保存后生效。保修条件适用于后续出货，已出货商品的保修期限保持不变。",
     cw_ja: "日语名称",
     cw_en: "英语名称",
     cw_zh: "中文名称",
@@ -54873,10 +54876,11 @@ async function saveCustomerAccessSettings() {
   if (!canManageCustomerAccess() || !currentCustomerAccessCustomer) { alert(t("err_perm")); return; }
   if (customerAccessSettingsSaving) return;
   if (!customerCategorySettingsReady(currentCustomerAccessCustomer.id)) { alert(t("customer_category_reload_required")); return; }
+  var onlyCategories = customerAccessOnlyCategoryChanges();
   syncCustomerDisplayRuleControls();
   var hanbaiouBilling = collectHanbaiouCustomerBillingSettings();
   var hanbaiouBillingError = validateHanbaiouCustomerBillingSettings(hanbaiouBilling);
-  if (hanbaiouBillingError) {
+  if (!onlyCategories && hanbaiouBillingError) {
     alert(hanbaiouBillingError.message);
     var invalidField = document.getElementById(hanbaiouBillingError.fieldId);
     if (invalidField) invalidField.focus();
@@ -54884,13 +54888,12 @@ async function saveCustomerAccessSettings() {
   }
   var hanbaiouCollection = collectHanbaiouCustomerCollectionSettings();
   var collectionError = validateHanbaiouCustomerCollectionSettings(hanbaiouCollection);
-  if (collectionError) {
+  if (!onlyCategories && collectionError) {
     alert(collectionError.message);
     var collectionField = document.getElementById(collectionError.fieldId);
     if (collectionField) collectionField.focus();
     return;
   }
-  var onlyCategories = customerAccessOnlyCategoryChanges();
   var operation = { actor: userProfile, customerId: String(currentCustomerAccessCustomer.id) };
   customerAccessSaveOperation = operation;
   customerAccessSettingsSaving = true;
@@ -54963,7 +54966,9 @@ async function saveCustomerAccessSettings() {
       return String(row.id) === String(customerId) ? Object.assign({}, row, updatedCustomer) : row;
     });
     if (customerPortalPreviewContext && String(customerPortalPreviewContext.sales_customer_id || "") === String(customerId)) {
-      customerPortalPreviewContext = await loadCustomerPortalContextForCustomer(updatedCustomer);
+      var updatedPreview = await loadCustomerPortalContextForCustomer(updatedCustomer);
+      if (!customerAccessOperationCurrent(operation)) return;
+      customerPortalPreviewContext = updatedPreview;
     }
     customerAccessSettings = Object.assign(defaultCustomerDisplaySettings(), data);
     detailCustomerDisplaySettingsCache[String(customerId)] = Object.assign({}, customerAccessSettings);
