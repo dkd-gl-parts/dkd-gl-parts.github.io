@@ -153,7 +153,8 @@ const expectedAuxiliaryWorkflows = new Map([
         ".github/workflows/category-warranty-ui.yml",
         "category-warranty-settings.js",
         "scripts/qa-category-warranty-admin.js",
-        "scripts/qa-customer-category-master.js"
+        "scripts/qa-customer-category-master.js",
+        "scripts/qa-hanbaiou-billing-settings.js"
       ]
     }
   },
@@ -191,7 +192,7 @@ const expectedAuxiliaryWorkflows = new Map([
             "WARRANTY_PLAYWRIGHT_MODULE": "${{ runner.temp }}/warranty-browser/node_modules/playwright",
             "WARRANTY_QA_OUTPUT": "${{ runner.temp }}/warranty-qa-results"
           },
-          "run": "node scripts/qa-sales-product-warranty.js\nnode scripts/qa-category-warranty-admin.js\nnode scripts/qa-customer-category-master.js"
+          "run": "node scripts/qa-sales-product-warranty.js\nnode scripts/qa-category-warranty-admin.js\nnode scripts/qa-customer-category-master.js\nnode scripts/qa-hanbaiou-billing-settings.js"
         },
         {
           "uses": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
