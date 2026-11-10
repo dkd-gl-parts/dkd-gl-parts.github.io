@@ -36127,6 +36127,9 @@ async function loadFinishedLabelComponentCandidates(options) {
   finishedLabelComponentsLoading = true;
   finishedLabelComponentError = "";
   renderFinishedLabelComponents();
+  var body = document.getElementById("finished-label-component-body");
+  var tableWrap = body && body.closest(".finished-label-table-wrap");
+  if (tableWrap) tableWrap.scrollLeft = 0;
   var controller = typeof AbortController === "function" ? new AbortController() : null;
   var timeoutId = window.setTimeout(function() { if (controller) controller.abort(); }, 20000);
   try {
@@ -36176,6 +36179,12 @@ async function loadFinishedLabelComponentCandidates(options) {
 function renderFinishedLabelComponents(errorMessage) {
   errorMessage = errorMessage || finishedLabelComponentError;
   var body = document.getElementById("finished-label-component-body");
+  var status = document.getElementById("finished-label-component-status");
+  if (status) {
+    status.hidden = !finishedLabelComponentsLoading && !errorMessage;
+    status.textContent = finishedLabelComponentsLoading ? t("loading") : (errorMessage || "");
+    status.classList.toggle("error", !!errorMessage);
+  }
   updateFinishedLabelSaveButton(finishedLabelSelectedProduct);
   var resetButton = document.getElementById("btn-finished-label-template");
   if (resetButton) {
@@ -36209,6 +36218,7 @@ function renderFinishedLabelComponents(errorMessage) {
     body.innerHTML = "<tr><td colspan='7' class='finished-label-component-empty'>" + esc(t("loading")) + "</td></tr>";
     return;
   }
+  if (errorMessage && status) { body.innerHTML = ""; return; }
   if (errorMessage) {
     body.innerHTML = "<tr><td colspan='7' class='finished-label-component-empty'>" + esc(errorMessage) + "</td></tr>";
     return;
