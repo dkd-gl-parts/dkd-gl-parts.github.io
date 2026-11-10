@@ -32,6 +32,7 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check app.js
+          node scripts/test-claim-cases.js
           node --check sales-order-revision.js
           node --check install-app.js
           node --check assets/concierge-pet/concierge-pet.js
