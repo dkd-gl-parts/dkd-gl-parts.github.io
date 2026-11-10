@@ -246,6 +246,7 @@
       "Shipping documents",
       "发货单据",
     ],
+    "claim-case-mgmt": ["クレーム受付・対応", "Claim cases", "投诉受理与处理"],
     "core-return-mgmt": ["コア返却管理", "Core returns", "旧件退回管理"],
     "production-search": ["製造管理", "Production management", "生产管理"],
     "finished-label-mgmt": [
