@@ -11788,3 +11788,41 @@ html[data-product-3d-paused] :is(
 
 .finished-warranty-policy-card .finished-warranty-policy-table td[colspan] { padding: 24px 12px; color: #526174; font-size: 14px; text-align: center; }
 @media (max-width: 679px) { .finished-warranty-policy-card .finished-warranty-policy-table td[colspan] { grid-column: 1 / -1; } }
+
+/* Warranty kinds use the same palette as Sales Management. */
+.finished-warranty-policy-card .finished-warranty-policy-kind-heading.rebuilt,
+.finished-warranty-policy-card .finished-warranty-policy-cell.rebuilt {
+  --warranty-kind-bg: var(--kind-rebuilt-bg);
+  --warranty-kind-fg: var(--kind-rebuilt-fg);
+  --warranty-kind-border: var(--kind-rebuilt-border);
+}
+.finished-warranty-policy-card .finished-warranty-policy-kind-heading.aftermarket_new,
+.finished-warranty-policy-card .finished-warranty-policy-cell.aftermarket_new {
+  --warranty-kind-bg: var(--kind-aftermarket-bg);
+  --warranty-kind-fg: var(--kind-aftermarket-fg);
+  --warranty-kind-border: var(--kind-aftermarket-border);
+}
+.finished-warranty-policy-card .finished-warranty-policy-table thead th.finished-warranty-policy-kind-heading {
+  background: var(--warranty-kind-bg);
+  color: var(--warranty-kind-fg);
+  border-bottom-color: var(--warranty-kind-border);
+  box-shadow: inset 0 -3px 0 var(--warranty-kind-fg);
+}
+.finished-warranty-policy-card .finished-warranty-policy-table tbody td.finished-warranty-policy-cell {
+  background: var(--warranty-kind-bg);
+  border-bottom-color: var(--warranty-kind-border);
+}
+.finished-warranty-policy-card .finished-warranty-policy-cell .finished-warranty-policy-inputs label > span,
+.finished-warranty-policy-card .finished-warranty-policy-cell .finished-warranty-policy-kind {
+  color: var(--warranty-kind-fg);
+}
+.finished-warranty-policy-card .finished-warranty-policy-cell input {
+  color: var(--warranty-kind-fg);
+  border-color: var(--warranty-kind-border);
+}
+@media (max-width: 679px) {
+  .finished-warranty-policy-card .finished-warranty-policy-table tbody td.finished-warranty-policy-cell {
+    border-radius: 5px;
+    box-shadow: 0 0 0 4px var(--warranty-kind-bg);
+  }
+}
