@@ -9582,6 +9582,7 @@ function getConciergeNavigation() {
   return conciergeNavigation;
 }
 var CONCIERGE_AI_SCREEN_IDS = Object.freeze({
+  "claim-case-mgmt": true,
   menu: true,
   search: true,
   "customer-portal": true,
