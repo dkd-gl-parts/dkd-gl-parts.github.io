@@ -8504,7 +8504,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1292";
+var APP_VERSION       = "v1.1.1293";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -37279,7 +37279,7 @@ function renderFinishedWarrantyPolicyTable() {
       return "<div class='finished-warranty-policy-kind'>" + esc(productKindLabel(kind)) + "</div><div class='finished-warranty-policy-inputs'><label><span>" + esc(t("sales_warranty_periodInput")) + "</span><input type='number' min='1' max='120' step='1' value='" + esc(String(row.warranty_months || 12)) + "' aria-label='" + esc(name + t("sales_warranty_periodInput")) + "' data-finished-warranty-category='" + esc(category.category_code) + "' data-finished-warranty-kind='" + esc(kind) + "'></label>" +
         "<label><span>" + esc(t("sales_warranty_distanceInput")) + "</span><input type='number' min='1' max='10000000' step='1' inputmode='numeric' value='" + esc(row.warranty_distance_km == null ? "" : String(row.warranty_distance_km)) + "' aria-label='" + esc(name + t("sales_warranty_distanceInput")) + "' data-finished-warranty-distance-category='" + esc(category.category_code) + "' data-finished-warranty-distance-kind='" + esc(kind) + "'></label></div>";
     }
-    return "<tr><th scope='row'><strong>" + esc(finishedWarrantyCategoryLabel(category)) + "</strong></th><td>" + input(rebuilt, "rebuilt") + "</td><td>" + input(fresh, "aftermarket_new") + "</td></tr>";
+    return "<tr><th scope='row'><strong>" + esc(finishedWarrantyCategoryLabel(category)) + "</strong></th><td class='finished-warranty-policy-cell rebuilt'>" + input(rebuilt, "rebuilt") + "</td><td class='finished-warranty-policy-cell aftermarket_new'>" + input(fresh, "aftermarket_new") + "</td></tr>";
   }).join("") || "<tr><td colspan='3'>保証期間を読み込めませんでした。</td></tr>";
 }
 
