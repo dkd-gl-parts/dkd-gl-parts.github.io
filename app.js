@@ -1993,6 +1993,19 @@ var TRANSLATIONS = {
     detail_customer_sales_price_note: "選択した得意先の売値区分で販売価格を計算しています。",
     detail_customer_no_price: "販売価格は未設定です",
     sales_detail_title: "商品詳細",
+    sales_warranty_prefix: "保証期間：",
+    sales_warranty_loading: "保証期間を確認中",
+    sales_warranty_error: "保証期間を取得できませんでした",
+    sales_warranty_unset: "保証期間未設定",
+    sales_warranty_year: "{n}年",
+    sales_warranty_years: "{n}年",
+    sales_warranty_months: "{n}か月",
+    sales_warranty_or: "または",
+    sales_warranty_km: "{n}km",
+    sales_warranty_periodInput: "期間（月）",
+    sales_warranty_distanceInput: "走行距離（km・任意）",
+    sales_warranty_hint: "走行距離が空欄の場合、距離の上限は表示しません。",
+    sales_warranty_invalid: "走行距離は1〜10,000,000kmの整数で入力してください。",
     sales_conditions_title: "販売条件",
     sales_shipping_charge_rule: "送料条件",
     sales_shipping_charge_separate: "送料別途",
@@ -4770,6 +4783,19 @@ var TRANSLATIONS = {
     detail_customer_sales_price_note: "Sales price is calculated using the selected customer's sales rank.",
     detail_customer_no_price: "Sales price is not set",
     sales_detail_title: "Product Details",
+    sales_warranty_prefix: "Warranty: ",
+    sales_warranty_loading: "Checking warranty",
+    sales_warranty_error: "Warranty unavailable",
+    sales_warranty_unset: "Warranty not configured",
+    sales_warranty_year: "{n} year",
+    sales_warranty_years: "{n} years",
+    sales_warranty_months: "{n} months",
+    sales_warranty_or: " or ",
+    sales_warranty_km: "{n} km",
+    sales_warranty_periodInput: "Period (months)",
+    sales_warranty_distanceInput: "Distance (km, optional)",
+    sales_warranty_hint: "Leave distance blank when no distance limit is specified.",
+    sales_warranty_invalid: "Enter a whole distance from 1 to 10,000,000 km.",
     sales_conditions_title: "Sales Terms",
     sales_shipping_charge_rule: "Shipping Terms",
     sales_shipping_charge_separate: "Shipping charged separately",
@@ -7547,6 +7573,19 @@ var TRANSLATIONS = {
     detail_customer_sales_price_note: "销售价格按所选客户的销售等级计算。",
     detail_customer_no_price: "尚未设置销售价格",
     sales_detail_title: "商品详情",
+    sales_warranty_prefix: "保修期：",
+    sales_warranty_loading: "正在确认保修期",
+    sales_warranty_error: "无法获取保修期",
+    sales_warranty_unset: "尚未设置保修期",
+    sales_warranty_year: "{n}年",
+    sales_warranty_years: "{n}年",
+    sales_warranty_months: "{n}个月",
+    sales_warranty_or: "或",
+    sales_warranty_km: "{n}公里",
+    sales_warranty_periodInput: "期限（月）",
+    sales_warranty_distanceInput: "里程（公里，可选）",
+    sales_warranty_hint: "里程留空时不显示里程上限。",
+    sales_warranty_invalid: "里程请输入1至10,000,000公里的整数。",
     sales_conditions_title: "销售条件",
     sales_shipping_charge_rule: "运费条件",
     sales_shipping_charge_separate: "运费另计",
@@ -8459,7 +8498,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1289";
+var APP_VERSION       = "v1.1.1291";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -8667,6 +8706,7 @@ var finishedShipmentOrderAssignments = [];
 var finishedShipmentCandidateOrderItemId = null;
 var finishedShipmentCandidateRows = [];
 var finishedWarrantyPolicyRows = [];
+var salesProductWarrantyState = null;
 var finishedWarrantyPolicySaving = false;
 var finishedShipmentReplacementTargetId = null;
 var finishedShipmentReplacementSaving = false;
@@ -11973,6 +12013,7 @@ async function doLogout() {
   finishedShipmentCandidateOrderItemId = null;
   finishedShipmentCandidateRows = [];
   finishedWarrantyPolicyRows = [];
+  salesProductWarrantyState = null;
   finishedWarrantyPolicySaving = false;
   finishedShipmentReplacementTargetId = null;
   finishedShipmentReplacementSaving = false;
@@ -37228,7 +37269,9 @@ function renderFinishedWarrantyPolicyTable() {
     var rebuilt = category.policies.rebuilt || {};
     var fresh = category.policies.aftermarket_new || {};
     function input(row, kind) {
-      return "<label><input type='number' min='1' max='120' step='1' value='" + esc(String(row.warranty_months || 12)) + "' data-finished-warranty-category='" + esc(category.category_code) + "' data-finished-warranty-kind='" + esc(kind) + "'><span>か月</span></label>";
+      var name = finishedWarrantyCategoryLabel(category) + " " + productKindLabel(kind) + " ";
+      return "<div class='finished-warranty-policy-inputs'><label><span>" + esc(t("sales_warranty_periodInput")) + "</span><input type='number' min='1' max='120' step='1' value='" + esc(String(row.warranty_months || 12)) + "' aria-label='" + esc(name + t("sales_warranty_periodInput")) + "' data-finished-warranty-category='" + esc(category.category_code) + "' data-finished-warranty-kind='" + esc(kind) + "'></label>" +
+        "<label><span>" + esc(t("sales_warranty_distanceInput")) + "</span><input type='number' min='1' max='10000000' step='1' inputmode='numeric' value='" + esc(row.warranty_distance_km == null ? "" : String(row.warranty_distance_km)) + "' aria-label='" + esc(name + t("sales_warranty_distanceInput")) + "' data-finished-warranty-distance-category='" + esc(category.category_code) + "' data-finished-warranty-distance-kind='" + esc(kind) + "'></label></div>";
     }
     return "<tr><th><strong>" + esc(finishedWarrantyCategoryLabel(category)) + "</strong><small>" + esc(category.category_code) + "</small></th><td>" + input(rebuilt, "rebuilt") + "</td><td>" + input(fresh, "aftermarket_new") + "</td></tr>";
   }).join("") || "<tr><td colspan='3'>保証期間を読み込めませんでした。</td></tr>";
@@ -37257,16 +37300,28 @@ async function saveFinishedWarrantyPolicies() {
   var inputs = Array.from(document.querySelectorAll("[data-finished-warranty-category][data-finished-warranty-kind]"));
   var policies = [];
   for (var index = 0; index < inputs.length; index += 1) {
-    var months = parseInt(inputs[index].value, 10);
-    if (!Number.isFinite(months) || months < 1 || months > 120) {
+    var months = Number(inputs[index].value);
+    if (!Number.isInteger(months) || months < 1 || months > 120) {
       setFinishedShipmentMessage("finished-warranty-policy-message", "保証月数は1〜120で入力してください。", true);
       inputs[index].focus();
+      return;
+    }
+    var distanceInput = Array.from(document.querySelectorAll("[data-finished-warranty-distance-category][data-finished-warranty-distance-kind]")).find(function(input) {
+      return input.dataset.finishedWarrantyDistanceCategory === inputs[index].dataset.finishedWarrantyCategory &&
+        input.dataset.finishedWarrantyDistanceKind === inputs[index].dataset.finishedWarrantyKind;
+    });
+    var distanceValue = distanceInput ? distanceInput.value.trim() : "";
+    var distance = distanceValue === "" ? null : Number(distanceValue);
+    if (!distanceInput || (distanceInput.validity && distanceInput.validity.badInput) || (distance !== null && (!Number.isInteger(distance) || distance < 1 || distance > 10000000))) {
+      setFinishedShipmentMessage("finished-warranty-policy-message", t("sales_warranty_invalid"), true);
+      distanceInput.focus();
       return;
     }
     policies.push({
       category_code: inputs[index].dataset.finishedWarrantyCategory,
       product_kind: inputs[index].dataset.finishedWarrantyKind,
-      warranty_months: months
+      warranty_months: months,
+      warranty_distance_km: distance
     });
   }
   finishedWarrantyPolicySaving = true;
@@ -37284,6 +37339,7 @@ async function saveFinishedWarrantyPolicies() {
   salesOrderWarrantyPolicies = finishedWarrantyPolicyRows.slice();
   renderFinishedWarrantyPolicyTable();
   renderFinishedShipmentOrderContext();
+  if (currentProduct) loadSalesProductWarrantyForCurrent(detailSecondaryRequestSeq);
   setFinishedShipmentMessage("finished-warranty-policy-message", "保証期間を保存しました。次の出荷から適用します。", false);
 }
 
@@ -43769,6 +43825,58 @@ function updateSalesProductStatusBadges() {
   }
   html += "<span class='sales-status-badge core " + (policy.required ? "required" : "not-required") + "'>" + esc(policy.required ? t("core_return_required") : t("core_return_not_required")) + "</span>";
   wrap.innerHTML = html;
+  renderSalesProductWarranty();
+}
+
+function salesWarrantyTermsText(policy) {
+  if (!policy) return "";
+  var months = Number(policy.warranty_months);
+  if (!Number.isInteger(months) || months < 1 || months > 120) return "";
+  var text = t(months % 12 === 0 ? (months === 12 ? "sales_warranty_year" : "sales_warranty_years") : "sales_warranty_months").replace("{n}", String(months % 12 === 0 ? months / 12 : months));
+  var distance = Number(policy.warranty_distance_km);
+  if (Number.isInteger(distance) && distance > 0 && distance <= 10000000) {
+    text += t("sales_warranty_or") + t("sales_warranty_km").replace("{n}", String(distance));
+  }
+  return text;
+}
+
+function renderSalesProductWarranty() {
+  var host = document.getElementById("sales-product-warranty");
+  if (!host) return;
+  var kind = selectedProductKind();
+  var allowed = !!currentProduct && canViewProductInfo() && !isCustomerPortalSearchMode() && ["rebuilt", "aftermarket_new"].indexOf(kind) >= 0;
+  host.hidden = !allowed;
+  if (!allowed) { host.textContent = ""; return; }
+  var state = salesProductWarrantyState;
+  if (!state || state.product !== currentProduct || state.actor !== userProfile || state.status === "loading") {
+    host.textContent = t("sales_warranty_loading");
+    return;
+  }
+  if (state.status === "error") { host.textContent = t("sales_warranty_error"); return; }
+  var category = String(currentProduct.category_code || currentProduct.category || "");
+  var policy = state.rows.find(function(row) {
+    return row.category_code === category && row.product_kind === kind;
+  });
+  var terms = salesWarrantyTermsText(policy);
+  host.textContent = terms ? t("sales_warranty_prefix") + terms : t("sales_warranty_unset");
+}
+
+async function loadSalesProductWarrantyForCurrent(seq) {
+  if (!currentProduct || !canViewProductInfo() || isCustomerPortalSearchMode()) return;
+  var state = { product: currentProduct, actor: userProfile, status: "loading", rows: [] };
+  salesProductWarrantyState = state;
+  renderSalesProductWarranty();
+  try {
+    var result = await sb.rpc("get_sales_product_warranty_terms");
+    if (result.error) throw result.error;
+    if (!Array.isArray(result.data)) throw new Error("Invalid warranty terms response");
+    state.rows = result.data;
+    state.status = "ready";
+  } catch (error) {
+    state.status = "error";
+  }
+  if (seq !== detailSecondaryRequestSeq || currentProduct !== state.product || userProfile !== state.actor || salesProductWarrantyState !== state) return;
+  renderSalesProductWarranty();
 }
 
 function renderSalesProductIdentity(product) {
@@ -43784,6 +43892,7 @@ function renderSalesProductIdentity(product) {
     "<div class='sales-product-category'>" + esc(productCategoryLabel(product) || "-") + "</div>" +
     "<div class='sales-product-maker'>" + esc(makerLine) + "</div>" +
     "<div class='sales-product-status' id='sales-detail-status'></div>" +
+    "<div class='sales-product-warranty' id='sales-product-warranty' aria-live='polite'></div>" +
   "</div>" + editHtml;
   updateSalesProductStatusBadges();
 }
@@ -43791,6 +43900,7 @@ function renderSalesProductIdentity(product) {
 function renderPanelStatic() {
   var p = currentProduct;
   var detailSeq = ++detailSecondaryRequestSeq;
+  salesProductWarrantyState = null;
   currentSelectedProductKind = "rebuilt";
   document.getElementById("panel-topbar-title").textContent = t("sales_detail_title");
   configureSalesProductAddButton();
@@ -43888,6 +43998,7 @@ function renderPanelStatic() {
   bindProductKindPanelActions();
   currentVehicleApplicationRows = [];
   var detailLoads = [
+    loadSalesProductWarrantyForCurrent(detailSeq),
     loadCatalogVehicleSummary(document.getElementById("panel-body"), p, detailSeq),
     loadGltekPartNumberValue(document.getElementById("panel-body"), p),
     loadProductSpecsForCurrent(),
