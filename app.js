@@ -57,6 +57,7 @@ var CORE_AI_CAMERA_TEST_URL = "https://script.google.com/macros/s/AKfycbxlaPJSNT
 var TRANSLATIONS = {
 
   ja: {
+    finished_label_component_load_failed: "部品を読み込めませんでした。「100%使用部品を再セット」を押して読み直してください。",
     finished_label_setup_guide_driver_title: "Windowsにもプリンターを追加したい場合",
     finished_label_setup_guide_driver_desc: "Windowsの通常印刷やP-touch Editorを使う場合は、Brother公式ページで、このPCのWindowsに合うプリンタードライバーを選んでください。D-CATSのIP直接指定による設定は、Windowsのプリンター一覧が0台でも進められます。",
     finished_label_setup_guide_driver_link: "Brother公式：TD-4420TNドライバー・BPM（新しいタブ）",
@@ -2916,6 +2917,7 @@ var TRANSLATIONS = {
   },
 
   en: {
+    finished_label_component_load_failed: "Unable to load parts. Select Reset 100% Usage Parts to try again.",
     finished_label_setup_guide_driver_title: "Adding the printer to Windows",
     finished_label_setup_guide_driver_desc: "For regular Windows printing or P-touch Editor, choose the printer driver for this PC on the official Brother download page. D-CATS setup by IP address can continue even if Windows lists no printers.",
     finished_label_setup_guide_driver_link: "Brother: TD-4420TN drivers and BPM (opens a new tab)",
@@ -5775,6 +5777,7 @@ var TRANSLATIONS = {
   },
 
   zh: {
+    finished_label_component_load_failed: "无法读取零件。请点击“重新设置100%使用零件”重试。",
     finished_label_setup_guide_driver_title: "如需将打印机添加到Windows",
     finished_label_setup_guide_driver_desc: "如需使用Windows常规打印或P-touch Editor，请在Brother官方页面选择适合此电脑Windows版本的打印机驱动。即使Windows打印机列表为空，也可继续通过IP设置D-CATS。",
     finished_label_setup_guide_driver_link: "Brother官方：TD-4420TN驱动及BPM（新标签页）",
@@ -8705,7 +8708,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1300";
+var APP_VERSION       = "v1.1.1301";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -8901,6 +8904,9 @@ var FINISHED_LABEL_MOBILE_PRINT_TIMEOUT_MS = 120000;
 var finishedLabelComponentCandidates = [];
 var finishedLabelSelectedComponentIds = {};
 var finishedLabelComponentLoadSeq = 0;
+var finishedLabelProductSelectionSeq = 0;
+var finishedLabelComponentsLoading = false;
+var finishedLabelComponentError = "";
 var finishedLabelPendingReprint = null;
 var finishedShipmentUnits = [];
 var finishedShipmentHistoryRows = [];
@@ -35457,6 +35463,9 @@ function renderFinishedLabelEmpty() {
   finishedLabelComponentCandidates = [];
   finishedLabelSelectedComponentIds = {};
   finishedLabelComponentLoadSeq += 1;
+  finishedLabelProductSelectionSeq += 1;
+  finishedLabelComponentsLoading = false;
+  finishedLabelComponentError = "";
   var results = document.getElementById("finished-label-results");
   var count = document.getElementById("finished-label-search-count");
   var loadMore = document.getElementById("btn-finished-label-load-more");
@@ -35904,21 +35913,49 @@ async function selectFinishedLabelProduct(product, instruction) {
   if (!product) return;
   var dkdId = productDkdId(product);
   if (!dkdId) return;
-  var full = product;
-  var r = await sb.from("core_products").select(CORE_PRODUCT_FAST_SELECT).eq("dkd_shohin_id", dkdId).maybeSingle();
-  if (!r.error && r.data) full = Object.assign({}, product, normalizeCoreProductFastRows([r.data])[0]);
-  finishedLabelSelectedProduct = full;
-  finishedLabelSelectedInstruction = instruction || finishedLabelInstructionMap[String(dkdId)] || null;
-  renderFinishedLabelResults();
-  renderFinishedLabelSelectedSummary(full);
-  resetFinishedLabelForm(full, finishedLabelSelectedInstruction);
-  await loadFinishedLabelVariants(dkdId);
-  renderFinishedLabelVariantOptions(finishedLabelVariants);
-  renderFinishedLabelCategoryOptions(finishedLabelCategoryForProduct(full));
-  if (finishedLabelPrintMode === "product") await loadFinishedLabelComponentCandidates({ resetDefaults: true });
-  else renderFinishedLabelComponents();
-  updateFinishedLabelQrPayload();
-  await loadFinishedLabelHistory();
+  var selectionSeq = ++finishedLabelProductSelectionSeq;
+  finishedLabelComponentLoadSeq += 1;
+  finishedLabelComponentsLoading = true;
+  finishedLabelComponentError = "";
+  finishedLabelComponentCandidates = [];
+  finishedLabelSelectedComponentIds = {};
+  finishedLabelSelectedProduct = product;
+  var componentRequestSeq = null;
+  renderFinishedLabelComponents();
+  try {
+    var full = product;
+    var r = await sb.from("core_products").select(CORE_PRODUCT_FAST_SELECT).eq("dkd_shohin_id", dkdId).maybeSingle();
+    if (selectionSeq !== finishedLabelProductSelectionSeq) return;
+    if (!r.error && r.data) full = Object.assign({}, product, normalizeCoreProductFastRows([r.data])[0]);
+    finishedLabelSelectedProduct = full;
+    finishedLabelSelectedInstruction = instruction || finishedLabelInstructionMap[String(dkdId)] || null;
+    renderFinishedLabelResults();
+    renderFinishedLabelSelectedSummary(full);
+    resetFinishedLabelForm(full, finishedLabelSelectedInstruction);
+    await loadFinishedLabelVariants(dkdId);
+    if (selectionSeq !== finishedLabelProductSelectionSeq) return;
+    renderFinishedLabelVariantOptions(finishedLabelVariants);
+    renderFinishedLabelCategoryOptions(finishedLabelCategoryForProduct(full));
+    if (finishedLabelPrintMode === "product") {
+      var componentRequest = loadFinishedLabelComponentCandidates({ resetDefaults: true });
+      componentRequestSeq = finishedLabelComponentLoadSeq;
+      await componentRequest;
+    }
+    else renderFinishedLabelComponents();
+    if (selectionSeq !== finishedLabelProductSelectionSeq) return;
+    updateFinishedLabelQrPayload();
+    await loadFinishedLabelHistory();
+  } catch (error) {
+    if (selectionSeq !== finishedLabelProductSelectionSeq) return;
+    console.warn("finished label product selection failed", error);
+    finishedLabelComponentError = t("finished_label_component_load_failed");
+  } finally {
+    if (selectionSeq === finishedLabelProductSelectionSeq &&
+        (componentRequestSeq === null || componentRequestSeq === finishedLabelComponentLoadSeq)) {
+      finishedLabelComponentsLoading = false;
+      renderFinishedLabelComponents();
+    }
+  }
 }
 
 function renderFinishedLabelSelectedSummary(product) {
@@ -35941,7 +35978,7 @@ function updateFinishedLabelSaveButton(product) {
   if (!save) return;
   var hasProduct = !!product;
   var missingGNumber = hasProduct && !product.gltek_part_number;
-  save.disabled = !hasProduct;
+  save.disabled = !hasProduct || (finishedLabelPrintMode === "product" && (finishedLabelComponentsLoading || !!finishedLabelComponentError));
   save.textContent = t(missingGNumber
     ? "finished_label_g_number_missing_value"
     : (finishedLabelUsesRemotePrintQueue() ? "finished_label_mobile_issue_save" : "finished_label_issue_save"));
@@ -35986,14 +36023,17 @@ function finishedLabelValue(id) {
 }
 
 async function loadFinishedLabelVariants(dkdId) {
-  finishedLabelVariants = [];
+  var selectionSeq = finishedLabelProductSelectionSeq;
   var r = await sb.from("core_product_variants")
     .select("product_variant_id,dkd_shohin_id,product_kind,display_label,stock_qty,stock_location,is_active")
     .eq("dkd_shohin_id", dkdId)
     .eq("is_active", true)
     .order("product_variant_id", { ascending: true });
+  if (selectionSeq !== finishedLabelProductSelectionSeq || productDkdId(finishedLabelSelectedProduct) !== String(dkdId)) return;
+  finishedLabelVariants = [];
   if (r.error) {
     console.warn("finished label variants lookup failed", r.error);
+    finishedLabelComponentError = t("finished_label_component_load_failed");
     return;
   }
   finishedLabelVariants = r.data || [];
@@ -36008,11 +36048,14 @@ function renderFinishedLabelVariantOptions(rows) {
     select.innerHTML = "<option value=''>" + esc(productKindLabel(kind)) + "</option>";
     return;
   }
+  var preferredKind = normalizeProductKind(finishedLabelSelectedProduct && finishedLabelSelectedProduct.default_product_kind);
+  var preferred = rows.find(function(row) { return normalizeProductKind(row.product_kind) === preferredKind; }) ||
+    rows.find(function(row) { return normalizeProductKind(row.product_kind) !== "catalog_spec"; }) || rows[0];
   select.innerHTML = rows.map(function(row) {
     var stock = row.stock_qty == null ? "0" : row.stock_qty;
     var label = tf("finished_label_variant_stock", { kind: productKindLabel(row.product_kind), n: stock });
     if (row.display_label) label += " / " + row.display_label;
-    return "<option value='" + esc(String(row.product_variant_id)) + "'>" + esc(label) + "</option>";
+    return "<option value='" + esc(String(row.product_variant_id)) + "'" + (row === preferred ? " selected" : "") + ">" + esc(label) + "</option>";
   }).join("");
 }
 
@@ -36025,20 +36068,26 @@ function selectedFinishedLabelVariant() {
   return null;
 }
 
-function applyFinishedLabelTemplate() {
+async function applyFinishedLabelTemplate() {
   if (!finishedLabelSelectedProduct) {
+    finishedLabelComponentCandidates = [];
     finishedLabelSelectedComponentIds = {};
+    finishedLabelComponentError = "";
     renderFinishedLabelComponents();
     return;
   }
-  finishedLabelSelectedComponentIds = {};
-  (finishedLabelComponentCandidates || []).forEach(function(row) {
-    if (Number(row.replacement_rate) === 100) {
-      finishedLabelSelectedComponentIds[String(row.id)] = true;
+  var productId = productDkdId(finishedLabelSelectedProduct);
+  if (!selectedFinishedLabelVariant()) {
+    try {
+      await loadFinishedLabelVariants(productId);
+      if (productDkdId(finishedLabelSelectedProduct) !== productId) return;
+      renderFinishedLabelVariantOptions(finishedLabelVariants);
+    } catch (error) {
+      console.warn("finished label variant retry failed", error);
     }
-  });
-  renderFinishedLabelComponents();
-  updateFinishedLabelQrPayload();
+  }
+  if (productDkdId(finishedLabelSelectedProduct) !== productId) return;
+  await loadFinishedLabelComponentCandidates({ resetDefaults: true });
 }
 
 function finishedLabelComponentName(row) {
@@ -36064,53 +36113,88 @@ async function loadFinishedLabelComponentCandidates(options) {
   var seq = ++finishedLabelComponentLoadSeq;
   var product = finishedLabelSelectedProduct;
   var variant = selectedFinishedLabelVariant();
-  if (!product || !variant || !variant.product_variant_id) {
+  var productId = productDkdId(product);
+  var variantId = variant && String(variant.product_variant_id || "");
+  if (!product || !variantId) {
+    finishedLabelComponentsLoading = false;
     finishedLabelComponentCandidates = [];
     finishedLabelSelectedComponentIds = {};
+    finishedLabelComponentError = product ? t("finished_label_variant_required") : "";
     renderFinishedLabelComponents();
     return;
   }
-  var body = document.getElementById("finished-label-component-body");
-  if (body) body.innerHTML = "<tr><td colspan='7' class='finished-label-component-empty'>" + esc(t("loading")) + "</td></tr>";
   var previous = Object.assign({}, finishedLabelSelectedComponentIds || {});
-  var query = sb.from("assembly_component_usage_details")
-    .select("id,dkd_component_id,dkd_shohin_id,product_kind,product_variant_id,component_name,component_part_name,component_manufacturer,component_manufacturer_part_number,component_genuine_part_number,quantity,replacement_rate,procurement_category,manufacturing_memo,component_position,is_catalog_evidence")
-    .eq("dkd_shohin_id", productDkdId(product))
-    .eq("product_kind", normalizeProductKind(variant.product_kind))
-    .or("product_variant_id.is.null,product_variant_id.eq." + String(variant.product_variant_id))
-    .limit(1000);
-  var r = await query;
-  if (seq !== finishedLabelComponentLoadSeq) return;
-  if (r.error) {
-    console.warn("finished label component lookup failed", r.error);
+  finishedLabelComponentsLoading = true;
+  finishedLabelComponentError = "";
+  renderFinishedLabelComponents();
+  var body = document.getElementById("finished-label-component-body");
+  var tableWrap = body && body.closest(".finished-label-table-wrap");
+  if (tableWrap) tableWrap.scrollLeft = 0;
+  var controller = typeof AbortController === "function" ? new AbortController() : null;
+  var timeoutId = window.setTimeout(function() { if (controller) controller.abort(); }, 20000);
+  try {
+    var request = sb.rpc("list_finished_label_component_candidates", {
+      target_dkd_shohin_id: Number(productId),
+      target_product_variant_id: Number(variantId)
+    });
+    if (controller && typeof request.abortSignal === "function") request = request.abortSignal(controller.signal);
+    var r = await request;
+    var currentVariant = selectedFinishedLabelVariant();
+    if (seq !== finishedLabelComponentLoadSeq || productDkdId(finishedLabelSelectedProduct) !== productId ||
+        !currentVariant || String(currentVariant.product_variant_id) !== variantId) return;
+    if (r.error) throw r.error;
+    if (!Array.isArray(r.data)) throw new Error("Invalid finished-label component response");
+    var seen = {};
+    finishedLabelComponentCandidates = r.data.filter(function(row) {
+      var key = String(row.id || "");
+      if (!key || seen[key]) return false;
+      seen[key] = true;
+      return true;
+    }).sort(finishedLabelComponentSort);
+    finishedLabelSelectedComponentIds = {};
+    finishedLabelComponentCandidates.forEach(function(row) {
+      var key = String(row.id);
+      if (options.resetDefaults) {
+        if (Number(row.replacement_rate) === 100) finishedLabelSelectedComponentIds[key] = true;
+      } else if (previous[key] || String(options.includeUsageId || "") === key || Number(row.replacement_rate) === 100) {
+        finishedLabelSelectedComponentIds[key] = true;
+      }
+    });
+  } catch (error) {
+    if (seq !== finishedLabelComponentLoadSeq) return;
+    console.warn("finished label component lookup failed", error);
     finishedLabelComponentCandidates = [];
     finishedLabelSelectedComponentIds = {};
-    renderFinishedLabelComponents(r.error.message || t("msg_part_err"));
-    return;
-  }
-  var seen = {};
-  finishedLabelComponentCandidates = (r.data || []).filter(function(row) {
-    var key = String(row.id || "");
-    if (!key || seen[key]) return false;
-    seen[key] = true;
-    return true;
-  }).sort(finishedLabelComponentSort);
-  finishedLabelSelectedComponentIds = {};
-  finishedLabelComponentCandidates.forEach(function(row) {
-    var key = String(row.id);
-    if (options.resetDefaults) {
-      if (Number(row.replacement_rate) === 100) finishedLabelSelectedComponentIds[key] = true;
-    } else if (previous[key] || String(options.includeUsageId || "") === key || Number(row.replacement_rate) === 100) {
-      finishedLabelSelectedComponentIds[key] = true;
+    finishedLabelComponentError = t("finished_label_component_load_failed");
+  } finally {
+    window.clearTimeout(timeoutId);
+    if (seq === finishedLabelComponentLoadSeq) {
+      finishedLabelComponentsLoading = false;
+      renderFinishedLabelComponents();
+      updateFinishedLabelQrPayload();
     }
-  });
-  renderFinishedLabelComponents();
-  updateFinishedLabelQrPayload();
+  }
 }
 
 function renderFinishedLabelComponents(errorMessage) {
+  errorMessage = errorMessage || finishedLabelComponentError;
   var body = document.getElementById("finished-label-component-body");
+  var status = document.getElementById("finished-label-component-status");
+  if (status) {
+    status.hidden = !finishedLabelComponentsLoading && !errorMessage;
+    status.textContent = finishedLabelComponentsLoading ? t("loading") : (errorMessage || "");
+    status.classList.toggle("error", !!errorMessage);
+  }
+  updateFinishedLabelSaveButton(finishedLabelSelectedProduct);
+  var resetButton = document.getElementById("btn-finished-label-template");
+  if (resetButton) {
+    resetButton.disabled = finishedLabelComponentsLoading || !finishedLabelSelectedProduct;
+    resetButton.setAttribute("aria-busy", finishedLabelComponentsLoading ? "true" : "false");
+  }
   if (!body) return;
+  body.setAttribute("aria-busy", finishedLabelComponentsLoading ? "true" : "false");
+  var variantSelect = document.getElementById("finished-label-variant-kind");
+  if (variantSelect) variantSelect.disabled = finishedLabelComponentsLoading;
   var selectedRows = (finishedLabelComponentCandidates || []).filter(function(row) {
     return !!finishedLabelSelectedComponentIds[String(row.id)];
   }).sort(finishedLabelComponentSort);
@@ -36125,10 +36209,16 @@ function renderFinishedLabelComponents(errorMessage) {
       var text = [finishedLabelComponentName(row), row.component_manufacturer, finishedLabelComponentPartNumber(row), row.replacement_rate == null ? "" : (t("finished_label_usage_rate") + " " + row.replacement_rate + "%")].filter(Boolean).join(" / ");
       return "<option value='" + esc(String(row.id)) + "'>" + esc(text) + "</option>";
     }).join("");
-    picker.disabled = !availableRows.length;
+    picker.disabled = finishedLabelComponentsLoading || !!errorMessage || !availableRows.length;
   }
-  if (addBtn) addBtn.disabled = !availableRows.length;
+  if (addBtn) addBtn.disabled = finishedLabelComponentsLoading || !!errorMessage || !availableRows.length;
   if (count) count.textContent = tf("finished_label_component_selected_count", { selected: selectedRows.length, total: finishedLabelComponentCandidates.length });
+  if (finishedLabelComponentsLoading) {
+    if (count) count.textContent = t("loading");
+    body.innerHTML = "<tr><td colspan='7' class='finished-label-component-empty'>" + esc(t("loading")) + "</td></tr>";
+    return;
+  }
+  if (errorMessage && status) { body.innerHTML = ""; return; }
   if (errorMessage) {
     body.innerHTML = "<tr><td colspan='7' class='finished-label-component-empty'>" + esc(errorMessage) + "</td></tr>";
     return;
@@ -36413,6 +36503,10 @@ function renderFinishedBoxLabelLayoutPreview() {
 }
 
 async function saveFinishedLabelIssue() {
+  if (finishedLabelComponentsLoading || finishedLabelComponentError) {
+    alert(finishedLabelComponentError || t("loading"));
+    return;
+  }
   if (!canEditFinishedLabelMgmt()) { alert(t("err_perm")); return; }
   if (!finishedLabelSelectedProduct) { alert(t("finished_label_no_product")); return; }
   if (!finishedLabelSelectedProduct.gltek_part_number) {
