@@ -38,6 +38,7 @@
     if (!body) return;
     var tr = state.context.t;
     document.querySelectorAll('#finished-warranty-policy-overlay [data-i18n]').forEach(function(n){n.textContent=tr(n.dataset.i18n);});
+    el('finished-warranty-policy-close').setAttribute('aria-label',text('btn_close'));
     if (state.loading) body.innerHTML = '<tr><td colspan="3">' + esc(text('cw_loading')) + '</td></tr>';
     else body.innerHTML = state.rows.map(function(row) {
       var names = '<div class="category-warranty-names">' + ['ja','en','zh'].map(function(lang) {
