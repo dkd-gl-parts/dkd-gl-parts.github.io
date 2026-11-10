@@ -5920,8 +5920,8 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .finished-label-setup-guide-tabs button[aria-selected="true"] { background: #1c5c43; color: #fff; }
 .finished-label-setup-guide-panel { margin-top: 15px; }
 .finished-label-setup-guide-steps { margin: 0; padding: 0; list-style: none; }
-.finished-label-setup-guide-steps li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; border-top: 1px solid #e1e6eb; padding: 13px 0; }
-.finished-label-setup-guide-steps li:first-child { border-top: 0; padding-top: 3px; }
+.finished-label-setup-guide-steps > li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; border-top: 1px solid #e1e6eb; padding: 13px 0; }
+.finished-label-setup-guide-steps > li:first-child { border-top: 0; padding-top: 3px; }
 .finished-label-setup-guide-step-number { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; background: #e6f1ec; color: #18543d; font-size: 13px; font-weight: 900; }
 .finished-label-setup-guide-steps strong { display: block; color: #1c2c42; font-size: 14px; }
 .finished-label-setup-guide-steps p { margin: 4px 0 0; color: #657185; font-size: 12px; line-height: 1.65; }
@@ -5939,6 +5939,17 @@ html[lang="en"] #screen-production-search .production-search .search-row { gap: 
 .finished-label-setup-guide-fallback button { justify-self: start; margin-top: 6px; }
 .finished-label-setup-guide-footer { display: flex; justify-content: flex-end; margin-top: 18px; border-top: 1px solid #e1e6eb; padding-top: 14px; }
 .finished-label-setup-guide button:focus-visible, .finished-label-setup-guide a:focus-visible { outline: 3px solid rgba(47, 111, 237, .32); outline-offset: 2px; }
+
+.finished-label-setup-guide-driver { margin-top: 10px; border-top: 1px dashed #cbd5df; padding-top: 4px; }
+.finished-label-setup-guide-driver > a { color: #185995; font-size: 13px; font-weight: 700; text-decoration: underline; overflow-wrap: anywhere; }
+.finished-label-setup-guide-checklist { margin: 10px 0; padding-left: 22px; color: #405168; font-size: 13px; line-height: 1.7; }
+.finished-label-setup-guide-checklist > li { display: list-item; margin: 8px 0; padding: 0; border: 0; }
+.finished-label-setup-guide-window { margin-top: 10px; border-left: 4px solid #3677b7; padding: 8px 10px; background: #f1f6fb; color: #1f3f60; font-size: 13px; font-weight: 800; overflow-wrap: anywhere; }
+.finished-label-setup-guide-help { margin-top: 12px; border: 1px solid #cbd5df; border-radius: 6px; padding: 10px 12px; background: #f8fafc; }
+.finished-label-setup-guide-help > summary { min-height: 28px; color: #1f4f7a; font-size: 13px; font-weight: 800; cursor: pointer; line-height: 1.6; }
+.finished-label-setup-guide-help > summary:focus-visible { outline: 3px solid rgba(47, 111, 237, .32); outline-offset: 3px; }
+.finished-label-setup-guide-steps .finished-label-setup-guide-help a { display: inline; min-height: 0; margin: 0; color: #185995; text-decoration: underline; overflow-wrap: anywhere; }
+.finished-label-setup-guide-steps .finished-label-setup-guide-file-note { overflow-wrap: anywhere; }
 body.finished-label-setup-guide-open { overflow: hidden; }
 .finished-label-workspace { display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; }
 .finished-label-workspace[hidden], [data-finished-label-product-only][hidden], [data-finished-label-box-only][hidden] { display: none !important; }
@@ -5997,7 +6008,11 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .finished-label-history-row { border: 1px solid #edf0f4; border-radius: 8px; background: #fff; padding: 9px 10px; }
 .finished-label-history-row.active { border-color: #4f8ef7; box-shadow: 0 0 0 2px rgba(79, 142, 247, .12); background: #f7faff; }
 .finished-label-history-main { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 12px; font-weight: 700; }
-.finished-label-history-main > span:first-child { font-family: Consolas, "SFMono-Regular", monospace; white-space: nowrap; }
+.finished-label-history-main > span:first-child { min-width: 0; font-family: Consolas, "SFMono-Regular", monospace; white-space: normal; overflow-wrap: anywhere; }
+.finished-label-history-part-numbers { display: grid; gap: 3px; margin: 6px 0 0; font-size: 11px; line-height: 1.45; }
+.finished-label-history-part-numbers > div { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 6px; }
+.finished-label-history-part-numbers dt { color: #667085; overflow-wrap: anywhere; }
+.finished-label-history-part-numbers dd { min-width: 0; margin: 0; color: #344054; font-weight: 600; overflow-wrap: anywhere; }
 .finished-label-history-sub { font-size: 11px; color: #7c8492; margin-top: 4px; line-height: 1.45; word-break: break-word; }
 .finished-label-history-print-state { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; border-left: 3px solid #4876a8; padding: 7px 8px; background: #f3f7fb; color: #344054; font-size: 11px; line-height: 1.45; }
 .finished-label-history-print-state > div { min-width: 0; }
@@ -6095,7 +6110,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .finished-label-issued-meta { margin-top: 4px; color: #547061; font-size: 11px; }
 .finished-label-serial-list { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 9px; }
 .finished-label-serial-chip { border: 1px solid #bad7c4; border-radius: 5px; padding: 4px 7px; background: #fff; color: #183f29; font-family: Consolas, "SFMono-Regular", monospace; font-size: 11px; font-weight: 800; letter-spacing: .02em; }
-.finished-label-history-serial { margin-top: 5px; color: #173f2a; font-family: Consolas, "SFMono-Regular", monospace; font-size: 11px; font-weight: 800; word-break: break-word; }
+.finished-label-history-serial { margin: 0; color: #173f2a; font-family: Consolas, "SFMono-Regular", monospace; font-size: 12px; font-weight: 800; word-break: break-word; }
 .finished-box-label-print-status { display: inline-flex; align-items: center; min-height: 22px; border-radius: 999px; padding: 3px 8px; background: #e8f6ed; color: #17603a; font-size: 9px; font-weight: 900; white-space: nowrap; }
 .finished-box-label-print-status.reprint { background: #fff3dd; color: #8a4b08; }
 .finished-label-mode-card.station { border-color: #b9cbe1; background: #f5f8fc; }
@@ -6192,7 +6207,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   .finished-label-setup-guide-card > h2 { font-size: 19px; }
   .finished-label-setup-guide-card > p { font-size: 12px; }
   .finished-label-setup-guide-tabs button { min-height: 48px; padding: 8px 9px; font-size: 12px; }
-  .finished-label-setup-guide-steps li { grid-template-columns: 30px minmax(0, 1fr); gap: 9px; padding: 11px 0; }
+  .finished-label-setup-guide-steps > li { grid-template-columns: 30px minmax(0, 1fr); gap: 9px; padding: 11px 0; }
   .finished-label-setup-guide-step-number { width: 28px; height: 28px; }
   .finished-label-setup-guide-steps a, .finished-label-setup-guide-panel > .btn-primary { width: 100%; }
   .finished-label-setup-detection { grid-template-columns: 12px minmax(0, 1fr); }
@@ -11826,3 +11841,37 @@ html[data-product-3d-paused] :is(
     box-shadow: 0 0 0 4px var(--warranty-kind-bg);
   }
 }
+
+/* Unified category names and warranty terms. */
+.category-warranty-toolbar { display:flex; align-items:center; gap:12px; padding:14px 24px 8px; flex:0 0 auto; flex-wrap:wrap; }
+.category-warranty-toolbar button { min-height:44px; padding:8px 16px; font:inherit; }
+#category-warranty-count { color:#526174; font-size:14px; margin-right:auto; }
+.category-warranty-help { margin:0; padding:0 24px 12px; color:#526174; font-size:13px; line-height:1.6; flex:0 0 auto; }
+.finished-warranty-policy-card .finished-warranty-policy-table thead th:first-child { width:32%; }
+.category-warranty-names { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:8px; text-align:left; font-weight:400; }
+.category-warranty-names > label { display:grid; gap:4px; min-width:0; }
+.category-warranty-names > label:first-child { grid-column:1 / -1; }
+.category-warranty-names label > span { font-size:12px; color:#526174; line-height:1.4; }
+.finished-warranty-policy-table .category-warranty-names input { box-sizing:border-box; width:100%; min-width:0; min-height:40px; padding:8px 10px; border:1px solid #b9c9db; border-radius:7px; background:#fff; color:#172033; font-size:16px; font-family:inherit; }
+.category-warranty-names input:focus-visible { outline:2px solid #3979d3; outline-offset:2px; }
+.category-warranty-remove { margin-top:8px; padding:6px 8px; min-height:36px; border:1px solid #b9c9db; border-radius:6px; background:#fff; color:#a32635; cursor:pointer; font:inherit; font-size:13px; }
+#finished-warranty-policy-overlay input:disabled { background:#f2f4f7; color:#526174; cursor:default; }
+
+
+
+
+@media(max-width:679px) {
+  .category-warranty-toolbar { gap:8px; padding:10px 16px 8px; }
+  .category-warranty-toolbar button { padding:8px 10px; font-size:14px; }
+  .category-warranty-help { padding:0 16px 10px; font-size:12px; }
+  .finished-warranty-policy-card .finished-warranty-policy-table tbody td.category-warranty-kind { padding:10px; border-radius:7px; }
+}
+
+/* Required global category publication gate. */
+.category-warranty-publish{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12px;color:var(--text-primary,#172b4d);font-weight:600}.finished-warranty-policy-card .finished-warranty-policy-table .category-warranty-publish input{box-sizing:border-box;width:18px;max-width:18px;height:18px;min-height:18px;flex:0 0 18px;margin:0;padding:0;accent-color:var(--primary,#2563eb)}.customer-category-check.master-off{opacity:.65;background:var(--bg-secondary,#f4f6f8)}.customer-category-master-off{display:inline-block;font-size:12px;border:1px solid currentColor;border-radius:4px;padding:1px 4px;margin-left:4px}.category-warranty-publication-help{font-size:12px;line-height:1.6;margin:0;padding:0 24px 8px;color:var(--text-secondary,#526275);flex:0 0 auto}@media(max-width:679px){.category-warranty-publication-help{padding:0 16px 8px}}
+
+@media(min-width:1024px){.finished-warranty-policy-card .finished-warranty-policy-table thead th:first-child{width:44%}.category-warranty-names{grid-template-columns:repeat(3,minmax(0,1fr))}.category-warranty-names > label:first-child{grid-column:auto}}
+
+.finished-label-component-status { margin: 8px 0; border-left: 3px solid #3677b7; border-radius: 4px; padding: 9px 11px; background: #f1f6fb; color: #284665; font-size: 12px; line-height: 1.65; overflow-wrap: anywhere; }
+.finished-label-component-status.error { border-left-color: #bd353c; background: #fff3f3; color: #942b32; }
+.finished-label-component-status[hidden] { display: none !important; }

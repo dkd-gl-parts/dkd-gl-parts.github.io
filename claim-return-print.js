@@ -1,0 +1,1 @@
+(function(){"use strict";function print(){document.querySelectorAll('[data-claim-return-barcode]').forEach(function(svg){if(window.JsBarcode)window.JsBarcode(svg,svg.dataset.claimReturnBarcode,{format:'CODE128',displayValue:true,width:2,height:70});});window.print();}if(document.readyState==='complete')print();else window.addEventListener('load',print,{once:true});})();

@@ -117,9 +117,9 @@ assert(/@media\s+print\s*{[\s\S]*?\.serial-label\s*{[^}]*transform:\s*translateY
 assert(/\.serial-label-qr\s*{[^}]*width:\s*11\.9mm;[^}]*height:\s*11\.9mm;/i.test(printCss), "finished-label QR is not square inside the safe print area");
 assert(/\.serial-label-field-name\s*{[^}]*font-size:/i.test(printCss), "print field hierarchy is missing");
 const componentLoadSource = functionSource("loadFinishedLabelComponentCandidates");
-assert(componentLoadSource.includes('.from("assembly_component_usage_details")'), "product-scoped registered components are not loaded");
-assert(componentLoadSource.includes('.eq("dkd_shohin_id", productDkdId(product))'), "component candidates are not limited to the selected product");
-assert(componentLoadSource.includes('.eq("product_kind", normalizeProductKind(variant.product_kind))'), "component candidates are not limited to the selected product kind");
+assert(componentLoadSource.includes('sb.rpc("list_finished_label_component_candidates"'), "label-authorized component candidates are not loaded through the scoped RPC");
+assert(componentLoadSource.includes("target_dkd_shohin_id: Number(productId)"), "component RPC is not scoped to the selected product");
+assert(componentLoadSource.includes("target_product_variant_id: Number(variantId)"), "component RPC is not scoped to the selected variant");
 assert(componentLoadSource.includes('Number(row.replacement_rate) === 100'), "100-percent components are not selected by default");
 assert(functionSource("addFinishedLabelSelectedComponent").includes("belongsToSelectedProduct"), "additional components are not guarded by the selected product candidate list");
 assert(functionSource("openFinishedLabelComponentRegistration").includes('componentReturnScreen = "finished-label-mgmt"'), "category-based component registration is not available from the finished-label screen");
@@ -227,6 +227,9 @@ const saveButton = {
   setAttribute(name, value) { if (name === "aria-disabled") this.ariaDisabled = value; }
 };
 const saveButtonSandbox = {
+  finishedLabelPrintMode: "product",
+  finishedLabelComponentsLoading: false,
+  finishedLabelComponentError: "",
   document: { getElementById(id) { return id === "btn-finished-label-save" ? saveButton : null; } },
   finishedLabelUsesRemotePrintQueue() { return false; },
   t(key) { return key; }
@@ -237,6 +240,14 @@ saveButtonSandbox.updateSave({ gltek_part_number: "" });
 assert(!saveButton.disabled && saveButton.textContent === "finished_label_g_number_missing_value" && saveButtonClasses.has("missing-g-number"), "missing G part number is not presented as an actionable explanation");
 saveButtonSandbox.updateSave({ gltek_part_number: "G0101-00001" });
 assert(!saveButton.disabled && saveButton.textContent === "finished_label_issue_save" && !saveButtonClasses.has("missing-g-number"), "valid G part number does not restore register-and-print");
+saveButtonSandbox.finishedLabelComponentsLoading = true;
+saveButtonSandbox.updateSave({ gltek_part_number: "G0101-00001" });
+assert(saveButton.disabled, "register-and-print must wait for the component reader");
+saveButtonSandbox.finishedLabelComponentsLoading = false;
+saveButtonSandbox.finishedLabelComponentError = "synthetic read failure";
+saveButtonSandbox.updateSave({ gltek_part_number: "G0101-00001" });
+assert(saveButton.disabled, "register-and-print must stop after component read failure");
+saveButtonSandbox.finishedLabelComponentError = "";
 saveButtonSandbox.updateSave(null);
 assert(saveButton.disabled && saveButton.ariaDisabled === "true", "register-and-print is enabled before a product is selected");
 
@@ -510,3 +521,98 @@ const longOutput = sandbox.build({
 assert(longOutput.includes("serial-label-product long"), "long GLTEK part numbers do not receive the adaptive type size");
 
 console.log("Finished-product serial issuance, one-label rule, and product-scoped component defaults passed.");
+
+// Search results and readiness queries must use only products with issued G numbers.
+async function verifyIssuedGLabelSearch() {
+  const candidates = [
+    { id: 1, gltek_part_number: "G0101-00001" },
+    { id: 2, gltek_part_number: null, manufacturer_part_number: "104210-4120" },
+    { id: 3, gltek_part_number: "" },
+    { id: 4, gltek_part_number: " \t\u3000" },
+    { id: 5 },
+    { id: 6, gltek_part_number: "G0101-00006", hidden: true },
+    { id: 7, gltek_part_number: " G0101-00007 " }
+  ];
+  let checked = 0;
+  for (const [mode, query, rows, expected] of [
+    ["product", "104210", candidates, "1,7"],
+    ["box", "104210", candidates, "1,7"],
+    ["box", "", candidates, "1,7"],
+    ["product", "104210", candidates.slice(1, 5), ""],
+    ["box", "", candidates.slice(1, 5), ""]
+  ]) {
+    const nodes = {
+      "finished-label-search": { value: query },
+      "finished-label-results": { innerHTML: "" },
+      "finished-label-search-count": { textContent: "" },
+      "btn-finished-label-load-more": { hidden: false }
+    };
+    let readinessIds = null;
+    let rendered = 0;
+    const context = {
+      finishedLabelPrintMode: mode, finishedLabelSearchRequestSeq: 0,
+      FINISHED_LABEL_PAGE_STEP: 20,
+      document: { getElementById(id) { return nodes[id]; } },
+      canViewFinishedLabelMgmt() { return true; },
+      normalizeFinishedLabelSearchInput(input) { return input.value; },
+      esc(value) { return value; }, t(value) { return value; }, console,
+      async fetchCoreProductMasterMatches() { return { data: rows }; },
+      normalizeCoreProductFastRows(value) { return value; },
+      async fetchFinishedBoxLabelProducts() { return rows; },
+      filterVisibleProducts(value) { return value.filter(row => !row.hidden); },
+      async loadFinishedLabelProductReadiness(value) { readinessIds = value.map(row => row.id).join(","); return {}; },
+      async loadFinishedBoxLabelProductReadiness(value) { readinessIds = value.map(row => row.id).join(","); return {}; },
+      sortFinishedLabelProducts(value) { return value; },
+      renderFinishedLabelResults() { rendered += 1; }
+    };
+    vm.createContext(context);
+    vm.runInContext("async " + functionSource("searchFinishedLabelProducts"), context);
+    await context.searchFinishedLabelProducts();
+    assert(context.finishedLabelProducts.map(row => row.id).join(",") === expected, "unissued G number appeared in " + mode + " search");
+    assert(readinessIds === expected, "excluded products reached label readiness queries");
+    assert(rendered === 1, "filtered results were not rendered exactly once");
+    checked += 1;
+  }
+  console.log("Issued G label search: " + checked + " product/box cases passed.");
+}
+verifyIssuedGLabelSearch().catch(error => { console.error(error); process.exitCode = 1; });
+
+// Exercise the same reader/reset flow used by a label-only shipping user.
+async function verifyFinishedLabelComponentDefaults() {
+  const calls=[],alerts=[],queue=[];
+  const select={value:'101',disabled:false};
+  Object.defineProperty(select,'innerHTML',{set(value){this.markup=value;const options=[...value.matchAll(/<option value='([^']*)'([^>]*)>/g)];const selected=options.find(m=>/\bselected\b/.test(m[2]))||options[0];this.value=selected?selected[1]:'';},get(){return this.markup||'';}});
+  const rows=[{id:1,replacement_rate:100,component_name:'bearing A',quantity:'1'},{id:2,replacement_rate:'100',component_name:'bearing B',quantity:'1'},{id:3,replacement_rate:100,component_name:'brush',quantity:'2'},{id:4,replacement_rate:40,component_name:'optional',quantity:'1'}];
+  const sandbox={window:{setTimeout,clearTimeout},finishedLabelSelectedProduct:{dkd_shohin_id:1,default_product_kind:'rebuilt'},finishedLabelVariants:[{product_variant_id:101,product_kind:'rebuilt',dkd_shohin_id:1}],finishedLabelComponentLoadSeq:0,finishedLabelProductSelectionSeq:0,finishedLabelComponentsLoading:false,finishedLabelComponentError:'',finishedLabelComponentCandidates:[],finishedLabelSelectedComponentIds:{},document:{getElementById(id){return id==='finished-label-variant-kind'?select:null;}},t:k=>k,tf:(k,v)=>v.kind,esc:String,console:{warn(){}},renderFinishedLabelComponents(){},updateFinishedLabelQrPayload(){},alert:m=>alerts.push(m),sb:{rpc(name,args){calls.push({name,args});return queue.shift()||Promise.resolve({data:rows,error:null});}}};
+  const asyncNames=new Set(['loadFinishedLabelComponentCandidates','applyFinishedLabelTemplate','saveFinishedLabelIssue']);
+  vm.createContext(sandbox);
+  vm.runInContext(['productDkdId','normalizeProductKind','productKindLabel','selectedFinishedLabelVariant','renderFinishedLabelVariantOptions','finishedLabelComponentName','finishedLabelComponentPartNumber','finishedLabelComponentSort','loadFinishedLabelComponentCandidates','applyFinishedLabelTemplate','saveFinishedLabelIssue'].map(name=>(asyncNames.has(name)?'async ':'')+functionSource(name)).join('\n'),sandbox);
+  const selected=()=>Object.keys(sandbox.finishedLabelSelectedComponentIds).sort().join(',');
+  await sandbox.loadFinishedLabelComponentCandidates({resetDefaults:true});
+  assert(selected()==='1,2,3','initial selection must contain exactly the three 100% rows');
+  assert(calls[0].name==='list_finished_label_component_candidates'&&calls[0].args.target_dkd_shohin_id===1&&calls[0].args.target_product_variant_id===101,'label reader must send the selected product and variant to the authorized RPC');
+  delete sandbox.finishedLabelSelectedComponentIds['1'];sandbox.finishedLabelSelectedComponentIds['4']=true;
+  await sandbox.applyFinishedLabelTemplate();
+  assert(calls.length===2&&selected()==='1,2,3','reset must fetch again, restore defaults, and remove optional selections');
+  sandbox.finishedLabelSelectedComponentIds['4']=true;
+  queue.push(Promise.resolve({data:rows.concat({id:5,replacement_rate:0,component_name:'newly registered'}),error:null}));
+  await sandbox.loadFinishedLabelComponentCandidates({includeUsageId:5});
+  assert(selected()==='1,2,3,4,5','adding a registered part must preserve the operator selection and include the added row');
+  queue.push(Promise.reject(new Error('synthetic network failure')));
+  await sandbox.loadFinishedLabelComponentCandidates({resetDefaults:true});
+  assert(sandbox.finishedLabelComponentError==='finished_label_component_load_failed'&&sandbox.finishedLabelComponentCandidates.length===0&&!sandbox.finishedLabelComponentsLoading,'read failure must be visible and clear stale candidates');
+  await sandbox.saveFinishedLabelIssue();assert(alerts.length===1,'registration must stop while component reading is in error');
+  await sandbox.applyFinishedLabelTemplate();assert(selected()==='1,2,3'&&!sandbox.finishedLabelComponentError,'reset must recover from a failed read');
+  let resolveA,resolveB;queue.push(new Promise(r=>resolveA=r));const pendingA=sandbox.loadFinishedLabelComponentCandidates({resetDefaults:true});
+  assert(sandbox.finishedLabelComponentsLoading,'loading must be visible while the RPC is pending');await sandbox.saveFinishedLabelIssue();assert(alerts.length===2,'registration must stop while components are loading');
+  sandbox.finishedLabelSelectedProduct={dkd_shohin_id:2,default_product_kind:'rebuilt'};sandbox.finishedLabelVariants=[{product_variant_id:201,product_kind:'rebuilt',dkd_shohin_id:2}];select.value='201';
+  queue.push(new Promise(r=>resolveB=r));const pendingB=sandbox.loadFinishedLabelComponentCandidates({resetDefaults:true});
+  resolveB({data:[{id:21,replacement_rate:100,component_name:'product B'}],error:null});await pendingB;
+  resolveA({data:rows,error:null});await pendingA;assert(selected()==='21','a late response from the previous product must not replace the current parts');
+  queue.push(Promise.resolve({data:{unexpected:true},error:null}));await sandbox.loadFinishedLabelComponentCandidates({resetDefaults:true});assert(sandbox.finishedLabelComponentError,'malformed RPC data must not be treated as a valid empty selection');
+  sandbox.finishedLabelSelectedProduct={dkd_shohin_id:1,default_product_kind:'rebuilt'};sandbox.finishedLabelVariants=[{product_variant_id:1,product_kind:'catalog_spec'},{product_variant_id:101,product_kind:'rebuilt'}];
+  sandbox.renderFinishedLabelVariantOptions(sandbox.finishedLabelVariants);assert(select.value==='101','the default product kind must be selected even when the catalog variant sorts first');
+  sandbox.finishedLabelVariants=[];select.value='';const count=calls.length;await sandbox.loadFinishedLabelComponentCandidates({resetDefaults:true});assert(calls.length===count&&sandbox.finishedLabelComponentError==='finished_label_variant_required','missing variants must be explicit and must not cause an unscoped read');
+  console.log('Finished-label 100% component defaults: 10 runtime scenarios passed.');
+}
+verifyFinishedLabelComponentDefaults().catch(error=>{console.error(error);process.exitCode=1;});
