@@ -8705,7 +8705,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1297";
+var APP_VERSION       = "v1.1.1298";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -35763,7 +35763,9 @@ async function searchFinishedLabelProducts() {
     rows = await fetchFinishedLabelProductionProducts();
   }
   if (requestSeq !== finishedLabelSearchRequestSeq) return;
-  var visibleProducts = filterVisibleProducts(rows);
+  var visibleProducts = filterVisibleProducts(rows).filter(function(product) {
+    return !!String(product.gltek_part_number || "").trim();
+  });
   var readinessMap = {};
   try {
     readinessMap = finishedLabelPrintMode === "box"

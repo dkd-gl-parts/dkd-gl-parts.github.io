@@ -510,3 +510,58 @@ const longOutput = sandbox.build({
 assert(longOutput.includes("serial-label-product long"), "long GLTEK part numbers do not receive the adaptive type size");
 
 console.log("Finished-product serial issuance, one-label rule, and product-scoped component defaults passed.");
+
+// Search results and readiness queries must use only products with issued G numbers.
+async function verifyIssuedGLabelSearch() {
+  const candidates = [
+    { id: 1, gltek_part_number: "G0101-00001" },
+    { id: 2, gltek_part_number: null, manufacturer_part_number: "104210-4120" },
+    { id: 3, gltek_part_number: "" },
+    { id: 4, gltek_part_number: " \t\u3000" },
+    { id: 5 },
+    { id: 6, gltek_part_number: "G0101-00006", hidden: true },
+    { id: 7, gltek_part_number: " G0101-00007 " }
+  ];
+  let checked = 0;
+  for (const [mode, query, rows, expected] of [
+    ["product", "104210", candidates, "1,7"],
+    ["box", "104210", candidates, "1,7"],
+    ["box", "", candidates, "1,7"],
+    ["product", "104210", candidates.slice(1, 5), ""],
+    ["box", "", candidates.slice(1, 5), ""]
+  ]) {
+    const nodes = {
+      "finished-label-search": { value: query },
+      "finished-label-results": { innerHTML: "" },
+      "finished-label-search-count": { textContent: "" },
+      "btn-finished-label-load-more": { hidden: false }
+    };
+    let readinessIds = null;
+    let rendered = 0;
+    const context = {
+      finishedLabelPrintMode: mode, finishedLabelSearchRequestSeq: 0,
+      FINISHED_LABEL_PAGE_STEP: 20,
+      document: { getElementById(id) { return nodes[id]; } },
+      canViewFinishedLabelMgmt() { return true; },
+      normalizeFinishedLabelSearchInput(input) { return input.value; },
+      esc(value) { return value; }, t(value) { return value; }, console,
+      async fetchCoreProductMasterMatches() { return { data: rows }; },
+      normalizeCoreProductFastRows(value) { return value; },
+      async fetchFinishedBoxLabelProducts() { return rows; },
+      filterVisibleProducts(value) { return value.filter(row => !row.hidden); },
+      async loadFinishedLabelProductReadiness(value) { readinessIds = value.map(row => row.id).join(","); return {}; },
+      async loadFinishedBoxLabelProductReadiness(value) { readinessIds = value.map(row => row.id).join(","); return {}; },
+      sortFinishedLabelProducts(value) { return value; },
+      renderFinishedLabelResults() { rendered += 1; }
+    };
+    vm.createContext(context);
+    vm.runInContext("async " + functionSource("searchFinishedLabelProducts"), context);
+    await context.searchFinishedLabelProducts();
+    assert(context.finishedLabelProducts.map(row => row.id).join(",") === expected, "unissued G number appeared in " + mode + " search");
+    assert(readinessIds === expected, "excluded products reached label readiness queries");
+    assert(rendered === 1, "filtered results were not rendered exactly once");
+    checked += 1;
+  }
+  console.log("Issued G label search: " + checked + " product/box cases passed.");
+}
+verifyIssuedGLabelSearch().catch(error => { console.error(error); process.exitCode = 1; });
