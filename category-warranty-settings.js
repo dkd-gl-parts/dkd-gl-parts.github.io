@@ -72,6 +72,10 @@
       row.original = JSON.parse(JSON.stringify(row));
       return row;
     });
+    // Group saved publication settings while preserving the server order within each group.
+    s.rows = s.rows.filter(function(row){return row.show_to_customers;}).concat(
+      s.rows.filter(function(row){return !row.show_to_customers;})
+    );
     s.revision = payload.revision; s.canCategories=payload.can_edit_categories; s.canWarranty=payload.can_edit_warranty; s.unknown=false;
   }
   async function load() {
