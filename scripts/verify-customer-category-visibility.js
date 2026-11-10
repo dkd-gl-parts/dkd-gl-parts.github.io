@@ -21,23 +21,15 @@ const defaultCategoryDeclaration = `var DEFAULT_CUSTOMER_VISIBLE_CATEGORY_CODES 
 if (!source.replace(/\s+/g, "").includes(defaultCategoryDeclaration.replace(/\s+/g, ""))) {
   throw new Error("the six requested primary categories must remain the customer default");
 }
-const sandbox = { DEFAULT_CUSTOMER_VISIBLE_CATEGORY_CODES: expectedDefaultCategories };
+const sandbox = { DEFAULT_CUSTOMER_VISIBLE_CATEGORY_CODES: expectedDefaultCategories, categoryOptions: [] };
 vm.runInNewContext(`${helperSource}; result = customerCategoryIsVisible;`, sandbox);
 const isVisible = sandbox.result;
-expectedDefaultCategories.forEach((code) => {
-  if (!isVisible(code, [])) throw new Error(`${code} must be visible by default`);
-});
-if (isVisible("radiator", [])) throw new Error("non-primary categories must be hidden by default");
-if (!isVisible("radiator", [{ visibility_scope: "all", is_visible: true }])) throw new Error("an explicit show-all rule must override primary-category defaults");
-if (isVisible("starter", [{ visibility_scope: "all", is_visible: false }])) throw new Error("all-scope hidden rule must hide categories by default");
-if (!isVisible("starter", [
-  { visibility_scope: "all", is_visible: false },
-  { visibility_scope: "category", category_code: "starter", is_visible: true }
-])) throw new Error("category rule must override the all-scope default");
-if (isVisible("starter", [
-  { visibility_scope: "all", is_visible: true },
-  { visibility_scope: "category", category_code: "starter", is_visible: false }
-])) throw new Error("hidden category rule must override the visible all-scope default");
+sandbox.categoryOptions = expectedDefaultCategories.map(category_code=>({category_code,show_to_customers:true})).concat([{category_code:'radiator',show_to_customers:false}]);
+expectedDefaultCategories.forEach(code=>{if(!isVisible(code,[]))throw new Error('globally enabled category hidden');});
+if(isVisible('radiator',[{visibility_scope:'all',is_visible:true},{visibility_scope:'category',category_code:'radiator',is_visible:true}]))throw new Error('legacy positive rules bypass global OFF');
+if(!isVisible('starter',[{visibility_scope:'all',is_visible:false}]))throw new Error('legacy all-OFF must not override the required master model');
+if(isVisible('starter',[{visibility_scope:'all',is_visible:true},{visibility_scope:'category',category_code:'starter',is_visible:false}]))throw new Error('customer exclusion bypassed');
+if(isVisible('unknown',[]))throw new Error('missing master metadata must fail closed');
 
 const productVisibilitySource = functionSource("isCustomerVisibleProduct", "async function loadCustomerPortalContextForCustomer");
 if (!productVisibilitySource.includes("customerCategoryIsVisible(category, rows)") ||
@@ -105,6 +97,8 @@ const saveSandbox = {
   currentCustomerAccessCustomer: { id: 1, price_rank_code: "A" },
   customerAccessSavedDisplayDraft: null,
   customerAccessSettingsSaving: false,
+  userProfile: {},
+  customerAccessCategoryState: { customerId: 1, unknown: false },
   draftSetting: false,
   collectHanbaiouCustomerBillingSettings: () => null,
   collectHanbaiouCustomerCollectionSettings: () => null,
@@ -113,6 +107,7 @@ const saveSandbox = {
   document: { getElementById: (id) => saveElements[id] || null },
   t: (key) => key
 };
+saveSandbox.customerAccessCategoryState.actor = saveSandbox.userProfile;
 vm.runInNewContext(`${saveStateBlock}; resetCustomerAccessSaveState(); result = { updateCustomerAccessSaveState, customerAccessHasUnsavedChanges };`, saveSandbox);
 if (!saveElements["btn-customer-access-save"].disabled || saveElements.unsaved) {
   throw new Error("saved customer settings must start in a clean state with the save button disabled");
@@ -124,12 +119,8 @@ if (saveElements["btn-customer-access-save"].disabled || !saveElements.unsaved |
 }
 
 const saveSource = functionSource("saveCustomerAccessCategoryVisibility", "async function saveCustomerAccessSettings");
-if (!saveSource.includes('from("customer_product_visibility")') ||
-    !saveSource.includes('visibility_scope", "category"') ||
-    !saveSource.includes("usesDefaultSelection") ||
-    !saveSource.includes("showsAllCategories") ||
-    !saveSource.includes('visibility_scope: "all"')) {
-  throw new Error("category selections must be persisted as customer category visibility rules");
+if (!saveSource.includes('save_customer_category_exclusions') || !saveSource.includes('target_expected_revision') || saveSource.includes('from("customer_product_visibility")')) {
+  throw new Error('customer category exclusions must use the guarded atomic RPC');
 }
 
 const catalogSource = functionSource("populateCustomerCatalogCategories", "function renderCustomerCatalogShell");

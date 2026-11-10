@@ -2169,7 +2169,7 @@ var TRANSLATIONS = {
     customer_access_shipping_separate_desc: "商品価格とは別に、お届け先に応じた送料をご案内します。",
     customer_access_shipping_free_desc: "この得意先には送料を請求しません。",
     customer_access_category_visibility: "得意先に表示するカテゴリ",
-    customer_access_category_help: "チェックしたカテゴリを商品カタログに表示します。未設定時は主要6カテゴリが初期値です。変更後は画面下の保存ボタンを押してください。",
+    customer_access_category_help: "「カテゴリ・保証設定」で全体ONのカテゴリから、この得意先に表示するものを選びます。全体OFFは表示できません。変更後は画面下の保存ボタンを押してください。",
     customer_access_category_all: "すべて選択",
     customer_access_category_none: "すべて解除",
     customer_access_category_count: "{n}カテゴリ表示",
@@ -2853,6 +2853,12 @@ var TRANSLATIONS = {
     cw_add: "カテゴリを追加",
     cw_reload: "再読み込み",
     cw_save: "設定を保存",
+    customer_category_master_off: "全体OFF",
+    customer_category_reload: "設定を再読み込み",
+    customer_category_reload_required: "設定を再読み込みして保存結果と全体設定を確認してください。確認するまで再保存できません。",
+    cw_customer_publication: "得意先に公開（全体ON）",
+    cw_publication_help: "得意先への公開は全体ONが必須です。得意先ごとに追加でOFFにできます。新しいカテゴリは全体OFFで作成します。",
+    cw_apply_note: "カテゴリ名・公開設定は保存後に反映します。保証条件は次の出荷から適用し、出荷済み商品の保証期限は変わりません。",
     cw_ja: "日本語名",
     cw_en: "英語名",
     cw_zh: "中国語名",
@@ -4997,7 +5003,7 @@ var TRANSLATIONS = {
     customer_access_shipping_separate_desc: "Show a destination-based shipping charge separately from the product price.",
     customer_access_shipping_free_desc: "Do not charge this customer for shipping.",
     customer_access_category_visibility: "Categories visible to this customer",
-    customer_access_category_help: "Checked categories appear in the product catalog. Six primary categories are selected by default. Use the Save changes button below to apply changes.",
+    customer_access_category_help: "Choose customer categories from those enabled in Category & warranty settings. Globally disabled categories cannot be shown. Save changes below to apply.",
     customer_access_category_all: "Select all",
     customer_access_category_none: "Clear all",
     customer_access_category_count: "{n} categories visible",
@@ -5681,6 +5687,12 @@ var TRANSLATIONS = {
     cw_add: "Add category",
     cw_reload: "Reload",
     cw_save: "Save settings",
+    customer_category_master_off: "Globally OFF",
+    customer_category_reload: "Reload settings",
+    customer_category_reload_required: "Reload settings to confirm the saved result and global settings before saving again.",
+    cw_customer_publication: "Publish to customers (global ON)",
+    cw_publication_help: "Global ON is required for customer publication. Each customer can exclude additional categories. New categories start globally OFF.",
+    cw_apply_note: "Category names and publication apply after saving. Warranty changes apply to future shipments; existing shipment warranties stay unchanged.",
     cw_ja: "Japanese name",
     cw_en: "English name",
     cw_zh: "Chinese name",
@@ -7825,7 +7837,7 @@ var TRANSLATIONS = {
     customer_access_shipping_separate_desc: "商品价格之外，按收货地区另行显示运费。",
     customer_access_shipping_free_desc: "不向此客户收取运费。",
     customer_access_category_visibility: "向客户显示的类别",
-    customer_access_category_help: "商品目录中仅显示已勾选的类别。默认选择六个主要类别。更改后请按下方的保存按钮。",
+    customer_access_category_help: "从「类别与保修设置」中全局开启的类别中选择此客户可见的类别。全局关闭的类别无法显示。更改后请按下方的保存按钮。",
     customer_access_category_all: "全选",
     customer_access_category_none: "全部取消",
     customer_access_category_count: "显示{n}个类别",
@@ -8509,6 +8521,12 @@ var TRANSLATIONS = {
     cw_add: "添加类别",
     cw_reload: "重新加载",
     cw_save: "保存设置",
+    customer_category_master_off: "全局关闭",
+    customer_category_reload: "重新加载设置",
+    customer_category_reload_required: "请重新加载设置，确认保存结果与全局设置后再保存。",
+    cw_customer_publication: "向客户公开（全局开启）",
+    cw_publication_help: "向客户公开必须全局开启。可为每位客户额外关闭类别。新类别默认全局关闭。",
+    cw_apply_note: "类别名称与公开设置在保存后生效。保修条件适用于后续出货，已出货商品的保修期限保持不变。",
     cw_ja: "日语名称",
     cw_en: "英语名称",
     cw_zh: "中文名称",
@@ -8612,7 +8630,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1295";
+var APP_VERSION       = "v1.1.1296";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -10148,15 +10166,12 @@ function customerCanShowVehicleInfo() {
 function customerCanShowCompatibleParts() {
   return customerViewerSetting("show_compatible_parts", true);
 }
-function customerCategoryIsVisible(categoryCode, visibilityRows) {
+function customerCategoryIsVisible(categoryCode, visibilityRows, categories) {
   var code = String(categoryCode || "");
-  var rows = visibilityRows || [];
-  var categoryRule = rows.find(function(row) {
-    return row.visibility_scope === "category" && String(row.category_code || "") === code;
+  var category = (categories || categoryOptions || []).find(function(cat) { return String(cat.category_code || cat.category || "") === code; });
+  return !!category && category.show_to_customers === true && !(visibilityRows || []).some(function(row) {
+    return row.visibility_scope === "category" && String(row.category_code || "") === code && row.is_visible === false;
   });
-  if (categoryRule) return !!categoryRule.is_visible;
-  var allRule = rows.find(function(row) { return row.visibility_scope === "all"; });
-  return allRule ? !!allRule.is_visible : DEFAULT_CUSTOMER_VISIBLE_CATEGORY_CODES.indexOf(code) >= 0;
 }
 function isCustomerVisibleProduct(p) {
   if (!userProfile || (!isCustomerViewer() && !isCustomerPortalSearchMode())) return false;
@@ -12715,7 +12730,7 @@ async function populateCustomerCatalogCategories() {
   if (!select) return;
   if (!categoryOptions.length) {
     var r = await sb.from("assy_categories")
-      .select("category_code,label_ja,label_en,label_zh,sort_order")
+      .select("category_code,label_ja,label_en,label_zh,sort_order,show_to_customers")
       .eq("is_active", true)
       .order("sort_order", { ascending: true });
     if (!r.error) {
@@ -26706,7 +26721,7 @@ async function populateRakutenTargetCategoryOptions() {
   if (!select) return;
   if (!categoryOptions.length) {
     var r = await sb.from("assy_categories")
-      .select("category_code,label_ja,label_en,label_zh,sort_order,is_active")
+      .select("category_code,label_ja,label_en,label_zh,sort_order,show_to_customers,is_active")
       .eq("is_active", true)
       .order("sort_order", { ascending: true });
     if (!r.error) {
@@ -31625,7 +31640,7 @@ async function populateProductKindStockCategoryOptions() {
   if (!select) return;
   if (!categoryOptions.length) {
     var r = await sb.from("assy_categories")
-      .select("category_code,label_ja,label_en,label_zh,sort_order,is_active")
+      .select("category_code,label_ja,label_en,label_zh,sort_order,show_to_customers,is_active")
       .eq("is_active", true)
       .order("sort_order", { ascending: true });
     if (!r.error) {
@@ -32546,7 +32561,7 @@ async function populateManufacturingCostCategoryOptions() {
   if (!select) return;
   if (!categoryOptions.length) {
     var r = await sb.from("assy_categories")
-      .select("category_code,label_ja,label_en,label_zh,sort_order,is_active")
+      .select("category_code,label_ja,label_en,label_zh,sort_order,show_to_customers,is_active")
       .eq("is_active", true)
       .order("sort_order", { ascending: true });
     if (!r.error) {
@@ -40769,7 +40784,7 @@ async function initSearch() {
   slPresenceMap = {};
 
   var r4 = await sb.from("assy_categories")
-    .select("category_code,label_ja,label_en,label_zh,sort_order")
+    .select("category_code,label_ja,label_en,label_zh,sort_order,show_to_customers")
     .eq("is_active", true)
     .order("sort_order", { ascending: true });
   categoryOptions = (r4.data || []).filter(function(cat) {
@@ -53533,6 +53548,8 @@ async function unlinkPurchaseProduct(linkId) {
 
 var customerAccessWorkspaceTab = "overview";
 var customerAccessDetailRequestSeq = 0;
+var customerAccessCategoryState = null;
+var customerAccessSaveOperation = null;
 var customerAccessIncludeInactiveLoaded = false;
 
 function customerAccessRankLabel(code) {
@@ -53921,7 +53938,7 @@ async function ensureCustomerAccessShippingServices() {
 async function ensureCustomerAccessCategories() {
   if (categoryOptions && categoryOptions.length) return;
   var r = await sb.from("assy_categories")
-    .select("category_code,label_ja,label_en,label_zh,sort_order")
+    .select("category_code,label_ja,label_en,label_zh,sort_order,show_to_customers")
     .eq("is_active", true)
     .order("sort_order", { ascending: true });
   if (!r.error) {
@@ -54054,6 +54071,10 @@ async function selectCustomerAccessCustomer(customerId) {
 
 async function loadCustomerAccessDetail(customerId) {
   var requestSeq = ++customerAccessDetailRequestSeq;
+  var actor = userProfile;
+  customerAccessCategoryState = null;
+  customerAccessSaveOperation = null;
+  customerAccessSettingsSaving = false;
   var detail = document.getElementById("customer-access-detail");
   customerAccessSavedDisplayDraft = null;
   customerAccessSettings = null;
@@ -54065,9 +54086,10 @@ async function loadCustomerAccessDetail(customerId) {
   var results;
   try { results = await Promise.all([
     sb.from("customer_display_settings").select("*").eq("sales_customer_id", customerId).maybeSingle(),
-    sb.from("customer_product_visibility").select("id,sales_customer_id,visibility_scope,category_code,dkd_shohin_id,is_visible,note,updated_at").eq("sales_customer_id", customerId).in("visibility_scope", ["all", "category"]).order("visibility_scope", { ascending: true }).order("id", { ascending: true })
+    sb.rpc("get_customer_category_settings", { target_sales_customer_id: customerId })
   ]); } catch (error) { results = [{ error: true }, { error: true }]; }
-  if (requestSeq !== customerAccessDetailRequestSeq || !currentCustomerAccessCustomer || String(currentCustomerAccessCustomer.id) !== String(customerId)) return;
+  if (actor !== userProfile || requestSeq !== customerAccessDetailRequestSeq || !currentCustomerAccessCustomer || String(currentCustomerAccessCustomer.id) !== String(customerId)) return;
+  if (!results[1].error && !adoptCustomerCategorySettings(results[1].data, customerId, actor)) results[1] = { error: true };
   if (results[0].error || results[1].error) {
     customerAccessVisibilityRows = [];
     var errorState = document.getElementById("customer-access-save-state");
@@ -54082,7 +54104,7 @@ async function loadCustomerAccessDetail(customerId) {
     return;
   }
   customerAccessSettings = Object.assign(defaultCustomerDisplaySettings(), results[0].data || { sales_customer_id: customerId });
-  customerAccessVisibilityRows = results[1].data || [];
+  customerAccessVisibilityRows = customerAccessCategoryState.exclusions.map(function(code) { return { visibility_scope: "category", category_code: code, is_visible: false }; });
   renderCustomerAccessDetail();
 }
 
@@ -54330,12 +54352,13 @@ function customerAccessCategoryChecksHtml() {
   var items = (categoryOptions || []).map(function(cat) {
     var code = cat.category_code || cat.category || "";
     if (!code) return "";
+    var masterOn = cat.show_to_customers === true;
     var visible = customerCategoryIsVisible(code, rows);
     if (visible) visibleCount += 1;
-    return "<label class='customer-category-check'><input type='checkbox' data-customer-category='" + esc(code) + "'" + (visible ? " checked" : "") + "> <span>" + esc(categoryOptionLabel(cat)) + "</span></label>";
+    return "<label class='customer-category-check" + (masterOn ? "" : " master-off") + "'><input type='checkbox' data-customer-category='" + esc(code) + "'" + (visible ? " checked" : "") + (masterOn ? "" : " disabled") + "> <span>" + esc(categoryOptionLabel(cat)) + (masterOn ? "" : " <small class='customer-category-master-off'>" + esc(t("customer_category_master_off")) + "</small>") + "</span></label>";
   }).join("");
   return "<div class='customer-category-control'>" +
-    "<div class='customer-category-toolbar'><span id='customer-category-visible-count'>" + esc(tf("customer_access_category_count", { n: visibleCount })) + "</span><div class='customer-rule-actions'><button class='btn-sm-edit' id='btn-customer-category-all' type='button'>" + esc(t("customer_access_category_all")) + "</button><button class='btn-sm-edit' id='btn-customer-category-none' type='button'>" + esc(t("customer_access_category_none")) + "</button></div></div>" +
+    "<div class='customer-category-toolbar'><span id='customer-category-visible-count'>" + esc(tf("customer_access_category_count", { n: visibleCount })) + "</span><div class='customer-rule-actions'><button class='btn-sm-edit' id='btn-customer-category-all' type='button'>" + esc(t("customer_access_category_all")) + "</button><button class='btn-sm-edit' id='btn-customer-category-none' type='button'>" + esc(t("customer_access_category_none")) + "</button><button class='btn-sm-edit' id='btn-customer-category-reload' type='button'>" + esc(t("customer_category_reload")) + "</button></div></div>" +
     "<div class='customer-category-grid'>" + items + "</div>" +
   "</div>";
 }
@@ -54563,6 +54586,12 @@ function bindCustomerAccessDetailEvents() {
   });
   var rankSelect = document.getElementById("customer-access-rank-select");
   if (rankSelect) rankSelect.addEventListener("change", updateCustomerAccessSaveState);
+  var categoryReloadBtn = document.getElementById("btn-customer-category-reload");
+  if (categoryReloadBtn) categoryReloadBtn.addEventListener("click", function() {
+    if (customerAccessSettingsSaving || !currentCustomerAccessCustomer) return;
+    if (customerAccessHasUnsavedChanges() && !confirm(t("cw_reloadConfirm"))) return;
+    loadCustomerAccessDetail(currentCustomerAccessCustomer.id);
+  });
   var categoryAllBtn = document.getElementById("btn-customer-category-all");
   if (categoryAllBtn) categoryAllBtn.addEventListener("click", function() { setCustomerAccessCategoriesChecked(true); });
   var categoryNoneBtn = document.getElementById("btn-customer-category-none");
@@ -54578,14 +54607,14 @@ function bindCustomerAccessDetailEvents() {
 }
 
 function setCustomerAccessCategoriesChecked(checked) {
-  document.querySelectorAll("[data-customer-category]").forEach(function(el) { el.checked = !!checked; });
+  document.querySelectorAll("[data-customer-category]").forEach(function(el) { el.checked = !el.disabled && !!checked; });
   syncCustomerAccessCategoryCount();
   updateCustomerAccessSaveState();
 }
 
 function syncCustomerAccessCategoryCount() {
   var count = 0;
-  document.querySelectorAll("[data-customer-category]").forEach(function(el) { if (el.checked) count += 1; });
+  document.querySelectorAll("[data-customer-category]").forEach(function(el) { if (!el.disabled && el.checked) count += 1; });
   var countEl = document.getElementById("customer-category-visible-count");
   if (countEl) countEl.textContent = tf("customer_access_category_count", { n: count });
 }
@@ -54665,7 +54694,7 @@ function collectCustomerDisplaySettings() {
 function collectCustomerAccessCategoryVisibility() {
   var visibility = {};
   document.querySelectorAll("[data-customer-category]").forEach(function(el) {
-    visibility[String(el.dataset.customerCategory || "")] = !!el.checked;
+    if (!el.disabled) visibility[String(el.dataset.customerCategory || "")] = !!el.checked;
   });
   return visibility;
 }
@@ -54763,7 +54792,7 @@ function updateCustomerAccessSaveState() {
   var help = document.getElementById("customer-access-save-help");
   var button = document.getElementById("btn-customer-access-save");
   if (!bar || !state || !help || !button) return;
-  var ready = !!currentCustomerAccessCustomer && customerAccessSavedDisplayDraft != null;
+  var ready = !!currentCustomerAccessCustomer && customerAccessSavedDisplayDraft != null && customerCategorySettingsReady(currentCustomerAccessCustomer.id);
   var dirty = ready && customerAccessHasUnsavedChanges();
   var titleKey = !currentCustomerAccessCustomer ? "customer_access_save_no_customer" :
     (customerAccessSettingsSaving ? "customer_access_saving" :
@@ -54772,7 +54801,7 @@ function updateCustomerAccessSaveState() {
     (customerAccessSettingsSaving ? "customer_access_saving_help" :
       (!ready ? "" : (dirty ? "customer_access_save_dirty_help" : "customer_access_save_clean_help")));
   state.textContent = t(titleKey);
-  help.textContent = helpKey ? t(helpKey) : "";
+  help.textContent = customerAccessCategoryState && customerAccessCategoryState.unknown ? t("customer_category_reload_required") : (helpKey ? t(helpKey) : "");
   button.textContent = customerAccessSettingsSaving ? t("customer_access_saving") : t("customer_access_save_display");
   button.disabled = !dirty || customerAccessSettingsSaving;
   bar.classList.toggle("unsaved", dirty && !customerAccessSettingsSaving);
@@ -54784,122 +54813,74 @@ function resetCustomerAccessSaveState() {
   updateCustomerAccessSaveState();
 }
 
+function customerCategorySettingsReady(customerId) {
+  return !!customerAccessCategoryState && !customerAccessCategoryState.unknown && customerAccessCategoryState.actor === userProfile && String(customerAccessCategoryState.customerId) === String(customerId);
+}
+
+function adoptCustomerCategorySettings(payload, customerId, actor) {
+  if (!payload || String(payload.sales_customer_id) !== String(customerId) || !/^[a-f0-9]{32}$/.test(payload.revision) || !Array.isArray(payload.categories) || !Array.isArray(payload.excluded_category_codes)) return false;
+  var codes = new Set();
+  if (payload.categories.some(function(cat) {
+    if (!cat || typeof cat.category_code !== "string" || !cat.category_code || typeof cat.show_to_customers !== "boolean" || codes.has(cat.category_code) || ["label_ja", "label_en", "label_zh"].some(function(key) { return typeof cat[key] !== "string"; })) return true;
+    codes.add(cat.category_code); return false;
+  }) || payload.excluded_category_codes.some(function(code) { return typeof code !== "string" || !code; })) return false;
+  customerAccessCategoryState = { customerId: customerId, actor: actor, revision: payload.revision, exclusions: payload.excluded_category_codes.slice(), unknown: false };
+  categoryOptions = payload.categories.filter(function(cat) { return cat.category_code !== "car_air_conditioner"; });
+  return true;
+}
+
+function customerAccessOperationCurrent(operation) {
+  return customerAccessSaveOperation === operation && operation.actor === userProfile && !!currentCustomerAccessCustomer && String(currentCustomerAccessCustomer.id) === operation.customerId;
+}
+
+function customerAccessOnlyCategoryChanges() {
+  try {
+    var before = JSON.parse(customerAccessSavedDisplayDraft || "null");
+    var after = JSON.parse(customerAccessDisplayDraftSignature() || "null");
+    if (!before || !after) return false;
+    delete before.categories; delete after.categories;
+    return JSON.stringify(before) === JSON.stringify(after);
+  } catch (error) { return false; }
+}
+
 async function saveCustomerAccessCategoryVisibility(customerId, desiredVisibility) {
-  var codes = Object.keys(desiredVisibility || {}).filter(Boolean);
-  if (!codes.length) return;
-  var selectedCodes = codes.filter(function(code) { return !!desiredVisibility[code]; });
-  var defaultCodes = codes.filter(function(code) { return DEFAULT_CUSTOMER_VISIBLE_CATEGORY_CODES.indexOf(code) >= 0; });
-  var usesDefaultSelection = selectedCodes.length === defaultCodes.length && defaultCodes.every(function(code) {
-    return selectedCodes.indexOf(code) >= 0;
-  });
-  var showsAllCategories = selectedCodes.length === codes.length;
-  var restrictCategories = !showsAllCategories;
-  var allRows = (customerAccessVisibilityRows || []).filter(function(row) { return row.visibility_scope === "all"; });
-  var existingCategoryRows = (customerAccessVisibilityRows || []).filter(function(row) { return row.visibility_scope === "category"; });
-  var existingCodes = {};
-  existingCategoryRows.forEach(function(row) { existingCodes[String(row.category_code || "")] = true; });
-  var updateCodes = selectedCodes.filter(function(code) { return existingCodes[code]; });
-  var insertCodes = selectedCodes.filter(function(code) { return !existingCodes[code]; });
-  var deleteIds = existingCategoryRows.filter(function(row) {
-    return !restrictCategories || selectedCodes.indexOf(String(row.category_code || "")) < 0;
-  }).map(function(row) { return row.id; }).filter(Boolean);
-  var now = new Date().toISOString();
-  if (usesDefaultSelection) {
-    var clearIds = existingCategoryRows.map(function(row) { return row.id; }).filter(Boolean)
-      .concat(allRows.map(function(row) { return row.id; }).filter(Boolean));
-    if (clearIds.length) {
-      var clearR = await sb.from("customer_product_visibility")
-        .delete()
-        .eq("sales_customer_id", customerId)
-        .in("id", clearIds);
-      if (clearR.error) throw clearR.error;
-    }
-    return;
-  }
-  if (showsAllCategories) {
-    if (allRows.length) {
-      var showAllUpdateR = await sb.from("customer_product_visibility")
-        .update({ is_visible: true, updated_at: now })
-        .eq("sales_customer_id", customerId)
-        .eq("visibility_scope", "all");
-      if (showAllUpdateR.error) throw showAllUpdateR.error;
-    } else {
-      var showAllInsertR = await sb.from("customer_product_visibility").insert({
-        sales_customer_id: customerId,
-        visibility_scope: "all",
-        category_code: null,
-        dkd_shohin_id: null,
-        is_visible: true,
-        note: null,
-        updated_at: now
-      });
-      if (showAllInsertR.error) throw showAllInsertR.error;
-    }
-    if (deleteIds.length) {
-      var clearCategoryR = await sb.from("customer_product_visibility")
-        .delete()
-        .eq("sales_customer_id", customerId)
-        .in("id", deleteIds);
-      if (clearCategoryR.error) throw clearCategoryR.error;
-    }
-    return;
-  }
-  if (updateCodes.length) {
-    var updateR = await sb.from("customer_product_visibility")
-      .update({ is_visible: true, updated_at: now })
-      .eq("sales_customer_id", customerId)
-      .eq("visibility_scope", "category")
-      .in("category_code", updateCodes);
-    if (updateR.error) throw updateR.error;
-  }
-  if (insertCodes.length) {
-    var insertR = await sb.from("customer_product_visibility").insert(insertCodes.map(function(code) {
-      return {
-        sales_customer_id: customerId,
-        visibility_scope: "category",
-        category_code: code,
-        dkd_shohin_id: null,
-        is_visible: true,
-        note: null,
-        updated_at: now
-      };
-    }));
-    if (insertR.error) throw insertR.error;
-  }
-  if (allRows.length) {
-    var allUpdateR = await sb.from("customer_product_visibility")
-      .update({ is_visible: false, updated_at: now })
-      .eq("sales_customer_id", customerId)
-      .eq("visibility_scope", "all");
-    if (allUpdateR.error) throw allUpdateR.error;
-  } else {
-    var allInsertR = await sb.from("customer_product_visibility").insert({
-      sales_customer_id: customerId,
-      visibility_scope: "all",
-      category_code: null,
-      dkd_shohin_id: null,
-      is_visible: false,
-      note: null,
-      updated_at: now
+  if (!customerCategorySettingsReady(customerId)) throw Error(t("customer_category_reload_required"));
+  var snapshot = customerAccessCategoryState;
+  var exclusions = Object.keys(desiredVisibility || {}).filter(function(code) { return !!code && desiredVisibility[code] === false; }).sort();
+  var result;
+  try {
+    result = await sb.rpc("save_customer_category_exclusions", {
+      target_sales_customer_id: customerId,
+      target_excluded_category_codes: exclusions,
+      target_expected_revision: snapshot.revision
     });
-    if (allInsertR.error) throw allInsertR.error;
+  } catch (error) {
+    if (customerAccessCategoryState === snapshot) snapshot.unknown = true;
+    throw Error(t("customer_category_reload_required"));
   }
-  if (deleteIds.length) {
-    var deleteR = await sb.from("customer_product_visibility")
-      .delete()
-      .eq("sales_customer_id", customerId)
-      .in("id", deleteIds);
-    if (deleteR.error) throw deleteR.error;
+  if (customerAccessCategoryState !== snapshot || snapshot.actor !== userProfile || !currentCustomerAccessCustomer || String(currentCustomerAccessCustomer.id) !== String(customerId)) return false;
+  if (result.error) {
+    if (String(result.error.code || "") !== "22023") snapshot.unknown = true;
+    if (snapshot.unknown) throw Error(t("customer_category_reload_required"));
+    throw result.error;
   }
+  if (!adoptCustomerCategorySettings(result.data, customerId, snapshot.actor)) {
+    snapshot.unknown = true;
+    throw Error(t("customer_category_reload_required"));
+  }
+  customerAccessVisibilityRows = customerAccessCategoryState.exclusions.map(function(code) { return { visibility_scope: "category", category_code: code, is_visible: false }; });
+  return true;
 }
 
 async function saveCustomerAccessSettings() {
   if (!canManageCustomerAccess() || !currentCustomerAccessCustomer) { alert(t("err_perm")); return; }
   if (customerAccessSettingsSaving) return;
+  if (!customerCategorySettingsReady(currentCustomerAccessCustomer.id)) { alert(t("customer_category_reload_required")); return; }
+  var onlyCategories = customerAccessOnlyCategoryChanges();
   syncCustomerDisplayRuleControls();
   var hanbaiouBilling = collectHanbaiouCustomerBillingSettings();
   var hanbaiouBillingError = validateHanbaiouCustomerBillingSettings(hanbaiouBilling);
-  if (hanbaiouBillingError) {
+  if (!onlyCategories && hanbaiouBillingError) {
     alert(hanbaiouBillingError.message);
     var invalidField = document.getElementById(hanbaiouBillingError.fieldId);
     if (invalidField) invalidField.focus();
@@ -54907,12 +54888,14 @@ async function saveCustomerAccessSettings() {
   }
   var hanbaiouCollection = collectHanbaiouCustomerCollectionSettings();
   var collectionError = validateHanbaiouCustomerCollectionSettings(hanbaiouCollection);
-  if (collectionError) {
+  if (!onlyCategories && collectionError) {
     alert(collectionError.message);
     var collectionField = document.getElementById(collectionError.fieldId);
     if (collectionField) collectionField.focus();
     return;
   }
+  var operation = { actor: userProfile, customerId: String(currentCustomerAccessCustomer.id) };
+  customerAccessSaveOperation = operation;
   customerAccessSettingsSaving = true;
   updateCustomerAccessSaveState();
   var customerId = currentCustomerAccessCustomer.id;
@@ -54923,11 +54906,24 @@ async function saveCustomerAccessSettings() {
   data.sales_customer_id = customerId;
   data.updated_at = new Date().toISOString();
   try {
+    if (!await saveCustomerAccessCategoryVisibility(customerId, categoryVisibility)) return;
+    if (!customerAccessOperationCurrent(operation)) return;
+    if (onlyCategories) {
+      if (customerPortalPreviewContext && String(customerPortalPreviewContext.sales_customer_id || "") === String(customerId)) {
+        var preview = await loadCustomerPortalContextForCustomer(currentCustomerAccessCustomer);
+        if (!customerAccessOperationCurrent(operation)) return;
+        customerPortalPreviewContext = preview;
+      }
+      alert(t("msg_saved"));
+      await loadCustomerAccessDetail(customerId);
+      return;
+    }
     var customerR = await sb.from("sales_customers")
       .update({ price_rank_code: nextRankCode || null, updated_at: new Date().toISOString() })
       .eq("id", customerId)
       .select("id,source_code,source_customer_code,customer_name,customer_kana,price_rank_code,billing_customer_code,closing_code,collection_method_code,collection_month_offset,collection_day,is_active")
       .maybeSingle();
+    if (!customerAccessOperationCurrent(operation)) return;
     if (customerR.error) throw customerR.error;
     var billingResult = null;
     if (hanbaiouBilling) {
@@ -54948,14 +54944,14 @@ async function saveCustomerAccessSettings() {
           target_closing_code: hanbaiouBilling.closing_code
         });
       }
+      if (!customerAccessOperationCurrent(operation)) return;
       if (billingR.error) throw billingR.error;
       billingResult = Array.isArray(billingR.data) ? (billingR.data[0] || {}) : (billingR.data || {});
     }
     var updatedCustomer = Object.assign({}, currentCustomerAccessCustomer, customerR.data || {}, billingResult || {}, { price_rank_code: nextRankCode || null });
     var r = await sb.from("customer_display_settings").upsert(data, { onConflict: "sales_customer_id" });
     if (r.error) throw r.error;
-    await saveCustomerAccessCategoryVisibility(customerId, categoryVisibility);
-    if (!currentCustomerAccessCustomer || String(currentCustomerAccessCustomer.id) !== String(customerId)) return;
+    if (!customerAccessOperationCurrent(operation)) return;
     currentCustomerAccessCustomer = updatedCustomer;
     customerAccessRows = customerAccessRows.map(function(row) {
       return String(row.id) === String(customerId) ? Object.assign({}, row, updatedCustomer) : row;
@@ -54970,7 +54966,9 @@ async function saveCustomerAccessSettings() {
       return String(row.id) === String(customerId) ? Object.assign({}, row, updatedCustomer) : row;
     });
     if (customerPortalPreviewContext && String(customerPortalPreviewContext.sales_customer_id || "") === String(customerId)) {
-      customerPortalPreviewContext = await loadCustomerPortalContextForCustomer(updatedCustomer);
+      var updatedPreview = await loadCustomerPortalContextForCustomer(updatedCustomer);
+      if (!customerAccessOperationCurrent(operation)) return;
+      customerPortalPreviewContext = updatedPreview;
     }
     customerAccessSettings = Object.assign(defaultCustomerDisplaySettings(), data);
     detailCustomerDisplaySettingsCache[String(customerId)] = Object.assign({}, customerAccessSettings);
@@ -54978,11 +54976,15 @@ async function saveCustomerAccessSettings() {
     renderCustomerAccessList();
     await loadCustomerAccessDetail(customerId);
   } catch (e) {
+    if (!customerAccessOperationCurrent(operation)) return;
     console.warn("save customer access settings failed", e);
     alert(t("msg_save_err") + ": " + ((e && e.message) || String(e)));
   } finally {
-    customerAccessSettingsSaving = false;
-    updateCustomerAccessSaveState();
+    if (customerAccessSaveOperation === operation) {
+      customerAccessSaveOperation = null;
+      customerAccessSettingsSaving = false;
+      updateCustomerAccessSaveState();
+    }
   }
 }
 

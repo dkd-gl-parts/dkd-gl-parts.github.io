@@ -38,7 +38,7 @@ expect(app.includes('action: "report-hub"'), "reports menu must open its hub");
   "販売価格"
 ].forEach((fragment) => expect(report.includes(fragment), `price report contract is missing: ${fragment}`));
 expect(report.includes("ご注文前に最新の価格と在庫状況をご確認ください。"), "printed guidance must include the stock and price check");
-expect(report.includes('sb.from("customer_product_visibility")') && report.includes('customerCategoryIsVisible(code, rows)'), "category choices must follow the selected customer's saved visibility rules");
+expect(report.includes('sb.rpc("get_customer_category_settings"') && report.includes('customerCategoryIsVisible(cat.category_code, rows, categories)'), "category choices must follow the selected customer's saved visibility rules");
 expect(report.includes("PDF保存時は印刷設定の「ヘッダーとフッター」をオフにしてください。"), "PDF toolbar must explain browser header/footer settings");
 expect(!report.includes("document-footer"), "print guidance must not be orphaned on a footer-only page");
 expect(!report.includes("product_base_prices"), "browser must not calculate a report from base-price rows");
@@ -267,41 +267,35 @@ expect(screenCss.includes("container: cpr-preview / inline-size") && screenCss.i
 expect(/\.cpr-table th:nth-child\(7\)\s*\{[^}]*text-align:\s*right/.test(screenCss), "price headings and amounts must share the right edge");
 
 const defaults = app.match(/var DEFAULT_CUSTOMER_VISIBLE_CATEGORY_CODES = \[[^\]]+\];/);
-const categoryVisible = app.match(/function customerCategoryIsVisible\(categoryCode, visibilityRows\) \{[\s\S]*?\n\}/);
+const categoryVisible = app.match(/function customerCategoryIsVisible\(categoryCode, visibilityRows, categories\) \{[\s\S]*?\n\}/);
 expect(defaults && categoryVisible, "shared customer category visibility helper must exist");
 vm.runInNewContext(defaults[0] + "\n" + categoryVisible[0], runtime);
 runtime.customerPriceState.categoryOptions = ["alternator", "starter", "injector"];
 runtime.customerPriceState.categories = { alternator: "オルタネータ", starter: "スタータ", injector: "インジェクター" };
 elements["cpr-customer"].value = "13";
-let visibilityResult = { data: [] };
-runtime.sb = { from(table) {
-  expect(table === "customer_product_visibility", "only saved customer visibility is read for category choices");
-  return { select() { return this; }, eq() { return this; }, in() { return this; }, limit() { return Promise.resolve(visibilityResult); } };
+let masterCategories = [{category_code:"alternator",label_ja:"オルタネータ",show_to_customers:true},{category_code:"starter",label_ja:"スタータ",show_to_customers:true},{category_code:"injector",label_ja:"インジェクター",show_to_customers:false}];
+let exclusions = [];
+let categoryError = false;
+runtime.categoryOptions = masterCategories;
+runtime.sb = { rpc(name,args) {
+  expect(name === "get_customer_category_settings" && args.target_sales_customer_id === 13, "fresh master/customer category settings must drive choices");
+  return Promise.resolve(categoryError ? {error: new Error("visibility unavailable")} : {data:{sales_customer_id:13,categories:masterCategories,excluded_category_codes:exclusions}});
 } };
 
 (async () => {
   elements["cpr-category"].value = "injector";
   await runtime.loadVisibleCustomerPriceCategories();
-  expect(!elements["cpr-category"].innerHTML.includes("インジェクター") && elements["cpr-category"].value === "", "default six-category rule must remove injector and reset a hidden selection");
-  visibilityResult = { data: [
-    { visibility_scope: "all", is_visible: false },
-    { visibility_scope: "category", category_code: "alternator", is_visible: true }
-  ] };
+  expect(!elements["cpr-category"].innerHTML.includes("インジェクター") && elements["cpr-category"].value === "", "global OFF must remove injector and reset a hidden selection");
+  exclusions = ["starter"];
   await runtime.loadVisibleCustomerPriceCategories();
-  expect(elements["cpr-category"].innerHTML.includes("オルタネータ") && !elements["cpr-category"].innerHTML.includes("スタータ"), "saved category allow-list must drive report choices");
-  visibilityResult = { data: [
-    { visibility_scope: "all", is_visible: true },
-    { visibility_scope: "category", category_code: "injector", is_visible: false }
-  ] };
+  expect(elements["cpr-category"].innerHTML.includes("オルタネータ") && !elements["cpr-category"].innerHTML.includes("スタータ"), "saved customer exclusion must drive report choices");
+  masterCategories[2].show_to_customers = true;
   await runtime.loadVisibleCustomerPriceCategories();
-  expect(!elements["cpr-category"].innerHTML.includes("インジェクター") && elements["cpr-category"].innerHTML.includes("スタータ"), "category-specific hide must override show-all");
-  visibilityResult = { data: [
-    { visibility_scope: "all", is_visible: false },
-    { visibility_scope: "category", category_code: "injector", is_visible: true }
-  ] };
+  expect(elements["cpr-category"].innerHTML.includes("インジェクター"), "freshly globally enabled category must become selectable");
+  exclusions = ["injector"];
   await runtime.loadVisibleCustomerPriceCategories();
-  expect(elements["cpr-category"].innerHTML.includes("インジェクター"), "an explicitly enabled injector category must remain selectable");
-  visibilityResult = { data: null, error: new Error("visibility unavailable") };
+  expect(!elements["cpr-category"].innerHTML.includes("インジェクター") && elements["cpr-category"].innerHTML.includes("スタータ"), "customer exclusion must narrow global ON choices");
+  categoryError = true;
   await runtime.loadVisibleCustomerPriceCategories();
   expect(elements["cpr-category"].disabled && elements["cpr-preview-button"].disabled && elements["cpr-status"].classList, "visibility read errors must fail closed");
 

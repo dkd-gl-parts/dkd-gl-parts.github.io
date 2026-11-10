@@ -14,7 +14,7 @@
     if (node) { node.textContent = text(key); node.classList.toggle('error', !!error); }
   }
   function changed(row) {
-    return row.isNew || ['label_ja','label_en','label_zh'].some(function(k){return row[k] !== row.original[k];}) ||
+    return row.isNew || row.show_to_customers !== row.original.show_to_customers || ['label_ja','label_en','label_zh'].some(function(k){return row[k] !== row.original[k];}) ||
       ['rebuilt','aftermarket_new'].some(function(kind){return ['months','distance'].some(function(k){return row[kind][k] !== row.original[kind][k];});});
   }
   function dirty() { return !!state && state.rows.some(changed); }
@@ -29,7 +29,7 @@
     el('category-warranty-count').textContent = state.rows.length + ' ' + text('cw_count');
     var body = el('finished-warranty-policy-body');
     if (body) body.querySelectorAll('input,button').forEach(function(input) {
-      input.disabled = busy || state.unknown || (input.dataset.cwName ? !state.canCategories : input.dataset.cwPolicy ? !state.canWarranty : false);
+      input.disabled = busy || state.unknown || (input.dataset.cwName || input.dataset.cwPublic ? !state.canCategories : input.dataset.cwPolicy ? !state.canWarranty : false);
     });
   }
   function render() {
@@ -44,6 +44,7 @@
       var names = '<div class="category-warranty-names">' + ['ja','en','zh'].map(function(lang) {
         return '<label><span>' + esc(text('cw_' + lang)) + '</span><input type="text" maxlength="100" autocomplete="off" data-cw-name="label_' + lang + '" data-cw-code="' + esc(row.category_code) + '" value="' + esc(row['label_' + lang]) + '" aria-label="' + esc((row.label_ja || text('cw_new')) + ' ' + text('cw_' + lang)) + '"></label>';
       }).join('') + '</div>';
+      names += '<label class="category-warranty-publish"><input type="checkbox" data-cw-public="1" data-cw-code="' + esc(row.category_code) + '"' + (row.show_to_customers ? ' checked' : '') + ' aria-label="' + esc((row.label_ja || text('cw_new')) + ' ' + text('cw_customer_publication')) + '"><span>' + esc(text('cw_customer_publication')) + '</span></label>';
       if (row.isNew) names += '<button type="button" class="category-warranty-remove" data-cw-remove="' + esc(row.category_code) + '">' + esc(text('cw_remove')) + '</button>';
       function kindCell(kind) {
         var kindLabel = text(kind === 'rebuilt' ? 'product_kind_rebuilt' : 'product_kind_aftermarket_new');
@@ -61,9 +62,9 @@
     if (!payload || !Array.isArray(payload.categories) || !Array.isArray(payload.policies) || !/^[a-f0-9]{32}$/.test(payload.revision) || typeof payload.can_edit_categories !== 'boolean' || typeof payload.can_edit_warranty !== 'boolean') throw Error('invalid settings response');
     var codes = new Set();
     s.rows = payload.categories.map(function(category) {
-      if (!category || typeof category.category_code !== 'string' || codes.has(category.category_code) || ['ja','en','zh'].some(function(lang){return typeof category['label_' + lang] !== 'string';})) throw Error('invalid category');
+      if (!category || typeof category.category_code !== 'string' || typeof category.show_to_customers !== 'boolean' || codes.has(category.category_code) || ['ja','en','zh'].some(function(lang){return typeof category['label_' + lang] !== 'string';})) throw Error('invalid category');
       codes.add(category.category_code);
-      var row = {category_code:category.category_code,label_ja:category.label_ja,label_en:category.label_en,label_zh:category.label_zh,isNew:false};
+      var row = {category_code:category.category_code,label_ja:category.label_ja,label_en:category.label_en,label_zh:category.label_zh,show_to_customers:category.show_to_customers,isNew:false};
       ['rebuilt','aftermarket_new'].forEach(function(kind) {
         var policy = payload.policies.find(function(p){return p.category_code === row.category_code && p.product_kind === kind;});
         row[kind] = {months:policy ? String(policy.warranty_months) : '',distance:policy && policy.warranty_distance_km != null ? String(policy.warranty_distance_km) : ''};
@@ -116,12 +117,12 @@
   function collect() {
     var categories=[],policies=[],seen=new Set();
     for(var row of state.rows) {
-      var names={category_code:row.category_code,label_ja:row.label_ja.trim(),label_en:row.label_en.trim() || row.label_ja.trim(),label_zh:row.label_zh.trim() || row.label_ja.trim()};
+      var names={category_code:row.category_code,label_ja:row.label_ja.trim(),label_en:row.label_en.trim() || row.label_ja.trim(),label_zh:row.label_zh.trim() || row.label_ja.trim(),show_to_customers:row.show_to_customers};
       if (!names.label_ja) return invalid('cw_required',row,'[data-cw-name="label_ja"]');
       if (['label_ja','label_en','label_zh'].some(function(k){return Array.from(names[k]).length>100 || /[\x00-\x1F\x7F]/.test(names[k]);})) return invalid('cw_nameInvalid',row,'[data-cw-name]');
       if (seen.has(names.label_ja.toLocaleLowerCase())) return invalid('cw_duplicate',row,'[data-cw-name="label_ja"]');
       seen.add(names.label_ja.toLocaleLowerCase());
-      if (row.isNew || ['label_ja','label_en','label_zh'].some(function(k){return names[k]!==row.original[k];})) categories.push(names);
+      if (row.isNew || names.show_to_customers!==row.original.show_to_customers || ['label_ja','label_en','label_zh'].some(function(k){return names[k]!==row.original[k];})) categories.push(names);
       for (var kind of ['rebuilt','aftermarket_new']) {
         var p=row[kind];
         if (!row.isNew && p.months===row.original[kind].months && p.distance===row.original[kind].distance) continue;
@@ -159,7 +160,7 @@
   function add() {
     if(!state || !current(state) || state.loading || state.saving || state.unknown || !state.revision || !state.canCategories || !state.canWarranty)return;
     var code='custom_' + global.crypto.randomUUID().replace(/-/g,'');
-    var row={category_code:code,label_ja:'',label_en:'',label_zh:'',isNew:true,rebuilt:{months:'12',distance:''},aftermarket_new:{months:'12',distance:''}};
+    var row={category_code:code,label_ja:'',label_en:'',label_zh:'',show_to_customers:false,isNew:true,rebuilt:{months:'12',distance:''},aftermarket_new:{months:'12',distance:''}};
     row.original=JSON.parse(JSON.stringify(row));state.rows.push(row);message('');render();
     var nodes=el('finished-warranty-policy-body').querySelectorAll('[data-cw-name="label_ja"]');nodes[nodes.length-1].focus();
   }
@@ -168,6 +169,7 @@
     body.addEventListener('input',function(event){
       var input=event.target;if(!state || !current(state) || state.loading || state.saving || state.unknown)return;
       var row=state.rows.find(function(r){return r.category_code===input.dataset.cwCode;});if(!row)return;
+      if(input.dataset.cwPublic && state.canCategories)row.show_to_customers=!!input.checked;
       if(input.dataset.cwName && state.canCategories)row[input.dataset.cwName]=input.value;
       if(input.dataset.cwPolicy && state.canWarranty)row[input.dataset.cwKind][input.dataset.cwPolicy]=input.value;
       sync();
