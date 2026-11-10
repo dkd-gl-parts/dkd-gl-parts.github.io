@@ -47,8 +47,9 @@ for (const fragment of [
 if (!/for \(var day = 1; day <= 30; day \+= 1\)/.test(app)) {
   throw new Error("Closing-code selector must contain fixed days 1 through 30");
 }
-if (!app.includes('value: "0"') || !app.includes('value: "31"')) {
-  throw new Error("Closing-code selector must include on-demand code 0 and month-end code 31");
+if (!app.includes('value: "0"') || !app.includes('value: "31"') || !app.includes('value: "50"')) {
+  throw new Error("Closing-code selector must include 0, 31 and twice-monthly code 50");
 }
+requireFragment(app, '/^(0|[1-9]|[12][0-9]|3[01]|50)$/.test(closingCode)', 'Registration accepts closing code 50');
 
 console.log("Sales King customer billing settings UI verification passed.");

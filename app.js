@@ -2085,7 +2085,7 @@ var TRANSLATIONS = {
     customer_register_billing_code: "販売王 請求得意先コード",
     customer_register_billing_code_help: "通常は販売王 得意先コードと同じ値です。",
     customer_register_closing_code: "販売王 得意先締めコード",
-    customer_register_closing_code_help: "台帳の値を選択します。0は随時、31は末日です。",
+    customer_register_closing_code_help: "台帳の値を選択します。0は随時、31は末日、50は15日・末日です。",
     customer_register_name: "得意先名",
     customer_register_kana: "得意先名カナ",
     customer_register_contact: "ご担当者名",
@@ -2159,6 +2159,8 @@ var TRANSLATIONS = {
     hanbaiou_closing_select: "選択してください",
     hanbaiou_closing_on_demand: "0（随時／売上日）",
     hanbaiou_closing_month_end: "31（末日）",
+    hanbaiou_closing_twice_monthly: "50（15日・末日）",
+    customer_access_save_unconfirmed: "対象の得意先の更新を確認できませんでした。入力内容を保持しています。権限と対象の状態を確認してください。",
     hanbaiou_closing_day: "{day}日締め",
     customer_access_order_publication: "受注機能の公開",
     customer_access_order_publication_help: "公開にすると、受注機能全体が有効な場合に、この得意先の商品画面へ注文ボタンを表示します。初期値は非公開です。",
@@ -4947,7 +4949,7 @@ var TRANSLATIONS = {
     customer_register_billing_code: "Sales King Billing Customer Code",
     customer_register_billing_code_help: "This is usually the same as the Sales King customer code.",
     customer_register_closing_code: "Sales King Closing Code",
-    customer_register_closing_code_help: "Select the ledger value. 0 means on demand and 31 means month end.",
+    customer_register_closing_code_help: "Select the ledger value. 0 means on demand, 31 means month end, and 50 means the 15th and month end.",
     customer_register_name: "Customer Name",
     customer_register_kana: "Customer Name Kana",
     customer_register_contact: "Contact Name",
@@ -5021,6 +5023,8 @@ var TRANSLATIONS = {
     hanbaiou_closing_select: "Select",
     hanbaiou_closing_on_demand: "0 (on demand / sale date)",
     hanbaiou_closing_month_end: "31 (month end)",
+    hanbaiou_closing_twice_monthly: "50 (15th and month end)",
+    customer_access_save_unconfirmed: "The customer update could not be confirmed. Your inputs have been kept. Check your permissions and the customer's status.",
     hanbaiou_closing_day: "Day {day}",
     customer_access_order_publication: "Publish ordering",
     customer_access_order_publication_help: "When enabled, order actions appear for this customer only while the overall ordering feature is available. The default is hidden.",
@@ -7809,7 +7813,7 @@ var TRANSLATIONS = {
     customer_register_billing_code: "销售王 请款客户代码",
     customer_register_billing_code_help: "通常与销售王客户代码相同。",
     customer_register_closing_code: "销售王 客户结算代码",
-    customer_register_closing_code_help: "请选择台账值。0表示随时，31表示月末。",
+    customer_register_closing_code_help: "请选择台账值。0表示随时，31表示月末，50表示15日和月末。",
     customer_register_name: "客户名称",
     customer_register_kana: "客户名称假名",
     customer_register_contact: "联系人",
@@ -7883,6 +7887,8 @@ var TRANSLATIONS = {
     hanbaiou_closing_select: "请选择",
     hanbaiou_closing_on_demand: "0（随时／销售日）",
     hanbaiou_closing_month_end: "31（月末）",
+    hanbaiou_closing_twice_monthly: "50（15日和月末）",
+    customer_access_save_unconfirmed: "无法确认目标客户已更新。已保留输入内容，请检查权限和目标客户的状态。",
     hanbaiou_closing_day: "{day}日结算",
     customer_access_order_publication: "公开订购功能",
     customer_access_order_publication_help: "开启后，仅在整体订购功能可用时向该客户显示订购操作。默认不公开。",
@@ -8714,7 +8720,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1303";
+var APP_VERSION       = "v1.1.1304";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -53906,6 +53912,7 @@ function hanbaiouClosingCodeOptionsHtml(selected, includePlaceholder) {
     rows.push({ value: String(day), label: tf("hanbaiou_closing_day", { day: day }) });
   }
   rows.push({ value: "31", label: t("hanbaiou_closing_month_end") });
+  rows.push({ value: "50", label: t("hanbaiou_closing_twice_monthly") });
   return rows.map(function(row) {
     return "<option value='" + esc(row.value) + "'" + (row.value === selected ? " selected" : "") + ">" + esc(row.label) + "</option>";
   }).join("");
@@ -54063,7 +54070,7 @@ async function registerHanbaiouCustomer() {
     if (billingCodeInput) billingCodeInput.focus();
     return;
   }
-  if (!/^(0|[1-9]|[12][0-9]|3[01])$/.test(closingCode)) {
+  if (!/^(0|[1-9]|[12][0-9]|3[01]|50)$/.test(closingCode)) {
     setCustomerRegistrationMessage(t("customer_register_closing_error"), true);
     if (closingCodeInput) closingCodeInput.focus();
     return;
@@ -54974,7 +54981,7 @@ function validateHanbaiouCustomerBillingSettings(settings) {
       !/^[!-~]+$/.test(settings.billing_customer_code) || /[,\"]/.test(settings.billing_customer_code)) {
     return { message: t("customer_register_billing_error"), fieldId: "customer-hanbaiou-billing-code" };
   }
-  if (!/^(0|[1-9]|[12][0-9]|3[01])$/.test(settings.closing_code)) {
+  if (!/^(0|[1-9]|[12][0-9]|3[01]|50)$/.test(settings.closing_code)) {
     return { message: t("customer_register_closing_error"), fieldId: "customer-hanbaiou-closing-code" };
   }
   return null;
@@ -55137,6 +55144,10 @@ async function saveCustomerAccessSettings() {
       .maybeSingle();
     if (!customerAccessOperationCurrent(operation)) return;
     if (customerR.error) throw customerR.error;
+    if (!customerR.data || Array.isArray(customerR.data) ||
+        String(customerR.data.id) !== String(customerId)) {
+      throw new Error(t("customer_access_save_unconfirmed"));
+    }
     var billingResult = null;
     if (hanbaiouBilling) {
       var billingR;
