@@ -11721,3 +11721,70 @@ html[data-product-3d-paused] :is(
 .finished-warranty-policy-table .finished-warranty-policy-inputs label { display: grid; gap: 3px; white-space: normal; }
 .finished-warranty-policy-inputs label > span { font-size: 12px; color: #667085; }
 .finished-warranty-policy-table .finished-warranty-policy-inputs input { width: 100%; min-width: 0; box-sizing: border-box; }
+
+/* Spacious category warranty settings: independent of the shared form width. */
+#finished-warranty-policy-overlay { padding: 24px; }
+.form-card.finished-warranty-policy-card {
+  display: flex;
+  flex-direction: column;
+  width: min(1180px, 100%);
+  max-width: 1180px;
+  height: min(920px, calc(100vh - 48px));
+  height: min(920px, calc(100dvh - 48px));
+  max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px);
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.finished-warranty-policy-card .finished-warranty-policy-heading { flex: 0 0 auto; gap: 20px; padding: 22px 24px 18px; background: #f7fafe; }
+.finished-warranty-policy-card .finished-warranty-policy-heading > div > span { font-size: 12px; }
+.finished-warranty-policy-card .finished-warranty-policy-heading h3 { margin: 5px 0 0; font-size: 24px; line-height: 1.35; }
+.finished-warranty-policy-card .finished-warranty-policy-heading p { max-width: 86ch; margin: 9px 0 0; color: #526174; font-size: 14px; line-height: 1.65; }
+.finished-warranty-policy-card .finished-warranty-policy-heading button { flex-basis: 44px; width: 44px; height: 44px; border-radius: 8px; }
+.finished-warranty-policy-card .finished-warranty-policy-table-wrap { flex: 1 1 auto; min-height: 0; max-height: none; overflow: auto; padding: 0 24px; }
+.finished-warranty-policy-card .finished-warranty-policy-table { width: 100%; table-layout: fixed; }
+.finished-warranty-policy-card .finished-warranty-policy-table thead th { padding: 14px 12px; border-bottom: 1px solid #d4deeb; background: #eaf0f8; color: #344054; font-size: 15px; font-weight: 800; }
+.finished-warranty-policy-card .finished-warranty-policy-table thead th:first-child { width: 22%; }
+.finished-warranty-policy-card .finished-warranty-policy-table tbody th,
+.finished-warranty-policy-card .finished-warranty-policy-table tbody td { padding: 14px 12px; vertical-align: middle; }
+.finished-warranty-policy-card .finished-warranty-policy-table tbody th strong { color: #1b2d46; font-size: 16px; line-height: 1.5; }
+.finished-warranty-policy-card .finished-warranty-policy-table tbody tr:hover { background: #f7faff; }
+.finished-warranty-policy-card .finished-warranty-policy-inputs { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: end; gap: 12px; }
+.finished-warranty-policy-card .finished-warranty-policy-inputs label { gap: 6px; min-width: 0; }
+.finished-warranty-policy-card .finished-warranty-policy-inputs label > span { color: #526174; font-size: 14px; line-height: 1.5; }
+.finished-warranty-policy-card .finished-warranty-policy-inputs input { height: 46px; min-height: 46px; padding: 8px 12px; border-color: #b9c9db; border-radius: 7px; background: #fff; color: #172033; font-size: 18px; font-variant-numeric: tabular-nums; }
+.finished-warranty-policy-card .finished-warranty-policy-inputs input:focus-visible { outline: 2px solid #3979d3; outline-offset: 2px; }
+.finished-warranty-policy-kind { display: none; }
+.finished-warranty-policy-card > .finished-shipment-message { flex: 0 0 auto; margin: 10px 24px 0; font-size: 14px; }
+.finished-warranty-policy-card .finished-warranty-policy-footer { flex: 0 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 12px; margin-top: 0; padding: 16px 24px; border-top: 1px solid #dce4ec; background: #fff; }
+.finished-warranty-policy-card .finished-warranty-policy-note { margin: 0; color: #526174; font-size: 13px; line-height: 1.6; text-align: left; }
+.finished-warranty-policy-card .finished-warranty-policy-footer button { min-height: 46px; margin: 0; padding: 10px 22px; font-size: 15px; white-space: nowrap; }
+@media (max-width: 679px) {
+  #finished-warranty-policy-overlay { padding: 8px; }
+  .form-card.finished-warranty-policy-card { width: 100%; max-width: none; height: calc(100vh - 16px); height: calc(100dvh - 16px); max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); border-radius: 12px; }
+  .finished-warranty-policy-card .finished-warranty-policy-heading { gap: 10px; padding: 16px; }
+  .finished-warranty-policy-card .finished-warranty-policy-heading h3 { font-size: 20px; }
+  .finished-warranty-policy-card .finished-warranty-policy-heading p { font-size: 13px; }
+  .finished-warranty-policy-card .finished-warranty-policy-heading button { flex-basis: 40px; width: 40px; height: 40px; }
+  .finished-warranty-policy-card .finished-warranty-policy-table-wrap { padding: 0 12px; background: #f5f8fc; }
+  .finished-warranty-policy-card .finished-warranty-policy-table,
+  .finished-warranty-policy-card .finished-warranty-policy-table tbody { display: block; }
+  .finished-warranty-policy-card .finished-warranty-policy-table thead { display: none; }
+  .finished-warranty-policy-card .finished-warranty-policy-table tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; margin: 12px 0; padding: 14px; border: 1px solid #d9e3ef; border-radius: 9px; background: #fff; }
+  .finished-warranty-policy-card .finished-warranty-policy-table tbody th { grid-column: 1 / -1; }
+  .finished-warranty-policy-card .finished-warranty-policy-table tbody th,
+  .finished-warranty-policy-card .finished-warranty-policy-table tbody td { min-width: 0; padding: 0; border: 0; }
+  .finished-warranty-policy-card .finished-warranty-policy-table tbody th strong { font-size: 16px; }
+  .finished-warranty-policy-kind { display: block; margin-bottom: 8px; color: #244d7c; font-size: 14px; font-weight: 800; }
+  .finished-warranty-policy-card .finished-warranty-policy-inputs { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .finished-warranty-policy-card .finished-warranty-policy-inputs label > span { font-size: 13px; }
+  .finished-warranty-policy-card .finished-warranty-policy-inputs input { padding-right: 8px; padding-left: 8px; font-size: 17px; }
+  .finished-warranty-policy-card > .finished-shipment-message { margin-right: 16px; margin-left: 16px; }
+  .finished-warranty-policy-card .finished-warranty-policy-footer { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; padding: 12px 16px; }
+  .finished-warranty-policy-card .finished-warranty-policy-note { grid-column: 1 / -1; font-size: 12px; }
+  .finished-warranty-policy-card .finished-warranty-policy-footer button { width: 100%; min-width: 0; padding-right: 10px; padding-left: 10px; font-size: 14px; }
+}
+
+.finished-warranty-policy-card .finished-warranty-policy-table td[colspan] { padding: 24px 12px; color: #526174; font-size: 14px; text-align: center; }
+@media (max-width: 679px) { .finished-warranty-policy-card .finished-warranty-policy-table td[colspan] { grid-column: 1 / -1; } }
