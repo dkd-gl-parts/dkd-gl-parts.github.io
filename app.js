@@ -19041,6 +19041,11 @@ async function refreshCoreReturnManagement(options) {
   var seq = ++coreReturnManagementListSeq;
   var status = String((document.getElementById("core-return-mgmt-status") || {}).value || "awaiting_return");
   var search = String((document.getElementById("core-return-mgmt-search") || {}).value || "").trim();
+  var claimReference = search.normalize("NFKC").toUpperCase().replace(/[-\s]/g, "");
+  if (/^C(?:R)?[0-9]{9}$/.test(claimReference)) {
+    await enterClaimCaseMgmt({search:claimReference,state:"all",openSingle:true});
+    return;
+  }
   var reload = document.getElementById("core-return-mgmt-reload");
   if (reload) reload.disabled = true;
   coreReturnManagementSetMessage("返却対象を読み込んでいます。", false);
