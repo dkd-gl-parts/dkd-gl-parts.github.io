@@ -11670,7 +11670,7 @@ function resetScreenStateForMenu(screenId) {
 
 function showScreen(id) {
   var previousScreenId = activeAppScreenName();
-  if (claimCaseWorkspace && id !== "claim-case-mgmt") claimCaseWorkspace.reset();
+  if (typeof claimCaseWorkspace !== "undefined" && claimCaseWorkspace && id !== "claim-case-mgmt") claimCaseWorkspace.reset();
   if ((id === "login" || id === "boot") && window.DcatsProductPhotoTools) window.DcatsProductPhotoTools.forceClose();
   if ((id === "login" || id === "boot") && typeof conciergeNavigation !== "undefined" && conciergeNavigation) conciergeNavigation.clear();
   if (id !== "concierge-admin") closeConciergeAdmin();
@@ -12104,7 +12104,7 @@ async function signOutAllDevices() {
 }
 
 async function doLogout() {
-  if (claimCaseWorkspace) claimCaseWorkspace.reset();
+  if (typeof claimCaseWorkspace !== "undefined" && claimCaseWorkspace) claimCaseWorkspace.reset();
   claimCaseReturnContext = null;
   if (packingBoxesController) packingBoxesController.close();
   resetUnusedProductDeletion();
