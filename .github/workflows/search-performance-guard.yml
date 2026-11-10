@@ -276,6 +276,8 @@ jobs:
         run: node scripts/verify-finished-product-serials.js
       - name: Verify finished-box labels
         run: node scripts/verify-finished-box-labels.js
+      - name: Verify sales product warranty terms
+        run: node scripts/verify-sales-product-warranty.js
       - name: Verify category warranty and replacement inheritance
         run: node scripts/verify-category-warranty-policy.js
       - name: Verify compatible-product serial dispatch
