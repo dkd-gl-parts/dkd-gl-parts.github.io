@@ -11717,7 +11717,7 @@ html[data-product-3d-paused] :is(
 @media(max-width: 600px) { .packing-box-overlay { padding: 8px; } .packing-box-dialog { padding: 14px; } .packing-box-form { grid-template-columns: 1fr; } }
 
 .sales-product-warranty { margin-top: 9px; color: #344054; font-size: 13px; font-weight: 600; line-height: 1.6; overflow-wrap: anywhere; }
-.finished-warranty-policy-inputs { display: grid; gap: 8px; min-width: 130px; }
+.finished-warranty-policy-inputs { display: grid; gap: 8px; min-width: 0; }
 .finished-warranty-policy-table .finished-warranty-policy-inputs label { display: grid; gap: 3px; white-space: normal; }
-.finished-warranty-policy-inputs label > span { font-size: 11px; color: #667085; }
+.finished-warranty-policy-inputs label > span { font-size: 12px; color: #667085; }
 .finished-warranty-policy-table .finished-warranty-policy-inputs input { width: 100%; min-width: 0; box-sizing: border-box; }
