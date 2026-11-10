@@ -57,6 +57,11 @@ var CORE_AI_CAMERA_TEST_URL = "https://script.google.com/macros/s/AKfycbxlaPJSNT
 var TRANSLATIONS = {
 
   ja: {
+    finished_label_component_load_failed: "部品を読み込めませんでした。「100%使用部品を再セット」を押して読み直してください。",
+    finished_label_setup_guide_driver_title: "Windowsにもプリンターを追加したい場合",
+    finished_label_setup_guide_driver_desc: "Windowsの通常印刷やP-touch Editorを使う場合は、Brother公式ページで、このPCのWindowsに合うプリンタードライバーを選んでください。D-CATSのIP直接指定による設定は、Windowsのプリンター一覧が0台でも進められます。",
+    finished_label_setup_guide_driver_link: "Brother公式：TD-4420TNドライバー・BPM（新しいタブ）",
+    finished_label_setup_guide_registration_scope: "Windowsのプリンター一覧が0台でも、IPアドレスを直接指定して設定できます。最後の登録ボタンでD-CATSの印刷端末を登録します。Windowsの「プリンターとスキャナー」への追加は行いません。",
     customer_register_read_title: "販売王から入力",
     customer_register_read_help: "販売王の「基本1」で名称・住所などを取得できます。同じ得意先の「売上／回収」に切り替えて再取得すると、請求先・締め情報を追加できます。内容を確認して登録してください。",
     customer_register_read: "販売王の画面から取得",
@@ -1094,7 +1099,7 @@ var TRANSLATIONS = {
     finished_label_setup_test: "テスト印刷",
     finished_label_setup_first_run: "初めて設定するPCではパッケージを展開し、D-CATS-Printer-Setup.cmdを開いてください。設定済みPCでは再設定・校正・テスト印刷を画面から起動できます。",
     finished_label_setup_guide_title: "TD-4420TN設定ナビ",
-    finished_label_setup_guide_lead: "このPCの設定状態を自動確認し、必要な手順を表示します。判定後も手動で切り替えられます。",
+    finished_label_setup_guide_lead: "プリンターを使うWindows PCでこのナビを開き、手順1から進めてください。設定状態は、いま開いているPCだけを確認します。",
     finished_label_setup_detection_checking_badge: "確認中",
     finished_label_setup_detection_configured_badge: "設定済み",
     finished_label_setup_detection_attention_badge: "設定確認",
@@ -1115,15 +1120,15 @@ var TRANSLATIONS = {
     finished_label_setup_guide_first_path: "初めて設定する",
     finished_label_setup_guide_installed_path: "設定済み",
     finished_label_setup_guide_download_title: "設定パッケージをダウンロード",
-    finished_label_setup_guide_download_desc: "このPCのダウンロードフォルダーへZIPファイルを保存します。",
+    finished_label_setup_guide_download_desc: "設定するWindows PCで、下のボタンから最新版のZIPを保存します。以前のZIPがあっても、今回ダウンロードしたファイルを使ってください。",
     finished_label_setup_guide_download_action: "パッケージをダウンロード",
     finished_label_setup_guide_downloaded: "ダウンロードを開始しました。次の手順へ進んでください。",
     finished_label_setup_guide_extract_title: "ZIPを展開",
-    finished_label_setup_guide_extract_desc: "ダウンロードしたZIPを右クリックし、「すべて展開」を選びます。",
+    finished_label_setup_guide_extract_desc: "保存したZIPを右クリックし「すべて展開」を選びます。展開先のフォルダーを開いてください。",
     finished_label_setup_guide_run_title: "設定ファイルを実行",
-    finished_label_setup_guide_run_desc: "展開したフォルダーのD-CATS-Printer-Setup.cmdを開き、表示言語を選びます。",
+    finished_label_setup_guide_run_desc: "展開したフォルダーのD-CATS-Printer-Setup.cmdをダブルクリックし「日本語」を選びます。「D-CATS TD-4420TN 初回設定」という別ウィンドウが開きます。",
     finished_label_setup_guide_configure_title: "プリンターを登録してテスト",
-    finished_label_setup_guide_configure_desc: "拠点と各用紙のプリンターを選び、接続確認後に登録します。用紙とリボンをセット済みなら校正とテスト印刷も続けて実行できます。",
+    finished_label_setup_guide_configure_desc: "手順3で開いた別ウィンドウで、以下の順番に操作します。",
     finished_label_setup_guide_language_title: "表示言語",
     finished_label_setup_guide_language_desc: "設定ツールは日本語・英語・中国語に対応しています。",
     finished_label_setup_guide_installed_title: "設定済みPCの再設定",
@@ -1209,8 +1214,8 @@ var TRANSLATIONS = {
     finished_label_product_search: "完品登録対象検索",
     finished_box_label_product_search: "箱シール対象品番検索",
     finished_label_search_ph: "品番・製造予定Noで検索",
-    finished_label_search_hint: "品番または製造予定Noを入力して検索してください。",
-    finished_box_label_search_hint: "空欄の場合は、箱シールを印刷できる最新の完品登録品番を表示します。",
+    finished_label_search_hint: "G品番が発行済みの商品だけが検索対象です。品番または製造予定Noを入力して検索してください。",
+    finished_box_label_search_hint: "G品番が発行済みの商品だけが検索対象です。空欄の場合は、箱シールを印刷できる最新の完品登録品番を表示します。",
     finished_box_label_ready_summary: "完品登録 {n}件 / 最新 {date}",
     finished_box_label_no_history: "発行済み製造シリアルなし",
     finished_label_history: "発行履歴",
@@ -1993,6 +1998,21 @@ var TRANSLATIONS = {
     detail_customer_sales_price_note: "選択した得意先の売値区分で販売価格を計算しています。",
     detail_customer_no_price: "販売価格は未設定です",
     sales_detail_title: "商品詳細",
+    sales_warranty_prefix: "保証期間：",
+    sales_warranty_settingsDescription: "リビルト品・新品の保証期間と走行距離をカテゴリ別に設定します。期間は月、走行距離はkmで入力し、距離の指定がない場合は空欄にしてください。",
+    sales_warranty_applyNote: "変更は次の出荷から適用されます。出荷済み商品の保証期限は変わりません。",
+    sales_warranty_loading: "保証期間を確認中",
+    sales_warranty_error: "保証期間を取得できませんでした",
+    sales_warranty_unset: "保証期間未設定",
+    sales_warranty_year: "{n}年",
+    sales_warranty_years: "{n}年",
+    sales_warranty_months: "{n}か月",
+    sales_warranty_or: "または",
+    sales_warranty_km: "{n}km",
+    sales_warranty_periodInput: "期間（月）",
+    sales_warranty_distanceInput: "走行距離（km・任意）",
+    sales_warranty_hint: "走行距離が空欄の場合、距離の上限は表示しません。",
+    sales_warranty_invalid: "走行距離は1〜10,000,000kmの整数で入力してください。",
     sales_conditions_title: "販売条件",
     sales_shipping_charge_rule: "送料条件",
     sales_shipping_charge_separate: "送料別途",
@@ -2156,7 +2176,7 @@ var TRANSLATIONS = {
     customer_access_shipping_separate_desc: "商品価格とは別に、お届け先に応じた送料をご案内します。",
     customer_access_shipping_free_desc: "この得意先には送料を請求しません。",
     customer_access_category_visibility: "得意先に表示するカテゴリ",
-    customer_access_category_help: "チェックしたカテゴリを商品カタログに表示します。未設定時は主要6カテゴリが初期値です。変更後は画面下の保存ボタンを押してください。",
+    customer_access_category_help: "「カテゴリ・保証設定」で全体ONのカテゴリから、この得意先に表示するものを選びます。全体OFFは表示できません。変更後は画面下の保存ボタンを押してください。",
     customer_access_category_all: "すべて選択",
     customer_access_category_none: "すべて解除",
     customer_access_category_count: "{n}カテゴリ表示",
@@ -2833,9 +2853,77 @@ var TRANSLATIONS = {
     "unused_product_delete_production_instruction_candidates": "製造指示候補",
     "unused_product_delete_rebuilt_sales_top_parts": "出荷実績分析",
     "unused_product_delete_operation_logs": "G品番の発行履歴"
+  ,
+    cw_title: "カテゴリ・保証設定",
+    cw_desc: "カテゴリ名と、リビルト品・新品の保証期間・走行距離をまとめて設定します。",
+    cw_menuDesc: "カテゴリの追加・名称変更と、商品区分ごとの保証条件を設定します。",
+    cw_add: "カテゴリを追加",
+    cw_reload: "再読み込み",
+    cw_save: "設定を保存",
+    customer_category_master_off: "全体OFF",
+    customer_category_reload: "設定を再読み込み",
+    customer_category_reload_required: "設定を再読み込みして保存結果と全体設定を確認してください。確認するまで再保存できません。",
+    cw_customer_publication: "得意先に公開（全体ON）",
+    cw_publication_help: "得意先への公開は全体ONが必須です。得意先ごとに追加でOFFにできます。新しいカテゴリは全体OFFで作成します。",
+    cw_apply_note: "カテゴリ名・公開設定は保存後に反映します。保証条件は次の出荷から適用し、出荷済み商品の保証期限は変わりません。",
+    cw_ja: "日本語名",
+    cw_en: "英語名",
+    cw_zh: "中国語名",
+    cw_new: "新しいカテゴリ",
+    cw_remove: "追加を取り消す",
+    cw_required: "日本語名を入力してください。",
+    cw_nameInvalid: "カテゴリ名は100文字以内で入力してください。",
+    cw_duplicate: "同じ名前のカテゴリがあります。",
+    cw_monthsInvalid: "保証期間は1〜120か月の整数で入力してください。",
+    cw_distanceInvalid: "走行距離は1〜10000000kmの整数で入力してください。空欄は距離指定なしです。",
+    cw_unset: "未設定",
+    cw_loading: "設定を読み込んでいます…",
+    cw_loadError: "設定を読み込めませんでした。再読み込みしてください。",
+    cw_saving: "設定を保存しています…",
+    cw_saved: "設定を保存しました。保証条件は次の出荷から適用します。",
+    cw_unchanged: "変更はありません。",
+    cw_conflict: "他の利用者が設定を変更しました。再読み込みしてから変更してください。",
+    cw_unknown: "保存結果を確認できません。再送せず、再読み込みで保存済みの内容を確認してください。",
+    cw_denied: "この設定を変更する権限がありません。",
+    cw_reloadConfirm: "編集中の変更を破棄して再読み込みしますか？",
+    cw_closeConfirm: "保存していない変更を破棄して閉じますか？",
+    cw_help: "英語名・中国語名が空欄の場合は日本語名を使用します。既存カテゴリの商品との紐付けは維持されます。",
+    cw_empty: "カテゴリがありません。「カテゴリを追加」から登録できます。",
+    cw_namesReadonly: "カテゴリ名は閲覧のみです。",
+    cw_warrantyReadonly: "保証条件は閲覧のみです。",
+    cw_count: "カテゴリ",
+    cw_missingPolicy: "保証条件を入力してください。",
+    cw_noChange: "変更なし",
+    cw_category: "カテゴリ",
+    finished_label_setup_guide_run_files: "D-CATS-Printer-Setup.cmdとStart-DcatsFinishedLabelAgentSetup.ps1が、同じ展開先フォルダーにあることを確認してください。",
+    finished_label_setup_guide_help_title: "言語選択・設定画面が開かない場合",
+    finished_label_setup_guide_help_lead: "黒い画面が一瞬で消える場合は、次の方法でエラーを確認できます。",
+    finished_label_setup_guide_help_extract: "手順1で最新版を保存し、手順2で「すべて展開」します。ZIPの中から直接起動しないでください。",
+    finished_label_setup_guide_help_cmd: "展開したフォルダーの上部にあるアドレスバーへ cmd と入力してEnterを押します。",
+    finished_label_setup_guide_help_run: "開いた画面に次の1行を入力し、Enterを押します。",
+    finished_label_setup_guide_help_error: "画面に残ったエラー文をサポートへ伝えてください。画面が開かない原因はエラーで確認し、ログイン用パスワードは送らないでください。",
+    finished_label_setup_guide_configure_window: "操作する画面：D-CATS TD-4420TN 初回設定",
+    finished_label_setup_guide_configure_site: "「拠点」で、日本なら「JP | 日本」を選びます。",
+    finished_label_setup_guide_configure_printer: "「拠点」のすぐ下にある「完品シール（必須）45×20mm」欄の「プリンター」右側の▼を押して選びます。日本側の指定IPは最新版で初期入力されます。",
+    finished_label_setup_guide_configure_box: "箱シール専用の別プリンターがない場合は、「箱シール」を「後で設定する」のままにします。",
+    finished_label_setup_guide_configure_media: "用紙とリボンをセットしたプリンターの「用紙・リボンをセット済み／登録後に校正・テスト印刷」にチェックを入れます。",
+    finished_label_setup_guide_configure_auth: "「D-CATS認証」に、D-CATSに登録したメールアドレスとD-CATSのパスワードを入力します。",
+    finished_label_setup_guide_configure_register: "「プリンター接続確認」で接続成功を確認し、「このPCを印刷端末として登録」を押します。チェックしたプリンターの校正とテスト印刷が続けて実行されます。",
+    finished_label_setup_guide_configure_result: "「印刷端末の登録が完了しました」「校正・テスト印刷 完了」と、実際のテストラベルを確認します。校正で空ラベルが数枚送られることがあります。",
+    finished_label_setup_guide_ip_title: "プリンターのIPアドレスが分からない場合",
+    finished_label_setup_guide_ip_windows: "Windowsにネットワークプリンターとして登録済みなら、設定ツールの一覧で選ぶとIPアドレスが表示されます。一覧にない場合は、IPアドレスで直接指定できます。",
+    finished_label_setup_guide_ip_bpm: "BrotherのBPM（Brother Printer Management Tool）で「プリンター設定」→「Ethernet」を開くと、プリンターのIPアドレスを確認できます。",
+    finished_label_setup_guide_ip_link: "Brother公式：IPアドレスの確認方法（新しいタブ）",
+    finished_label_setup_guide_network_note: "この設定はLAN接続を使います。PCとプリンターを同じネットワークへ接続してください。USB接続だけではバックグラウンド印刷を利用できません。",
+    finished_label_setup_guide_ip_local: "指定IPの初期表示は接続や登録の完了を意味しません。設定先PCで接続確認とD-CATS認証を行い、登録してください。",
   },
 
   en: {
+    finished_label_component_load_failed: "Unable to load parts. Select Reset 100% Usage Parts to try again.",
+    finished_label_setup_guide_driver_title: "Adding the printer to Windows",
+    finished_label_setup_guide_driver_desc: "For regular Windows printing or P-touch Editor, choose the printer driver for this PC on the official Brother download page. D-CATS setup by IP address can continue even if Windows lists no printers.",
+    finished_label_setup_guide_driver_link: "Brother: TD-4420TN drivers and BPM (opens a new tab)",
+    finished_label_setup_guide_registration_scope: "You can set up this PC by IP address even if Windows lists no printers. The final registration button registers a D-CATS print station; it does not add a printer to Windows Printers & scanners.",
     customer_register_read_title: "Fill from Sales King",
     customer_register_read_help: "Read the customer's name and address from Basic 1 in Sales King. Switch the same customer to Sales / Collection and read again to add billing and closing details. Review before registering.",
     customer_register_read: "Read Sales King screen",
@@ -3872,7 +3960,7 @@ var TRANSLATIONS = {
     finished_label_setup_test: "Test Print",
     finished_label_setup_first_run: "On a new PC, extract the package and open D-CATS-Printer-Setup.cmd. On a configured PC, reconfiguration, calibration, and test printing can be launched here.",
     finished_label_setup_guide_title: "TD-4420TN Setup Guide",
-    finished_label_setup_guide_lead: "D-CATS checks this PC automatically and shows the steps it needs. You can still switch paths manually after detection.",
+    finished_label_setup_guide_lead: "Open this guide on the Windows PC that will use the printer, then start at step 1. Setup detection checks only the PC currently displaying this page.",
     finished_label_setup_detection_checking_badge: "Checking",
     finished_label_setup_detection_configured_badge: "Configured",
     finished_label_setup_detection_attention_badge: "Check Setup",
@@ -3893,15 +3981,15 @@ var TRANSLATIONS = {
     finished_label_setup_guide_first_path: "Set Up for the First Time",
     finished_label_setup_guide_installed_path: "Already Set Up",
     finished_label_setup_guide_download_title: "Download the Setup Package",
-    finished_label_setup_guide_download_desc: "Save the ZIP file in the Downloads folder on this PC.",
+    finished_label_setup_guide_download_desc: "Use the button below to save the latest ZIP on the Windows PC you are setting up. Use this new download even if an older ZIP is already saved.",
     finished_label_setup_guide_download_action: "Download Setup Package",
     finished_label_setup_guide_downloaded: "The download has started. Continue to the next step.",
     finished_label_setup_guide_extract_title: "Extract the ZIP File",
-    finished_label_setup_guide_extract_desc: "Right-click the downloaded ZIP file and select Extract All.",
+    finished_label_setup_guide_extract_desc: "Right-click the saved ZIP and choose Extract All. Open the extracted folder.",
     finished_label_setup_guide_run_title: "Run the Setup File",
-    finished_label_setup_guide_run_desc: "Open D-CATS-Printer-Setup.cmd in the extracted folder and choose a display language.",
+    finished_label_setup_guide_run_desc: "Double-click D-CATS-Printer-Setup.cmd in the extracted folder and choose English. A separate D-CATS TD-4420TN First-Time Setup window opens.",
     finished_label_setup_guide_configure_title: "Register and Test the Printers",
-    finished_label_setup_guide_configure_desc: "Choose the site and printer for each media size, check the connection, and register this PC. If media and ribbon are loaded, calibration and a test print can run immediately.",
+    finished_label_setup_guide_configure_desc: "Complete the following steps in the separate window opened in step 3.",
     finished_label_setup_guide_language_title: "Display Languages",
     finished_label_setup_guide_language_desc: "The setup tool supports Japanese, English, and Chinese.",
     finished_label_setup_guide_installed_title: "Reconfigure a Set-Up PC",
@@ -3989,8 +4077,8 @@ var TRANSLATIONS = {
     finished_label_title: "Finished Unit / Manufacturing Serial Issue",
     finished_label_product_search: "Finished Unit Target Search",
     finished_label_search_ph: "Search part number or production plan No.",
-    finished_label_search_hint: "Enter a part number or production plan No. to search.",
-    finished_box_label_search_hint: "A blank search shows the latest registered products available for box-label printing.",
+    finished_label_search_hint: "Only products with an issued G part number can be searched. Enter a part number or production plan No. to search.",
+    finished_box_label_search_hint: "Only products with an issued G part number can be searched. A blank search shows the latest registered products available for box-label printing.",
     finished_box_label_ready_summary: "{n} registration(s) / Latest {date}",
     finished_box_label_no_history: "No issued manufacturing serial",
     finished_label_history: "Issue History",
@@ -4772,6 +4860,21 @@ var TRANSLATIONS = {
     detail_customer_sales_price_note: "Sales price is calculated using the selected customer's sales rank.",
     detail_customer_no_price: "Sales price is not set",
     sales_detail_title: "Product Details",
+    sales_warranty_prefix: "Warranty: ",
+    sales_warranty_settingsDescription: "Set warranty periods and distance limits for each category and product kind. Enter months and kilometres; leave distance blank when no limit is specified.",
+    sales_warranty_applyNote: "Changes apply to future shipments. Existing shipment expiry dates remain unchanged.",
+    sales_warranty_loading: "Checking warranty",
+    sales_warranty_error: "Warranty unavailable",
+    sales_warranty_unset: "Warranty not configured",
+    sales_warranty_year: "{n} year",
+    sales_warranty_years: "{n} years",
+    sales_warranty_months: "{n} months",
+    sales_warranty_or: " or ",
+    sales_warranty_km: "{n} km",
+    sales_warranty_periodInput: "Period (months)",
+    sales_warranty_distanceInput: "Distance (km, optional)",
+    sales_warranty_hint: "Leave distance blank when no distance limit is specified.",
+    sales_warranty_invalid: "Enter a whole distance from 1 to 10,000,000 km.",
     sales_conditions_title: "Sales Terms",
     sales_shipping_charge_rule: "Shipping Terms",
     sales_shipping_charge_separate: "Shipping charged separately",
@@ -4935,7 +5038,7 @@ var TRANSLATIONS = {
     customer_access_shipping_separate_desc: "Show a destination-based shipping charge separately from the product price.",
     customer_access_shipping_free_desc: "Do not charge this customer for shipping.",
     customer_access_category_visibility: "Categories visible to this customer",
-    customer_access_category_help: "Checked categories appear in the product catalog. Six primary categories are selected by default. Use the Save changes button below to apply changes.",
+    customer_access_category_help: "Choose customer categories from those enabled in Category & warranty settings. Globally disabled categories cannot be shown. Save changes below to apply.",
     customer_access_category_all: "Select all",
     customer_access_category_none: "Clear all",
     customer_access_category_count: "{n} categories visible",
@@ -5612,9 +5715,77 @@ var TRANSLATIONS = {
     "unused_product_delete_production_instruction_candidates": "Production instruction candidates",
     "unused_product_delete_rebuilt_sales_top_parts": "Shipment analysis",
     "unused_product_delete_operation_logs": "G-number issuance history"
+  ,
+    cw_title: "Categories & warranty",
+    cw_desc: "Manage category names and warranty periods and mileage for rebuilt and new products together.",
+    cw_menuDesc: "Add or rename categories and set warranty terms for each product kind.",
+    cw_add: "Add category",
+    cw_reload: "Reload",
+    cw_save: "Save settings",
+    customer_category_master_off: "Globally OFF",
+    customer_category_reload: "Reload settings",
+    customer_category_reload_required: "Reload settings to confirm the saved result and global settings before saving again.",
+    cw_customer_publication: "Publish to customers (global ON)",
+    cw_publication_help: "Global ON is required for customer publication. Each customer can exclude additional categories. New categories start globally OFF.",
+    cw_apply_note: "Category names and publication apply after saving. Warranty changes apply to future shipments; existing shipment warranties stay unchanged.",
+    cw_ja: "Japanese name",
+    cw_en: "English name",
+    cw_zh: "Chinese name",
+    cw_new: "New category",
+    cw_remove: "Remove new category",
+    cw_required: "Enter a Japanese name.",
+    cw_nameInvalid: "Category names must be 100 characters or fewer.",
+    cw_duplicate: "A category with the same name already exists.",
+    cw_monthsInvalid: "Enter a whole number from 1 to 120 months.",
+    cw_distanceInvalid: "Enter a whole number from 1 to 10000000 km, or leave blank for no mileage limit.",
+    cw_unset: "Not set",
+    cw_loading: "Loading settings…",
+    cw_loadError: "Could not load settings. Please reload.",
+    cw_saving: "Saving settings…",
+    cw_saved: "Settings saved. Warranty changes apply to future shipments.",
+    cw_unchanged: "No changes to save.",
+    cw_conflict: "Another user updated these settings. Reload before editing.",
+    cw_unknown: "The save result is unknown. Do not resend. Reload to check the saved settings.",
+    cw_denied: "You do not have permission to change these settings.",
+    cw_reloadConfirm: "Discard your edits and reload?",
+    cw_closeConfirm: "Discard unsaved changes and close?",
+    cw_help: "The Japanese name is used when English or Chinese is blank. Existing product links are preserved.",
+    cw_empty: "No categories. Choose Add category to create one.",
+    cw_namesReadonly: "Category names are read-only.",
+    cw_warrantyReadonly: "Warranty terms are read-only.",
+    cw_count: "categories",
+    cw_missingPolicy: "Enter the warranty terms.",
+    cw_noChange: "No change",
+    cw_category: "Category",
+    finished_label_setup_guide_run_files: "Check that D-CATS-Printer-Setup.cmd and Start-DcatsFinishedLabelAgentSetup.ps1 are in the same extracted folder.",
+    finished_label_setup_guide_help_title: "Language selection or setup window does not open",
+    finished_label_setup_guide_help_lead: "If a black window appears briefly and closes, keep the error visible with these steps.",
+    finished_label_setup_guide_help_extract: "Download the latest ZIP in step 1 and choose Extract All in step 2. Do not run the file from inside the ZIP.",
+    finished_label_setup_guide_help_cmd: "In the address bar at the top of the extracted folder, type cmd and press Enter.",
+    finished_label_setup_guide_help_run: "In the window that opens, enter the following line and press Enter.",
+    finished_label_setup_guide_help_error: "Send the error text that remains on screen to support. Use the error to identify the launch problem; do not send your login password.",
+    finished_label_setup_guide_configure_window: "Window to use: D-CATS TD-4420TN First-Time Setup",
+    finished_label_setup_guide_configure_site: "Under Site, select JP | Japan for a printer in Japan.",
+    finished_label_setup_guide_configure_printer: "Directly below Site, find Finished label (required) 45 x 20 mm. Open the Printer dropdown with the arrow on the right. The latest package prefills the designated Japanese printer IP.",
+    finished_label_setup_guide_configure_box: "If you do not have a separate box-label printer, leave Box label set to Set up later.",
+    finished_label_setup_guide_configure_media: "For each printer with media and ribbon loaded, check Media and ribbon are loaded / Calibrate and test after registration.",
+    finished_label_setup_guide_configure_auth: "Under D-CATS sign-in, enter the email address and password registered with D-CATS.",
+    finished_label_setup_guide_configure_register: "Click Check printer connection. After it succeeds, click Register this PC as a print station. Checked printers are then calibrated and receive a test print.",
+    finished_label_setup_guide_configure_result: "Check for Print-station registration is complete and Calibration and test print completed, and inspect the physical test label. Calibration may feed a few blank labels.",
+    finished_label_setup_guide_ip_title: "Finding the printer IP address",
+    finished_label_setup_guide_ip_windows: "If Windows already has the network printer registered, selecting it in the setup tool displays its IP address. You can also enter an IP directly for a printer not listed.",
+    finished_label_setup_guide_ip_bpm: "In Brother BPM (Brother Printer Management Tool), open Printer Configuration, then Ethernet to view the printer IP address.",
+    finished_label_setup_guide_ip_link: "Brother: Find the printer IP address (opens a new tab)",
+    finished_label_setup_guide_network_note: "This setup requires a LAN connection. Connect the PC and printer to the same network. A USB-only connection does not support background printing.",
+    finished_label_setup_guide_ip_local: "A prefilled IP does not mean the printer is connected or registered. Check the connection and sign in to D-CATS on the destination PC to finish registration.",
   },
 
   zh: {
+    finished_label_component_load_failed: "无法读取零件。请点击“重新设置100%使用零件”重试。",
+    finished_label_setup_guide_driver_title: "如需将打印机添加到Windows",
+    finished_label_setup_guide_driver_desc: "如需使用Windows常规打印或P-touch Editor，请在Brother官方页面选择适合此电脑Windows版本的打印机驱动。即使Windows打印机列表为空，也可继续通过IP设置D-CATS。",
+    finished_label_setup_guide_driver_link: "Brother官方：TD-4420TN驱动及BPM（新标签页）",
+    finished_label_setup_guide_registration_scope: "即使Windows打印机列表为空，也可直接指定IP进行设置。最后的注册按钮用于注册D-CATS打印终端，不会向Windows“打印机和扫描仪”添加设备。",
     customer_register_read_title: "从销售王填写",
     customer_register_read_help: "在销售王的“基本1”页读取客户名称、地址等。切换同一客户的“销售／回款”页后再次读取，可补充开票客户和结算信息。确认内容后再登记。",
     customer_register_read: "读取销售王画面",
@@ -6662,7 +6833,7 @@ var TRANSLATIONS = {
     finished_label_setup_test: "测试打印",
     finished_label_setup_first_run: "首次设置的电脑请解压设置包并打开D-CATS-Printer-Setup.cmd。已设置的电脑可从此处重新设置、校准或测试打印。",
     finished_label_setup_guide_title: "TD-4420TN设置导航",
-    finished_label_setup_guide_lead: "D-CATS会自动检查此电脑并显示所需步骤。检测后仍可手动切换设置方式。",
+    finished_label_setup_guide_lead: "请在将使用打印机的Windows电脑上打开本导航，从步骤1开始。设置检测仅检查当前打开此页面的电脑。",
     finished_label_setup_detection_checking_badge: "检查中",
     finished_label_setup_detection_configured_badge: "已设置",
     finished_label_setup_detection_attention_badge: "检查设置",
@@ -6683,15 +6854,15 @@ var TRANSLATIONS = {
     finished_label_setup_guide_first_path: "首次设置",
     finished_label_setup_guide_installed_path: "已完成设置",
     finished_label_setup_guide_download_title: "下载设置包",
-    finished_label_setup_guide_download_desc: "将ZIP文件保存到此电脑的下载文件夹。",
+    finished_label_setup_guide_download_desc: "请在需要设置的Windows电脑上，点击下方按钮保存最新版ZIP。即使已有旧ZIP，也请使用本次下载的文件。",
     finished_label_setup_guide_download_action: "下载设置包",
     finished_label_setup_guide_downloaded: "已开始下载，请继续下一步。",
     finished_label_setup_guide_extract_title: "解压ZIP文件",
-    finished_label_setup_guide_extract_desc: "右键单击下载的ZIP文件，然后选择“全部解压缩”。",
+    finished_label_setup_guide_extract_desc: "右键点击已保存的ZIP，选择“全部解压缩”，然后打开解压后的文件夹。",
     finished_label_setup_guide_run_title: "运行设置文件",
-    finished_label_setup_guide_run_desc: "打开解压文件夹中的D-CATS-Printer-Setup.cmd，然后选择显示语言。",
+    finished_label_setup_guide_run_desc: "双击解压文件夹中的D-CATS-Printer-Setup.cmd，选择“中文”。系统会打开单独的“D-CATS TD-4420TN 首次设置”窗口。",
     finished_label_setup_guide_configure_title: "注册并测试打印机",
-    finished_label_setup_guide_configure_desc: "选择站点及各纸张尺寸对应的打印机，检查连接后注册此电脑。已装入纸张和色带时，可继续执行校准和测试打印。",
+    finished_label_setup_guide_configure_desc: "请在步骤3打开的独立窗口内，按以下顺序操作。",
     finished_label_setup_guide_language_title: "显示语言",
     finished_label_setup_guide_language_desc: "设置工具支持日语、英语和中文。",
     finished_label_setup_guide_installed_title: "重新设置已配置的电脑",
@@ -6779,8 +6950,8 @@ var TRANSLATIONS = {
     finished_label_title: "完品登记・制造序列号发行",
     finished_label_product_search: "完品登记对象搜索",
     finished_label_search_ph: "按品号或生产计划编号搜索",
-    finished_label_search_hint: "请输入品号或生产计划编号后搜索。",
-    finished_box_label_search_hint: "空白搜索时显示可打印箱标签的最新完品登记品号。",
+    finished_label_search_hint: "仅可搜索已发行G品号的商品。请输入品号或生产计划编号后搜索。",
+    finished_box_label_search_hint: "仅可搜索已发行G品号的商品。空白搜索时显示可打印箱标签的最新完品登记品号。",
     finished_box_label_ready_summary: "完品登记 {n}件 / 最新 {date}",
     finished_box_label_no_history: "无已发行制造序列号",
     finished_label_history: "发行历史",
@@ -7551,6 +7722,21 @@ var TRANSLATIONS = {
     detail_customer_sales_price_note: "销售价格按所选客户的销售等级计算。",
     detail_customer_no_price: "尚未设置销售价格",
     sales_detail_title: "商品详情",
+    sales_warranty_prefix: "保修期：",
+    sales_warranty_settingsDescription: "按分类分别设置再制造品和新品的保修期限及里程上限。期限以月、里程以公里输入；没有里程限制时请留空。",
+    sales_warranty_applyNote: "更改适用于之后的出货。已出货商品的保修截止日期保持不变。",
+    sales_warranty_loading: "正在确认保修期",
+    sales_warranty_error: "无法获取保修期",
+    sales_warranty_unset: "尚未设置保修期",
+    sales_warranty_year: "{n}年",
+    sales_warranty_years: "{n}年",
+    sales_warranty_months: "{n}个月",
+    sales_warranty_or: "或",
+    sales_warranty_km: "{n}公里",
+    sales_warranty_periodInput: "期限（月）",
+    sales_warranty_distanceInput: "里程（公里，可选）",
+    sales_warranty_hint: "里程留空时不显示里程上限。",
+    sales_warranty_invalid: "里程请输入1至10,000,000公里的整数。",
     sales_conditions_title: "销售条件",
     sales_shipping_charge_rule: "运费条件",
     sales_shipping_charge_separate: "运费另计",
@@ -7714,7 +7900,7 @@ var TRANSLATIONS = {
     customer_access_shipping_separate_desc: "商品价格之外，按收货地区另行显示运费。",
     customer_access_shipping_free_desc: "不向此客户收取运费。",
     customer_access_category_visibility: "向客户显示的类别",
-    customer_access_category_help: "商品目录中仅显示已勾选的类别。默认选择六个主要类别。更改后请按下方的保存按钮。",
+    customer_access_category_help: "从「类别与保修设置」中全局开启的类别中选择此客户可见的类别。全局关闭的类别无法显示。更改后请按下方的保存按钮。",
     customer_access_category_all: "全选",
     customer_access_category_none: "全部取消",
     customer_access_category_count: "显示{n}个类别",
@@ -8391,6 +8577,69 @@ var TRANSLATIONS = {
     "unused_product_delete_production_instruction_candidates": "生产指示候选",
     "unused_product_delete_rebuilt_sales_top_parts": "出货实绩分析",
     "unused_product_delete_operation_logs": "G品号发行历史"
+  ,
+    cw_title: "类别与保修设置",
+    cw_desc: "统一设置类别名称以及翻新品和新品的保修期限与行驶里程。",
+    cw_menuDesc: "添加或修改类别名称，并设置各商品类型的保修条件。",
+    cw_add: "添加类别",
+    cw_reload: "重新加载",
+    cw_save: "保存设置",
+    customer_category_master_off: "全局关闭",
+    customer_category_reload: "重新加载设置",
+    customer_category_reload_required: "请重新加载设置，确认保存结果与全局设置后再保存。",
+    cw_customer_publication: "向客户公开（全局开启）",
+    cw_publication_help: "向客户公开必须全局开启。可为每位客户额外关闭类别。新类别默认全局关闭。",
+    cw_apply_note: "类别名称与公开设置在保存后生效。保修条件适用于后续出货，已出货商品的保修期限保持不变。",
+    cw_ja: "日语名称",
+    cw_en: "英语名称",
+    cw_zh: "中文名称",
+    cw_new: "新类别",
+    cw_remove: "取消添加",
+    cw_required: "请输入日语名称。",
+    cw_nameInvalid: "类别名称不得超过100个字符。",
+    cw_duplicate: "已存在相同名称的类别。",
+    cw_monthsInvalid: "请输入1至120个月的整数。",
+    cw_distanceInvalid: "请输入1至10000000km的整数。留空表示不限定里程。",
+    cw_unset: "未设置",
+    cw_loading: "正在加载设置…",
+    cw_loadError: "无法加载设置。请重新加载。",
+    cw_saving: "正在保存设置…",
+    cw_saved: "设置已保存。保修条件将从下次出货起适用。",
+    cw_unchanged: "没有需要保存的更改。",
+    cw_conflict: "其他用户已修改设置。请重新加载后再编辑。",
+    cw_unknown: "无法确认保存结果。请勿重新提交，请重新加载以确认已保存的内容。",
+    cw_denied: "您无权修改此设置。",
+    cw_reloadConfirm: "放弃编辑并重新加载吗？",
+    cw_closeConfirm: "放弃未保存的更改并关闭吗？",
+    cw_help: "类别的英语名或中文名为空时使用日语名称。现有商品关联将保持不变。",
+    cw_empty: "暂无类别。可通过“添加类别”登记。",
+    cw_namesReadonly: "类别名称仅供查看。",
+    cw_warrantyReadonly: "保修条件仅供查看。",
+    cw_count: "个类别",
+    cw_missingPolicy: "请输入保修条件。",
+    cw_noChange: "无更改",
+    cw_category: "类别",
+    finished_label_setup_guide_run_files: "确认D-CATS-Printer-Setup.cmd与Start-DcatsFinishedLabelAgentSetup.ps1位于同一个解压文件夹内。",
+    finished_label_setup_guide_help_title: "无法打开语言选择或设置窗口",
+    finished_label_setup_guide_help_lead: "如果黑色窗口一闪而过，可按以下方法保留错误信息。",
+    finished_label_setup_guide_help_extract: "在步骤1下载最新版ZIP，在步骤2选择“全部解压缩”。请勿直接从ZIP内部运行文件。",
+    finished_label_setup_guide_help_cmd: "在解压文件夹顶部的地址栏输入cmd，然后按Enter。",
+    finished_label_setup_guide_help_run: "在打开的窗口中输入以下一行命令，然后按Enter。",
+    finished_label_setup_guide_help_error: "请将窗口中保留的错误文本提供给支持人员，以确认启动失败的原因。请勿发送登录密码。",
+    finished_label_setup_guide_configure_window: "操作窗口：D-CATS TD-4420TN 首次设置",
+    finished_label_setup_guide_configure_site: "日本的打印机请在“站点”选择“JP | 日本”。",
+    finished_label_setup_guide_configure_printer: "在“站点”下方找到“完品标签（必填）45×20mm”，点击“打印机”右侧的▼进行选择。最新版会预填日本打印机的指定IP。",
+    finished_label_setup_guide_configure_box: "如果没有单独的箱标签打印机，请将“箱标签”保持为“稍后设置”。",
+    finished_label_setup_guide_configure_media: "为已装入纸张及色带的打印机勾选“已装入纸张和色带／注册后校准并测试打印”。",
+    finished_label_setup_guide_configure_auth: "在“D-CATS登录”中输入已注册的D-CATS电子邮箱和D-CATS密码。",
+    finished_label_setup_guide_configure_register: "点击“检查打印机连接”，成功后点击“将此电脑注册为打印终端”。随后会为勾选的打印机执行校准和测试打印。",
+    finished_label_setup_guide_configure_result: "确认显示“打印终端注册完成”和“校准和测试打印完成”，并检查实际输出的测试标签。校准时可能送出几张空白标签。",
+    finished_label_setup_guide_ip_title: "如何确认打印机的IP地址",
+    finished_label_setup_guide_ip_windows: "如果Windows已注册该网络打印机，在设置工具列表中选择后会显示IP地址。列表中没有的打印机也可直接输入IP。",
+    finished_label_setup_guide_ip_bpm: "在Brother BPM（Brother Printer Management Tool）中，打开“打印机设置”→“Ethernet”，即可查看打印机的IP地址。",
+    finished_label_setup_guide_ip_link: "Brother官方：确认IP地址的方法（新标签页）",
+    finished_label_setup_guide_network_note: "此设置需要LAN连接。请将电脑和打印机连接到同一网络。仅通过USB连接无法使用后台打印。",
+    finished_label_setup_guide_ip_local: "预填IP不表示已连接或已注册。请在目标电脑上检查连接并完成D-CATS登录和注册。",
   },
 
   // タガログ語（Tagalog）— 準備中
@@ -8465,7 +8714,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1290";
+var APP_VERSION       = "v1.1.1303";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -8661,6 +8910,9 @@ var FINISHED_LABEL_MOBILE_PRINT_TIMEOUT_MS = 120000;
 var finishedLabelComponentCandidates = [];
 var finishedLabelSelectedComponentIds = {};
 var finishedLabelComponentLoadSeq = 0;
+var finishedLabelProductSelectionSeq = 0;
+var finishedLabelComponentsLoading = false;
+var finishedLabelComponentError = "";
 var finishedLabelPendingReprint = null;
 var finishedShipmentUnits = [];
 var finishedShipmentHistoryRows = [];
@@ -8673,6 +8925,7 @@ var finishedShipmentOrderAssignments = [];
 var finishedShipmentCandidateOrderItemId = null;
 var finishedShipmentCandidateRows = [];
 var finishedWarrantyPolicyRows = [];
+var salesProductWarrantyState = null;
 var finishedWarrantyPolicySaving = false;
 var finishedShipmentReplacementTargetId = null;
 var finishedShipmentReplacementSaving = false;
@@ -10000,15 +10253,12 @@ function customerCanShowVehicleInfo() {
 function customerCanShowCompatibleParts() {
   return customerViewerSetting("show_compatible_parts", true);
 }
-function customerCategoryIsVisible(categoryCode, visibilityRows) {
+function customerCategoryIsVisible(categoryCode, visibilityRows, categories) {
   var code = String(categoryCode || "");
-  var rows = visibilityRows || [];
-  var categoryRule = rows.find(function(row) {
-    return row.visibility_scope === "category" && String(row.category_code || "") === code;
+  var category = (categories || categoryOptions || []).find(function(cat) { return String(cat.category_code || cat.category || "") === code; });
+  return !!category && category.show_to_customers === true && !(visibilityRows || []).some(function(row) {
+    return row.visibility_scope === "category" && String(row.category_code || "") === code && row.is_visible === false;
   });
-  if (categoryRule) return !!categoryRule.is_visible;
-  var allRule = rows.find(function(row) { return row.visibility_scope === "all"; });
-  return allRule ? !!allRule.is_visible : DEFAULT_CUSTOMER_VISIBLE_CATEGORY_CODES.indexOf(code) >= 0;
 }
 function isCustomerVisibleProduct(p) {
   if (!userProfile || (!isCustomerViewer() && !isCustomerPortalSearchMode())) return false;
@@ -11979,6 +12229,8 @@ async function doLogout() {
   finishedShipmentCandidateOrderItemId = null;
   finishedShipmentCandidateRows = [];
   finishedWarrantyPolicyRows = [];
+  if (window.DcatsCategoryWarrantySettings) window.DcatsCategoryWarrantySettings.reset();
+  salesProductWarrantyState = null;
   finishedWarrantyPolicySaving = false;
   finishedShipmentReplacementTargetId = null;
   finishedShipmentReplacementSaving = false;
@@ -12020,6 +12272,7 @@ function renderMenu() {
   }
 
   var adminItems = [
+    { icon: "&#x2699;", titleKey: "cw_title", descKey: "cw_menuDesc", action: "category-warranty-settings", available: canManageSharedSettings() || canManageFinishedProductShipping() },
     { icon: "&#x1F465;", titleKey: "mi_users_title",  descKey: "mi_users_desc",  action: "users",  available: canManageUsers },
     { icon: "&#x1F6AA;", titleKey: "mi_customer_access_title", descKey: "mi_customer_access_desc", action: "customer-access-mgmt", available: canManageCustomerAccess() },
     { icon: "&#x1F69A;", titleKey: "mi_shipping_title", descKey: "mi_shipping_desc", action: "shipping-rate-mgmt", available: canManageShippingRates() },
@@ -12119,6 +12372,7 @@ function renderMenu() {
       else if (card.dataset.action === "rakuten-bulk") enterRakutenBulk();
       else if (card.dataset.action === "rakuten-price-list") enterRakutenPriceList();
       else if (card.dataset.action === "business-workspace-settings") openDcatsBusinessWorkspaceSettings(event);
+      else if (card.dataset.action === "category-warranty-settings") openFinishedWarrantyPolicySettings();
       else if (card.dataset.action === "api-settings") enterApiSettings();
       else if (card.dataset.action === "logs") enterLogs();
       else if (card.dataset.action === "concierge-admin") enterConciergeAdmin();
@@ -12563,7 +12817,7 @@ async function populateCustomerCatalogCategories() {
   if (!select) return;
   if (!categoryOptions.length) {
     var r = await sb.from("assy_categories")
-      .select("category_code,label_ja,label_en,label_zh,sort_order")
+      .select("category_code,label_ja,label_en,label_zh,sort_order,show_to_customers")
       .eq("is_active", true)
       .order("sort_order", { ascending: true });
     if (!r.error) {
@@ -26554,7 +26808,7 @@ async function populateRakutenTargetCategoryOptions() {
   if (!select) return;
   if (!categoryOptions.length) {
     var r = await sb.from("assy_categories")
-      .select("category_code,label_ja,label_en,label_zh,sort_order,is_active")
+      .select("category_code,label_ja,label_en,label_zh,sort_order,show_to_customers,is_active")
       .eq("is_active", true)
       .order("sort_order", { ascending: true });
     if (!r.error) {
@@ -29896,7 +30150,7 @@ function renderPartsMgmt() {
     html += "<td><div class='mgmt-pn'>" + esc(p.manufacturer_part_number || "-") + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(p.gltek_part_number || "-") + "</div></td>";
     html += "<td><div class='mgmt-sub'>" + esc(p.manufacturer || "-") + "</div></td>";
-    html += "<td><div class='mgmt-sub'>" + tCat(p.category) + "</div></td>";
+    html += "<td><div class='mgmt-sub'>" + esc(tCat(p.category)) + "</div></td>";
     html += "<td class='parts-mgmt-weight'><div class='mgmt-pn'>" + esc(partsMgmtWeightText(p.shipping_weight_kg)) + "</div></td>";
     html += "<td><div class='mgmt-actions'>";
     if (p._coreManaged) {
@@ -31473,7 +31727,7 @@ async function populateProductKindStockCategoryOptions() {
   if (!select) return;
   if (!categoryOptions.length) {
     var r = await sb.from("assy_categories")
-      .select("category_code,label_ja,label_en,label_zh,sort_order,is_active")
+      .select("category_code,label_ja,label_en,label_zh,sort_order,show_to_customers,is_active")
       .eq("is_active", true)
       .order("sort_order", { ascending: true });
     if (!r.error) {
@@ -32394,7 +32648,7 @@ async function populateManufacturingCostCategoryOptions() {
   if (!select) return;
   if (!categoryOptions.length) {
     var r = await sb.from("assy_categories")
-      .select("category_code,label_ja,label_en,label_zh,sort_order,is_active")
+      .select("category_code,label_ja,label_en,label_zh,sort_order,show_to_customers,is_active")
       .eq("is_active", true)
       .order("sort_order", { ascending: true });
     if (!r.error) {
@@ -35215,6 +35469,9 @@ function renderFinishedLabelEmpty() {
   finishedLabelComponentCandidates = [];
   finishedLabelSelectedComponentIds = {};
   finishedLabelComponentLoadSeq += 1;
+  finishedLabelProductSelectionSeq += 1;
+  finishedLabelComponentsLoading = false;
+  finishedLabelComponentError = "";
   var results = document.getElementById("finished-label-results");
   var count = document.getElementById("finished-label-search-count");
   var loadMore = document.getElementById("btn-finished-label-load-more");
@@ -35521,7 +35778,9 @@ async function searchFinishedLabelProducts() {
     rows = await fetchFinishedLabelProductionProducts();
   }
   if (requestSeq !== finishedLabelSearchRequestSeq) return;
-  var visibleProducts = filterVisibleProducts(rows);
+  var visibleProducts = filterVisibleProducts(rows).filter(function(product) {
+    return !!String(product.gltek_part_number || "").trim();
+  });
   var readinessMap = {};
   try {
     readinessMap = finishedLabelPrintMode === "box"
@@ -35660,21 +35919,49 @@ async function selectFinishedLabelProduct(product, instruction) {
   if (!product) return;
   var dkdId = productDkdId(product);
   if (!dkdId) return;
-  var full = product;
-  var r = await sb.from("core_products").select(CORE_PRODUCT_FAST_SELECT).eq("dkd_shohin_id", dkdId).maybeSingle();
-  if (!r.error && r.data) full = Object.assign({}, product, normalizeCoreProductFastRows([r.data])[0]);
-  finishedLabelSelectedProduct = full;
-  finishedLabelSelectedInstruction = instruction || finishedLabelInstructionMap[String(dkdId)] || null;
-  renderFinishedLabelResults();
-  renderFinishedLabelSelectedSummary(full);
-  resetFinishedLabelForm(full, finishedLabelSelectedInstruction);
-  await loadFinishedLabelVariants(dkdId);
-  renderFinishedLabelVariantOptions(finishedLabelVariants);
-  renderFinishedLabelCategoryOptions(finishedLabelCategoryForProduct(full));
-  if (finishedLabelPrintMode === "product") await loadFinishedLabelComponentCandidates({ resetDefaults: true });
-  else renderFinishedLabelComponents();
-  updateFinishedLabelQrPayload();
-  await loadFinishedLabelHistory();
+  var selectionSeq = ++finishedLabelProductSelectionSeq;
+  finishedLabelComponentLoadSeq += 1;
+  finishedLabelComponentsLoading = true;
+  finishedLabelComponentError = "";
+  finishedLabelComponentCandidates = [];
+  finishedLabelSelectedComponentIds = {};
+  finishedLabelSelectedProduct = product;
+  var componentRequestSeq = null;
+  renderFinishedLabelComponents();
+  try {
+    var full = product;
+    var r = await sb.from("core_products").select(CORE_PRODUCT_FAST_SELECT).eq("dkd_shohin_id", dkdId).maybeSingle();
+    if (selectionSeq !== finishedLabelProductSelectionSeq) return;
+    if (!r.error && r.data) full = Object.assign({}, product, normalizeCoreProductFastRows([r.data])[0]);
+    finishedLabelSelectedProduct = full;
+    finishedLabelSelectedInstruction = instruction || finishedLabelInstructionMap[String(dkdId)] || null;
+    renderFinishedLabelResults();
+    renderFinishedLabelSelectedSummary(full);
+    resetFinishedLabelForm(full, finishedLabelSelectedInstruction);
+    await loadFinishedLabelVariants(dkdId);
+    if (selectionSeq !== finishedLabelProductSelectionSeq) return;
+    renderFinishedLabelVariantOptions(finishedLabelVariants);
+    renderFinishedLabelCategoryOptions(finishedLabelCategoryForProduct(full));
+    if (finishedLabelPrintMode === "product") {
+      var componentRequest = loadFinishedLabelComponentCandidates({ resetDefaults: true });
+      componentRequestSeq = finishedLabelComponentLoadSeq;
+      await componentRequest;
+    }
+    else renderFinishedLabelComponents();
+    if (selectionSeq !== finishedLabelProductSelectionSeq) return;
+    updateFinishedLabelQrPayload();
+    await loadFinishedLabelHistory();
+  } catch (error) {
+    if (selectionSeq !== finishedLabelProductSelectionSeq) return;
+    console.warn("finished label product selection failed", error);
+    finishedLabelComponentError = t("finished_label_component_load_failed");
+  } finally {
+    if (selectionSeq === finishedLabelProductSelectionSeq &&
+        (componentRequestSeq === null || componentRequestSeq === finishedLabelComponentLoadSeq)) {
+      finishedLabelComponentsLoading = false;
+      renderFinishedLabelComponents();
+    }
+  }
 }
 
 function renderFinishedLabelSelectedSummary(product) {
@@ -35697,7 +35984,7 @@ function updateFinishedLabelSaveButton(product) {
   if (!save) return;
   var hasProduct = !!product;
   var missingGNumber = hasProduct && !product.gltek_part_number;
-  save.disabled = !hasProduct;
+  save.disabled = !hasProduct || (finishedLabelPrintMode === "product" && (finishedLabelComponentsLoading || !!finishedLabelComponentError));
   save.textContent = t(missingGNumber
     ? "finished_label_g_number_missing_value"
     : (finishedLabelUsesRemotePrintQueue() ? "finished_label_mobile_issue_save" : "finished_label_issue_save"));
@@ -35742,14 +36029,17 @@ function finishedLabelValue(id) {
 }
 
 async function loadFinishedLabelVariants(dkdId) {
-  finishedLabelVariants = [];
+  var selectionSeq = finishedLabelProductSelectionSeq;
   var r = await sb.from("core_product_variants")
     .select("product_variant_id,dkd_shohin_id,product_kind,display_label,stock_qty,stock_location,is_active")
     .eq("dkd_shohin_id", dkdId)
     .eq("is_active", true)
     .order("product_variant_id", { ascending: true });
+  if (selectionSeq !== finishedLabelProductSelectionSeq || productDkdId(finishedLabelSelectedProduct) !== String(dkdId)) return;
+  finishedLabelVariants = [];
   if (r.error) {
     console.warn("finished label variants lookup failed", r.error);
+    finishedLabelComponentError = t("finished_label_component_load_failed");
     return;
   }
   finishedLabelVariants = r.data || [];
@@ -35764,11 +36054,14 @@ function renderFinishedLabelVariantOptions(rows) {
     select.innerHTML = "<option value=''>" + esc(productKindLabel(kind)) + "</option>";
     return;
   }
+  var preferredKind = normalizeProductKind(finishedLabelSelectedProduct && finishedLabelSelectedProduct.default_product_kind);
+  var preferred = rows.find(function(row) { return normalizeProductKind(row.product_kind) === preferredKind; }) ||
+    rows.find(function(row) { return normalizeProductKind(row.product_kind) !== "catalog_spec"; }) || rows[0];
   select.innerHTML = rows.map(function(row) {
     var stock = row.stock_qty == null ? "0" : row.stock_qty;
     var label = tf("finished_label_variant_stock", { kind: productKindLabel(row.product_kind), n: stock });
     if (row.display_label) label += " / " + row.display_label;
-    return "<option value='" + esc(String(row.product_variant_id)) + "'>" + esc(label) + "</option>";
+    return "<option value='" + esc(String(row.product_variant_id)) + "'" + (row === preferred ? " selected" : "") + ">" + esc(label) + "</option>";
   }).join("");
 }
 
@@ -35781,20 +36074,26 @@ function selectedFinishedLabelVariant() {
   return null;
 }
 
-function applyFinishedLabelTemplate() {
+async function applyFinishedLabelTemplate() {
   if (!finishedLabelSelectedProduct) {
+    finishedLabelComponentCandidates = [];
     finishedLabelSelectedComponentIds = {};
+    finishedLabelComponentError = "";
     renderFinishedLabelComponents();
     return;
   }
-  finishedLabelSelectedComponentIds = {};
-  (finishedLabelComponentCandidates || []).forEach(function(row) {
-    if (Number(row.replacement_rate) === 100) {
-      finishedLabelSelectedComponentIds[String(row.id)] = true;
+  var productId = productDkdId(finishedLabelSelectedProduct);
+  if (!selectedFinishedLabelVariant()) {
+    try {
+      await loadFinishedLabelVariants(productId);
+      if (productDkdId(finishedLabelSelectedProduct) !== productId) return;
+      renderFinishedLabelVariantOptions(finishedLabelVariants);
+    } catch (error) {
+      console.warn("finished label variant retry failed", error);
     }
-  });
-  renderFinishedLabelComponents();
-  updateFinishedLabelQrPayload();
+  }
+  if (productDkdId(finishedLabelSelectedProduct) !== productId) return;
+  await loadFinishedLabelComponentCandidates({ resetDefaults: true });
 }
 
 function finishedLabelComponentName(row) {
@@ -35820,53 +36119,88 @@ async function loadFinishedLabelComponentCandidates(options) {
   var seq = ++finishedLabelComponentLoadSeq;
   var product = finishedLabelSelectedProduct;
   var variant = selectedFinishedLabelVariant();
-  if (!product || !variant || !variant.product_variant_id) {
+  var productId = productDkdId(product);
+  var variantId = variant && String(variant.product_variant_id || "");
+  if (!product || !variantId) {
+    finishedLabelComponentsLoading = false;
     finishedLabelComponentCandidates = [];
     finishedLabelSelectedComponentIds = {};
+    finishedLabelComponentError = product ? t("finished_label_variant_required") : "";
     renderFinishedLabelComponents();
     return;
   }
-  var body = document.getElementById("finished-label-component-body");
-  if (body) body.innerHTML = "<tr><td colspan='7' class='finished-label-component-empty'>" + esc(t("loading")) + "</td></tr>";
   var previous = Object.assign({}, finishedLabelSelectedComponentIds || {});
-  var query = sb.from("assembly_component_usage_details")
-    .select("id,dkd_component_id,dkd_shohin_id,product_kind,product_variant_id,component_name,component_part_name,component_manufacturer,component_manufacturer_part_number,component_genuine_part_number,quantity,replacement_rate,procurement_category,manufacturing_memo,component_position,is_catalog_evidence")
-    .eq("dkd_shohin_id", productDkdId(product))
-    .eq("product_kind", normalizeProductKind(variant.product_kind))
-    .or("product_variant_id.is.null,product_variant_id.eq." + String(variant.product_variant_id))
-    .limit(1000);
-  var r = await query;
-  if (seq !== finishedLabelComponentLoadSeq) return;
-  if (r.error) {
-    console.warn("finished label component lookup failed", r.error);
+  finishedLabelComponentsLoading = true;
+  finishedLabelComponentError = "";
+  renderFinishedLabelComponents();
+  var body = document.getElementById("finished-label-component-body");
+  var tableWrap = body && body.closest(".finished-label-table-wrap");
+  if (tableWrap) tableWrap.scrollLeft = 0;
+  var controller = typeof AbortController === "function" ? new AbortController() : null;
+  var timeoutId = window.setTimeout(function() { if (controller) controller.abort(); }, 20000);
+  try {
+    var request = sb.rpc("list_finished_label_component_candidates", {
+      target_dkd_shohin_id: Number(productId),
+      target_product_variant_id: Number(variantId)
+    });
+    if (controller && typeof request.abortSignal === "function") request = request.abortSignal(controller.signal);
+    var r = await request;
+    var currentVariant = selectedFinishedLabelVariant();
+    if (seq !== finishedLabelComponentLoadSeq || productDkdId(finishedLabelSelectedProduct) !== productId ||
+        !currentVariant || String(currentVariant.product_variant_id) !== variantId) return;
+    if (r.error) throw r.error;
+    if (!Array.isArray(r.data)) throw new Error("Invalid finished-label component response");
+    var seen = {};
+    finishedLabelComponentCandidates = r.data.filter(function(row) {
+      var key = String(row.id || "");
+      if (!key || seen[key]) return false;
+      seen[key] = true;
+      return true;
+    }).sort(finishedLabelComponentSort);
+    finishedLabelSelectedComponentIds = {};
+    finishedLabelComponentCandidates.forEach(function(row) {
+      var key = String(row.id);
+      if (options.resetDefaults) {
+        if (Number(row.replacement_rate) === 100) finishedLabelSelectedComponentIds[key] = true;
+      } else if (previous[key] || String(options.includeUsageId || "") === key || Number(row.replacement_rate) === 100) {
+        finishedLabelSelectedComponentIds[key] = true;
+      }
+    });
+  } catch (error) {
+    if (seq !== finishedLabelComponentLoadSeq) return;
+    console.warn("finished label component lookup failed", error);
     finishedLabelComponentCandidates = [];
     finishedLabelSelectedComponentIds = {};
-    renderFinishedLabelComponents(r.error.message || t("msg_part_err"));
-    return;
-  }
-  var seen = {};
-  finishedLabelComponentCandidates = (r.data || []).filter(function(row) {
-    var key = String(row.id || "");
-    if (!key || seen[key]) return false;
-    seen[key] = true;
-    return true;
-  }).sort(finishedLabelComponentSort);
-  finishedLabelSelectedComponentIds = {};
-  finishedLabelComponentCandidates.forEach(function(row) {
-    var key = String(row.id);
-    if (options.resetDefaults) {
-      if (Number(row.replacement_rate) === 100) finishedLabelSelectedComponentIds[key] = true;
-    } else if (previous[key] || String(options.includeUsageId || "") === key || Number(row.replacement_rate) === 100) {
-      finishedLabelSelectedComponentIds[key] = true;
+    finishedLabelComponentError = t("finished_label_component_load_failed");
+  } finally {
+    window.clearTimeout(timeoutId);
+    if (seq === finishedLabelComponentLoadSeq) {
+      finishedLabelComponentsLoading = false;
+      renderFinishedLabelComponents();
+      updateFinishedLabelQrPayload();
     }
-  });
-  renderFinishedLabelComponents();
-  updateFinishedLabelQrPayload();
+  }
 }
 
 function renderFinishedLabelComponents(errorMessage) {
+  errorMessage = errorMessage || finishedLabelComponentError;
   var body = document.getElementById("finished-label-component-body");
+  var status = document.getElementById("finished-label-component-status");
+  if (status) {
+    status.hidden = !finishedLabelComponentsLoading && !errorMessage;
+    status.textContent = finishedLabelComponentsLoading ? t("loading") : (errorMessage || "");
+    status.classList.toggle("error", !!errorMessage);
+  }
+  updateFinishedLabelSaveButton(finishedLabelSelectedProduct);
+  var resetButton = document.getElementById("btn-finished-label-template");
+  if (resetButton) {
+    resetButton.disabled = finishedLabelComponentsLoading || !finishedLabelSelectedProduct;
+    resetButton.setAttribute("aria-busy", finishedLabelComponentsLoading ? "true" : "false");
+  }
   if (!body) return;
+  body.setAttribute("aria-busy", finishedLabelComponentsLoading ? "true" : "false");
+  var variantSelect = document.getElementById("finished-label-variant-kind");
+  if (variantSelect) variantSelect.disabled = finishedLabelComponentsLoading;
   var selectedRows = (finishedLabelComponentCandidates || []).filter(function(row) {
     return !!finishedLabelSelectedComponentIds[String(row.id)];
   }).sort(finishedLabelComponentSort);
@@ -35881,10 +36215,16 @@ function renderFinishedLabelComponents(errorMessage) {
       var text = [finishedLabelComponentName(row), row.component_manufacturer, finishedLabelComponentPartNumber(row), row.replacement_rate == null ? "" : (t("finished_label_usage_rate") + " " + row.replacement_rate + "%")].filter(Boolean).join(" / ");
       return "<option value='" + esc(String(row.id)) + "'>" + esc(text) + "</option>";
     }).join("");
-    picker.disabled = !availableRows.length;
+    picker.disabled = finishedLabelComponentsLoading || !!errorMessage || !availableRows.length;
   }
-  if (addBtn) addBtn.disabled = !availableRows.length;
+  if (addBtn) addBtn.disabled = finishedLabelComponentsLoading || !!errorMessage || !availableRows.length;
   if (count) count.textContent = tf("finished_label_component_selected_count", { selected: selectedRows.length, total: finishedLabelComponentCandidates.length });
+  if (finishedLabelComponentsLoading) {
+    if (count) count.textContent = t("loading");
+    body.innerHTML = "<tr><td colspan='7' class='finished-label-component-empty'>" + esc(t("loading")) + "</td></tr>";
+    return;
+  }
+  if (errorMessage && status) { body.innerHTML = ""; return; }
   if (errorMessage) {
     body.innerHTML = "<tr><td colspan='7' class='finished-label-component-empty'>" + esc(errorMessage) + "</td></tr>";
     return;
@@ -36169,6 +36509,10 @@ function renderFinishedBoxLabelLayoutPreview() {
 }
 
 async function saveFinishedLabelIssue() {
+  if (finishedLabelComponentsLoading || finishedLabelComponentError) {
+    alert(finishedLabelComponentError || t("loading"));
+    return;
+  }
   if (!canEditFinishedLabelMgmt()) { alert(t("err_perm")); return; }
   if (!finishedLabelSelectedProduct) { alert(t("finished_label_no_product")); return; }
   if (!finishedLabelSelectedProduct.gltek_part_number) {
@@ -36555,8 +36899,12 @@ function renderFinishedLabelHistory() {
       }
     }
     html += "<div class='finished-label-history-row" + (finishedLabelPrintMode === "box" && String(row.id) === String(finishedLabelSelectedHistoryId || "") ? " active" : "") + "'>";
-    html += "<div class='finished-label-history-main'><span>" + esc(row.issue_code || "-") + "</span><div class='finished-label-history-actions'>" + actionHtml + "</div></div>";
-    html += "<div class='finished-label-history-serial'>" + esc(serialText) + "</div>";
+    var genuineNumbers = [row.genuine_part_number, row.genuine_part_number_2].map(function(value) {
+      return String(value || "").trim();
+    }).filter(function(value, index, values) { return value && values.indexOf(value) === index; });
+    html += "<div class='finished-label-history-main'><span class='finished-label-history-serial'>" + esc(serialText) + "</span><div class='finished-label-history-actions'>" + actionHtml + "</div></div>";
+    html += "<dl class='finished-label-history-part-numbers'><div><dt>" + esc(t("f_genuine_pn")) + "</dt><dd>" + esc(genuineNumbers.join(" / ") || "-") + "</dd></div>" +
+      "<div><dt>" + esc(t("f_mfr_pn")) + "</dt><dd>" + esc(String(row.manufacturer_part_number || "").trim() || "-") + "</dd></div></dl>";
     html += "<div class='finished-label-history-sub'>" + esc([formatDateTime(row.issued_at), row.product_category ? tCat(row.product_category) : "", productKindLabel(row.product_kind), tf("finished_label_history_units", { n: row.quantity }), tf("finished_label_history_parts", { n: comps })].filter(Boolean).join(" / ")) + "</div>";
     html += statusHtml;
     html += "</div>";
@@ -37208,6 +37556,10 @@ async function loadFinishedWarrantyPolicies(force) {
 }
 
 function renderFinishedWarrantyPolicyTable() {
+  if (typeof window !== "undefined" && window.DcatsCategoryWarrantySettings && window.DcatsCategoryWarrantySettings.isOpen()) {
+    window.DcatsCategoryWarrantySettings.render();
+    return;
+  }
   var body = document.getElementById("finished-warranty-policy-body");
   if (!body) return;
   var categories = [];
@@ -37234,45 +37586,72 @@ function renderFinishedWarrantyPolicyTable() {
     var rebuilt = category.policies.rebuilt || {};
     var fresh = category.policies.aftermarket_new || {};
     function input(row, kind) {
-      return "<label><input type='number' min='1' max='120' step='1' value='" + esc(String(row.warranty_months || 12)) + "' data-finished-warranty-category='" + esc(category.category_code) + "' data-finished-warranty-kind='" + esc(kind) + "'><span>か月</span></label>";
+      var name = finishedWarrantyCategoryLabel(category) + " " + productKindLabel(kind) + " ";
+      return "<div class='finished-warranty-policy-kind'>" + esc(productKindLabel(kind)) + "</div><div class='finished-warranty-policy-inputs'><label><span>" + esc(t("sales_warranty_periodInput")) + "</span><input type='number' min='1' max='120' step='1' value='" + esc(String(row.warranty_months || 12)) + "' aria-label='" + esc(name + t("sales_warranty_periodInput")) + "' data-finished-warranty-category='" + esc(category.category_code) + "' data-finished-warranty-kind='" + esc(kind) + "'></label>" +
+        "<label><span>" + esc(t("sales_warranty_distanceInput")) + "</span><input type='number' min='1' max='10000000' step='1' inputmode='numeric' value='" + esc(row.warranty_distance_km == null ? "" : String(row.warranty_distance_km)) + "' aria-label='" + esc(name + t("sales_warranty_distanceInput")) + "' data-finished-warranty-distance-category='" + esc(category.category_code) + "' data-finished-warranty-distance-kind='" + esc(kind) + "'></label></div>";
     }
-    return "<tr><th><strong>" + esc(finishedWarrantyCategoryLabel(category)) + "</strong><small>" + esc(category.category_code) + "</small></th><td>" + input(rebuilt, "rebuilt") + "</td><td>" + input(fresh, "aftermarket_new") + "</td></tr>";
+    return "<tr><th scope='row'><strong>" + esc(finishedWarrantyCategoryLabel(category)) + "</strong></th><td>" + input(rebuilt, "rebuilt") + "</td><td>" + input(fresh, "aftermarket_new") + "</td></tr>";
   }).join("") || "<tr><td colspan='3'>保証期間を読み込めませんでした。</td></tr>";
 }
 
 async function openFinishedWarrantyPolicySettings() {
-  if (!canManageFinishedProductShipping()) return;
-  var overlay = document.getElementById("finished-warranty-policy-overlay");
-  if (!overlay) return;
-  overlay.classList.add("show");
-  setFinishedShipmentMessage("finished-warranty-policy-message", t("loading"), false);
-  if (await loadFinishedWarrantyPolicies(true)) {
-    renderFinishedWarrantyPolicyTable();
-    setFinishedShipmentMessage("finished-warranty-policy-message", "", false);
-  }
+  if (!userProfile || (!canManageSharedSettings() && !canManageFinishedProductShipping())) return;
+  if (!window.DcatsCategoryWarrantySettings) return;
+  await window.DcatsCategoryWarrantySettings.open({
+    actor: userProfile,
+    currentActor: function() { return userProfile; },
+    allowed: function() { return !!userProfile && (canManageSharedSettings() || canManageFinishedProductShipping()); },
+    rpc: function(name, args) { return sb.rpc(name, args); },
+    t: function(key) { return t(key); },
+    onSaved: function(settings) {
+      categoryOptions = settings.categories.filter(function(cat) { return cat.category_code !== "car_air_conditioner"; });
+      finishedWarrantyPolicyRows = settings.policies.map(function(policy) {
+        return Object.assign({}, settings.categories.find(function(cat) { return cat.category_code === policy.category_code; }), policy);
+      });
+      salesOrderWarrantyPolicies = finishedWarrantyPolicyRows.slice();
+      renderCategoryChips();
+      refreshCategorySelectLabels();
+      renderFinishedShipmentOrderContext();
+      if (currentProduct) { renderSalesProductIdentity(currentProduct); loadSalesProductWarrantyForCurrent(detailSecondaryRequestSeq); }
+    }
+  });
 }
 
 function closeFinishedWarrantyPolicySettings() {
-  if (finishedWarrantyPolicySaving) return;
-  var overlay = document.getElementById("finished-warranty-policy-overlay");
-  if (overlay) overlay.classList.remove("show");
+  if (window.DcatsCategoryWarrantySettings) window.DcatsCategoryWarrantySettings.close();
 }
 
 async function saveFinishedWarrantyPolicies() {
+  if (typeof window !== "undefined" && window.DcatsCategoryWarrantySettings) {
+    await window.DcatsCategoryWarrantySettings.save();
+    return;
+  }
   if (finishedWarrantyPolicySaving) return;
   var inputs = Array.from(document.querySelectorAll("[data-finished-warranty-category][data-finished-warranty-kind]"));
   var policies = [];
   for (var index = 0; index < inputs.length; index += 1) {
-    var months = parseInt(inputs[index].value, 10);
-    if (!Number.isFinite(months) || months < 1 || months > 120) {
+    var months = Number(inputs[index].value);
+    if (!Number.isInteger(months) || months < 1 || months > 120) {
       setFinishedShipmentMessage("finished-warranty-policy-message", "保証月数は1〜120で入力してください。", true);
       inputs[index].focus();
+      return;
+    }
+    var distanceInput = Array.from(document.querySelectorAll("[data-finished-warranty-distance-category][data-finished-warranty-distance-kind]")).find(function(input) {
+      return input.dataset.finishedWarrantyDistanceCategory === inputs[index].dataset.finishedWarrantyCategory &&
+        input.dataset.finishedWarrantyDistanceKind === inputs[index].dataset.finishedWarrantyKind;
+    });
+    var distanceValue = distanceInput ? distanceInput.value.trim() : "";
+    var distance = distanceValue === "" ? null : Number(distanceValue);
+    if (!distanceInput || (distanceInput.validity && distanceInput.validity.badInput) || (distance !== null && (!Number.isInteger(distance) || distance < 1 || distance > 10000000))) {
+      setFinishedShipmentMessage("finished-warranty-policy-message", t("sales_warranty_invalid"), true);
+      distanceInput.focus();
       return;
     }
     policies.push({
       category_code: inputs[index].dataset.finishedWarrantyCategory,
       product_kind: inputs[index].dataset.finishedWarrantyKind,
-      warranty_months: months
+      warranty_months: months,
+      warranty_distance_km: distance
     });
   }
   finishedWarrantyPolicySaving = true;
@@ -37290,6 +37669,7 @@ async function saveFinishedWarrantyPolicies() {
   salesOrderWarrantyPolicies = finishedWarrantyPolicyRows.slice();
   renderFinishedWarrantyPolicyTable();
   renderFinishedShipmentOrderContext();
+  if (currentProduct) loadSalesProductWarrantyForCurrent(detailSecondaryRequestSeq);
   setFinishedShipmentMessage("finished-warranty-policy-message", "保証期間を保存しました。次の出荷から適用します。", false);
 }
 
@@ -38836,7 +39216,7 @@ function formValueFromCategoryCode(code) {
     throttle_body: "Throttle Body",
     blower_motor: "Blower Motor"
   };
-  return map[code] || map[String(code || "").toLowerCase()] || "Alternator";
+  return map[code] || map[String(code || "").toLowerCase()] || ((typeof categoryOptions !== "undefined" && categoryOptions.some(function(cat) { return cat.category_code === code; })) ? code : "Alternator");
 }
 
 function normalizeManualManufacturerSelection(value) {
@@ -39644,6 +40024,10 @@ async function executeUnusedProductDeletion() {
 async function openCoreProductForm(mode, product, context) {
   resetUnusedProductDeletion();
   if (!canEdit()) { alert(t("err_perm")); return; }
+  var categoryFormActor = userProfile;
+  await ensureCustomerAccessCategories();
+  if (userProfile !== categoryFormActor || !canEdit()) return;
+  refreshCategorySelectLabels();
   var formProduct = mode === "add" ? (product || null) : product;
   if (mode === "edit" && product && productDkdId(product)) {
     try {
@@ -40581,7 +40965,7 @@ async function initSearch() {
   slPresenceMap = {};
 
   var r4 = await sb.from("assy_categories")
-    .select("category_code,label_ja,label_en,label_zh,sort_order")
+    .select("category_code,label_ja,label_en,label_zh,sort_order,show_to_customers")
     .eq("is_active", true)
     .order("sort_order", { ascending: true });
   categoryOptions = (r4.data || []).filter(function(cat) {
@@ -40590,6 +40974,7 @@ async function initSearch() {
   allProducts = [];
 
   renderCategoryChips();
+  refreshCategorySelectLabels();
   render();
 }
 
@@ -41003,6 +41388,8 @@ function categoryTranslationSource(category) {
 }
 function tCat(category) {
   if (!category) return "-";
+  var master = typeof categoryOptions !== "undefined" && categoryOptions.find(function(cat) { return cat.category_code === category; });
+  if (master) return master["label_" + currentLang] || master.label_ja || master.label_en || String(category);
   var source = categoryTranslationSource(category);
   var key = "cat_" + source.replace(/ /g, "_");
   var val = t(key);
@@ -41022,6 +41409,8 @@ function categoryOptionLabel(cat) {
 }
 function productCategoryLabel(p) {
   if (!p) return "-";
+  var master = typeof categoryOptions !== "undefined" && categoryOptions.find(function(cat) { return cat.category_code === (p.category_code || p.category); });
+  if (master) return categoryOptionLabel(master);
   var code = p.category_code || p.category || "";
   var rawCode = String(code || "").trim().toLowerCase();
   var label = "";
@@ -41032,8 +41421,20 @@ function productCategoryLabel(p) {
   return tCat(code || label);
 }
 function refreshCategorySelectLabels() {
-  document.querySelectorAll("#pf-category option").forEach(function(opt) {
-    opt.textContent = tCat(opt.value);
+  var select = document.getElementById("pf-category");
+  if (!select) return;
+  var cats = typeof categoryOptions !== "undefined" ? categoryOptions : [];
+  cats.forEach(function(cat) {
+    var code = cat.category_code;
+    var value = formValueFromCategoryCode(code);
+    if (value === "Alternator" && code !== "alternator") value = code;
+    if (!Array.from(select.options).some(function(opt) { return opt.value === value; })) {
+      var opt = document.createElement("option"); opt.value = value; opt.dataset.categoryMaster = "true"; select.appendChild(opt);
+    }
+  });
+  Array.from(select.options).forEach(function(opt) {
+    var cat = cats.find(function(row) { return row.category_code === categoryCodeFromForm(opt.value); });
+    opt.textContent = cat && (opt.dataset.categoryMaster || formValueFromCategoryCode(cat.category_code) === opt.value) ? categoryOptionLabel(cat) : tCat(opt.value);
   });
 }
 function getProductEngine(p) {
@@ -43775,6 +44176,58 @@ function updateSalesProductStatusBadges() {
   }
   html += "<span class='sales-status-badge core " + (policy.required ? "required" : "not-required") + "'>" + esc(policy.required ? t("core_return_required") : t("core_return_not_required")) + "</span>";
   wrap.innerHTML = html;
+  renderSalesProductWarranty();
+}
+
+function salesWarrantyTermsText(policy) {
+  if (!policy) return "";
+  var months = Number(policy.warranty_months);
+  if (!Number.isInteger(months) || months < 1 || months > 120) return "";
+  var text = t(months % 12 === 0 ? (months === 12 ? "sales_warranty_year" : "sales_warranty_years") : "sales_warranty_months").replace("{n}", String(months % 12 === 0 ? months / 12 : months));
+  var distance = Number(policy.warranty_distance_km);
+  if (Number.isInteger(distance) && distance > 0 && distance <= 10000000) {
+    text += t("sales_warranty_or") + t("sales_warranty_km").replace("{n}", String(distance));
+  }
+  return text;
+}
+
+function renderSalesProductWarranty() {
+  var host = document.getElementById("sales-product-warranty");
+  if (!host) return;
+  var kind = selectedProductKind();
+  var allowed = !!currentProduct && canViewProductInfo() && !isCustomerPortalSearchMode() && ["rebuilt", "aftermarket_new"].indexOf(kind) >= 0;
+  host.hidden = !allowed;
+  if (!allowed) { host.textContent = ""; return; }
+  var state = salesProductWarrantyState;
+  if (!state || state.product !== currentProduct || state.actor !== userProfile || state.status === "loading") {
+    host.textContent = t("sales_warranty_loading");
+    return;
+  }
+  if (state.status === "error") { host.textContent = t("sales_warranty_error"); return; }
+  var category = String(currentProduct.category_code || currentProduct.category || "");
+  var policy = state.rows.find(function(row) {
+    return row.category_code === category && row.product_kind === kind;
+  });
+  var terms = salesWarrantyTermsText(policy);
+  host.textContent = terms ? t("sales_warranty_prefix") + terms : t("sales_warranty_unset");
+}
+
+async function loadSalesProductWarrantyForCurrent(seq) {
+  if (!currentProduct || !canViewProductInfo() || isCustomerPortalSearchMode()) return;
+  var state = { product: currentProduct, actor: userProfile, status: "loading", rows: [] };
+  salesProductWarrantyState = state;
+  renderSalesProductWarranty();
+  try {
+    var result = await sb.rpc("get_sales_product_warranty_terms");
+    if (result.error) throw result.error;
+    if (!Array.isArray(result.data)) throw new Error("Invalid warranty terms response");
+    state.rows = result.data;
+    state.status = "ready";
+  } catch (error) {
+    state.status = "error";
+  }
+  if (seq !== detailSecondaryRequestSeq || currentProduct !== state.product || userProfile !== state.actor || salesProductWarrantyState !== state) return;
+  renderSalesProductWarranty();
 }
 
 function renderSalesProductIdentity(product) {
@@ -43790,6 +44243,7 @@ function renderSalesProductIdentity(product) {
     "<div class='sales-product-category'>" + esc(productCategoryLabel(product) || "-") + "</div>" +
     "<div class='sales-product-maker'>" + esc(makerLine) + "</div>" +
     "<div class='sales-product-status' id='sales-detail-status'></div>" +
+    "<div class='sales-product-warranty' id='sales-product-warranty' aria-live='polite'></div>" +
   "</div>" + editHtml;
   updateSalesProductStatusBadges();
 }
@@ -43797,6 +44251,7 @@ function renderSalesProductIdentity(product) {
 function renderPanelStatic() {
   var p = currentProduct;
   var detailSeq = ++detailSecondaryRequestSeq;
+  salesProductWarrantyState = null;
   currentSelectedProductKind = "rebuilt";
   document.getElementById("panel-topbar-title").textContent = t("sales_detail_title");
   configureSalesProductAddButton();
@@ -43894,6 +44349,7 @@ function renderPanelStatic() {
   bindProductKindPanelActions();
   currentVehicleApplicationRows = [];
   var detailLoads = [
+    loadSalesProductWarrantyForCurrent(detailSeq),
     loadCatalogVehicleSummary(document.getElementById("panel-body"), p, detailSeq),
     loadGltekPartNumberValue(document.getElementById("panel-body"), p),
     loadProductSpecsForCurrent(),
@@ -53273,6 +53729,8 @@ async function unlinkPurchaseProduct(linkId) {
 
 var customerAccessWorkspaceTab = "overview";
 var customerAccessDetailRequestSeq = 0;
+var customerAccessCategoryState = null;
+var customerAccessSaveOperation = null;
 var customerAccessIncludeInactiveLoaded = false;
 
 function customerAccessRankLabel(code) {
@@ -53662,7 +54120,7 @@ async function ensureCustomerAccessShippingServices() {
 async function ensureCustomerAccessCategories() {
   if (categoryOptions && categoryOptions.length) return;
   var r = await sb.from("assy_categories")
-    .select("category_code,label_ja,label_en,label_zh,sort_order")
+    .select("category_code,label_ja,label_en,label_zh,sort_order,show_to_customers")
     .eq("is_active", true)
     .order("sort_order", { ascending: true });
   if (!r.error) {
@@ -53795,6 +54253,10 @@ async function selectCustomerAccessCustomer(customerId) {
 
 async function loadCustomerAccessDetail(customerId) {
   var requestSeq = ++customerAccessDetailRequestSeq;
+  var actor = userProfile;
+  customerAccessCategoryState = null;
+  customerAccessSaveOperation = null;
+  customerAccessSettingsSaving = false;
   var detail = document.getElementById("customer-access-detail");
   customerAccessSavedDisplayDraft = null;
   customerAccessSettings = null;
@@ -53806,9 +54268,10 @@ async function loadCustomerAccessDetail(customerId) {
   var results;
   try { results = await Promise.all([
     sb.from("customer_display_settings").select("*").eq("sales_customer_id", customerId).maybeSingle(),
-    sb.from("customer_product_visibility").select("id,sales_customer_id,visibility_scope,category_code,dkd_shohin_id,is_visible,note,updated_at").eq("sales_customer_id", customerId).in("visibility_scope", ["all", "category"]).order("visibility_scope", { ascending: true }).order("id", { ascending: true })
+    sb.rpc("get_customer_category_settings", { target_sales_customer_id: customerId })
   ]); } catch (error) { results = [{ error: true }, { error: true }]; }
-  if (requestSeq !== customerAccessDetailRequestSeq || !currentCustomerAccessCustomer || String(currentCustomerAccessCustomer.id) !== String(customerId)) return;
+  if (actor !== userProfile || requestSeq !== customerAccessDetailRequestSeq || !currentCustomerAccessCustomer || String(currentCustomerAccessCustomer.id) !== String(customerId)) return;
+  if (!results[1].error && !adoptCustomerCategorySettings(results[1].data, customerId, actor)) results[1] = { error: true };
   if (results[0].error || results[1].error) {
     customerAccessVisibilityRows = [];
     var errorState = document.getElementById("customer-access-save-state");
@@ -53823,7 +54286,7 @@ async function loadCustomerAccessDetail(customerId) {
     return;
   }
   customerAccessSettings = Object.assign(defaultCustomerDisplaySettings(), results[0].data || { sales_customer_id: customerId });
-  customerAccessVisibilityRows = results[1].data || [];
+  customerAccessVisibilityRows = customerAccessCategoryState.exclusions.map(function(code) { return { visibility_scope: "category", category_code: code, is_visible: false }; });
   renderCustomerAccessDetail();
 }
 
@@ -54071,12 +54534,13 @@ function customerAccessCategoryChecksHtml() {
   var items = (categoryOptions || []).map(function(cat) {
     var code = cat.category_code || cat.category || "";
     if (!code) return "";
+    var masterOn = cat.show_to_customers === true;
     var visible = customerCategoryIsVisible(code, rows);
     if (visible) visibleCount += 1;
-    return "<label class='customer-category-check'><input type='checkbox' data-customer-category='" + esc(code) + "'" + (visible ? " checked" : "") + "> <span>" + esc(categoryOptionLabel(cat)) + "</span></label>";
+    return "<label class='customer-category-check" + (masterOn ? "" : " master-off") + "'><input type='checkbox' data-customer-category='" + esc(code) + "'" + (visible ? " checked" : "") + (masterOn ? "" : " disabled") + "> <span>" + esc(categoryOptionLabel(cat)) + (masterOn ? "" : " <small class='customer-category-master-off'>" + esc(t("customer_category_master_off")) + "</small>") + "</span></label>";
   }).join("");
   return "<div class='customer-category-control'>" +
-    "<div class='customer-category-toolbar'><span id='customer-category-visible-count'>" + esc(tf("customer_access_category_count", { n: visibleCount })) + "</span><div class='customer-rule-actions'><button class='btn-sm-edit' id='btn-customer-category-all' type='button'>" + esc(t("customer_access_category_all")) + "</button><button class='btn-sm-edit' id='btn-customer-category-none' type='button'>" + esc(t("customer_access_category_none")) + "</button></div></div>" +
+    "<div class='customer-category-toolbar'><span id='customer-category-visible-count'>" + esc(tf("customer_access_category_count", { n: visibleCount })) + "</span><div class='customer-rule-actions'><button class='btn-sm-edit' id='btn-customer-category-all' type='button'>" + esc(t("customer_access_category_all")) + "</button><button class='btn-sm-edit' id='btn-customer-category-none' type='button'>" + esc(t("customer_access_category_none")) + "</button><button class='btn-sm-edit' id='btn-customer-category-reload' type='button'>" + esc(t("customer_category_reload")) + "</button></div></div>" +
     "<div class='customer-category-grid'>" + items + "</div>" +
   "</div>";
 }
@@ -54304,6 +54768,12 @@ function bindCustomerAccessDetailEvents() {
   });
   var rankSelect = document.getElementById("customer-access-rank-select");
   if (rankSelect) rankSelect.addEventListener("change", updateCustomerAccessSaveState);
+  var categoryReloadBtn = document.getElementById("btn-customer-category-reload");
+  if (categoryReloadBtn) categoryReloadBtn.addEventListener("click", function() {
+    if (customerAccessSettingsSaving || !currentCustomerAccessCustomer) return;
+    if (customerAccessHasUnsavedChanges() && !confirm(t("cw_reloadConfirm"))) return;
+    loadCustomerAccessDetail(currentCustomerAccessCustomer.id);
+  });
   var categoryAllBtn = document.getElementById("btn-customer-category-all");
   if (categoryAllBtn) categoryAllBtn.addEventListener("click", function() { setCustomerAccessCategoriesChecked(true); });
   var categoryNoneBtn = document.getElementById("btn-customer-category-none");
@@ -54319,14 +54789,14 @@ function bindCustomerAccessDetailEvents() {
 }
 
 function setCustomerAccessCategoriesChecked(checked) {
-  document.querySelectorAll("[data-customer-category]").forEach(function(el) { el.checked = !!checked; });
+  document.querySelectorAll("[data-customer-category]").forEach(function(el) { el.checked = !el.disabled && !!checked; });
   syncCustomerAccessCategoryCount();
   updateCustomerAccessSaveState();
 }
 
 function syncCustomerAccessCategoryCount() {
   var count = 0;
-  document.querySelectorAll("[data-customer-category]").forEach(function(el) { if (el.checked) count += 1; });
+  document.querySelectorAll("[data-customer-category]").forEach(function(el) { if (!el.disabled && el.checked) count += 1; });
   var countEl = document.getElementById("customer-category-visible-count");
   if (countEl) countEl.textContent = tf("customer_access_category_count", { n: count });
 }
@@ -54406,7 +54876,7 @@ function collectCustomerDisplaySettings() {
 function collectCustomerAccessCategoryVisibility() {
   var visibility = {};
   document.querySelectorAll("[data-customer-category]").forEach(function(el) {
-    visibility[String(el.dataset.customerCategory || "")] = !!el.checked;
+    if (!el.disabled) visibility[String(el.dataset.customerCategory || "")] = !!el.checked;
   });
   return visibility;
 }
@@ -54504,7 +54974,7 @@ function updateCustomerAccessSaveState() {
   var help = document.getElementById("customer-access-save-help");
   var button = document.getElementById("btn-customer-access-save");
   if (!bar || !state || !help || !button) return;
-  var ready = !!currentCustomerAccessCustomer && customerAccessSavedDisplayDraft != null;
+  var ready = !!currentCustomerAccessCustomer && customerAccessSavedDisplayDraft != null && customerCategorySettingsReady(currentCustomerAccessCustomer.id);
   var dirty = ready && customerAccessHasUnsavedChanges();
   var titleKey = !currentCustomerAccessCustomer ? "customer_access_save_no_customer" :
     (customerAccessSettingsSaving ? "customer_access_saving" :
@@ -54513,7 +54983,7 @@ function updateCustomerAccessSaveState() {
     (customerAccessSettingsSaving ? "customer_access_saving_help" :
       (!ready ? "" : (dirty ? "customer_access_save_dirty_help" : "customer_access_save_clean_help")));
   state.textContent = t(titleKey);
-  help.textContent = helpKey ? t(helpKey) : "";
+  help.textContent = customerAccessCategoryState && customerAccessCategoryState.unknown ? t("customer_category_reload_required") : (helpKey ? t(helpKey) : "");
   button.textContent = customerAccessSettingsSaving ? t("customer_access_saving") : t("customer_access_save_display");
   button.disabled = !dirty || customerAccessSettingsSaving;
   bar.classList.toggle("unsaved", dirty && !customerAccessSettingsSaving);
@@ -54525,122 +54995,74 @@ function resetCustomerAccessSaveState() {
   updateCustomerAccessSaveState();
 }
 
+function customerCategorySettingsReady(customerId) {
+  return !!customerAccessCategoryState && !customerAccessCategoryState.unknown && customerAccessCategoryState.actor === userProfile && String(customerAccessCategoryState.customerId) === String(customerId);
+}
+
+function adoptCustomerCategorySettings(payload, customerId, actor) {
+  if (!payload || String(payload.sales_customer_id) !== String(customerId) || !/^[a-f0-9]{32}$/.test(payload.revision) || !Array.isArray(payload.categories) || !Array.isArray(payload.excluded_category_codes)) return false;
+  var codes = new Set();
+  if (payload.categories.some(function(cat) {
+    if (!cat || typeof cat.category_code !== "string" || !cat.category_code || typeof cat.show_to_customers !== "boolean" || codes.has(cat.category_code) || ["label_ja", "label_en", "label_zh"].some(function(key) { return typeof cat[key] !== "string"; })) return true;
+    codes.add(cat.category_code); return false;
+  }) || payload.excluded_category_codes.some(function(code) { return typeof code !== "string" || !code; })) return false;
+  customerAccessCategoryState = { customerId: customerId, actor: actor, revision: payload.revision, exclusions: payload.excluded_category_codes.slice(), unknown: false };
+  categoryOptions = payload.categories.filter(function(cat) { return cat.category_code !== "car_air_conditioner"; });
+  return true;
+}
+
+function customerAccessOperationCurrent(operation) {
+  return customerAccessSaveOperation === operation && operation.actor === userProfile && !!currentCustomerAccessCustomer && String(currentCustomerAccessCustomer.id) === operation.customerId;
+}
+
+function customerAccessOnlyCategoryChanges() {
+  try {
+    var before = JSON.parse(customerAccessSavedDisplayDraft || "null");
+    var after = JSON.parse(customerAccessDisplayDraftSignature() || "null");
+    if (!before || !after) return false;
+    delete before.categories; delete after.categories;
+    return JSON.stringify(before) === JSON.stringify(after);
+  } catch (error) { return false; }
+}
+
 async function saveCustomerAccessCategoryVisibility(customerId, desiredVisibility) {
-  var codes = Object.keys(desiredVisibility || {}).filter(Boolean);
-  if (!codes.length) return;
-  var selectedCodes = codes.filter(function(code) { return !!desiredVisibility[code]; });
-  var defaultCodes = codes.filter(function(code) { return DEFAULT_CUSTOMER_VISIBLE_CATEGORY_CODES.indexOf(code) >= 0; });
-  var usesDefaultSelection = selectedCodes.length === defaultCodes.length && defaultCodes.every(function(code) {
-    return selectedCodes.indexOf(code) >= 0;
-  });
-  var showsAllCategories = selectedCodes.length === codes.length;
-  var restrictCategories = !showsAllCategories;
-  var allRows = (customerAccessVisibilityRows || []).filter(function(row) { return row.visibility_scope === "all"; });
-  var existingCategoryRows = (customerAccessVisibilityRows || []).filter(function(row) { return row.visibility_scope === "category"; });
-  var existingCodes = {};
-  existingCategoryRows.forEach(function(row) { existingCodes[String(row.category_code || "")] = true; });
-  var updateCodes = selectedCodes.filter(function(code) { return existingCodes[code]; });
-  var insertCodes = selectedCodes.filter(function(code) { return !existingCodes[code]; });
-  var deleteIds = existingCategoryRows.filter(function(row) {
-    return !restrictCategories || selectedCodes.indexOf(String(row.category_code || "")) < 0;
-  }).map(function(row) { return row.id; }).filter(Boolean);
-  var now = new Date().toISOString();
-  if (usesDefaultSelection) {
-    var clearIds = existingCategoryRows.map(function(row) { return row.id; }).filter(Boolean)
-      .concat(allRows.map(function(row) { return row.id; }).filter(Boolean));
-    if (clearIds.length) {
-      var clearR = await sb.from("customer_product_visibility")
-        .delete()
-        .eq("sales_customer_id", customerId)
-        .in("id", clearIds);
-      if (clearR.error) throw clearR.error;
-    }
-    return;
-  }
-  if (showsAllCategories) {
-    if (allRows.length) {
-      var showAllUpdateR = await sb.from("customer_product_visibility")
-        .update({ is_visible: true, updated_at: now })
-        .eq("sales_customer_id", customerId)
-        .eq("visibility_scope", "all");
-      if (showAllUpdateR.error) throw showAllUpdateR.error;
-    } else {
-      var showAllInsertR = await sb.from("customer_product_visibility").insert({
-        sales_customer_id: customerId,
-        visibility_scope: "all",
-        category_code: null,
-        dkd_shohin_id: null,
-        is_visible: true,
-        note: null,
-        updated_at: now
-      });
-      if (showAllInsertR.error) throw showAllInsertR.error;
-    }
-    if (deleteIds.length) {
-      var clearCategoryR = await sb.from("customer_product_visibility")
-        .delete()
-        .eq("sales_customer_id", customerId)
-        .in("id", deleteIds);
-      if (clearCategoryR.error) throw clearCategoryR.error;
-    }
-    return;
-  }
-  if (updateCodes.length) {
-    var updateR = await sb.from("customer_product_visibility")
-      .update({ is_visible: true, updated_at: now })
-      .eq("sales_customer_id", customerId)
-      .eq("visibility_scope", "category")
-      .in("category_code", updateCodes);
-    if (updateR.error) throw updateR.error;
-  }
-  if (insertCodes.length) {
-    var insertR = await sb.from("customer_product_visibility").insert(insertCodes.map(function(code) {
-      return {
-        sales_customer_id: customerId,
-        visibility_scope: "category",
-        category_code: code,
-        dkd_shohin_id: null,
-        is_visible: true,
-        note: null,
-        updated_at: now
-      };
-    }));
-    if (insertR.error) throw insertR.error;
-  }
-  if (allRows.length) {
-    var allUpdateR = await sb.from("customer_product_visibility")
-      .update({ is_visible: false, updated_at: now })
-      .eq("sales_customer_id", customerId)
-      .eq("visibility_scope", "all");
-    if (allUpdateR.error) throw allUpdateR.error;
-  } else {
-    var allInsertR = await sb.from("customer_product_visibility").insert({
-      sales_customer_id: customerId,
-      visibility_scope: "all",
-      category_code: null,
-      dkd_shohin_id: null,
-      is_visible: false,
-      note: null,
-      updated_at: now
+  if (!customerCategorySettingsReady(customerId)) throw Error(t("customer_category_reload_required"));
+  var snapshot = customerAccessCategoryState;
+  var exclusions = Object.keys(desiredVisibility || {}).filter(function(code) { return !!code && desiredVisibility[code] === false; }).sort();
+  var result;
+  try {
+    result = await sb.rpc("save_customer_category_exclusions", {
+      target_sales_customer_id: customerId,
+      target_excluded_category_codes: exclusions,
+      target_expected_revision: snapshot.revision
     });
-    if (allInsertR.error) throw allInsertR.error;
+  } catch (error) {
+    if (customerAccessCategoryState === snapshot) snapshot.unknown = true;
+    throw Error(t("customer_category_reload_required"));
   }
-  if (deleteIds.length) {
-    var deleteR = await sb.from("customer_product_visibility")
-      .delete()
-      .eq("sales_customer_id", customerId)
-      .in("id", deleteIds);
-    if (deleteR.error) throw deleteR.error;
+  if (customerAccessCategoryState !== snapshot || snapshot.actor !== userProfile || !currentCustomerAccessCustomer || String(currentCustomerAccessCustomer.id) !== String(customerId)) return false;
+  if (result.error) {
+    if (String(result.error.code || "") !== "22023") snapshot.unknown = true;
+    if (snapshot.unknown) throw Error(t("customer_category_reload_required"));
+    throw result.error;
   }
+  if (!adoptCustomerCategorySettings(result.data, customerId, snapshot.actor)) {
+    snapshot.unknown = true;
+    throw Error(t("customer_category_reload_required"));
+  }
+  customerAccessVisibilityRows = customerAccessCategoryState.exclusions.map(function(code) { return { visibility_scope: "category", category_code: code, is_visible: false }; });
+  return true;
 }
 
 async function saveCustomerAccessSettings() {
   if (!canManageCustomerAccess() || !currentCustomerAccessCustomer) { alert(t("err_perm")); return; }
   if (customerAccessSettingsSaving) return;
+  if (!customerCategorySettingsReady(currentCustomerAccessCustomer.id)) { alert(t("customer_category_reload_required")); return; }
+  var onlyCategories = customerAccessOnlyCategoryChanges();
   syncCustomerDisplayRuleControls();
   var hanbaiouBilling = collectHanbaiouCustomerBillingSettings();
   var hanbaiouBillingError = validateHanbaiouCustomerBillingSettings(hanbaiouBilling);
-  if (hanbaiouBillingError) {
+  if (!onlyCategories && hanbaiouBillingError) {
     alert(hanbaiouBillingError.message);
     var invalidField = document.getElementById(hanbaiouBillingError.fieldId);
     if (invalidField) invalidField.focus();
@@ -54648,12 +55070,14 @@ async function saveCustomerAccessSettings() {
   }
   var hanbaiouCollection = collectHanbaiouCustomerCollectionSettings();
   var collectionError = validateHanbaiouCustomerCollectionSettings(hanbaiouCollection);
-  if (collectionError) {
+  if (!onlyCategories && collectionError) {
     alert(collectionError.message);
     var collectionField = document.getElementById(collectionError.fieldId);
     if (collectionField) collectionField.focus();
     return;
   }
+  var operation = { actor: userProfile, customerId: String(currentCustomerAccessCustomer.id) };
+  customerAccessSaveOperation = operation;
   customerAccessSettingsSaving = true;
   updateCustomerAccessSaveState();
   var customerId = currentCustomerAccessCustomer.id;
@@ -54664,11 +55088,24 @@ async function saveCustomerAccessSettings() {
   data.sales_customer_id = customerId;
   data.updated_at = new Date().toISOString();
   try {
+    if (!await saveCustomerAccessCategoryVisibility(customerId, categoryVisibility)) return;
+    if (!customerAccessOperationCurrent(operation)) return;
+    if (onlyCategories) {
+      if (customerPortalPreviewContext && String(customerPortalPreviewContext.sales_customer_id || "") === String(customerId)) {
+        var preview = await loadCustomerPortalContextForCustomer(currentCustomerAccessCustomer);
+        if (!customerAccessOperationCurrent(operation)) return;
+        customerPortalPreviewContext = preview;
+      }
+      alert(t("msg_saved"));
+      await loadCustomerAccessDetail(customerId);
+      return;
+    }
     var customerR = await sb.from("sales_customers")
       .update({ price_rank_code: nextRankCode || null, updated_at: new Date().toISOString() })
       .eq("id", customerId)
       .select("id,source_code,source_customer_code,customer_name,customer_kana,price_rank_code,billing_customer_code,closing_code,collection_method_code,collection_month_offset,collection_day,is_active")
       .maybeSingle();
+    if (!customerAccessOperationCurrent(operation)) return;
     if (customerR.error) throw customerR.error;
     if (!customerR.data || Array.isArray(customerR.data) ||
         String(customerR.data.id) !== String(customerId)) {
@@ -54693,14 +55130,14 @@ async function saveCustomerAccessSettings() {
           target_closing_code: hanbaiouBilling.closing_code
         });
       }
+      if (!customerAccessOperationCurrent(operation)) return;
       if (billingR.error) throw billingR.error;
       billingResult = Array.isArray(billingR.data) ? (billingR.data[0] || {}) : (billingR.data || {});
     }
     var updatedCustomer = Object.assign({}, currentCustomerAccessCustomer, customerR.data || {}, billingResult || {}, { price_rank_code: nextRankCode || null });
     var r = await sb.from("customer_display_settings").upsert(data, { onConflict: "sales_customer_id" });
     if (r.error) throw r.error;
-    await saveCustomerAccessCategoryVisibility(customerId, categoryVisibility);
-    if (!currentCustomerAccessCustomer || String(currentCustomerAccessCustomer.id) !== String(customerId)) return;
+    if (!customerAccessOperationCurrent(operation)) return;
     currentCustomerAccessCustomer = updatedCustomer;
     customerAccessRows = customerAccessRows.map(function(row) {
       return String(row.id) === String(customerId) ? Object.assign({}, row, updatedCustomer) : row;
@@ -54715,7 +55152,9 @@ async function saveCustomerAccessSettings() {
       return String(row.id) === String(customerId) ? Object.assign({}, row, updatedCustomer) : row;
     });
     if (customerPortalPreviewContext && String(customerPortalPreviewContext.sales_customer_id || "") === String(customerId)) {
-      customerPortalPreviewContext = await loadCustomerPortalContextForCustomer(updatedCustomer);
+      var updatedPreview = await loadCustomerPortalContextForCustomer(updatedCustomer);
+      if (!customerAccessOperationCurrent(operation)) return;
+      customerPortalPreviewContext = updatedPreview;
     }
     customerAccessSettings = Object.assign(defaultCustomerDisplaySettings(), data);
     detailCustomerDisplaySettingsCache[String(customerId)] = Object.assign({}, customerAccessSettings);
@@ -54723,11 +55162,15 @@ async function saveCustomerAccessSettings() {
     renderCustomerAccessList();
     await loadCustomerAccessDetail(customerId);
   } catch (e) {
+    if (!customerAccessOperationCurrent(operation)) return;
     console.warn("save customer access settings failed", e);
     alert(t("msg_save_err") + ": " + ((e && e.message) || String(e)));
   } finally {
-    customerAccessSettingsSaving = false;
-    updateCustomerAccessSaveState();
+    if (customerAccessSaveOperation === operation) {
+      customerAccessSaveOperation = null;
+      customerAccessSettingsSaving = false;
+      updateCustomerAccessSaveState();
+    }
   }
 }
 

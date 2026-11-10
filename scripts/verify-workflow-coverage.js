@@ -55,13 +55,14 @@ const yamlParseOptions = Object.freeze({
 });
 
 const approvedActionReferences = new Map([
-  [checkoutActionReference, 4],
-  [setupNodeActionReference, 4],
-  [uploadArtifactActionReference, 1],
+  [checkoutActionReference, 5],
+  [setupNodeActionReference, 5],
+  [uploadArtifactActionReference, 2],
   [deploymentActionReference, 1],
 ]);
 
 const reviewedWorkflowFiles = [
+  "category-warranty-ui.yml",
   "postal-data-update.yml",
   "search-performance-guard.yml",
   "security-headers-guard.yml",
@@ -140,6 +141,70 @@ const postalUnchangedSummaryCommand = [
   "",
 ].join("\n");
 const expectedAuxiliaryWorkflows = new Map([
+  ["category-warranty-ui.yml", {
+  "name": "Category warranty browser QA",
+  "on": {
+    "pull_request": {
+      "paths": [
+        "app.js",
+        "styles.css",
+        "index.html",
+        "scripts/qa-sales-product-warranty.js",
+        ".github/workflows/category-warranty-ui.yml",
+        "category-warranty-settings.js",
+        "scripts/qa-category-warranty-admin.js",
+        "scripts/qa-customer-category-master.js"
+      ]
+    }
+  },
+  "permissions": {
+    "contents": "read"
+  },
+  "jobs": {
+    "warranty-browser": {
+      "runs-on": "ubuntu-24.04",
+      "timeout-minutes": 10,
+      "steps": [
+        {
+          "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "with": {
+            "persist-credentials": false
+          }
+        },
+        {
+          "uses": "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
+          "with": {
+            "node-version": 22
+          }
+        },
+        {
+          "name": "Install locked project dependencies",
+          "run": "npm ci --ignore-scripts"
+        },
+        {
+          "name": "Install fixed browser test dependency",
+          "run": "npm install --prefix \"$RUNNER_TEMP/warranty-browser\" --no-save --ignore-scripts --no-audit --no-fund playwright@1.56.1\n\"$RUNNER_TEMP/warranty-browser/node_modules/.bin/playwright\" install --with-deps chromium"
+        },
+        {
+          "name": "Verify PC and mobile warranty settings and detail",
+          "env": {
+            "WARRANTY_PLAYWRIGHT_MODULE": "${{ runner.temp }}/warranty-browser/node_modules/playwright",
+            "WARRANTY_QA_OUTPUT": "${{ runner.temp }}/warranty-qa-results"
+          },
+          "run": "node scripts/qa-sales-product-warranty.js\nnode scripts/qa-category-warranty-admin.js\nnode scripts/qa-customer-category-master.js"
+        },
+        {
+          "uses": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "with": {
+            "name": "warranty-browser-qa",
+            "path": "${{ runner.temp }}/warranty-qa-results",
+            "retention-days": 7
+          }
+        }
+      ]
+    }
+  }
+}], 
   ["security-headers-guard.yml", {
     name: "Security response headers guard",
     on: {

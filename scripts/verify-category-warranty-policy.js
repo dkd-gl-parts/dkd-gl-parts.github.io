@@ -46,7 +46,8 @@ for (const id of [
 
 assert(!html.includes('id="finished-shipment-warranty-months"'), "Manual shipment warranty input remains");
 assert(functionSource("loadFinishedWarrantyPolicies").includes('sb.rpc("get_product_warranty_policies"'), "Warranty policy load RPC is missing");
-assert(functionSource("saveFinishedWarrantyPolicies").includes('sb.rpc("save_product_warranty_policies"'), "Warranty policy save RPC is missing");
+assert(functionSource("saveFinishedWarrantyPolicies").includes('window.DcatsCategoryWarrantySettings.save()'), "Unified settings save entry is missing");
+assert(fs.readFileSync(path.join(root, "category-warranty-settings.js"), "utf8").includes("save_category_warranty_settings"), "Atomic category and warranty save RPC is missing");
 assert(functionSource("updateFinishedShipmentReplacement").includes('sb.rpc("set_sales_order_dispatch_item_replacement"'), "Replacement setting RPC is missing");
 assert(functionSource("saveFinishedProductShipment").includes("target_warranty_months: 12"), "Legacy confirmation signature compatibility is missing");
 assert(!functionSource("saveFinishedProductShipment").includes("finished-shipment-warranty-months"), "Browser still controls warranty months");
@@ -62,7 +63,7 @@ for (const fragment of [
   ".finished-shipment-replacement-card"
 ]) assert(css.includes(fragment), `Missing category warranty styling: ${fragment}`);
 
-assert(html.includes('content="v1.1.1290"'), "Release version is not v1.1.1290");
-assert(app.includes('var APP_VERSION       = "v1.1.1290"'), "Runtime version is not v1.1.1290");
+assert(html.includes('content="v1.1.1303"'), "Release version is not v1.1.1303");
+assert(app.includes('var APP_VERSION       = "v1.1.1303"'), "Runtime version is not v1.1.1303");
 
 console.log("Category warranty and replacement shipment UI contract: OK");
