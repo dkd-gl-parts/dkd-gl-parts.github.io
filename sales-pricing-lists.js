@@ -104,7 +104,7 @@
     var normalize=function(v){return String(v||'').toLowerCase().replace(/[^a-z0-9]/g,'').replace(/^([am])00(\d)t/,'$1$2t');};
     var key=normalize(q);return !!key&&normalize(r.manufacturer_part_number).includes(key);
   }
-  function matchesFilter(r,f){return f==='any'||f==='unconfigured'&&(!registered(r)||loss(r)&&r.state!=='configured')||f==='ready'&&canPrice(r)||f==='dks_missing'&&r.state==='dks_missing'&&!registered(r)||f==='unavailable'&&rowStatus(r)==='costEmpty'||f==='review'&&(!['ready','configured'].includes(r.state)||r.cost_incomplete===true)||f==='configured'&&registered(r);}
+  function matchesFilter(r,f){return f==='any'||f==='unconfigured'&&(!registered(r)||loss(r)&&r.state!=='configured')||f==='ready'&&canPrice(r)||f==='dks_missing'&&r.state==='dks_missing'&&!registered(r)||f==='unavailable'&&['costEmpty','componentUnknown'].includes(rowStatus(r))||f==='review'&&(!['ready','configured'].includes(r.state)||r.cost_incomplete===true)||f==='configured'&&registered(r);}
   function filtered(){var f=el('spl-filter')?el('spl-filter').value:'unconfigured',q=el('spl-query')?el('spl-query').value.trim().toLowerCase():'';return state.rows.filter(function(r){return matchesFilter(r,f)&&(!q||matchesQuery(r,q));});}
   function renderContent(){
     var filters=['any','ready','dks_missing','configured','review','unavailable'];

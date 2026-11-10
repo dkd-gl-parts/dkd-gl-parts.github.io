@@ -32,7 +32,7 @@ async function fixture(lang='ja'){
  return {window,doc,calls,edgeCalls,individual,gCalls,setGHandler(fn){gHandler=fn;},setReceipt(fn){receiptHandler=fn;},setPreview(fn){previewHandler=fn;},setCommitFailure(error){commitFailure=error;},setReview(reason){configured=true;reviewFailure=reason;},async enableEc(){ecEnabled=true;await window.DcatsSalesPricingLists.enter();},completeEc(){ecComplete=true;},blockEc(){ecBlocked=true;},loseEcResponse(){ecLost=true;},async pollEc(){for(const [id,fn] of [...timers]){timers.delete(id);await fn();}await tick();await tick();},async advanceTime(ms){clockOffset+=ms;for(const [id,fn] of [...timers]){timers.delete(id);await fn();}await tick();},timerCount(){return timers.size;},loseCredentialResponse(){credentialLost=true;},setUnknown(){unknown=true;},deny(){allowed=false;},rows};
 }
 (async()=>{
- // The unavailable filter follows the displayed zero-component status, independently of review/configured states.
+ // The unavailable filter follows both displayed unavailable statuses, independently of review/configured states.
  for(const lang of ['ja','en','zh']){
   const f=await fixture(lang),doc=f.doc,Event=f.window.Event;
   const labels={ja:'設定不可',en:'Cannot set price',zh:'不可设置'};
@@ -50,9 +50,9 @@ async function fixture(lang='ja'){
   doc.getElementById('spl-refresh').click();await tick();await tick();
   const filter=doc.getElementById('spl-filter'),tab=doc.querySelector('[data-spl-filter="unavailable"]');
   assert.equal(filter.querySelector('[value="unavailable"]').textContent,labels[lang]);
-  assert.equal(tab.querySelector('strong').textContent,'3');
+  assert.equal(tab.querySelector('strong').textContent,'5');
   filter.value='unavailable';filter.dispatchEvent(new Event('change'));
-  assert.deepEqual(Array.from(doc.querySelectorAll('[data-spl-row]'),n=>n.dataset.splRow),['4','5','6']);
+  assert.deepEqual(Array.from(doc.querySelectorAll('[data-spl-row]'),n=>n.dataset.splRow),['4','5','6','8','11']);
   assert.equal(tab.getAttribute('aria-pressed'),'true');
   assert.equal(doc.querySelectorAll('[data-spl-price]').length,0);
   selectVisible(f);assert.equal(doc.getElementById('spl-bulk').disabled,true);
@@ -66,7 +66,7 @@ async function fixture(lang='ja'){
   assert.equal(doc.querySelectorAll('[data-spl-row]').length,0);assert.ok(doc.querySelector('.spl-empty'));
   doc.getElementById('spl-query').value='';doc.getElementById('spl-query').dispatchEvent(new Event('input'));
   doc.querySelector('[data-spl-filter="ready"]').click();assert.ok(doc.querySelector('[data-spl-price="10"]'),'partial costs remain priceable');
-  doc.querySelector('[data-spl-filter="unavailable"]').click();assert.equal(doc.querySelectorAll('[data-spl-row]').length,3);
+  doc.querySelector('[data-spl-filter="unavailable"]').click();assert.equal(doc.querySelectorAll('[data-spl-row]').length,5);
   assert.equal(f.calls.filter(c=>c.action==='commit').length,0);assert.equal(f.edgeCalls.length,0);f.window.DcatsSalesPricingLists.reset();
  }
 
