@@ -23,6 +23,7 @@
 <script src="vendor/supabase-js-2.115.0.js" integrity="sha384-CLZeq1dk8+Uzrs7TVvBUdlFoV5F0DMqgRoeHa8g5wJcuPe5SkVfEvdxB0ZuzlnBQ" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="styles.css?v=1.1.1304&amp;ranking=9&amp;brand=4">
 <link rel="stylesheet" href="claim-cases.css?v=1.1.1304">
+<link rel="stylesheet" href="sales-slips-readonly.css?v=1.1.1304">
 <link rel="stylesheet" href="sales-pricing-lists.css?v=1.1.1304">
 <link rel="stylesheet" href="core-valuation.css?v=1.1.1304">
 <link rel="stylesheet" href="ec-cost-list-targets.css?v=1.1.1304">
@@ -702,6 +703,7 @@
         <p data-i18n="sales_order_mgmt_note">注文受付、B2発送データ取込、現場の製造シリアル照合を管理します。</p>
       </div>
       <div class="sales-order-filter-row">
+        <button type="button" class="sales-order-new-order-button" id="sales-order-slips-readonly" hidden>売上伝票を確認</button>
         <button type="button" class="sales-order-new-order-button" id="sales-order-new-internal-order" hidden data-i18n="sales_order_internal_entry">FAX・メール注文入力</button>
         <button type="button" class="sales-order-new-order-button" id="sales-order-recycle-open" hidden data-i18n="sales_order_recycle_entry">Recycle+受注入力</button>
         <div class="sales-order-search-controls" role="search" aria-label="受注を検索">
@@ -859,6 +861,21 @@
 <!-- =============================================
    コア返却管理
 ============================================= -->
+<div id="screen-sales-slip-readonly" class="screen">
+  <div class="page-header">
+    <div class="page-header-left">
+      <button type="button" class="back-btn" id="btn-back-sales-slip-readonly">← 受注・出荷管理</button>
+      <span class="logo-text">売上伝票（閲覧のみ）</span>
+      <span class="app-version-wrap"><span class="app-version">v1.1.1304</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span>
+    </div>
+    <div class="page-header-right">
+      <span class="header-username" id="sales-slip-readonly-username"></span>
+      <span class="role-badge" id="sales-slip-readonly-role-badge"></span>
+      <button type="button" class="btn-logout" id="btn-logout-sales-slip-readonly" data-i18n="btn_logout">ログアウト</button>
+    </div>
+  </div>
+  <main id="sales-slip-readonly-workspace" class="slip-body"></main>
+</div>
 <div id="screen-claim-case-mgmt" class="screen">
  <div class="page-header"><div class="page-header-left"><button class="back-btn" id="btn-back-claim-case-mgmt" data-i18n="btn_back">← メニュー</button><span class="logo-text" data-i18n="claim_case_mgmt_title">クレーム受付・対応</span><span class="app-version-wrap"><span class="app-version">v1.1.1304</span><button class="app-manual-refresh" type="button" data-i18n="app_manual_refresh">更新</button></span></div><div class="page-header-right"><span class="header-username" id="claim-case-mgmt-username"></span><span class="role-badge" id="claim-case-mgmt-role-badge"></span><button class="btn-logout" id="btn-logout-claim-case-mgmt" data-i18n="btn_logout">ログアウト</button></div></div>
  <main id="claim-case-workspace" class="claim-body"></main>
@@ -5954,6 +5971,7 @@
 <script src="packing-boxes.js?v=1.1.1304"></script>
 <script src="category-warranty-settings.js?v=1.1.1304"></script>
 <script src="claim-cases.js?v=1.1.1304"></script>
+<script src="sales-slips-readonly.js?v=1.1.1304"></script>
 <script src="app.js?v=1.1.1304"></script>
 <script src="vendor/fflate-0.8.2.js" integrity="sha384-DT0Ls0mO7JmjTnT+oBuMhEJzYJO1zUqzuuMXNdnOmOQRIpN2BgSjvBV/j50NngIT" crossorigin="anonymous"></script>
 <script src="product-photo-tools.js?v=1.1.1304"></script>
