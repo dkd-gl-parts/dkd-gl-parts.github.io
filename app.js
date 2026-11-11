@@ -8720,7 +8720,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1305";
+var APP_VERSION       = "v1.1.1306";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -19489,7 +19489,7 @@ function renderShippingDocumentList() {
   }).join("");
   host.querySelectorAll("[data-shipping-document-order]").forEach(function(row) {
     row.addEventListener("click", function(event) {
-      if (event.target && event.target.matches("input[type='checkbox']")) return;
+      if (event.target && (event.target.closest("[data-sales-order-claim-new]") || event.target.matches("input[type='checkbox']"))) return;
       loadShippingDocumentDetail(parseInt(row.dataset.shippingDocumentOrder, 10));
     });
   });
@@ -20730,6 +20730,18 @@ function clearSalesOrderDetailSelection() {
   renderSalesOrderDetail();
 }
 
+function salesOrderCanStartClaim(order) {
+  return !!order && ["shipped", "completed"].indexOf(order.status) >= 0
+    && /^[1-9][0-9]*$/.test(String(order.id)) && String(order.order_number || "").trim().length >= 3;
+}
+
+async function startSalesOrderClaimIntake(order) {
+  if (!canManageSalesOrders()) { showPermissionDenied("open_claim_cases", "customer_claim_cases"); return; }
+  if (!salesOrderCanStartClaim(order)) return;
+  claimCaseReturnContext = null;
+  await enterClaimCaseMgmt({ sourceOrderId: order.id, sourceOrderNumber: order.order_number, search: order.order_number, state: "all" });
+}
+
 function salesOrderListRowHtml(order) {
   var selected = String(order.id) === String(salesOrderSelectedId);
   var checked = salesOrderCheckedIdsState.has(parseInt(order.id, 10));
@@ -20737,6 +20749,7 @@ function salesOrderListRowHtml(order) {
   return "<div class='sales-order-list-row" + (selected ? " selected" : "") + "' data-sales-order-open='" + esc(order.id) + "'>" +
     "<label class='sales-order-check' aria-label='処理対象'><input type='checkbox' data-sales-order-check value='" + esc(order.id) + "'" + (checked ? " checked" : "") + "></label>" +
     "<div class='sales-order-list-main'><div class='sales-order-list-identity'><strong class='sales-order-list-number'>" + esc(orderNumber) + "</strong><span class='sales-order-list-total'><small>合計</small><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></span></div><span class='sales-order-list-customer' title='" + esc(order.customer_name || "-") + "'>" + esc(order.customer_name || "-") + "</span><div class='sales-order-list-context'><div class='sales-order-list-meta'>" + customerOrderSourceBadgeHtml(order.order_source) + "</div><div class='sales-order-list-next'><span aria-label='次の操作'>次</span><strong>" + esc(salesOrderNextOperationLabel(order)) + "</strong></div></div></div>" +
+    (canManageSalesOrders() && salesOrderCanStartClaim(order) ? "<div class='sales-order-claim-entry'><button type='button' data-sales-order-claim-new='" + esc(order.id) + "' aria-label='受注 " + esc(orderNumber) + " のクレーム受付'>クレーム受付</button></div>" : "") +
   "</div>";
 }
 
@@ -21604,6 +21617,7 @@ function renderSalesOrderDetail() {
   var actions = allowed.filter(function(action) { return action !== "cancel" && action !== "cancel_after_picking"; }).map(function(action) {
     return "<button type='button' class='sales-order-action " + esc(action) + "' data-sales-order-action='" + esc(action) + "'>" + esc(actionLabels[action] || action) + "</button>";
   }).join("");
+  if (canManageSalesOrders() && salesOrderCanStartClaim(order)) actions += "<button type='button' data-sales-order-claim-new='" + esc(order.id) + "'>クレーム受付</button>";
   actions += "<button type='button' data-sales-order-claim-open>クレーム案件を開く</button>";
   var purgeStatus = order.development_test_order_purge || {};
   var cancellationAction = salesOrderCancellationAction(order);
@@ -60783,4 +60797,12 @@ document.getElementById("shipping-packing-boxes-open").addEventListener("click",
 document.getElementById("btn-back-claim-case-mgmt").addEventListener("click",returnToMenuFresh);
 document.getElementById("btn-logout-claim-case-mgmt").addEventListener("click",doLogout);
 document.getElementById("core-return-claim-cases").addEventListener("click",function(){enterClaimCaseMgmt({state:"awaiting_return"});});
+document.addEventListener("click", function(event) {
+  var button = event.target.closest("[data-sales-order-claim-new]");
+  if (!button) return;
+  var id = button.dataset.salesOrderClaimNew;
+  var order = salesOrderDetail && String(salesOrderDetail.id) === id ? salesOrderDetail
+    : salesOrderRows.find(function(row) { return String(row.id) === id; });
+  startSalesOrderClaimIntake(order);
+});
 document.addEventListener("click",function(event){var button=event.target.closest("[data-sales-order-claim-open]");if(!button||!salesOrderDetail||!canManageSalesOrders())return;var c=claimCaseReturnContext;var same=c&&[String(c.original_order_id),String(c.replacement_order_id)].indexOf(String(salesOrderDetail.id))>=0;enterClaimCaseMgmt(same?{caseId:c.id}:{search:salesOrderDetail.order_number,state:"all"});});

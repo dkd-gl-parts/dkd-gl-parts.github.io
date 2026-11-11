@@ -11875,3 +11875,9 @@ html[data-product-3d-paused] :is(
 .finished-label-component-status { margin: 8px 0; border-left: 3px solid #3677b7; border-radius: 4px; padding: 9px 11px; background: #f1f6fb; color: #284665; font-size: 12px; line-height: 1.65; overflow-wrap: anywhere; }
 .finished-label-component-status.error { border-left-color: #bd353c; background: #fff3f3; color: #942b32; }
 .finished-label-component-status[hidden] { display: none !important; }
+
+/* Reception begins with the shipped order selected in the order list. */
+#screen-sales-order-mgmt .sales-order-claim-entry { grid-column: 2; justify-self: end; }
+#screen-sales-order-mgmt .sales-order-claim-entry button { min-height: 36px; padding: 6px 10px; border: 1px solid #b8cbdc; border-radius: 8px; background: #fff; color: #1d5278; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+#screen-sales-order-mgmt .sales-order-claim-entry button:hover { background: #edf5fc; }
+#screen-sales-order-mgmt .sales-order-claim-entry button:focus-visible { outline: 3px solid #2278ad; outline-offset: 2px; }
