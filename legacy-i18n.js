@@ -8282,3 +8282,15 @@ Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {
   "この案件を再開しますか？": "是否重新开启此案件？",
   "前回の保存結果が未確認です。再送せず「保存結果を照会」を押してください。": "尚未确认上次保存结果。请勿重新提交，请点击查询保存结果。"
 });
+
+// Read-only sales slip entry labels.
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {
+  "売上伝票を確認": "View sales slips",
+  "← 受注・出荷管理": "← Orders and shipping",
+  "売上伝票（閲覧のみ）": "Sales slips (read only)"
+});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {
+  "売上伝票を確認": "查看销售单据",
+  "← 受注・出荷管理": "← 订单与发货管理",
+  "売上伝票（閲覧のみ）": "销售单据（只读）"
+});

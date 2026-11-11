@@ -233,6 +233,7 @@
     "The request already has a saved image. It cannot be replaced.";
   COPY.zh.imageConflict = "请求已有保存的图片，不能替换。";
   var SCREENS = {
+    "sales-slip-readonly": ["売上伝票（閲覧のみ）", "Sales slips (read only)", "销售单据（只读）"],
     menu: ["メニュー", "Menu", "菜单"],
     search: ["販売管理", "Sales management", "销售管理"],
     "customer-portal": ["得意先ポータル", "Customer portal", "客户门户"],

@@ -9523,6 +9523,7 @@ function conciergeNavigationBusy() {
   });
 }
 function createConciergeScreenRoutes() { return Object.freeze({
+  "sales-slip-readonly": { allowed: canReadSalesSlips, feature: "internal_management", open: function () { return enterSalesSlipsReadonly(); } },
   menu: { allowed: function () { return true; }, open: function () { showAuthenticatedHome(); } },
   search: { allowed: canViewProductSearch, open: function () { return enterSearch(); } },
   "customer-portal": { allowed: canShowCustomerPortalMenu, open: function () { return enterCustomerPortal(); } },
@@ -9588,6 +9589,7 @@ function getConciergeNavigation() {
   return conciergeNavigation;
 }
 var CONCIERGE_AI_SCREEN_IDS = Object.freeze({
+  "sales-slip-readonly": true,
   "claim-case-mgmt": true,
   menu: true,
   search: true,
