@@ -19489,7 +19489,7 @@ function renderShippingDocumentList() {
   }).join("");
   host.querySelectorAll("[data-shipping-document-order]").forEach(function(row) {
     row.addEventListener("click", function(event) {
-      if (event.target && (event.target.closest("[data-sales-order-claim-new]") || event.target.matches("input[type='checkbox']"))) return;
+      if (event.target && event.target.matches("input[type='checkbox']")) return;
       loadShippingDocumentDetail(parseInt(row.dataset.shippingDocumentOrder, 10));
     });
   });
@@ -20778,7 +20778,7 @@ function renderSalesOrderList() {
   }
   host.querySelectorAll("[data-sales-order-open]").forEach(function(row) {
     row.addEventListener("click", function(event) {
-      if (event.target && event.target.matches("input[type='checkbox']")) return;
+      if (event.target && (event.target.closest("[data-sales-order-claim-new]") || event.target.matches("input[type='checkbox']"))) return;
       loadSalesOrderDetail(parseInt(row.dataset.salesOrderOpen, 10));
     });
   });
@@ -60801,8 +60801,9 @@ document.addEventListener("click", function(event) {
   var button = event.target.closest("[data-sales-order-claim-new]");
   if (!button) return;
   var id = button.dataset.salesOrderClaimNew;
-  var order = salesOrderDetail && String(salesOrderDetail.id) === id ? salesOrderDetail
-    : salesOrderRows.find(function(row) { return String(row.id) === id; });
+  var order = button.closest("#sales-order-list")
+    ? salesOrderRows.find(function(row) { return String(row.id) === id; })
+    : salesOrderDetail && String(salesOrderDetail.id) === id ? salesOrderDetail : null;
   startSalesOrderClaimIntake(order);
 });
 document.addEventListener("click",function(event){var button=event.target.closest("[data-sales-order-claim-open]");if(!button||!salesOrderDetail||!canManageSalesOrders())return;var c=claimCaseReturnContext;var same=c&&[String(c.original_order_id),String(c.replacement_order_id)].indexOf(String(salesOrderDetail.id))>=0;enterClaimCaseMgmt(same?{caseId:c.id}:{search:salesOrderDetail.order_number,state:"all"});});
