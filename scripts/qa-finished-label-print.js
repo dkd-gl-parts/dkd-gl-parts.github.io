@@ -53,7 +53,7 @@ function finishedLabelMobilePrintErrorText(e) { return e.message; }
 function finishedProductSerialQrDataUrl() { return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII='; }
 function printFinishedLabelWindowWhenReady() { qaPrints++; }
 window.alert = message => qaAlerts.push(message);
-window.open = () => qaMode === 'blocked' ? null : ({closed:false,qaHtml:'',close(){this.closed=true;},document:{open(){},write(text){window.qaPrintedHtml=text;},close(){}}});
+window.open = () => qaMode === 'blocked' ? null : ({closed:false,qaHtml:'',close(){this.closed=true;},document:{open(){},write(text){if(qaMode==='print-error' && text.includes("<main class='serial-labels'>"))throw new Error('synthetic print error');window.qaPrintedHtml=text;},close(){}}});
 var sb = { async rpc(name, args) {
   qaCalls.push({name,args});
   if (qaMode === 'delayed') await new Promise(resolve => window.qaResolveIssue = resolve);
@@ -123,12 +123,15 @@ async function run() {
         assert.equal(await p.evaluate(() => qaLogs.length), 1);
         assert.equal(await p.evaluate(() => (qaPrintedHtml.match(/class='serial-label'/g)||[]).length), 3);
         await p.locator("#btn-finished-label-clear").click();assert.equal(await quantity.inputValue(), "1");
+        await p.evaluate(()=>resetFinishedLabelForm(finishedLabelSelectedProduct,{id:70,merged_source_count:5}));
+        assert.equal(await quantity.inputValue(), "1");
+        assert.equal(await p.locator("#finished-label-instruction-id").inputValue(), "70");
         assert.deepEqual(errors, []);
         if (lang === "ja") await p.screenshot({path:path.join(out,`finished-label-${width}.png`),fullPage:true});
         results.push({width,height,lang,success:true});await p.close();
       }
     }
-    for (const mode of ["denied","loading","component-error","issue-error","blocked","remote-success","remote-error","remote-pending","delayed","invalid"]) {
+    for (const mode of ["denied","loading","component-error","issue-error","print-error","blocked","remote-success","remote-error","remote-pending","delayed","invalid"]) {
       const p = await browser.newPage({viewport:{width:1280,height:720}}), errors=[];
       p.on("pageerror",e=>errors.push(e.message));await p.goto(base);await p.waitForFunction(()=>window.qaReady);
       await p.evaluate(mode=>{qaMode=mode;finishedLabelComponentsLoading=mode==='loading';finishedLabelComponentError=mode==='component-error'?'synthetic component error':'';},mode);
