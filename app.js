@@ -11677,6 +11677,7 @@ function resetScreenStateForMenu(screenId) {
 }
 
 function showScreen(id) {
+  if (typeof salesSlipReadonlyAccessGate !== "undefined" && salesSlipReadonlyAccessGate && id !== "sales-slip-readonly") salesSlipReadonlyAccessGate.reset();
   if (typeof salesSlipReadonlyWorkspace !== "undefined" && salesSlipReadonlyWorkspace && id !== "sales-slip-readonly") salesSlipReadonlyWorkspace.reset();
   var previousScreenId = activeAppScreenName();
   if (typeof claimCaseWorkspace !== "undefined" && claimCaseWorkspace && id !== "claim-case-mgmt") claimCaseWorkspace.reset();
@@ -12113,6 +12114,7 @@ async function signOutAllDevices() {
 }
 
 async function doLogout() {
+  if (typeof salesSlipReadonlyAccessGate !== "undefined" && salesSlipReadonlyAccessGate) salesSlipReadonlyAccessGate.reset();
   if (typeof salesSlipReadonlyWorkspace !== "undefined" && salesSlipReadonlyWorkspace) salesSlipReadonlyWorkspace.reset();
   if (typeof claimCaseWorkspace !== "undefined" && claimCaseWorkspace) claimCaseWorkspace.reset();
   claimCaseReturnContext = null;
@@ -17163,6 +17165,7 @@ async function enterSalesOrderMgmt(options) {
   renderSalesOrderB2Preflight(null);
   renderSalesOrderDashboard();
   renderSalesOrderPrintSettings();
+  refreshSalesSlipsReadonlyAccess();
   await Promise.all([refreshSalesOrderManagement(), loadSalesOrderPrintSettings()]);
   if (salesOrderSelectedId) await loadSalesOrderDetail(salesOrderSelectedId);
 }
@@ -19014,13 +19017,39 @@ function coreReturnManagementSetMessage(message, isError) {
   host.className = "core-return-mgmt-message" + (isError ? " error" : "");
 }
 
+function canReadSalesSlipsByRole() {
+  return !!currentUser && canManageSalesOrders() && canManageFinishedProductShipping();
+}
+var salesSlipReadonlyAccessGate = null;
+function getSalesSlipsReadonlyAccessGate() {
+  if (!salesSlipReadonlyAccessGate && window.DcatsSalesSlipsReadonly) {
+    salesSlipReadonlyAccessGate = window.DcatsSalesSlipsReadonly.createAccessGate({
+      canRead: canReadSalesSlipsByRole,
+      isSystemAdmin: isSystemAdmin,
+      contextKey: function() {
+        return currentUser && userProfile ? JSON.stringify([currentUser.id, conciergeNavigationProfileStamp(userProfile)]) : null;
+      },
+      rpc: function(name, payload) { return sb.rpc(name, payload); },
+      changed: function(allowed) {
+        var button = document.getElementById("sales-order-slips-readonly");
+        if (button) button.hidden = !allowed;
+      }
+    });
+  }
+  return salesSlipReadonlyAccessGate;
+}
 function canReadSalesSlips() {
-  return canManageSalesOrders() && canManageFinishedProductShipping();
+  var gate = getSalesSlipsReadonlyAccessGate();
+  return !!gate && gate.allowed();
+}
+async function refreshSalesSlipsReadonlyAccess() {
+  var gate = getSalesSlipsReadonlyAccessGate();
+  return !!gate && await gate.refresh();
 }
 var salesSlipReadonlyWorkspace = null;
 async function enterSalesSlipsReadonly() {
-  if (!canReadSalesSlips()) { showPermissionDenied("read_sales_slips", "sales_slips"); return; }
   if (!window.DcatsSalesSlipsReadonly) return;
+  if (!await refreshSalesSlipsReadonlyAccess()) { showPermissionDenied("read_sales_slips", "sales_slips"); return; }
   showScreen("sales-slip-readonly");
   updateAllHeaders();
   if (!salesSlipReadonlyWorkspace) salesSlipReadonlyWorkspace = window.DcatsSalesSlipsReadonly.create({

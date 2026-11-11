@@ -208,5 +208,47 @@
     }
     return {enter:enter,reset:reset};
   }
-  root.DcatsSalesSlipsReadonly={create:create};
+  function createAccessGate(options) {
+    var generation=0, verifiedKey=null, postingEnabled=false;
+    function allowed() {
+      return options.canRead() === true && options.contextKey() !== null && (
+        options.isSystemAdmin() === true ||
+        (verifiedKey !== null && verifiedKey === options.contextKey() && postingEnabled === true)
+      );
+    }
+    function notify() { if (options.changed) options.changed(allowed()); }
+    function reset() {
+      generation++; verifiedKey=null; postingEnabled=false;
+      if (options.changed) options.changed(false);
+    }
+    async function refresh() {
+      var ticket=++generation, key=options.contextKey();
+      verifiedKey=null; postingEnabled=false; notify();
+      if (options.canRead() !== true || key === null) return false;
+      if (options.isSystemAdmin() === true) return true;
+      var timer=null;
+      var schedule=options.setTimeout || root.setTimeout;
+      var cancel=options.clearTimeout || root.clearTimeout;
+      try {
+        // Read only the flag; do not fetch sales data to decide whether to show its entry.
+        var result=await Promise.race([
+          options.rpc("get_sales_slip_readonly_access",{}),
+          new Promise(function(resolve,reject) { timer=schedule(function(){reject(new Error("Flag lookup timeout"));},10000); })
+        ]);
+        if (ticket !== generation || key !== options.contextKey() || options.canRead() !== true) return false;
+        var data=result && !result.error && result.data;
+        if (data && data.contract_version === 1 && typeof data.posting_enabled === "boolean") {
+          verifiedKey=key; postingEnabled=data.posting_enabled;
+        }
+      } catch (error) {
+        if (ticket !== generation || key !== options.contextKey()) return false;
+      } finally {
+        if (timer !== null) cancel(timer);
+      }
+      if (ticket !== generation || key !== options.contextKey()) return false;
+      notify(); return allowed();
+    }
+    return {allowed:allowed,refresh:refresh,reset:reset};
+  }
+  root.DcatsSalesSlipsReadonly={create:create,createAccessGate:createAccessGate};
 })(typeof window!=="undefined" ? window : globalThis);

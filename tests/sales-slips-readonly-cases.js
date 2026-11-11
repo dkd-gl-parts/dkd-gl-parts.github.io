@@ -65,3 +65,43 @@ root.runSalesSlipsReadonlyCases = async function(document, create) {
   return results;
 };
 })(typeof window!=="undefined"?window:globalThis);
+
+(function(root) {
+"use strict";
+root.runSalesSlipsReadonlyAccessCases = async function(document, createGate) {
+  var results=[];
+  function assert(ok,message){if(!ok)throw new Error(message);}
+  function deferred(){var resolve;return {promise:new Promise(function(r){resolve=r;}),resolve:function(v){resolve(v);}};}
+  async function test(name, run) {
+    var context={key:"owner-a:company-a:sales-editor",role:true,admin:false},responses=[],calls=[],timeout=null;
+    var button=document.createElement("button");button.textContent="売上伝票を確認";button.hidden=true;document.body.append(button);
+    var gate=createGate({setTimeout:function(fn,ms){assert(ms===10000,"Bounded lookup");timeout=fn;return 1;},clearTimeout:function(){timeout=null;},canRead:function(){return context.role;},isSystemAdmin:function(){return context.admin;},contextKey:function(){return context.key;},
+      changed:function(allowed){button.hidden=!allowed;},
+      rpc:async function(name,payload){calls.push({name:name,payload:payload});assert(name==="get_sales_slip_readonly_access"&&Object.keys(payload).length===0,"Flag-only RPC");
+        assert(responses.length>0,"Unexpected status request");var r=responses.shift();return typeof r==="function"?r():r;}});
+    var f={gate:gate,button:button,context:context,calls:calls,responses:responses,timeout:function(){assert(timeout,"Pending timer");timeout();},
+      flag:function(v){responses.push({data:{contract_version:1,posting_enabled:v},error:null});}};
+    try{await run(f);results.push({name:name,pass:true});}catch(e){results.push({name:name,pass:false,error:String(e.message||e)});}finally{gate.reset();button.remove();}
+  }
+  await test("業務ユーザーは計上状態未取得なら非表示",async function(f){assert(!f.gate.allowed()&&f.button.hidden,"Unknown must hide");assert(f.calls.length===0,"No implicit read");});
+  await test("業務ユーザーはOFFなら入口非表示・遷移不可",async function(f){f.flag(false);assert(!await f.gate.refresh()&&!f.gate.allowed()&&f.button.hidden,"OFF must hide");});
+  await test("業務ユーザーはONなら入口表示・遷移可",async function(f){f.flag(true);assert(await f.gate.refresh()&&f.gate.allowed()&&!f.button.hidden,"ON may show");});
+  await test("システム管理者はOFFでも入口表示",async function(f){f.context.admin=true;assert(await f.gate.refresh()&&f.gate.allowed()&&!f.button.hidden,"Admin exception");assert(f.calls.length===0,"Admin must not need flag lookup");});
+  await test("管理者でも既存閲覧権限の拒否を優先",async function(f){f.context.admin=true;f.context.role=false;assert(!await f.gate.refresh()&&f.button.hidden,"Keep original permissions");assert(f.calls.length===0,"Denied user RPC");});
+  await test("会社管理者はシステム管理者の例外対象外",async function(f){f.context.key="owner-a:company-a:company-admin";f.flag(false);assert(!await f.gate.refresh()&&f.button.hidden,"Company admin is a business user");});
+  await test("状態API未提供なら業務入口非表示",async function(f){f.responses.push({error:{code:"PGRST202"}});assert(!await f.gate.refresh()&&f.button.hidden,"Unapplied API must hide");});
+  await test("状態API権限エラーなら非表示",async function(f){f.responses.push({error:{code:"42501"}});assert(!await f.gate.refresh()&&f.button.hidden,"Denied lookup must hide");});
+  await test("状態API通信失敗なら非表示・自動再試行なし",async function(f){f.responses.push(function(){throw new Error("synthetic failure");});assert(!await f.gate.refresh()&&f.button.hidden&&f.calls.length===1,"Failure must hide");});
+  await test("文字列trueをONとして扱わない",async function(f){f.flag("true");assert(!await f.gate.refresh()&&f.button.hidden,"Strict boolean");});
+  await test("応答版の不一致をONとして扱わない",async function(f){f.responses.push({data:{contract_version:2,posting_enabled:true}});assert(!await f.gate.refresh()&&f.button.hidden,"Strict version");});
+  await test("再確認中は以前のONを再利用しない",async function(f){f.flag(true);await f.gate.refresh();var d=deferred();f.responses.push(function(){return d.promise;});var p=f.gate.refresh();assert(!f.gate.allowed()&&f.button.hidden,"Pending must hide");d.resolve({data:{contract_version:1,posting_enabled:false}});assert(!await p&&f.button.hidden,"OFF after ON");});
+  await test("ログアウト・離脱後の状態応答を破棄",async function(f){var d=deferred();f.responses.push(function(){return d.promise;});var p=f.gate.refresh();f.gate.reset();d.resolve({data:{contract_version:1,posting_enabled:true}});assert(!await p&&!f.gate.allowed()&&f.button.hidden,"Reset must invalidate");});
+  await test("利用者変更後の状態応答を破棄",async function(f){var d=deferred();f.responses.push(function(){return d.promise;});var p=f.gate.refresh();f.context.key="owner-b:company-a:sales-editor";d.resolve({data:{contract_version:1,posting_enabled:true}});assert(!await p&&!f.gate.allowed()&&f.button.hidden,"Owner change");});
+  await test("同じ利用者でも会社・権限変更後のONを破棄",async function(f){f.flag(true);await f.gate.refresh();f.context.key="owner-a:company-b:sales-editor";assert(!f.gate.allowed(),"Scope change invalidates cached ON");});
+  await test("取得中の閲覧権限失効を優先",async function(f){var d=deferred();f.responses.push(function(){return d.promise;});var p=f.gate.refresh();f.context.role=false;d.resolve({data:{contract_version:1,posting_enabled:true}});assert(!await p&&!f.gate.allowed()&&f.button.hidden,"Revoked permission");});
+  await test("古いON応答で新しいOFFを上書きしない",async function(f){var d=deferred();f.responses.push(function(){return d.promise;});var first=f.gate.refresh();f.flag(false);assert(!await f.gate.refresh(),"New OFF");d.resolve({data:{contract_version:1,posting_enabled:true}});await first;assert(!f.gate.allowed()&&f.button.hidden,"Stale ON ignored");});
+  await test("状態確認の時間切れで非表示を維持し遅延ONを破棄",async function(f){var d=deferred();f.responses.push(function(){return d.promise;});var p=f.gate.refresh();f.timeout();assert(!await p&&f.button.hidden,"Timeout hidden");d.resolve({data:{contract_version:1,posting_enabled:true}});await Promise.resolve();assert(!f.gate.allowed()&&f.button.hidden&&f.calls.length===1,"Late ON rejected without retry");});
+  await test("入口判定で売上明細は取得しない",async function(f){f.flag(true);await f.gate.refresh();assert(f.calls.length===1&&f.calls[0].name==="get_sales_slip_readonly_access","Status only");});
+  return results;
+};
+})(typeof window!=="undefined"?window:globalThis);
