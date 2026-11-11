@@ -23,10 +23,12 @@ function fixtureFiles() {
   const screen = html.slice(start, end).replace('id="screen-finished-label-mgmt" class="screen"', 'id="screen-finished-label-mgmt" class="screen active"');
   const script = app.slice(translations.start, translations.end) + "\n" + [
     "saveFinishedLabelIssue", "readFinishedLabelRecord", "finishedLabelValue", "setFinishedLabelValue",
-    "resetFinishedLabelForm", "openFinishedLabelPrintPreview", "buildFinishedLabelPrintHtml",
+    "resetFinishedLabelForm", "renderFinishedLabelStockOption", "finishedLabelSkipStock", "userCompanyCode", "renderFinishedLabelIssuedResult", "openFinishedLabelPrintPreview", "buildFinishedLabelPrintHtml",
     "buildFinishedLabelMarkup", "finishedLabelOutputText"
   ].map(fn).join("\n") + "\n" + String.raw`
 var qaLang = new URLSearchParams(location.search).get('lang') || 'ja';
+var qaCompany = new URLSearchParams(location.search).get('company') || 'daiko';
+var currentUser = {id:'synthetic-label-user'}, userProfile = {company_code:qaCompany}, finishedLabelPrintMode = 'product';
 var currentLang = qaLang, APP_VERSION = 'synthetic', qaMode = 'success', qaCalls = [], qaAlerts = [], qaNotices = [], qaHistory = 0, qaPrints = 0, qaLogs = [];
 var finishedLabelComponentsLoading = false, finishedLabelComponentError = '', finishedLabelLastIssuedRecord = null, finishedLabelSelectedHistoryId = null, finishedLabelLastQueuedJob = null;
 var finishedLabelSelectedProduct = { dkd_shohin_id: 1, gltek_part_number: 'G0102-10056' };
@@ -45,7 +47,7 @@ function updateFinishedLabelQrPayload() {}
 function updateFinishedLabelSaveButton() { document.getElementById('btn-finished-label-save').disabled = false; }
 function renderFinishedLabelLayoutPreview() {}
 function renderFinishedBoxLabelLayoutPreview() {}
-function renderFinishedLabelIssuedResult(record) { window.qaRendered = record; }
+function setFinishedBoxLabelPrintButton() {}
 async function writeLog(...args) { qaLogs.push(args); }
 async function loadFinishedLabelHistory() { qaHistory++; }
 function showDcatsAutoNotice(message) { qaNotices.push(message); }
@@ -58,7 +60,8 @@ var sb = { async rpc(name, args) {
   qaCalls.push({name,args});
   if (qaMode === 'delayed') await new Promise(resolve => window.qaResolveIssue = resolve);
   if (qaMode === 'issue-error') return {error:{message:'synthetic issuance error'}};
-  return {data:{issue_id:91,issue_code:'FB2026-0000091',quantity:args.target_quantity,stock_qty_after:args.target_quantity,units:Array.from({length:args.target_quantity},(_,i)=>({manufacturing_serial:'M2026-'+String(i+1).padStart(7,'0'),gltek_part_number:'G0102-10056'}))}};
+  if (qaMode === 'missing-rpc') return {error:{message:'synthetic stock-option RPC not deployed'}};
+  return {data:{stock_posted:name!=='issue_finished_product_serials_with_stock_option',issue_id:91,issue_code:'FB2026-0000091',quantity:args.target_quantity,stock_qty_after:args.target_quantity,units:Array.from({length:args.target_quantity},(_,i)=>({manufacturing_serial:'M2026-'+String(i+1).padStart(7,'0'),gltek_part_number:'G0102-10056'}))}};
 }};
 async function enqueueAndWaitForFinishedLabelPrint(record,target,eventType,reason) {
   window.qaQueue = {record,target,eventType,reason};
@@ -72,6 +75,7 @@ document.getElementById('finished-label-print-station').hidden = true;
 document.querySelectorAll('[data-i18n]').forEach(e=>e.textContent=t(e.dataset.i18n));
 document.getElementById('btn-finished-label-save').addEventListener('click',()=>{window.qaSaving=saveFinishedLabelIssue();});
 document.getElementById('btn-finished-label-clear').addEventListener('click',()=>resetFinishedLabelForm(finishedLabelSelectedProduct,null));
+renderFinishedLabelStockOption(true);
 window.qaReady = true;
 `;
   return {
@@ -99,39 +103,62 @@ async function run() {
     const base = "http://127.0.0.1:" + server.address().port;
     for (const [width, height] of [[1440,900],[1280,720],[1024,768],[390,844],[320,640]]) {
       for (const lang of ["ja", "en", "zh"]) {
+       for (const company of ["daiko", "gltek"]) {
         const p = await browser.newPage({ viewport: { width, height } }), errors = [];
         p.on("pageerror", e => errors.push(e.message));
-        await p.goto(base + "/?lang=" + lang);
+        await p.goto(base + "/?lang=" + lang + "&company=" + company);
         await p.waitForFunction(() => window.qaReady);
         const quantity = p.locator("#finished-label-quantity");
         assert.equal(await quantity.inputValue(), "1");
         assert.equal(await quantity.count(), 1);
+        assert.equal(await p.locator("#finished-label-stock-option").isVisible(), company === "daiko");
+        assert.equal(await p.locator("#finished-label-skip-stock").isChecked(), company === "daiko");
+        assert.equal(await p.locator("#finished-label-skip-stock").isDisabled(), company !== "daiko");
         for (const selector of ["#finished-label-quantity", "#btn-finished-label-save"]) {
           const b = await p.locator(selector).boundingBox();
           assert(b && b.x >= 0 && b.y >= 0 && b.x+b.width <= width && b.y+b.height <= height, `${selector} outside initial viewport ${width}/${lang}: ${JSON.stringify(b)}`);
         }
         assert.equal(await p.evaluate(() => document.getElementById('finished-label-quantity').labels.length), 1);
-        if (lang === "ja") await p.screenshot({path:path.join(out,`finished-label-${width}.png`),fullPage:false});
+        if (lang === "ja") await p.screenshot({path:path.join(out,`finished-label-${company}-${width}.png`),fullPage:false});
         await quantity.focus();await quantity.press("ArrowUp");assert.equal(await quantity.inputValue(), "2");
         await quantity.fill("3");await p.locator("#btn-finished-label-save").click();
         await p.evaluate(() => qaSaving);
         assert.equal(await p.evaluate(() => qaCalls.length), 1);
         assert.equal(await p.evaluate(() => qaCalls[0].args.target_quantity), 3);
+        assert.equal(await p.evaluate(() => qaCalls[0].name), company === "daiko" ? "issue_finished_product_serials_with_stock_option" : "issue_finished_product_serials");
+        assert.equal(await p.evaluate(() => qaCalls[0].args.target_skip_stock), company === "daiko" ? true : undefined);
+        assert.equal(await p.evaluate(() => finishedLabelLastIssuedRecord.stockPosted), company !== "daiko");
+        const notPosted = await p.evaluate(() => t("finished_label_stock_not_posted"));
+        assert.equal((await p.locator("#finished-label-issued-result").textContent()).includes(notPosted), company === "daiko");
         assert.equal(await p.evaluate(() => finishedLabelLastIssuedRecord.printCount), 1);
         assert.equal(await p.evaluate(() => finishedLabelLastIssuedRecord.units.length), 3);
         assert.equal(await p.evaluate(() => qaAlerts.length), 0);
         assert.equal(await p.evaluate(() => qaHistory), 1);
         assert.equal(await p.evaluate(() => qaLogs.length), 1);
         assert.equal(await p.evaluate(() => (qaPrintedHtml.match(/class='serial-label'/g)||[]).length), 3);
+        if (company === "daiko") {
+          await p.locator("#finished-label-skip-stock").uncheck();
+          await p.locator("#btn-finished-label-save").click();await p.evaluate(() => qaSaving);
+          assert.equal(await p.evaluate(() => qaCalls[1].name), "issue_finished_product_serials");
+          assert.equal(await p.evaluate(() => finishedLabelLastIssuedRecord.stockPosted), true);
+        } else {
+          await p.evaluate(() => document.getElementById("finished-label-skip-stock").checked = true);
+          assert.equal(await p.evaluate(() => finishedLabelSkipStock()), false);
+        }
         await p.locator("#btn-finished-label-clear").click();assert.equal(await quantity.inputValue(), "1");
         await p.evaluate(()=>resetFinishedLabelForm(finishedLabelSelectedProduct,{id:70,merged_source_count:5}));
         assert.equal(await quantity.inputValue(), "1");
         assert.equal(await p.locator("#finished-label-instruction-id").inputValue(), "70");
         assert.deepEqual(errors, []);
-        results.push({width,height,lang,success:true});await p.close();
+        await p.evaluate(() => {userProfile={company_code:"gltek"};renderFinishedLabelStockOption(false);});
+        assert.equal(await p.locator("#finished-label-stock-option").isVisible(), false);
+        await p.evaluate(() => {userProfile={company_code:"daiko"};renderFinishedLabelStockOption(false);});
+        assert.equal(await p.locator("#finished-label-skip-stock").isChecked(), true);
+        results.push({width,height,lang,company,success:true});await p.close();
+       }
       }
     }
-    for (const mode of ["denied","loading","component-error","issue-error","print-error","blocked","remote-success","remote-error","remote-pending","delayed","invalid"]) {
+    for (const mode of ["denied","loading","component-error","issue-error","print-error","blocked","remote-success","remote-error","remote-pending","delayed","invalid","missing-rpc"]) {
       const p = await browser.newPage({viewport:{width:1280,height:720}}), errors=[];
       p.on("pageerror",e=>errors.push(e.message));await p.goto(base);await p.waitForFunction(()=>window.qaReady);
       await p.evaluate(mode=>{qaMode=mode;finishedLabelComponentsLoading=mode==='loading';finishedLabelComponentError=mode==='component-error'?'synthetic component error':'';},mode);
@@ -149,6 +176,7 @@ async function run() {
       else assert.equal(await p.evaluate(()=>qaAlerts.length),1,mode+' must report an error');
       if(['denied','loading','component-error','blocked','invalid'].includes(mode))assert.equal(await p.evaluate(()=>qaCalls.length),0);
       if(mode.startsWith('remote')) {assert.equal(await p.evaluate(()=>qaCalls.length),1);assert.equal(await p.evaluate(()=>qaHistory),1);assert.equal(await p.evaluate(()=>qaQueue.target),'finished_product');}
+      if(mode==='missing-rpc') {assert.equal(await p.evaluate(()=>qaCalls.length),1);assert.equal(await p.evaluate(()=>qaCalls[0].name),"issue_finished_product_serials_with_stock_option");assert.equal(await p.evaluate(()=>finishedLabelLastIssuedRecord),null);}
       if(mode==='remote-pending')assert.equal(await p.locator('#btn-finished-label-preview').isDisabled(),true);
       assert.deepEqual(errors,[]);results.push({mode,success:true});await p.close();
     }
