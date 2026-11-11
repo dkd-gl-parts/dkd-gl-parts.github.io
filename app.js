@@ -8726,7 +8726,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1306";
+var APP_VERSION       = "v1.1.1307";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -51493,6 +51493,7 @@ function salesPricingRankCountMap(rows) {
 }
 
 function salesRankDisplayName(rank) {
+  if (rank && rank.rank_code === "RECYCLE_FACTORING") return "Recycle＋";
   var name = String((rank && (rank.rank_name || rank.rank_code)) || "-");
   name = name.replace(/^販売王\s*/, "");
   name = name.replace(/^売値区分\s+/, "売値区分");
@@ -51845,7 +51846,9 @@ function renderSalesRankPreview() {
     html += "<th>" + esc(t("sales_rate_adjust")) + "</th>";
   }
   html += "</tr>";
-  salesPricingRanks.forEach(function(rank) {
+  var displayRanks = salesPricingRanks.filter(function(rank) { return rank.rank_code === "RECYCLE_FACTORING"; })
+    .concat(salesPricingRanks.filter(function(rank) { return rank.rank_code !== "RECYCLE_FACTORING"; }));
+  displayRanks.forEach(function(rank) {
     var price = calculateSalesPriceClient(base, rank);
     var isRank1 = rank.rank_code === "HANBAIOU_URI_1";
     if (isRank1) {
