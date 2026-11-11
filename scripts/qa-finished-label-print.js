@@ -111,6 +111,7 @@ async function run() {
           assert(b && b.x >= 0 && b.y >= 0 && b.x+b.width <= width && b.y+b.height <= height, `${selector} outside initial viewport ${width}/${lang}: ${JSON.stringify(b)}`);
         }
         assert.equal(await p.evaluate(() => document.getElementById('finished-label-quantity').labels.length), 1);
+        if (lang === "ja") await p.screenshot({path:path.join(out,`finished-label-${width}.png`),fullPage:false});
         await quantity.focus();await quantity.press("ArrowUp");assert.equal(await quantity.inputValue(), "2");
         await quantity.fill("3");await p.locator("#btn-finished-label-save").click();
         await p.evaluate(() => qaSaving);
@@ -127,7 +128,6 @@ async function run() {
         assert.equal(await quantity.inputValue(), "1");
         assert.equal(await p.locator("#finished-label-instruction-id").inputValue(), "70");
         assert.deepEqual(errors, []);
-        if (lang === "ja") await p.screenshot({path:path.join(out,`finished-label-${width}.png`),fullPage:true});
         results.push({width,height,lang,success:true});await p.close();
       }
     }
