@@ -11,7 +11,10 @@
         "category-warranty-settings.js",
         "scripts/qa-category-warranty-admin.js",
         "scripts/qa-customer-category-master.js",
-        "scripts/qa-hanbaiou-billing-settings.js"
+        "scripts/qa-hanbaiou-billing-settings.js",
+        "sales-pricing-lists.js",
+        "sales-pricing-lists.css",
+        "scripts/qa-sales-pricing-copy.js"
       ]
     }
   },
@@ -44,12 +47,12 @@
           "run": "npm install --prefix \"$RUNNER_TEMP/warranty-browser\" --no-save --ignore-scripts --no-audit --no-fund playwright@1.56.1\n\"$RUNNER_TEMP/warranty-browser/node_modules/.bin/playwright\" install --with-deps chromium"
         },
         {
-          "name": "Verify PC and mobile warranty settings and detail",
+          "name": "Verify PC and mobile warranty, customer and pricing screens",
           "env": {
             "WARRANTY_PLAYWRIGHT_MODULE": "${{ runner.temp }}/warranty-browser/node_modules/playwright",
             "WARRANTY_QA_OUTPUT": "${{ runner.temp }}/warranty-qa-results"
           },
-          "run": "node scripts/qa-sales-product-warranty.js\nnode scripts/qa-category-warranty-admin.js\nnode scripts/qa-customer-category-master.js\nnode scripts/qa-hanbaiou-billing-settings.js"
+          "run": "node scripts/qa-sales-product-warranty.js\nnode scripts/qa-category-warranty-admin.js\nnode scripts/qa-customer-category-master.js\nnode scripts/qa-hanbaiou-billing-settings.js\nnode scripts/qa-sales-pricing-copy.js"
         },
         {
           "uses": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
