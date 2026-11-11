@@ -1432,6 +1432,8 @@ var TRANSLATIONS = {
     finished_label_priority_both_kinds: "リビルト・新品 部品登録済",
     finished_label_history_empty: "この品番の発行履歴はありません。",
     screen_product_kind_stock_title: "在庫管理",
+    container_stock_title: "コンテナ一括入庫",
+    container_stock_back: "← 在庫管理",
     img_section: "画像",
     image_actions_title: "画像操作",
     product_photo_tools_title: "商品撮影・画像整理",
@@ -4298,6 +4300,8 @@ var TRANSLATIONS = {
     finished_label_priority_both_kinds: "Rebuilt + New Parts Ready",
     finished_label_history_empty: "No issue history for this product.",
     screen_product_kind_stock_title: "Stock Management",
+    container_stock_title: "Container stock receipt",
+    container_stock_back: "← Stock management",
     img_section: "Images",
     image_actions_title: "Image Actions",
     product_photo_tools_title: "Product Photos",
@@ -7175,6 +7179,8 @@ var TRANSLATIONS = {
     finished_label_priority_both_kinds: "再制造・新品零件已登记",
     finished_label_history_empty: "此品号没有发行历史。",
     screen_product_kind_stock_title: "库存管理",
+    container_stock_title: "集装箱批量入库",
+    container_stock_back: "← 库存管理",
     img_section: "图片",
     image_actions_title: "图片操作",
     product_photo_tools_title: "商品拍摄与图片整理",
@@ -8726,7 +8732,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1307";
+var APP_VERSION       = "v1.1.1308";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -9606,6 +9612,7 @@ var CONCIERGE_AI_SCREEN_IDS = Object.freeze({
   "finished-product-shipping": true,
   "core-list-mgmt": true,
   "product-kind-stock-mgmt": true,
+  "container-stock-mgmt": true,
   "manufacturing-cost-mgmt": true,
   "rakuten-price": true,
   users: true,
@@ -12054,7 +12061,7 @@ function updateAllHeaders() {
   var cls   = roleClass(userProfile.role);
   var greet = tf("greeting", { name: name });
 
-  ["menu","customer-portal","customer-shipping","customer-catalog","customer-orders","claim-case-mgmt","sales-order-mgmt","shipping-document-mgmt","core-return-mgmt","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","component-name-master-mgmt","component-compat-mgmt","product-kind-stock-mgmt","manufacturing-cost-mgmt","finished-label-mgmt","finished-product-shipping","production-ranking-mgmt","report-hub","customer-price-report","manufacturing-ranking-report","sales-pricing-mgmt","purchase-mgmt","customer-access-mgmt","shipping-rate-mgmt","logs"].forEach(function(sc) {
+  ["menu","customer-portal","customer-shipping","customer-catalog","customer-orders","claim-case-mgmt","sales-order-mgmt","shipping-document-mgmt","core-return-mgmt","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","component-name-master-mgmt","component-compat-mgmt","product-kind-stock-mgmt","container-stock-mgmt","manufacturing-cost-mgmt","finished-label-mgmt","finished-product-shipping","production-ranking-mgmt","report-hub","customer-price-report","manufacturing-ranking-report","sales-pricing-mgmt","purchase-mgmt","customer-access-mgmt","shipping-rate-mgmt","logs"].forEach(function(sc) {
     var nameEl  = document.getElementById(sc + "-username");
     var badgeEl = document.getElementById(sc + "-role-badge");
     if (nameEl)  nameEl.textContent = name;
@@ -31759,9 +31766,33 @@ async function enterProductKindStockMgmt() {
   configureProductKindStockMode();
   var saveBtn = document.getElementById("btn-product-kind-stock-save");
   if (saveBtn) setCspStyle(saveBtn, "display", canEditProductKindStockMgmt() ? "" : "none");
-  if (window.DcatsContainerStockImport) window.DcatsContainerStockImport.enter();
+  var containerBtn = document.getElementById("btn-container-stock-open");
+  if (containerBtn) containerBtn.hidden = !canEditProductKindStockMgmt();
   await populateProductKindStockCategoryOptions();
   renderProductKindStockEmpty();
+}
+
+function enterContainerStockMgmt() {
+  if (!canViewProductKindStockMgmt() || !canEditProductKindStockMgmt()) { alert(t("err_perm")); return; }
+  var importer = window.DcatsContainerStockImport;
+  if (!importer || !importer.canLeave()) return;
+  showScreen("container-stock-mgmt");
+  updateAllHeaders();
+  importer.enter();
+  var back = document.getElementById("btn-back-container-stock-mgmt");
+  if (back) back.focus();
+}
+
+function returnFromContainerStockMgmt() {
+  var importer = window.DcatsContainerStockImport;
+  if (importer && !importer.canLeave()) return;
+  if (!canViewProductKindStockMgmt()) { returnToMenuFresh(); return; }
+  showScreen("product-kind-stock-mgmt");
+  var launcher = document.getElementById("btn-container-stock-open");
+  if (launcher) {
+    launcher.hidden = !canEditProductKindStockMgmt();
+    if (!launcher.hidden) launcher.focus();
+  }
 }
 
 function renderProductKindStockEmpty() {
@@ -59170,7 +59201,7 @@ document.getElementById("current-password").addEventListener("keydown", function
   if(e.key==="Enter") doChangePassword();
 });
 document.getElementById("login-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
-["btn-logout-menu","btn-logout-customer-portal","btn-logout-customer-shipping","btn-logout-customer-users","btn-logout-customer-catalog","btn-logout-customer-orders","btn-logout-sales-order-mgmt","btn-logout-shipping-document-mgmt","btn-logout-core-return-mgmt","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-purchase-mgmt","btn-logout-customer-access-mgmt","btn-logout-shipping-rate-mgmt","btn-logout-core-list-mgmt","btn-logout-component-name-master-mgmt","btn-logout-component-compat-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-manufacturing-cost-mgmt","btn-logout-finished-label-mgmt","btn-logout-finished-product-shipping","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
+["btn-logout-menu","btn-logout-customer-portal","btn-logout-customer-shipping","btn-logout-customer-users","btn-logout-customer-catalog","btn-logout-customer-orders","btn-logout-sales-order-mgmt","btn-logout-shipping-document-mgmt","btn-logout-core-return-mgmt","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-purchase-mgmt","btn-logout-customer-access-mgmt","btn-logout-shipping-rate-mgmt","btn-logout-core-list-mgmt","btn-logout-component-name-master-mgmt","btn-logout-component-compat-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-container-stock-mgmt","btn-logout-manufacturing-cost-mgmt","btn-logout-finished-label-mgmt","btn-logout-finished-product-shipping","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
 document.getElementById("customer-portal-search-btn").addEventListener("click", function(){ openCustomerPortalSearch(); });
 document.getElementById("customer-portal-q").addEventListener("keydown", function(e){ if (e.key === "Enter") openCustomerPortalSearch(); });
 document.getElementById("customer-portal-customer-select").addEventListener("change", function(){ loadCustomerPortalPreviewContext(this.value); });
@@ -59714,6 +59745,8 @@ document.getElementById("btn-component-compat-form-cancel").addEventListener("cl
 document.getElementById("btn-component-compat-form-save").addEventListener("click", saveComponentCompatForm);
 document.getElementById("component-compat-form-overlay").addEventListener("click", function(e){ if (e.target === this) closeComponentCompatForm(); });
 document.getElementById("component-compat-form-part-number").addEventListener("blur", function(){ normalizeComponentPartNumberElement(this); });
+document.getElementById("btn-container-stock-open").addEventListener("click", enterContainerStockMgmt);
+document.getElementById("btn-back-container-stock-mgmt").addEventListener("click", returnFromContainerStockMgmt);
 document.getElementById("btn-back-product-kind-stock-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-manufacturing-cost-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-finished-label-mgmt").addEventListener("click", returnFromFinishedLabelMgmtToMenu);
