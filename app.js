@@ -1212,6 +1212,7 @@ var TRANSLATIONS = {
     finished_label_mobile_station_error: "Windows印刷端末でエラーが発生しました: {message}",
     finished_label_mode_back: "← 印刷画面を選び直す",
     finished_label_product_screen_title: "完品シール印刷・完品登録",
+    finished_label_print_quantity: "印刷枚数",
     finished_box_label_screen_title: "箱シール印刷",
     finished_label_product_badge: "45 × 20 mm / 完品シール",
     finished_box_label_badge: "80 × 60 mm / 箱シール",
@@ -4079,6 +4080,7 @@ var TRANSLATIONS = {
     finished_label_mobile_station_error: "The Windows print station reported an error: {message}",
     finished_label_mode_back: "← Choose Another Print Screen",
     finished_label_product_screen_title: "Finished Label Printing / Registration",
+    finished_label_print_quantity: "Print quantity",
     finished_box_label_screen_title: "Box Label Printing",
     finished_label_product_badge: "45 × 20 mm / Finished Label",
     finished_box_label_badge: "80 × 60 mm / Box Label",
@@ -6958,6 +6960,7 @@ var TRANSLATIONS = {
     finished_label_mobile_station_error: "Windows打印终端发生错误：{message}",
     finished_label_mode_back: "← 重新选择打印画面",
     finished_label_product_screen_title: "完品标签打印・完品登记",
+    finished_label_print_quantity: "打印张数",
     finished_box_label_screen_title: "箱标签打印",
     finished_label_product_badge: "45 × 20 mm / 完品标签",
     finished_box_label_badge: "80 × 60 mm / 箱标签",
@@ -8732,7 +8735,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1308";
+var APP_VERSION       = "v1.1.1309";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -36088,7 +36091,7 @@ function resetFinishedLabelForm(product, instruction) {
   finishedLabelSelectedHistoryId = null;
   setFinishedLabelValue("finished-label-issue-code", t("finished_label_issue_pending"));
   setFinishedLabelValue("finished-label-instruction-id", instruction && instruction.id ? String(instruction.id) : "");
-  setFinishedLabelValue("finished-label-quantity", instruction && instruction.merged_source_count ? String(instruction.merged_source_count) : "1");
+  setFinishedLabelValue("finished-label-quantity", "1");
   setFinishedLabelValue("finished-label-print-count", "1");
   setFinishedLabelValue("finished-label-assembly-staff", "");
   setFinishedLabelValue("finished-label-inspection-staff", "");
@@ -36685,8 +36688,6 @@ async function saveFinishedLabelIssue() {
       } else {
         showDcatsAutoNotice(t("finished_label_mobile_queue_saved"));
       }
-    } else {
-      alert(t("finished_label_saved"));
     }
     await loadFinishedLabelHistory();
   } catch (e) {

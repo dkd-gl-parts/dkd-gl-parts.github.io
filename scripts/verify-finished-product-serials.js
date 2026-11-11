@@ -509,6 +509,12 @@ assert(functionSource("restoreAppStateAfterRefresh").includes('state.screen === 
 assert(functionSource("printFinishedLabelWindow").includes("restoreFinishedLabelWorkspaceAfterPrint(printMode)"), "print completion does not restore the finished-label workspace");
 assert(printRuntime.includes("window.opener.restoreFinishedLabelWorkspaceAfterPrint"), "the print window does not notify its opener before closing");
 
+
+assert(html.indexOf('id="finished-label-quantity"') < html.indexOf('class="finished-label-shell"'), "print quantity must be visible before search and details on mobile");
+assert((html.match(/id="finished-label-quantity"/g) || []).length === 1, "print quantity must use a single source of truth");
+assert(!functionSource("saveFinishedLabelIssue").includes('alert(t("finished_label_saved"))'), "successful issuance must not block printing with a message box");
+assert(functionSource("resetFinishedLabelForm").includes('setFinishedLabelValue("finished-label-quantity", "1")'), "print quantity must start at one for every target");
+
 const saveSource = functionSource("saveFinishedLabelIssue");
 assert(saveSource.indexOf('if (!printWindow)') < saveSource.indexOf('sb.rpc("issue_finished_product_serials"'), "finished-product registration can proceed after a blocked print window");
 assert(saveSource.includes("printWindow.document.close()"), "finished-product registration loading window is left open");

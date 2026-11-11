@@ -6007,6 +6007,9 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .finished-label-result-sub { font-size: 11px; color: #667085; margin-top: 3px; line-height: 1.45; word-break: break-word; }
 .finished-label-load-more { margin-top: 8px; padding: 8px; font-size: 12px; }
 .finished-label-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.finished-label-print-toolbar { flex: 0 0 auto; justify-content: flex-start; padding: 8px 10px; border: 1px solid #dce2eb; border-radius: 10px; background: #fff; }
+.finished-label-print-quantity label { margin: 0; white-space: nowrap; }
+.finished-label-print-quantity input { width: 80px; }
 .finished-label-toolbar .finished-label-print-action { min-height: 36px; padding: 8px 15px; font-size: 15px; font-weight: 900; line-height: 1.1; }
 .finished-label-toolbar .finished-label-print-action:disabled { border-color: #cbd2dd; background: #cbd2dd; color: #fff; cursor: not-allowed; opacity: 1; }
 .finished-label-toolbar .finished-label-print-action.missing-g-number { border: 1px solid #e4ad3b; background: #fff1c9; color: #7d4b00; cursor: help; }
