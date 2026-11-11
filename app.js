@@ -35519,7 +35519,7 @@ function setFinishedLabelPrintMode(mode) {
   document.querySelectorAll("[data-finished-label-box-only]").forEach(function(el) {
     el.hidden = mode !== "box";
   });
-  renderFinishedLabelStockOption(true);
+  renderFinishedLabelStockOption(previousMode !== mode);
   var title = document.getElementById("finished-label-screen-title");
   var badge = document.getElementById("finished-label-mode-badge");
   var searchTitle = document.getElementById("finished-label-product-search-title");

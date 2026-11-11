@@ -23,7 +23,7 @@ function fixtureFiles() {
   const screen = html.slice(start, end).replace('id="screen-finished-label-mgmt" class="screen"', 'id="screen-finished-label-mgmt" class="screen active"');
   const script = app.slice(translations.start, translations.end) + "\n" + [
     "saveFinishedLabelIssue", "readFinishedLabelRecord", "finishedLabelValue", "setFinishedLabelValue",
-    "resetFinishedLabelForm", "renderFinishedLabelStockOption", "finishedLabelSkipStock", "userCompanyCode", "renderFinishedLabelIssuedResult", "openFinishedLabelPrintPreview", "buildFinishedLabelPrintHtml",
+    "resetFinishedLabelForm", "setFinishedLabelPrintMode", "renderFinishedLabelStockOption", "finishedLabelSkipStock", "userCompanyCode", "renderFinishedLabelIssuedResult", "openFinishedLabelPrintPreview", "buildFinishedLabelPrintHtml",
     "buildFinishedLabelMarkup", "finishedLabelOutputText"
   ].map(fn).join("\n") + "\n" + String.raw`
 var qaLang = new URLSearchParams(location.search).get('lang') || 'ja';
@@ -48,6 +48,9 @@ function updateFinishedLabelSaveButton() { document.getElementById('btn-finished
 function renderFinishedLabelLayoutPreview() {}
 function renderFinishedBoxLabelLayoutPreview() {}
 function setFinishedBoxLabelPrintButton() {}
+function renderFinishedLabelHistory() {}
+function renderFinishedLabelMobilePrintRule() {}
+function isFinishedLabelMobilePrintClient() { return false; }
 async function writeLog(...args) { qaLogs.push(args); }
 async function loadFinishedLabelHistory() { qaHistory++; }
 function showDcatsAutoNotice(message) { qaNotices.push(message); }
@@ -138,6 +141,8 @@ async function run() {
         assert.equal(await p.evaluate(() => (qaPrintedHtml.match(/class='serial-label'/g)||[]).length), 3);
         if (company === "daiko") {
           await p.locator("#finished-label-skip-stock").uncheck();
+          await p.evaluate(() => {qaLang=qaLang==='ja'?'en':'ja';currentLang=qaLang;setFinishedLabelPrintMode('product');});
+          assert.equal(await p.locator("#finished-label-skip-stock").isChecked(), false, "language refresh must preserve an explicit stock-posting choice");
           await p.locator("#btn-finished-label-save").click();await p.evaluate(() => qaSaving);
           assert.equal(await p.evaluate(() => qaCalls[1].name), "issue_finished_product_serials");
           assert.equal(await p.evaluate(() => finishedLabelLastIssuedRecord.stockPosted), true);
