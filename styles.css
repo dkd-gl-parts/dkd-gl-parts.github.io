@@ -2460,6 +2460,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .core-collection-selected-product { grid-template-columns: 1fr; }
 }
 .stock-mgmt-body { max-width: 1360px; }
+#btn-container-stock-open { min-height: 36px; white-space: nowrap; }
+#btn-container-stock-open[hidden] { display: none; }
+@media (max-width: 600px) {
+  #screen-container-stock-mgmt .page-header-left { flex: 1 1 100%; flex-wrap: wrap; min-width: 0; row-gap: 8px; }
+  #screen-container-stock-mgmt .back-btn { flex: 0 0 auto; white-space: nowrap; }
+  #screen-container-stock-mgmt .logo-text { flex: 1 1 160px; white-space: normal; }
+}
+
 .container-stock-card { margin: 0 0 18px; padding: 18px; border: 1px solid #dbe4ef; border-radius: 12px; background: #fff; box-shadow: 0 1px 5px rgba(17, 35, 60, .05); }
 .container-stock-card[hidden], .container-stock-history[hidden] { display: none; }
 .container-stock-held-panel[hidden] { display: none; }
