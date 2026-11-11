@@ -159,7 +159,8 @@ const expectedAuxiliaryWorkflows = new Map([
         "sales-pricing-lists.css",
         "scripts/qa-sales-pricing-copy.js",
         "claim-cases.js",
-        "scripts/qa-order-claim-intake.js"
+        "scripts/qa-order-claim-intake.js",
+        "scripts/qa-sales-pricing-ranks.js"
       ]
     }
   },
@@ -197,7 +198,7 @@ const expectedAuxiliaryWorkflows = new Map([
             "WARRANTY_PLAYWRIGHT_MODULE": "${{ runner.temp }}/warranty-browser/node_modules/playwright",
             "WARRANTY_QA_OUTPUT": "${{ runner.temp }}/warranty-qa-results"
           },
-          "run": "node scripts/qa-sales-product-warranty.js\nnode scripts/qa-category-warranty-admin.js\nnode scripts/qa-customer-category-master.js\nnode scripts/qa-hanbaiou-billing-settings.js\nnode scripts/qa-sales-pricing-copy.js\nnode scripts/qa-order-claim-intake.js"
+          "run": "node scripts/qa-sales-product-warranty.js\nnode scripts/qa-category-warranty-admin.js\nnode scripts/qa-customer-category-master.js\nnode scripts/qa-hanbaiou-billing-settings.js\nnode scripts/qa-sales-pricing-copy.js\nnode scripts/qa-order-claim-intake.js\nnode scripts/qa-sales-pricing-ranks.js"
         },
         {
           "uses": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",

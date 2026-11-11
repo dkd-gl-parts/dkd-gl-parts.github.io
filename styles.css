@@ -245,7 +245,30 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .sales-rank-table .form-input { min-height: 34px; }
 }
 @media(min-width:901px){
-  .sales-pricing-core-return, .sales-pricing-core-charge { grid-column: span 2; }
+  .sales-pricing-body { padding: 14px 20px 8px; }
+  .sales-pricing-heading { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 16px; margin-bottom: 10px; }
+  .sales-pricing-card .sales-pricing-heading h3 { grid-column: auto; margin: 0; }
+  .sales-pricing-context { grid-column: auto; display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 6px 16px; }
+  .sales-pricing-context .g-part-number-context { margin-top: 0; flex-shrink: 0; }
+  .sales-pricing-references { margin-bottom: 10px; }
+  .sales-pricing-references-title { padding: 4px 10px; }
+  .sales-pricing-reference-item { min-height: 54px; padding: 6px 10px; }
+  .sales-pricing-competitor-reference { padding: 5px 8px; }
+  .sales-pricing-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px 12px; }
+  .sales-pricing-grid > .form-row:nth-child(-n+2) { grid-column: span 2; }
+  .sales-pricing-core-return, .sales-pricing-core-charge, .sales-pricing-note { grid-column: span 2; }
+  .sales-pricing-grid .form-label { margin-bottom: 4px; }
+  .sales-pricing-grid .form-input { min-height: 32px; padding: 6px 9px; }
+  .sales-pricing-grid .core-return-choice span { min-height: 34px; padding: 6px 10px; }
+  .sales-pricing-preview { margin-top: 10px; padding-top: 8px; }
+  .sales-pricing-preview-head { margin-bottom: 6px; }
+  .sales-pricing-preview-head .btn-sm-edit { min-height: 30px; }
+  .sales-pricing-card .sales-rank-table { margin-bottom: 0; }
+  .sales-pricing-card .sales-rank-table th, .sales-pricing-card .sales-rank-table td { padding: 4px 9px; }
+  .sales-rank-table .form-input { min-height: 32px; padding: 5px 9px; }
+  .sales-rank-table .price-country { display: none; }
+  .sales-pricing-error:empty { display: none; }
+  .sales-pricing-card .sales-pricing-footer { margin-top: 0; padding: 8px 20px; }
 }
 @media(max-width:560px){
   .sales-pricing-reference-grid { grid-template-columns: 1fr; }
