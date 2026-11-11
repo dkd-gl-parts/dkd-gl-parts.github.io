@@ -1212,6 +1212,10 @@ var TRANSLATIONS = {
     finished_label_mobile_station_error: "Windows印刷端末でエラーが発生しました: {message}",
     finished_label_mode_back: "← 印刷画面を選び直す",
     finished_label_product_screen_title: "完品シール印刷・完品登録",
+    finished_label_print_quantity: "印刷枚数",
+    finished_label_skip_stock: "在庫計上しない（シールのみ）",
+    finished_label_skip_stock_help: "シリアルと印刷履歴を発行し、在庫数・入庫履歴は増やしません。",
+    finished_label_stock_not_posted: "在庫計上なし",
     finished_box_label_screen_title: "箱シール印刷",
     finished_label_product_badge: "45 × 20 mm / 完品シール",
     finished_box_label_badge: "80 × 60 mm / 箱シール",
@@ -4079,6 +4083,10 @@ var TRANSLATIONS = {
     finished_label_mobile_station_error: "The Windows print station reported an error: {message}",
     finished_label_mode_back: "← Choose Another Print Screen",
     finished_label_product_screen_title: "Finished Label Printing / Registration",
+    finished_label_print_quantity: "Print quantity",
+    finished_label_skip_stock: "Do not add stock (labels only)",
+    finished_label_skip_stock_help: "Issue serials and print history without increasing stock or recording a stock receipt.",
+    finished_label_stock_not_posted: "Stock not posted",
     finished_box_label_screen_title: "Box Label Printing",
     finished_label_product_badge: "45 × 20 mm / Finished Label",
     finished_box_label_badge: "80 × 60 mm / Box Label",
@@ -6958,6 +6966,10 @@ var TRANSLATIONS = {
     finished_label_mobile_station_error: "Windows打印终端发生错误：{message}",
     finished_label_mode_back: "← 重新选择打印画面",
     finished_label_product_screen_title: "完品标签打印・完品登记",
+    finished_label_print_quantity: "打印张数",
+    finished_label_skip_stock: "不计入库存（仅打印标签）",
+    finished_label_skip_stock_help: "生成序列号和打印记录，不增加库存或入库记录。",
+    finished_label_stock_not_posted: "未计入库存",
     finished_box_label_screen_title: "箱标签打印",
     finished_label_product_badge: "45 × 20 mm / 完品标签",
     finished_box_label_badge: "80 × 60 mm / 箱标签",
@@ -8732,7 +8744,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1308";
+var APP_VERSION       = "v1.1.1309";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -35507,6 +35519,7 @@ function setFinishedLabelPrintMode(mode) {
   document.querySelectorAll("[data-finished-label-box-only]").forEach(function(el) {
     el.hidden = mode !== "box";
   });
+  renderFinishedLabelStockOption(previousMode !== mode);
   var title = document.getElementById("finished-label-screen-title");
   var badge = document.getElementById("finished-label-mode-badge");
   var searchTitle = document.getElementById("finished-label-product-search-title");
@@ -36083,12 +36096,32 @@ function updateFinishedLabelSaveButton(product) {
   save.setAttribute("aria-disabled", save.disabled ? "true" : "false");
 }
 
+function renderFinishedLabelStockOption(reset) {
+  var field = document.getElementById("finished-label-stock-option");
+  var input = document.getElementById("finished-label-skip-stock");
+  if (!field || !input) return;
+  var company = userCompanyCode(userProfile);
+  var owner = String(currentUser && currentUser.id || "") + ":" + company;
+  var isDaiko = company === "daiko";
+  if (reset || field.dataset.owner !== owner) input.checked = isDaiko;
+  field.dataset.owner = owner;
+  field.hidden = !isDaiko;
+  input.disabled = !isDaiko || !canEditFinishedLabelMgmt();
+}
+
+function finishedLabelSkipStock() {
+  if (userCompanyCode(userProfile) !== "daiko") return false;
+  var input = document.getElementById("finished-label-skip-stock");
+  return !input || input.checked;
+}
+
 function resetFinishedLabelForm(product, instruction) {
+  renderFinishedLabelStockOption(false);
   finishedLabelLastIssuedRecord = null;
   finishedLabelSelectedHistoryId = null;
   setFinishedLabelValue("finished-label-issue-code", t("finished_label_issue_pending"));
   setFinishedLabelValue("finished-label-instruction-id", instruction && instruction.id ? String(instruction.id) : "");
-  setFinishedLabelValue("finished-label-quantity", instruction && instruction.merged_source_count ? String(instruction.merged_source_count) : "1");
+  setFinishedLabelValue("finished-label-quantity", "1");
   setFinishedLabelValue("finished-label-print-count", "1");
   setFinishedLabelValue("finished-label-assembly-staff", "");
   setFinishedLabelValue("finished-label-inspection-staff", "");
@@ -36437,6 +36470,7 @@ function readFinishedLabelRecord() {
     shelfNo: finishedLabelValue("finished-label-shelf-no"),
     memo: finishedLabelValue("finished-label-memo"),
     printCount: 1,
+    skipStock: finishedLabelSkipStock(),
     issuedAt: null,
     units: [],
     components: readFinishedLabelComponents()
@@ -36626,7 +36660,7 @@ async function saveFinishedLabelIssue() {
       printWindow.document.write("<!doctype html><meta charset='utf-8'><title>D-CATS</title><p>" + esc(t("finished_label_issuing")) + "</p>");
       printWindow.document.close();
     }
-    var r = await sb.rpc("issue_finished_product_serials", {
+    var issueArgs = {
       target_dkd_shohin_id: record.dkdShohinId,
       target_product_variant_id: record.productVariantId,
       target_quantity: record.quantity,
@@ -36637,7 +36671,14 @@ async function saveFinishedLabelIssue() {
       target_shelf_no: record.shelfNo || null,
       target_memo: record.memo || null,
       target_components: record.components
-    });
+    };
+    var r;
+    if (record.skipStock) {
+      issueArgs.target_skip_stock = true;
+      r = await sb.rpc("issue_finished_product_serials_with_stock_option", issueArgs);
+    } else {
+      r = await sb.rpc("issue_finished_product_serials", issueArgs);
+    }
     if (r.error) throw r.error;
     var issued = r.data || {};
     record.issueCode = issued.issue_code || "";
@@ -36645,6 +36686,7 @@ async function saveFinishedLabelIssue() {
     record.issuedAt = issued.issued_at ? new Date(issued.issued_at) : new Date();
     record.quantity = Number(issued.quantity) || record.quantity;
     record.stockQtyAfter = Number(issued.stock_qty_after);
+    record.stockPosted = issued.stock_posted !== false;
     record.units = Array.isArray(issued.units) ? issued.units : [];
     if (!record.units.length) throw new Error("Manufacturing serial response was empty");
     finishedLabelLastIssuedRecord = record;
@@ -36660,7 +36702,8 @@ async function saveFinishedLabelIssue() {
       quantity: record.quantity,
       first_serial: issued.first_serial,
       last_serial: issued.last_serial,
-      stock_qty_after: issued.stock_qty_after
+      stock_qty_after: issued.stock_qty_after,
+      stock_posted: record.stockPosted
     });
     var queueResult = null;
     var queueError = null;
@@ -36685,8 +36728,6 @@ async function saveFinishedLabelIssue() {
       } else {
         showDcatsAutoNotice(t("finished_label_mobile_queue_saved"));
       }
-    } else {
-      alert(t("finished_label_saved"));
     }
     await loadFinishedLabelHistory();
   } catch (e) {
@@ -36709,9 +36750,9 @@ function renderFinishedLabelIssuedResult(record) {
   var serials = record.units.map(function(unit) {
     return "<span class='finished-label-serial-chip'>" + esc(unit.manufacturing_serial || "") + "</span>";
   }).join("");
-  var stockText = Number.isFinite(record.stockQtyAfter)
-    ? tf("finished_label_stock_after", { n: record.stockQtyAfter })
-    : "";
+  var stockText = record.stockPosted === false
+    ? t("finished_label_stock_not_posted")
+    : (Number.isFinite(record.stockQtyAfter) ? tf("finished_label_stock_after", { n: record.stockQtyAfter }) : "");
   var isBox = finishedLabelPrintMode === "box";
   var mobileQueue = !isBox && finishedLabelUsesRemotePrintQueue();
   var sourceRow = record.sourceHistoryRow || null;
@@ -36965,6 +37006,7 @@ function renderFinishedLabelHistory() {
   var html = "";
   finishedLabelHistoryRows.forEach(function(row) {
     var comps = Array.isArray(row.components_json) ? row.components_json.length : 0;
+    var stockNotice = row.stock_posted === false ? t("finished_label_stock_not_posted") : "";
     var units = Array.isArray(row.finishedUnits) ? row.finishedUnits : [];
     var serialText = units.length ? units[0].manufacturing_serial : "-";
     if (units.length > 1) serialText += " ～ " + units[units.length - 1].manufacturing_serial;
@@ -36995,7 +37037,7 @@ function renderFinishedLabelHistory() {
     html += "<div class='finished-label-history-main'><span class='finished-label-history-serial'>" + esc(serialText) + "</span><div class='finished-label-history-actions'>" + actionHtml + "</div></div>";
     html += "<dl class='finished-label-history-part-numbers'><div><dt>" + esc(t("f_genuine_pn")) + "</dt><dd>" + esc(genuineNumbers.join(" / ") || "-") + "</dd></div>" +
       "<div><dt>" + esc(t("f_mfr_pn")) + "</dt><dd>" + esc(String(row.manufacturer_part_number || "").trim() || "-") + "</dd></div></dl>";
-    html += "<div class='finished-label-history-sub'>" + esc([formatDateTime(row.issued_at), row.product_category ? tCat(row.product_category) : "", productKindLabel(row.product_kind), tf("finished_label_history_units", { n: row.quantity }), tf("finished_label_history_parts", { n: comps })].filter(Boolean).join(" / ")) + "</div>";
+    html += "<div class='finished-label-history-sub'>" + esc([formatDateTime(row.issued_at), stockNotice, row.product_category ? tCat(row.product_category) : "", productKindLabel(row.product_kind), tf("finished_label_history_units", { n: row.quantity }), tf("finished_label_history_parts", { n: comps })].filter(Boolean).join(" / ")) + "</div>";
     html += statusHtml;
     html += "</div>";
   });
@@ -37024,6 +37066,7 @@ function finishedLabelRecordFromHistory(row, issued) {
   issued = issued || {};
   var units = Array.isArray(issued.units) ? issued.units : (row.finishedUnits || []);
   return {
+    stockPosted: row.stock_posted !== false,
     issueCode: row.issue_code,
     issueId: row.id,
     productionInstructionId: row.production_instruction_id,
