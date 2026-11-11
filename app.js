@@ -57,6 +57,8 @@ var CORE_AI_CAMERA_TEST_URL = "https://script.google.com/macros/s/AKfycbxlaPJSNT
 var TRANSLATIONS = {
 
   ja: {
+    sales_order_claim_intake: "クレーム受付",
+    sales_order_claim_intake_order: "受注 {order} のクレーム受付",
     finished_label_component_load_failed: "部品を読み込めませんでした。「100%使用部品を再セット」を押して読み直してください。",
     finished_label_setup_guide_driver_title: "Windowsにもプリンターを追加したい場合",
     finished_label_setup_guide_driver_desc: "Windowsの通常印刷やP-touch Editorを使う場合は、Brother公式ページで、このPCのWindowsに合うプリンタードライバーを選んでください。D-CATSのIP直接指定による設定は、Windowsのプリンター一覧が0台でも進められます。",
@@ -2921,6 +2923,8 @@ var TRANSLATIONS = {
   },
 
   en: {
+    sales_order_claim_intake: "Start claim",
+    sales_order_claim_intake_order: "Start a claim for order {order}",
     finished_label_component_load_failed: "Unable to load parts. Select Reset 100% Usage Parts to try again.",
     finished_label_setup_guide_driver_title: "Adding the printer to Windows",
     finished_label_setup_guide_driver_desc: "For regular Windows printing or P-touch Editor, choose the printer driver for this PC on the official Brother download page. D-CATS setup by IP address can continue even if Windows lists no printers.",
@@ -5785,6 +5789,8 @@ var TRANSLATIONS = {
   },
 
   zh: {
+    sales_order_claim_intake: "投诉受理",
+    sales_order_claim_intake_order: "受理订单 {order} 的投诉",
     finished_label_component_load_failed: "无法读取零件。请点击“重新设置100%使用零件”重试。",
     finished_label_setup_guide_driver_title: "如需将打印机添加到Windows",
     finished_label_setup_guide_driver_desc: "如需使用Windows常规打印或P-touch Editor，请在Brother官方页面选择适合此电脑Windows版本的打印机驱动。即使Windows打印机列表为空，也可继续通过IP设置D-CATS。",
@@ -20749,7 +20755,7 @@ function salesOrderListRowHtml(order) {
   return "<div class='sales-order-list-row" + (selected ? " selected" : "") + "' data-sales-order-open='" + esc(order.id) + "'>" +
     "<label class='sales-order-check' aria-label='処理対象'><input type='checkbox' data-sales-order-check value='" + esc(order.id) + "'" + (checked ? " checked" : "") + "></label>" +
     "<div class='sales-order-list-main'><div class='sales-order-list-identity'><strong class='sales-order-list-number'>" + esc(orderNumber) + "</strong><span class='sales-order-list-total'><small>合計</small><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></span></div><span class='sales-order-list-customer' title='" + esc(order.customer_name || "-") + "'>" + esc(order.customer_name || "-") + "</span><div class='sales-order-list-context'><div class='sales-order-list-meta'>" + customerOrderSourceBadgeHtml(order.order_source) + "</div><div class='sales-order-list-next'><span aria-label='次の操作'>次</span><strong>" + esc(salesOrderNextOperationLabel(order)) + "</strong></div></div></div>" +
-    (canManageSalesOrders() && salesOrderCanStartClaim(order) ? "<div class='sales-order-claim-entry'><button type='button' data-sales-order-claim-new='" + esc(order.id) + "' aria-label='受注 " + esc(orderNumber) + " のクレーム受付'>クレーム受付</button></div>" : "") +
+    (canManageSalesOrders() && salesOrderCanStartClaim(order) ? "<div class='sales-order-claim-entry'><button type='button' data-sales-order-claim-new='" + esc(order.id) + "' aria-label='" + esc(tf("sales_order_claim_intake_order", { order: orderNumber })) + "'>" + esc(t("sales_order_claim_intake")) + "</button></div>" : "") +
   "</div>";
 }
 
@@ -21617,7 +21623,7 @@ function renderSalesOrderDetail() {
   var actions = allowed.filter(function(action) { return action !== "cancel" && action !== "cancel_after_picking"; }).map(function(action) {
     return "<button type='button' class='sales-order-action " + esc(action) + "' data-sales-order-action='" + esc(action) + "'>" + esc(actionLabels[action] || action) + "</button>";
   }).join("");
-  if (canManageSalesOrders() && salesOrderCanStartClaim(order)) actions += "<button type='button' data-sales-order-claim-new='" + esc(order.id) + "'>クレーム受付</button>";
+  if (canManageSalesOrders() && salesOrderCanStartClaim(order)) actions += "<button type='button' data-sales-order-claim-new='" + esc(order.id) + "'>" + esc(t("sales_order_claim_intake")) + "</button>";
   actions += "<button type='button' data-sales-order-claim-open>クレーム案件を開く</button>";
   var purgeStatus = order.development_test_order_purge || {};
   var cancellationAction = salesOrderCancellationAction(order);

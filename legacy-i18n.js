@@ -8282,3 +8282,19 @@ Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {
   "この案件を再開しますか？": "是否重新开启此案件？",
   "前回の保存結果が未確認です。再送せず「保存結果を照会」を押してください。": "尚未确认上次保存结果。请勿重新提交，请点击查询保存结果。"
 });
+
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {
+  "クレーム受付": "Start claim",
+  "出荷済み商品・シリアルを選びます。": "Select a shipped item and serial number.",
+  "出荷済みの元受注明細を選びます。": "Select an item from a shipped order.",
+  "出荷明細を再読込": "Reload shipped items",
+  "出荷済みの商品を読み込んでいます。": "Loading shipped items."
+});
+
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {
+  "クレーム受付": "投诉受理",
+  "出荷済み商品・シリアルを選びます。": "请选择已出货的商品及序列号。",
+  "出荷済みの元受注明細を選びます。": "请选择已出货的原订单明细。",
+  "出荷明細を再読込": "重新加载出货明细",
+  "出荷済みの商品を読み込んでいます。": "正在加载已出货商品。"
+});
