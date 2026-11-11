@@ -9525,6 +9525,7 @@ function conciergeNavigationProfileStamp(profile) {
     Object.keys(overrides).sort().map(function (key) { return [key, overrides[key]]; })]);
 }
 function conciergeNavigationBusy() {
+  if (window.DcatsContainerStockImport && !window.DcatsContainerStockImport.canLeave()) return true;
   if (customerOrderSaving || customerOrderCart.length || salesOrderSaving || salesOrderPricingSaving || salesOrderB2ImportSaving || salesOrderB2ExportSaving || salesOrderB2ContractSettingsSaving || salesOrderPrintSettingsSaving ||
       salesAccountingExportSaving || salesAccountingExportCodeSavingKey || salesAccountingProductOnboardingSaving || shippingDocumentSaving || shippingDocumentBatchSelectionDirty || coreReturnManagementSaving ||
       shippingWaybillLayoutSaving || shippingHandwrittenWaybillSaving || shippingRateFormSaving || shippingServiceVisibilitySavingKey || customerAccessSettingsSaving || customerAccessRegistrationSaving || customerAccessRegistrationReading ||
@@ -9547,6 +9548,7 @@ function createConciergeScreenRoutes() { return Object.freeze({
   "finished-product-shipping": { allowed: canManageFinishedProductShipping, open: function () { return enterFinishedProductShipping(); } },
   "core-list-mgmt": { allowed: canViewCoreManagement, open: function () { return enterCoreListMgmt(); } },
   "product-kind-stock-mgmt": { allowed: canViewProductKindStockMgmt, open: function () { return enterProductKindStockMgmt(); } },
+  "container-stock-mgmt": { allowed: canEditProductKindStockMgmt, open: function () { return enterContainerStockMgmt(); } },
   "manufacturing-cost-mgmt": { allowed: canViewManufacturingCostMgmt, open: function () { return enterManufacturingCostMgmt(); } },
   "rakuten-price": { allowed: canUseRakutenResearch, open: function () { return enterRakutenPrice(); } },
   "rakuten-bulk": { allowed: canUseRakutenResearch, destination: "rakuten-price", open: function () { return enterRakutenBulk(); } },

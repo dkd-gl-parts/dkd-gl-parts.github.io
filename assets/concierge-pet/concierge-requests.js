@@ -261,6 +261,7 @@
     ],
     "core-list-mgmt": ["コア管理", "Core management", "旧件管理"],
     "product-kind-stock-mgmt": ["在庫管理", "Inventory", "库存管理"],
+    "container-stock-mgmt": ["コンテナ一括入庫", "Container stock receipt", "集装箱批量入库"],
     "manufacturing-cost-mgmt": ["製造原価", "Manufacturing cost", "制造成本"],
     "rakuten-price": [
       "ECモール価格調査",
