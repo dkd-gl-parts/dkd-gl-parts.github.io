@@ -314,6 +314,8 @@ jobs:
         run: node scripts/verify-security-response-headers.js
       - name: Verify purchase multiple-link management
         run: node scripts/verify-purchase-multiple-links.js
+      - name: Verify production report ranks and compatibility inheritance
+        run: node scripts/verify-production-report-ranks.js
       - name: Verify manufacturing ranking performance
         run: node scripts/verify-manufacturing-ranking-performance.js
       - name: Verify manufacturing ranking supplier report

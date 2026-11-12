@@ -377,6 +377,216 @@
     return rows;
   }
 
+
+  // Rank inheritance uses product codes and explicit membership only.
+  // No part-number match, report master-match candidate, or group chain is an edge.
+  var productionRanks;
+  function resetProductionRanks() {
+    productionRanks = { owner: "", status: "idle", map: Object.create(null), index: null,
+      products: Object.create(null), groups: Object.create(null), complete: new Set(),
+      failed: new Set(), pending: null, basePending: null, loadedAt: 0 };
+  }
+  resetProductionRanks();
+
+  function productionRankOwner() {
+    if (typeof currentUser === "undefined" || !currentUser ||
+        typeof userProfile === "undefined" || !userProfile ||
+        String(currentUser.id) !== String(userProfile.id) ||
+        typeof canViewProductionFeatures !== "function" || !canViewProductionFeatures() ||
+        typeof canViewManufacturingReport !== "function" || !canViewManufacturingReport()) return "";
+    return String(currentUser.id);
+  }
+
+  function productionRankStatus(product) {
+    var owner = productionRankOwner();
+    if (!owner) return "denied";
+    if (owner !== productionRanks.owner) return "idle";
+    if (productionRanks.loadedAt && Date.now() - productionRanks.loadedAt >= 300000) return "idle";
+    if (product) {
+      var id = String(product.dkd_shohin_id || "");
+      if (productionRanks.complete.has(id)) return "ready";
+      if (productionRanks.failed.has(id)) return "error";
+    }
+    return productionRanks.status === "error" ? "error" : product ? "loading" : productionRanks.status;
+  }
+
+  function productionRankFor(product) {
+    if (productionRankStatus(product) !== "ready") return null;
+    return productionRanks.map[String(product && product.dkd_shohin_id || "")] || null;
+  }
+
+  function productionRankCode(value) {
+    var code = normalizeText(value);
+    return /^\d+$/.test(code) ? code.replace(/^0+(?=\d)/, "") : code;
+  }
+
+  function indexProductionRankSources(rows, sheets) {
+    var ranking = buildRanking(rows, {
+      categories: defaultSourceCategories(sheets), reportType: "manufacturing", metric: "shipment",
+      rankScope: "overall", startRank: 1, endRank: MAX_SOURCE_ROWS,
+      minShipment: 0, query: "", compatibilityMode: "all",
+      compatibilityBasis: "none", productCategories: [], vehicleTargets: []
+    });
+    var byCode = Object.create(null);
+    ranking.results.forEach(function(result) {
+      var code = productionRankCode(result.row.productCode);
+      if (code && (!byCode[code] || result.rank < byCode[code])) byCode[code] = result.rank;
+    });
+    return byCode;
+  }
+
+  function buildProductionRankMap(rows, sheets, membership, products, sourceIndex) {
+    var byCode = sourceIndex || indexProductionRankSources(rows, sheets);
+    var own = Object.create(null), groups = Object.create(null), best = Object.create(null);
+    (products || []).forEach(function(product) {
+      var id = String(product.dkd_shohin_id);
+      var rank = byCode[productionRankCode(product.dks_shohin_cd)];
+      if (rank) own[id] = { rank: rank, sourceProductId: id };
+    });
+    (membership || []).forEach(function(member) {
+      if (member.kikan_group_id == null || member.dkd_gokan_id == null) return;
+      var id = String(member.dkd_gokan_id), group = String(member.kikan_group_id);
+      if (!groups[id]) groups[id] = [];
+      if (groups[id].indexOf(group) < 0) groups[id].push(group);
+      if (own[id] && (!best[group] || own[id].rank < best[group].rank)) best[group] = own[id];
+    });
+    var map = Object.create(null);
+    (products || []).forEach(function(product) {
+      var id = String(product.dkd_shohin_id), rank = own[id];
+      (groups[id] || []).forEach(function(group) {
+        if (best[group] && (!rank || best[group].rank < rank.rank)) rank = best[group];
+      });
+      if (rank) map[id] = { rank: rank.rank, sourceProductId: rank.sourceProductId, inherited: id !== rank.sourceProductId };
+    });
+    return map;
+  }
+
+  async function fetchProductionRankPages(table, columns, field, ids, checkCurrent, size) {
+    var values = uniqueIds(ids), chunks = [], all = [];
+    for (var i = 0; i < values.length; i += size) chunks.push(values.slice(i, i + size));
+    for (var start = 0; start < chunks.length; start += REFERENCE_QUERY_CONCURRENCY) {
+      checkCurrent();
+      var responses = await Promise.all(chunks.slice(start, start + REFERENCE_QUERY_CONCURRENCY).map(async function(chunk) {
+        var rows = [];
+        for (var offset = 0; ; offset += DATA_PAGE_SIZE) {
+          checkCurrent();
+          var response = await sb.from(table).select(columns).in(field, chunk)
+            .order(table === "core_products" ? "dkd_shohin_id" : "id", { ascending: true })
+            .range(offset, offset + DATA_PAGE_SIZE - 1);
+          if (response.error) throw response.error;
+          var page = response.data || [];
+          rows = rows.concat(page);
+          if (page.length < DATA_PAGE_SIZE) return rows;
+        }
+      }));
+      responses.forEach(function(rows) { all = all.concat(rows); });
+    }
+    return all;
+  }
+
+  async function loadProductionRankIndex(cache, checkCurrent) {
+    if (cache.index) return;
+    if (cache.basePending) return cache.basePending;
+    cache.basePending = (async function() {
+      var response = await sb.from("manufacturing_report_datasets")
+        .select("id,report_year,row_count,sheet_manifest").eq("is_active", true)
+        .order("report_year", { ascending: false }).order("imported_at", { ascending: false })
+        .limit(1).maybeSingle();
+      if (response.error) throw response.error;
+      if (!response.data) throw new Error("Manufacturing ranking unavailable");
+      var dataset = response.data;
+      var sheets = (dataset.sheet_manifest || []).map(function(sheet) {
+        return { name: normalizeText(sheet.name), isAggregate: !!sheet.is_aggregate, count: Number(sheet.count) };
+      });
+      var categories = defaultSourceCategories(sheets);
+      var selected = sheets.filter(function(sheet) { return categories.indexOf(sheet.name) >= 0; });
+      var count = selected.reduce(function(total, sheet) { return total + sheet.count; }, 0);
+      if (!categories.length || !Number.isInteger(count) || count < 1 || count > MAX_SOURCE_ROWS) throw new Error("Invalid manufacturing ranking row count");
+      var offsets = [], rows = [];
+      for (var offset = 0; offset < count; offset += DATA_PAGE_SIZE) offsets.push(offset);
+      for (var start = 0; start < offsets.length; start += DATA_PAGE_CONCURRENCY) {
+        checkCurrent();
+        var pages = await Promise.all(offsets.slice(start, start + DATA_PAGE_CONCURRENCY).map(function(offset) {
+          return sb.from("manufacturing_report_rows")
+            .select("id,dataset_id,category_name,category_order,source_row_number,is_aggregate,product_code,genuine_part_number,manufacturer_part_number,shipment_count")
+            .eq("dataset_id", dataset.id).in("category_name", categories)
+            .order("category_order", { ascending: true }).order("source_row_number", { ascending: true })
+            .order("id", { ascending: true }).range(offset, offset + DATA_PAGE_SIZE - 1);
+        }));
+        pages.forEach(function(page) { if (page.error) throw page.error; rows = rows.concat(page.data || []); });
+      }
+      checkCurrent();
+      if (rows.length !== count) throw new Error("Incomplete manufacturing ranking");
+      cache.index = indexProductionRankSources(rows.map(mapDatabaseRow), sheets);
+      cache.reportYear = Number(dataset.report_year);
+      cache.loadedAt = Date.now();
+    })();
+    try { await cache.basePending; } finally { cache.basePending = null; }
+  }
+
+  async function loadProductionRanks(products) {
+    var owner = productionRankOwner();
+    if (!owner) { resetProductionRanks(); return; }
+    if (productionRanks.owner !== owner ||
+        (productionRanks.loadedAt && Date.now() - productionRanks.loadedAt >= 300000)) resetProductionRanks();
+    var cache = productionRanks;
+    cache.owner = owner;
+    var ids = uniqueIds((products || []).map(function(product) { return product && product.dkd_shohin_id; }));
+    if (!ids.length || ids.every(function(id) { return cache.complete.has(id); })) return;
+    function checkCurrent() {
+      if (productionRanks !== cache || productionRankOwner() !== owner) throw new Error("Production rank request superseded");
+    }
+    var previous = cache.pending || Promise.resolve();
+    var job = previous.then(async function() {
+      var targets = ids.filter(function(id) { return !cache.complete.has(id); });
+      if (!targets.length) return;
+      cache.status = "loading";
+      targets.forEach(function(id) { cache.failed.delete(id); });
+      try {
+        checkCurrent();
+        var loaded = await Promise.all([
+          loadProductionRankIndex(cache, checkCurrent),
+          fetchProductionRankPages("kikan_group_members", "id,kikan_group_id,dkd_gokan_id",
+            "dkd_gokan_id", targets, checkCurrent, 150)
+        ]);
+        var direct = loaded[1];
+        var groupIds = uniqueIds(direct.map(function(member) { return member.kikan_group_id; }));
+        var missingGroups = groupIds.filter(function(id) { return !cache.groups[id]; });
+        var members = await fetchProductionRankPages("kikan_group_members", "id,kikan_group_id,dkd_gokan_id",
+          "kikan_group_id", missingGroups, checkCurrent, 25);
+        checkCurrent();
+        missingGroups.forEach(function(group) { cache.groups[group] = []; });
+        members.forEach(function(member) { cache.groups[String(member.kikan_group_id)].push(member); });
+        var membership = [];
+        groupIds.forEach(function(group) { membership = membership.concat(cache.groups[group]); });
+        var productIds = uniqueIds(targets.concat(membership.map(function(member) { return member.dkd_gokan_id; })));
+        var missingProducts = productIds.filter(function(id) { return !Object.prototype.hasOwnProperty.call(cache.products, id); });
+        var records = await fetchProductionRankPages("core_products", "dkd_shohin_id,dks_shohin_cd",
+          "dkd_shohin_id", missingProducts, checkCurrent, 200);
+        checkCurrent();
+        missingProducts.forEach(function(id) { cache.products[id] = null; });
+        records.forEach(function(product) { cache.products[String(product.dkd_shohin_id)] = product; });
+        var rankMap = buildProductionRankMap([], [], membership,
+          productIds.map(function(id) { return cache.products[id]; }).filter(Boolean), cache.index);
+        targets.forEach(function(id) {
+          var rank = rankMap[id];
+          if (rank) { rank.reportYear = cache.reportYear; cache.map[id] = rank; }
+          else delete cache.map[id];
+          cache.complete.add(id);
+        });
+        cache.status = "ready";
+      } catch (error) {
+        if (productionRanks === cache && productionRankOwner() === owner) {
+          targets.forEach(function(id) { delete cache.map[id]; cache.failed.add(id); });
+          cache.status = "error";
+          console.warn("production manufacturing ranking lookup failed");
+        }
+      }
+    });
+    cache.pending = job;
+    try { await job; } finally { if (cache.pending === job) cache.pending = null; }
+  }
+
   function uniqueIds(values) {
     var seen = Object.create(null);
     return (values || []).filter(function(value) {
@@ -597,6 +807,7 @@
 
   async function loadDcatsSource() {
     if (state.isLoading) return;
+    resetProductionRanks();
     state.dataset = null;
     state.fileName = "";
     state.rows = [];
@@ -2082,6 +2293,12 @@
   window.enterManufacturingRankingReport = enterManufacturingRankingReport;
   window.DCatsManufacturingRankingReport = {
     buildRanking: buildRanking,
+    buildProductionRankMap: buildProductionRankMap,
+    indexProductionRankSources: indexProductionRankSources,
+    loadProductionRanks: loadProductionRanks,
+    productionRankFor: productionRankFor,
+    productionRankStatus: productionRankStatus,
+    resetProductionRanks: resetProductionRanks,
     matchesVehicleFilters: matchesVehicleFilters,
     defaultSourceCategories: defaultSourceCategories,
     vehicleClassificationText: vehicleClassificationText,
