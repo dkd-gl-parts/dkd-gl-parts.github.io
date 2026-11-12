@@ -1991,6 +1991,10 @@ var TRANSLATIONS = {
     core_list_no_ranking_source: "ランキング側に追加できるコア候補がありません",
     production_ranking_search_ph: "順位・品番・メーカー・DKD商品IDで検索",
     production_ranking_rank: "順位",
+    production_report_rank_loading: "順位取得中",
+    production_report_rank_error: "順位未取得",
+    production_report_rank_denied: "順位閲覧権限なし",
+    production_report_rank_source: "{year}年 製造ランキング：出荷数・全体集計／互換グループの最上位",
     production_ranking_year: "年度",
     production_ranking_source: "元リスト",
     production_ranking_status: "状態",
@@ -4863,6 +4867,10 @@ var TRANSLATIONS = {
     core_list_no_ranking_source: "No CORE candidates available in ranking",
     production_ranking_search_ph: "Search by rank, part number, manufacturer, or DKD ID",
     production_ranking_rank: "Rank",
+    production_report_rank_loading: "Loading rank",
+    production_report_rank_error: "Rank unavailable",
+    production_report_rank_denied: "Rank access denied",
+    production_report_rank_source: "{year} manufacturing ranking: shipments, overall / best rank in the compatibility group",
     production_ranking_year: "Year",
     production_ranking_source: "Source",
     production_ranking_status: "Status",
@@ -7736,6 +7744,10 @@ var TRANSLATIONS = {
     core_list_no_ranking_source: "排行中没有可添加的CORE候选",
     production_ranking_search_ph: "按排名、零件编号、制造商或DKD ID搜索",
     production_ranking_rank: "排名",
+    production_report_rank_loading: "排名加载中",
+    production_report_rank_error: "排名未获取",
+    production_report_rank_denied: "无排名查看权限",
+    production_report_rank_source: "{year}年生产排名：总出货量／互换组内最高排名",
     production_ranking_year: "年度",
     production_ranking_source: "来源",
     production_ranking_status: "状态",
@@ -8744,7 +8756,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1309";
+var APP_VERSION       = "v1.1.1310";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -12137,6 +12149,7 @@ async function signOutAllDevices() {
 }
 
 async function doLogout() {
+  resetProductionReportRanks();
   if (typeof claimCaseWorkspace !== "undefined" && claimCaseWorkspace) claimCaseWorkspace.reset();
   claimCaseReturnContext = null;
   if (packingBoxesController) packingBoxesController.close();
@@ -24361,6 +24374,7 @@ async function enterSearch(options) {
 async function enterProductionSearch() {
   if (!canViewProductionFeatures()) { showPermissionDenied("open_production_search", "core_products"); return; }
   showScreen("production-search");
+  resetProductionReportRanks();
   var productionAddBtn = document.getElementById("production-add-core-product");
   if (productionAddBtn) setCspStyle(productionAddBtn, "display", canEdit() ? "" : "none");
   productionFilter = "all";
@@ -24623,6 +24637,35 @@ async function selectProductionFilter(filter) {
   }
 }
 
+function productionReportRankFor(row) {
+  var service = window.DCatsManufacturingRankingReport;
+  return service && typeof service.productionRankFor === "function" ? service.productionRankFor(row) : null;
+}
+
+function resetProductionReportRanks() {
+  var service = window.DCatsManufacturingRankingReport;
+  if (service && typeof service.resetProductionRanks === "function") service.resetProductionRanks();
+}
+
+async function loadProductionReportRanks() {
+  var service = window.DCatsManufacturingRankingReport;
+  if (service && typeof service.loadProductionRanks === "function") await service.loadProductionRanks();
+}
+
+function renderProductionReportRank(row, detail) {
+  var service = window.DCatsManufacturingRankingReport;
+  var rank = productionReportRankFor(row);
+  var status = service && typeof service.productionRankStatus === "function" ? service.productionRankStatus() : "error";
+  var label = rank ? (detail ? t("production_ranking_rank") + " #" : "#") + rank.rank
+    : status === "ready" ? "" : t(status === "denied" ? "production_report_rank_denied"
+      : status === "error" ? "production_report_rank_error" : "production_report_rank_loading");
+  if (!label) return detail ? "" : "<div></div>";
+  var title = rank ? tf("production_report_rank_source", { year: rank.reportYear }) : label;
+  var tag = detail ? "span" : "div";
+  return "<" + tag + " class='" + (detail ? "production-priority" : "production-rank") +
+    "' title='" + esc(title) + "'>" + esc(label) + "</" + tag + ">";
+}
+
 function enrichProductionProduct(row) {
   var inst = productionInstructionFor(row);
   var coreKey = productDkdId(row);
@@ -24643,9 +24686,9 @@ function enrichProductionProduct(row) {
 
 function sortProductionRows() {
   productionRows.sort(function(a,b) {
-    var ai = productionInstructionFor(a), bi = productionInstructionFor(b);
-    var ar = ai ? ai.priority_rank : 999999;
-    var br = bi ? bi.priority_rank : 999999;
+    var ai = productionReportRankFor(a), bi = productionReportRankFor(b);
+    var ar = ai ? ai.rank : 999999;
+    var br = bi ? bi.rank : 999999;
     if (ar !== br) return ar - br;
     var arc = productRebuiltComponentCount(a);
     var brc = productRebuiltComponentCount(b);
@@ -24804,7 +24847,8 @@ async function loadProductionAuxiliaryData(products, options) {
     fetchCoreStockQtyMap(products),
     fetchProductVariantSummaryMap(products),
     fetchProductSearchCardFlags(products),
-    fetchProductImageCountMapForContext(products, "all")
+    fetchProductImageCountMapForContext(products, "all"),
+    loadProductionReportRanks()
   ]);
   if (auxSeq !== productionAuxRequestSeq) return;
   var componentCounts = fast[0] || {};
@@ -24910,7 +24954,7 @@ function renderProductionList() {
     var hasSL = productHasSlPart(row, slNums);
     var hasKikan = hasProductKikanCompatible(row);
     var imageCount = getProductionImageCount(row);
-    var rankHtml = inst ? "<div class='production-rank'>#" + esc(inst.priority_rank || "-") + "</div>" : "<div></div>";
+    var rankHtml = renderProductionReportRank(row, false);
     var meta = [
       row.manufacturer || "-",
       productionCategoryLabel(row),
@@ -26013,9 +26057,7 @@ async function renderProductionDetail(row) {
   var detail = await loadProductionDetailData(row);
   if (seq !== productionDetailRequestSeq) return;
   var title = row.manufacturer_part_number || row.genuine_part_number || row.daiko_part_number || ("DKD " + row.dkd_shohin_id);
-  var priorityHtml = inst
-    ? "<span class='production-priority'>" + esc(t("production_ranking_rank")) + " #" + esc(inst.priority_rank || "-") + "</span>"
-    : "";
+  var priorityHtml = renderProductionReportRank(row, true);
   var html = "";
   html += "<div class='production-detail-head'>";
   html += "<div class='production-head-main'><div class='production-head-context'><span>" + esc(productionCategoryLabel(row)) + "</span>" + priorityHtml + "</div>";
