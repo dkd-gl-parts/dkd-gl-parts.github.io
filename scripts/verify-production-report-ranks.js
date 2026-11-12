@@ -91,5 +91,43 @@ function context({rows=[row(1,100),row(2,80),row(9,40)],members=[],products=[pro
  assert.equal(rankRefreshes,0);resolveRank();await Promise.resolve();await Promise.resolve();assert.equal(rankRefreshes,1);
  await auxiliary.loadProductionAuxiliaryData([product(1)]);auxiliary.productionAuxRequestSeq++;resolveRank();await Promise.resolve();await Promise.resolve();
  assert.equal(rankRefreshes,1,"late rank response must not repaint a newer search");
+
+ // The compatible search button opens a product directly, outside auxiliary-data loading.
+ async function directRoute({rankOptions={},rankLoader=null,detailWait=null}={}) {
+  const fixture=context({...rankOptions,members:[{id:1,kikan_group_id:7,dkd_gokan_id:1},{id:2,kikan_group_id:7,dkd_gokan_id:2},{id:3,kikan_group_id:7,dkd_gokan_id:3}],products:[product(1),product(2),product(3,null)]});
+  const c=fixture.c,rankLoads=[],paints=[],query={value:""};let rankTask;
+  const from=c.sb.from.bind(c.sb);c.sb.from=table=>table==="core_product_search_view"?{select(){return this},eq(field,id){this.id=id;return this},async maybeSingle(){return {data:product(this.id,null)}}}:from(table);
+  Object.assign(c,{productionRows:[product(1),product(2)],productionFilteredRows:[],currentProductionRow:product(1),
+   document:{getElementById:id=>id==="production-q"?query:null},productDkdId:p=>String(p.dkd_shohin_id),
+   applyCachedSearchAuxiliaryMaps(){},enrichProductionProduct:p=>p,normalizeCoreProductFastRows:p=>p,
+   renderProductionFilterChips(){},renderProductionCategoryFilterOptions(){},showScreen(){},updateAllHeaders(){},focusProductionResultIndex(){},logProductDetailOpen(){},
+   t:k=>k,alert:()=>assert.fail("unexpected missing product"),
+   renderProductionList(){c.productionFilteredRows=c.productionRows.slice()},
+   async renderProductionDetail(){if(detailWait)await detailWait},
+   loadProductionReportRanks:products=>{rankLoads.push(products.map(p=>p.dkd_shohin_id));rankTask=rankLoader?rankLoader(products):fixture.api.loadProductionRanks(products);return rankTask},
+   refreshProductionReportRankViews(){paints.push({id:c.currentProductionRow.dkd_shohin_id,status:fixture.api.productionRankStatus(c.currentProductionRow),rank:fixture.api.productionRankFor(c.currentProductionRow)?.rank})}
+  });
+  const start=app.indexOf("function productionSearchTermForRow("),end=app.indexOf("\nfunction closePanel()",start);
+  vm.runInContext(app.slice(start,end),c);
+  return {...fixture,rankLoads,paints,query,settled:async()=>{await rankTask;await Promise.resolve()}};
+ }
+ const direct=await directRoute();await direct.api.loadProductionRanks([product(1)]);
+ assert.equal(direct.api.productionRankStatus(product(2)),"loading","cached compatible metadata is not a completed target rank");
+ const directReads=direct.calls.length;await direct.c.openProductionCompatibleProduct(2);await direct.settled();
+ assert.equal(direct.api.productionRankStatus(product(2)),"ready","compatible search must actually start rank loading");
+ assert.equal(direct.api.productionRankFor(product(2)).rank,2,"direct opening retains the target's own rank");
+ assert.equal(direct.calls.length-directReads,1,"direct sibling navigation reuses aggregate and group caches");
+ assert.equal(direct.paints.at(-1).rank,2,"completed rank refreshes the selected product");
+ const warmReads=direct.calls.length;await direct.c.openProductionCompatibleProduct(2);await direct.settled();assert.equal(direct.calls.length,warmReads);
+ await direct.c.openProductionCompatibleProduct(3);await direct.settled();
+ assert.equal(direct.api.productionRankFor(product(3)).rank,1,"fetched unlisted compatible product receives its fallback rank");
+ assert.equal(direct.paints.at(-1).id,3);
+ for(const options of [{fail:true},{denied:true}]){const brokenRoute=await directRoute({rankOptions:options});await brokenRoute.c.openProductionCompatibleProduct(2);await brokenRoute.settled();assert.equal(brokenRoute.api.productionRankStatus(product(2)),options.denied?"denied":"error");assert.equal(brokenRoute.paints.length,1,"failure or denial clears the loading presentation");}
+ let releaseDirect;const delayedRoute=await directRoute({rankLoader:()=>new Promise(resolve=>releaseDirect=resolve)});
+ await delayedRoute.c.openProductionCompatibleProduct(2);assert.equal(delayedRoute.rankLoads.length,1,"rank load starts without delaying navigation");
+ delayedRoute.c.currentProductionRow=product(1);releaseDirect();await delayedRoute.settled();assert.equal(delayedRoute.paints.length,0,"late rank completion cannot repaint another selected product");
+ let releaseUser;const userRoute=await directRoute({rankLoader:()=>new Promise(resolve=>releaseUser=resolve)});await userRoute.c.openProductionCompatibleProduct(2);userRoute.c.currentUser={id:"other"};releaseUser();await userRoute.settled();assert.equal(userRoute.paints.length,0,"late completion cannot repaint a different session");
+ let releaseDetail;const slowDetail=await directRoute({detailWait:new Promise(resolve=>releaseDetail=resolve)});const detailTask=slowDetail.c.openProductionCompatibleProduct(2);await slowDetail.settled();assert.equal(slowDetail.api.productionRankStatus(product(2)),"ready","rank load is independent of slow detail data");releaseDetail();await detailTask;
+
  console.log("Production ranks: exact source product codes, explicit group scope, B2020 exclusion, no indirect inheritance, scoped aggregate reads, bounded pagination, zero-read warm cache, one-read group reuse, permissions, stale responses and nonblocking UI passed.");
 })().catch(e=>{console.error(e);process.exitCode=1});
