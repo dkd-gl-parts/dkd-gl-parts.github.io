@@ -1958,6 +1958,7 @@ var TRANSLATIONS = {
     lbl_model: "型式",
     lbl_category: "カテゴリ",
     btn_add_part: "商品を追加",
+    parts_mgmt_search_incomplete: "検索の一部を取得できませんでした。再検索してください。",
     parts_mgmt_search_label: "商品を検索",
     parts_mgmt_create_label: "新規登録",
     part_form_add_title: "商品追加",
@@ -4834,6 +4835,7 @@ var TRANSLATIONS = {
     lbl_model: "Model Code",
     lbl_category: "Category",
     btn_add_part: "Add Part",
+    parts_mgmt_search_incomplete: "Some search results could not be loaded. Please search again.",
     parts_mgmt_search_label: "Search products",
     parts_mgmt_create_label: "New product",
     part_form_add_title: "Add Part",
@@ -7720,6 +7722,7 @@ var TRANSLATIONS = {
     lbl_model: "型号代码",
     lbl_category: "类别",
     btn_add_part: "添加零件",
+    parts_mgmt_search_incomplete: "部分搜索结果未能加载，请重新搜索。",
     parts_mgmt_search_label: "搜索商品",
     parts_mgmt_create_label: "新建商品",
     btn_add_core_list: "添加库存CORE",
@@ -8756,7 +8759,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1314";
+var APP_VERSION       = "v1.1.1315";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -30083,6 +30086,7 @@ var partsMgmtData = [];
 var partsMgmtWeightLoadFailed = false;
 var partsMgmtWeightSortDirection = ""; // "", "ascending", or "descending"
 var partsMgmtSearchInFlight = false;
+var partsMgmtSearchFailed = false;
 var partFormMode  = "add"; // "add" or "edit"
 var partFormSource = "parts"; // "parts" or "core_products"
 var coreProductFormContext = "sales"; // "sales", "production", or "management"
@@ -30198,6 +30202,7 @@ function togglePartsMgmtWeightSort() {
 
 async function loadPartsMgmt() {
   var q = document.getElementById("parts-mgmt-search").value.trim();
+  partsMgmtSearchFailed = false;
 
   if (!isDaikoGroup()) {
     var visibleDkdIds = await fetchActiveSlLinkedDkdIds(10000);
@@ -30247,7 +30252,31 @@ async function loadPartsMgmt() {
     );
   }
   var r = await query;
+  partsMgmtSearchFailed = !!r.error;
   partsMgmtData = r.data || [];
+
+  if (q && !/^\d+$/.test(q)) {
+    var coreMatches = await fetchCoreProductMasterMatches(q, null, 200);
+    if (coreMatches.error) {
+      partsMgmtSearchFailed = true;
+      console.warn("core product management search failed", coreMatches.error);
+    } else {
+      var seenCoreIds = {};
+      partsMgmtData.forEach(function(row) {
+        var id = row.dkd_shohin_id;
+        if (id) seenCoreIds[String(id)] = true;
+      });
+      (coreMatches.data || []).forEach(function(row) {
+        var id = String(row.dkd_shohin_id);
+        if (seenCoreIds[id]) return;
+        seenCoreIds[id] = true;
+        var product = Object.assign({}, row);
+        product._coreManaged = true;
+        partsMgmtData.push(product);
+      });
+      partsMgmtData = partsMgmtData.slice(0, 200);
+    }
+  }
 
   if (q && /^\d+$/.test(q)) {
     var coreId = parseInt(q, 10);
@@ -30271,7 +30300,8 @@ function renderPartsMgmt() {
   var list     = document.getElementById("parts-mgmt-list");
   var countEl  = document.getElementById("parts-mgmt-count");
   if (countEl) countEl.textContent = partsMgmtData.length + " 件";
-  if (!partsMgmtData.length) { list.innerHTML = "<div class='empty'>該当する商品がありません</div>"; return; }
+  var searchWarning = partsMgmtSearchFailed ? "<div class='parts-mgmt-weight-error' role='status'>" + esc(t("parts_mgmt_search_incomplete")) + "</div>" : "";
+  if (!partsMgmtData.length) { list.innerHTML = searchWarning || "<div class='empty'>該当する商品がありません</div>"; return; }
   var weightSortAria = partsMgmtWeightSortDirection || "none";
   var weightSortIndicator = partsMgmtWeightSortDirection === "ascending" ? "▲" : (partsMgmtWeightSortDirection === "descending" ? "▼" : "↕");
   var weightSortOrderLabel = partsMgmtWeightSortOrderLabel();
@@ -30300,7 +30330,7 @@ function renderPartsMgmt() {
   if (partsMgmtWeightLoadFailed) {
     html = "<div class='parts-mgmt-weight-error' role='status'>" + esc(t("product_weight_list_load_failed")) + "</div>" + html;
   }
-  list.innerHTML = html;
+  list.innerHTML = searchWarning + html;
   var weightSortButton = list.querySelector("[data-parts-weight-sort]");
   if (weightSortButton) weightSortButton.addEventListener("click", togglePartsMgmtWeightSort);
   if (!canEdit()) {
@@ -43262,10 +43292,25 @@ async function fetchSlPartProducts(q, categoryFilter, maxRows) {
   return { data: rows, error: null };
 }
 
+function mitsubishiManufacturerSearchAliases(value) {
+  var key = normalizePartQuery(value);
+  var longForm = key.match(/^([AM])00([0-9]T[A-Z0-9]*)$/);
+  var shortForm = key.match(/^([AM])([0-9]T[A-Z0-9]*)$/);
+  if (longForm) return [longForm[1] + longForm[2]];
+  if (shortForm) return [shortForm[1] + "00" + shortForm[2]];
+  return [];
+}
+
 async function fetchCoreProductMasterMatches(q, categoryFilter, maxRows, options) {
   options = options || {};
   var normalized = normalizePartQuery(q);
   var raw = String(q || "").trim();
+  var mitsubishiAliases = mitsubishiManufacturerSearchAliases(q);
+  function manufacturerAliasFilters(operator, suffix) {
+    return mitsubishiAliases.map(function(alias) {
+      return "and(manufacturer.eq.MITSUBISHI,normalized_manufacturer_part_number." + operator + "." + alias + (suffix || "") + ")";
+    });
+  }
   if (!normalized && !raw) return { data: [] };
   maxRows = maxRows || productSearchLimit;
   var normalizedFields = [
@@ -43304,12 +43349,15 @@ async function fetchCoreProductMasterMatches(q, categoryFilter, maxRows, options
   }).concat(directExactFields.map(function(column) {
     return column + ".eq." + normalized;
   })) : [];
+  if (!options.preferPrefix) exactParts = exactParts.concat(manufacturerAliasFilters("eq"));
   var exact = await runCoreProductQuery(exactParts, 1);
   if (exact.error || (exact.data || []).length || options.exactOnly) return exact;
 
   var prefixParts = normalized ? normalizedFields.map(function(column) {
     return column + ".like." + normalized + "%";
   }) : [];
+
+  prefixParts = prefixParts.concat(manufacturerAliasFilters("like", "%"));
 
   var fast = normalized ? await sb.rpc("search_core_products_by_prefix_fast", {
     search_prefix: normalized,
@@ -43320,13 +43368,37 @@ async function fetchCoreProductMasterMatches(q, categoryFilter, maxRows, options
     console.warn("Fast core product prefix search failed; falling back to direct lookup", fast.error);
     fast = await runCoreProductQuery(prefixParts, 2);
   } else {
-    fast.data = normalizeCoreProductFastRows(fast.data || []).slice(0, maxRows);
+    fast.data = normalizeCoreProductFastRows(fast.data || []);
+    if (mitsubishiAliases.length) {
+      var aliasPrefix = await sb.rpc("search_core_products_by_prefix_fast", {
+        search_prefix: mitsubishiAliases[0],
+        category_filter: categoryFilter || null,
+        max_rows: maxRows
+      });
+      if (aliasPrefix.error) {
+        aliasPrefix = await runCoreProductQuery(manufacturerAliasFilters("like", "%"), 2);
+      }
+      if (aliasPrefix.error) return aliasPrefix;
+      fast.data = fast.data.concat(normalizeCoreProductFastRows(aliasPrefix.data || []).filter(function(row) {
+        return String(row.manufacturer || "").trim().toUpperCase() === "MITSUBISHI";
+      }));
+    }
+    var seen = {};
+    fast.data = fast.data.filter(function(row) {
+      var id = String(row.dkd_shohin_id);
+      if (seen[id]) return false;
+      seen[id] = true;
+      return true;
+    }).slice(0, maxRows);
   }
   if (fast.error || (fast.data || []).length) return fast;
 
   var orParts = normalized ? normalizedFields.map(function(column) {
     return column + ".ilike.%" + normalized + "%";
   }) : [];
+  orParts = orParts.concat(mitsubishiAliases.map(function(alias) {
+    return "and(manufacturer.eq.MITSUBISHI,normalized_manufacturer_part_number.ilike.%" + alias + "%)";
+  }));
   return await runCoreProductQuery(orParts, 2);
 }
 
