@@ -8756,7 +8756,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1310";
+var APP_VERSION       = "v1.1.1311";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -24374,7 +24374,6 @@ async function enterSearch(options) {
 async function enterProductionSearch() {
   if (!canViewProductionFeatures()) { showPermissionDenied("open_production_search", "core_products"); return; }
   showScreen("production-search");
-  resetProductionReportRanks();
   var productionAddBtn = document.getElementById("production-add-core-product");
   if (productionAddBtn) setCspStyle(productionAddBtn, "display", canEdit() ? "" : "none");
   productionFilter = "all";
@@ -24647,15 +24646,15 @@ function resetProductionReportRanks() {
   if (service && typeof service.resetProductionRanks === "function") service.resetProductionRanks();
 }
 
-async function loadProductionReportRanks() {
+async function loadProductionReportRanks(products) {
   var service = window.DCatsManufacturingRankingReport;
-  if (service && typeof service.loadProductionRanks === "function") await service.loadProductionRanks();
+  if (service && typeof service.loadProductionRanks === "function") await service.loadProductionRanks(products || productionRows);
 }
 
 function renderProductionReportRank(row, detail) {
   var service = window.DCatsManufacturingRankingReport;
   var rank = productionReportRankFor(row);
-  var status = service && typeof service.productionRankStatus === "function" ? service.productionRankStatus() : "error";
+  var status = service && typeof service.productionRankStatus === "function" ? service.productionRankStatus(row) : "error";
   var label = rank ? (detail ? t("production_ranking_rank") + " #" : "#") + rank.rank
     : status === "ready" ? "" : t(status === "denied" ? "production_report_rank_denied"
       : status === "error" ? "production_report_rank_error" : "production_report_rank_loading");
@@ -24664,6 +24663,17 @@ function renderProductionReportRank(row, detail) {
   var tag = detail ? "span" : "div";
   return "<" + tag + " class='" + (detail ? "production-priority" : "production-rank") +
     "' title='" + esc(title) + "'>" + esc(label) + "</" + tag + ">";
+}
+
+function refreshProductionReportRankViews() {
+  sortProductionRows();
+  renderProductionList();
+  var context = document.querySelector("#production-detail .production-head-context");
+  if (!context || !currentProductionRow || context.dataset.productionRankDkd !== productDkdId(currentProductionRow)) return;
+  var badge = context.querySelector(".production-priority");
+  if (badge) badge.remove();
+  var html = renderProductionReportRank(currentProductionRow, true);
+  if (html) context.insertAdjacentHTML("beforeend", html);
 }
 
 function enrichProductionProduct(row) {
@@ -24842,13 +24852,16 @@ async function loadProductionProducts(options) {
 async function loadProductionAuxiliaryData(products, options) {
   options = options || {};
   var auxSeq = ++productionAuxRequestSeq;
+  loadProductionReportRanks(products).then(function() {
+    if (auxSeq !== productionAuxRequestSeq) return;
+    refreshProductionReportRankViews();
+  }).catch(function() { console.warn("production rank refresh failed"); });
   var fast = await Promise.all([
     fetchProductionPartRegistrationCountMap(products),
     fetchCoreStockQtyMap(products),
     fetchProductVariantSummaryMap(products),
     fetchProductSearchCardFlags(products),
-    fetchProductImageCountMapForContext(products, "all"),
-    loadProductionReportRanks()
+    fetchProductImageCountMapForContext(products, "all")
   ]);
   if (auxSeq !== productionAuxRequestSeq) return;
   var componentCounts = fast[0] || {};
@@ -26060,7 +26073,7 @@ async function renderProductionDetail(row) {
   var priorityHtml = renderProductionReportRank(row, true);
   var html = "";
   html += "<div class='production-detail-head'>";
-  html += "<div class='production-head-main'><div class='production-head-context'><span>" + esc(productionCategoryLabel(row)) + "</span>" + priorityHtml + "</div>";
+  html += "<div class='production-head-main'><div class='production-head-context' data-production-rank-dkd='" + esc(productDkdId(row)) + "'><span>" + esc(productionCategoryLabel(row)) + "</span>" + priorityHtml + "</div>";
   html += "<div class='production-detail-title'>" + esc(title) + "</div>";
   html += "<div class='production-detail-meta'>";
   html += "<span><small>" + esc(t("f_genuine_pn")) + "</small><strong>" + esc(row.genuine_part_number || "-") + "</strong></span>";
