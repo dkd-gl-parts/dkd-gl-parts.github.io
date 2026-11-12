@@ -56,7 +56,7 @@ document.getElementById("production-list").addEventListener("click",function(eve
 window.qaReady=true;qaRender();
 `;
  return {
- "/":{type:"text/html",body:'<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/styles.css"></head><body>'+screen+'<script src="/fixture.js"></script><script src="/report.js"></script><script src="/start.js"></script></body></html>'},
+ "/":{type:"text/html",body:'<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/styles.css"></head><body>'+screen+'<script src="/fixture.js"></script><script src="/report.js"></script><script src="/start.js"></script></body></html>'},
  "/fixture.js":{type:"application/javascript",body:script},
  "/report.js":{type:"application/javascript",body:fs.readFileSync(path.join(root,"manufacturing-ranking-report.js"),"utf8")},
  "/start.js":{type:"application/javascript",body:"qaRender();"},
@@ -72,7 +72,7 @@ async function run(){
   await new Promise(r=>server.listen(0,"127.0.0.1",r));browser=await chromium.launch({headless:true});
   for(const width of [1280,390,320])for(const lang of ["ja","en","zh"]){
    const p=await browser.newPage({viewport:{width,height:900}}),errors=[];p.on("pageerror",e=>{errors.push(e.message);console.error("Production QA page error:",e.message);});
-   await p.goto("http://127.0.0.1:"+server.address().port+"?lang="+lang);await p.waitForFunction(()=>window.qaReady);
+   await p.goto("http://127.0.0.1:"+server.address().port+"?lang="+lang);await p.waitForFunction(()=>window.qaReady);assert.equal(await p.evaluate(()=>document.characterSet),"UTF-8");
    await p.evaluate(()=>{window.qaPending=qaLoad("held")});await p.waitForFunction(()=>!!window.qaRelease);
    assert.equal(await p.locator(".production-card .production-rank").first().textContent(),await p.evaluate(()=>t("production_report_rank_loading")));
    await p.evaluate(()=>qaRelease());await p.evaluate(()=>qaPending);
