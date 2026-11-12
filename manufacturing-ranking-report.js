@@ -453,9 +453,12 @@
     var map = Object.create(null);
     (products || []).forEach(function(product) {
       var id = String(product.dkd_shohin_id), rank = own[id];
-      (groups[id] || []).forEach(function(group) {
-        if (best[group] && (!rank || best[group].rank < rank.rank)) rank = best[group];
-      });
+      // A ranked product keeps its own position; compatibility is a fallback only.
+      if (!rank) {
+        (groups[id] || []).forEach(function(group) {
+          if (best[group] && (!rank || best[group].rank < rank.rank)) rank = best[group];
+        });
+      }
       if (rank) map[id] = { rank: rank.rank, sourceProductId: rank.sourceProductId, inherited: id !== rank.sourceProductId };
     });
     return map;
