@@ -13,7 +13,8 @@ function fixtureFiles() {
  const head=detail.slice(detail.indexOf("  var priorityHtml ="),detail.indexOf('  html += "<div class=\'production-workspace\'>";'));
  assert(head.includes("renderProductionReportRank(row, true)"));
  const script=app.slice(dictionary.start,dictionary.end)+"\n"+[
-  "productionReportRankFor","resetProductionReportRanks","loadProductionReportRanks","renderProductionReportRank","renderProductionList"
+  "productionReportRankFor","resetProductionReportRanks","loadProductionReportRanks","renderProductionReportRank","renderProductionList","refreshProductionReportRankViews",
+  "productionSearchTermForRow","openProductionProductByDkdId","openProductionCompatibleProduct","renderProductionKikanPartsList"
  ].map(fn).join("\n")+"\n"+String.raw`
 var qaLang=new URLSearchParams(location.search).get("lang")||"ja", qaMode="success",qaAllowed=true,qaCalls=0;
 var currentUser={id:"synthetic-rank-user"},userProfile={id:"synthetic-rank-user"};
@@ -24,12 +25,13 @@ var productionRows=[
  {dkd_shohin_id:9,manufacturer_part_number:"SYN-1009",genuine_part_number:"QA-1001"},
  {dkd_shohin_id:99,manufacturer_part_number:"SYN-1099",genuine_part_number:"QA-1001"}
 ],productionFilteredRows=[],currentProductionRow=productionRows[0],productionStampSearchActive=false,productionSearchTotalCount=null,productionSearchHasMore=false;
+var qaCatalog=productionRows.slice();
 var qaRows=[1,2,9].map((id,i)=>({id:id,dataset_id:"fixture",category_name:"全体集計",category_order:1,source_row_number:i+1,is_aggregate:true,product_code:String(id),manufacturer_part_number:"SYN-"+id,shipment_count:[100,80,50][i],substitute_count:0,master_product_ids:[id],master_checked_at:"checked",genuine_part_number:"QA-1001"}));
 qaRows.push({id:99,dataset_id:"fixture",category_name:"全体集計",category_order:1,source_row_number:99,is_aggregate:true,product_code:"99",manufacturer_part_number:"ALDK-EXCLUDED",genuine_part_number:"QA-1001",shipment_count:90});
 var qaProducts=productionRows.map(p=>({dkd_shohin_id:p.dkd_shohin_id,dks_shohin_cd:String(p.dkd_shohin_id)}));
 var qaMembers=[{id:1,kikan_group_id:1,dkd_gokan_id:1},{id:2,kikan_group_id:1,dkd_gokan_id:2},{id:3,kikan_group_id:1,dkd_gokan_id:3}];
-var sb={from:function(table){qaCalls++;return {ids:[],field:"",select:function(){return this},eq:function(){return this},order:function(){return this},limit:function(){return this},in:function(field,ids){this.field=field;this.ids=ids.map(String);return this},
- maybeSingle:async function(){if(qaMode==="held")await new Promise(resolve=>window.qaRelease=resolve);return {data:{id:"fixture",report_year:2025,row_count:4,sheet_manifest:[{name:"全体集計",is_aggregate:true,count:4}]}};},
+var sb={from:function(table){qaCalls++;return {ids:[],field:"",select:function(){return this},eq:function(field,id){this.key=field;this.id=id;return this},order:function(){return this},limit:function(){return this},in:function(field,ids){this.field=field;this.ids=ids.map(String);return this},
+ maybeSingle:async function(){if(table==="core_product_search_view")return {data:qaCatalog.find(p=>p.dkd_shohin_id===this.id)};if(qaMode==="held")await new Promise(resolve=>window.qaRelease=resolve);return {data:{id:"fixture",report_year:2025,row_count:4,sheet_manifest:[{name:"全体集計",is_aggregate:true,count:4}]}};},
  range:async function(start,end){if(qaMode==="error")return {error:Error("synthetic network failure")};return {data:(table==="manufacturing_report_rows"?qaRows:table==="core_products"?qaProducts.filter(p=>this.ids.indexOf(String(p.dkd_shohin_id))>=0):qaMembers.filter(m=>this.ids.indexOf(String(m[this.field]))>=0)).slice(start,end+1)}}
 }}};
 function t(k){return TRANSLATIONS[qaLang][k]||TRANSLATIONS.ja[k]||k}
@@ -37,6 +39,11 @@ function tf(k,values){return t(k).replace(/\{(\w+)\}/g,(_,key)=>values[key])}
 function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function canViewProductionFeatures(){return qaAllowed}function canViewManufacturingReport(){return qaAllowed}
 function productDkdId(row){return String(row.dkd_shohin_id)}
+function sortProductionRows(){}
+function applyCachedSearchAuxiliaryMaps(){}function enrichProductionProduct(p){return p}function normalizeCoreProductFastRows(rows){return rows}
+function renderProductionFilterChips(){}function renderProductionCategoryFilterOptions(){}function showScreen(){}function updateAllHeaders(){}function focusProductionResultIndex(){}function logProductDetailOpen(){}
+function canSeeCoreStockInfo(){return false}function renderKikanStockHtml(){return ""}
+async function renderProductionDetail(row){renderQaDetail(row)}
 function productionInstructionFor(){return {priority_rank:94}}
 function productionMatchesFilter(){return true}
 function productionMatchesQuery(row,q){return !q||row.manufacturer_part_number.indexOf(q)>=0}
@@ -49,8 +56,10 @@ function renderProductionComponentCountBadges(){return ""}function renderProduct
 function renderProductKindPills(){return ""}function renderResultBadgeSlots(){return ""}
 function canViewFinishedLabelMgmt(){return false}function canEdit(){return false}function canManageAllImages(){return false}function canManageProduct3D(){return false}function canUseProductPhotoTools(){return false}
 function renderQaDetail(row){var title=row.manufacturer_part_number;`+head+String.raw`
-document.getElementById("production-detail").innerHTML=html;}
+document.getElementById("production-detail").innerHTML=html+"<div class='production-workspace'><div class='production-master-column'><section class='production-section production-kikan-section'><div class='production-section-heading'><h3>"+esc(t("kikan_section"))+"</h3></div><div id='production-kikan-wrap'></div></section></div></div>";
+renderProductionKikanPartsList(qaCatalog.filter(p=>p.dkd_shohin_id<=3&&p.dkd_shohin_id!==row.dkd_shohin_id),document.getElementById("production-kikan-wrap"));}
 window.qaRender=function(){renderProductionList();renderQaDetail(currentProductionRow);}
+window.qaSetupDirect=async function(){qaMode="success";qaAllowed=true;productionRows=[qaCatalog[0]];currentProductionRow=productionRows[0];document.getElementById("production-q").value="";resetProductionReportRanks();await loadProductionReportRanks(productionRows);qaRender();}
 window.qaLoad=async function(mode){qaMode=mode||"success";qaAllowed=mode!=="denied";resetProductionReportRanks();var promise=loadProductionReportRanks();qaRender();await promise;qaRender();}
 document.getElementById("production-q").addEventListener("input",qaRender);
 document.getElementById("production-search-btn").addEventListener("click",()=>qaLoad());
@@ -95,7 +104,28 @@ async function run(){
    await p.screenshot({path:path.join(output,"production-report-rank-"+lang+"-"+width+".png"),fullPage:true});
    for(const mode of ["error","denied"]){await p.evaluate(mode=>qaLoad(mode),mode);assert.equal(await p.locator(".production-card .production-rank").first().textContent(),await p.evaluate(mode=>t("production_report_rank_"+(mode==="error"?"error":"denied")),mode));assert(!(await p.locator(".production-priority").textContent()).includes("#"));}
    await p.evaluate(()=>qaLoad("success"));assert.equal(await p.locator(".production-card .production-rank").first().textContent(),"#1");
-   assert.deepEqual(errors,[]);results.push({width,lang,passed:true});await p.close();
+
+   await p.evaluate(()=>qaSetupDirect());
+   assert.equal(await p.evaluate(()=>DCatsManufacturingRankingReport.productionRankStatus(qaCatalog[1])),"loading","group metadata alone must not masquerade as a completed target rank");
+   const directReads=await p.evaluate(()=>qaCalls);
+   await p.locator('[data-production-kikan-search="2"]').click();
+   await p.waitForFunction(()=>currentProductionRow.dkd_shohin_id===2&&DCatsManufacturingRankingReport.productionRankStatus(currentProductionRow)==="ready");
+   await p.waitForFunction(()=>document.querySelector(".production-priority").textContent.includes("#2"));
+   assert.equal(await p.locator('[data-dkd-id="2"] .production-rank').textContent(),"#2");
+   assert.equal((await p.evaluate(()=>qaCalls))-directReads,2,"fetched compatible target needs only its product and direct membership reads");
+   if(lang==="ja")await p.screenshot({path:path.join(output,"production-report-rank-compatible-direct-ja-"+width+".png"),fullPage:true});
+   await p.locator('[data-production-kikan-search="3"]').click();
+   await p.waitForFunction(()=>currentProductionRow.dkd_shohin_id===3&&document.querySelector(".production-priority").textContent.includes("#1"));
+   assert.equal(await p.locator('[data-dkd-id="3"] .production-rank').textContent(),"#1","unlisted direct target uses registered compatibility fallback");
+   const backReads=await p.evaluate(()=>qaCalls);await p.locator('[data-production-kikan-search="1"]').click();
+   await p.waitForFunction(()=>currentProductionRow.dkd_shohin_id===1&&document.querySelector(".production-priority").textContent.includes("#1"));
+   assert.equal(await p.evaluate(()=>qaCalls),backReads,"returning to a cached target requires no reads");
+   for(const mode of ["error","denied"]){
+    await p.evaluate(async()=>qaSetupDirect());await p.evaluate(mode=>{qaMode=mode;qaAllowed=mode!=="denied"},mode);
+    await p.locator('[data-production-kikan-search="2"]').click();
+    await p.waitForFunction(mode=>document.querySelector(".production-priority").textContent===t("production_report_rank_"+(mode==="error"?"error":"denied")),mode);
+   }
+   assert.deepEqual(errors,[]);results.push({width,lang,passed:true,directCompatibleNavigation:true});await p.close();
   }
   fs.writeFileSync(path.join(output,"production-report-ranks-results.json"),JSON.stringify({passed:true,synthetic:true,productionWrites:0,results},null,2));
   console.log("Production report ranks browser QA passed: "+results.length+" desktop/mobile/language scenarios");

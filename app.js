@@ -8756,7 +8756,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1313";
+var APP_VERSION       = "v1.1.1314";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -44200,6 +44200,11 @@ async function openProductionProductByDkdId(dkdId, options) {
   showScreen("production-search");
   updateAllHeaders();
   renderProductionList();
+  var rankUserId = currentUser && currentUser.id;
+  loadProductionReportRanks([row]).then(function() {
+    if (!currentUser || currentUser.id !== rankUserId || !currentProductionRow || productDkdId(currentProductionRow) !== productDkdId(row)) return;
+    refreshProductionReportRankViews();
+  }).catch(function() { console.warn("production direct rank refresh failed"); });
   var selectedIndex = productionFilteredRows.findIndex(function(p) { return parseInt(productDkdId(p), 10) === id; });
   await renderProductionDetail(row);
   if (selectedIndex >= 0) focusProductionResultIndex(selectedIndex);
