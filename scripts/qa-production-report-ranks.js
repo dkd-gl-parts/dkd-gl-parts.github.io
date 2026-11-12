@@ -45,13 +45,13 @@ function getProductionImageCount(){return 0}function productionCategoryLabel(){r
 function productKindLabel(k){return k==="rebuilt"?"リビルト":"新品"}function productionProductKindStockQty(){return 0}
 function renderProductionComponentCountBadges(){return ""}function renderProductionStampMatchHtml(){return ""}
 function renderProductKindPills(){return ""}function renderResultBadgeSlots(){return ""}
-function canViewFinishedLabelMgmt(){return false}function canEdit(){return false}function canManageAllImages(){return false}function canManageProduct3D(){return false}
+function canViewFinishedLabelMgmt(){return false}function canEdit(){return false}function canManageAllImages(){return false}function canManageProduct3D(){return false}function canUseProductPhotoTools(){return false}
 function renderQaDetail(row){var title=row.manufacturer_part_number;`+head+String.raw`
 document.getElementById("production-detail").innerHTML=html;}
 window.qaRender=function(){renderProductionList();renderQaDetail(currentProductionRow);}
 window.qaLoad=async function(mode){qaMode=mode||"success";qaAllowed=mode!=="denied";resetProductionReportRanks();var promise=loadProductionReportRanks();qaRender();await promise;qaRender();}
 document.getElementById("production-q").addEventListener("input",qaRender);
-document.getElementById("btn-production-search").addEventListener("click",()=>qaLoad());
+document.getElementById("production-search-btn").addEventListener("click",()=>qaLoad());
 document.getElementById("production-list").addEventListener("click",function(event){var card=event.target.closest("[data-dkd-id]");if(card){currentProductionRow=productionRows.find(row=>String(row.dkd_shohin_id)===card.dataset.dkdId);qaRender();}});
 window.qaReady=true;qaRender();
 `;
@@ -71,7 +71,7 @@ async function run(){
  try{
   await new Promise(r=>server.listen(0,"127.0.0.1",r));browser=await chromium.launch({headless:true});
   for(const width of [1280,390,320])for(const lang of ["ja","en","zh"]){
-   const p=await browser.newPage({viewport:{width,height:900}}),errors=[];p.on("pageerror",e=>errors.push(e.message));
+   const p=await browser.newPage({viewport:{width,height:900}}),errors=[];p.on("pageerror",e=>{errors.push(e.message);console.error("Production QA page error:",e.message);});
    await p.goto("http://127.0.0.1:"+server.address().port+"?lang="+lang);await p.waitForFunction(()=>window.qaReady);
    await p.evaluate(()=>{window.qaPending=qaLoad("held")});await p.waitForFunction(()=>!!window.qaRelease);
    assert.equal(await p.locator(".production-card .production-rank").first().textContent(),await p.evaluate(()=>t("production_report_rank_loading")));
