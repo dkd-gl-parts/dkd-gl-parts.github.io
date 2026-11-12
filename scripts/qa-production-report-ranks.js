@@ -78,7 +78,7 @@ async function run(){
    await p.evaluate(()=>{window.qaPending=qaLoad("held")});await p.waitForFunction(()=>!!window.qaRelease);
    assert.equal(await p.locator(".production-card .production-rank").first().textContent(),await p.evaluate(()=>t("production_report_rank_loading")));
    await p.evaluate(()=>qaRelease());await p.evaluate(()=>qaPending);
-   for(const id of [1,2,3])assert.equal(await p.locator('[data-dkd-id="'+id+'"] .production-rank').textContent(),"#1");
+   for(const [id,rank] of [[1,1],[2,2],[3,1]])assert.equal(await p.locator('[data-dkd-id="'+id+'"] .production-rank').textContent(),"#"+rank);
    assert.equal(await p.locator('[data-dkd-id="9"] .production-rank').textContent(),"#3");
    assert.equal(await p.locator('[data-dkd-id="99"] .production-rank').count(),0);
    assert((await p.locator(".production-priority").textContent()).includes("#1"));
@@ -86,7 +86,9 @@ async function run(){
    assert(!(await p.locator(".production-body").textContent()).includes("#94"));
    const reads=await p.evaluate(()=>qaCalls);await p.evaluate(async()=>{await loadProductionReportRanks();qaRender();});assert.equal(await p.evaluate(()=>qaCalls),reads,"warm rank display needs no new network reads");
    if(width<768)await p.evaluate(()=>document.getElementById("production-q").value="");
-   await p.locator('[data-dkd-id="2"]').click();assert((await p.locator(".production-priority").textContent()).includes("#1"));
+   await p.locator('[data-dkd-id="2"]').click();assert((await p.locator(".production-priority").textContent()).includes("#2"));
+   if(lang==="ja")await p.screenshot({path:path.join(output,"production-report-rank-own-ja-"+width+".png"),fullPage:true});
+   await p.locator('[data-dkd-id="3"]').click();assert((await p.locator(".production-priority").textContent()).includes("#1"));
    await p.locator("#production-q").fill("SYN-1009");assert.equal(await p.locator(".production-card .production-rank").textContent(),"#3");
    await p.locator("#production-q").fill("");
    assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),"no page horizontal overflow");

@@ -1994,7 +1994,7 @@ var TRANSLATIONS = {
     production_report_rank_loading: "順位取得中",
     production_report_rank_error: "順位未取得",
     production_report_rank_denied: "順位閲覧権限なし",
-    production_report_rank_source: "{year}年 製造ランキング：出荷数・全体集計／互換グループの最上位",
+    production_report_rank_source: "{year}年 製造ランキング：出荷数・全体集計／本人順位を優先、未掲載のみ登録互換から継承",
     production_ranking_year: "年度",
     production_ranking_source: "元リスト",
     production_ranking_status: "状態",
@@ -4870,7 +4870,7 @@ var TRANSLATIONS = {
     production_report_rank_loading: "Loading rank",
     production_report_rank_error: "Rank unavailable",
     production_report_rank_denied: "Rank access denied",
-    production_report_rank_source: "{year} manufacturing ranking: shipments, overall / best rank in the compatibility group",
+    production_report_rank_source: "{year} manufacturing ranking: overall shipments / own rank first; registered compatibility is used only when unlisted",
     production_ranking_year: "Year",
     production_ranking_source: "Source",
     production_ranking_status: "Status",
@@ -7747,7 +7747,7 @@ var TRANSLATIONS = {
     production_report_rank_loading: "排名加载中",
     production_report_rank_error: "排名未获取",
     production_report_rank_denied: "无排名查看权限",
-    production_report_rank_source: "{year}年生产排名：总出货量／互换组内最高排名",
+    production_report_rank_source: "{year}年生产排名：总出货量／优先自身排名，未收录时才采用已登记互换排名",
     production_ranking_year: "年度",
     production_ranking_source: "来源",
     production_ranking_status: "状态",
@@ -8756,7 +8756,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1312";
+var APP_VERSION       = "v1.1.1313";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
