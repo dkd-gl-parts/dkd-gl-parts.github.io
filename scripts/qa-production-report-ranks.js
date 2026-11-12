@@ -21,14 +21,16 @@ var productionRows=[
  {dkd_shohin_id:1,manufacturer_part_number:"SYN-1001",genuine_part_number:"QA-1001"},
  {dkd_shohin_id:2,manufacturer_part_number:"SYN-1002",genuine_part_number:"QA-1002"},
  {dkd_shohin_id:3,manufacturer_part_number:"SYN-1003",genuine_part_number:"QA-1003"},
- {dkd_shohin_id:9,manufacturer_part_number:"SYN-1009",genuine_part_number:"QA-1009"},
- {dkd_shohin_id:99,manufacturer_part_number:"SYN-1099",genuine_part_number:"QA-1099"}
+ {dkd_shohin_id:9,manufacturer_part_number:"SYN-1009",genuine_part_number:"QA-1001"},
+ {dkd_shohin_id:99,manufacturer_part_number:"SYN-1099",genuine_part_number:"QA-1001"}
 ],productionFilteredRows=[],currentProductionRow=productionRows[0],productionStampSearchActive=false,productionSearchTotalCount=null,productionSearchHasMore=false;
-var qaRows=[1,2,9].map((id,i)=>({id:id,dataset_id:"fixture",category_name:"全体集計",category_order:1,source_row_number:i+1,is_aggregate:true,product_code:String(id),manufacturer_part_number:"SYN-"+id,shipment_count:[100,80,50][i],substitute_count:0,master_product_ids:[id],master_checked_at:"checked"}));
+var qaRows=[1,2,9].map((id,i)=>({id:id,dataset_id:"fixture",category_name:"全体集計",category_order:1,source_row_number:i+1,is_aggregate:true,product_code:String(id),manufacturer_part_number:"SYN-"+id,shipment_count:[100,80,50][i],substitute_count:0,master_product_ids:[id],master_checked_at:"checked",genuine_part_number:"QA-1001"}));
+qaRows.push({id:99,dataset_id:"fixture",category_name:"全体集計",category_order:1,source_row_number:99,is_aggregate:true,product_code:"99",manufacturer_part_number:"ALDK-EXCLUDED",genuine_part_number:"QA-1001",shipment_count:90});
+var qaProducts=productionRows.map(p=>({dkd_shohin_id:p.dkd_shohin_id,dks_shohin_cd:String(p.dkd_shohin_id)}));
 var qaMembers=[{id:1,kikan_group_id:1,dkd_gokan_id:1},{id:2,kikan_group_id:1,dkd_gokan_id:2},{id:3,kikan_group_id:1,dkd_gokan_id:3}];
 var sb={from:function(table){qaCalls++;return {ids:[],field:"",select:function(){return this},eq:function(){return this},order:function(){return this},limit:function(){return this},in:function(field,ids){this.field=field;this.ids=ids.map(String);return this},
- maybeSingle:async function(){if(qaMode==="held")await new Promise(resolve=>window.qaRelease=resolve);return {data:{id:"fixture",report_year:2025,row_count:3,sheet_manifest:[{name:"全体集計",is_aggregate:true}]}};},
- range:async function(start,end){if(qaMode==="error")return {error:Error("synthetic network failure")};return {data:(table==="manufacturing_report_rows"?qaRows:qaMembers.filter(m=>this.ids.indexOf(String(m[this.field]))>=0)).slice(start,end+1)}}
+ maybeSingle:async function(){if(qaMode==="held")await new Promise(resolve=>window.qaRelease=resolve);return {data:{id:"fixture",report_year:2025,row_count:4,sheet_manifest:[{name:"全体集計",is_aggregate:true,count:4}]}};},
+ range:async function(start,end){if(qaMode==="error")return {error:Error("synthetic network failure")};return {data:(table==="manufacturing_report_rows"?qaRows:table==="core_products"?qaProducts.filter(p=>this.ids.indexOf(String(p.dkd_shohin_id))>=0):qaMembers.filter(m=>this.ids.indexOf(String(m[this.field]))>=0)).slice(start,end+1)}}
 }}};
 function t(k){return TRANSLATIONS[qaLang][k]||TRANSLATIONS.ja[k]||k}
 function tf(k,values){return t(k).replace(/\{(\w+)\}/g,(_,key)=>values[key])}
@@ -82,6 +84,7 @@ async function run(){
    assert((await p.locator(".production-priority").textContent()).includes("#1"));
    assert((await p.locator(".production-priority").getAttribute("title")).includes("2025"));
    assert(!(await p.locator(".production-body").textContent()).includes("#94"));
+   const reads=await p.evaluate(()=>qaCalls);await p.evaluate(async()=>{await loadProductionReportRanks();qaRender();});assert.equal(await p.evaluate(()=>qaCalls),reads,"warm rank display needs no new network reads");
    if(width<768)await p.evaluate(()=>document.getElementById("production-q").value="");
    await p.locator('[data-dkd-id="2"]').click();assert((await p.locator(".production-priority").textContent()).includes("#1"));
    await p.locator("#production-q").fill("SYN-1009");assert.equal(await p.locator(".production-card .production-rank").textContent(),"#3");
