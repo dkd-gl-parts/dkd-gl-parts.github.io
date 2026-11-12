@@ -377,6 +377,187 @@
     return rows;
   }
 
+
+  // Production badges share the report's default ranking; keep this cache
+  // separate from the report workspace's user-selected filters and file imports.
+  var productionRanks = { epoch: 0, owner: "", status: "idle", map: Object.create(null), pending: null, loadedAt: 0 };
+
+  function productionRankOwner() {
+    if (typeof currentUser === "undefined" || !currentUser ||
+        typeof userProfile === "undefined" || !userProfile ||
+        String(currentUser.id) !== String(userProfile.id) ||
+        typeof canViewProductionFeatures !== "function" || !canViewProductionFeatures() ||
+        typeof canViewManufacturingReport !== "function" || !canViewManufacturingReport()) return "";
+    return String(currentUser.id);
+  }
+
+  function resetProductionRanks() {
+    productionRanks = { epoch: productionRanks.epoch + 1, owner: "", status: "idle", map: Object.create(null), pending: null, loadedAt: 0 };
+  }
+
+  function productionRankStatus() {
+    var owner = productionRankOwner();
+    if (!owner) return "denied";
+    return owner === productionRanks.owner ? productionRanks.status : "idle";
+  }
+
+  function productionRankFor(product) {
+    if (productionRankStatus() !== "ready") return null;
+    return productionRanks.map[String(product && product.dkd_shohin_id || "")] || null;
+  }
+
+  function buildProductionRankMap(rows, sheets, membership) {
+    var categories = defaultSourceCategories(sheets);
+    var ranking = buildRanking(rows, {
+      categories: categories, reportType: "manufacturing", metric: "shipment",
+      rankScope: "overall", startRank: 1, endRank: MAX_SOURCE_ROWS,
+      minShipment: 0, query: "", compatibilityMode: "all",
+      compatibilityBasis: "maker_genuine", productCategories: [], vehicleTargets: []
+    });
+    var parents = Object.create(null);
+    function find(id) {
+      id = String(id);
+      if (!parents[id]) parents[id] = id;
+      var root = id;
+      while (parents[root] !== root) root = parents[root];
+      while (parents[id] !== id) { var next = parents[id]; parents[id] = root; id = next; }
+      return root;
+    }
+    function union(ids) {
+      if (!ids.length) return;
+      var root = find(ids[0]);
+      ids.slice(1).forEach(function(id) { parents[find(id)] = root; });
+    }
+    var groups = Object.create(null);
+    (membership || []).forEach(function(member) {
+      if (member.kikan_group_id == null || member.dkd_gokan_id == null) return;
+      var groupId = String(member.kikan_group_id);
+      if (!groups[groupId]) groups[groupId] = [];
+      groups[groupId].push(String(member.dkd_gokan_id));
+    });
+    Object.keys(groups).forEach(function(id) { union(groups[id]); });
+    var sourceGroups = new Set();
+    ranking.results.forEach(function(result) {
+      if (sourceGroups.has(result.group)) return;
+      sourceGroups.add(result.group);
+      var ids = [];
+      result.group.forEach(function(row) { ids = ids.concat(row.masterProductIds || []); });
+      union(uniqueIds(ids));
+    });
+    var best = Object.create(null);
+    ranking.results.forEach(function(result) {
+      (result.row.masterProductIds || []).forEach(function(id) {
+        var root = find(id);
+        if (!best[root] || result.rank < best[root].rank) {
+          best[root] = { rank: result.rank, sourceProductId: String(id) };
+        }
+      });
+    });
+    var map = Object.create(null);
+    Object.keys(parents).forEach(function(id) {
+      var rank = best[find(id)];
+      if (rank) map[id] = { rank: rank.rank, sourceProductId: rank.sourceProductId, inherited: id !== rank.sourceProductId };
+    });
+    return map;
+  }
+
+  async function fetchProductionRankMembers(productIds, checkCurrent) {
+    var members = new Map(), seenProducts = new Set(), seenGroups = new Set();
+    async function fetchPages(field, ids, chunkSize) {
+      var chunks = [];
+      for (var i = 0; i < ids.length; i += chunkSize) chunks.push(ids.slice(i, i + chunkSize));
+      var all = [];
+      for (var start = 0; start < chunks.length; start += REFERENCE_QUERY_CONCURRENCY) {
+        checkCurrent();
+        var batch = await Promise.all(chunks.slice(start, start + REFERENCE_QUERY_CONCURRENCY).map(async function(chunk) {
+          var rows = [];
+          for (var offset = 0; ; offset += DATA_PAGE_SIZE) {
+            checkCurrent();
+            var response = await sb.from("kikan_group_members")
+              .select("id,kikan_group_id,dkd_gokan_id").in(field, chunk)
+              .order("id", { ascending: true }).range(offset, offset + DATA_PAGE_SIZE - 1);
+            if (response.error) throw response.error;
+            var page = response.data || [];
+            rows = rows.concat(page);
+            if (page.length < DATA_PAGE_SIZE) return rows;
+          }
+        }));
+        batch.forEach(function(rows) { all = all.concat(rows); });
+      }
+      return all;
+    }
+    var frontier = uniqueIds(productIds);
+    while (frontier.length) {
+      frontier.forEach(function(id) { seenProducts.add(id); });
+      var direct = await fetchPages("dkd_gokan_id", frontier, 150);
+      var groupIds = uniqueIds(direct.map(function(row) { return row.kikan_group_id; }))
+        .filter(function(id) { return !seenGroups.has(id); });
+      groupIds.forEach(function(id) { seenGroups.add(id); });
+      var groupMembers = await fetchPages("kikan_group_id", groupIds, 25);
+      direct.concat(groupMembers).forEach(function(row) { members.set(String(row.id), row); });
+      frontier = uniqueIds(groupMembers.map(function(row) { return row.dkd_gokan_id; }))
+        .filter(function(id) { return !seenProducts.has(id); });
+    }
+    return Array.from(members.values());
+  }
+
+  async function loadProductionRanks() {
+    var owner = productionRankOwner();
+    if (!owner) { resetProductionRanks(); return; }
+    if (productionRanks.owner === owner) {
+      if (productionRanks.pending) return productionRanks.pending;
+      if (productionRanks.status === "ready" && Date.now() - productionRanks.loadedAt < 300000) return;
+    }
+    resetProductionRanks();
+    var cache = productionRanks;
+    cache.owner = owner;
+    cache.status = "loading";
+    function checkCurrent() {
+      if (productionRanks !== cache || productionRankOwner() !== owner) throw new Error("Production rank request superseded");
+    }
+    cache.pending = (async function() {
+      try {
+        var response = await sb.from("manufacturing_report_datasets")
+          .select("id,report_year,row_count,sheet_manifest").eq("is_active", true)
+          .order("report_year", { ascending: false }).order("imported_at", { ascending: false })
+          .limit(1).maybeSingle();
+        if (response.error) throw response.error;
+        if (!response.data) throw new Error("Manufacturing ranking unavailable");
+        var dataset = response.data;
+        if (!Number.isInteger(Number(dataset.row_count)) || Number(dataset.row_count) < 1 ||
+            Number(dataset.row_count) > MAX_SOURCE_ROWS) throw new Error("Invalid manufacturing ranking row count");
+        checkCurrent();
+        var databaseRows = await fetchDatasetRows(dataset.id, dataset.row_count);
+        checkCurrent();
+        if (databaseRows.length !== Number(dataset.row_count)) throw new Error("Incomplete manufacturing ranking");
+        var rows = databaseRows.map(mapDatabaseRow);
+        if (rows.some(function(row) { return !row.masterCacheReady; })) throw new Error("Manufacturing ranking master links unavailable");
+        var sheets = (dataset.sheet_manifest || []).map(function(sheet) {
+          return { name: normalizeText(sheet.name), isAggregate: !!sheet.is_aggregate };
+        });
+        if (!sheets.length) throw new Error("Manufacturing ranking categories unavailable");
+        var ids = [];
+        rows.forEach(function(row) { ids = ids.concat(row.masterProductIds || []); });
+        var membership = await fetchProductionRankMembers(ids, checkCurrent);
+        checkCurrent();
+        var map = buildProductionRankMap(rows, sheets, membership);
+        Object.keys(map).forEach(function(id) { map[id].reportYear = Number(dataset.report_year); });
+        cache.map = map;
+        cache.status = "ready";
+        cache.loadedAt = Date.now();
+      } catch (error) {
+        if (productionRanks === cache && productionRankOwner() === owner) {
+          cache.map = Object.create(null);
+          cache.status = "error";
+          console.warn("production manufacturing ranking lookup failed");
+        }
+      } finally {
+        cache.pending = null;
+      }
+    })();
+    return cache.pending;
+  }
+
   function uniqueIds(values) {
     var seen = Object.create(null);
     return (values || []).filter(function(value) {
@@ -597,6 +778,7 @@
 
   async function loadDcatsSource() {
     if (state.isLoading) return;
+    resetProductionRanks();
     state.dataset = null;
     state.fileName = "";
     state.rows = [];
@@ -2082,6 +2264,11 @@
   window.enterManufacturingRankingReport = enterManufacturingRankingReport;
   window.DCatsManufacturingRankingReport = {
     buildRanking: buildRanking,
+    buildProductionRankMap: buildProductionRankMap,
+    loadProductionRanks: loadProductionRanks,
+    productionRankFor: productionRankFor,
+    productionRankStatus: productionRankStatus,
+    resetProductionRanks: resetProductionRanks,
     matchesVehicleFilters: matchesVehicleFilters,
     defaultSourceCategories: defaultSourceCategories,
     vehicleClassificationText: vehicleClassificationText,
