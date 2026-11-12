@@ -112,7 +112,7 @@ async function run(){
    await p.waitForFunction(()=>currentProductionRow.dkd_shohin_id===2&&DCatsManufacturingRankingReport.productionRankStatus(currentProductionRow)==="ready");
    await p.waitForFunction(()=>document.querySelector(".production-priority").textContent.includes("#2"));
    assert.equal(await p.locator('[data-dkd-id="2"] .production-rank').textContent(),"#2");
-   assert.equal(await p.evaluate(()=>qaCalls-directReads),2,"fetched compatible target needs only its product and direct membership reads");
+   assert.equal((await p.evaluate(()=>qaCalls))-directReads,2,"fetched compatible target needs only its product and direct membership reads");
    if(lang==="ja")await p.screenshot({path:path.join(output,"production-report-rank-compatible-direct-ja-"+width+".png"),fullPage:true});
    await p.locator('[data-production-kikan-search="3"]').click();
    await p.waitForFunction(()=>currentProductionRow.dkd_shohin_id===3&&document.querySelector(".production-priority").textContent.includes("#1"));
