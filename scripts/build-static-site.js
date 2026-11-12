@@ -32,6 +32,8 @@ const files = [
   "customer-price-report-print.css",
   "customer-price-report.js",
   "container-stock-import.js",
+  "warehouse-stock.js",
+  "warehouse-stock.css",
   "product-data-research.js",
   "product-data-research.css",
   "partsfan-research.js",

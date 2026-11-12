@@ -8744,7 +8744,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1309";
+var APP_VERSION       = "v1.1.1310";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -11702,6 +11702,7 @@ function resetScreenStateForMenu(screenId) {
 }
 
 function showScreen(id) {
+  if (window.DcatsWarehouseStock && !window.DcatsWarehouseStock.beforeNavigate(id)) return;
   var previousScreenId = activeAppScreenName();
   if (typeof claimCaseWorkspace !== "undefined" && claimCaseWorkspace && id !== "claim-case-mgmt") claimCaseWorkspace.reset();
   if ((id === "login" || id === "boot") && window.DcatsProductPhotoTools) window.DcatsProductPhotoTools.forceClose();
@@ -31778,6 +31779,7 @@ async function enterProductKindStockMgmt() {
   if (!canViewProductKindStockMgmt()) { alert(t("err_perm")); return; }
   showScreen("product-kind-stock-mgmt");
   configureProductKindStockMode();
+  if (window.DcatsWarehouseStock) window.DcatsWarehouseStock.refreshAccess();
   var saveBtn = document.getElementById("btn-product-kind-stock-save");
   if (saveBtn) setCspStyle(saveBtn, "display", canEditProductKindStockMgmt() ? "" : "none");
   var containerBtn = document.getElementById("btn-container-stock-open");
