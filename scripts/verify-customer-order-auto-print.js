@@ -102,7 +102,7 @@ for (const fragment of [
   if (!saveSettings.includes(fragment)) throw new Error(`Auto-print save guard is missing: ${fragment}`);
 }
 const enterManagement = sourceBetween("async function enterSalesOrderMgmt", "function renderSalesOrderList");
-if (!enterManagement.includes("Promise.all([refreshSalesOrderManagement(), loadSalesOrderPrintSettings()])")) {
+if (!enterManagement.includes("Promise.all([refreshSalesOrderManagement(), checkSalesOrderPrintReadiness()])")) {
   throw new Error("Orders and print-station state must load together");
 }
 const printerSetup = sourceBetween("function renderSalesOrderPrinterSetup", "async function enterSalesOrderMgmt");
