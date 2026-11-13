@@ -1142,6 +1142,7 @@ async function verifyInternalFirstOutput() {
     currentUser:{id:'qa-user'},canManageSalesOrders:()=>true,t:k=>k,
     salesOrderDispatch:o=>o&&o.dispatch&&o.dispatch.id?o.dispatch:null,
     salesOrderWarrantyDocumentRequired:()=>true,hydrateSalesOrderWarrantyPrintData:async()=>{},
+    hydrateSalesOrderInventory:async order=>{assert(order.dispatch,"Inventory must load after dispatch issuance");},
     renderSalesOrderDetail(){},renderShippingDocumentDetail(){},buildSalesOrderDocumentHtml:()=>'<html>synthetic</html>',
     alert:s=>alerts.push(s),window:{open(){const p={closed:false,close(){this.closed=true;},document:{open(){},write(){},close(){},getElementById(){return null;}}};popups.push(p);return p;}},
     sb:{rpc:(name,args)=>{calls.push({name,args});return new Promise(resolve=>{resolveIssue=resolve;});}}
