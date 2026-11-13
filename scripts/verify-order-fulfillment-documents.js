@@ -1118,11 +1118,11 @@ for (const fragment of [
 ]) requireFragment(i18n, fragment, `B2 reissue translation is missing: ${fragment}`);
 
 for (const fragment of [
-  'content="v1.1.1317"',
-  'styles.css?v=1.1.1317',
-  'app.js?v=1.1.1317'
+  'content="v1.1.1318"',
+  'styles.css?v=1.1.1318',
+  'app.js?v=1.1.1318'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.1317"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.1318"');
 requireFragment(source, 'sales_management_registered: "売上登録済"');
 requireFragment(source, 'sales_management_unknown: "売上確認不可"');
 
@@ -1142,6 +1142,7 @@ async function verifyInternalFirstOutput() {
     currentUser:{id:'qa-user'},canManageSalesOrders:()=>true,t:k=>k,
     salesOrderDispatch:o=>o&&o.dispatch&&o.dispatch.id?o.dispatch:null,
     salesOrderWarrantyDocumentRequired:()=>true,hydrateSalesOrderWarrantyPrintData:async()=>{},
+    hydrateSalesOrderInventory:async order=>{assert(order.dispatch,"Inventory must load after dispatch issuance");},
     renderSalesOrderDetail(){},renderShippingDocumentDetail(){},buildSalesOrderDocumentHtml:()=>'<html>synthetic</html>',
     alert:s=>alerts.push(s),window:{open(){const p={closed:false,close(){this.closed=true;},document:{open(){},write(){},close(){},getElementById(){return null;}}};popups.push(p);return p;}},
     sb:{rpc:(name,args)=>{calls.push({name,args});return new Promise(resolve=>{resolveIssue=resolve;});}}

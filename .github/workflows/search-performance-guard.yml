@@ -181,6 +181,8 @@ jobs:
         run: node scripts/verify-customer-order-batch-accept.js
       - name: Verify sales order operations dashboard
         run: node scripts/verify-sales-order-dashboard.js
+      - name: Verify sales order shelf locations and stock
+        run: node scripts/verify-sales-order-inventory.js
       - name: Verify sales order detail usability
         run: node scripts/verify-sales-order-detail-usability.js
       - name: Verify readable sales order layout
