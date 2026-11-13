@@ -197,8 +197,8 @@ for (const fragment of [
 
 for (const versionFragment of [
   'content="v1.1.1320"',
-  'styles.css?v=1.1.1319',
-  'app.js?v=1.1.1319',
+  'styles.css?v=1.1.1320',
+  'app.js?v=1.1.1320',
   'var APP_VERSION       = "v1.1.1320"'
 ]) {
   const versionSource = versionFragment.startsWith("var ") ? source : html;

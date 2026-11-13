@@ -1119,8 +1119,8 @@ for (const fragment of [
 
 for (const fragment of [
   'content="v1.1.1320"',
-  'styles.css?v=1.1.1319',
-  'app.js?v=1.1.1319'
+  'styles.css?v=1.1.1320',
+  'app.js?v=1.1.1320'
 ]) requireFragment(html, fragment);
 requireFragment(source, 'var APP_VERSION       = "v1.1.1320"');
 requireFragment(source, 'sales_management_registered: "売上登録済"');
