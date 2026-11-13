@@ -3,7 +3,7 @@ const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),
 const {fixtureFiles}=require('../tests/shipping-print-actions.cjs');
 async function main(){
  const {chromium}=require(process.env.WARRANTY_PLAYWRIGHT_MODULE||'playwright'),root=path.resolve(__dirname,'..'),out=path.join(process.env.WARRANTY_QA_OUTPUT||path.join(root,'outputs'),'shipping-print-actions');fs.mkdirSync(out,{recursive:true});
- const files=fixtureFiles(root),server=http.createServer((req,res)=>{const p=new URL(req.url,'http://localhost').pathname;if(!Object.hasOwn(files,p)){res.writeHead(404);res.end();return;}res.setHeader('Content-Type',p.endsWith('.js')?'application/javascript':p.endsWith('.css')?'text/css':'text/html');res.end(files[p]);});await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;const results=[],errors=[];
+ const files=fixtureFiles(root),server=http.createServer((req,res)=>{const p=new URL(req.url,'http://localhost').pathname;if(!Object.hasOwn(files,p)){res.writeHead(404);res.end();return;}res.setHeader('Content-Type',p.endsWith('.js')?'application/javascript; charset=utf-8':p.endsWith('.css')?'text/css; charset=utf-8':'text/html; charset=utf-8');res.end(files[p]);});await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;const results=[],errors=[];
  try{browser=await chromium.launch({headless:true});const page=await browser.newPage();page.on('pageerror',e=>errors.push(String(e)));
  for(const width of [1280,390,320]){
   await page.setViewportSize({width,height:900});await page.goto('http://127.0.0.1:'+server.address().port+'/');
