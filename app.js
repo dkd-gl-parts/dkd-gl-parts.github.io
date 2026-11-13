@@ -8792,7 +8792,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1316";
+var APP_VERSION       = "v1.1.1317";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -44589,6 +44589,12 @@ function salesWarrantyTermsText(policy) {
   return text;
 }
 
+function salesProductWarrantyMatchesCurrent(state) {
+  if (!state || !currentProduct || state.actor !== userProfile) return false;
+  var id = productDkdId(state.product);
+  return state.product === currentProduct || (!!id && id === productDkdId(currentProduct));
+}
+
 function renderSalesProductWarranty() {
   var host = document.getElementById("sales-product-warranty");
   if (!host) return;
@@ -44597,7 +44603,7 @@ function renderSalesProductWarranty() {
   host.hidden = !allowed;
   if (!allowed) { host.textContent = ""; return; }
   var state = salesProductWarrantyState;
-  if (!state || state.product !== currentProduct || state.actor !== userProfile || state.status === "loading") {
+  if (!salesProductWarrantyMatchesCurrent(state) || state.status === "loading") {
     host.textContent = t("sales_warranty_loading");
     return;
   }
@@ -44624,7 +44630,7 @@ async function loadSalesProductWarrantyForCurrent(seq) {
   } catch (error) {
     state.status = "error";
   }
-  if (seq !== detailSecondaryRequestSeq || currentProduct !== state.product || userProfile !== state.actor || salesProductWarrantyState !== state) return;
+  if (seq !== detailSecondaryRequestSeq || !salesProductWarrantyMatchesCurrent(state) || salesProductWarrantyState !== state) return;
   renderSalesProductWarranty();
 }
 
