@@ -26,7 +26,7 @@ module.exports = async function verifyInventory(source, acorn) {
   };
   vm.createContext(ctx);vm.runInContext(source.slice(dictionary.start,dictionary.end),ctx);
   ctx.t=k=>ctx.TRANSLATIONS[ctx.currentLang][k]||ctx.TRANSLATIONS.ja[k]||k;
-  vm.runInContext(["salesOrderInventoryItems","hydrateSalesOrderInventory","salesOrderInventoryItemHtml","salesOrderInventorySectionHtml"].map(fn).join("\n"),ctx);
+  vm.runInContext(["salesOrderInventoryItems","hydrateSalesOrderInventory","salesOrderInventoryItemHtml","salesOrderInventorySectionHtml","ensureSalesOrderInventoryDisplay"].map(fn).join("\n"),ctx);
   let checks=0;const check=(value,label)=>{assert(value,label);checks++;};
   let o=order();await ctx.hydrateSalesOrderInventory(o);
   check(calls.length===1,"duplicate variants share one exact read");
@@ -49,5 +49,9 @@ module.exports = async function verifyInventory(source, acorn) {
   check(fn("printSalesOrderDocument").includes('if (type === "dispatch") await hydrateSalesOrderInventory(order);'),"print refreshes current stock");
   check(fn("buildSalesOrderDispatchPage").includes("salesOrderInventoryItemHtml(order, item)"),"dispatch uses shared view");
   check(fn("renderSalesOrderDetail").includes("salesOrderInventorySectionHtml(order)"),"detail uses shared view");
+  mode="success";o=order();let host={outerHTML:""};ctx.document={getElementById:()=>host};ctx.salesOrderDetail=o;
+  await ctx.ensureSalesOrderInventoryDisplay(o);check(host.outerHTML.includes("GLA-21"),"replaced order after actions loads inventory");
+  reads=0;await ctx.ensureSalesOrderInventoryDisplay(o);check(reads===0,"render does not refetch a loaded snapshot");
+  mode="held";o=order();ctx.salesOrderDetail=o;host.outerHTML="new selection";pending=ctx.ensureSalesOrderInventoryDisplay(o);ctx.salesOrderDetail=order();held();await pending;check(host.outerHTML==="new selection","late action inventory preserves new selection");
   return checks;
 };

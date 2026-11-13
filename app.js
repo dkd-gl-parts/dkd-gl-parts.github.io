@@ -21762,6 +21762,15 @@ function salesOrderInventorySectionHtml(order) {
     }).join("") + "<p>" + esc(t("sales_inventory_note")) + "</p></div>";
 }
 
+async function ensureSalesOrderInventoryDisplay(order) {
+  var actor = currentUser && currentUser.id;
+  if (!actor || !canManageSalesOrders() || order.inventory_display && order.inventory_display.owner === actor) return;
+  await hydrateSalesOrderInventory(order);
+  if (salesOrderDetail !== order || !currentUser || currentUser.id !== actor || !canManageSalesOrders()) return;
+  var host = document.getElementById("sales-order-inventory");
+  if (host) host.outerHTML = salesOrderInventorySectionHtml(order);
+}
+
 function renderSalesOrderDetail() {
   var host = document.getElementById("sales-order-detail");
   var order = salesOrderDetail;
@@ -21770,6 +21779,7 @@ function renderSalesOrderDetail() {
     host.innerHTML = "<div class='sales-order-empty sales-order-empty-guidance'><strong>注文を選択</strong><span>左の注文一覧から、確認または処理する受注を選択してください。</span></div>";
     return;
   }
+  ensureSalesOrderInventoryDisplay(order);
   var address = order.shipping_address || {};
   var allowed = Array.isArray(order.allowed_actions) ? order.allowed_actions : [];
   var actionLabels = {
