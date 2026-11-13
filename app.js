@@ -8792,7 +8792,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1318";
+var APP_VERSION       = "v1.1.1319";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -9004,6 +9004,7 @@ var finishedShipmentCandidateOrderItemId = null;
 var finishedShipmentCandidateRows = [];
 var finishedWarrantyPolicyRows = [];
 var salesProductWarrantyState = null;
+var salesProductShelfState = null;
 var finishedWarrantyPolicySaving = false;
 var finishedShipmentReplacementTargetId = null;
 var finishedShipmentReplacementSaving = false;
@@ -21754,23 +21755,6 @@ function salesOrderInventoryItemHtml(order, item) {
     (row.needsRecount ? "<strong class='sales-order-inventory-warning'>" + esc(t("sales_inventory_recount")) + "</strong>" : "") + "</div>";
 }
 
-function salesOrderInventorySectionHtml(order) {
-  var items = Array.isArray(order && order.items) ? order.items : [];
-  return "<div class='sales-order-inventory' id='sales-order-inventory' aria-live='polite'><h4>" + esc(t("sales_inventory_title")) + "</h4>" +
-    items.map(function(item) {
-      return "<article><div><strong>" + esc(item.genuine_part_number || item.manufacturer_part_number || "-") + "</strong><small>" + esc(customerProductKindLabel(item.product_kind)) + "</small></div>" + salesOrderInventoryItemHtml(order, item) + "</article>";
-    }).join("") + "<p>" + esc(t("sales_inventory_note")) + "</p></div>";
-}
-
-async function ensureSalesOrderInventoryDisplay(order) {
-  var actor = currentUser && currentUser.id;
-  if (!actor || !canManageSalesOrders() || order.inventory_display && order.inventory_display.owner === actor) return;
-  await hydrateSalesOrderInventory(order);
-  if (salesOrderDetail !== order || !currentUser || currentUser.id !== actor || !canManageSalesOrders()) return;
-  var host = document.getElementById("sales-order-inventory");
-  if (host) host.outerHTML = salesOrderInventorySectionHtml(order);
-}
-
 function renderSalesOrderDetail() {
   var host = document.getElementById("sales-order-detail");
   var order = salesOrderDetail;
@@ -21779,7 +21763,6 @@ function renderSalesOrderDetail() {
     host.innerHTML = "<div class='sales-order-empty sales-order-empty-guidance'><strong>注文を選択</strong><span>左の注文一覧から、確認または処理する受注を選択してください。</span></div>";
     return;
   }
-  ensureSalesOrderInventoryDisplay(order);
   var address = order.shipping_address || {};
   var allowed = Array.isArray(order.allowed_actions) ? order.allowed_actions : [];
   var actionLabels = {
@@ -21840,7 +21823,7 @@ function renderSalesOrderDetail() {
     "<div class='sales-order-detail-navigation'><nav class='sales-order-detail-nav' role='tablist' aria-label='注文詳細の作業項目'>" + tabHtml + "</nav>" + salesOrderWorkspaceNavigationHtml("sales-order") + "</div>" +
     "<div class='sales-order-detail-panels'>" +
       "<section class='sales-order-detail-panel sales-order-detail-overview' id='sales-order-detail-panel-overview' role='tabpanel' aria-labelledby='sales-order-detail-tab-overview' data-sales-order-detail-panel='overview'><div class='sales-order-detail-overview-grid'>" +
-        "<section class='sales-order-detail-section sales-order-billing' id='sales-order-detail-products'><div class='sales-order-section-heading'><div><h3>請求明細</h3></div>" + pricingButton + "</div>" + salesOrderBillingDetailsHtml(order, orderAdjustments, orderDiscount) + salesOrderInventorySectionHtml(order) + "</section>" +
+        "<section class='sales-order-detail-section sales-order-billing' id='sales-order-detail-products'><div class='sales-order-section-heading'><div><h3>請求明細</h3></div>" + pricingButton + "</div>" + salesOrderBillingDetailsHtml(order, orderAdjustments, orderDiscount) + "</section>" +
         "<section class='sales-order-detail-section sales-order-address' id='sales-order-detail-delivery'><div class='sales-order-section-heading'><div><h3>お届け先・運送便</h3></div></div>" + salesOrderDestinationHtml(address) + "<dl>" + deliveryFacts + "</dl>" + salesOrderShippingScheduleHtml(order) + customerOrderVehicleInformationHtml(order.vehicle_information, "sales-order-vehicle-information") + "</section>" +
       "</div></section>" +
       "<div class='sales-order-detail-panel' id='sales-order-detail-panel-fulfillment' role='tabpanel' aria-labelledby='sales-order-detail-tab-fulfillment' data-sales-order-detail-panel='fulfillment' hidden>" + salesOrderDispatchHtml(order) + "</div>" +
@@ -22426,15 +22409,7 @@ async function loadSalesOrderDetail(orderId) {
       ? (Array.isArray(purgeResult.data) ? (purgeResult.data[0] || {}) : (purgeResult.data || {}))
       : {};
   }
-  var inventoryOrder = salesOrderDetail;
-  var inventoryPending = inventoryOrder ? hydrateSalesOrderInventory(inventoryOrder) : Promise.resolve();
   renderSalesOrderDetail();
-  if (inventoryOrder) {
-    await inventoryPending;
-    if (requestSeq !== salesOrderDetailSeq || salesOrderDetail !== inventoryOrder) return;
-    var inventoryHost = document.getElementById("sales-order-inventory");
-    if (inventoryHost) inventoryHost.outerHTML = salesOrderInventorySectionHtml(inventoryOrder);
-  }
 }
 
 function setSalesOrderDetailMessage(message, isError) {
@@ -42484,7 +42459,7 @@ function renderProductKindStockHtml(summary) {
   var html = "<div class='product-kind-stock-grid'><div class='product-kind-stock-row detail-sales-term-row active " + productKindClass(selected) + "' data-product-kind-row='" + esc(selected) + "'>";
   html += "<div class='product-kind-stock-label detail-sales-term-label'>" + esc(t("product_kind_stock_qty")) + "</div>";
   html += "<div class='product-kind-stock-value detail-sales-term-value'>" + esc(stockText) + "</div>";
-  html += "</div></div>";
+  html += "</div><div class='product-kind-stock-row detail-sales-term-row sales-product-shelf-row' id='sales-product-shelf' hidden aria-live='polite'></div></div>";
   return html;
 }
 
@@ -42539,7 +42514,10 @@ function renderProductKindWrapForCurrent() {
   var summary = productKindSummaryForProduct(currentProduct);
   wrap.innerHTML = renderProductKindPanelHtml(summary);
   var stock = document.getElementById("product-kind-stock-wrap");
-  if (stock) stock.innerHTML = renderProductKindStockHtml(summary);
+  if (stock) {
+    stock.innerHTML = renderProductKindStockHtml(summary);
+    loadSalesProductShelfForCurrent(detailSecondaryRequestSeq);
+  }
   positionSalesConditionFields();
   bindProductKindPanelActions();
   var select = document.getElementById("product-kind-select");
@@ -44558,6 +44536,82 @@ function configureSalesDetailTabAvailability() {
 function salesDetailPrimaryPartNumber(product) {
   product = product || {};
   return product.genuine_part_number || product.genuine_part_number_2 || product.manufacturer_part_number || "-";
+}
+
+function salesProductShelfMatchesCurrent(state) {
+  return !!state && !!currentProduct && state.actor === userProfile
+    && state.seq === detailSecondaryRequestSeq && state.productId === String(productDkdId(currentProduct))
+    && state.kind === selectedProductKind() && canViewProductInfo() && !isCustomerPortalSearchMode()
+    && productKindStockKindAllowed(state.kind);
+}
+
+function renderSalesProductShelf() {
+  var host = document.getElementById("sales-product-shelf");
+  if (!host) return;
+  var state = salesProductShelfState;
+  var allowed = !!currentProduct && canViewProductInfo() && !isCustomerPortalSearchMode() && productKindStockKindAllowed(selectedProductKind());
+  host.hidden = !allowed;
+  if (!allowed) { host.textContent = ""; return; }
+  var value = t("sales_inventory_loading");
+  if (salesProductShelfMatchesCurrent(state)) {
+    if (state.status === "ready") {
+      value = Object.keys(state.locations).sort().map(function(code) { return code + " (" + state.locations[code] + ")"; }).join(" / ");
+      if (!value) value = state.legacy.length ? state.legacy.join(" / ") + " " + t("sales_inventory_legacy") : t("sales_inventory_unassigned");
+      if (state.unassigned > 0 && Object.keys(state.locations).length) value += " / " + t("sales_inventory_unassigned") + " (" + state.unassigned + ")";
+    } else if (state.status !== "loading") {
+      value = t(state.status === "denied" ? "sales_inventory_denied" : state.status === "missing" ? "sales_inventory_missing" : "sales_inventory_error");
+    }
+  }
+  host.innerHTML = "<div class='detail-sales-term-label'>" + esc(t("sales_inventory_shelf")) + "</div><div class='detail-sales-term-value'>" + esc(value) +
+    (salesProductShelfMatchesCurrent(state) && state.status === "ready" && state.needsRecount ? "<strong class='sales-order-inventory-warning'>" + esc(t("sales_inventory_recount")) + "</strong>" : "") + "</div>";
+}
+
+async function loadSalesProductShelfForCurrent(seq) {
+  var host = document.getElementById("sales-product-shelf");
+  if (!host || !currentProduct || !userProfile || !canViewProductInfo() || isCustomerPortalSearchMode() || !productKindStockKindAllowed(selectedProductKind())) {
+    renderSalesProductShelf(); return;
+  }
+  var kind = selectedProductKind(), productId = String(productDkdId(currentProduct));
+  var ids = productKindRowsForCurrent().filter(function(row) {
+    return row.is_active !== false && String(row.dkd_shohin_id) === productId && row.product_kind === kind && /^[1-9][0-9]*$/.test(String(row.product_variant_id || ""));
+  }).map(function(row) { return String(row.product_variant_id); }).filter(function(id, index, all) { return all.indexOf(id) === index; }).sort();
+  var old = salesProductShelfState;
+  if (salesProductShelfMatchesCurrent(old) && old.ids.join(",") === ids.join(",")) { renderSalesProductShelf(); return; }
+  var state = { seq: seq, actor: userProfile, productId: productId, kind: kind, ids: ids, status: ids.length ? "loading" : "missing", locations: Object.create(null), legacy: [], unassigned: 0, needsRecount: false };
+  salesProductShelfState = state;
+  renderSalesProductShelf();
+  var cursor = 0;
+  async function worker() {
+    while (cursor < ids.length) {
+      if (!salesProductShelfMatchesCurrent(state) || salesProductShelfState !== state) return;
+      var id = ids[cursor++];
+      var result = await sb.rpc("get_warehouse_stock", {p_query:"",p_kind:"",p_location:"",p_variant_id:id,p_offset:0,p_limit:1});
+      if (!salesProductShelfMatchesCurrent(state) || salesProductShelfState !== state) return;
+      if (result.error) throw result.error;
+      var data = result.data;
+      if (!data || !Array.isArray(data.variants) || !Array.isArray(data.positions)) throw new Error("Invalid shelf response");
+      var v = data.variants.find(function(row) { return String(row.variant_id) === id && String(row.product_id) === productId && row.kind === kind; });
+      if (!v || v.stock_qty == null || !Number.isSafeInteger(Number(v.stock_qty))) throw new Error("Shelf identity mismatch");
+      var allocated = 0;
+      data.positions.filter(function(row) { return String(row.variant_id) === id; }).forEach(function(row) {
+        var quantity = Number(row.quantity), code = String(row.location || "").trim();
+        if (!Number.isSafeInteger(quantity) || quantity <= 0 || !code) throw new Error("Invalid shelf quantity");
+        state.locations[code] = (state.locations[code] || 0) + quantity;
+        allocated += quantity;
+        if (row.needs_recount) state.needsRecount = true;
+      });
+      var unassigned = Number(v.stock_qty) - allocated;
+      state.unassigned += Math.max(0, unassigned);
+      if (v.needs_recount || unassigned < 0) state.needsRecount = true;
+      var legacy = String(v.legacy_location || "").trim();
+      if (legacy && state.legacy.indexOf(legacy) < 0) state.legacy.push(legacy);
+    }
+  }
+  try {
+    await Promise.all(Array.from({length:Math.min(4,ids.length)},worker));
+    if (ids.length) state.status = "ready";
+  } catch (error) { state.status = error && error.code === "42501" ? "denied" : "error"; }
+  if (salesProductShelfMatchesCurrent(state) && salesProductShelfState === state) renderSalesProductShelf();
 }
 
 function salesDetailSelectedStock() {
