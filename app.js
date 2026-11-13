@@ -57,6 +57,17 @@ var CORE_AI_CAMERA_TEST_URL = "https://script.google.com/macros/s/AKfycbxlaPJSNT
 var TRANSLATIONS = {
 
   ja: {
+    sales_inventory_title: "棚番・在庫数",
+    sales_inventory_shelf: "棚番",
+    sales_inventory_stock: "在庫数",
+    sales_inventory_loading: "取得中",
+    sales_inventory_denied: "在庫の閲覧権限がありません",
+    sales_inventory_missing: "在庫区分未登録",
+    sales_inventory_error: "取得できません。詳細を再読込してください。",
+    sales_inventory_unassigned: "場所未登録",
+    sales_inventory_legacy: "（旧登録）",
+    sales_inventory_recount: "棚番の数量は要実数確認",
+    sales_inventory_note: "在庫数は表示時点の合計在庫です。棚番の括弧内は場所別数量です。",
     sales_order_claim_intake: "クレーム受付",
     sales_order_claim_intake_order: "受注 {order} のクレーム受付",
     finished_label_component_load_failed: "部品を読み込めませんでした。「100%使用部品を再セット」を押して読み直してください。",
@@ -2934,6 +2945,17 @@ var TRANSLATIONS = {
   },
 
   en: {
+    sales_inventory_title: "Shelf locations and stock",
+    sales_inventory_shelf: "Shelf",
+    sales_inventory_stock: "Stock",
+    sales_inventory_loading: "Loading",
+    sales_inventory_denied: "Stock view permission required",
+    sales_inventory_missing: "Stock variant unavailable",
+    sales_inventory_error: "Unavailable. Reload order details.",
+    sales_inventory_unassigned: "Unassigned",
+    sales_inventory_legacy: "(legacy)",
+    sales_inventory_recount: "Location quantities need recount",
+    sales_inventory_note: "Stock is the current total. Quantities in parentheses are per location.",
     sales_order_claim_intake: "Start claim",
     sales_order_claim_intake_order: "Start a claim for order {order}",
     finished_label_component_load_failed: "Unable to load parts. Select Reset 100% Usage Parts to try again.",
@@ -5811,6 +5833,17 @@ var TRANSLATIONS = {
   },
 
   zh: {
+    sales_inventory_title: "货位与库存数量",
+    sales_inventory_shelf: "货位",
+    sales_inventory_stock: "库存数量",
+    sales_inventory_loading: "读取中",
+    sales_inventory_denied: "没有库存查看权限",
+    sales_inventory_missing: "未登记库存类别",
+    sales_inventory_error: "无法读取，请重新加载订单详情。",
+    sales_inventory_unassigned: "未分配货位",
+    sales_inventory_legacy: "（旧登记）",
+    sales_inventory_recount: "货位数量需实物盘点",
+    sales_inventory_note: "库存数量为显示时的总库存。括号内为各货位数量。",
     sales_order_claim_intake: "投诉受理",
     sales_order_claim_intake_order: "受理订单 {order} 的投诉",
     finished_label_component_load_failed: "无法读取零件。请点击“重新设置100%使用零件”重试。",
@@ -8759,7 +8792,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1315";
+var APP_VERSION       = "v1.1.1316";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -21641,6 +21674,94 @@ async function saveSalesOrderScheduledShippingDate() {
   setSalesOrderDetailMessage(t("sales_order_shipping_date_updated"), false);
 }
 
+function salesOrderInventoryItems(order) {
+  var items = Array.isArray(order && order.items) ? order.items.slice() : [];
+  var dispatch = salesOrderDispatch(order);
+  (Array.isArray(dispatch && dispatch.items) ? dispatch.items : []).forEach(function(entry) {
+    if (entry && entry.order_item) items.push(entry.order_item);
+  });
+  return items;
+}
+
+async function hydrateSalesOrderInventory(order) {
+  var actor = currentUser && currentUser.id;
+  if (!order || !actor || !canManageSalesOrders()) return;
+  var snapshot = { owner: actor, rows: Object.create(null) };
+  order.inventory_display = snapshot;
+  var items = salesOrderInventoryItems(order);
+  var ids = items.map(function(item) { return String(item.product_variant_id || ""); }).filter(function(id, index, all) {
+    return /^[1-9][0-9]*$/.test(id) && all.indexOf(id) === index;
+  });
+  ids.forEach(function(id) { snapshot.rows[id] = { status: "loading" }; });
+  var cursor = 0;
+  async function worker() {
+    while (cursor < ids.length) {
+      if (!currentUser || currentUser.id !== actor || !canManageSalesOrders()) return;
+      var id = ids[cursor++];
+      try {
+        var result = await sb.rpc("get_warehouse_stock", {
+          p_query: "", p_kind: "", p_location: "", p_variant_id: id, p_offset: 0, p_limit: 1
+        });
+        if (!currentUser || currentUser.id !== actor || !canManageSalesOrders() || order.inventory_display !== snapshot) return;
+        if (result.error) throw result.error;
+        var data = result.data;
+        if (!data || !Array.isArray(data.variants) || !Array.isArray(data.positions)) throw new Error("Invalid inventory response");
+        var variant = data.variants.find(function(row) { return String(row.variant_id) === id; });
+        if (!variant) { snapshot.rows[id] = { status: "missing" }; continue; }
+        var matchingItems = items.filter(function(item) { return String(item.product_variant_id || "") === id; });
+        if (!matchingItems.every(function(item) {
+          return (!item.dkd_shohin_id || String(item.dkd_shohin_id) === String(variant.product_id))
+            && (!item.product_kind || item.product_kind === variant.kind);
+        }) || variant.stock_qty == null || !Number.isSafeInteger(Number(variant.stock_qty))) throw new Error("Inventory identity mismatch");
+        var locations = Object.create(null), allocated = 0, needsRecount = variant.needs_recount === true;
+        data.positions.filter(function(row) { return String(row.variant_id) === id; }).forEach(function(row) {
+          var quantity = Number(row.quantity), location = String(row.location || "").trim();
+          if (!Number.isSafeInteger(quantity) || quantity <= 0 || !location) throw new Error("Invalid inventory position");
+          locations[location] = (locations[location] || 0) + quantity;
+          allocated += quantity;
+          if (row.needs_recount) needsRecount = true;
+        });
+        var stock = Number(variant.stock_qty);
+        snapshot.rows[id] = { status: "ready", stock: stock, locations: locations,
+          legacy: String(variant.legacy_location || "").trim(), unassigned: stock - allocated,
+          needsRecount: needsRecount || allocated > stock };
+      } catch (error) {
+        if (currentUser && currentUser.id === actor && order.inventory_display === snapshot) {
+          snapshot.rows[id] = { status: error && error.code === "42501" ? "denied" : "error" };
+        }
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(4, ids.length) }, worker));
+}
+
+function salesOrderInventoryItemHtml(order, item) {
+  var snapshot = order && order.inventory_display;
+  var row = snapshot && currentUser && snapshot.owner === currentUser.id && canManageSalesOrders()
+    ? snapshot.rows[String(item && item.product_variant_id || "")] : null;
+  if (!row || row.status !== "ready") {
+    var key = row && row.status === "loading" ? "sales_inventory_loading"
+      : row && row.status === "denied" ? "sales_inventory_denied"
+      : !item || !item.product_variant_id || row && row.status === "missing" ? "sales_inventory_missing" : "sales_inventory_error";
+    return "<div class='sales-order-inventory-values'><span>" + esc(t("sales_inventory_shelf")) + " / " + esc(t("sales_inventory_stock")) + ": " + esc(t(key)) + "</span></div>";
+  }
+  var locations = Object.keys(row.locations).sort().map(function(code) {
+    return code + " (" + row.locations[code] + ")";
+  }).join(" / ") || (row.legacy ? row.legacy + " " + t("sales_inventory_legacy") : t("sales_inventory_unassigned"));
+  return "<div class='sales-order-inventory-values'><span><b>" + esc(t("sales_inventory_shelf")) + "</b> " + esc(locations) + "</span>" +
+    "<span><b>" + esc(t("sales_inventory_stock")) + "</b> " + esc(String(row.stock)) +
+    (row.unassigned > 0 ? " / " + esc(t("sales_inventory_unassigned")) + " " + esc(String(row.unassigned)) : "") + "</span>" +
+    (row.needsRecount ? "<strong class='sales-order-inventory-warning'>" + esc(t("sales_inventory_recount")) + "</strong>" : "") + "</div>";
+}
+
+function salesOrderInventorySectionHtml(order) {
+  var items = Array.isArray(order && order.items) ? order.items : [];
+  return "<div class='sales-order-inventory' id='sales-order-inventory' aria-live='polite'><h4>" + esc(t("sales_inventory_title")) + "</h4>" +
+    items.map(function(item) {
+      return "<article><div><strong>" + esc(item.genuine_part_number || item.manufacturer_part_number || "-") + "</strong><small>" + esc(customerProductKindLabel(item.product_kind)) + "</small></div>" + salesOrderInventoryItemHtml(order, item) + "</article>";
+    }).join("") + "<p>" + esc(t("sales_inventory_note")) + "</p></div>";
+}
+
 function renderSalesOrderDetail() {
   var host = document.getElementById("sales-order-detail");
   var order = salesOrderDetail;
@@ -21709,7 +21830,7 @@ function renderSalesOrderDetail() {
     "<div class='sales-order-detail-navigation'><nav class='sales-order-detail-nav' role='tablist' aria-label='注文詳細の作業項目'>" + tabHtml + "</nav>" + salesOrderWorkspaceNavigationHtml("sales-order") + "</div>" +
     "<div class='sales-order-detail-panels'>" +
       "<section class='sales-order-detail-panel sales-order-detail-overview' id='sales-order-detail-panel-overview' role='tabpanel' aria-labelledby='sales-order-detail-tab-overview' data-sales-order-detail-panel='overview'><div class='sales-order-detail-overview-grid'>" +
-        "<section class='sales-order-detail-section sales-order-billing' id='sales-order-detail-products'><div class='sales-order-section-heading'><div><h3>請求明細</h3></div>" + pricingButton + "</div>" + salesOrderBillingDetailsHtml(order, orderAdjustments, orderDiscount) + "</section>" +
+        "<section class='sales-order-detail-section sales-order-billing' id='sales-order-detail-products'><div class='sales-order-section-heading'><div><h3>請求明細</h3></div>" + pricingButton + "</div>" + salesOrderBillingDetailsHtml(order, orderAdjustments, orderDiscount) + salesOrderInventorySectionHtml(order) + "</section>" +
         "<section class='sales-order-detail-section sales-order-address' id='sales-order-detail-delivery'><div class='sales-order-section-heading'><div><h3>お届け先・運送便</h3></div></div>" + salesOrderDestinationHtml(address) + "<dl>" + deliveryFacts + "</dl>" + salesOrderShippingScheduleHtml(order) + customerOrderVehicleInformationHtml(order.vehicle_information, "sales-order-vehicle-information") + "</section>" +
       "</div></section>" +
       "<div class='sales-order-detail-panel' id='sales-order-detail-panel-fulfillment' role='tabpanel' aria-labelledby='sales-order-detail-tab-fulfillment' data-sales-order-detail-panel='fulfillment' hidden>" + salesOrderDispatchHtml(order) + "</div>" +
@@ -21924,7 +22045,7 @@ function buildSalesOrderDispatchPage(order, pageItems, pageIndex, pageCount, bar
     var serials = (Array.isArray(entry.serials) ? entry.serials : []).map(function(row) {
       return row && row.manufacturing_serial || "";
     }).filter(Boolean).join(", ") || "照合時に記録";
-    return "<tr><td>" + esc(String(startIndex + index + 1)) + "</td><td><strong>" + esc(item.gltek_part_number || "GLTEK未発行") + "</strong><small>" + esc(reference) + "</small><div class='dispatch-packing'><b>出荷サイズ " + esc(packing.sizeText) + "</b><span>箱: " + esc(packing.boxText) + "</span></div></td><td>" + esc(customerProductKindLabel(item.product_kind)) + "</td><td>" + esc(String(entry.quantity || 0)) + "</td><td>" + esc(item.core_return_required ? "必要" : "不要") + "</td><td>" + esc(serials) + "</td></tr>";
+    return "<tr><td>" + esc(String(startIndex + index + 1)) + "</td><td><strong>" + esc(item.gltek_part_number || "GLTEK未発行") + "</strong><small>" + esc(reference) + "</small><div class='dispatch-packing'><b>出荷サイズ " + esc(packing.sizeText) + "</b><span>箱: " + esc(packing.boxText) + "</span></div>" + salesOrderInventoryItemHtml(order, item) + "</td><td>" + esc(customerProductKindLabel(item.product_kind)) + "</td><td>" + esc(String(entry.quantity || 0)) + "</td><td>" + esc(item.core_return_required ? "必要" : "不要") + "</td><td>" + esc(serials) + "</td></tr>";
   }).join("");
   var documentRows = salesOrderDispatchDocumentSet(order).map(function(row) {
     return "<tr><th scope='row'>" + esc(row.name) + "</th><td>" + esc(row.detail) + "</td><td>" + (row.required ? "<span class='dispatch-check-box'></span>確認" : "—") + "</td></tr>";
@@ -22240,6 +22361,8 @@ async function printSalesOrderDocument(type, targetOrder) {
       await hydrateSalesOrderWarrantyPrintData(order);
     }
     popup.document.open();
+    if (type === "dispatch") await hydrateSalesOrderInventory(order);
+    if (!currentUser || currentUser.id !== printActorId || !canManageSalesOrders()) throw new Error(t("permission_denied"));
     popup.document.write(buildSalesOrderDocumentHtml(order, type));
     popup.document.close();
     var button = popup.document.getElementById("dcats-print-shipment-document");
@@ -22293,7 +22416,15 @@ async function loadSalesOrderDetail(orderId) {
       ? (Array.isArray(purgeResult.data) ? (purgeResult.data[0] || {}) : (purgeResult.data || {}))
       : {};
   }
+  var inventoryOrder = salesOrderDetail;
+  var inventoryPending = inventoryOrder ? hydrateSalesOrderInventory(inventoryOrder) : Promise.resolve();
   renderSalesOrderDetail();
+  if (inventoryOrder) {
+    await inventoryPending;
+    if (requestSeq !== salesOrderDetailSeq || salesOrderDetail !== inventoryOrder) return;
+    var inventoryHost = document.getElementById("sales-order-inventory");
+    if (inventoryHost) inventoryHost.outerHTML = salesOrderInventorySectionHtml(inventoryOrder);
+  }
 }
 
 function setSalesOrderDetailMessage(message, isError) {

@@ -172,3 +172,6 @@ body { margin: 0; color: #111; background: #e8e8e8; font-family: "Yu Gothic", "M
   .warranty-certificate { background: transparent; }
   .dispatch-sheet, .core-return-sheet, .warranty-certificate { filter: grayscale(1); -webkit-print-color-adjust: economy; print-color-adjust: economy; }
 }
+
+.dispatch-items .sales-order-inventory-values { display: grid; gap: 0.5mm; margin-top: 1mm; font-size: 7.2pt; line-height: 1.3; overflow-wrap: anywhere; }
+.dispatch-items .sales-order-inventory-warning { font-size: 7.2pt; }
