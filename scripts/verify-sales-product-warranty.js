@@ -10,7 +10,7 @@ const ast = acorn.parse(source,{ecmaVersion:"latest"});
 function extract(name) { const node=ast.body.find(n=>n.type==="FunctionDeclaration"&&n.id.name===name); assert(node,name);return source.slice(node.start,node.end); }
 const translationNode=ast.body.filter(n=>n.type==="VariableDeclaration").flatMap(n=>n.declarations).find(n=>n.id.name==="TRANSLATIONS").init;
 const translations=vm.runInNewContext("("+source.slice(translationNode.start,translationNode.end)+")");
-const functions=["salesWarrantyTermsText","renderSalesProductWarranty","loadSalesProductWarrantyForCurrent","renderFinishedWarrantyPolicyTable","saveFinishedWarrantyPolicies"];
+const functions=["productDkdId","salesProductWarrantyMatchesCurrent","loadSalesShippingEstimateForCurrent","salesWarrantyTermsText","renderSalesProductWarranty","loadSalesProductWarrantyForCurrent","renderFinishedWarrantyPolicyTable","saveFinishedWarrantyPolicies"];
 let passed=0;
 function eq(actual,expected,label){ assert.equal(actual,expected,label);passed++; }
 function makeContext(){const host={hidden:false,textContent:""};const body={innerHTML:""};const save={disabled:false};const context={currentLang:"ja",currentProduct:{id:1,category_code:"alternator"},userProfile:{id:"fixture"},detailSecondaryRequestSeq:1,salesProductWarrantyState:null,finishedWarrantyPolicyRows:[],finishedWarrantyPolicySaving:false,salesOrderWarrantyPolicies:null,document:{getElementById:id=>({"sales-product-warranty":host,"finished-warranty-policy-body":body,"finished-warranty-policy-save":save}[id]||null),querySelectorAll:()=>[]},selectedProductKind:()=>"rebuilt",canViewProductInfo:()=>true,isCustomerPortalSearchMode:()=>false,normalizeProductKind:k=>k,productKindLabel:k=>k,finishedWarrantyCategoryLabel:r=>r.label_ja||r.category_code,esc:s=>String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll("'","&#39;"),setFinishedShipmentMessage:()=>{},renderFinishedShipmentOrderContext:()=>{},sb:{rpc:async()=>({data:[],error:null})}}; context.t=key=>(translations[context.currentLang]||translations.en)[key]||translations.ja[key]||key;vm.createContext(context);vm.runInContext(functions.map(extract).join("\n"),context);return {context,host,body,save};}
@@ -30,5 +30,54 @@ let done;c.sb.rpc=()=>new Promise(r=>done=r);const stale=c.loadSalesProductWarra
 let oldActorResolve;c.sb.rpc=()=>new Promise(r=>oldActorResolve=r);const oldActor=c.loadSalesProductWarrantyForCurrent(3);c.userProfile={id:"next-user"};c.isCustomerPortalSearchMode=()=>true;c.renderSalesProductWarranty();oldActorResolve({data:[rebuilt]});await oldActor;eq(host.hidden,true,"actor/customer switch hides internal terms");let calls=0;c.sb.rpc=async()=>{calls++;return {data:[rebuilt]}};await c.loadSalesProductWarrantyForCurrent(3);eq(calls,0,"external detail does not request internal terms");c.isCustomerPortalSearchMode=()=>false;c.canViewProductInfo=()=>false;await c.loadSalesProductWarrantyForCurrent(3);eq(calls,0,"product permission denial does not request terms");
 ({context:c,body}=makeContext());c.finishedWarrantyPolicyRows=[{...rebuilt,label_ja:"オルタネータ"},{category_code:"alternator",label_ja:"オルタネータ",product_kind:"aftermarket_new",warranty_months:12,warranty_distance_km:null}];c.renderFinishedWarrantyPolicyTable();eq(body.innerHTML.includes("value='40000'"),true,"distance loaded into settings");eq(body.innerHTML.includes("data-finished-warranty-distance-kind='aftermarket_new'"),true,"separate product-kind distance fields");
 let focused=false;const months={value:"24",dataset:{finishedWarrantyCategory:"alternator",finishedWarrantyKind:"rebuilt"},focus:()=>{focused=true}};const distance={value:"40000",dataset:{finishedWarrantyDistanceCategory:"alternator",finishedWarrantyDistanceKind:"rebuilt"},validity:{badInput:false},focus:()=>{focused=true}};c.document.querySelectorAll=selector=>selector.includes("distance-category")?[distance]:[months];c.currentProduct=null;let saved;calls=0;c.sb.rpc=async(name,args)=>{calls++;saved=args.target_policies;return {data:c.finishedWarrantyPolicyRows}};await c.saveFinishedWarrantyPolicies();eq(JSON.stringify(saved),JSON.stringify([{category_code:"alternator",product_kind:"rebuilt",warranty_months:24,warranty_distance_km:40000}]),"numeric settings round-trip");distance.value="";await c.saveFinishedWarrantyPolicies();eq(saved[0].warranty_distance_km,null,"blank distance means unspecified");for(const invalid of ["0","-1","1.5","10000001"]){distance.value=invalid;let before=calls;await c.saveFinishedWarrantyPolicies();eq(calls,before,"reject invalid distance "+invalid);}distance.value="";distance.validity.badInput=true;let before=calls;await c.saveFinishedWarrantyPolicies();eq(calls,before,"incomplete number does not clear distance");distance.validity.badInput=false;distance.value="40000";months.value="24.5";before=calls;await c.saveFinishedWarrantyPolicies();eq(calls,before,"fractional month rejected");eq(focused,true,"invalid input receives focus");
+
+// Shipping enrichment replaces the object for the same selected product.
+// Exercise the real shipping loader with both completion orders and read failures.
+for (const category of ["ac_compressor", "alternator", "starter"]) {
+  for (const shippingFirst of [true, false]) {
+    for (const failure of [false, true]) {
+      const fixture = makeContext(); const x = fixture.context;
+      x.currentProduct = { id: 92600, category_code: category };
+      const original = x.currentProduct;
+      const policy = { category_code: category, product_kind: "rebuilt", warranty_months: 12, warranty_distance_km: 20000 };
+      const get = x.document.getElementById;
+      x.document.getElementById = id => ["sales-shipping-estimate-section", "sales-shipping-estimate-wrap"].includes(id) ? {} : get(id);
+      x.canViewCustomerShippingRates = () => true;
+      x.updateSalesShippingEstimateVisibility = () => {};
+      x.renderSalesShippingEstimate = () => {};
+      x.ensureSalesShippingRateRows = async () => [];
+      let shippingDone, warrantyDone;
+      x.fetchCoreProductShippingProfile = () => new Promise(r => shippingDone = r);
+      x.sb.rpc = () => new Promise(r => warrantyDone = r);
+      x.salesShippingProfileDkdId = null;
+      const warranty = x.loadSalesProductWarrantyForCurrent(1);
+      const shipping = x.loadSalesShippingEstimateForCurrent(1);
+      const finishWarranty = async () => { warrantyDone(failure ? { error: new Error("denied") } : { data: [policy] }); await warranty; };
+      const finishShipping = async () => { shippingDone({ shipping_weight_kg: 7 }); await shipping; };
+      if (shippingFirst) { await finishShipping(); await finishWarranty(); }
+      else { await finishWarranty(); await finishShipping(); }
+      eq(x.currentProduct === original, false, category + " real shipping loader replaced object");
+      x.renderSalesProductWarranty();
+      eq(fixture.host.textContent, failure ? "保証期間を取得できませんでした" : "保証期間：1年または20000km", category + " shipping order " + shippingFirst + " error " + failure);
+      x.selectedProductKind = () => "aftermarket_new"; x.renderSalesProductWarranty();
+      eq(fixture.host.textContent, failure ? "保証期間を取得できませんでした" : "保証期間未設定", "kind change after enrichment");
+    }
+  }
+}
+{
+  const { context: x, host: h } = makeContext();
+  const first = x.currentProduct;
+  let oldDone; x.sb.rpc = () => new Promise(r => oldDone = r);
+  const old = x.loadSalesProductWarrantyForCurrent(1);
+  x.detailSecondaryRequestSeq = 2;
+  x.currentProduct = { ...first }; x.sb.rpc = async () => ({ data: [{ category_code: "alternator", product_kind: "rebuilt", warranty_months: 24 }] });
+  await x.loadSalesProductWarrantyForCurrent(2);
+  oldDone({ data: [{ category_code: "alternator", product_kind: "rebuilt", warranty_months: 120 }] }); await old;
+  eq(h.textContent, "保証期間：2年", "reopening same product rejects prior selection response");
+  x.currentProduct = {}; eq(x.salesProductWarrantyMatchesCurrent({product:{},actor:x.userProfile}), false, "empty IDs cannot match different objects");
+  x.currentProduct = { id: "99" }; eq(x.salesProductWarrantyMatchesCurrent({product:{id:99},actor:x.userProfile}), true, "numeric/string ID consistency");
+  eq(x.salesProductWarrantyMatchesCurrent({product:{id:99},actor:{id:"other"}}), false, "same product does not bypass actor identity");
+}
+
 console.log("Sales product warranty behavior: "+passed+" checks passed");}
 main().catch(error=>{console.error(error);process.exitCode=1;});
