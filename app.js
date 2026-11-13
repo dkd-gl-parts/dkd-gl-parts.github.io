@@ -8816,7 +8816,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1321";
+var APP_VERSION       = "v1.1.1322";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -19593,7 +19593,9 @@ async function enterShippingDocumentMgmt(options) {
   var stateSelect = document.getElementById("shipping-document-print-state");
   if (input) input.value = options.order ? (options.order.order_number || String(options.order.id || "")) : "";
   if (statusSelect) statusSelect.value = options.order ? "all" : "active";
-  if (stateSelect) stateSelect.value = options.order ? "all" : "unprinted";
+  if (stateSelect) stateSelect.value = "all";
+  var endDateInput = document.getElementById("shipping-document-date-to");
+  if (endDateInput) endDateInput.value = salesAccountingExportLocalDate();
   syncShippingDocumentBatchDefaults(salesOrderPrintSettings ? "loaded" : "loading");
   setShippingDocumentLookupMessage("", false);
   if (options.order) {
