@@ -63,7 +63,7 @@ for (const fragment of [
   ".finished-shipment-replacement-card"
 ]) assert(css.includes(fragment), `Missing category warranty styling: ${fragment}`);
 
-assert(html.includes('content="v1.1.1320"'), "Release version is not v1.1.1320");
-assert(app.includes('var APP_VERSION       = "v1.1.1320"'), "Runtime version is not v1.1.1320");
+assert(html.includes('content="v1.1.1322"'), "Release version is not v1.1.1322");
+assert(app.includes('var APP_VERSION       = "v1.1.1322"'), "Runtime version is not v1.1.1322");
 
 console.log("Category warranty and replacement shipment UI contract: OK");
