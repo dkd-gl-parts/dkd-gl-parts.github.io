@@ -78,8 +78,8 @@ function requireFragment(text, fragment, label) {
   "grid-template-columns: 1fr;"
 ].forEach((fragment) => requireFragment(css, fragment, "responsive office-pickup layout"));
 
-if (!source.includes('var APP_VERSION       = "v1.1.1321"') || !html.includes('content="v1.1.1321"')) {
-  throw new Error("Yamato office-pickup release version must be v1.1.1321");
+if (!source.includes('var APP_VERSION       = "v1.1.1324"') || !html.includes('content="v1.1.1324"')) {
+  throw new Error("Yamato office-pickup release version must be v1.1.1324");
 }
 
 console.log("Yamato office-pickup frontend verified.");

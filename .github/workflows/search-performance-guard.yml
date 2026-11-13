@@ -43,6 +43,8 @@ jobs:
         run: node scripts/verify-recycle-orders.js
       - name: Verify configurable factoring sale prices
         run: node scripts/verify-factoring-pricing.js
+      - name: Verify operation log descriptions
+        run: node scripts/verify-operation-logs.js
       - name: Verify sales order revision workflow
         run: node scripts/verify-sales-order-revision.js
       - name: Verify animated concierge pets
