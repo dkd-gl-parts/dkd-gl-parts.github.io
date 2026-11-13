@@ -71,11 +71,11 @@
 }
 
 .dcats-concierge-sprite.is-suzuto {
-  background-image: url("./suzuto/spritesheet.webp?v=1.1.1316");
+  background-image: url("./suzuto/spritesheet.webp?v=1.1.1317");
 }
 
 .dcats-concierge-sprite.is-rinna {
-  background-image: url("./rinna/spritesheet.webp?v=1.1.1316");
+  background-image: url("./rinna/spritesheet.webp?v=1.1.1317");
 }
 
 .dcats-concierge.is-front-desk {
@@ -83,8 +83,8 @@
   --dcats-concierge-height: 128px;
 }
 .dcats-concierge.is-front-desk .dcats-concierge-sprite { background-size: 400% 600%; }
-.dcats-concierge.is-front-desk .dcats-concierge-sprite.is-suzuto { background-image: url("./suzuto/front-desk.webp?v=1.1.1316"); }
-.dcats-concierge.is-front-desk .dcats-concierge-sprite.is-rinna { background-image: url("./rinna/front-desk.webp?v=1.1.1316"); }
+.dcats-concierge.is-front-desk .dcats-concierge-sprite.is-suzuto { background-image: url("./suzuto/front-desk.webp?v=1.1.1317"); }
+.dcats-concierge.is-front-desk .dcats-concierge-sprite.is-rinna { background-image: url("./rinna/front-desk.webp?v=1.1.1317"); }
 
 .dcats-concierge-hit-target {
   position: absolute;
