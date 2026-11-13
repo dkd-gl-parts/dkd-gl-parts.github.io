@@ -8792,7 +8792,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1319";
+var APP_VERSION       = "v1.1.1321";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -41231,31 +41231,171 @@ async function enterLogs() {
 }
 
 async function loadLogs() {
+  if (!canViewOperationLogs()) { showPermissionDenied("open_logs", "operation_logs"); return; }
+  var actorId = userProfile && userProfile.id;
+  var list = document.getElementById("logs-list");
+  if (list) list.textContent = t("loading");
   var r = await sb.from("operation_logs").select("*").order("created_at", { ascending: false }).limit(200);
+  if (!canViewOperationLogs() || !userProfile || userProfile.id !== actorId) return;
+  if (r.error) {
+    if (list) list.textContent = operationLogText("ログを取得できませんでした。再度開いてください。", "Unable to load logs. Please reopen this screen.", "无法加载日志，请重新打开此页面。");
+    var count = document.getElementById("logs-count");
+    if (count) count.textContent = "";
+    return;
+  }
   renderLogs(r.data || []);
+}
+
+function operationLogText(ja, en, zh) {
+  return currentLang === "ja" ? ja : (currentLang === "zh" ? zh : en);
+}
+
+function operationLogFieldLabel(key) {
+  var labels = {
+    parts_cost_jpy: ["部品原価","Parts cost","零件成本"],
+    labor_cost_jpy: ["工賃","Labor cost","人工费"],
+    total_cost_jpy: ["総原価","Total cost","总成本"],
+    component_quantity: ["使用数量","Usage quantity","使用数量"],
+    carrier_name: ["配送会社","Carrier","承运商"],
+    service_name: ["配送サービス","Service","配送服务"],
+    package_size_label: ["梱包サイズ","Package size","包装尺寸"],
+    prefecture_code: ["都道府県コード","Prefecture code","地区代码"],
+    price_jpy: ["価格", "Price", "价格"], base_price_jpy: ["基準価格", "Base price", "基准价格"],
+    rank1_price_jpy: ["売値区分1", "Sales price 1", "售价等级1"], unit_price_jpy: ["部品単価", "Unit price", "零件单价"],
+    unit_price: ["仕入単価", "Purchase unit price", "采购单价"], cost_unit_jpy: ["原価単価", "Cost per unit", "成本单价"],
+    core_charge_jpy: ["コア代金", "Core charge", "旧件费用"], core_cost_jpy: ["コア原価", "Core cost", "旧件成本"],
+    stock_qty: ["在庫数", "Stock quantity", "库存数量"], stock_location: ["棚番", "Stock location", "货位"],
+    stock_note: ["在庫メモ", "Stock note", "库存备注"], core_stock_qty: ["コア在庫数", "Core stock", "旧件库存"],
+    core_pallet_no: ["コア棚番", "Core location", "旧件货位"], quantity: ["数量", "Quantity", "数量"],
+    rate_multiplier: ["掛率", "Price multiplier", "价格倍率"], customer_rate_multiplier: ["顧客掛率", "Customer multiplier", "客户倍率"],
+    amount_adjustment_jpy: ["加減算額", "Price adjustment", "价格调整额"], price_rank_code: ["売値区分", "Price rank", "售价等级"],
+    rounding_unit_jpy: ["丸め単位", "Rounding unit", "取整单位"], rounding_method: ["端数処理", "Rounding method", "取整方式"],
+    tax_included: ["税込設定", "Tax included", "含税设置"], tax_type: ["税区分", "Tax type", "税别"],
+    price_basis: ["価格根拠", "Price basis", "定价依据"], basis_note: ["価格の説明", "Price note", "价格说明"],
+    effective_start: ["適用開始日", "Effective from", "生效日期"], effective_end: ["適用終了日", "Effective until", "结束日期"],
+    effective_from: ["適用開始日", "Effective from", "生效日期"], is_current: ["現行価格", "Current price", "当前价格"],
+    core_return_required: ["コア返却要否", "Core return required", "是否退回旧件"],
+    genuine_part_number: ["純正品番", "Genuine part number", "原厂件号"], manufacturer_part_number: ["メーカー品番", "Manufacturer part number", "制造商件号"],
+    product_kind: ["商品区分", "Product kind", "商品类别"], dkd_shohin_id: ["商品ID", "Product ID", "商品ID"],
+    product_variant_id: ["在庫区分ID", "Variant ID", "库存类别ID"], part_number: ["品番", "Part number", "件号"],
+    part_name: ["部品名", "Part name", "零件名"], component_name: ["部品名", "Part name", "零件名"],
+    component_position: ["構成位置", "Component position", "零件位置"], replacement_rate: ["交換率", "Replacement rate", "更换率"],
+    procurement_category: ["調達区分", "Procurement category", "采购类别"], manufacturing_memo: ["製造メモ", "Manufacturing note", "制造备注"],
+    labor_rate_percent: ["工賃率", "Labor rate", "人工费率"], labor_amount_jpy: ["工賃", "Labor cost", "人工费"],
+    selling_expense_jpy: ["販売経費", "Selling expense", "销售费用"], packaging_cost_jpy: ["梱包費", "Packaging cost", "包装费"],
+    included_documents_cost_jpy: ["同梱書類費", "Document cost", "随附文件费"], transport_cost_jpy: ["輸送費", "Transport cost", "运输费"],
+    core_return_shipping_cost_jpy: ["コア返却送料", "Core return shipping cost", "旧件退回运费"],
+    standard_fee_jpy: ["基本送料", "Standard shipping fee", "基本运费"], remote_island_fee_jpy: ["離島送料", "Remote island fee", "离岛运费"],
+    shipping_fee_jpy: ["送料", "Shipping fee", "运费"], shipping_charge_rule: ["送料請求ルール", "Shipping charge rule", "运费规则"],
+    subtotal_jpy: ["小計", "Subtotal", "小计"], total_jpy: ["合計", "Total", "合计"], tax_jpy: ["消費税", "Tax", "税额"],
+    discount_jpy: ["値引額", "Discount", "折扣额"], order_discount_jpy: ["受注値引額", "Order discount", "订单折扣"],
+    line_total_jpy: ["明細金額", "Line total", "明细金额"], tax_rate_basis_points: ["税率（万分率）", "Tax rate (basis points)", "税率（万分比）"],
+    shipping_tax_rate_basis_points: ["送料税率（万分率）", "Shipping tax rate (basis points)", "运费税率（万分比）"],
+    tax_category_code: ["課税区分", "Tax category", "纳税类别"], tax_rate_percent: ["消費税率", "Tax rate", "税率"],
+    factoring_rate_percent: ["ファクタリング料率", "Factoring rate", "保理费率"], sales_fee_rate_percent: ["販売手数料率", "Sales fee rate", "销售手续费率"],
+    shipping_allocation_rate_percent: ["送料配賦率", "Shipping allocation rate", "运费分摊率"], fee_rate_percent: ["手数料率", "Fee rate", "手续费率"],
+    fee_basis: ["手数料計算基準", "Fee basis", "手续费依据"], include_shipping: ["送料を計算に含める", "Include shipping", "包含运费"],
+    include_core: ["コア代を計算に含める", "Include core charge", "包含旧件费"], rounding: ["端数処理", "Rounding", "取整方式"],
+    currency: ["通貨", "Currency", "币种"], note: ["備考", "Note", "备注"], status: ["状態", "Status", "状态"],
+    is_active: ["有効設定", "Active", "有效设置"], display_label: ["表示名", "Display name", "显示名"],
+    source_type: ["設定方法", "Price source", "设置方式"], source_list_id: ["原価表ID", "Cost list ID", "成本表ID"],
+    source_strain_price_jpy: ["算定価格", "Calculated price", "计算价格"], source_total_cost_jpy: ["算定原価", "Calculated cost", "计算成本"],
+    rank_code: ["売値区分コード", "Price rank code", "售价等级代码"], rank_name: ["売値区分名", "Price rank name", "售价等级名"],
+    list_name: ["原価表名", "Cost list name", "成本表名"], count: ["件数", "Count", "数量"],
+    issue_code: ["発行番号", "Issue number", "发行编号"], first_serial: ["開始シリアル", "First serial", "起始序列号"],
+    last_serial: ["終了シリアル", "Last serial", "结束序列号"], target_quantity: ["対象数量", "Target quantity", "目标数量"]
+  };
+  var value = labels[key];
+  if (value) return value[currentLang === "ja" ? 0 : (currentLang === "zh" ? 2 : 1)];
+  if (/_snapshot$/.test(key)) return operationLogFieldLabel(key.replace(/_snapshot$/, "")) + operationLogText("（保存時）", " (at save)", "（保存时）");
+  return key;
+}
+
+function operationLogValue(value, key) {
+  if (value === undefined) return operationLogText("記録なし", "Not recorded", "无记录");
+  if (value === null || value === "") return operationLogText("未設定", "Not set", "未设置");
+  if (typeof value === "boolean") return value ? operationLogText("はい", "Yes", "是") : operationLogText("いいえ", "No", "否");
+  var enums = { round: ["四捨五入", "Round", "四舍五入"], ceil: ["切り上げ", "Round up", "向上取整"], floor: ["切り捨て", "Round down", "向下取整"], manual: ["手動設定", "Manual", "手动设置"], cost_list: ["原価表から設定", "From cost list", "根据成本表"] };
+  if (enums[value]) return enums[value][currentLang === "ja" ? 0 : (currentLang === "zh" ? 2 : 1)];
+  if (key === "product_kind") return productKindLabel(value);
+  if (typeof value !== "object" && /^-?\d+(\.\d+)?$/.test(String(value))) {
+    var number = Number(value).toLocaleString(currentLang === "ja" ? "ja-JP" : "en-US", { maximumFractionDigits: 10 });
+    if (/_jpy$/.test(key) || key === "price_jpy") return number + operationLogText("円", " JPY", "日元");
+    if (/_percent$/.test(key)) return number + "%";
+    return number;
+  }
+  return String(value);
+}
+
+function operationLogChanges(log) {
+  var changes = [];
+  var ignore = /^(id|created_at|updated_at|created_by|updated_by|_audit_source|revision|version)$/;
+  var secret = /password|token|secret|credential|authorization|raw_payload|payment_evidence/i;
+  function walk(before, after, prefix, depth) {
+    if (depth > 10) return;
+    if (Array.isArray(before) && before.length === 1 && !Array.isArray(after) && after && typeof after === "object") before = before[0];
+    if (Array.isArray(before) || Array.isArray(after)) {
+      var oldRows = Array.isArray(before) ? before : [], newRows = Array.isArray(after) ? after : [];
+      var identity = function(row, index) { return row && typeof row === "object" ? String(row.product_variant_id || row.id || index) : String(index); };
+      var oldMap = {}, newMap = {};
+      oldRows.forEach(function(row, index) { oldMap[identity(row, index)] = row; });
+      newRows.forEach(function(row, index) { newMap[identity(row, index)] = row; });
+      Array.from(new Set(Object.keys(oldMap).concat(Object.keys(newMap)))).forEach(function(id) { walk(oldMap[id], newMap[id], prefix + " [" + id + "]", depth + 1); });
+      return;
+    }
+    var keys = Object.keys(before && typeof before === "object" ? before : {}).concat(Object.keys(after && typeof after === "object" ? after : {}));
+    Array.from(new Set(keys)).forEach(function(key) {
+      if (ignore.test(key) || secret.test(key)) return;
+      var oldValue = before && Object.prototype.hasOwnProperty.call(before, key) ? before[key] : undefined;
+      var newValue = after && Object.prototype.hasOwnProperty.call(after, key) ? after[key] : undefined;
+      // Update payloads can be partial. An omitted field is not a deletion.
+      if (log.operation === "update" && newValue === undefined) return;
+      if (JSON.stringify(oldValue) === JSON.stringify(newValue)) return;
+      var label = prefix + operationLogFieldLabel(log.table_name === "product_rank1_prices" && key === "price_jpy" ? "rank1_price_jpy" : key);
+      if ((oldValue && typeof oldValue === "object") || (newValue && typeof newValue === "object")) {
+        walk(oldValue, newValue, label + " / ", depth + 1);
+      } else {
+        var text = label + ": ";
+        if (log.operation === "insert") text += operationLogValue(newValue, key);
+        else if (log.operation === "delete") text += operationLogValue(oldValue, key) + operationLogText(" を削除", " removed", " 已删除");
+        else text += operationLogValue(oldValue, key) + " → " + operationLogValue(newValue, key);
+        changes.push(text);
+      }
+    });
+  }
+  walk(log.before_data, log.after_data, "", 0);
+  return changes;
+}
+
+function operationLogDetailsHtml(log) {
+  var changes = operationLogChanges(log);
+  if (!changes.length) return "<span class='mgmt-sub'>" + esc(operationLogText("変更内容の記録なし", "No change details recorded", "无变更详情记录")) + "</span>";
+  function lines(rows) { return rows.map(function(text) { return "<div class='log-change'>" + esc(text) + "</div>"; }).join(""); }
+  var html = lines(changes.slice(0, 4));
+  if (changes.length > 4) html += "<details class='log-change-more'><summary>" + esc(operationLogText("残り", "More", "其余")) + " " + (changes.length - 4) + "</summary>" + lines(changes.slice(4)) + "</details>";
+  return html;
 }
 
 function renderLogs(logs) {
   var countEl = document.getElementById("logs-count");
-  if (countEl) countEl.textContent = logs.length + " 件（最新200件）";
+  if (countEl) countEl.textContent = logs.length + operationLogText(" 件（最新200件）", " entries (latest 200)", " 条（最近200条）");
   if (!logs.length) {
     document.getElementById("logs-list").innerHTML = "<div class='empty'>" + t("log_no_data") + "</div>";
     return;
   }
   var opLabels = { insert: t("log_insert"), update: t("log_update"), delete: t("log_delete") };
   var opClasses = { insert: "log-insert", update: "log-update", delete: "log-delete" };
-  var html = "<table class='log-table'><tr><th>" + t("log_date") + "</th><th>" + t("log_operation") + "</th><th>" + t("log_user") + "</th><th>" + t("log_target") + "</th><th>詳細</th></tr>";
+  var html = "<table class='log-table'><tr><th>" + t("log_date") + "</th><th>" + t("log_operation") + "</th><th>" + t("log_user") + "</th><th>" + t("log_target") + "</th><th>" + operationLogText("詳細", "Details", "详情") + "</th></tr>";
   logs.forEach(function(log) {
     var dt  = log.created_at ? new Date(log.created_at).toLocaleString("ja-JP") : "-";
     var op  = opLabels[log.operation] || log.operation;
     var cls = opClasses[log.operation] || "";
-    var after = log.after_data ? JSON.stringify(log.after_data).slice(0,80) + "..." : "";
     html += "<tr>";
     html += "<td data-dcats-inline-style='s-eb99a4c193ed'>" + esc(dt) + "</td>";
     html += "<td><span class='" + cls + "'>" + esc(op) + "</span></td>";
     html += "<td>" + esc(log.user_name || log.user_email || "-") + "</td>";
     html += "<td><div class='mgmt-pn'>" + esc(log.target_desc || "-") + "</div><div class='mgmt-sub'>" + esc(log.table_name) + "</div></td>";
-    html += "<td><div class='log-json'>" + esc(after) + "</div></td>";
+    html += "<td class='log-details'>" + operationLogDetailsHtml(log) + "</td>";
     html += "</tr>";
   });
   html += "</table>";

@@ -171,7 +171,8 @@ const expectedAuxiliaryWorkflows = new Map([
         "scripts/qa-part-number-alignment.js",
         "shipment-instruction-print.css",
         "scripts/qa-sales-order-inventory.js",
-        "tests/sales-order-inventory-fixture.js"
+        "tests/sales-order-inventory-fixture.js",
+        "scripts/qa-operation-logs.js"
       ]
     }
   },
@@ -209,7 +210,7 @@ const expectedAuxiliaryWorkflows = new Map([
             "WARRANTY_PLAYWRIGHT_MODULE": "${{ runner.temp }}/warranty-browser/node_modules/playwright",
             "WARRANTY_QA_OUTPUT": "${{ runner.temp }}/warranty-qa-results"
           },
-          "run": "node scripts/qa-sales-product-warranty.js\nnode scripts/qa-category-warranty-admin.js\nnode scripts/qa-customer-category-master.js\nnode scripts/qa-hanbaiou-billing-settings.js\nnode scripts/qa-sales-pricing-copy.js\nnode scripts/qa-order-claim-intake.js\nnode scripts/qa-sales-pricing-ranks.js\nnode scripts/qa-container-stock-screen.js\nnode scripts/qa-finished-label-print.js\nnode scripts/qa-production-report-ranks.js\nnode scripts/qa-mitsubishi-master-search.js\nnode scripts/qa-part-number-alignment.js\nnode scripts/qa-sales-order-inventory.js"
+          "run": "node scripts/qa-sales-product-warranty.js\nnode scripts/qa-category-warranty-admin.js\nnode scripts/qa-customer-category-master.js\nnode scripts/qa-hanbaiou-billing-settings.js\nnode scripts/qa-sales-pricing-copy.js\nnode scripts/qa-order-claim-intake.js\nnode scripts/qa-sales-pricing-ranks.js\nnode scripts/qa-container-stock-screen.js\nnode scripts/qa-finished-label-print.js\nnode scripts/qa-production-report-ranks.js\nnode scripts/qa-mitsubishi-master-search.js\nnode scripts/qa-part-number-alignment.js\nnode scripts/qa-sales-order-inventory.js\nnode scripts/qa-operation-logs.js"
         },
         {
           "uses": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
