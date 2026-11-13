@@ -27,6 +27,8 @@ has(nested,'¥2,000 → ¥2,200');assert.ok(!nested.includes('¥1,000 →'));ass
 has(details({rounding_method:'floor'},{rounding_method:'round'}),'切り捨て → 四捨五入');
 has(details({rate_multiplier:1},{rate_multiplier:0.8}),'掛率: 1 → 0.8');
 has(details({fee_rate_percent:2.5},{fee_rate_percent:3}),'2.5% → 3%');
+has(details({settings:{net_weight_kg:3},result:{body_appraisal_jpy:300}},{settings:{net_weight_kg:4},result:{body_appraisal_jpy:400}},'update','core_valuation_settings'),'コア査定設定 / 正味コア重量（kg）: 3 → 4');
+has(details({result:{body_appraisal_jpy:300}},{result:{body_appraisal_jpy:400}},'update','core_valuation_settings'),'コア本体評価額: ¥300 → ¥400');
 const safe=details({}, {note:'<img src=x onerror=alert(1)>',password:'do-not-show',token:'hidden'});has(safe,'&lt;img');assert.ok(!safe.includes('do-not-show')&&!safe.includes('hidden'));assertions++;
 const many=details({},Object.fromEntries(Array.from({length:12},(_,i)=>['field'+i,'value'+i])));has(many,'<details');has(many,'value11');
 for(const lang of ['en','zh']){ctx.currentLang=lang;has(details({price_jpy:12000},{price_jpy:13000}),lang==='en'?'Sales price 1':'售价等级1');}

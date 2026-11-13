@@ -41416,6 +41416,17 @@ function operationLogText(ja, en, zh) {
 
 function operationLogFieldLabel(key) {
   var labels = {
+    settings: ["コア査定設定","Core valuation settings","旧件评估设置"],
+    result: ["コア査定結果","Core valuation result","旧件评估结果"],
+    body_appraisal_jpy: ["コア本体評価額","Core body value","旧件本体估值"],
+    net_weight_kg: ["正味コア重量（kg）","Net core weight (kg)","旧件净重（kg）"],
+    weight_source: ["重量の確認元","Weight source","重量确认来源"],
+    component_bases: ["部品評価基準","Component value bases","零件估值基准"],
+    components: ["構成部品","Components","组成零件"],
+    base_jpy: ["評価基準単価","Valuation unit price","估值基准单价"],
+    appraisal_jpy: ["部品評価額","Component value","零件估值"],
+    recovery_rate: ["回収率","Recovery rate","回收率"],
+    variant_key: ["在庫区分ID","Variant ID","库存类别ID"],
     parts_cost_jpy: ["部品原価","Parts cost","零件成本"],
     labor_cost_jpy: ["工賃","Labor cost","人工费"],
     total_cost_jpy: ["総原価","Total cost","总成本"],
