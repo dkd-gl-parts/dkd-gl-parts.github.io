@@ -344,6 +344,8 @@ const fieldsContext = {
   document: fieldsDocument, currentProduct: { dkd_shohin_id: 1 },
   currentSelectedProductKind: "rebuilt", detailSelectedSalesCustomerId: "1",
   detailSecondaryRequestSeq: 1, priceVisible: true,
+  shelfLoadCount: 0,
+  loadSalesProductShelfForCurrent(seq) { assert.equal(seq, fieldsContext.detailSecondaryRequestSeq); fieldsContext.shelfLoadCount++; },
   t: key => key, esc: value => String(value == null ? "" : value),
   formatYen: value => String(value),
   productKindSummaryForProduct: () => fixtureSummary,
@@ -381,6 +383,7 @@ vm.runInContext(
   fieldsContext
 );
 fieldsContext.renderProductKindWrapForCurrent();
+assert.equal(fieldsContext.shelfLoadCount, 1, "Product kind layout starts shelf loading for the selected detail");
 const stableKindHost = fieldsDocument.getElementById("product-kind-wrap");
 const stableStockHost = fieldsDocument.getElementById("product-kind-stock-wrap");
 const firstSelect = fieldsDocument.getElementById("product-kind-select");
