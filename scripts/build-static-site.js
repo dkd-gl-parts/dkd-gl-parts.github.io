@@ -7,7 +7,6 @@ const files = [
   "_headers",
   "app.js",
   "claim-cases.js",
-  "reception-management.js",
   "claim-cases.css",
   "claim-return-print.js",
   "category-warranty-settings.js",
