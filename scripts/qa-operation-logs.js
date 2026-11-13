@@ -5,7 +5,7 @@ const {chromium}=require(process.env.WARRANTY_PLAYWRIGHT_MODULE||'playwright');
 const root=path.resolve(__dirname,'..');
 const source=fs.readFileSync(path.join(root,'app.js'),'utf8').replace(/\r\n/g,'\n');
 function extract(name){const start=source.search(new RegExp('(?:async )?function '+name+'\\('));assert.ok(start>=0);const end=source.indexOf('\n}\n',start);return source.slice(start,end+2);}
-const functions=['operationLogText','operationLogFieldLabel','operationLogValue','operationLogChanges','operationLogDetailsHtml','renderLogs','loadLogs'].map(extract).join('\n');
+const functions=['formatYen','formatYenCurrency','operationLogText','operationLogFieldLabel','operationLogValue','operationLogChanges','operationLogDetailsHtml','renderLogs','loadLogs'].map(extract).join('\n');
 const out=path.join(process.env.WARRANTY_QA_OUTPUT||path.join(root,'outputs'),'operation-logs');
 fs.mkdirSync(out,{recursive:true});
 (async()=>{
@@ -23,7 +23,7 @@ fs.mkdirSync(out,{recursive:true});
     rows=[{operation:'update',table_name:'product_rank1_prices',target_desc:'QA 27060-TEST',user_name:'QA',before_data:{price_jpy:12000,source_type:'manual',note:'旧価格'},after_data:{price_jpy:13000,source_type:'cost_list',note:'原価の見直し'}},{operation:'update',table_name:'sales_price_ranks',target_desc:'RANK1',before_data:{rate_multiplier:1,amount_adjustment_jpy:0,rounding_unit_jpy:10,rounding_method:'floor',is_active:false,note:'旧'},after_data:{rate_multiplier:0.8,amount_adjustment_jpy:100,rounding_unit_jpy:100,rounding_method:'round',is_active:true,note:'<script>sample</script>'}},{operation:'update',table_name:'core_product_variants',target_desc:'QA stock',before_data:{stock_qty:24,stock_note:null},after_data:{stock_qty:20,stock_note:'棚卸による数量修正'}}];renderLogs(rows);
    });
    assert.ok(await page.locator('.log-details').first().innerText().then(x=>x.includes('12,000')&&x.includes('13,000')));
-   assert.equal(await page.locator('script:not([type])').count(),1);
+   assert.equal(await page.locator('.log-details script').count(),0);
    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1);assert.equal(overflow,false,'whole page overflow');
    const more=page.locator('.log-change-more').first();await more.locator('summary').focus();await page.keyboard.press('Enter');assert.ok(await more.getAttribute('open')!==null);assert.ok((await more.innerText()).includes('<script>sample</script>'));
    await page.screenshot({path:path.join(out,`${lang}-${width}-success.png`),fullPage:true});

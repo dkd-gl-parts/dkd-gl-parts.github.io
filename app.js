@@ -41482,7 +41482,7 @@ function operationLogValue(value, key) {
   if (key === "product_kind") return productKindLabel(value);
   if (typeof value !== "object" && /^-?\d+(\.\d+)?$/.test(String(value))) {
     var number = Number(value).toLocaleString(currentLang === "ja" ? "ja-JP" : "en-US", { maximumFractionDigits: 10 });
-    if (/_jpy$/.test(key) || key === "price_jpy") return number + operationLogText("円", " JPY", "日元");
+    if (/_jpy$/.test(key) || key === "price_jpy") return formatYenCurrency(Number(value));
     if (/_percent$/.test(key)) return number + "%";
     return number;
   }
