@@ -19,6 +19,7 @@ fs.mkdirSync(out, {recursive:true});
       await page.addStyleTag({content:fs.readFileSync(path.join(root,'styles.css'),'utf8')});
       await page.addStyleTag({content:fs.readFileSync(path.join(root,'warehouse-stock.css'),'utf8')});
       await page.evaluate(({lang}) => {
+        sessionStorage.clear();
         window.currentLang=lang;
         window.userProfile={id:'synthetic-warehouse-actor'};
         window.canViewProductKindStockMgmt=()=>true;
@@ -32,6 +33,7 @@ fs.mkdirSync(out, {recursive:true});
       await page.waitForFunction(()=>!!DcatsWarehouseStock._state.snapshot);
       await page.evaluate(()=>{DcatsWarehouseStock._state.selected='10';DcatsWarehouseStock._render();});
       for (const operation of ['allocate','transfer','release','recount']) {
+        console.log('Warehouse QA',width,lang,operation);
         await page.evaluate(operation=>DcatsWarehouseStock._openDialog(operation,operation==='allocate'?undefined:fixture.positions[0].id),operation);
         assert.equal(await page.locator('#warehouse-note').getAttribute('required'),null);
         assert.match(await page.locator('label.warehouse-field').filter({has:page.locator('#warehouse-note')}).textContent(), /任意|optional|选填/);
