@@ -3028,9 +3028,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .ac-part-grid { display: grid; grid-template-columns: 1fr; gap: 0; border-top: 1px solid #f0f0f0; margin-bottom: 8px; }
 .ac-part-row { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 0; align-items: stretch; min-width: 0; border-bottom: 1px solid #f0f0f0; min-height: 34px; }
 .ac-part-label { font-size: 13px; color: #888; padding: 7px 4px; display: flex; align-items: center; }
-.ac-part-value { font-size: 13px; font-weight: 700; color: #1a1a2e; padding: 7px 4px; display: flex; align-items: center; word-break: break-all; }
+.ac-part-value { font-size: 13px; font-weight: 700; color: #1a1a2e; padding: 7px 4px; display: flex; align-items: center; justify-content: flex-start; text-align: left; word-break: break-all; }
 .ac-part-value-with-action { justify-content: space-between; gap: 8px; padding: 5px 4px; }
-.ac-part-value-text { min-width: 0; overflow-wrap: anywhere; }
+.ac-part-value-text { flex: 1 1 auto; min-width: 0; text-align: left; overflow-wrap: anywhere; }
 .detail-inline-action { flex: 0 0 auto; white-space: nowrap; padding: 5px 9px; }
 .detail-mobile-actions { display: none; }
 .detail-main-grid .detail-table,
