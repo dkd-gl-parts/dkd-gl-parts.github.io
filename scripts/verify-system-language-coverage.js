@@ -8,6 +8,7 @@ const legacySource = fs.readFileSync("legacy-i18n.js", "utf8");
 const runtimeScriptPaths = [
   "app.js",
   "claim-cases.js",
+  "reception-management.js",
   "container-stock-import.js",
   "product-data-research.js",
   "sales-order-revision.js",

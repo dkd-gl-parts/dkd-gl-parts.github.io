@@ -473,8 +473,8 @@ var TRANSLATIONS = {
     customer_order_subtotal: "小計",
     customer_order_total: "合計",
     sales_order_id_label: "受注ID",
-    claim_case_mgmt_title: "クレーム受付・対応",
-    claim_case_mgmt_desc: "受付・代替受注・発送・旧品返却・検査を案件ごとに管理します。",
+    claim_case_mgmt_title: "受付管理",
+    claim_case_mgmt_desc: "連絡メモ・問い合わせ・クレームを受け付け、必要に応じて代替対応へ進みます。",
     sales_order_mgmt_title: "受注・出荷管理",
     sales_order_internal_print_timing: "受注書（出荷指示書）は、保証書などと一緒に印刷時に発行します。",
     sales_order_documents_queued: "受注書を含む{n}件の帳票を印刷待ちに登録しました。",
@@ -3369,8 +3369,8 @@ var TRANSLATIONS = {
     customer_order_subtotal: "Subtotal",
     customer_order_total: "Total",
     sales_order_id_label: "Order ID",
-    claim_case_mgmt_title: "Claim cases",
-    claim_case_mgmt_desc: "Track reception, replacements, shipping, returns and inspection by case.",
+    claim_case_mgmt_title: "Reception management",
+    claim_case_mgmt_desc: "Record customer contacts and inquiries, then continue to replacement handling when needed.",
     sales_order_mgmt_title: "Orders / Shipping",
     sales_order_internal_print_timing: "The order / shipment instruction is issued with the warranty and other documents when printing.",
     sales_order_documents_queued: "Queued {n} documents, including the order / shipment instruction, for printing.",
@@ -6209,8 +6209,8 @@ var TRANSLATIONS = {
     customer_order_subtotal: "小计",
     customer_order_total: "合计",
     sales_order_id_label: "订单ID",
-    claim_case_mgmt_title: "投诉受理与处理",
-    claim_case_mgmt_desc: "按案件分别跟踪受理、替换订单、发货、旧品退回和检验。",
+    claim_case_mgmt_title: "受理管理",
+    claim_case_mgmt_desc: "记录客户联系、咨询与投诉，并在需要时转入替换处理。",
     sales_order_mgmt_title: "订单・出货管理",
     sales_order_internal_print_timing: "订单（出货指示书）将在打印时与保修书等一起签发。",
     sales_order_documents_queued: "已将包含订单在内的{n}份单据加入打印队列。",
@@ -8816,7 +8816,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1320";
+var APP_VERSION       = "v1.1.1321";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -19190,7 +19190,7 @@ async function enterClaimCaseMgmt(options) {
   if (!window.DcatsClaimCases) return;
   showScreen("claim-case-mgmt");
   updateAllHeaders();
-  if (!claimCaseWorkspace) claimCaseWorkspace = window.DcatsClaimCases.create({
+  if (!claimCaseWorkspace) claimCaseWorkspace = (window.DcatsReceptionManagement || window.DcatsClaimCases).create({
     host: document.getElementById("claim-case-workspace"),
     rpc: function(name, payload) { return sb.rpc(name, payload); },
     currentUserId: function() { return currentUser && currentUser.id; },
