@@ -8816,7 +8816,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1322";
+var APP_VERSION       = "v1.1.1323";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -41416,6 +41416,17 @@ function operationLogText(ja, en, zh) {
 
 function operationLogFieldLabel(key) {
   var labels = {
+    settings: ["コア査定設定","Core valuation settings","旧件评估设置"],
+    result: ["コア査定結果","Core valuation result","旧件评估结果"],
+    body_appraisal_jpy: ["コア本体評価額","Core body value","旧件本体估值"],
+    net_weight_kg: ["正味コア重量（kg）","Net core weight (kg)","旧件净重（kg）"],
+    weight_source: ["重量の確認元","Weight source","重量确认来源"],
+    component_bases: ["部品評価基準","Component value bases","零件估值基准"],
+    components: ["構成部品","Components","组成零件"],
+    base_jpy: ["評価基準単価","Valuation unit price","估值基准单价"],
+    appraisal_jpy: ["部品評価額","Component value","零件估值"],
+    recovery_rate: ["回収率","Recovery rate","回收率"],
+    variant_key: ["在庫区分ID","Variant ID","库存类别ID"],
     parts_cost_jpy: ["部品原価","Parts cost","零件成本"],
     labor_cost_jpy: ["工賃","Labor cost","人工费"],
     total_cost_jpy: ["総原価","Total cost","总成本"],
@@ -41428,7 +41439,9 @@ function operationLogFieldLabel(key) {
     rank1_price_jpy: ["売値区分1", "Sales price 1", "售价等级1"], unit_price_jpy: ["部品単価", "Unit price", "零件单价"],
     unit_price: ["仕入単価", "Purchase unit price", "采购单价"], cost_unit_jpy: ["原価単価", "Cost per unit", "成本单价"],
     core_charge_jpy: ["コア代金", "Core charge", "旧件费用"], core_cost_jpy: ["コア原価", "Core cost", "旧件成本"],
-    stock_qty: ["在庫数", "Stock quantity", "库存数量"], stock_location: ["棚番", "Stock location", "货位"],
+    stock_qty: ["在庫数", "Stock quantity", "库存数量"],
+    stock_qty_before: ["保存前在庫数", "Stock before save", "保存前库存数量"], stock_qty_after: ["保存後在庫数", "Stock after save", "保存后库存数量"],
+    shared_price_updated_count: ["単価を更新した件数", "Unit prices updated", "单价更新数量"], stock_location: ["棚番", "Stock location", "货位"],
     stock_note: ["在庫メモ", "Stock note", "库存备注"], core_stock_qty: ["コア在庫数", "Core stock", "旧件库存"],
     core_pallet_no: ["コア棚番", "Core location", "旧件货位"], quantity: ["数量", "Quantity", "数量"],
     rate_multiplier: ["掛率", "Price multiplier", "价格倍率"], customer_rate_multiplier: ["顧客掛率", "Customer multiplier", "客户倍率"],
@@ -41533,7 +41546,14 @@ function operationLogChanges(log) {
 
 function operationLogDetailsHtml(log) {
   var changes = operationLogChanges(log);
-  if (!changes.length) return "<span class='mgmt-sub'>" + esc(operationLogText("変更内容の記録なし", "No change details recorded", "无变更详情记录")) + "</span>";
+  if (!changes.length) {
+    var before = log.before_data, after = log.after_data;
+    var unchanged = log.operation === "update" && before && after && Object.keys(after).length && Object.keys(after).every(function(key) {
+      return /^(created_at|updated_at|created_by|updated_by|revision|version)$/.test(key) || JSON.stringify(before[key]) === JSON.stringify(after[key]);
+    });
+    var message = unchanged ? operationLogText("変更なし（同じ内容で保存）", "No values changed (saved again)", "未更改（重复保存）") : operationLogText("変更内容の記録なし", "No change details recorded", "无变更详情记录");
+    return "<span class='mgmt-sub'>" + esc(message) + "</span>";
+  }
   function lines(rows) { return rows.map(function(text) { return "<div class='log-change'>" + esc(text) + "</div>"; }).join(""); }
   var html = lines(changes.slice(0, 4));
   if (changes.length > 4) html += "<details class='log-change-more'><summary>" + esc(operationLogText("残り", "More", "其余")) + " " + (changes.length - 4) + "</summary>" + lines(changes.slice(4)) + "</details>";
