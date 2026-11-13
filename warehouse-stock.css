@@ -5,3 +5,7 @@
 .warehouse-needs-check{display:block;font-size:11px;line-height:1.35;font-style:normal;font-weight:700;color:#805014;background:#fff0cb;padding:3px 5px;border-radius:4px;margin-top:4px;white-space:normal}.warehouse-position-actions{flex-wrap:wrap}
 
 .warehouse-location-code,.warehouse-pallet strong{overflow-wrap:anywhere;min-width:0}.warehouse-pallet b{min-width:0}.warehouse-needs-check{overflow-wrap:anywhere;max-width:100%;box-sizing:border-box}
+
+.warehouse-bulk-panel textarea{display:block;box-sizing:border-box;width:100%;max-width:100%;margin:8px 0 12px;min-height:160px;padding:10px;border:1px solid #687587;border-radius:6px;font:inherit;color:#162330;background:#fff}
+.warehouse-bulk-panel .warehouse-table-wrap{max-height:360px;overflow:auto}.warehouse-bulk-panel .warehouse-dialog-actions{flex-wrap:wrap}.warehouse-bulk-panel [role="status"]{overflow-wrap:anywhere}
+@media(max-width:600px){.warehouse-bulk-panel{padding:12px}.warehouse-bulk-panel .warehouse-dialog-actions{display:grid;grid-template-columns:1fr}.warehouse-bulk-panel textarea{font-size:14px}}
