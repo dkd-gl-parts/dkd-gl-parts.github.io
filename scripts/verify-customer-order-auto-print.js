@@ -102,7 +102,7 @@ for (const fragment of [
   if (!saveSettings.includes(fragment)) throw new Error(`Auto-print save guard is missing: ${fragment}`);
 }
 const enterManagement = sourceBetween("async function enterSalesOrderMgmt", "function renderSalesOrderList");
-if (!enterManagement.includes("Promise.all([refreshSalesOrderManagement(), loadSalesOrderPrintSettings()])")) {
+if (!enterManagement.includes("Promise.all([refreshSalesOrderManagement(), checkSalesOrderPrintReadiness()])")) {
   throw new Error("Orders and print-station state must load together");
 }
 const printerSetup = sourceBetween("function renderSalesOrderPrinterSetup", "async function enterSalesOrderMgmt");
@@ -196,10 +196,10 @@ for (const fragment of [
 }
 
 for (const versionFragment of [
-  'content="v1.1.1319"',
+  'content="v1.1.1320"',
   'styles.css?v=1.1.1319',
   'app.js?v=1.1.1319',
-  'var APP_VERSION       = "v1.1.1319"'
+  'var APP_VERSION       = "v1.1.1320"'
 ]) {
   const versionSource = versionFragment.startsWith("var ") ? source : html;
   if (!versionSource.includes(versionFragment)) throw new Error(`Release version is inconsistent: ${versionFragment}`);

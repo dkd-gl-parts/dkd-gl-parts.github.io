@@ -125,7 +125,7 @@ for (const fragment of [
   'shippingDocumentOverlayMode = ""'
 ]) requireFragment(enterSource, fragment);
 for (const fragment of [
-  "loadSalesOrderPrintSettings()",
+  "checkSalesOrderPrintReadiness()",
   "shippingDocumentBatchSelectionDirty",
   "syncShippingDocumentBatchDefaults"
 ]) requireFragment(enterSource, fragment);
@@ -414,8 +414,8 @@ for (const fragment of [
   "帳票の標準設定",
   "A4縦 / モノクロ / 受付時に自動発行",
   "B2クラウド / ヤマト宅急便 元払い",
-  "A5横 / モノクロ / 商品数量分 / 端末印刷",
-  "A5横 / モノクロ / コア返却必要時 / 端末印刷",
+  "A5横 / モノクロ / 商品数量分 / 印刷",
+  "A5横 / モノクロ / コア返却必要時 / 印刷",
   "対象商品1個につき1枚 / 佐川急便 着払い",
   'carrierCode: "yamato_prepaid"',
   'carrierCode: "sagawa_collect"',
@@ -436,10 +436,10 @@ const temporaryOutput = sourceBetween("function shippingDocumentLocalOutputType"
 for (const fragment of [
   'return ["dispatch", "warranty", "core_return"].indexOf(type) >= 0',
   "shippingDocumentTemporaryOutputs",
-  'mode === "browser" ? "表示・PDF" : "端末印刷"',
+  'mode === "browser" ? "表示・PDF" : "印刷"',
   "この画面でこの受注を開いている間だけ有効です",
   "自動印刷や保存済みの標準プリンターは変更しません",
-  "端末印刷（保存済みの標準プリンター）",
+  "印刷（保存済みの標準プリンター）",
   "表示・PDF（印刷画面でプリンターを選択）",
   "標準プリンターを変更",
   "shippingDocumentManualOutputActions"
@@ -575,7 +575,7 @@ for (const fragment of [
   'var returnCanPrint = !!(dispatch && order.core_return_required && returnWaybillCopyCount > 0 && returnMethod === "dot_matrix"',
   'var returnCanHandwrite = !!(dispatch && order.core_return_required && returnWaybillCopyCount > 0 && returnMethod === "handwritten"',
   'returnJob.status === "printed" ? "再印刷"',
-  'returnJob.status === "error" ? "再送" : "端末印刷"',
+  'returnJob.status === "error" ? "再送" : "印刷"',
   'esc(returnPrintActionLabel) + "（" + returnWaybillCopyCount + "枚）',
   '手書き内容を表示（" + returnWaybillCopyCount + "枚）',
   "shippingCarrierBrandHtml(row.carrierCode, true)"
@@ -1118,11 +1118,11 @@ for (const fragment of [
 ]) requireFragment(i18n, fragment, `B2 reissue translation is missing: ${fragment}`);
 
 for (const fragment of [
-  'content="v1.1.1319"',
+  'content="v1.1.1320"',
   'styles.css?v=1.1.1319',
   'app.js?v=1.1.1319'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.1319"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.1320"');
 requireFragment(source, 'sales_management_registered: "売上登録済"');
 requireFragment(source, 'sales_management_unknown: "売上確認不可"');
 
@@ -1214,4 +1214,4 @@ async function verifyIntegratedB2History() {
   context.shippingDocumentDetail={id:77,status:"cancelled"};
   await context.confirmShippingDocumentB2Reissue();
 }
-verifyIntegratedB2History().then(()=>console.log("Order fulfillment document UI verification passed.")).catch(error=>{console.error(error);process.exitCode=1;});
+verifyIntegratedB2History().then(()=>require("../tests/shipping-print-actions.cjs").verify(source)).then(()=>require("../tests/shipping-print-actions.cjs").verifyReadiness(source)).then(()=>console.log("Order fulfillment document UI verification passed.")).catch(error=>{console.error(error);process.exitCode=1;});

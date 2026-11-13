@@ -11927,3 +11927,14 @@ html[data-product-3d-paused] :is(
 
 #screen-search #sales-product-shelf { grid-template-columns: var(--sales-condition-label-width, 132px) minmax(0, 1fr); column-gap: var(--sales-condition-field-gap, 0px); align-items: start; text-align: left; }
 #screen-search #sales-product-shelf .detail-sales-term-value { display: block; }
+
+/* Print readiness is checked when internal order screens open. */
+.order-print-readiness { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 16px; margin:0 0 16px; border:1px solid #bbd5cd; border-radius:8px; background:#eef8f3; color:#185642; }
+.order-print-readiness[hidden] { display:none; }
+.order-print-readiness.stopped { background:#fff4e8; border-color:#dfb881; color:#77440a; }
+.order-print-readiness.checking { background:#eef4fb; border-color:#c1d4e8; color:#24517a; }
+.order-print-readiness p { margin:4px 0 0; line-height:1.55; overflow-wrap:anywhere; }
+.order-print-readiness-actions { display:flex; flex-shrink:0; align-items:center; gap:10px; }
+.order-print-readiness-actions a,.order-print-readiness-actions button { padding:8px 12px; border:1px solid currentColor; border-radius:6px; color:inherit; background:transparent; text-decoration:none; font:inherit; cursor:pointer; }
+.order-print-readiness-actions button:disabled { opacity:.6; cursor:wait; }
+@media (max-width:600px) { .order-print-readiness { align-items:stretch; flex-direction:column; gap:10px; } .order-print-readiness-actions { flex-wrap:wrap; } }
