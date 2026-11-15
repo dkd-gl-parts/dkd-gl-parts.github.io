@@ -8816,7 +8816,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1325";
+var APP_VERSION       = "v1.1.1326";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -8879,6 +8879,7 @@ var componentIllustrationSignedUrlCache = null;
 var componentIllustrationLastTiming = null;
 if (sb.auth && typeof sb.auth.onAuthStateChange === "function") {
   sb.auth.onAuthStateChange(function(event) {
+    if (window.DcatsNineTabs) window.DcatsNineTabs.authEvent(event);
     if (["SIGNED_OUT", "SIGNED_IN", "TOKEN_REFRESHED", "USER_UPDATED", "PASSWORD_RECOVERY"].indexOf(event) >= 0) {
       clearCatalogIllustrationSignedUrlCache(event === "SIGNED_OUT");
     }
@@ -9865,8 +9866,9 @@ function closeConciergeAdmin() {
   if (host) host.replaceChildren();
 }
 function enterConciergeAdmin() {
-  closeConciergeAdmin();
   if (!currentUser || !isSystemAdmin() || !window.DcatsConciergeAdmin) return;
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("concierge-admin", false)) return;
+  closeConciergeAdmin();
   showScreen("concierge-admin");
   conciergeAdminController = window.DcatsConciergeAdmin.mount(document.getElementById("concierge-admin-host"), {
     context: function () { return { id: currentUser && currentUser.id, admin: !!currentUser && isSystemAdmin(), language: currentLang }; },
@@ -11327,6 +11329,28 @@ function showAuthenticatedHome() {
   }
   showScreen("menu");
   renderMenu();
+  if (window.DcatsNineTabs) window.DcatsNineTabs.afterAuthenticated({
+    userId: function () { return currentUser && currentUser.id; },
+    external: isCustomerViewer(),
+    verify: function () { return sb.auth.getUser(); },
+    screen: activeAppScreenName,
+    show: showScreen,
+    canAccess: function (id) {
+      if (!currentUser || !userProfile || isCustomerViewer()) return false;
+      return id === "concierge-admin" ? isSystemAdmin() : id === "customer-access-mgmt" ? canManageCustomerAccess() : id === "finished-label-mgmt" ? canViewFinishedLabelMgmt() : id === "finished-product-shipping" ? canManageFinishedProductShipping() : id === "logs" ? canViewOperationLogs() : id === "rakuten-price" ? canUseRakutenResearch() : id === "rakuten-price-list" ? canViewPriceResearchHistory() : id === "shipping-rate-mgmt" ? canManageShippingRates() : id === "users" ? canUseUserManagement() : false;
+    },
+    enter: function (id) {
+      if (id === "concierge-admin") return enterConciergeAdmin();
+      if (id === "customer-access-mgmt") return enterCustomerAccessMgmt();
+      if (id === "finished-label-mgmt") return enterFinishedLabelMgmt();
+      if (id === "finished-product-shipping") return enterFinishedProductShipping();
+      if (id === "logs") return enterLogs();
+      if (id === "rakuten-price") return enterRakutenPrice();
+      if (id === "rakuten-price-list") return enterRakutenPriceList();
+      if (id === "shipping-rate-mgmt") return enterShippingRateMgmt();
+      if (id === "users") return enterUsers();
+    }
+  }).catch(function () { console.warn("Screen tabs are unavailable"); });
 }
 
 function openRequestedPrintStationAfterAuth() {
@@ -11760,6 +11784,7 @@ function resetScreenRuntimeStateForMenu(screenId) {
 }
 
 function resetScreenStateForMenu(screenId) {
+  if (window.DcatsNineTabs && window.DcatsNineTabs.hasTab(screenId)) return;
   var screen = document.getElementById("screen-" + screenId);
   if (!screen) return;
   screen.querySelectorAll("input, select, textarea").forEach(resetScreenControlState);
@@ -11794,6 +11819,7 @@ function showScreen(id) {
   if (el) el.classList.add("active");
   window.scrollTo(0, 0);
   logScreenOpen(id);
+  if (window.DcatsNineTabs) window.DcatsNineTabs.screenChanged(id);
 }
 captureInitialScreenControlState();
 function isScreenActive(id) {
@@ -12211,6 +12237,7 @@ async function signOutAllDevices() {
 }
 
 async function doLogout() {
+  if (window.DcatsNineTabs) window.DcatsNineTabs.suspend(true);
   resetProductionReportRanks();
   if (typeof claimCaseWorkspace !== "undefined" && claimCaseWorkspace) claimCaseWorkspace.reset();
   claimCaseReturnContext = null;
@@ -24062,6 +24089,7 @@ async function enterShippingRateMgmt() {
     showPermissionDenied("open_shipping_rate_management", "customer_shipping_rates");
     return;
   }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("shipping-rate-mgmt", false)) return;
   showScreen("shipping-rate-mgmt");
   var b2SettingsButton = document.getElementById("shipping-rate-b2-settings-open");
   if (b2SettingsButton) b2SettingsButton.hidden = !isSystemAdmin();
@@ -27189,6 +27217,7 @@ function openRakutenForCurrentProduct() {
 
 async function enterRakutenPrice(seedKeyword) {
   if (!canUseRakutenResearch()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("rakuten-price", seedKeyword)) return;
   if (window.DcatsEcCostListTargets) window.DcatsEcCostListTargets.refresh();
   relocateRakutenSections("price");
   showScreen("rakuten-price");
@@ -29605,6 +29634,7 @@ function clearEcMallPriceListInitialState() {
 
 async function enterRakutenPriceList() {
   if (!canViewPriceResearchHistory()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("rakuten-price-list", false)) return;
   showScreen("rakuten-price-list");
   var nameEl = document.getElementById("rakuten-price-list-username");
   if (nameEl && userProfile) nameEl.textContent = userProfile.name || userProfile.email.split("@")[0];
@@ -35030,6 +35060,7 @@ async function deleteManufacturingCostList() {
 // =============================================
 async function enterFinishedLabelMgmt(options) {
   if (!canViewFinishedLabelMgmt()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("finished-label-mgmt", options && (options.product || options.mode))) return;
   showScreen("finished-label-mgmt");
   probeFinishedLabelSetup({ selectGuide: false }).catch(function() {});
   renderFinishedLabelCategoryOptions();
@@ -38709,6 +38740,7 @@ function setFinishedShipmentDispatchLoadVisible(visible) {
 
 async function enterFinishedProductShipping(options) {
   if (!canManageFinishedProductShipping()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("finished-product-shipping", options && options.order)) return;
   options = options || {};
   closeFinishedShipmentCamera();
   finishedShipmentOrderContext = options.order || null;
@@ -41390,6 +41422,7 @@ async function removeKikanMember(groupId, dkdGokanId, keepFormOpen) {
 // =============================================
 async function enterLogs() {
   if (!canViewOperationLogs()) { showPermissionDenied("open_logs", "operation_logs"); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("logs", false)) return;
   showScreen("logs");
   await loadLogs();
 }
@@ -41602,6 +41635,7 @@ function enterChangePw() {
 
 async function enterUsers() {
   if (!userProfile || !canUseUserManagement()) { showPermissionDenied("open_users", "profiles"); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("users", false)) return;
   userManagementRows = [];
   userManagementLoaded = false;
   userManagementLoadError = null;
@@ -54624,6 +54658,7 @@ function bindCustomerAccessWorkspaceNavigation() {
 
 async function enterCustomerAccessMgmt() {
   if (!canManageCustomerAccess()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("customer-access-mgmt", false)) return;
   currentCustomerAccessCustomer = null;
   customerAccessDetailRequestSeq += 1;
   customerAccessSavedDisplayDraft = null;
