@@ -11331,6 +11331,7 @@ function showAuthenticatedHome() {
   renderMenu();
   if (window.DcatsNineTabs) window.DcatsNineTabs.afterAuthenticated({
     userId: function () { return currentUser && currentUser.id; },
+    scope: function () { return JSON.stringify([currentUser && currentUser.id, userProfile && userProfile.id, userProfile && userProfile.company_code, userProfile && userProfile.department_code, userProfile && userProfile.role, userProfile && userProfile.role_code, userProfile && userProfile.status, userProfile && userProfile.permission_overrides]); },
     external: isCustomerViewer(),
     verify: function () { return sb.auth.getUser(); },
     screen: activeAppScreenName,

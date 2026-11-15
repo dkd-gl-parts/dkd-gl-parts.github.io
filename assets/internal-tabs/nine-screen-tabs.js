@@ -7,14 +7,14 @@
     en: ["Concierge", "Customers", "Product labels", "Product shipping", "Operation logs", "Price research", "Price results", "Shipping rates", "Users"],
     zh: ["礼宾管理", "客户管理", "成品标签", "成品发货", "操作日志", "价格调查", "价格结果", "运费管理", "用户管理"]
   };
-  var context = null, verifiedId = null, epoch = 0, tabs = [], active = null, loaded = new Set(), navigating = false;
+  var context = null, verifiedId = null, verifiedScope = null, epoch = 0, tabs = [], active = null, loaded = new Set(), navigating = false;
   var bar, list, notice, toggle, enabled = false;
   function language() { return LABELS[root.currentLang] ? root.currentLang : "ja"; }
   function text(ja, en, zh) { return language() === "ja" ? ja : language() === "zh" ? zh : en; }
   function policy() { return root.DcatsNineTabsPolicy || {mode: "off", pilotEmails: []}; }
   function ownerKey() { return "dcats-nine-tabs.v1:" + verifiedId; }
   function preferenceKey() { return ownerKey() + ":enabled"; }
-  function current() { return !!context && !!verifiedId && context.userId() === verifiedId; }
+  function current() { return !!context && !!verifiedId && context.userId() === verifiedId && context.scope() === verifiedScope; }
   function pilot() { return current() && policy().mode === "pilot" && Array.isArray(policy().pilotUserIds) && policy().pilotUserIds.includes(verifiedId) && Array.isArray(policy().pilotEmails) && policy().pilotEmails.includes(context.email); }
   function allowed(id) { return current() && FEATURES.includes(id) && context.canAccess(id) === true; }
   function available() { return current() && (policy().mode === "all" || pilot()); }
@@ -96,6 +96,7 @@
     return true;
   }
   function beforeEnter(id, hasContext) {
+    if (enabled && !current()) suspend(false);
     if (!enabled || !available() || !FEATURES.includes(id)) return false;
     if (!allowed(id)) { denied(id); return true; }
     if (!tabs.includes(id) && tabs.length >= 6) { announce(text("画面タブは6つまでです。1つ閉じてから開いてください。", "Maximum 6 tabs. Close one before opening another.", "最多6个标签，请先关闭一个。")); return true; }
@@ -123,17 +124,17 @@
   }
   function suspend(forget) {
     if (forget && verifiedId) { try { root.sessionStorage.removeItem(ownerKey()); root.sessionStorage.removeItem(preferenceKey()); } catch (_) {} }
-    epoch += 1; enabled = false; context = null; verifiedId = null; tabs = []; active = null; loaded.clear(); render();
+    epoch += 1; enabled = false; context = null; verifiedId = null; verifiedScope = null; tabs = []; active = null; loaded.clear(); render();
   }
   async function afterAuthenticated(options) {
-    var ticket = ++epoch, expected = options.userId();
+    var ticket = ++epoch, expected = options.userId(), expectedScope = options.scope();
     if (!expected || options.external) { suspend(false); return; }
     var response;
     try { response = await options.verify(); } catch (_) { if (ticket === epoch) suspend(false); return; }
-    if (ticket !== epoch || options.userId() !== expected) return;
+    if (ticket !== epoch || options.userId() !== expected || options.scope() !== expectedScope) return;
     var user = response && !response.error && response.data && response.data.user;
     if (!user || user.id !== expected || !user.email_confirmed_at) { suspend(false); return; }
-    context = options; context.email = String(user.email || "").toLowerCase(); verifiedId = user.id;
+    context = options; context.email = String(user.email || "").toLowerCase(); verifiedId = user.id; verifiedScope = expectedScope;
     tabs = []; loaded.clear(); active = null; mount();
     enabled = available() && storageGet(preferenceKey()) === "on";
     if (enabled) restore(); else render();
@@ -141,5 +142,5 @@
   root.DcatsNineTabs = Object.freeze({features: FEATURES, retainedLimit: 6, afterAuthenticated: afterAuthenticated, beforeEnter: beforeEnter, screenChanged: screenChanged, suspend: suspend,
     authEvent: function (event) { if (["SIGNED_OUT", "USER_UPDATED", "PASSWORD_RECOVERY"].includes(event)) suspend(event === "SIGNED_OUT"); },
     hasTab: function (id) { return enabled && current() && tabs.includes(id); },
-    snapshot: function () { return {enabled: enabled, tabs: tabs.slice(), active: active, retainedLimit: 6}; }});
+    snapshot: function () { return {enabled: enabled && current(), tabs: tabs.slice(), active: active, retainedLimit: 6}; }});
 })(window);
