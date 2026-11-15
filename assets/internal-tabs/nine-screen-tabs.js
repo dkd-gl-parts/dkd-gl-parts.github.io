@@ -127,6 +127,7 @@
     epoch += 1; enabled = false; context = null; verifiedId = null; verifiedScope = null; tabs = []; active = null; loaded.clear(); render();
   }
   async function afterAuthenticated(options) {
+    var wasCurrent = current();
     var ticket = ++epoch, expected = options.userId(), expectedScope = options.scope();
     if (!expected || options.external) { suspend(false); return; }
     var response;
@@ -135,8 +136,11 @@
     var user = response && !response.error && response.data && response.data.user;
     if (!user || user.id !== expected || !user.email_confirmed_at) { suspend(false); return; }
     context = options; context.email = String(user.email || "").toLowerCase(); verifiedId = user.id; verifiedScope = expectedScope;
-    tabs = []; loaded.clear(); active = null; mount();
+    mount();
     enabled = available() && storageGet(preferenceKey()) === "on";
+    // Returning to the menu for the same verified scope must not reopen its last tab.
+    if (wasCurrent) { render(); return; }
+    tabs = []; loaded.clear(); active = null;
     if (enabled) restore(); else render();
   }
   root.DcatsNineTabs = Object.freeze({features: FEATURES, retainedLimit: 6, afterAuthenticated: afterAuthenticated, beforeEnter: beforeEnter, screenChanged: screenChanged, suspend: suspend,
