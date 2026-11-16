@@ -273,3 +273,18 @@ async function verifySalesSearchReset() {
   console.log("screen state policy verification passed (sales reset, entry guards, child return and stale reads)");
 }
 verifySalesSearchReset().catch(error => { console.error(error); process.exitCode = 1; });
+
+// Retained pilot tabs keep the native workspace while ordinary navigation resets it.
+active = "sales-order-mgmt";
+context.salesOrderDetailView = "history";
+context.window.DcatsNineTabs = { hasTab: id => ["sales-order-mgmt", "claim-case-mgmt"].includes(id), screenChanged() {} };
+let claimResets = 0;
+context.claimCaseWorkspace = { reset() { claimResets += 1; } };
+context.showScreen("shipping-document-mgmt");
+assert.equal(context.salesOrderDetailView, "history", "Switching retained order tabs keeps the current detail view");
+assert.equal(claimResets, 0, "The retained reception workspace survives tab and menu navigation");
+context.showScreen("login");
+assert.equal(claimResets, 1, "Sign-out clears a retained reception workspace");
+assert.equal(context.salesOrderDetailView, "overview", "Sign-out resets retained order details");
+delete context.window.DcatsNineTabs;
+delete context.claimCaseWorkspace;
