@@ -46,11 +46,12 @@ assert(app.includes('var roleCanManageStock = permissionOverviewRoleIn(role, pro
 const editorDefaults = app.match(/var editors = \[([^\]]+)\]/);
 assert(editorDefaults && !editorDefaults[1].includes("sales_editor"), "Shipping role must not inherit product editing");
 
-const menuSource = functionSource("renderMenu", "customerPortalValue");
+const menuSource = functionSource("createScreenMenuDefinitions", "customerPortalValue");
 function menuForRole(roleCode, shippingAllowed = true) {
   const { document } = parseHTML('<div id="menu-grid"></div>');
   let shippingOpened = 0;
   const context = {
+    window: {},
     document,
     userProfile: { role_code: roleCode, role: "price_viewer", group_name: "daiko" },
     syncDcatsIntegrationReadinessContext() {},
