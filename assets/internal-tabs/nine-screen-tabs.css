@@ -20,7 +20,7 @@
 .dcats-nine-tabs-notice:not(:empty) { color: #a32222; }
 .dcats-nine-tabs-toggle { display: block; width: fit-content; max-width: 100%; margin: 0 0 20px; padding: 10px 18px; min-height: 44px; border: 1px solid #a9b9d0; border-radius: 10px; background: #fff; color: #23334d; font: inherit; cursor: pointer; }
 .dcats-nine-tabs-toggle[aria-pressed="true"] { border-color: #4b78b2; color: #123e77; background: #eaf2ff; }
-.dcats-nine-tabs-visible .screen.active .page-header { position: static; }
+.dcats-nine-tabs-visible .screen.active .page-header { position: relative; }
 body.dcats-nine-tabs-visible { height: auto; min-height: 100%; overflow: visible; }
 .dcats-nine-tabs-visible .screen.active .page-header-right { min-width: 0; max-width: 100%; flex-shrink: 1; }
 .dcats-nine-tabs-visible .screen.active .page-header-right [id$="-username"] { min-width: 0; max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
