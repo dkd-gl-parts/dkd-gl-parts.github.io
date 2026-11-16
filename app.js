@@ -8816,7 +8816,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1328";
+var APP_VERSION       = "v1.1.1329";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -9963,7 +9963,7 @@ function canManageAllImages() {
 }
 function canUseProductPhotoTools() {
   if (!userProfile || isExternalViewer() || isCustomerPortalSearchMode()) return false;
-  return hasAccessRole(userProfile, ["master_editor", "dept_admin"]) && userPermissionAllowed(userProfile, "image.manage", true);
+  return (isBusinessInspectionProfile(userProfile) || hasAccessRole(userProfile, ["master_editor", "dept_admin"])) && userPermissionAllowed(userProfile, "image.manage", true);
 }
 function openProductPhotoTools(product, context, tab) {
   if (!canUseProductPhotoTools()) { showPermissionDenied("open_product_photo_tools", "core_product_images"); return; }
@@ -10015,7 +10015,7 @@ function canDeleteImageTarget(target, context) {
   return context !== "production" && kind === "used_core" && origin !== "production" && !productionShown;
 }
 function canDelete() {
-  if (isCustomerPortalSearchMode()) return false;
+  if (isBusinessInspectionProfile(userProfile) || isCustomerPortalSearchMode()) return false;
   return userPermissionAllowed(userProfile, "product.delete", isCompanyAdminRole(userProfile));
 }
 function isAdmin() {
@@ -10025,6 +10025,7 @@ function canUseUserManagement() {
   return userPermissionAllowed(userProfile, "users.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "sales_editor", "business_admin"]));
 }
 function canAssignUserRole(roleCode) {
+  if (roleCode === "business_inspection") return false;
   if (isSystemAdmin()) return true;
   var currentRole = accessRoleCode(userProfile);
   if (currentRole === "company_admin") return roleCode !== "system_admin";
@@ -10033,7 +10034,7 @@ function canAssignUserRole(roleCode) {
 
 // 業務管理者は、自社かつ同じ業務のスタッフだけを管理する。
 function canManageUser(targetProfile) {
-  if (!userProfile || !targetProfile) return false;
+  if (!userProfile || !targetProfile || isBusinessInspectionProfile(targetProfile)) return false;
   if (isSystemAdmin()) return true;
   if (!canUseUserManagement()) return false;
   if (userCompanyCode(targetProfile) !== userCompanyCode(userProfile)) return false;
@@ -10447,9 +10448,15 @@ function accessRoleLabel(roleCode) {
   var opt = USER_ACCESS_ROLE_OPTIONS.find(function(item) { return item[0] === roleCode; });
   return opt ? opt[1] : (roleCode || "");
 }
+function isBusinessInspectionProfile(profile) {
+  return !!profile && profile.permission_profile_code === "business_inspection";
+}
+function profileAccessRoleLabel(profile) {
+  if (isBusinessInspectionProfile(profile)) return "業務点検";
+  return accessRoleLabel(userAccessRoleCode(profile)) || roleLabel(profile && profile.role);
+}
 function currentRoleDisplayLabel() {
-  var roleCode = userAccessRoleCode(userProfile);
-  return accessRoleLabel(roleCode) || roleLabel(userProfile && userProfile.role);
+  return profileAccessRoleLabel(userProfile);
 }
 function roleClass(role) {
   return {
@@ -57894,6 +57901,7 @@ function permissionOverviewUserContext(user, roleCode, manufacturingCostAllowed)
     roleCode: roleCode,
     companyCode: companyCode,
     ownRole: true,
+    businessInspection: isBusinessInspectionProfile(user),
     scope: accessScopeLabel(roleCode, companyLabel),
     manufacturingCostAllowed: !!manufacturingCostAllowed,
     permissionOverrides: userPermissionOverrides(user),
@@ -58139,7 +58147,7 @@ function permissionOverviewScreenGroups(context) {
         {
           title: "商品撮影・画像整理",
           items: [
-            { label: "撮影・登録・整理・選択ダウンロード", state: yesNo(roleIsInternal && permissionOverviewRoleIn(role, ["master_editor", "dept_admin"]), "責任者のみ利用可（画像管理の拒否設定を優先）", "利用不可") }
+            { label: "撮影・登録・整理・選択ダウンロード", state: yesNo(roleIsInternal && (context.businessInspection || permissionOverviewRoleIn(role, ["master_editor", "dept_admin"])), "責任者のみ利用可（画像管理の拒否設定を優先）", "利用不可") }
           ]
         },
         {
@@ -58937,7 +58945,7 @@ function permissionOverviewCountHtml(context) {
 }
 
 function canEditUserPermission(user) {
-  if (!user || !isSystemAdmin()) return false;
+  if (!user || isBusinessInspectionProfile(user) || !isSystemAdmin()) return false;
   var actorId = (currentUser && currentUser.id) || (userProfile && userProfile.id) || "";
   return !!actorId && String(user.id) !== String(actorId);
 }
@@ -58957,6 +58965,7 @@ function canEditUserPermissionStates(user, roleCode) {
 }
 
 function permissionOverridesForRole(user, roleCode, overrides) {
+  if (isBusinessInspectionProfile(user)) return Object.assign({}, userPermissionOverrides(user));
   var clean = {};
   var context = permissionOverviewUserContext(user, roleCode, false);
   context.canEditStates = true;
@@ -58993,7 +59002,7 @@ function renderUserPermissionOverview() {
       user.name,
       user.email,
       optionLabel(USER_COMPANY_OPTIONS, userCompanyCode(user)),
-      accessRoleLabel(roleCode),
+      profileAccessRoleLabel(user),
       accessRoleScopeText(roleCode)
     ].filter(Boolean).join(" ")).indexOf(query) >= 0;
   });
@@ -59028,7 +59037,7 @@ function renderUserPermissionOverview() {
     html += "<td><div class='user-permission-person'><strong>" + esc(user.name || "-") + "</strong>" + statusBadge + "</div><div class='mgmt-sub'>ログインID: " + esc(user.email || "-") + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(optionLabel(USER_COMPANY_OPTIONS, companyCode)) + "</div></td>";
     var overrideCount = Object.keys(userPermissionOverrides(user)).filter(function(key) { return typeof userPermissionOverrides(user)[key] === "boolean"; }).length;
-    html += "<td><div class='mgmt-pn'>" + esc(accessRoleLabel(roleCode)) + "</div><div class='mgmt-sub'>" + esc(accessRoleScopeText(roleCode)) + "</div>" + (overrideCount ? "<div class='mgmt-sub permission-override-count'>個別設定: " + overrideCount + "件</div>" : "") + (customerText ? "<div class='mgmt-sub'>得意先: " + esc(customerText) + "</div>" : "") + "</td>";
+    html += "<td><div class='mgmt-pn'>" + esc(profileAccessRoleLabel(user)) + "</div><div class='mgmt-sub'>" + esc(accessRoleScopeText(roleCode)) + "</div>" + (overrideCount ? "<div class='mgmt-sub permission-override-count'>個別設定: " + overrideCount + "件</div>" : "") + (customerText ? "<div class='mgmt-sub'>得意先: " + esc(customerText) + "</div>" : "") + "</td>";
     html += "<td>" + permissionOverviewStatusHtml(costState) + "</td>";
     html += "<td><button class='btn-user-permission-open' type='button' data-uid='" + esc(user.id) + "'>" + (canEditUserPermission(user) ? "確認・変更" : "確認") + "</button></td>";
     html += "</tr>";
@@ -59074,12 +59083,14 @@ function openUserPermissionEditor(user) {
   var roleCode = normalizeAccessRoleForCompany(userAccessRoleCode(user), companyCode);
   var canManage = canEditUserPermission(user);
   currentPermissionEditOverrides = Object.assign({}, userPermissionOverrides(user));
-  roleDisplay.innerHTML = internalAccessRoleOptionHtmlForCompany(companyCode, roleCode);
+  roleDisplay.innerHTML = isBusinessInspectionProfile(user)
+    ? optionHtml([[roleCode, profileAccessRoleLabel(user)]], roleCode)
+    : internalAccessRoleOptionHtmlForCompany(companyCode, roleCode);
   roleDisplay.disabled = !canManage;
   customerSelect.innerHTML = customerOptionHtml(customerUserLinkMap[user.id] || "");
   customerSelect.disabled = !canManage;
   if (summary) {
-    summary.innerHTML = "<strong>" + esc(user.name || user.email || "-") + "</strong><span>" + esc(user.email || "-") + "</span><span>会社: " + esc(optionLabel(USER_COMPANY_OPTIONS, companyCode)) + " / 基準権限: " + esc(accessRoleLabel(roleCode)) + "</span>";
+    summary.innerHTML = "<strong>" + esc(user.name || user.email || "-") + "</strong><span>" + esc(user.email || "-") + "</span><span>会社: " + esc(optionLabel(USER_COMPANY_OPTIONS, companyCode)) + " / 基準権限: " + esc(profileAccessRoleLabel(user)) + "</span>";
   }
   if (message) { message.className = "save-msg"; message.textContent = ""; }
   overlay.classList.add("show");
@@ -59103,12 +59114,16 @@ function refreshUserPermissionEditor() {
   var optionalAllowed = manufacturingCostOptionalAllowedFor(roleCode, companyCode);
   var canManage = canEditUserPermission(user);
   var canEditStates = canEditUserPermissionStates(user, roleCode);
-  if (roleNote) roleNote.textContent = accessRoleScopeText(roleCode);
+  if (roleNote) roleNote.textContent = isBusinessInspectionProfile(user)
+    ? "AI専用 / 商品削除以外を利用できます。"
+    : accessRoleScopeText(roleCode);
   if (controls) controls.classList.toggle("has-customer-field", roleCode === "customer_viewer");
   if (customerField) setCspStyle(customerField, "display", roleCode === "customer_viewer" ? "" : "none");
   if (saveButton) setCspStyle(saveButton, "display", canManage ? "" : "none");
   if (guide) {
-    if (!canManage) {
+    if (isBusinessInspectionProfile(user)) {
+      guide.textContent = "業務点検はAI専用です。商品削除のみ禁止され、通常のユーザー権限画面では変更できません。";
+    } else if (!canManage) {
       guide.textContent = "表示ルール: 利用可・制限は表示、不可は非表示です。自分自身の基準権限はこの画面では変更できません。";
     } else if (roleCode === "system_admin") {
       guide.textContent = "表示ルール: 利用可・制限は表示、不可は非表示です。システム管理者は全機能を利用できるため、個別設定は使用しません。";
@@ -59396,7 +59411,7 @@ async function openUserAuthHistory(user, options) {
   }
   summary.textContent = options.customerAccount && currentCustomerAccessCustomer
     ? [currentCustomerAccessCustomer.source_customer_code, currentCustomerAccessCustomer.customer_name, user.name, user.email].filter(Boolean).join(" / ")
-    : (user.email || "-") + " / " + accessRoleLabel(normalizeAccessRoleForCompany(userAccessRoleCode(user), userCompanyCode(user)));
+    : (user.email || "-") + " / " + profileAccessRoleLabel(user);
   list.innerHTML = "<div class='loading'>" + t("loading") + "</div>";
   overlay.classList.add("show");
 
@@ -59532,7 +59547,7 @@ function renderUsers(users) {
     html += "<div data-dcats-inline-style='s-286372957b99'>";
     html += "<div class='user-email'>ログインID: "+esc(u.email)+" "+sbadge+"</div>";
     html += "<div class='user-summary-line'>";
-    html += "<span class='user-summary-chip user-affiliation-summary'>会社: "+esc(companyLabel)+" / 基準権限: "+esc(accessRoleLabel(roleCode))+"</span>";
+    html += "<span class='user-summary-chip user-affiliation-summary'>会社: "+esc(companyLabel)+" / 基準権限: "+esc(profileAccessRoleLabel(u))+"</span>";
     html += "</div>";
     if (u.company) html += "<div class='user-created'>申請会社名: "+esc(u.company)+"</div>";
     html += "<div class='user-created'>"+t("lbl_registered")+" "+(u.created_at?u.created_at.slice(0,10):"-")+"</div>";

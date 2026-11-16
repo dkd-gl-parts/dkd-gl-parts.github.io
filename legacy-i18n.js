@@ -8956,3 +8956,14 @@ Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {
   "この受付を再開しますか？": "重新打开此受理吗？",
   "代替対応": "替换处理"
 });
+
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {
+  "業務点検": "Business Inspection",
+  "AI専用 / 商品削除以外を利用できます。": "AI only / All operations except product deletion are permitted.",
+  "業務点検はAI専用です。商品削除のみ禁止され、通常のユーザー権限画面では変更できません。": "Business Inspection is reserved for AI. Product deletion is prohibited, and this profile cannot be changed in the regular user permission screen."
+});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {
+  "業務点検": "业务检查",
+  "AI専用 / 商品削除以外を利用できます。": "仅限AI / 允许除删除商品之外的所有操作。",
+  "業務点検はAI専用です。商品削除のみ禁止され、通常のユーザー権限画面では変更できません。": "业务检查仅供AI使用。仅禁止删除商品，无法在普通用户权限界面中更改此配置。"
+});
