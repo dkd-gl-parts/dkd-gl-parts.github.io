@@ -38,7 +38,7 @@
   ]
 };
   var context = null, verifiedId = null, verifiedScope = null, epoch = 0, tabs = [], active = null, loaded = new Set(), navigating = false;
-  var bar, list, notice, toggle, home, hint, enabled = false;
+  var bar, list, notice, toggle, hint, enabled = false;
   function language() { return LABELS[root.currentLang] ? root.currentLang : "ja"; }
   function text(ja, en, zh) { return language() === "ja" ? ja : language() === "zh" ? zh : en; }
   function policy() { return root.DcatsNineTabsPolicy || {mode: "off", pilotEmails: []}; }
@@ -57,10 +57,8 @@
     bar = root.document.createElement("section"); bar.id = "dcats-nine-tabs"; bar.className = "dcats-nine-tabs"; bar.hidden = true;
     list = root.document.createElement("div"); list.className = "dcats-nine-tabs-list"; list.setAttribute("role", "tablist");
     notice = root.document.createElement("p"); notice.className = "dcats-nine-tabs-notice"; notice.setAttribute("role", "status"); notice.setAttribute("aria-live", "polite");
-    home = root.document.createElement("button"); home.type = "button"; home.id = "dcats-nine-tabs-home"; home.className = "dcats-nine-tabs-home";
-    home.addEventListener("click", function () { if (current()) context.home(); });
     hint = root.document.createElement("p"); hint.className = "dcats-nine-tabs-hint";
-    var strip = root.document.createElement("div"); strip.className = "dcats-nine-tabs-strip"; strip.append(home, list);
+    var strip = root.document.createElement("div"); strip.className = "dcats-nine-tabs-strip"; strip.append(list);
     bar.append(strip, hint, notice); root.document.body.insertBefore(bar, root.document.body.firstChild);
     var menu = root.document.getElementById("screen-menu");
     if (menu) {
@@ -85,7 +83,6 @@
     var destination = screen && root.document.getElementById("screen-" + screen);
     if (!bar.hidden && destination && bar.parentNode !== destination) destination.insertBefore(bar, destination.firstChild);
     root.document.body.classList.toggle("dcats-nine-tabs-visible", !bar.hidden);
-    home.textContent = text("メニュー", "Menu", "菜单"); home.setAttribute("aria-current", screen === "menu" ? "page" : "false");
     hint.hidden = tabs.length > 0; hint.textContent = text("下のメニューから対応画面を開くと、ここにタブが並びます（最大6つ）。", "Open a supported screen from the menu to add a tab here (up to 6).", "从下方菜单打开支持的屏幕后，此处会显示标签（最多6个）。");
     list.replaceChildren(); list.setAttribute("aria-label", text("画面タブ（最大6）", "Screen tabs (maximum 6)", "屏幕标签（最多6个）"));
     tabs.forEach(function (id) {
