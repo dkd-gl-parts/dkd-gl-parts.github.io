@@ -1,7 +1,7 @@
 .dcats-nine-tabs { position: sticky; top: 0; z-index: 150; width: 100%; box-sizing: border-box; flex-shrink: 0; padding: 3px 12px 0; background: #dfe7f2; border-bottom: 1px solid #a9b9d0; color: #23334d; }
 .dcats-nine-tabs[hidden], .dcats-nine-tabs-toggle[hidden], .dcats-nine-tabs-hint[hidden] { display: none; }
 .dcats-nine-tabs-strip { display: flex; align-items: end; gap: 0; min-width: 0; }
-.dcats-nine-tabs-list { display: flex; align-items: end; gap: 4px; flex: 1; min-width: 0; overflow-x: auto; padding: 0 5px; scrollbar-width: thin; }
+.dcats-nine-tabs-list { display: flex; align-items: end; gap: 4px; flex: 1; min-width: 0; overflow-x: auto; padding: 0 5px; scrollbar-width: none; }
 .dcats-nine-tab { position: relative; display: flex; flex: 0 0 auto; align-items: center; max-width: 270px; border: 1px solid #becbdd; border-bottom: 0; border-radius: 9px 9px 0 0; background: #eaf0f8; color: #41516b; margin-top: 2px; }
 .dcats-nine-tab::before, .dcats-nine-tab::after { content: ""; position: absolute; bottom: 0; width: 6px; height: 6px; pointer-events: none; }
 .dcats-nine-tab::before { left: -6px; border-radius: 0 0 6px 0; box-shadow: 3px 0 0 0 #eaf0f8; }
