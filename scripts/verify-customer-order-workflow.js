@@ -209,7 +209,7 @@ if (!source.includes('new Blob(["\\ufeff" + csv], { type: "text/csv;charset=utf-
   throw new Error("B2 CSV must be exported with a UTF-8 BOM");
 }
 
-const menuSource = sourceBetween("function renderMenu", "function customerPortalValue");
+const menuSource = sourceBetween("function createScreenMenuDefinitions", "function customerPortalValue");
 if (!menuSource.includes('action: "sales-order-mgmt"') || !menuSource.includes("canManageSalesOrders()")) {
   throw new Error("internal order management must be permission-gated in the menu");
 }

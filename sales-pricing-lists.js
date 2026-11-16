@@ -434,7 +434,7 @@
     }catch(e){if(ecCurrent(job))job.message='ecUnknown';}
     finally{job.checking=false;if(valid())ecRender();}
   }
-  root.DcatsSalesPricingLists={enter:enter,reset:reset,refresh:function(){if(valid()&&state.run)return load(true,true);}};
+  root.DcatsSalesPricingLists={isBusy:function(){return !!(state.busy||state.pending||state.ec||state.dksProgress&&!state.dksProgress.finished);},enter:enter,reset:reset,refresh:function(){if(valid()&&state.run)return load(true,true);}};
   // Account, permission and screen changes clear financial/credential UI. No
   // session is copied from another browser or persisted in browser storage.
   var screen=el('screen-sales-pricing-mgmt');

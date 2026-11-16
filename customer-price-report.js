@@ -476,6 +476,7 @@
     var price = canManageCustomerAccess();
     var ranking = canViewManufacturingReport();
     if (!price && !ranking) { alert(t("err_perm")); return; }
+    if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("report-hub", false)) return;
     byId("report-hub-open-price").hidden = !price;
     byId("report-hub-open-ranking").hidden = !ranking;
     showScreen("report-hub");
@@ -538,6 +539,7 @@
     });
   }
 
+  window.DcatsCustomerPriceReportTabState = function() { return {busy: !!(state.loading || state.pendingIssue)}; };
   window.enterReportHub = enterReportHub;
   window.enterCustomerPriceReport = enterCustomerPriceReport;
   bindEvents();

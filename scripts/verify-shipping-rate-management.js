@@ -35,18 +35,20 @@ const logoutSource = sourceBetween("async function doLogout()", "// メニュー
 });
 
 const renderMenuSource = sourceBetween("function renderMenu()", "function renderCustomerExperienceHeaders");
-const adminItemsStart = renderMenuSource.indexOf("var adminItems = [");
-const adminItemsEnd = renderMenuSource.indexOf("].filter(function(item) { return item.available; });", adminItemsStart);
+const menuDefinitionsSource = sourceBetween("function createScreenMenuDefinitions()", "function renderMenu()");
+const adminItemsStart = menuDefinitionsSource.indexOf("adminItems: [");
+const adminItemsEnd = menuDefinitionsSource.indexOf("settingsItems:", adminItemsStart);
 if (adminItemsStart < 0 || adminItemsEnd < adminItemsStart) throw new Error("adminItems could not be isolated");
-const adminItemsSource = renderMenuSource.slice(adminItemsStart, adminItemsEnd);
+const adminItemsSource = menuDefinitionsSource.slice(adminItemsStart, adminItemsEnd);
 if (!adminItemsSource.includes('action: "shipping-rate-mgmt"')) {
   throw new Error("shipping master must be an adminItems entry");
 }
 if (adminItemsSource.includes("shippingRateRows = [];") || adminItemsSource.includes("shippingRateLoadSeq += 1;")) {
   throw new Error("shipping logout resets must not be inside adminItems");
 }
-if (!renderMenuSource.includes('else if (card.dataset.action === "shipping-rate-mgmt") enterShippingRateMgmt();')) {
-  throw new Error("shipping master click routing must be inside renderMenu");
+if (!renderMenuSource.includes("openAppMenuAction(card.dataset.action, event)") ||
+    !renderMenuSource.includes('else if (action === "shipping-rate-mgmt") enterShippingRateMgmt();')) {
+  throw new Error("shipping master click must delegate from renderMenu to the native shipping entry");
 }
 if (!adminItemsSource.includes('titleKey: "mi_shipping_title"') ||
     !source.includes('mi_shipping_title: "運送・送料管理"') ||

@@ -288,3 +288,172 @@ assert.equal(claimResets, 1, "Sign-out clears a retained reception workspace");
 assert.equal(context.salesOrderDetailView, "overview", "Sign-out resets retained order details");
 delete context.window.DcatsNineTabs;
 delete context.claimCaseWorkspace;
+
+
+// Dynamic FIFO tabs use the real runtime and independent synthetic screens.
+async function verifyDynamicScreenTabs() {
+  const tabSource = fs.readFileSync(path.join(root, "assets/internal-tabs/nine-screen-tabs.js"), "utf8");
+  async function makeTabs() {
+    const ids = Array.from({length: 14}, (_, i) => "synthetic-menu-" + (i + 1));
+    const parsed = parseHTML('<html><body><div id="screen-menu"><div class="menu-body"><div class="menu-welcome"></div></div></div>' + ids.map(id => '<div id="screen-' + id + '" class="screen"><input id="input-' + id + '" value=""></div>').join("") + '</body></html>');
+    parsed.window.HTMLElement.prototype.focus = function () {};
+    parsed.window.HTMLElement.prototype.getBoundingClientRect = function () { return {left: 0, right: 100, top: 0, bottom: 35, height: 35}; };
+    const values = new Map(), allowed = new Set(ids), dirty = new Set(), released = [];
+    let currentScreen = "menu", scope = "initial", busy = false, confirmResult = true, confirms = 0, selected = null;
+    const w = {
+      document: parsed.document, currentLang: "ja",
+      DcatsNineTabsPolicy: {mode: "pilot", pilotUserIds: ["synthetic-owner"], pilotEmails: ["owner@example.invalid"]},
+      sessionStorage: {getItem: key => values.has(key) ? values.get(key) : null, setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key)},
+      addEventListener() {},
+      confirm(message) { assert.match(message, /入力内容の変更/); confirms += 1; return confirmResult; }
+    };
+    vm.runInNewContext(tabSource, {window: w, Promise, Set, Map, Array, JSON});
+    const api = w.DcatsNineTabs;
+    const show = id => { if (!api.beforeShow(id)) return false; if (id === "menu") api.willLeave(id); currentScreen = id; api.screenChanged(id); return true; };
+    const open = id => { if (api.beforeEnter(id, false)) return false; selected = id; return show(id); };
+    const options = {
+      userId: () => "synthetic-owner", scope: () => scope, external: false,
+      verify: async () => ({data: {user: {id: "synthetic-owner", email: "owner@example.invalid", email_confirmed_at: "2026-11-16"}}}),
+      entries: () => ids.map(id => ({id, label: id})), canAccess: id => allowed.has(id),
+      screen: () => currentScreen, show, home: () => show("menu"), enter: open,
+      capture: () => ({selected}), restore: state => { selected = state.selected; },
+      release: id => { released.push(id); dirty.delete(id); },
+      resetControl: node => { node.value = ""; },
+      closeState: id => ({dirty: dirty.has(id), busy})
+    };
+    await api.afterAuthenticated(options);
+    const click = selector => parsed.document.querySelector(selector).dispatchEvent(new parsed.window.Event("click", {bubbles: true}));
+    const enable = () => click("#dcats-nine-tabs-toggle");
+    const select = id => click("#dcats-nine-tab-" + id);
+    const close = id => click('[data-close-feature="' + id + '"]');
+    const input = (id, value) => {
+      const node = parsed.document.getElementById("input-" + id);
+      node.dispatchEvent(new parsed.window.Event("focusin", {bubbles: true}));
+      node.dispatchEvent(new parsed.window.Event("beforeinput", {bubbles: true}));
+      node.value = value;
+      node.dispatchEvent(new parsed.window.Event("input", {bubbles: true}));
+      return node;
+    };
+    return {api, w, ids, options, values, allowed, dirty, released, show, open, enable, select, close, input,
+      get screen() { return currentScreen; }, get confirms() { return confirms; }, get selected() { return selected; },
+      set confirmResult(value) { confirmResult = value; }, set busy(value) { busy = value; }, set scope(value) { scope = value; },
+      set selected(value) { selected = value; }};
+  }
+  const clean = await makeTabs();
+  clean.enable(); clean.open(clean.ids[0]);
+  const loadedInput = clean.w.document.getElementById("input-" + clean.ids[0]);
+  loadedInput.dispatchEvent(new (loadedInput.ownerDocument.defaultView.Event)("focusin", {bubbles: true}));
+  loadedInput.value = "server-loaded";
+  assert.equal(clean.api.hasUnsaved(), false, "Programmatic server loading is not a user edit");
+  clean.input(clean.ids[0], "edited");
+  assert.equal(clean.api.hasUnsaved(), true);
+  clean.input(clean.ids[0], "server-loaded");
+  assert.equal(clean.api.hasUnsaved(), false, "Undo restores the loaded baseline");
+  const t = await makeTabs();
+  assert.equal(t.api.snapshot().enabled, false, "Default stays off");
+  t.enable();
+  const firstNine = t.ids.slice(0, 9);
+  firstNine.forEach(t.open);
+  assert.equal(t.api.retainedLimit, 9);
+  assert.equal(Array.from(t.api.snapshot().tabs).join("|"), firstNine.join("|"));
+  t.select(firstNine[0]);
+  assert.equal(Array.from(t.api.snapshot().tabs).join("|"), firstNine.join("|"), "Switching is FIFO, not LRU");
+  t.open(t.ids[9]);
+  assert.equal(Array.from(t.api.snapshot().tabs).join("|"), t.ids.slice(1, 10).join("|"), "Tenth replaces only the oldest");
+  assert.deepEqual(t.released, [t.ids[0]]);
+  t.select(t.ids[1]); t.selected = "per-screen-selection";
+  t.select(t.ids[2]); t.select(t.ids[1]);
+  assert.equal(t.selected, "per-screen-selection", "Shared presentation context follows each tab");
+
+  t.show("menu");
+  t.dirty.add(t.ids[1]); t.confirmResult = false;
+  const before = JSON.stringify(t.api.snapshot()), stored = t.values.get("dcats-nine-tabs.v1:synthetic-owner"), released = t.released.length;
+  assert.equal(t.open(t.ids[10]), false);
+  assert.equal(JSON.stringify(t.api.snapshot()), before, "Cancel leaves order, active and count intact");
+  assert.equal(t.values.get("dcats-nine-tabs.v1:synthetic-owner"), stored, "Cancel does not change saved tab metadata");
+  assert.equal(t.released.length, released);
+  assert.equal(t.confirms, 1);
+  t.confirmResult = true; t.open(t.ids[10]);
+  assert.equal(Array.from(t.api.snapshot().tabs).join("|"), t.ids.slice(2, 11).join("|"));
+  assert.equal(t.confirms, 2);
+
+  t.show("menu"); t.busy = true;
+  const busyBefore = JSON.stringify(t.api.snapshot()), busyConfirms = t.confirms;
+  t.open(t.ids[11]);
+  assert.equal(JSON.stringify(t.api.snapshot()), busyBefore, "Saving/unknown outcomes must not be evicted");
+  assert.equal(t.confirms, busyConfirms, "Busy operations cannot be discarded through a confirmation");
+  t.busy = false; t.open(t.ids[11]);
+  assert.equal(t.api.snapshot().tabs.length, 9);
+
+  const oldest = t.api.snapshot().tabs[0];
+  t.select(oldest);
+  const node = t.input(oldest, "UNSAVED SYNTHETIC INPUT");
+  assert.equal(t.api.hasUnsaved(), true);
+  const reloadGuard = sourceBetween("function isAppSafeForAutoReload()", "function getAppUpdateBanner");
+  assert.equal(vm.runInNewContext(reloadGuard + "; isAppSafeForAutoReload();", {window: {DcatsNineTabs: t.api}}), false, "Hidden draft tabs block automatic reload");
+  t.show("menu"); t.confirmResult = false;
+  const inputBefore = JSON.stringify(t.api.snapshot());
+  t.open(t.ids[12]);
+  assert.equal(JSON.stringify(t.api.snapshot()), inputBefore);
+  assert.equal(node.value, "UNSAVED SYNTHETIC INPUT", "Declined eviction keeps the actual DOM draft");
+  assert.equal(t.values.get("dcats-nine-tabs.v1:synthetic-owner").includes("UNSAVED"), false, "Draft values never enter tab storage");
+  t.close(oldest);
+  assert.equal(JSON.stringify(t.api.snapshot()), inputBefore, "Manual close has the same draft guard");
+  t.enable();
+  assert.equal(t.api.snapshot().enabled, true, "Declining OFF keeps every tab enabled");
+  t.select(oldest); t.input(oldest, "");
+  assert.equal(t.api.hasUnsaved(), false, "Undoing an edit returns to the clean baseline");
+  t.show("menu"); t.confirmResult = true; t.open(t.ids[12]);
+  assert.equal(t.api.snapshot().tabs.length, 9);
+  assert.equal(t.api.snapshot().tabs.includes(oldest), false);
+
+  const newId = "menu-added-after-initialization";
+  t.ids.push(newId); t.allowed.add(newId);
+  const screen = t.w.document.createElement("div"); screen.id = "screen-" + newId; t.w.document.body.appendChild(screen);
+  t.open(newId);
+  assert.equal(t.api.snapshot().tabs.at(-1), newId, "A newly supplied menu screen needs no fixed tab whitelist");
+  const deniedId = t.ids[13]; t.allowed.delete(deniedId); t.show("menu");
+  const deniedBefore = JSON.stringify(t.api.snapshot());
+  t.open(deniedId);
+  assert.equal(JSON.stringify(t.api.snapshot()), deniedBefore, "Unauthorized new menus neither open nor evict another tab");
+
+  const savedOrder = Array.from(t.api.snapshot().tabs), savedActive = t.api.snapshot().active;
+  t.api.suspend(false);
+  await t.api.afterAuthenticated(t.options);
+  assert.equal(Array.from(t.api.snapshot().tabs).join("|"), savedOrder.join("|"), "Reload restores nine in original opening order");
+  assert.equal(t.api.snapshot().active, savedActive);
+  t.w.DcatsNineTabsPolicy.mode = "off";
+  t.api.suspend(false); await t.api.afterAuthenticated(t.options);
+  assert.equal(t.api.snapshot().enabled, false);
+  assert.equal(t.w.document.getElementById("dcats-nine-tabs-toggle").hidden, true);
+  t.w.DcatsNineTabsPolicy.mode = "pilot"; t.w.DcatsNineTabsPolicy.pilotUserIds = ["another-user"];
+  t.api.suspend(false); await t.api.afterAuthenticated(t.options);
+  assert.equal(t.api.snapshot().enabled, false, "Non-pilot accounts cannot enable tabs from a saved ON preference");
+  t.w.DcatsNineTabsPolicy.pilotUserIds = ["synthetic-owner"];
+  t.api.suspend(false); await t.api.afterAuthenticated(t.options);
+  t.scope = "permission-scope-changed";
+  assert.equal(t.api.snapshot().enabled, false, "Changed account scope invalidates retained tabs");
+  t.api.authEvent("SIGNED_OUT");
+  assert.equal(t.values.has("dcats-nine-tabs.v1:synthetic-owner"), false);
+  console.log("dynamic screen tabs passed (FIFO 9, dirty cancel/accept, busy, dynamic menus, reload and pilot isolation)");
+}
+verifyDynamicScreenTabs().catch(error => { console.error(error); process.exitCode = 1; });
+
+async function verifySearchCancelKeepsPreviewMode() {
+  const entry = sourceBetween("async function enterSearch(options)", "async function enterProductionSearch");
+  const state = {window: {DcatsNineTabs: {beforeEnter: () => true}}, customerPortalSearchActive: true, isCustomerViewer: () => false, canViewProductSearch: () => true};
+  vm.runInNewContext(entry, state);
+  await state.enterSearch();
+  assert.equal(state.customerPortalSearchActive, true, "A cancelled direct entry must not alter the current customer-preview mode");
+}
+verifySearchCancelKeepsPreviewMode().catch(error => { console.error(error); process.exitCode = 1; });
+
+// A retained private inbox survives ordinary switches, but never authentication exit.
+active = "concierge-admin";
+context.window.DcatsNineTabs = {hasTab: id => id === "concierge-admin", screenChanged() {}};
+const retainedConciergeCloses = context.conciergeCloseCount;
+context.showScreen("menu");
+assert.equal(context.conciergeCloseCount, retainedConciergeCloses, "Retained same-account concierge is not disposed on a tab switch");
+context.showScreen("login");
+assert.equal(context.conciergeCloseCount, retainedConciergeCloses + 1, "Authentication exit always clears private concierge DOM");
+delete context.window.DcatsNineTabs;

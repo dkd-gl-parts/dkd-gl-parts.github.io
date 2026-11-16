@@ -8816,7 +8816,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1330";
+var APP_VERSION       = "v1.1.1331";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -9867,6 +9867,7 @@ function closeConciergeAdmin() {
 }
 function enterConciergeAdmin() {
   if (!currentUser || !isSystemAdmin() || !window.DcatsConciergeAdmin) return;
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("concierge-admin", false)) return;
   closeConciergeAdmin();
   showScreen("concierge-admin");
   conciergeAdminController = window.DcatsConciergeAdmin.mount(document.getElementById("concierge-admin-host"), {
@@ -11327,6 +11328,70 @@ async function refreshCustomerOrderFeatureStatus() {
   return customerOrderFeatureStatus;
 }
 
+
+function screenTabEntries() {
+  var definitions = createScreenMenuDefinitions();
+  return definitions.mainItems.concat(definitions.adminItems, definitions.settingsItems).filter(function (item) {
+    return !!document.getElementById("screen-" + item.action);
+  }).map(function (item) { return {id: item.action, label: t(item.titleKey), allowed: item.available}; });
+}
+function screenTabCanAccess(id) {
+  if (!currentUser || !userProfile || isCustomerViewer()) return false;
+  var mode = customerPortalSearchActive;
+  // A temporary customer-preview UI mode is not an account permission change.
+  try {
+    customerPortalSearchActive = false;
+    var entry = screenTabEntries().find(function (item) { return item.id === id; });
+    return !!entry && entry.allowed === true;
+  } finally { customerPortalSearchActive = mode; }
+}
+function captureScreenTabContext() {
+  return {currentProduct: currentProduct, currentProductionRow: currentProductionRow,
+    customerPortalSearchActive: customerPortalSearchActive, customerPortalPreviewContext: customerPortalPreviewContext,
+    componentReturnScreen: componentReturnScreen, componentParallelReturnScreen: componentParallelReturnScreen,
+    currentSalesDetailTab: currentSalesDetailTab, currentSelectedProductKind: currentSelectedProductKind,
+    rakutenActiveTarget: rakutenActiveTarget};
+}
+function restoreScreenTabContext(state) {
+  if (!state) return;
+  currentProduct = state.currentProduct; currentProductionRow = state.currentProductionRow;
+  customerPortalSearchActive = state.customerPortalSearchActive; customerPortalPreviewContext = state.customerPortalPreviewContext;
+  componentReturnScreen = state.componentReturnScreen; componentParallelReturnScreen = state.componentParallelReturnScreen;
+  currentSalesDetailTab = state.currentSalesDetailTab; currentSelectedProductKind = state.currentSelectedProductKind;
+  rakutenActiveTarget = state.rakutenActiveTarget;
+}
+function resumeScreenTab(id) {
+  if (id === "api-settings" || id === "rakuten-price") relocateRakutenSections(id === "api-settings" ? "api" : "price");
+  if (id === "search") configureCustomerSearchShell();
+}
+function screenTabCloseState(id) {
+  var reception = claimCaseWorkspace && claimCaseWorkspace.tabState ? claimCaseWorkspace.tabState() : {};
+  var warehouse = window.DcatsWarehouseStock && window.DcatsWarehouseStock._state;
+  var busy = !!(customerOrderSaving || salesOrderSaving || salesOrderPricingSaving || salesOrderB2ImportSaving ||
+    salesOrderB2ExportSaving || salesOrderB2ContractSettingsSaving || salesOrderPrintSettingsSaving ||
+    salesAccountingExportSaving || salesAccountingExportCodeSavingKey || salesAccountingProductOnboardingSaving ||
+    shippingDocumentSaving || coreReturnManagementSaving || shippingWaybillLayoutSaving || shippingHandwrittenWaybillSaving ||
+    shippingRateFormSaving || shippingServiceVisibilitySavingKey || customerAccessSettingsSaving || customerAccessRegistrationSaving ||
+    componentAddSaving || componentNameMasterSaving || finishedShipmentSaving || finishedWarrantyPolicySaving ||
+    finishedShipmentReplacementSaving || salesPricingSavePending || salesRank1SavePending || finishedLabelPrintInProgress ||
+    reception.busy || warehouse && (warehouse.working || warehouse.pending) ||
+    window.DcatsSalesPricingLists && window.DcatsSalesPricingLists.isBusy && window.DcatsSalesPricingLists.isBusy() ||
+    window.DcatsCustomerPriceReportTabState && window.DcatsCustomerPriceReportTabState().busy ||
+    window.DcatsRecycleOrders && window.DcatsRecycleOrders.isBusy() ||
+    window.DcatsFactoringPricing && window.DcatsFactoringPricing.isBusy());
+  var dirty = id === "product-kind-stock-mgmt" && Object.keys(productKindStockDirtyMap).some(function (key) { return !!productKindStockDirtyMap[key]; }) ||
+    id === "customer-access-mgmt" && !!currentCustomerAccessCustomer && customerAccessHasUnsavedChanges() ||
+    id === "shipping-document-mgmt" && shippingDocumentBatchSelectionDirty ||
+    id === "claim-case-mgmt" && reception.dirty ||
+    id === "customer-portal" && customerOrderCart.length > 0;
+  return {busy: busy, dirty: !!dirty};
+}
+function releaseScreenTab(id) {
+  if (id === "claim-case-mgmt" && claimCaseWorkspace) claimCaseWorkspace.reset();
+  if (id === "concierge-admin") closeConciergeAdmin();
+  resetScreenStateForMenu(id);
+}
+
 function showAuthenticatedHome() {
   if (isCustomerViewer()) {
     showScreen("customer-portal");
@@ -11337,27 +11402,21 @@ function showAuthenticatedHome() {
   renderMenu();
   if (window.DcatsNineTabs) window.DcatsNineTabs.afterAuthenticated({
     userId: function () { return currentUser && currentUser.id; },
-    scope: function () { return JSON.stringify([currentUser && currentUser.id, userProfile && userProfile.id, userProfile && userProfile.company_code, userProfile && userProfile.department_code, userProfile && userProfile.role, userProfile && userProfile.role_code, userProfile && userProfile.status, userProfile && userProfile.permission_overrides]); },
+    scope: function () { return JSON.stringify([currentUser && currentUser.id, userProfile && userProfile.id, conciergeNavigationProfileStamp(userProfile), userProfile && userProfile.permission_profile_code]); },
     external: isCustomerViewer(),
     verify: function () { return sb.auth.getUser(); },
     screen: activeAppScreenName,
     show: showScreen,
     home: returnToMenuFresh,
-    canAccess: function (id) {
-      if (!currentUser || !userProfile || isCustomerViewer()) return false;
-      return id === "search" ? canViewProductSearch() : id === "sales-order-mgmt" ? canManageSalesOrders() : id === "shipping-document-mgmt" ? canManageSalesOrders() : id === "claim-case-mgmt" ? canManageSalesOrders() : id === "core-return-mgmt" ? canManageSalesOrders() : id === "finished-label-mgmt" ? canViewFinishedLabelMgmt() : id === "finished-product-shipping" ? canManageFinishedProductShipping() : id === "core-list-mgmt" ? canViewCoreManagement() : id === "product-kind-stock-mgmt" ? canViewProductKindStockMgmt() : false;
-    },
-    enter: function (id) {
-      if (id === "search") return enterSearch();
-      if (id === "sales-order-mgmt") return enterSalesOrderMgmt();
-      if (id === "shipping-document-mgmt") return enterShippingDocumentMgmt();
-      if (id === "claim-case-mgmt") return enterClaimCaseMgmt();
-      if (id === "core-return-mgmt") return enterCoreReturnManagement();
-      if (id === "finished-label-mgmt") return enterFinishedLabelMgmt();
-      if (id === "finished-product-shipping") return enterFinishedProductShipping();
-      if (id === "core-list-mgmt") return enterCoreListMgmt();
-      if (id === "product-kind-stock-mgmt") return enterProductKindStockMgmt();
-    }
+    entries: screenTabEntries,
+    canAccess: screenTabCanAccess,
+    enter: function (id) { return openAppMenuAction(id); },
+    capture: captureScreenTabContext,
+    restore: restoreScreenTabContext,
+    resume: resumeScreenTab,
+    release: releaseScreenTab,
+    resetControl: resetScreenControlState,
+    closeState: screenTabCloseState
   }).catch(function () { console.warn("Screen tabs are unavailable"); });
 }
 
@@ -11584,6 +11643,7 @@ document.addEventListener("freeze", function() {
 });
 
 function isAppSafeForAutoReload() {
+  if (window.DcatsNineTabs && window.DcatsNineTabs.hasUnsaved && window.DcatsNineTabs.hasUnsaved()) return false;
   if (window.DcatsRecycleOrders && window.DcatsRecycleOrders.isBusy()) return false;
   if (window.DcatsFactoringPricing && window.DcatsFactoringPricing.isBusy()) return false;
   if (componentAddSaving) return false;
@@ -11808,12 +11868,14 @@ function resetScreenStateForMenu(screenId) {
 }
 
 function showScreen(id) {
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeShow && !window.DcatsNineTabs.beforeShow(id)) return;
+  if (window.DcatsNineTabs && window.DcatsNineTabs.willLeave) window.DcatsNineTabs.willLeave(id);
   if (window.DcatsWarehouseStock && !window.DcatsWarehouseStock.beforeNavigate(id)) return;
   var previousScreenId = activeAppScreenName();
   if (typeof claimCaseWorkspace !== "undefined" && claimCaseWorkspace && id !== "claim-case-mgmt" && (!window.DcatsNineTabs || !window.DcatsNineTabs.hasTab("claim-case-mgmt") || ["login", "boot", "reset"].includes(id))) claimCaseWorkspace.reset();
   if ((id === "login" || id === "boot") && window.DcatsProductPhotoTools) window.DcatsProductPhotoTools.forceClose();
   if ((id === "login" || id === "boot") && typeof conciergeNavigation !== "undefined" && conciergeNavigation) conciergeNavigation.clear();
-  if (id !== "concierge-admin") closeConciergeAdmin();
+  if (id !== "concierge-admin" && (!window.DcatsNineTabs || !window.DcatsNineTabs.hasTab("concierge-admin") || ["login", "boot", "reset"].includes(id))) closeConciergeAdmin();
   if (previousScreenId === "sales-order-mgmt" && id !== previousScreenId) {
     if (!window.DcatsNineTabs || !window.DcatsNineTabs.hasTab(previousScreenId) || ["login", "boot", "reset"].includes(id)) setSalesOrderDetailView("overview", false);
   }
@@ -12396,13 +12458,10 @@ async function doLogout() {
 // =============================================
 // メニュー（翻訳辞書のキーを使って生成）
 // =============================================
-function renderMenu() {
-  syncDcatsIntegrationReadinessContext();
-  var grid = document.getElementById("menu-grid");
-  if (!grid || !userProfile) return;
+function createScreenMenuDefinitions() {
   var canManageUsers = canUseUserManagement();
-
-  var mainItems = [
+  return {
+    mainItems: [
     { icon: "&#x1F50D;", titleKey: "mi_search_title", descKey: "mi_search_desc", action: "search", available: canViewProductSearch(), tag: null },
     { icon: "&#x1F6CD;", titleKey: "customer_portal_title", descKey: "customer_portal_preview_desc", action: "customer-portal", available: canShowCustomerPortalMenu(), tag: null },
     { icon: "&#x1F4E5;", titleKey: "sales_order_mgmt_title", descKey: "sales_order_mgmt_desc", action: "sales-order-mgmt", available: canManageSalesOrders(), tag: null },
@@ -12418,14 +12477,8 @@ function renderMenu() {
     { icon: "&#x1F9EE;", titleKey: "mi_manufacturing_cost_title", descKey: "mi_manufacturing_cost_desc", action: "manufacturing-cost-mgmt", available: canViewManufacturingCostMgmt(), tag: null },
     { icon: "&#x1F4C8;", titleKey: "mi_rakuten_title", descKey: "mi_rakuten_desc", action: canUseRakutenResearch() ? "rakuten-price" : "rakuten-price-list", available: canUseRakutenResearch() || canViewPriceResearchHistory(), tag: null },
     { icon: "&#x1F512;", titleKey: "mi_changepw_title", descKey: "mi_changepw_desc", action: "change-pw", available: true, tag: null }
-  ].filter(function(item) { return item.available; });
-
-  if (hasAccessRole(userProfile, ["sales_editor", "shipping_staff"])) {
-    var shippingIndex = mainItems.findIndex(function(item) { return item.action === "finished-product-shipping"; });
-    if (shippingIndex > 0) mainItems.unshift(mainItems.splice(shippingIndex, 1)[0]);
-  }
-
-  var adminItems = [
+  ],
+    adminItems: [
     { icon: "&#x2699;", titleKey: "cw_title", descKey: "cw_menuDesc", action: "category-warranty-settings", available: canManageSharedSettings() || canManageFinishedProductShipping() },
     { icon: "&#x1F465;", titleKey: "mi_users_title",  descKey: "mi_users_desc",  action: "users",  available: canManageUsers },
     { icon: "&#x1F6AA;", titleKey: "mi_customer_access_title", descKey: "mi_customer_access_desc", action: "customer-access-mgmt", available: canManageCustomerAccess() },
@@ -12440,11 +12493,29 @@ function renderMenu() {
     { icon: "&#x2699;", titleKey: "mi_api_settings_title", descKey: "mi_api_settings_desc", action: "api-settings", available: canManageSharedSettings() },
     { icon: "&#x1F4CB;", titleKey: "mi_logs_title", descKey: "mi_logs_desc", action: "logs", available: canViewOperationLogs() },
     { icon: "&#x1F4E8;", titleKey: "mi_concierge_admin_title", descKey: "mi_concierge_admin_desc", action: "concierge-admin", available: isSystemAdmin() }
-  ].filter(function(item) { return item.available; });
-
-  var settingsItems = [
+  ],
+    settingsItems: [
     { icon: "&#x1F517;", titleKey: "business_workspace_settings_title", descKey: "business_workspace_settings_desc", action: "business-workspace-settings", available: canManageSalesOrders() }
-  ].filter(function(item) { return item.available; });
+  ]
+  };
+}
+
+function renderMenu() {
+  syncDcatsIntegrationReadinessContext();
+  var grid = document.getElementById("menu-grid");
+  if (!grid || !userProfile) return;
+  var menuItems = createScreenMenuDefinitions();
+
+  var mainItems = menuItems.mainItems.filter(function(item) { return item.available; });
+
+  if (hasAccessRole(userProfile, ["sales_editor", "shipping_staff"])) {
+    var shippingIndex = mainItems.findIndex(function(item) { return item.action === "finished-product-shipping"; });
+    if (shippingIndex > 0) mainItems.unshift(mainItems.splice(shippingIndex, 1)[0]);
+  }
+
+  var adminItems = menuItems.adminItems.filter(function(item) { return item.available; });
+
+  var settingsItems = menuItems.settingsItems.filter(function(item) { return item.available; });
 
   function renderCard(item) {
     var act = item.action ? " data-action=\"" + item.action + "\"" : "";
@@ -12498,41 +12569,46 @@ function renderMenu() {
 
   grid.querySelectorAll(".menu-card:not(.disabled)[data-action], .menu-admin-link:not(.disabled)[data-action]").forEach(function(card) {
     card.addEventListener("click", function(event) {
-      if (card.dataset.action === "search") enterSearch();
-      else if (card.dataset.action === "customer-portal") enterCustomerPortal();
-      else if (card.dataset.action === "sales-order-mgmt") enterSalesOrderMgmt();
-      else if (card.dataset.action === "claim-case-mgmt") enterClaimCaseMgmt();
-      else if (card.dataset.action === "shipping-document-mgmt") enterShippingDocumentMgmt();
-      else if (card.dataset.action === "core-return-mgmt") enterCoreReturnManagement();
-      else if (card.dataset.action === "production-search") enterProductionSearch();
-      else if (card.dataset.action === "product-photo-tools") openProductPhotoTools();
-      else if (card.dataset.action === "finished-label-mgmt") enterFinishedLabelMgmt();
-      else if (card.dataset.action === "finished-product-shipping") enterFinishedProductShipping();
-      else if (card.dataset.action === "users") enterUsers();
-      else if (card.dataset.action === "customer-access-mgmt") enterCustomerAccessMgmt();
-      else if (card.dataset.action === "shipping-rate-mgmt") enterShippingRateMgmt();
-      else if (card.dataset.action === "change-pw") enterChangePw();
-      else if (card.dataset.action === "parts-mgmt") enterPartsMgmt();
-      else if (card.dataset.action === "component-name-master-mgmt") enterComponentNameMasterMgmt();
-      else if (card.dataset.action === "component-compat-mgmt") enterComponentCompatMgmt();
-      else if (card.dataset.action === "sales-pricing-mgmt") enterSalesPricingMgmt();
-      else if (card.dataset.action === "purchase-mgmt") enterPurchaseMgmt();
-      else if (card.dataset.action === "core-list-mgmt") enterCoreListMgmt();
-      else if (card.dataset.action === "product-kind-stock-mgmt") enterProductKindStockMgmt();
-      else if (card.dataset.action === "manufacturing-cost-mgmt") enterManufacturingCostMgmt();
-      else if (card.dataset.action === "production-ranking-mgmt") enterProductionRankingMgmt();
-      else if (card.dataset.action === "report-hub") enterReportHub();
-      else if (card.dataset.action === "kikan-mgmt") enterKikanMgmt();
-      else if (card.dataset.action === "rakuten-price") enterRakutenPrice();
-      else if (card.dataset.action === "rakuten-bulk") enterRakutenBulk();
-      else if (card.dataset.action === "rakuten-price-list") enterRakutenPriceList();
-      else if (card.dataset.action === "business-workspace-settings") openDcatsBusinessWorkspaceSettings(event);
-      else if (card.dataset.action === "category-warranty-settings") openFinishedWarrantyPolicySettings();
-      else if (card.dataset.action === "api-settings") enterApiSettings();
-      else if (card.dataset.action === "logs") enterLogs();
-      else if (card.dataset.action === "concierge-admin") enterConciergeAdmin();
+      openAppMenuAction(card.dataset.action, event);
     });
   });
+}
+
+function openAppMenuAction(action, event) {
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter(action, false)) return;
+      if (action === "search") enterSearch();
+      else if (action === "customer-portal") enterCustomerPortal();
+      else if (action === "sales-order-mgmt") enterSalesOrderMgmt();
+      else if (action === "claim-case-mgmt") enterClaimCaseMgmt();
+      else if (action === "shipping-document-mgmt") enterShippingDocumentMgmt();
+      else if (action === "core-return-mgmt") enterCoreReturnManagement();
+      else if (action === "production-search") enterProductionSearch();
+      else if (action === "product-photo-tools") openProductPhotoTools();
+      else if (action === "finished-label-mgmt") enterFinishedLabelMgmt();
+      else if (action === "finished-product-shipping") enterFinishedProductShipping();
+      else if (action === "users") enterUsers();
+      else if (action === "customer-access-mgmt") enterCustomerAccessMgmt();
+      else if (action === "shipping-rate-mgmt") enterShippingRateMgmt();
+      else if (action === "change-pw") enterChangePw();
+      else if (action === "parts-mgmt") enterPartsMgmt();
+      else if (action === "component-name-master-mgmt") enterComponentNameMasterMgmt();
+      else if (action === "component-compat-mgmt") enterComponentCompatMgmt();
+      else if (action === "sales-pricing-mgmt") enterSalesPricingMgmt();
+      else if (action === "purchase-mgmt") enterPurchaseMgmt();
+      else if (action === "core-list-mgmt") enterCoreListMgmt();
+      else if (action === "product-kind-stock-mgmt") enterProductKindStockMgmt();
+      else if (action === "manufacturing-cost-mgmt") enterManufacturingCostMgmt();
+      else if (action === "production-ranking-mgmt") enterProductionRankingMgmt();
+      else if (action === "report-hub") enterReportHub();
+      else if (action === "kikan-mgmt") enterKikanMgmt();
+      else if (action === "rakuten-price") enterRakutenPrice();
+      else if (action === "rakuten-bulk") enterRakutenBulk();
+      else if (action === "rakuten-price-list") enterRakutenPriceList();
+      else if (action === "business-workspace-settings") openDcatsBusinessWorkspaceSettings(event);
+      else if (action === "category-warranty-settings") openFinishedWarrantyPolicySettings();
+      else if (action === "api-settings") enterApiSettings();
+      else if (action === "logs") enterLogs();
+      else if (action === "concierge-admin") enterConciergeAdmin();
 }
 
 function customerPortalValue(id, value) {
@@ -12670,6 +12746,7 @@ async function enterCustomerPortal() {
     showPermissionDenied("open_customer_portal", "sales_customers");
     return;
   }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("customer-portal", false)) return;
   customerPortalSearchActive = false;
   showScreen("customer-portal");
   if (canPreviewCustomerPortal()) await loadDetailSalesCustomerOptions();
@@ -19234,6 +19311,7 @@ async function enterClaimCaseMgmt(options) {
     canManage: canManageSalesOrders,
     canShip: canManageFinishedProductShipping,
     active: function() { return isScreenActive("claim-case-mgmt") || !!(window.DcatsNineTabs && window.DcatsNineTabs.hasTab("claim-case-mgmt")); },
+    onSaved: function() { if (window.DcatsNineTabs) window.DcatsNineTabs.markClean("claim-case-mgmt"); },
     openOrder: function(id, claim) { claimCaseReturnContext = claim || null; return enterSalesOrderMgmt({orderId:id}); }
   });
   await claimCaseWorkspace.enter(options || {});
@@ -24101,6 +24179,7 @@ async function enterShippingRateMgmt() {
     showPermissionDenied("open_shipping_rate_management", "customer_shipping_rates");
     return;
   }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("shipping-rate-mgmt", false)) return;
   showScreen("shipping-rate-mgmt");
   var b2SettingsButton = document.getElementById("shipping-rate-b2-settings-open");
   if (b2SettingsButton) b2SettingsButton.hidden = !isSystemAdmin();
@@ -24685,9 +24764,9 @@ async function enterSearch(options) {
     await enterCustomerCatalog({ runSearch: false });
     return;
   }
-  customerPortalSearchActive = false;
   if (!canViewProductSearch()) { showPermissionDenied("open_product_search", "core_products"); return; }
   if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("search", false)) return;
+  customerPortalSearchActive = false;
   resetScreenStateForMenu("search");
   showScreen("search");
   configureCustomerSearchShell();
@@ -24697,6 +24776,7 @@ async function enterSearch(options) {
 
 async function enterProductionSearch() {
   if (!canViewProductionFeatures()) { showPermissionDenied("open_production_search", "core_products"); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("production-search", false)) return;
   showScreen("production-search");
   var productionAddBtn = document.getElementById("production-add-core-product");
   if (productionAddBtn) setCspStyle(productionAddBtn, "display", canEdit() ? "" : "none");
@@ -27229,6 +27309,7 @@ function openRakutenForCurrentProduct() {
 
 async function enterRakutenPrice(seedKeyword) {
   if (!canUseRakutenResearch()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("rakuten-price", seedKeyword)) return;
   if (window.DcatsEcCostListTargets) window.DcatsEcCostListTargets.refresh();
   relocateRakutenSections("price");
   showScreen("rakuten-price");
@@ -27254,6 +27335,7 @@ async function enterRakutenBulk() {
 
 async function enterApiSettings() {
   if (!canManageSharedSettings()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("api-settings", false)) return;
   relocateRakutenSections("api");
   showScreen("api-settings");
   await loadRakutenKeyFields();
@@ -29645,6 +29727,7 @@ function clearEcMallPriceListInitialState() {
 
 async function enterRakutenPriceList() {
   if (!canViewPriceResearchHistory()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("rakuten-price-list", false)) return;
   showScreen("rakuten-price-list");
   var nameEl = document.getElementById("rakuten-price-list-username");
   if (nameEl && userProfile) nameEl.textContent = userProfile.name || userProfile.email.split("@")[0];
@@ -30416,6 +30499,7 @@ var partFormShippingLoadSequence = 0;
 
 async function enterPartsMgmt() {
   if (!canViewManagementScreen()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("parts-mgmt", false)) return;
   showScreen("parts-mgmt");
   var nameEl  = document.getElementById("parts-mgmt-username");
   var badgeEl = document.getElementById("parts-mgmt-role-badge");
@@ -33103,6 +33187,7 @@ async function saveProductKindStockChanges() {
 // =============================================
 async function enterManufacturingCostMgmt() {
   if (!canViewManufacturingCostMgmt()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("manufacturing-cost-mgmt", false)) return;
   showScreen("manufacturing-cost-mgmt");
   updateAllHeaders();
   setManufacturingCostEditControls();
@@ -39330,6 +39415,7 @@ async function cancelFinishedProductShipment(shipmentId) {
 // =============================================
 async function enterProductionRankingMgmt() {
   if (!canViewManufacturingReport()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("production-ranking-mgmt", false)) return;
   showScreen("production-ranking-mgmt");
   var addBtn = document.getElementById("btn-add-production-ranking");
   if (addBtn) setCspStyle(addBtn, "display", canEdit() ? "" : "none");
@@ -40905,6 +40991,7 @@ function renderKikanMgmtInitialState() {
 
 async function enterKikanMgmt() {
   if (!canManageCompatibility()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("kikan-mgmt", false)) return;
   showScreen("kikan-mgmt");
   var nameEl = document.getElementById("kikan-mgmt-username");
   if (nameEl) nameEl.textContent = userProfile.name || userProfile.email.split("@")[0];
@@ -41434,6 +41521,7 @@ async function removeKikanMember(groupId, dkdGokanId, keepFormOpen) {
 // =============================================
 async function enterLogs() {
   if (!canViewOperationLogs()) { showPermissionDenied("open_logs", "operation_logs"); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("logs", false)) return;
   showScreen("logs");
   await loadLogs();
 }
@@ -41631,6 +41719,7 @@ function renderLogs(logs) {
 }
 
 function enterChangePw() {
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("change-pw", false)) return;
   showScreen("change-pw");
   var nameEl = document.getElementById("change-pw-username");
   if (nameEl && userProfile) nameEl.textContent = userProfile.name || userProfile.email.split("@")[0];
@@ -41646,6 +41735,7 @@ function enterChangePw() {
 
 async function enterUsers() {
   if (!userProfile || !canUseUserManagement()) { showPermissionDenied("open_users", "profiles"); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("users", false)) return;
   userManagementRows = [];
   userManagementLoaded = false;
   userManagementLoadError = null;
@@ -49462,6 +49552,7 @@ async function submitComponentNameRequestForm() {
 
 async function enterComponentNameMasterMgmt() {
   if (!canManageComponentNameMaster()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("component-name-master-mgmt", false)) return;
   showScreen("component-name-master-mgmt");
   updateAllHeaders();
   var category = document.getElementById("component-name-master-category");
@@ -49879,6 +49970,7 @@ function componentCompatReset() {
 
 async function enterComponentCompatMgmt() {
   if (!canManageComponentCompatibility()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("component-compat-mgmt", false)) return;
   showScreen("component-compat-mgmt");
   updateAllHeaders();
   var search = document.getElementById("component-compat-search");
@@ -53580,6 +53672,7 @@ function isSalesPricingMgmtSearchCurrent(epoch) {
 
 async function enterSalesPricingMgmt() {
   if (!canViewSalesPricing()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("sales-pricing-mgmt", false)) return;
   showScreen("sales-pricing-mgmt");
   updateAllHeaders();
   var q = document.getElementById("sales-pricing-mgmt-search");
@@ -53725,6 +53818,7 @@ async function openSalesPricingMgmtRow(dkdId) {
 
 async function enterPurchaseMgmt() {
   if (!canViewPurchaseMgmt()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("purchase-mgmt", false)) return;
   showScreen("purchase-mgmt");
   updateAllHeaders();
   var supplierEl = document.getElementById("purchase-mgmt-supplier");
@@ -54668,6 +54762,7 @@ function bindCustomerAccessWorkspaceNavigation() {
 
 async function enterCustomerAccessMgmt() {
   if (!canManageCustomerAccess()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("customer-access-mgmt", false)) return;
   currentCustomerAccessCustomer = null;
   customerAccessDetailRequestSeq += 1;
   customerAccessSavedDisplayDraft = null;
