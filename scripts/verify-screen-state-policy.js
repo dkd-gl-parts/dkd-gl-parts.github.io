@@ -298,13 +298,13 @@ async function verifyDynamicScreenTabs() {
     const parsed = parseHTML('<html><body><div id="screen-menu"><div class="menu-body"><div class="menu-welcome"></div></div></div>' + ids.map(id => '<div id="screen-' + id + '" class="screen"><input id="input-' + id + '" value=""></div>').join("") + '</body></html>');
     parsed.window.HTMLElement.prototype.focus = function () {};
     parsed.window.HTMLElement.prototype.getBoundingClientRect = function () { return {left: 0, right: 100, top: 0, bottom: 35, height: 35}; };
-    const values = new Map(), allowed = new Set(ids), dirty = new Set(), released = [];
+    const values = new Map(), allowed = new Set(ids), dirty = new Set(), released = [], listeners = new Map();
     let currentScreen = "menu", scope = "initial", busy = false, confirmResult = true, confirms = 0, selected = null;
     const w = {
       document: parsed.document, currentLang: "ja",
       DcatsNineTabsPolicy: {mode: "pilot", pilotUserIds: ["synthetic-owner"], pilotEmails: ["owner@example.invalid"]},
       sessionStorage: {getItem: key => values.has(key) ? values.get(key) : null, setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key)},
-      addEventListener() {},
+      addEventListener(event, handler) { listeners.set(event, handler); },
       confirm(message) { assert.match(message, /入力内容の変更/); confirms += 1; return confirmResult; }
     };
     vm.runInNewContext(tabSource, {window: w, Promise, Set, Map, Array, JSON});
@@ -334,7 +334,7 @@ async function verifyDynamicScreenTabs() {
       node.dispatchEvent(new parsed.window.Event("input", {bubbles: true}));
       return node;
     };
-    return {api, w, ids, options, values, allowed, dirty, released, show, open, enable, select, close, input,
+    return {api, w, ids, options, values, allowed, dirty, released, listeners, show, open, enable, select, close, input,
       get screen() { return currentScreen; }, get confirms() { return confirms; }, get selected() { return selected; },
       set confirmResult(value) { confirmResult = value; }, set busy(value) { busy = value; }, set scope(value) { scope = value; },
       set selected(value) { selected = value; }};
@@ -356,6 +356,18 @@ async function verifyDynamicScreenTabs() {
   firstNine.forEach(t.open);
   assert.equal(t.api.retainedLimit, 9);
   assert.equal(Array.from(t.api.snapshot().tabs).join("|"), firstNine.join("|"));
+  const strip = t.w.document.querySelector("[role=tablist]"), selectedNode = strip.querySelector(".is-active");
+  const beforeResize = JSON.stringify(t.api.snapshot());
+  strip.scrollLeft = 0;
+  strip.getBoundingClientRect = () => ({left: 0, right: 100});
+  selectedNode.getBoundingClientRect = () => ({left: 130, right: 180});
+  t.listeners.get("resize")();
+  assert.equal(strip.scrollLeft, 80, "Narrowing the viewport reveals the selected tab on the right");
+  selectedNode.getBoundingClientRect = () => ({left: -40, right: 20});
+  t.listeners.get("resize")();
+  assert.equal(strip.scrollLeft, 40, "Viewport changes also reveal the selected tab on the left");
+  assert.equal(JSON.stringify(t.api.snapshot()), beforeResize, "Resize never changes tab order or selection");
+  assert.equal(strip.querySelector(".is-active"), selectedNode, "Resize preserves controls and keyboard focus targets");
   t.select(firstNine[0]);
   assert.equal(Array.from(t.api.snapshot().tabs).join("|"), firstNine.join("|"), "Switching is FIFO, not LRU");
   t.open(t.ids[9]);

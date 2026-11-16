@@ -84,6 +84,7 @@
     }
     ["focusin", "beforeinput", "input", "change"].forEach(function (event) { root.document.addEventListener(event, rememberInput, true); });
     root.addEventListener("beforeunload", function (event) { if (enabled && current() && tabs.some(dirty)) { event.preventDefault(); event.returnValue = ""; } });
+    root.addEventListener("resize", revealSelected);
     list.addEventListener("keydown", function (event) {
       var buttons = Array.from(list.querySelectorAll('[role="tab"]')), at = buttons.indexOf(event.target);
       if (at < 0) return;
@@ -91,6 +92,15 @@
       if (next >= 0) { event.preventDefault(); buttons[next].focus(); }
       if (event.key === "Delete") { event.preventDefault(); close(event.target.dataset.feature); }
     });
+  }
+  function revealSelected() {
+    if (!list || !bar || bar.hidden) return;
+    var selectedTab = list.querySelector(".is-active");
+    if (selectedTab) {
+      var rect = selectedTab.getBoundingClientRect(), listRect = list.getBoundingClientRect();
+      if (rect.left < listRect.left) list.scrollLeft -= listRect.left - rect.left;
+      else if (rect.right > listRect.right) list.scrollLeft += rect.right - listRect.right;
+    }
   }
   function render() {
     if (!bar) return;
@@ -111,12 +121,7 @@
       remove.setAttribute("aria-label", button.textContent + text("を閉じる", ": close", "：关闭")); remove.addEventListener("click", function () { close(id); });
       group.append(button, remove); list.appendChild(group);
     });
-    var selectedTab = list.querySelector(".is-active");
-    if (selectedTab) {
-      var rect = selectedTab.getBoundingClientRect(), listRect = list.getBoundingClientRect();
-      if (rect.left < listRect.left) list.scrollLeft -= listRect.left - rect.left;
-      else if (rect.right > listRect.right) list.scrollLeft += rect.right - listRect.right;
-    }
+    revealSelected();
     if (toggle) { toggle.hidden = !available(); toggle.setAttribute("aria-pressed", String(enabled)); toggle.textContent = text("画面タブ（試験）: ", "Screen tabs (pilot): ", "屏幕标签（试用）：") + (enabled ? "ON" : "OFF"); }
   }
   function setEnabled(value) {
