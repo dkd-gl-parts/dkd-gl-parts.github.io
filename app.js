@@ -24764,9 +24764,9 @@ async function enterSearch(options) {
     await enterCustomerCatalog({ runSearch: false });
     return;
   }
-  customerPortalSearchActive = false;
   if (!canViewProductSearch()) { showPermissionDenied("open_product_search", "core_products"); return; }
   if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("search", false)) return;
+  customerPortalSearchActive = false;
   resetScreenStateForMenu("search");
   showScreen("search");
   configureCustomerSearchShell();

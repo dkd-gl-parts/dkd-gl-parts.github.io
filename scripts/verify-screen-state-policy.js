@@ -438,3 +438,22 @@ async function verifyDynamicScreenTabs() {
   console.log("dynamic screen tabs passed (FIFO 9, dirty cancel/accept, busy, dynamic menus, reload and pilot isolation)");
 }
 verifyDynamicScreenTabs().catch(error => { console.error(error); process.exitCode = 1; });
+
+async function verifySearchCancelKeepsPreviewMode() {
+  const entry = sourceBetween("async function enterSearch(options)", "async function enterProductionSearch");
+  const state = {window: {DcatsNineTabs: {beforeEnter: () => true}}, customerPortalSearchActive: true, isCustomerViewer: () => false, canViewProductSearch: () => true};
+  vm.runInNewContext(entry, state);
+  await state.enterSearch();
+  assert.equal(state.customerPortalSearchActive, true, "A cancelled direct entry must not alter the current customer-preview mode");
+}
+verifySearchCancelKeepsPreviewMode().catch(error => { console.error(error); process.exitCode = 1; });
+
+// A retained private inbox survives ordinary switches, but never authentication exit.
+active = "concierge-admin";
+context.window.DcatsNineTabs = {hasTab: id => id === "concierge-admin", screenChanged() {}};
+const retainedConciergeCloses = context.conciergeCloseCount;
+context.showScreen("menu");
+assert.equal(context.conciergeCloseCount, retainedConciergeCloses, "Retained same-account concierge is not disposed on a tab switch");
+context.showScreen("login");
+assert.equal(context.conciergeCloseCount, retainedConciergeCloses + 1, "Authentication exit always clears private concierge DOM");
+delete context.window.DcatsNineTabs;
