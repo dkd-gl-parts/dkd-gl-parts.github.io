@@ -25,7 +25,7 @@ function extract(name){
 
 const names=[...new Set(["isBusinessInspectionProfile","profileAccessRoleLabel","currentRoleDisplayLabel","userAccessRoleCode","accessRoleCode","hasAccessRole","userPermissionOverrides","userPermissionAllowed","isSystemAdmin","isCompanyAdminRole","canDelete","canUseUserManagement","canAssignUserRole","canManageUser","canEditUserPermission","canEditUserPermissionStates","permissionOverridesForRole","internalInviteRoleOptions","internalAccessRoleOptionHtmlForCompany","accessRoleOptionHtmlForCompany","optionHtml","userCompanyCode","optionLabel","accessScopeLabel","permissionOverviewUserContext","currentPermissionEditRoleCode","openUserPermissionEditor","refreshUserPermissionEditor","manufacturingCostBaseRoleByCode","manufacturingCostOptionalAllowedFor"].concat(
   [...app.matchAll(/^function (permissionOverview\w+|applyPermissionOverviewOverride|manufacturingCostPermissionNote|customerPortalDefaultEnabled|accessRoleScopeText)\(/gm)].map(m=>m[1]),
-  ["accessRoleLabel","roleLabel","esc","setCspStyle","closeUserPermissionEditor","canUseProductPhotoTools"]
+  ["accessRoleLabel","roleLabel","esc","setCspStyle","closeUserPermissionEditor","canUseProductPhotoTools","isCustomerPortalSearchMode"]
 ))];
 const functions=names.map(extract).join("\n");
 const roleArray=app.match(/var USER_ACCESS_ROLE_OPTIONS = \[[\s\S]*?\n\];/)[0];
