@@ -277,7 +277,7 @@ verifySalesSearchReset().catch(error => { console.error(error); process.exitCode
 // Retained pilot tabs keep the native workspace while ordinary navigation resets it.
 active = "sales-order-mgmt";
 context.salesOrderDetailView = "history";
-context.window.DcatsNineTabs = { hasTab: id => ["sales-order-mgmt", "claim-case-mgmt"].includes(id) };
+context.window.DcatsNineTabs = { hasTab: id => ["sales-order-mgmt", "claim-case-mgmt"].includes(id), screenChanged() {} };
 let claimResets = 0;
 context.claimCaseWorkspace = { reset() { claimResets += 1; } };
 context.showScreen("shipping-document-mgmt");
