@@ -1,14 +1,44 @@
 /* Nine existing screens share their original Auth, permissions and server APIs. */
 (function (root) {
   "use strict";
-  var FEATURES = Object.freeze(["concierge-admin", "customer-access-mgmt", "finished-label-mgmt", "finished-product-shipping", "logs", "rakuten-price", "rakuten-price-list", "shipping-rate-mgmt", "users"]);
+  var FEATURES = Object.freeze(["search","sales-order-mgmt","shipping-document-mgmt","claim-case-mgmt","core-return-mgmt","finished-label-mgmt","finished-product-shipping","core-list-mgmt","product-kind-stock-mgmt"]);
   var LABELS = {
-    ja: ["コンシェルジュ管理", "得意先管理", "完成品ラベル", "完成品出荷", "操作ログ", "ECモール価格調査", "ECモール価格調査結果", "送料管理", "ユーザー管理"],
-    en: ["Concierge", "Customers", "Product labels", "Product shipping", "Operation logs", "Price research", "Price results", "Shipping rates", "Users"],
-    zh: ["礼宾管理", "客户管理", "成品标签", "成品发货", "操作日志", "价格调查", "价格结果", "运费管理", "用户管理"]
-  };
+  "ja": [
+    "販売管理",
+    "受注・出荷管理",
+    "出荷帳票発行",
+    "受付管理",
+    "コア返却管理",
+    "完品登録・製造シリアル",
+    "出荷照合・保証管理",
+    "コア管理",
+    "在庫管理"
+  ],
+  "en": [
+    "Sales",
+    "Orders & shipping",
+    "Shipping documents",
+    "Reception",
+    "Core returns",
+    "Products & serials",
+    "Shipping & warranty",
+    "Core management",
+    "Inventory"
+  ],
+  "zh": [
+    "销售管理",
+    "订单与发货",
+    "出货单据",
+    "受理管理",
+    "旧件返还",
+    "成品登记与序列号",
+    "发货核对与保修",
+    "旧件管理",
+    "库存管理"
+  ]
+};
   var context = null, verifiedId = null, verifiedScope = null, epoch = 0, tabs = [], active = null, loaded = new Set(), navigating = false;
-  var bar, list, notice, toggle, enabled = false;
+  var bar, list, notice, toggle, home, hint, enabled = false;
   function language() { return LABELS[root.currentLang] ? root.currentLang : "ja"; }
   function text(ja, en, zh) { return language() === "ja" ? ja : language() === "zh" ? zh : en; }
   function policy() { return root.DcatsNineTabsPolicy || {mode: "off", pilotEmails: []}; }
@@ -27,12 +57,18 @@
     bar = root.document.createElement("section"); bar.id = "dcats-nine-tabs"; bar.className = "dcats-nine-tabs"; bar.hidden = true;
     list = root.document.createElement("div"); list.className = "dcats-nine-tabs-list"; list.setAttribute("role", "tablist");
     notice = root.document.createElement("p"); notice.className = "dcats-nine-tabs-notice"; notice.setAttribute("role", "status"); notice.setAttribute("aria-live", "polite");
-    bar.append(list, notice); root.document.body.insertBefore(bar, root.document.body.firstChild);
+    home = root.document.createElement("button"); home.type = "button"; home.id = "dcats-nine-tabs-home"; home.className = "dcats-nine-tabs-home";
+    home.addEventListener("click", function () { if (current()) context.home(); });
+    hint = root.document.createElement("p"); hint.className = "dcats-nine-tabs-hint";
+    var strip = root.document.createElement("div"); strip.className = "dcats-nine-tabs-strip"; strip.append(home, list);
+    bar.append(strip, hint, notice); root.document.body.insertBefore(bar, root.document.body.firstChild);
     var menu = root.document.getElementById("screen-menu");
     if (menu) {
       toggle = root.document.createElement("button"); toggle.type = "button"; toggle.id = "dcats-nine-tabs-toggle"; toggle.className = "btn-secondary dcats-nine-tabs-toggle"; toggle.hidden = true;
       toggle.addEventListener("click", function () { setEnabled(!enabled); });
-      (menu.querySelector(".screen-body") || menu).appendChild(toggle);
+      var menuBody = menu.querySelector(".menu-body") || menu;
+      var welcome = menuBody.querySelector(".menu-welcome");
+      if (welcome) welcome.after(toggle); else menuBody.prepend(toggle);
     }
     list.addEventListener("keydown", function (event) {
       var buttons = Array.from(list.querySelectorAll('[role="tab"]')), at = buttons.indexOf(event.target);
@@ -49,16 +85,24 @@
     var destination = screen && root.document.getElementById("screen-" + screen);
     if (!bar.hidden && destination && bar.parentNode !== destination) destination.insertBefore(bar, destination.firstChild);
     root.document.body.classList.toggle("dcats-nine-tabs-visible", !bar.hidden);
+    home.textContent = text("メニュー", "Menu", "菜单"); home.setAttribute("aria-current", screen === "menu" ? "page" : "false");
+    hint.hidden = tabs.length > 0; hint.textContent = text("下のメニューから対応画面を開くと、ここにタブが並びます（最大6つ）。", "Open a supported screen from the menu to add a tab here (up to 6).", "从下方菜单打开支持的屏幕后，此处会显示标签（最多6个）。");
     list.replaceChildren(); list.setAttribute("aria-label", text("画面タブ（最大6）", "Screen tabs (maximum 6)", "屏幕标签（最多6个）"));
     tabs.forEach(function (id) {
-      var group = root.document.createElement("div"); group.className = "dcats-nine-tab";
+      var group = root.document.createElement("div"); group.className = "dcats-nine-tab"; group.classList.toggle("is-active", screen === id);
       var button = root.document.createElement("button"); button.type = "button"; button.dataset.feature = id; button.id = "dcats-nine-tab-" + id;
-      button.setAttribute("role", "tab"); button.setAttribute("aria-selected", String(active === id)); button.setAttribute("aria-controls", "screen-" + id); button.tabIndex = active === id || !active && tabs[0] === id ? 0 : -1;
-      button.textContent = LABELS[language()][FEATURES.indexOf(id)]; button.addEventListener("click", function () { activate(id); });
+      button.setAttribute("role", "tab"); button.setAttribute("aria-selected", String(screen === id)); button.setAttribute("aria-controls", "screen-" + id); button.tabIndex = active === id || !active && tabs[0] === id ? 0 : -1;
+      button.textContent = LABELS[language()][FEATURES.indexOf(id)]; button.title = button.textContent; button.addEventListener("click", function () { activate(id); });
       var remove = root.document.createElement("button"); remove.type = "button"; remove.className = "dcats-nine-tab-close"; remove.dataset.closeFeature = id; remove.textContent = "×";
       remove.setAttribute("aria-label", button.textContent + text("を閉じる", ": close", "：关闭")); remove.addEventListener("click", function () { close(id); });
       group.append(button, remove); list.appendChild(group);
     });
+    var selected = list.querySelector(".is-active");
+    if (selected) {
+      var itemRect = selected.getBoundingClientRect(), listRect = list.getBoundingClientRect();
+      if (itemRect.left < listRect.left) list.scrollLeft -= listRect.left - itemRect.left;
+      else if (itemRect.right > listRect.right) list.scrollLeft += itemRect.right - listRect.right;
+    }
     if (toggle) { toggle.hidden = !available(); toggle.setAttribute("aria-pressed", String(enabled)); toggle.textContent = text("画面タブ（試験）: ", "Screen tabs (pilot): ", "屏幕标签（试用）：") + (enabled ? "ON" : "OFF"); }
   }
   function setEnabled(value) {
@@ -86,8 +130,8 @@
   function activate(id) {
     if (!enabled || !available() || !tabs.includes(id)) return false;
     if (!allowed(id)) { denied(id); return false; }
-    active = id; announce(""); save();
-    if (loaded.has(id) && id !== "concierge-admin") { context.show(id); render(); return true; }
+    announce("");
+    if (loaded.has(id)) { context.show(id); render(); return true; }
     navigating = true;
     try {
       Promise.resolve(context.enter(id)).catch(function () { announce(text("画面を開けませんでした。タブから再度開けます。", "Unable to open this screen. Select its tab to retry.", "无法打开屏幕，请再次选择标签。")); }).finally(function () { render(); });
@@ -116,9 +160,13 @@
   function close(id) {
     if (!current() || !tabs.includes(id)) return false;
     var wasActive = context.screen() === id, index = tabs.indexOf(id);
+    if (wasActive) {
+      var next = tabs[index + 1] || tabs[index - 1];
+      if (next) activate(next); else context.home();
+      if (context.screen() === id) return false;
+    }
     tabs.splice(index, 1); loaded.delete(id); if (active === id) active = tabs[Math.min(index, tabs.length - 1)] || null;
     save();
-    if (wasActive) { if (active) activate(active); else context.show("menu"); }
     render(); var focus = list.querySelector('[role="tab"][aria-selected="true"]'); if (focus) focus.focus();
     return true;
   }
