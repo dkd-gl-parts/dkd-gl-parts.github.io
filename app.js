@@ -9964,7 +9964,7 @@ function canManageAllImages() {
 }
 function canUseProductPhotoTools() {
   if (!userProfile || isExternalViewer() || isCustomerPortalSearchMode()) return false;
-  return hasAccessRole(userProfile, ["master_editor", "dept_admin"]) && userPermissionAllowed(userProfile, "image.manage", true);
+  return (isBusinessInspectionProfile(userProfile) || hasAccessRole(userProfile, ["master_editor", "dept_admin"])) && userPermissionAllowed(userProfile, "image.manage", true);
 }
 function openProductPhotoTools(product, context, tab) {
   if (!canUseProductPhotoTools()) { showPermissionDenied("open_product_photo_tools", "core_product_images"); return; }
@@ -57900,6 +57900,7 @@ function permissionOverviewUserContext(user, roleCode, manufacturingCostAllowed)
     roleCode: roleCode,
     companyCode: companyCode,
     ownRole: true,
+    businessInspection: isBusinessInspectionProfile(user),
     scope: accessScopeLabel(roleCode, companyLabel),
     manufacturingCostAllowed: !!manufacturingCostAllowed,
     permissionOverrides: userPermissionOverrides(user),
@@ -58145,7 +58146,7 @@ function permissionOverviewScreenGroups(context) {
         {
           title: "商品撮影・画像整理",
           items: [
-            { label: "撮影・登録・整理・選択ダウンロード", state: yesNo(roleIsInternal && permissionOverviewRoleIn(role, ["master_editor", "dept_admin"]), "責任者のみ利用可（画像管理の拒否設定を優先）", "利用不可") }
+            { label: "撮影・登録・整理・選択ダウンロード", state: yesNo(roleIsInternal && (context.businessInspection || permissionOverviewRoleIn(role, ["master_editor", "dept_admin"])), "責任者のみ利用可（画像管理の拒否設定を優先）", "利用不可") }
           ]
         },
         {

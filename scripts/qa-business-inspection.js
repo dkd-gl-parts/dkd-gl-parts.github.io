@@ -25,7 +25,7 @@ function extract(name){
 
 const names=[...new Set(["isBusinessInspectionProfile","profileAccessRoleLabel","currentRoleDisplayLabel","userAccessRoleCode","accessRoleCode","hasAccessRole","userPermissionOverrides","userPermissionAllowed","isSystemAdmin","isCompanyAdminRole","canDelete","canUseUserManagement","canAssignUserRole","canManageUser","canEditUserPermission","canEditUserPermissionStates","permissionOverridesForRole","internalInviteRoleOptions","internalAccessRoleOptionHtmlForCompany","accessRoleOptionHtmlForCompany","optionHtml","userCompanyCode","optionLabel","accessScopeLabel","permissionOverviewUserContext","currentPermissionEditRoleCode","openUserPermissionEditor","refreshUserPermissionEditor","manufacturingCostBaseRoleByCode","manufacturingCostOptionalAllowedFor"].concat(
   [...app.matchAll(/^function (permissionOverview\w+|applyPermissionOverviewOverride|manufacturingCostPermissionNote|customerPortalDefaultEnabled|accessRoleScopeText)\(/gm)].map(m=>m[1]),
-  ["accessRoleLabel","roleLabel","esc","setCspStyle","closeUserPermissionEditor"]
+  ["accessRoleLabel","roleLabel","esc","setCspStyle","closeUserPermissionEditor","canUseProductPhotoTools"]
 ))];
 const functions=names.map(extract).join("\n");
 const roleArray=app.match(/var USER_ACCESS_ROLE_OPTIONS = \[[\s\S]*?\n\];/)[0];
@@ -66,6 +66,7 @@ const preset={"product_search.view":true,"product_info.view":true,"sales_price.v
         function skipAccessRoleForCompany(){return false;}
         function managedStaffRoles(){return [];}
         function hasOwnDepartmentUserScope(){return false;}
+        function isExternalViewer(){return false;}
         function customerOptionHtml(){return "<option></option>";}
         function currentPermissionEditUser(){return fixtureTarget;}
         ${cspMap}\n${roleArray}\n${functions}
@@ -86,6 +87,8 @@ const preset={"product_search.view":true,"product_info.view":true,"sales_price.v
       assert.equal(await deleted.count(),1);
       assert.equal(await deleted.locator(".permission-status-denied").innerText(),"個別停止");
       assert.equal(await page.evaluate(()=>canDelete()),false);
+      assert.equal(await page.evaluate(()=>canUseProductPhotoTools()),true);
+      assert.equal(await page.locator("#user-permission-edit-preview tr").filter({hasText:"撮影・登録・整理・選択ダウンロード"}).locator(".permission-status-allowed").count(),1);
       assert.equal(await page.evaluate(()=>canAssignUserRole("business_inspection")),false);
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false,"AI page horizontal overflow");
       await page.screenshot({path:path.join(out,"ai-"+width+".png"),fullPage:true});

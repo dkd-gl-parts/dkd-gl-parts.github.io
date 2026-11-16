@@ -23,7 +23,7 @@ function extract(name){
 const functions=[
   "isBusinessInspectionProfile","profileAccessRoleLabel","currentRoleDisplayLabel",
   "userAccessRoleCode","accessRoleCode","hasAccessRole","userPermissionOverrides",
-  "userPermissionAllowed","isSystemAdmin","isCompanyAdminRole","canDelete",
+  "userPermissionAllowed","isSystemAdmin","isCompanyAdminRole","canDelete","canUseProductPhotoTools",
   "canUseUserManagement","canAssignUserRole","canManageUser","canEditUserPermission",
   "canEditUserPermissionStates","permissionOverridesForRole","internalInviteRoleOptions",
   "internalAccessRoleOptionHtmlForCompany","accessRoleOptionHtmlForCompany","optionHtml",
@@ -49,7 +49,7 @@ const ctx={
   normalizeAccessRoleForCompany:code=>code,defaultAccessRoleForCompany:()=>"sales_viewer",
   skipAccessRoleForCompany:()=>false,managedStaffRoles:()=>[],
   hasOwnDepartmentUserScope:()=>false,esc:v=>String(v==null?"":v),
-  isCustomerPortalSearchMode:()=>false,customerOptionHtml:()=>"<option></option>",
+  isExternalViewer:()=>false,isCustomerPortalSearchMode:()=>false,customerOptionHtml:()=>"<option></option>",
   currentPermissionEditUser:()=>ctx.editorUser,
   permissionOverviewTableHtml:c=>{previewContext=c;return JSON.stringify(c.permissionOverrides);},
   permissionOverviewCountHtml:()=>"",setCspStyle:()=>{},
@@ -70,6 +70,7 @@ check(ctx.currentRoleDisplayLabel(),"業務点検","signed-in AI label");
 check(ctx.isSystemAdmin(),true,"all existing administrator-only entry points remain compatible");
 check(ctx.canDelete(),false,"product deletion is hidden/denied");
 check(ctx.canUseUserManagement(),true,"user management is permitted");
+check(ctx.canUseProductPhotoTools(),true,"AI business inspection can use photo tools");
 check(ctx.canAssignUserRole("business_inspection"),false,"reserved profile cannot be assigned as a role");
 check(ctx.USER_ACCESS_ROLE_OPTIONS.some(x=>x[0]==="business_inspection"||x[1]==="業務点検"),false,"ordinary role list has no AI profile");
 check(ctx.internalInviteRoleOptions("daiko").some(x=>x[0]==="business_inspection"),false,"invitation list has no AI profile");
@@ -81,6 +82,7 @@ ctx.userProfile={id:"actor",role:"system_admin",role_code:"system_admin",company
 check(ctx.canEditUserPermission(ai),false,"another administrator cannot edit the reserved AI preset");
 check(ctx.canEditUserPermission(ordinary),true,"ordinary permission editing remains available");
 check(ctx.canAssignUserRole("company_admin"),true,"ordinary role assignment remains available");
+check(ctx.canUseProductPhotoTools(),false,"unmarked system administrator photo restriction remains");
 check(ctx.canManageUser(ordinary),true,"ordinary user management remains available");
 const clean=ctx.permissionOverridesForRole(ai,"system_admin",{"product.delete":true});
 check(JSON.stringify(clean),JSON.stringify(fixed),"AI preview keeps server values instead of editable drafts");

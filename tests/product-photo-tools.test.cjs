@@ -11,8 +11,7 @@ const source=fs.readFileSync(path.join(root,'product-photo-tools.js'),'utf8');
 const app=fs.readFileSync(path.join(root,'app.js'),'utf8');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const nodes=acorn.parse(app,{ecmaVersion:'latest'}).body;
-const declaration=nodes.find(n=>n.type==='FunctionDeclaration'&&n.id.name==='canUseProductPhotoTools');
-const gate=app.slice(declaration.start,declaration.end);
+const gate=['isBusinessInspectionProfile','canUseProductPhotoTools'].map(name=>{const declaration=nodes.find(n=>n.type==='FunctionDeclaration'&&n.id.name===name);assert.ok(declaration,name);return app.slice(declaration.start,declaration.end);}).join('\n');
 const actor='00000000-0000-4000-8000-000000000001';
 const product={dkd_shohin_id:1,genuine_part_number:'31400-58J10',manufacturer_part_number:'102211-5961',manufacturer:'DENSO'};
 function setup(role='master_editor') {
@@ -29,7 +28,7 @@ function setup(role='master_editor') {
     sb:{rpc:async(name,args)=>{
       calls.push([args.action,JSON.parse(JSON.stringify(args.payload))]);
       const p=args.payload;
-      if(!['master_editor','dept_admin'].includes(context.userProfile.role_code))return {error:{code:'42501',message:'権限'}};
+      if(!['master_editor','dept_admin'].includes(context.userProfile.role_code)&&!(context.registeredAi===true&&context.userProfile.role_code==='system_admin'&&context.userProfile.permission_profile_code==='business_inspection'))return {error:{code:'42501',message:'権限'}};
       if(context.fail&&context.fail(args.action,p))return context.fail(args.action,p);
       let data;
       if(args.action==='access')data={allowed:true,actor_id:actor};
@@ -66,6 +65,19 @@ test('exact two manager roles and explicit image denial, no administrator bypass
     const f=setup(role);assert.equal(f.context.canUseProductPhotoTools(),['master_editor','dept_admin'].includes(role));
     f.context.userPermissionAllowed=()=>false;assert.equal(f.context.canUseProductPhotoTools(),false);
   }
+});
+test('registered AI business inspection may open photo tools while explicit image denial still wins',async()=>{
+  const f=setup('system_admin');
+  assert.equal(f.context.canUseProductPhotoTools(),false);
+  f.context.registeredAi=true;
+  f.context.userProfile.permission_profile_code='business_inspection';
+  assert.equal(f.context.canUseProductPhotoTools(),true);
+  await f.api.open(product);
+  assert.equal(f.test.active.product.dkd_shohin_id,1);
+  assert.equal(f.test.active.stream,null);
+  f.api.forceClose();
+  f.context.userPermissionAllowed=()=>false;
+  assert.equal(f.context.canUseProductPhotoTools(),false);
 });
 test('default-hidden entry controls and no 3D reactivation',()=>{
   const {document}=parseHTML(html);
