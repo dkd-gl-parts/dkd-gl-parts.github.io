@@ -8846,7 +8846,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1341";
+var APP_VERSION       = "v1.1.1342";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -12503,17 +12503,17 @@ function createScreenMenuDefinitions() {
     { icon: "<span class='icon-image' aria-hidden='true'></span>", titleKey: "product_photo_tools_title", descKey: "product_photo_tools_desc", action: "product-photo-tools", available: canUseProductPhotoTools(), tag: null },
     { icon: "&#x1F3F7;", titleKey: "mi_finished_label_title", descKey: "mi_finished_label_desc", action: "finished-label-mgmt", available: canViewFinishedLabelMgmt(), tag: null },
     { icon: "&#x1F69A;", titleKey: "mi_finished_shipping_title", descKey: "mi_finished_shipping_desc", action: "finished-product-shipping", available: canManageFinishedProductShipping(), tag: null },
-    { icon: "&#x1F4E6;", titleKey: "mi_core_list_title", descKey: "mi_core_list_desc", action: "core-list-mgmt", available: canViewCoreManagement(), tag: null },
+    { icon: "&#x267B;&#xFE0F;", titleKey: "mi_core_list_title", descKey: "mi_core_list_desc", action: "core-list-mgmt", available: canViewCoreManagement(), tag: null },
     { icon: "&#x1F4E6;", titleKey: "mi_product_kind_stock_title", descKey: "mi_product_kind_stock_desc", action: "product-kind-stock-mgmt", available: canViewProductKindStockMgmt(), tag: null },
     { icon: "&#x1F9EE;", titleKey: "mi_manufacturing_cost_title", descKey: "mi_manufacturing_cost_desc", action: "manufacturing-cost-mgmt", available: canViewManufacturingCostMgmt(), tag: null },
     { icon: "&#x1F4C8;", titleKey: "mi_rakuten_title", descKey: "mi_rakuten_desc", action: canUseRakutenResearch() ? "rakuten-price" : "rakuten-price-list", available: canUseRakutenResearch() || canViewPriceResearchHistory(), tag: null },
     { icon: "&#x1F512;", titleKey: "mi_changepw_title", descKey: "mi_changepw_desc", action: "change-pw", available: true, tag: null }
   ],
     adminItems: [
-    { icon: "&#x2699;", titleKey: "cw_title", descKey: "cw_menuDesc", action: "category-warranty-settings", available: canManageSharedSettings() || canManageFinishedProductShipping() },
+    { icon: "&#x1F6E1;", titleKey: "cw_title", descKey: "cw_menuDesc", action: "category-warranty-settings", available: canManageSharedSettings() || canManageFinishedProductShipping() },
     { icon: "&#x1F465;", titleKey: "mi_users_title",  descKey: "mi_users_desc",  action: "users",  available: canManageUsers },
     { icon: "&#x1F6AA;", titleKey: "mi_customer_access_title", descKey: "mi_customer_access_desc", action: "customer-access-mgmt", available: canManageCustomerAccess() },
-    { icon: "&#x1F69A;", titleKey: "mi_shipping_title", descKey: "mi_shipping_desc", action: "shipping-rate-mgmt", available: canManageShippingRates() },
+    { icon: "&#x1F5FA;", titleKey: "mi_shipping_title", descKey: "mi_shipping_desc", action: "shipping-rate-mgmt", available: canManageShippingRates() },
     { icon: "&#x1F527;", titleKey: "mi_parts_title", descKey: "mi_parts_desc", action: "parts-mgmt", available: canViewManagementScreen() },
     { icon: "&#x1F524;", titleKey: "mi_component_name_master_title", descKey: "mi_component_name_master_desc", action: "component-name-master-mgmt", available: canManageComponentNameMaster() },
     { icon: "&#x1F517;", titleKey: "mi_component_compat_title", descKey: "mi_component_compat_desc", action: "component-compat-mgmt", available: canManageComponentCompatibility() },
@@ -12522,11 +12522,11 @@ function createScreenMenuDefinitions() {
     { icon: "&#x1F4CA;", titleKey: "mi_report_title", descKey: "mi_report_desc", action: "report-hub", available: canViewManufacturingReport() || canManageCustomerAccess() },
     { icon: "&#x1F504;", titleKey: "mi_kikan_title", descKey: "mi_kikan_desc", action: "kikan-mgmt", available: canManageCompatibility() },
     { icon: "&#x2699;", titleKey: "mi_api_settings_title", descKey: "mi_api_settings_desc", action: "api-settings", available: canManageSharedSettings() },
-    { icon: "&#x1F4CB;", titleKey: "mi_logs_title", descKey: "mi_logs_desc", action: "logs", available: canViewOperationLogs() },
+    { icon: "&#x1F4DC;", titleKey: "mi_logs_title", descKey: "mi_logs_desc", action: "logs", available: canViewOperationLogs() },
     { icon: "&#x1F4E8;", titleKey: "mi_concierge_admin_title", descKey: "mi_concierge_admin_desc", action: "concierge-admin", available: isSystemAdmin() }
   ],
     settingsItems: [
-    { icon: "&#x1F517;", titleKey: "business_workspace_settings_title", descKey: "business_workspace_settings_desc", action: "business-workspace-settings", available: canManageSalesOrders() }
+    { icon: "&#x1F50C;", titleKey: "business_workspace_settings_title", descKey: "business_workspace_settings_desc", action: "business-workspace-settings", available: canManageSalesOrders() }
   ]
   };
 }
