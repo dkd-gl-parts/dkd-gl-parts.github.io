@@ -8816,7 +8816,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1334";
+var APP_VERSION       = "v1.1.1335";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -45168,6 +45168,7 @@ function renderSalesProductIdentity(product) {
     "<h2>" + esc(salesDetailPrimaryPartNumber(product)) + "</h2>" +
     "<div class='sales-product-category'>" + esc(productCategoryLabel(product) || "-") + "</div>" +
     "<div class='sales-product-maker'>" + esc(makerLine) + "</div>" +
+    "<div class='sales-product-id'>" + esc(t("f_product_id")) + ": " + esc(productDkdId(product) || "-") + "</div>" +
     "<div class='sales-product-status' id='sales-detail-status'></div>" +
     "<div class='sales-product-warranty' id='sales-product-warranty' aria-live='polite'></div>" +
   "</div>" + editHtml;

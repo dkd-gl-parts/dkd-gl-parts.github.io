@@ -5024,7 +5024,7 @@ body.app-install-dialog-open { overflow: hidden; }
   font-variant-numeric: tabular-nums;
 }
 .sales-product-category { margin-top: 6px; color: #344054; font-size: var(--dcats-type-body); font-weight: 800; }
-.sales-product-maker { margin-top: 3px; color: #667085; font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
+.sales-product-maker, .sales-product-id { margin-top: 3px; color: #667085; font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
 .sales-product-edit { flex: 0 0 auto; min-height: 32px; }
 .sales-product-status { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
 .sales-status-badge {
