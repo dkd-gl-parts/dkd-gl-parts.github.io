@@ -11,6 +11,11 @@ assert(start > 0 && end > start);
 assert(source.includes("bindComponentInputMasterAssist(null);"));
 assert(source.includes('wrap.querySelectorAll("[data-component-edit-row]").forEach'));
 const helper = source.slice(start, end);
+const translationStart = source.indexOf("var TRANSLATIONS = ");
+const translationEnd = source.indexOf("\nvar currentLang", translationStart);
+const translationCode = source.slice(translationStart, translationEnd);
+const translationContext = {};
+vm.runInNewContext(translationCode.slice(0, translationCode.lastIndexOf("\n};") + 3), translationContext);
 class Element {
   constructor() {
     this.value = ""; this.dataset = {}; this.children = []; this.events = {};
@@ -40,6 +45,7 @@ function fixture() {
     clearTimeout, setTimeout, console: { warn() {} },
     sb: { rpc: async (name, args) => { calls.push({ name, args }); return typeof response === "function" ? response() : response; } }
   };
+  sandbox.t = key => translationContext.TRANSLATIONS[sandbox.currentLang][key] || key;
   vm.createContext(sandbox);
   vm.runInContext(helper, sandbox);
   return { sandbox, calls, get: id => elements[id], setResponse: value => { response = value; } };

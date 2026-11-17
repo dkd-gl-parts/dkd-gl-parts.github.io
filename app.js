@@ -2735,6 +2735,14 @@ var TRANSLATIONS = {
     component_mode_same: "一致",
     component_mode_all: "全件",
     component_add_title: "構成部品を追加",
+    component_input_master_name: "部品名を選択",
+    component_input_master_maker: "メーカーを入力または候補から選択",
+    component_input_master_part: "メーカーを選ぶと品番候補を表示",
+    component_input_master_empty: "登録候補なし（直接入力可）",
+    component_input_master_loading: "登録済み品番を確認中",
+    component_input_master_failed: "候補を取得できません（直接入力可）",
+    component_input_master_count: "登録候補 {n}件。品番を入力すると絞り込めます",
+    component_input_master_genuine: "純正",
     component_add_title_for_kind: "{kind} の構成部品を追加",
     component_add_open: "構成部品を追加",
     component_target_kind_title: "構成部品の対象",
@@ -5631,6 +5639,14 @@ var TRANSLATIONS = {
     component_mode_same: "Same",
     component_mode_all: "All",
     component_add_title: "Add Component Part",
+    component_input_master_name: "Select a part name",
+    component_input_master_maker: "Enter or choose a manufacturer",
+    component_input_master_part: "Choose a manufacturer for part numbers",
+    component_input_master_empty: "No registered choices; manual entry available",
+    component_input_master_loading: "Loading registered part numbers",
+    component_input_master_failed: "Choices unavailable; manual entry available",
+    component_input_master_count: "{n} registered choices. Type a part number to filter",
+    component_input_master_genuine: "Genuine",
     component_add_title_for_kind: "Add {kind} Component Part",
     component_add_open: "Add Component Part",
     component_target_kind_title: "Component Target",
@@ -8524,6 +8540,14 @@ var TRANSLATIONS = {
     component_mode_same: "一致",
     component_mode_all: "全部",
     component_add_title: "添加构成部件",
+    component_input_master_name: "请选择部件名称",
+    component_input_master_maker: "输入或选择制造商",
+    component_input_master_part: "选择制造商以显示品号",
+    component_input_master_empty: "无已登记候选，可手动输入",
+    component_input_master_loading: "正在读取已登记品号",
+    component_input_master_failed: "候选读取失败，可手动输入",
+    component_input_master_count: "已登记候选{n}项，输入品号可筛选",
+    component_input_master_genuine: "原厂",
     component_add_title_for_kind: "添加{kind}构成部件",
     component_add_open: "添加构成部件",
     component_target_kind_title: "构成部件对象",
@@ -46495,13 +46519,7 @@ async function openComponentAddForm() {
 
 /* Registered-component input master. Reading choices never changes input or money. */
 function componentInputMasterText(key, count) {
-  var messages = {
-    ja: { name: "部品名を選択", maker: "メーカーを入力または候補から選択", part: "メーカーを選ぶと品番候補を表示", empty: "登録候補なし（直接入力可）", loading: "登録済み品番を確認中", failed: "候補を取得できません（直接入力可）", count: "登録候補 {n}件。品番を入力すると絞り込めます", genuine: "純正" },
-    en: { name: "Select a part name", maker: "Enter or choose a manufacturer", part: "Choose a manufacturer for part numbers", empty: "No registered choices; manual entry available", loading: "Loading registered part numbers", failed: "Choices unavailable; manual entry available", count: "{n} registered choices. Type a part number to filter", genuine: "Genuine" },
-    zh: { name: "请选择部件名称", maker: "输入或选择制造商", part: "选择制造商以显示品号", empty: "无已登记候选，可手动输入", loading: "正在读取已登记品号", failed: "候选读取失败，可手动输入", count: "已登记候选{n}项，输入品号可筛选", genuine: "原厂" }
-  };
-  var lang = currentLang === "en" || currentLang === "zh" ? currentLang : "ja";
-  return String(messages[lang][key] || messages.ja[key] || "").replace("{n}", String(count == null ? 0 : count));
+  return String(t("component_input_master_" + key)).replace("{n}", String(count == null ? 0 : count));
 }
 
 function componentInputMasterControls(tr) {
