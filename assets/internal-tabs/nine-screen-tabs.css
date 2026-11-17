@@ -29,7 +29,6 @@ body.dcats-nine-tabs-visible { height: auto; min-height: 100%; overflow: visible
 .dcats-tab-page-button { flex: 0 0 28px; width: 28px; height: 31px; padding: 0; border: 1px solid #a9b9d0; border-radius: 5px; background: #f6f8fc; color: #23334d; font-size: 20px; cursor: pointer; }
 .dcats-tab-page-button:disabled { opacity: .45; cursor: default; }
 .dcats-tab-page-count { flex: 0 0 auto; min-width: 30px; text-align: center; font-size: 11px; line-height: 31px; }
-.screen-tabs-properties-entry { min-height: 28px; padding: 3px 9px; font-size: 12px; white-space: normal; }
 #screen-screen-tab-properties { height: 100dvh; min-height: 0; background: #f0f2f5; position: relative; z-index: 500; }
 .dcats-tab-properties-title { font-size: 16px; line-height: 1.4; }
 .dcats-tab-properties-body { display: flex; flex: 1 1 auto; min-height: 0; flex-direction: column; gap: 8px; width: min(100%, 620px); margin: 0 auto; padding: 12px 16px; }
