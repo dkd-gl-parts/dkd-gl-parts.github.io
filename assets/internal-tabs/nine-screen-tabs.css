@@ -24,7 +24,7 @@ body.dcats-nine-tabs-visible { height: auto; min-height: 100%; overflow: visible
 .dcats-nine-tabs-visible .screen.active .page-header-right { min-width: 0; max-width: 100%; flex-shrink: 1; }
 .dcats-nine-tabs-visible .screen.active .page-header-right [id$="-username"] { min-width: 0; max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
 @media (max-width: 600px) { .dcats-nine-tabs { padding: 3px 6px 0; } .dcats-nine-tabs-strip { gap: 4px; } .dcats-nine-tab { max-width: min(220px, 100%); } .dcats-nine-tab [role="tab"] { max-width: 180px; } }
-@media print { .dcats-nine-tabs, 
+@media print { .dcats-nine-tabs { display: none !important; } }
 .dcats-nine-tab[hidden], .dcats-tab-page-button[hidden], .dcats-tab-page-count[hidden] { display: none; }
 .dcats-tab-page-button { flex: 0 0 28px; width: 28px; height: 31px; padding: 0; border: 1px solid #a9b9d0; border-radius: 5px; background: #f6f8fc; color: #23334d; font-size: 20px; cursor: pointer; }
 .dcats-tab-page-button:disabled { opacity: .45; cursor: default; }
