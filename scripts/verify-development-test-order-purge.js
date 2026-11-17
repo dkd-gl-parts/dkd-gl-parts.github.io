@@ -39,8 +39,8 @@ if (!html.includes("画面に表示されている受注番号と完全に一致
 if (!css.includes(".development-test-order-purge-card")) {
   throw new Error("Development-test purge dialog styling is missing");
 }
-if (!app.includes('var APP_VERSION       = "v1.1.1334"')) {
-  throw new Error("Expected D-CATS v1.1.1334");
+if (!app.includes('var APP_VERSION       = "v1.1.1335"')) {
+  throw new Error("Expected D-CATS v1.1.1335");
 }
 
 console.log("Development-test order purge UI verification passed.");
