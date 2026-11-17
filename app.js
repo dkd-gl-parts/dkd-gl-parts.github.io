@@ -8840,7 +8840,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1339";
+var APP_VERSION       = "v1.1.1340";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -24038,14 +24038,19 @@ function renderSalesShippingEstimate(loadError) {
     html += "<div class='sales-shipping-message warning'>" + esc(t("sales_shipping_no_rate")) + "</div>";
   } else {
     var note = shippingRateVisibleNote(selectedRate.note);
-    html += "<div class='sales-shipping-result'><span>" + esc(t("sales_shipping_rate")) + "</span><div>" + shippingFeeHtml(selectedRate.standard_fee_jpy, selectedRate.tax_type) + "</div></div>";
-    var hasIslandDetails = !!(selectedRate.remote_island_condition || note);
-    html += hasIslandDetails ? "<details class='sales-shipping-island'><summary>" : "<div class='sales-shipping-island'><span>";
-    html += "<b>" + esc(t("shipping_island_fee")) + ":</b> " + shippingFeeHtml(selectedRate.remote_island_fee_jpy, selectedRate.tax_type);
-    html += hasIslandDetails ? "</summary>" : "</span>";
-    if (selectedRate.remote_island_condition) html += "<span><b>" + esc(t("shipping_island_condition")) + ":</b> " + esc(selectedRate.remote_island_condition) + "</span>";
-    if (note) html += "<span><b>" + esc(t("shipping_note")) + ":</b> " + esc(note) + "</span>";
-    html += hasIslandDetails ? "</details>" : "</div>";
+    var showIsland = !/ヤマト|yamato/i.test(salesShippingCarrierName);
+    html += "<div class='sales-shipping-result" + (showIsland ? "" : " no-island") + "'><span>" + esc(t("sales_shipping_rate")) + "</span><div>" + shippingFeeHtml(selectedRate.standard_fee_jpy, selectedRate.tax_type) + "</div></div>";
+    if (showIsland) {
+      var hasIslandDetails = !!(selectedRate.remote_island_condition || note);
+      html += hasIslandDetails ? "<details class='sales-shipping-island'><summary>" : "<div class='sales-shipping-island'><span>";
+      html += "<b>" + esc(t("shipping_island_fee")) + ":</b> " + shippingFeeHtml(selectedRate.remote_island_fee_jpy, selectedRate.tax_type);
+      html += hasIslandDetails ? "</summary>" : "</span>";
+      if (selectedRate.remote_island_condition) html += "<span><b>" + esc(t("shipping_island_condition")) + ":</b> " + esc(selectedRate.remote_island_condition) + "</span>";
+      if (note) html += "<span><b>" + esc(t("shipping_note")) + ":</b> " + esc(note) + "</span>";
+      html += hasIslandDetails ? "</details>" : "</div>";
+    } else if (note) {
+      html += "<details class='sales-shipping-method'><summary>" + esc(t("shipping_note")) + "</summary><div class='sales-shipping-message'>" + esc(note) + "</div></details>";
+    }
   }
   host.innerHTML = html;
   var prefectureSelect = document.getElementById("sales-shipping-prefecture");
