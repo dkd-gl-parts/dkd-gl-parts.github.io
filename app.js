@@ -487,6 +487,8 @@ var TRANSLATIONS = {
     sales_order_mgmt_note: "注文受付、B2発送データ取込、現場の製造シリアル照合を管理します。",
     business_workspace_open: "業務連携",
     business_workspace_settings_menu_title: "設定",
+    menu_screen_tabs_title: "画面タブ",
+    menu_screen_tabs_desc: "画面タブのON・OFFと動作を確認します。",
     business_workspace_settings_title: "D-CATS業務連携設定",
     business_workspace_settings_desc: "初回登録・Google接続・CSV保存先を設定します。",
     business_workspace_settings_location: "初回登録・接続・保存先の設定は、メニューの「設定」→「D-CATS業務連携設定」から行います。",
@@ -3391,6 +3393,8 @@ var TRANSLATIONS = {
     sales_order_mgmt_note: "Manage order acceptance, B2 shipping-data imports, and shop-floor serial verification.",
     business_workspace_open: "Shared Folder",
     business_workspace_settings_menu_title: "Settings",
+    menu_screen_tabs_title: "Screen tabs",
+    menu_screen_tabs_desc: "Turn screen tabs on or off and review their behavior.",
     business_workspace_settings_title: "D-CATS Integration Settings",
     business_workspace_settings_desc: "Set up passwords, Google connection and CSV folders.",
     business_workspace_settings_location: "For initial registration, connections and save folders, go to Menu → Settings → D-CATS Integration Settings.",
@@ -6239,6 +6243,8 @@ var TRANSLATIONS = {
     sales_order_mgmt_note: "管理订单受理、B2发货数据导入和现场序列号核对。",
     business_workspace_open: "业务协作",
     business_workspace_settings_menu_title: "设置",
+    menu_screen_tabs_title: "屏幕标签页",
+    menu_screen_tabs_desc: "开启或关闭屏幕标签页并查看其行为。",
     business_workspace_settings_title: "D-CATS业务联动设置",
     business_workspace_settings_desc: "设置首次注册、Google连接和CSV保存位置。",
     business_workspace_settings_location: "首次注册、连接及保存位置请通过菜单 → 设置 → D-CATS业务联动设置操作。",
@@ -8840,7 +8846,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1340";
+var APP_VERSION       = "v1.1.1341";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -12583,12 +12589,11 @@ function renderMenu() {
   var canUseScreenTabSettings = !!(window.DcatsNineTabs && window.DcatsNineTabs.isAvailable && window.DcatsNineTabs.isAvailable());
   if (settingsItems.length || canUseScreenTabSettings) {
     html += '<section class="menu-section" id="menu-settings-section">';
-    html += '<div class="menu-section-head"><h3 class="menu-section-title">' + t("business_workspace_settings_menu_title") + '</h3>';
-    if (canUseScreenTabSettings) html += '<button type="button" class="btn-secondary screen-tabs-properties-entry" data-action="screen-tab-properties">' + esc(window.DcatsNineTabs.propertiesTitle()) + '</button>';
-    html += '</div>';
-    if (settingsItems.length) html += '<div class="menu-admin-panel"><div class="menu-admin-grid">';
+    html += '<div class="menu-section-head"><h3 class="menu-section-title">' + t("business_workspace_settings_menu_title") + '</h3></div>';
+    html += '<div class="menu-admin-panel"><div class="menu-admin-grid">';
     settingsItems.forEach(function(item) { html += renderAdminLink(item); });
-    if (settingsItems.length) html += '</div></div>';
+    if (canUseScreenTabSettings) html += renderAdminLink({ action: "screen-tab-properties", icon: "&#x1F5C2;", titleKey: "menu_screen_tabs_title", descKey: "menu_screen_tabs_desc" });
+    html += '</div></div>';
     html += '</section>';
   }
 
@@ -12596,7 +12601,7 @@ function renderMenu() {
 
   refreshConciergeMenuBadge(grid).catch(function () {});
 
-  grid.querySelectorAll(".menu-card:not(.disabled)[data-action], .menu-admin-link:not(.disabled)[data-action], .screen-tabs-properties-entry").forEach(function(card) {
+  grid.querySelectorAll(".menu-card:not(.disabled)[data-action], .menu-admin-link:not(.disabled)[data-action]").forEach(function(card) {
     card.addEventListener("click", function(event) {
       openAppMenuAction(card.dataset.action, event);
     });
