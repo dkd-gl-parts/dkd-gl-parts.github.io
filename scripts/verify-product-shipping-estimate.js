@@ -207,9 +207,11 @@ const { parseHTML } = require("linkedom");
 const packageHelpers = sourceBetween("function shippingPackageKey", "async function fetchAllShippingRateRows");
 const estimateHelpers = sourceBetween("function salesShippingUniqueValues", "async function loadSalesShippingEstimateForCurrent");
 const runEstimate = new Function("parseHTML", `
-  var document = parseHTML("<button id='sales-shipping-destination-guide' hidden>Choose destination</button><section id='sales-shipping-estimate-section'><div id='sales-shipping-estimate-wrap'></div></section>").document;
+  var document = parseHTML("<main id='qa-shipping-left'><button id='sales-shipping-destination-guide' hidden>Choose destination</button><span id='sales-shipping-charge-amount' hidden></span><div id='sales-shipping-charge-details' hidden></div></main><section id='sales-shipping-estimate-section'><div id='sales-shipping-estimate-wrap'></div></section>").document;
   var salesShippingRateRows, salesShippingProfile, salesShippingPrefectureCode, salesShippingCarrierName, salesShippingServiceName, salesShippingPackageKeyValue;
   var detailCustomerShippingChargeRule = "separate";
+  var salesShippingEstimateView = { amountHtml: "", detailsHtml: "" };
+  var leftTemplate = document.getElementById("qa-shipping-left").innerHTML;
   function t(key) { return key; }
   function esc(value) { return String(value == null ? "" : value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/'/g, "&#39;"); }
   function shippingProfileText() { return "saved product profile"; }
@@ -232,12 +234,15 @@ const runEstimate = new Function("parseHTML", `
     detailCustomerShippingChargeRule = options.free ? "free" : "separate";
     shippingPermission = options.allowed !== false;
     renderSalesShippingEstimate(options.error);
+    if (options.replaceLeft) { document.getElementById("qa-shipping-left").innerHTML = leftTemplate; bindSalesShippingDestinationGuide(); }
     var destination = document.getElementById("sales-shipping-prefecture");
     var guide = document.getElementById("sales-shipping-destination-guide");
     var focused = false, scrolled = false;
     if (destination) { destination.focus = function() { focused = true; }; destination.scrollIntoView = function() { scrolled = true; }; }
     if (guide && !guide.hidden) guide.click();
-    return { html: document.getElementById("sales-shipping-estimate-wrap").innerHTML,
+    return { html: document.getElementById("qa-shipping-left").innerHTML + document.getElementById("sales-shipping-estimate-wrap").innerHTML,
+      leftHtml: document.getElementById("qa-shipping-left").innerHTML,
+      rightHtml: document.getElementById("sales-shipping-estimate-wrap").innerHTML,
       package: salesShippingPackageKeyValue, service: salesShippingServiceName,
       visible: salesShippingEstimateShouldShow(), guideHidden: guide.hidden, focused: focused, scrolled: scrolled,
       highlighted: !!destination && destination.classList.contains("needs-destination"),
@@ -319,6 +324,17 @@ const freeCustomerRule = renderCustomer({ id: 1 }, { shipping_charge_rule: "free
 assert.ok(freeCustomerRule.querySelector(".detail-customer-shipping-rule.free"));
 assert.equal(freeCustomerRule.querySelector("#sales-shipping-destination-guide"), null);
 
+
+// The selected quote stays in the left charge rule through customer-panel replacement.
+const leftQuote = runEstimate({ shipping_size_cm: 60 }, estimateRates, { replaceLeft: true });
+assert.match(leftQuote.leftHtml, /fee=600;tax=excluded/);
+assert.ok(!leftQuote.rightHtml.includes("fee="));
+assert.ok(!runEstimate({ shipping_size_cm: 60 }, estimateRates, { noDestination: true }).leftHtml.includes("fee="));
+assert.ok(!runEstimate({ shipping_size_cm: 60 }, estimateRates, { free: true }).leftHtml.includes("fee="));
+assert.ok(!runEstimate({ shipping_size_cm: 60 }, estimateRates, { allowed: false }).leftHtml.includes("fee="));
+assert.ok(!runEstimate({ shipping_size_cm: 60 }, [], {}).leftHtml.includes("fee="));
+assert.ok(!runEstimate(null, estimateRates, { error: true }).leftHtml.includes("fee="));
+
 // Yamato has no island-fee setting in the sales estimate. Other carriers retain theirs.
 for (const carrier of ["ヤマト運輸", "クロネコヤマト", "YAMATO"]) {
   const rows = estimateRates.map(row => ({ ...row, carrier_name: carrier,
@@ -326,7 +342,8 @@ for (const carrier of ["ヤマト運輸", "クロネコヤマト", "YAMATO"]) {
   const result = runEstimate({ shipping_size_cm: 60 }, rows, { carrier });
   const doc = parseHTML("<main>" + result.html + "</main>").document;
   assert.equal(doc.querySelectorAll(".sales-shipping-island").length, 0, carrier + " omits island settings");
-  assert.ok(doc.querySelector(".sales-shipping-result.no-island"), carrier + " uses the full fee row");
+  assert.ok(doc.querySelector("#sales-shipping-charge-amount"), carrier + " shows the amount in the left charge rule");
+  assert.ok(!result.rightHtml.includes("fee="), "quote amounts must stay out of the right selection panel");
   assert.match(result.html, /fee=600;tax=excluded/);
   assert.ok(!result.html.includes("fee=350;"), carrier + " does not display an island fee");
 }
@@ -336,6 +353,8 @@ const otherCarrierResult = runEstimate({ shipping_size_cm: 60 }, otherCarrierRow
 const otherCarrierDoc = parseHTML("<main>" + otherCarrierResult.html + "</main>").document;
 assert.ok(otherCarrierDoc.querySelector(".sales-shipping-island"), "other carriers retain island settings");
 assert.match(otherCarrierResult.html, /fee=350;tax=excluded/);
+assert.match(otherCarrierResult.leftHtml, /fee=350;tax=excluded/);
+assert.ok(!otherCarrierResult.rightHtml.includes("fee="), "other carrier quote details also stay on the left");
 assert.match(otherCarrierResult.html, /synthetic island condition/);
 assert.match(otherCarrierResult.html, /synthetic carrier note/);
 const yamatoNotice = runEstimate({ shipping_size_cm: 60 }, estimateRates.map(row => ({ ...row,
@@ -356,7 +375,7 @@ if (!source.includes("productShippingSizeRows.push(selected)")) {
   throw new Error("saved package sizes must be retained when the current master no longer contains them");
 }
 
-["product_shipping_section", "product_shipping_weight", "product_shipping_loading", "product_shipping_unlinked", "product_shipping_load_failed", "product_weight_list_load_failed", "product_weight_sort_ascending", "product_weight_sort_descending", "product_weight_sort_ascending_action", "product_weight_sort_descending_action", "product_shipping_save_failed", "sales_shipping_estimate_title", "sales_shipping_manual_size_note", "sales_shipping_size_only_note", "sales_shipping_destination_guide"].forEach((key) => {
+["product_shipping_section", "product_shipping_weight", "product_shipping_loading", "product_shipping_unlinked", "product_shipping_load_failed", "product_weight_list_load_failed", "product_weight_sort_ascending", "product_weight_sort_descending", "product_weight_sort_ascending_action", "product_weight_sort_descending_action", "product_shipping_save_failed", "sales_shipping_estimate_title", "sales_shipping_manual_size_note", "sales_shipping_size_only_note", "sales_shipping_destination_guide", "sales_shipping_charge_separate_short"].forEach((key) => {
   const count = (source.match(new RegExp(`${key}:`, "g")) || []).length;
   if (count !== 3) throw new Error(`${key} must be translated for all supported languages`);
 });

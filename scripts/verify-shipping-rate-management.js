@@ -170,7 +170,7 @@ const shippingDetailSource = sourceBetween("var SHIPPING_RATE_HIDDEN_NOTES", "fu
 });
 const salesShippingRender = sourceBetween("function renderSalesShippingEstimate", "async function loadSalesShippingEstimateForCurrent");
 if (!salesShippingRender.includes("var note = shippingRateVisibleNote(selectedRate.note);") ||
-    !salesShippingRender.includes('if (note) html += "<span><b>" + esc(t("shipping_note"))')) {
+    !salesShippingRender.includes('if (note) salesShippingEstimateView.detailsHtml += "<span><b>" + esc(t("shipping_note"))')) {
   throw new Error("sales shipping estimates must use the same shipping note display rule");
 }
 
