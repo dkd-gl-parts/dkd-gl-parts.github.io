@@ -77,7 +77,7 @@ const displayContext={
   detailSelectedSalesCustomerId:"167",t:key=>key,esc:value=>String(value),
   document:{getElementById:id=>id==="customer-access-list"?list:null},
 };
-const displayFunctions=["isDevelopmentSalesCustomer","salesManagementCustomerOptions","renderCustomerAccessList","renderDetailCustomerInfoHtml","detailCustomerOptionLabel"];
+const displayFunctions=["isDevelopmentSalesCustomer","salesManagementCustomerOptions","renderCustomerAccessList","renderDetailCustomerInfoHtml","detailCustomerShippingRuleHtml","normalizeCustomerShippingChargeRule","detailCustomerOptionLabel"];
 vm.createContext(displayContext);vm.runInContext(displayFunctions.map(extractFunction).join("\n"),displayContext);
 const expected=[14,75,167];
 for(const input of [rows,[rows[1],rows[0],rows[2]],[rows[0],rows[2],rows[1]]]){

@@ -2055,6 +2055,7 @@ var TRANSLATIONS = {
     sales_shipping_charge_free: "送料無料",
     sales_shipping_charge_loading: "送料条件を確認中",
     sales_shipping_separate_note: "お届け先を選択して送料をご確認ください。",
+    sales_shipping_destination_guide: "送料一覧で都道府県を選択してください",
     sales_shipping_free_note: "この得意先は送料無料です。",
     sales_shipping_estimate_title: "登録済み品番の送料試算",
     sales_shipping_destination: "お届け先",
@@ -4961,6 +4962,7 @@ var TRANSLATIONS = {
     sales_shipping_charge_free: "Free shipping",
     sales_shipping_charge_loading: "Checking shipping terms",
     sales_shipping_separate_note: "Select a destination to check shipping.",
+    sales_shipping_destination_guide: "Select a prefecture in the shipping list",
     sales_shipping_free_note: "This customer receives free shipping.",
     sales_shipping_estimate_title: "Registered Product Shipping Estimate",
     sales_shipping_destination: "Destination",
@@ -7867,6 +7869,7 @@ var TRANSLATIONS = {
     sales_shipping_charge_free: "免运费",
     sales_shipping_charge_loading: "正在确认运费条件",
     sales_shipping_separate_note: "请选择收货地区以确认运费。",
+    sales_shipping_destination_guide: "请在运费列表中选择都道府县",
     sales_shipping_free_note: "此客户免运费。",
     sales_shipping_estimate_title: "已登记商品运费试算",
     sales_shipping_destination: "收货地区",
@@ -8846,7 +8849,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1343";
+var APP_VERSION       = "v1.1.1344";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -23959,9 +23962,31 @@ function updateSalesShippingEstimateVisibility() {
   if (section) setCspStyle(section, "display", show ? "block" : "none");
   var conditions = document.getElementById("panel-right");
   if (conditions) conditions.classList.toggle("sales-conditions-without-shipping", !show);
+  bindSalesShippingDestinationGuide();
+}
+
+function bindSalesShippingDestinationGuide() {
+  var guide = document.getElementById("sales-shipping-destination-guide");
+  var prefecture = document.getElementById("sales-shipping-prefecture");
+  var pending = !!prefecture && salesShippingEstimateShouldShow() && !salesShippingPrefectureCode;
+  if (guide) {
+    guide.hidden = !pending;
+    guide.onclick = function() {
+      var target = document.getElementById("sales-shipping-prefecture");
+      if (!target || !salesShippingEstimateShouldShow()) return;
+      target.scrollIntoView({ block: "nearest", inline: "nearest" });
+      target.focus({ preventScroll: true });
+    };
+  }
+  if (prefecture) {
+    prefecture.classList.toggle("needs-destination", pending);
+    if (pending && guide) prefecture.setAttribute("aria-describedby", guide.id);
+    else prefecture.removeAttribute("aria-describedby");
+  }
 }
 
 function bindSalesShippingEstimateActions() {
+  bindSalesShippingDestinationGuide();
   var prefecture = document.getElementById("sales-shipping-prefecture");
   var carrier = document.getElementById("sales-shipping-carrier");
   var service = document.getElementById("sales-shipping-service");
@@ -23992,12 +24017,14 @@ function renderSalesShippingEstimate(loadError) {
   if (!host) return;
   if (loadError) {
     host.innerHTML = "<div class='sales-shipping-message error'>" + esc(t("sales_shipping_profile_load_error")) + "</div>";
+    bindSalesShippingDestinationGuide();
     return;
   }
   var rows = salesShippingRateRows || [];
   var carriers = salesShippingUniqueValues(rows, "carrier_name");
   if (!carriers.length) {
     host.innerHTML = "<div class='sales-shipping-message'>" + esc(t("shipping_no_rates")) + "</div>";
+    bindSalesShippingDestinationGuide();
     return;
   }
   if (carriers.indexOf(salesShippingCarrierName) < 0) salesShippingCarrierName = carriers[0];
@@ -24038,7 +24065,7 @@ function renderSalesShippingEstimate(loadError) {
   if (selectedPackage && !salesShippingIgnoresWeight(selectedPackage) && salesShippingProfile && salesShippingProfile.shipping_weight_kg != null && selectedPackage.max_weight_kg != null && Number(salesShippingProfile.shipping_weight_kg) > Number(selectedPackage.max_weight_kg)) {
     html += "<div class='sales-shipping-message warning'>" + esc(t("sales_shipping_weight_over")) + "</div>";
   } else if (!salesShippingPrefectureCode || !selectedPackage) {
-    html += "<div class='sales-shipping-result pending'>" + esc(!salesShippingPrefectureCode ? t("sales_shipping_select_prefecture") : t("sales_shipping_select_size")) + "</div>";
+    if (salesShippingPrefectureCode) html += "<div class='sales-shipping-result pending'>" + esc(t("sales_shipping_select_size")) + "</div>";
   } else if (!selectedRate) {
     html += "<div class='sales-shipping-message warning'>" + esc(t("sales_shipping_no_rate")) + "</div>";
   } else {
@@ -24072,6 +24099,7 @@ async function loadSalesShippingEstimateForCurrent(seq) {
   }
   updateSalesShippingEstimateVisibility();
   host.innerHTML = "<div class='sales-detail-empty'>" + esc(t("loading")) + "</div>";
+  bindSalesShippingDestinationGuide();
   var dkdId = parseInt(productDkdId(currentProduct), 10);
   if (isNaN(dkdId)) return;
   try {
@@ -53379,7 +53407,9 @@ function detailCustomerShippingRuleHtml(displaySettings) {
   var noteKey = rule === "free" ? "sales_shipping_free_note" : (rule === "separate" ? "sales_shipping_separate_note" : "");
   var html = "<div class='detail-customer-shipping-rule " + esc(rule) + "'>";
   html += "<span>" + esc(t("sales_shipping_charge_rule")) + "</span><strong>" + esc(t(labelKey)) + "</strong>";
-  if (noteKey) html += "<small>" + esc(t(noteKey)) + "</small>";
+  if (rule === "separate") {
+    html += "<button class='sales-shipping-destination-guide' id='sales-shipping-destination-guide' type='button' hidden><span>" + esc(t("sales_shipping_destination_guide")) + "</span><span class='sales-shipping-guide-arrow' aria-hidden='true'></span></button>";
+  } else if (noteKey) html += "<small>" + esc(t(noteKey)) + "</small>";
   return html + "</div>";
 }
 
@@ -53404,6 +53434,7 @@ function renderDetailCustomerInfoHtml(customer, priceInfo, canSelect, displaySet
       html += "<div class='detail-customer-note'>" + esc(t("detail_customer_no_customers")) + "</div>";
     }
     html += "<div class='detail-customer-price-focus empty'><span>" + esc(t("sales_price_section")) + "</span><strong>" + esc(t("detail_customer_no_price")) + "</strong></div>";
+    html += detailCustomerShippingRuleHtml({ shipping_charge_rule: "separate" });
     html += "</div>";
     return html;
   }
@@ -53477,6 +53508,7 @@ async function fetchDetailCustomerPriceInfo(customer, dkdId) {
 }
 
 function bindDetailSalesCustomerSelect() {
+  bindSalesShippingDestinationGuide();
   var select = document.getElementById("detail-sales-customer-select");
   if (!select) return;
   select.addEventListener("change", function() {
