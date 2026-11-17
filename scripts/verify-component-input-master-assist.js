@@ -60,8 +60,15 @@ function fixture() {
   assert.equal(f.get("component-add-mfr-pn").value, "existing", "reading choices must preserve entered part numbers");
   assert.equal(f.get("component-input-master-add-parts").children[0].value, "JNDX-37");
   assert.equal(f.get("component-input-master-add-makers").children[0].value, "STRONG HOLD");
+  let resolveRefresh;
+  f.setResponse(() => new Promise(resolve => { resolveRefresh = resolve; }));
+  const refreshPending = f.sandbox.refreshComponentInputMasterAssist(null);
+  assert.equal(f.get("component-input-master-add-makers").children.length, 0, "old manufacturer choices must clear while the new name request is pending");
+  resolveRefresh({ data: { manufacturers: [{ manufacturer: "STRONG HOLD" }], parts: [{ part_number: "JNDX-37" }], total_parts: 1, has_more: false } });
+  await refreshPending;
+  f.setResponse({ data: { manufacturers: [], parts: [], total_parts: 0, has_more: false } });
   await f.sandbox.refreshComponentInputMasterAssist(null, true);
-  assert.equal(f.calls[1].args.part_search_text, "existing");
+  assert.equal(f.calls[2].args.part_search_text, "existing");
   f.setResponse({ data: { manufacturers: [], parts: [{ part_number: "X" }, { part_number: "X", genuine_part_number: "Y" }], total_parts: 1, has_more: false } });
   await f.sandbox.refreshComponentInputMasterAssist(null);
   assert.equal(f.get("component-input-master-add-parts").children.length, 1);

@@ -2741,7 +2741,7 @@ var TRANSLATIONS = {
     component_input_master_empty: "登録候補なし（直接入力可）",
     component_input_master_loading: "登録済み品番を確認中",
     component_input_master_failed: "候補を取得できません（直接入力可）",
-    component_input_master_count: "登録候補 {n}件。品番を入力すると絞り込めます",
+    component_input_master_count: "候補 {n}件",
     component_input_master_genuine: "純正",
     component_add_title_for_kind: "{kind} の構成部品を追加",
     component_add_open: "構成部品を追加",
@@ -5645,7 +5645,7 @@ var TRANSLATIONS = {
     component_input_master_empty: "No registered choices; manual entry available",
     component_input_master_loading: "Loading registered part numbers",
     component_input_master_failed: "Choices unavailable; manual entry available",
-    component_input_master_count: "{n} registered choices. Type a part number to filter",
+    component_input_master_count: "{n} choices",
     component_input_master_genuine: "Genuine",
     component_add_title_for_kind: "Add {kind} Component Part",
     component_add_open: "Add Component Part",
@@ -8546,7 +8546,7 @@ var TRANSLATIONS = {
     component_input_master_empty: "无已登记候选，可手动输入",
     component_input_master_loading: "正在读取已登记品号",
     component_input_master_failed: "候选读取失败，可手动输入",
-    component_input_master_count: "已登记候选{n}项，输入品号可筛选",
+    component_input_master_count: "候选{n}项",
     component_input_master_genuine: "原厂",
     component_add_title_for_kind: "添加{kind}构成部件",
     component_add_open: "添加构成部件",
@@ -46586,6 +46586,7 @@ async function refreshComponentInputMasterAssist(tr, searchTyped) {
   var seq = (c.owner.componentInputMasterSeq || 0) + 1;
   c.owner.componentInputMasterSeq = seq;
   componentInputMasterListOptions(parts, []);
+  componentInputMasterListOptions(makers, []);
   delete c.part.dataset.masterCandidateCount;
   delete c.part.dataset.masterHasMore;
   delete c.part.dataset.masterAssistError;
