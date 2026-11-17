@@ -8849,7 +8849,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1344";
+var APP_VERSION       = "v1.1.1345";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -23968,9 +23968,10 @@ function updateSalesShippingEstimateVisibility() {
 function bindSalesShippingDestinationGuide() {
   var guide = document.getElementById("sales-shipping-destination-guide");
   var prefecture = document.getElementById("sales-shipping-prefecture");
-  var pending = !!prefecture && salesShippingEstimateShouldShow() && !salesShippingPrefectureCode;
+  var available = !!prefecture && salesShippingEstimateShouldShow();
+  var pending = available && !salesShippingPrefectureCode;
   if (guide) {
-    guide.hidden = !pending;
+    guide.hidden = !available;
     guide.onclick = function() {
       var target = document.getElementById("sales-shipping-prefecture");
       if (!target || !salesShippingEstimateShouldShow()) return;
