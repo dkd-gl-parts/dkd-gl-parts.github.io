@@ -8846,7 +8846,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1342";
+var APP_VERSION       = "v1.1.1343";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -45200,14 +45200,12 @@ function renderSalesProductIdentity(product) {
   var wrap = document.getElementById("sales-product-identity");
   if (!wrap) return;
   product = product || {};
-  var makerLine = [product.manufacturer, product.manufacturer_part_number].filter(Boolean).join(" / ") || "-";
   var editHtml = canEdit()
     ? "<button class='btn-sm-edit sales-product-edit' id='btn-edit-current-product' type='button'>" + esc(t("btn_edit_part")) + "</button>"
     : "";
   wrap.innerHTML = "<div class='sales-product-identity-copy'>" +
     "<h2>" + esc(salesDetailPrimaryPartNumber(product)) + "</h2>" +
     "<div class='sales-product-category'>" + esc(productCategoryLabel(product) || "-") + "</div>" +
-    "<div class='sales-product-maker'>" + esc(makerLine) + "</div>" +
     "<div class='sales-product-id'>" + esc(t("f_product_id")) + ": " + esc(productDkdId(product) || "-") + "</div>" +
     "<div class='sales-product-status' id='sales-detail-status'></div>" +
     "<div class='sales-product-warranty' id='sales-product-warranty' aria-live='polite'></div>" +
