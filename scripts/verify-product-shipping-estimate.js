@@ -207,7 +207,7 @@ const { parseHTML } = require("linkedom");
 const packageHelpers = sourceBetween("function shippingPackageKey", "async function fetchAllShippingRateRows");
 const estimateHelpers = sourceBetween("function salesShippingUniqueValues", "async function loadSalesShippingEstimateForCurrent");
 const runEstimate = new Function("parseHTML", `
-  var document = parseHTML("<section id='sales-shipping-estimate-section'><div id='sales-shipping-estimate-wrap'></div></section>").document;
+  var document = parseHTML("<button id='sales-shipping-destination-guide' hidden>Choose destination</button><section id='sales-shipping-estimate-section'><div id='sales-shipping-estimate-wrap'></div></section>").document;
   var salesShippingRateRows, salesShippingProfile, salesShippingPrefectureCode, salesShippingCarrierName, salesShippingServiceName, salesShippingPackageKeyValue;
   var detailCustomerShippingChargeRule = "separate";
   function t(key) { return key; }
@@ -216,7 +216,8 @@ const runEstimate = new Function("parseHTML", `
   function shippingPrefectureOptionsHtml() { return "<option value='13'>Tokyo</option>"; }
   function shippingFeeHtml(fee, tax) { return "fee=" + fee + ";tax=" + tax; }
   function shippingRateVisibleNote(note) { return note || ""; }
-  function canViewCustomerShippingRates() { return true; }
+  var shippingPermission = true;
+  function canViewCustomerShippingRates() { return shippingPermission; }
   function setCspStyle() {}
   ${packageHelpers}
   ${estimateHelpers}
@@ -228,10 +229,20 @@ const runEstimate = new Function("parseHTML", `
     salesShippingCarrierName = options.carrier || "";
     salesShippingServiceName = options.service || "";
     salesShippingPackageKeyValue = options.package ? shippingPackageKey(options.package) : "";
+    detailCustomerShippingChargeRule = options.free ? "free" : "separate";
+    shippingPermission = options.allowed !== false;
     renderSalesShippingEstimate(options.error);
+    var destination = document.getElementById("sales-shipping-prefecture");
+    var guide = document.getElementById("sales-shipping-destination-guide");
+    var focused = false, scrolled = false;
+    if (destination) { destination.focus = function() { focused = true; }; destination.scrollIntoView = function() { scrolled = true; }; }
+    if (guide && !guide.hidden) guide.click();
     return { html: document.getElementById("sales-shipping-estimate-wrap").innerHTML,
       package: salesShippingPackageKeyValue, service: salesShippingServiceName,
-      visible: salesShippingEstimateShouldShow() };
+      visible: salesShippingEstimateShouldShow(), guideHidden: guide.hidden, focused: focused, scrolled: scrolled,
+      highlighted: !!destination && destination.classList.contains("needs-destination"),
+      describedBy: destination && destination.getAttribute("aria-describedby"),
+      pendingResultCount: document.querySelectorAll(".sales-shipping-result.pending").length };
   };
 `)(parseHTML);
 const estimateRates = [60, 80, 100, 120, 140, 160].map((size, i) => ({
@@ -263,6 +274,48 @@ assert.equal(runEstimate({ shipping_size_cm: 200 }, estimateRates).package, "");
 const namedRate = { ...estimateRates[0], package_size_label: "BOX", max_size_cm: null };
 assert.match(runEstimate({ shipping_package_size_label: "BOX", shipping_weight_kg: 5 }, [namedRate]).html, /sales_shipping_weight_over/);
 assert.ok(!estimateRender.includes("weightPackage"), "Missing sizes must never fall back to weight");
+
+
+// The destination prompt lives beside the left charge rule and focuses the current select.
+const destinationPending = runEstimate({ shipping_size_cm: 60 }, estimateRates, { noDestination: true });
+assert.equal(destinationPending.guideHidden, false);
+assert.equal(destinationPending.highlighted, true);
+assert.equal(destinationPending.describedBy, "sales-shipping-destination-guide");
+assert.equal(destinationPending.focused, true);
+assert.equal(destinationPending.scrolled, true);
+assert.equal(destinationPending.pendingResultCount, 0, "do not repeat the destination prompt below the right controls");
+const deniedGuide = runEstimate({ shipping_size_cm: 60 }, estimateRates, { noDestination: true, allowed: false });
+assert.equal(deniedGuide.guideHidden, true);
+assert.equal(deniedGuide.highlighted, false);
+assert.equal(deniedGuide.visible, false);
+const destinationChosen = runEstimate({ shipping_size_cm: 60 }, estimateRates);
+assert.equal(destinationChosen.guideHidden, true);
+assert.equal(destinationChosen.highlighted, false);
+assert.equal(destinationChosen.describedBy, null);
+assert.equal(runEstimate({ shipping_size_cm: 60 }, estimateRates, { noDestination: true, free: true }).guideHidden, true);
+assert.equal(runEstimate({ shipping_size_cm: 60 }, [], { noDestination: true }).guideHidden, true);
+assert.equal(runEstimate(null, estimateRates, { noDestination: true, error: true }).guideHidden, true);
+const missingPackageChosenDestination = runEstimate({ shipping_size_cm: 200 }, estimateRates);
+assert.equal(missingPackageChosenDestination.pendingResultCount, 1, "retain the package-size guidance when a destination is selected");
+const customerRenderHelpers = sourceBetween("function detailCustomerShippingRuleHtml", "async function fetchDetailCustomerPriceInfo");
+const renderCustomer = new Function("parseHTML", "helpers", `
+  var detailSelectedSalesCustomerId = "";
+  function t(key) { return key; }
+  function esc(value) { return String(value == null ? "" : value).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+  function salesManagementCustomerOptions() { return [{ id: 1 }]; }
+  function detailCustomerOptionLabel() { return "Test customer"; }
+  function defaultCustomerDisplaySettings() { return { shipping_charge_rule: "separate" }; }
+  function normalizeCustomerShippingChargeRule(value) { return value && value.shipping_charge_rule === "free" ? "free" : "separate"; }
+  function formatYen(value) { return String(value); }
+  eval(helpers);
+  return function(customer, settings) { return parseHTML("<main>" + renderDetailCustomerInfoHtml(customer, null, true, settings) + "</main>").document; };
+`)(parseHTML, customerRenderHelpers);
+const noCustomerRule = renderCustomer(null);
+assert.ok(noCustomerRule.querySelector(".detail-customer-shipping-rule.separate"), "default separate-shipping rule remains on the left with no customer selected");
+assert.equal(noCustomerRule.querySelectorAll("#sales-shipping-destination-guide").length, 1);
+const freeCustomerRule = renderCustomer({ id: 1 }, { shipping_charge_rule: "free" });
+assert.ok(freeCustomerRule.querySelector(".detail-customer-shipping-rule.free"));
+assert.equal(freeCustomerRule.querySelector("#sales-shipping-destination-guide"), null);
 
 // Yamato has no island-fee setting in the sales estimate. Other carriers retain theirs.
 for (const carrier of ["ヤマト運輸", "クロネコヤマト", "YAMATO"]) {
@@ -301,7 +354,7 @@ if (!source.includes("productShippingSizeRows.push(selected)")) {
   throw new Error("saved package sizes must be retained when the current master no longer contains them");
 }
 
-["product_shipping_section", "product_shipping_weight", "product_shipping_loading", "product_shipping_unlinked", "product_shipping_load_failed", "product_weight_list_load_failed", "product_weight_sort_ascending", "product_weight_sort_descending", "product_weight_sort_ascending_action", "product_weight_sort_descending_action", "product_shipping_save_failed", "sales_shipping_estimate_title", "sales_shipping_manual_size_note", "sales_shipping_size_only_note"].forEach((key) => {
+["product_shipping_section", "product_shipping_weight", "product_shipping_loading", "product_shipping_unlinked", "product_shipping_load_failed", "product_weight_list_load_failed", "product_weight_sort_ascending", "product_weight_sort_descending", "product_weight_sort_ascending_action", "product_weight_sort_descending_action", "product_shipping_save_failed", "sales_shipping_estimate_title", "sales_shipping_manual_size_note", "sales_shipping_size_only_note", "sales_shipping_destination_guide"].forEach((key) => {
   const count = (source.match(new RegExp(`${key}:`, "g")) || []).length;
   if (count !== 3) throw new Error(`${key} must be translated for all supported languages`);
 });
