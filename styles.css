@@ -11943,3 +11943,74 @@ html[data-product-3d-paused] :is(
 .order-print-readiness-actions a,.order-print-readiness-actions button { padding:8px 12px; border:1px solid currentColor; border-radius:6px; color:inherit; background:transparent; text-decoration:none; font:inherit; cursor:pointer; }
 .order-print-readiness-actions button:disabled { opacity:.6; cursor:wait; }
 @media (max-width:600px) { .order-print-readiness { align-items:stretch; flex-direction:column; gap:10px; } .order-print-readiness-actions { flex-wrap:wrap; } }
+
+#screen-search .sales-product-identity { padding-top: 6px; padding-bottom: 6px; }
+/* Product identity shares rows so adding an ID cannot consume a new detail row. */
+#screen-search .sales-product-identity-copy { display: grid; grid-template-columns: fit-content(60%) minmax(0, 1fr); align-items: center; gap: 3px 12px; flex: 1 1 auto; }
+#screen-search .sales-product-identity h2 { grid-column: 1; grid-row: 1; }
+#screen-search .sales-product-id { grid-column: 2; grid-row: 1; margin-top: 0; }
+#screen-search .sales-product-category { grid-column: 1; grid-row: 2; margin-top: 0; }
+#screen-search .sales-product-maker { grid-column: 2; grid-row: 2; margin-top: 0; }
+#screen-search .sales-product-status { grid-column: 1; grid-row: 3; margin-top: 0; }
+#screen-search .sales-product-warranty { grid-column: 2; grid-row: 3; margin: 0; }
+@media (max-width: 767px) {
+  #screen-search .sales-product-identity-copy { grid-template-columns: minmax(0, 1fr) max-content; gap: 3px 8px; }
+  #screen-search .sales-product-identity h2 { grid-column: 1 / -1; }
+  #screen-search .sales-product-category { grid-column: 1; grid-row: 2; }
+  #screen-search .sales-product-id { grid-column: 2; grid-row: 2; }
+  #screen-search .sales-product-maker { grid-column: 1 / -1; grid-row: 3; }
+  #screen-search .sales-product-status { grid-column: 1 / -1; grid-row: 4; }
+  #screen-search .sales-product-warranty { grid-column: 1 / -1; grid-row: 5; }
+}
+@media (min-width: 1024px) {
+  #screen-search .sales-conditions-panel { padding: 4px 16px; gap: 3px 16px; }
+  #screen-search .sales-conditions-title { font-size: 18px; }
+  #screen-search .sales-shipping-controls label { gap: 1px; }
+  #screen-search .sales-shipping-controls select { min-height: 28px; }
+  #screen-search .sales-conditions-panel .detail-customer-panel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 4px 12px; align-items: start; }
+  #screen-search .sales-conditions-panel .detail-customer-head { grid-column: 1; margin: 0; }
+  #screen-search .sales-conditions-panel #product-kind-wrap { grid-column: 2; }
+  #screen-search .detail-customer-section .product-kind-control { margin-top: 0; }
+  #screen-search .detail-customer-section .detail-sales-kind-row { border: 0; padding-top: 0; margin: 0; min-height: 38px; }
+  #screen-search .sales-conditions-panel .detail-customer-price-focus { grid-column: 1; grid-row: 2; min-height: 34px; padding: 4px 0; }
+  #screen-search .sales-conditions-panel #product-kind-stock-wrap,
+  #screen-search .sales-conditions-panel #product-kind-stock-wrap > .product-kind-stock-grid { display: contents; }
+  #screen-search .detail-customer-section .product-kind-stock-row:not(.sales-product-shelf-row) { grid-column: 2; grid-row: 2; }
+  #screen-search .sales-product-shelf-row { grid-column: 1 / -1; grid-row: 3; }
+  #screen-search .sales-product-shelf-row .detail-sales-term-value { line-height: 1.35; }
+  #screen-search .sales-conditions-panel .detail-customer-shipping-rule { grid-column: 1 / -1; }
+  #sales-detail-basic { grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: 12px; padding: 8px 12px; }
+  #sales-detail-basic .detail-main-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  #screen-search .sales-basic-compatible-head { margin-bottom: 4px; }
+  #screen-search .sales-basic-compatible-wrap .kikan-table { min-width: 0; width: 100%; table-layout: fixed; }
+  #screen-search .sales-basic-compatible-wrap .kikan-table th:nth-child(1),
+  #screen-search .sales-basic-compatible-wrap .kikan-table td:nth-child(1),
+  #screen-search .sales-basic-compatible-wrap .kikan-table th:nth-child(2),
+  #screen-search .sales-basic-compatible-wrap .kikan-table td:nth-child(2) { width: calc((100% - 162px) / 2); }
+  #screen-search .sales-basic-compatible-wrap .kikan-table th:nth-child(3),
+  #screen-search .sales-basic-compatible-wrap .kikan-table td:nth-child(3) { width: 110px; }
+  #screen-search .sales-basic-compatible-wrap .kikan-table th:last-child,
+  #screen-search .sales-basic-compatible-wrap .kikan-table td:last-child { width: 52px; }
+  #screen-search .sales-basic-compatible-wrap .kikan-table th { white-space: normal; overflow-wrap: anywhere; line-height: 1.25; }
+  #screen-search .sales-basic-compatible-wrap .kikan-stock-pill { display: grid; grid-template-columns: minmax(0, 1fr) auto; min-width: 0; gap: 2px; }
+  #screen-search .sales-basic-compatible-wrap .kikan-stock-pill > span { white-space: normal; overflow: visible; overflow-wrap: anywhere; }
+  #screen-search .sales-basic-compatible-wrap .kikan-stock-pill b { min-width: 0; }
+  #screen-search .sales-basic-compatible-wrap .kikan-action .btn-sm-edit { white-space: nowrap; }
+  #screen-search .sales-basic-compatible-wrap .kikan-pn { white-space: normal; overflow-wrap: anywhere; }
+  #screen-search .sales-basic-compatible-wrap .kikan-action .btn-sm-edit { min-width: 0; padding: 3px 4px; }
+}
+@media (min-width: 1024px) and (max-height: 800px) {
+  #screen-search .sales-basic-compatible-wrap { max-height: 144px; }
+}
+
+@media (min-width: 1024px) and (max-width: 1200px) {
+  #sales-detail-basic { padding-top: 2px; padding-bottom: 2px; }
+  #screen-search .sales-conditions-panel .detail-customer-head,
+  #screen-search .detail-customer-section .detail-sales-kind-row { grid-template-columns: minmax(0, 1fr); gap: 1px; }
+  #screen-search .sales-conditions-panel .detail-customer-price-focus.empty { grid-template-columns: minmax(0, 1fr); }
+  #sales-detail-basic .detail-main-grid .ac-part-row,
+  #sales-detail-basic .detail-main-grid .detail-vehicle-maker-grid,
+  #sales-detail-basic .detail-main-grid .detail-spec-grid { grid-template-columns: minmax(0, 88px) minmax(0, 1fr); }
+  #sales-detail-basic .detail-main-grid .ac-part-label,
+  #sales-detail-basic .detail-main-grid .detail-vehicle-label { line-height: 1.3; }
+}
