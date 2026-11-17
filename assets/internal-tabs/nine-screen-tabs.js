@@ -5,6 +5,85 @@
   var context = null, verifiedId = null, verifiedScope = null, epoch = 0;
   var tabs = [], active = null, loaded = new Set(), states = new Map(), edits = new Map(), prepared = null, navigating = false;
   var bar, list, notice, toggle, hint, enabled = false;
+
+  var PROPERTIES_SCREEN = "screen-tab-properties";
+  var properties, propertiesStatus, propertiesApply, pagePrev, pageNext, pageCount, pages = [], pageNumber = 0;
+  function propertiesTitle() { return text("画面タブのプロパティ", "Screen tab properties", "屏幕标签属性"); }
+  function propertiesHome() {
+    if (current() && context.home) context.home();
+    else if (root.location && root.location.reload) root.location.reload();
+  }
+  function element(tag, className, parent, content) {
+    var node = root.document.createElement(tag);
+    if (className) node.className = className;
+    if (content != null) node.textContent = content;
+    if (parent) parent.appendChild(node);
+    return node;
+  }
+  function mountProperties() {
+    properties = element("section", "screen dcats-ui-screen dcats-tab-properties-screen", root.document.body);
+    properties.id = "screen-" + PROPERTIES_SCREEN;
+    properties.setAttribute("aria-labelledby", "dcats-tab-properties-title");
+    var header = element("div", "page-header", properties), left = element("div", "page-header-left", header);
+    var back = element("button", "back-btn", left); back.type = "button"; back.dataset.propertyText = "back";
+    back.addEventListener("click", propertiesHome);
+    var title = element("h1", "dcats-tab-properties-title", left); title.id = "dcats-tab-properties-title"; title.dataset.propertyText = "title";
+    var body = element("div", "dcats-tab-properties-body", properties);
+    var option = element("label", "dcats-tab-properties-option", body);
+    toggle = element("input", "", option); toggle.type = "checkbox"; toggle.id = "dcats-nine-tabs-toggle";
+    var optionText = element("span", "", option); optionText.dataset.propertyText = "enable";
+    var definitions = element("dl", "dcats-tab-properties-definitions", body);
+    [["limit", "limitValue"], ["overflow", "overflowValue"], ["unsaved", "unsavedValue"], ["restore", "restoreValue"]].forEach(function (keys) {
+      var row = element("div", "", definitions);
+      element("dt", "", row).dataset.propertyText = keys[0];
+      element("dd", "", row).dataset.propertyText = keys[1];
+    });
+    element("p", "dcats-tab-properties-note", body).dataset.propertyText = "note";
+    propertiesStatus = element("p", "dcats-tab-properties-status", body); propertiesStatus.setAttribute("role", "status"); propertiesStatus.setAttribute("aria-live", "polite");
+    var footer = element("div", "dcats-tab-properties-footer", properties);
+    var cancel = element("button", "btn-secondary", footer); cancel.type = "button"; cancel.dataset.propertyText = "cancel"; cancel.addEventListener("click", propertiesHome);
+    propertiesApply = element("button", "btn-primary", footer); propertiesApply.type = "button"; propertiesApply.id = "dcats-tab-properties-apply"; propertiesApply.dataset.propertyText = "apply";
+    propertiesApply.addEventListener("click", function () {
+      var requested = toggle.checked === true;
+      var result = setEnabled(requested);
+      updateProperties();
+      if (!available()) return;
+      if (result !== requested) {
+        propertiesStatus.textContent = text("変更していません。開いている画面をご確認ください。", "Settings were not changed. Check the open screens.", "设置未更改。请检查已打开的屏幕。");
+        return;
+      }
+      propertiesHome();
+    });
+    root.document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && properties.classList.contains("active")) { event.preventDefault(); propertiesHome(); }
+    });
+  }
+  function updateProperties() {
+    if (!properties) return;
+    var words = {
+      back: text("← メニュー", "← Menu", "← 菜单"), title: propertiesTitle(),
+      enable: text("このブラウザーで画面タブを使う", "Use screen tabs in this browser", "在此浏览器中使用屏幕标签"),
+      limit: text("保持数", "Tab limit", "保留数量"), limitValue: text("最大9個", "Up to 9", "最多9个"),
+      overflow: text("10個目", "Tenth tab", "第10个标签"), overflowValue: text("一番古いタブを閉じる", "Close the oldest tab", "关闭最早的标签"),
+      unsaved: text("未保存の入力", "Unsaved input", "未保存的输入"), unsavedValue: text("閉じる前に必ず確認", "Always confirm before closing", "关闭前始终确认"),
+      restore: text("再読み込み後", "After reload", "重新加载后"), restoreValue: text("画面・順番・選択を復元", "Restore screens, order and selection", "恢复屏幕、顺序和选择"),
+      note: text("同じ画面は1つのタブです。入力内容そのものは再読み込みで復元されません。", "Each screen uses one tab. Unsaved input is not restored after reload.", "每个屏幕仅使用一个标签。重新加载不会恢复未保存的输入。"),
+      cancel: text("キャンセル", "Cancel", "取消"), apply: text("適用して閉じる", "Apply & close", "应用并关闭")
+    };
+    properties.querySelectorAll("[data-property-text]").forEach(function (node) { node.textContent = words[node.dataset.propertyText]; });
+    toggle.checked = enabled && current(); toggle.disabled = !available(); propertiesApply.disabled = !available();
+    if (!available()) propertiesStatus.textContent = text("利用状態を確認できません。メニューへ戻ってください。", "Session unavailable. Return to the menu.", "无法确认会话。请返回菜单。");
+  }
+  function openProperties() {
+    if (!available()) return false;
+    announce(""); propertiesStatus.textContent = "";
+    context.show(PROPERTIES_SCREEN);
+    updateProperties();
+    toggle.focus();
+    return true;
+  }
+  function refreshMenu() { if (context && context.refreshMenu && context.screen() === "menu") context.refreshMenu(); }
+
   function text(ja, en, zh) { return root.currentLang === "zh" ? zh : root.currentLang === "en" ? en : ja; }
   function policy() { return root.DcatsNineTabsPolicy || {mode: "off"}; }
   function ownerKey() { return "dcats-nine-tabs.v1:" + verifiedId; }
@@ -31,7 +110,7 @@
   }
   function editable(node) { return node && (node.matches("input:not([type=hidden]):not([type=button]):not([type=submit]):not([type=reset]),textarea,select") || node.isContentEditable) && !node.disabled && !node.readOnly; }
   function rememberInput(event) {
-    if (!enabled || !available() || !active || !tabs.includes(active) || context.screen() === "menu" || !editable(event.target)) return;
+    if (!enabled || !available() || !active || !tabs.includes(active) || context.screen() === "menu" || properties && properties.contains(event.target) || !editable(event.target)) return;
     var node = event.target, records = edits.get(active);
     if (!records) { records = new Map(); edits.set(active, records); }
     if (!records.has(node)) records.set(node, {initial: signature(node), touched: false, changed: false, password: node.type === "password"});
@@ -75,13 +154,12 @@
     hint = root.document.createElement("p"); hint.className = "dcats-nine-tabs-hint";
     var strip = root.document.createElement("div"); strip.className = "dcats-nine-tabs-strip"; strip.append(list);
     bar.append(strip, hint, notice); root.document.body.insertBefore(bar, root.document.body.firstChild);
-    var menu = root.document.getElementById("screen-menu");
-    if (menu) {
-      toggle = root.document.createElement("button"); toggle.type = "button"; toggle.id = "dcats-nine-tabs-toggle"; toggle.className = "btn-secondary dcats-nine-tabs-toggle"; toggle.hidden = true;
-      toggle.addEventListener("click", function () { setEnabled(!enabled); });
-      var menuBody = menu.querySelector(".menu-body") || menu, welcome = menuBody.querySelector(".menu-welcome");
-      if (welcome) welcome.after(toggle); else menuBody.prepend(toggle);
-    }
+    pagePrev = element("button", "dcats-tab-page-button", strip, "‹"); pagePrev.type = "button"; pagePrev.id = "dcats-tabs-previous";
+    pageCount = element("span", "dcats-tab-page-count", strip); pageCount.setAttribute("aria-live", "polite");
+    pageNext = element("button", "dcats-tab-page-button", strip, "›"); pageNext.type = "button"; pageNext.id = "dcats-tabs-next";
+    pagePrev.addEventListener("click", function () { if (pageNumber > 0) revealSelected(tabs[pages[pageNumber - 1].start]); });
+    pageNext.addEventListener("click", function () { if (pageNumber + 1 < pages.length) revealSelected(tabs[pages[pageNumber + 1].start]); });
+    mountProperties();
     ["focusin", "beforeinput", "input", "change"].forEach(function (event) { root.document.addEventListener(event, rememberInput, true); });
     root.addEventListener("beforeunload", function (event) { if (enabled && current() && tabs.some(dirty)) { event.preventDefault(); event.returnValue = ""; } });
     root.addEventListener("resize", revealSelected);
@@ -89,18 +167,42 @@
       var buttons = Array.from(list.querySelectorAll('[role="tab"]')), at = buttons.indexOf(event.target);
       if (at < 0) return;
       var next = event.key === "ArrowRight" ? (at + 1) % buttons.length : event.key === "ArrowLeft" ? (at + buttons.length - 1) % buttons.length : event.key === "Home" ? 0 : event.key === "End" ? buttons.length - 1 : -1;
-      if (next >= 0) { event.preventDefault(); buttons[next].focus(); }
+      if (next >= 0) { event.preventDefault(); revealSelected(buttons[next].dataset.feature); buttons.forEach(function (button) { button.tabIndex = -1; }); buttons[next].tabIndex = 0; buttons[next].focus(); }
       if (event.key === "Delete") { event.preventDefault(); close(event.target.dataset.feature); }
     });
   }
-  function revealSelected() {
+
+  function revealSelected(preferredId) {
     if (!list || !bar || bar.hidden) return;
-    var selectedTab = list.querySelector(".is-active");
-    if (selectedTab) {
-      var rect = selectedTab.getBoundingClientRect(), listRect = list.getBoundingClientRect();
-      if (rect.left < listRect.left) list.scrollLeft -= listRect.left - rect.left;
-      else if (rect.right > listRect.right) list.scrollLeft += rect.right - listRect.right;
-    }
+    var groups = Array.from(list.children);
+    [pagePrev, pageNext, pageCount].forEach(function (node) { node.hidden = true; });
+    groups.forEach(function (node) { node.hidden = false; });
+    pages = []; pageNumber = 0;
+    if (!groups.length) return;
+    var bounds = list.getBoundingClientRect(), width = (list.clientWidth || bounds.width || bounds.right - bounds.left) - 12;
+    var widths = groups.map(function (node) { var rect = node.getBoundingClientRect(); return rect.width || rect.right - rect.left; });
+    if (widths.reduce(function (sum, value) { return sum + value; }, 0) + (groups.length - 1) * 4 <= width) return;
+    [pagePrev, pageNext, pageCount].forEach(function (node) { node.hidden = false; });
+    bounds = list.getBoundingClientRect(); width = (list.clientWidth || bounds.width || bounds.right - bounds.left) - 12;
+    widths = groups.map(function (node) { var rect = node.getBoundingClientRect(); return Math.min(rect.width || rect.right - rect.left, width); });
+    var start = 0, used = 0;
+    widths.forEach(function (value, index) {
+      if (index > start && used + 4 + value > width) { pages.push({start: start, end: index - 1}); start = index; used = 0; }
+      used += (index > start ? 4 : 0) + value;
+    });
+    pages.push({start: start, end: groups.length - 1});
+    var focused = root.document.activeElement, focusId = focused && focused.dataset && (focused.dataset.feature || focused.dataset.closeFeature);
+    var id = typeof preferredId === "string" ? preferredId : focusId || active;
+    var at = Math.max(0, tabs.indexOf(id));
+    pageNumber = Math.max(0, pages.findIndex(function (page) { return at >= page.start && at <= page.end; }));
+    var page = pages[pageNumber];
+    groups.forEach(function (node, index) { node.hidden = index < page.start || index > page.end; });
+    var visibleButtons = groups.slice(page.start, page.end + 1).map(function (node) { return node.querySelector('[role="tab"]'); });
+    if (!visibleButtons.some(function (node) { return node.tabIndex === 0; })) visibleButtons[0].tabIndex = 0;
+    pagePrev.disabled = pageNumber === 0; pageNext.disabled = pageNumber === pages.length - 1;
+    pagePrev.setAttribute("aria-label", text("前のタブを表示", "Show previous tabs", "显示上一组标签"));
+    pageNext.setAttribute("aria-label", text("次のタブを表示", "Show next tabs", "显示下一组标签"));
+    pageCount.textContent = (page.start + 1 === page.end + 1 ? String(page.start + 1) : (page.start + 1) + "–" + (page.end + 1)) + "/" + tabs.length;
   }
   function render() {
     if (!bar) return;
@@ -113,7 +215,7 @@
     hint.textContent = text("メニューから開いた順に9つまで残ります。10個目を開くと、一番古いタブを閉じます。", "Keep up to 9 screens in opening order. Opening a tenth closes the oldest tab.", "按打开顺序保留最多9个屏幕。打开第10个时关闭最早的标签。");
     list.replaceChildren(); list.setAttribute("aria-label", text("画面タブ（最大9）", "Screen tabs (maximum 9)", "屏幕标签（最多9个）"));
     tabs.forEach(function (id) {
-      var selected = screen !== "menu" && active === id, group = root.document.createElement("div"); group.className = "dcats-nine-tab"; group.classList.toggle("is-active", selected);
+      var selected = screen !== "menu" && screen !== PROPERTIES_SCREEN && active === id, group = root.document.createElement("div"); group.className = "dcats-nine-tab"; group.classList.toggle("is-active", selected);
       var button = root.document.createElement("button"); button.type = "button"; button.dataset.feature = id; button.id = "dcats-nine-tab-" + id;
       button.setAttribute("role", "tab"); button.setAttribute("aria-selected", String(selected)); button.setAttribute("aria-controls", "screen-" + id); button.tabIndex = active === id || !active && tabs[0] === id ? 0 : -1;
       button.textContent = label(id); button.title = button.textContent; button.addEventListener("click", function () { activate(id); });
@@ -122,7 +224,9 @@
       group.append(button, remove); list.appendChild(group);
     });
     revealSelected();
-    if (toggle) { toggle.hidden = !available(); toggle.setAttribute("aria-pressed", String(enabled)); toggle.textContent = text("画面タブ（試験）: ", "Screen tabs (pilot): ", "屏幕标签（试用）：") + (enabled ? "ON" : "OFF"); }
+    updateProperties();
+    var entry = root.document.querySelector('[data-action="screen-tab-properties"]');
+    if (entry && !available()) entry.remove();
   }
   function setEnabled(value) {
     if (!available()) return false;
@@ -181,6 +285,7 @@
     return !prepare(id, hasContext, true);
   }
   function beforeShow(id) {
+    if (id === PROPERTIES_SCREEN && !available()) return false;
     if (!enabled || !available() || !eligible(id)) return true;
     return prepare(id, false, false);
   }
@@ -230,11 +335,13 @@
     if (!user || user.id !== expected || !user.email_confirmed_at) { suspend(false); return; }
     context = options; context.email = String(user.email || "").toLowerCase(); verifiedId = user.id; verifiedScope = expectedScope;
     mount(); enabled = available() && storageGet(preferenceKey()) === "on";
-    if (wasCurrent) { render(); return; }
+    if (wasCurrent) { render(); refreshMenu(); return; }
     tabs = []; loaded.clear(); states.clear(); edits.clear(); active = null; prepared = null;
     if (enabled) restore(); else render();
+    refreshMenu();
   }
   root.DcatsNineTabs = Object.freeze({
+    isAvailable: available, openProperties: openProperties, propertiesTitle: propertiesTitle,
     get features() { return features(); }, retainedLimit: LIMIT, afterAuthenticated: afterAuthenticated, beforeEnter: beforeEnter, beforeShow: beforeShow, screenChanged: screenChanged, suspend: suspend,
     authEvent: function (event) { if (["SIGNED_OUT", "USER_UPDATED", "PASSWORD_RECOVERY"].includes(event)) suspend(event === "SIGNED_OUT"); },
     willLeave: function (id) { if (id === "menu") capture(); },
