@@ -2735,6 +2735,14 @@ var TRANSLATIONS = {
     component_mode_same: "一致",
     component_mode_all: "全件",
     component_add_title: "構成部品を追加",
+    component_input_master_name: "部品名を選択",
+    component_input_master_maker: "メーカーを入力または候補から選択",
+    component_input_master_part: "メーカーを選ぶと品番候補を表示",
+    component_input_master_empty: "登録候補なし（直接入力可）",
+    component_input_master_loading: "登録済み品番を確認中",
+    component_input_master_failed: "候補を取得できません（直接入力可）",
+    component_input_master_count: "候補 {n}件",
+    component_input_master_genuine: "純正",
     component_add_title_for_kind: "{kind} の構成部品を追加",
     component_add_open: "構成部品を追加",
     component_target_kind_title: "構成部品の対象",
@@ -5631,6 +5639,14 @@ var TRANSLATIONS = {
     component_mode_same: "Same",
     component_mode_all: "All",
     component_add_title: "Add Component Part",
+    component_input_master_name: "Select a part name",
+    component_input_master_maker: "Enter or choose a manufacturer",
+    component_input_master_part: "Choose a manufacturer for part numbers",
+    component_input_master_empty: "No registered choices; manual entry available",
+    component_input_master_loading: "Loading registered part numbers",
+    component_input_master_failed: "Choices unavailable; manual entry available",
+    component_input_master_count: "{n} choices",
+    component_input_master_genuine: "Genuine",
     component_add_title_for_kind: "Add {kind} Component Part",
     component_add_open: "Add Component Part",
     component_target_kind_title: "Component Target",
@@ -8524,6 +8540,14 @@ var TRANSLATIONS = {
     component_mode_same: "一致",
     component_mode_all: "全部",
     component_add_title: "添加构成部件",
+    component_input_master_name: "请选择部件名称",
+    component_input_master_maker: "输入或选择制造商",
+    component_input_master_part: "选择制造商以显示品号",
+    component_input_master_empty: "无已登记候选，可手动输入",
+    component_input_master_loading: "正在读取已登记品号",
+    component_input_master_failed: "候选读取失败，可手动输入",
+    component_input_master_count: "候选{n}项",
+    component_input_master_genuine: "原厂",
     component_add_title_for_kind: "添加{kind}构成部件",
     component_add_open: "添加构成部件",
     component_target_kind_title: "构成部件对象",
@@ -8816,7 +8840,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1338";
+var APP_VERSION       = "v1.1.1339";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -46478,6 +46502,8 @@ async function openComponentAddForm() {
   if (btn) { btn.disabled = false; btn.textContent = t("component_add"); }
   var overlay = document.getElementById("component-add-overlay");
   if (overlay) overlay.classList.add("show");
+  bindComponentInputMasterAssist(null);
+  refreshComponentInputMasterAssist(null);
   var name = document.getElementById("component-add-name");
   if (name) name.focus();
   loadComponentCatalogNameCandidatesForCurrent().then(function() {
@@ -46489,6 +46515,166 @@ async function openComponentAddForm() {
     console.warn("component name candidates load failed", err);
   });
 }
+
+
+/* Registered-component input master. Reading choices never changes input or money. */
+function componentInputMasterText(key, count) {
+  return String(t("component_input_master_" + key)).replace("{n}", String(count == null ? 0 : count));
+}
+
+function componentInputMasterControls(tr) {
+  var add = !tr;
+  var owner = tr || document.getElementById("component-add-overlay");
+  if (!owner) return null;
+  var fields = add ? {
+    name: document.getElementById("component-add-name"),
+    maker: document.getElementById("component-add-mfr"),
+    part: document.getElementById("component-add-mfr-pn")
+  } : {
+    name: tr.querySelector("[data-component-edit-field='component_part_name']"),
+    maker: tr.querySelector("[data-component-edit-field='component_manufacturer']"),
+    part: tr.querySelector("[data-component-edit-field='component_manufacturer_part_number']")
+  };
+  if (!fields.name || !fields.maker || !fields.part) return null;
+  fields.owner = owner;
+  fields.add = add;
+  return fields;
+}
+
+function componentInputMasterContext(c) {
+  return [
+    currentUser && currentUser.id || "",
+    currentProduct ? productDkdId(currentProduct) : "",
+    selectedProductKind(),
+    currentSelectedComponentVariantId || "",
+    currentLang || "ja",
+    componentCatalogCategoryCode(currentProduct),
+    canonicalComponentNameForStorage(c.name.value),
+    String(c.maker.value || "").trim().toUpperCase(),
+    String(c.part.value || "").trim()
+  ].join("|");
+}
+
+function componentInputMasterList(input, id) {
+  var list = document.getElementById(id);
+  if (!list) {
+    list = document.createElement("datalist");
+    list.id = id;
+    input.parentNode.appendChild(list);
+  }
+  input.setAttribute("list", id);
+  input.setAttribute("autocomplete", "off");
+  return list;
+}
+
+function componentInputMasterListOptions(list, choices) {
+  list.replaceChildren();
+  choices.forEach(function(choice) {
+    var option = document.createElement("option");
+    option.value = String(choice.value || "");
+    option.label = String(choice.label || "");
+    list.appendChild(option);
+  });
+}
+
+async function refreshComponentInputMasterAssist(tr, searchTyped) {
+  var c = componentInputMasterControls(tr);
+  if (!c) return;
+  var tag = c.add ? "add" : "edit-" + String(c.owner.dataset.componentEditRow || "").replace(/[^a-zA-Z0-9_-]/g, "");
+  var makers = componentInputMasterList(c.maker, "component-input-master-" + tag + "-makers");
+  var parts = componentInputMasterList(c.part, "component-input-master-" + tag + "-parts");
+  var seq = (c.owner.componentInputMasterSeq || 0) + 1;
+  c.owner.componentInputMasterSeq = seq;
+  componentInputMasterListOptions(parts, []);
+  componentInputMasterListOptions(makers, []);
+  delete c.part.dataset.masterCandidateCount;
+  delete c.part.dataset.masterHasMore;
+  delete c.part.dataset.masterAssistError;
+  if (!canManageComponentsInCurrentContext() || !currentProduct || (c.add && !c.owner.classList.contains("show"))) {
+    componentInputMasterListOptions(makers, []);
+    return;
+  }
+  var name = canonicalComponentNameForStorage(c.name.value);
+  if (!name) {
+    componentInputMasterListOptions(makers, []);
+    c.maker.placeholder = componentInputMasterText("name");
+    c.part.placeholder = componentInputMasterText("name");
+    return;
+  }
+  var context = componentInputMasterContext(c);
+  var maker = String(c.maker.value || "").trim().toUpperCase();
+  c.maker.placeholder = componentInputMasterText("maker");
+  c.part.placeholder = maker ? componentInputMasterText("loading") : componentInputMasterText("part");
+  c.part.title = c.part.placeholder;
+  function current() {
+    return c.owner.isConnected !== false &&
+      c.owner.componentInputMasterSeq === seq &&
+      canManageComponentsInCurrentContext() &&
+      (!c.add || c.owner.classList.contains("show")) &&
+      componentInputMasterContext(c) === context;
+  }
+  try {
+    var result = await sb.rpc("get_component_input_master_choices", {
+      target_component_name: name,
+      target_category_code: componentCatalogCategoryCode(currentProduct) || null,
+      target_manufacturer: maker || null,
+      part_search_text: searchTyped ? (String(c.part.value || "").trim() || null) : null,
+      page_size: 60
+    });
+    if (!current()) return;
+    if (result.error) throw new Error(result.error.message || "component input choices failed");
+    var data = result.data || {};
+    if (!Array.isArray(data.manufacturers) || !Array.isArray(data.parts)) throw new Error("Invalid component input choice response");
+    componentInputMasterListOptions(makers, data.manufacturers.map(function(row) {
+      return { value: row.manufacturer, label: row.manufacturer };
+    }));
+    var seen = {};
+    var choices = [];
+    data.parts.forEach(function(row) {
+      var pn = String(row.part_number || "").trim();
+      if (!pn || seen[pn]) return;
+      seen[pn] = true;
+      choices.push({ value: pn, label: row.genuine_part_number ? componentInputMasterText("genuine") + ": " + row.genuine_part_number : pn });
+    });
+    componentInputMasterListOptions(parts, choices);
+    var total = Number(data.total_parts);
+    if (!Number.isFinite(total) || total < 0) total = choices.length;
+    c.part.dataset.masterCandidateCount = String(total);
+    c.part.dataset.masterHasMore = data.has_more === true ? "1" : "0";
+    c.part.placeholder = !maker ? componentInputMasterText("part") : total ? componentInputMasterText("count", total) : componentInputMasterText("empty");
+    c.part.title = c.part.placeholder;
+  } catch (error) {
+    if (!current()) return;
+    componentInputMasterListOptions(makers, []);
+    componentInputMasterListOptions(parts, []);
+    c.part.placeholder = componentInputMasterText("failed");
+    c.part.title = c.part.placeholder;
+    c.part.dataset.masterAssistError = "1";
+    console.warn("component input master choices unavailable", error.message);
+  }
+}
+
+function bindComponentInputMasterAssist(tr) {
+  var c = componentInputMasterControls(tr);
+  if (!c || c.owner.componentInputMasterBound) return;
+  c.owner.componentInputMasterBound = true;
+  function schedule(event) {
+    var searchTyped = !!(event && event.type === "input" && event.target === c.part);
+    c.owner.componentInputMasterSeq = (c.owner.componentInputMasterSeq || 0) + 1;
+    clearTimeout(c.owner.componentInputMasterTimer);
+    c.owner.componentInputMasterTimer = setTimeout(function() {
+      refreshComponentInputMasterAssist(tr, searchTyped);
+    }, 180);
+  }
+  c.name.addEventListener("change", schedule);
+  c.maker.addEventListener("input", schedule);
+  c.maker.addEventListener("change", schedule);
+  c.part.addEventListener("input", schedule);
+  c.part.addEventListener("focus", schedule);
+  c.maker.addEventListener("focus", schedule);
+  refreshComponentInputMasterAssist(tr);
+}
+/* End registered-component input master. */
 
 function componentAddValue(id) {
   var el = document.getElementById(id);
@@ -47175,6 +47361,7 @@ async function reconcileComponentEditPartNumbers(usageId) {
 
 function bindComponentEditManufacturerLookup(wrap) {
   if (!wrap) return;
+  wrap.querySelectorAll("[data-component-edit-row]").forEach(function(tr) { bindComponentInputMasterAssist(tr); });
   wrap.querySelectorAll("[data-component-edit-field='component_manufacturer']").forEach(function(input) {
     var handler = function() {
       input.value = normalizeComponentManufacturerInput(input.value) || "UNKNOWN";

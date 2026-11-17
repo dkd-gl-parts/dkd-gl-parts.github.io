@@ -107,6 +107,8 @@ jobs:
         run: node scripts/verify-catalog-illustration-states.js
       - name: Verify manual component add
         run: node scripts/verify-component-manual-add.js
+      - name: Verify registered component name/manufacturer/part-number assist
+        run: node scripts/verify-component-input-master-assist.js
       - name: Verify shared component unit prices
         run: node scripts/verify-component-shared-unit-price.js
       - name: Verify component screen transition
