@@ -8816,7 +8816,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1336";
+var APP_VERSION       = "v1.1.1337";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -11403,7 +11403,7 @@ function showAuthenticatedHome() {
   if (window.DcatsNineTabs) window.DcatsNineTabs.afterAuthenticated({
     userId: function () { return currentUser && currentUser.id; },
     scope: function () { return JSON.stringify([currentUser && currentUser.id, userProfile && userProfile.id, conciergeNavigationProfileStamp(userProfile), userProfile && userProfile.permission_profile_code]); },
-    external: isCustomerViewer(),
+    external: !userProfile || isCustomerViewer() || isExternalViewer(),
     verify: function () { return sb.auth.getUser(); },
     screen: activeAppScreenName,
     show: showScreen,
@@ -11416,7 +11416,8 @@ function showAuthenticatedHome() {
     resume: resumeScreenTab,
     release: releaseScreenTab,
     resetControl: resetScreenControlState,
-    closeState: screenTabCloseState
+    closeState: screenTabCloseState,
+    refreshMenu: renderMenu
   }).catch(function () { console.warn("Screen tabs are unavailable"); });
 }
 
@@ -12555,19 +12556,23 @@ function renderMenu() {
     html += "</div></div></section>";
   }
 
-  if (settingsItems.length) {
+  var canUseScreenTabSettings = !!(window.DcatsNineTabs && window.DcatsNineTabs.isAvailable && window.DcatsNineTabs.isAvailable());
+  if (settingsItems.length || canUseScreenTabSettings) {
     html += '<section class="menu-section" id="menu-settings-section">';
-    html += '<div class="menu-section-head"><h3 class="menu-section-title">' + t("business_workspace_settings_menu_title") + '</h3></div>';
-    html += '<div class="menu-admin-panel"><div class="menu-admin-grid">';
+    html += '<div class="menu-section-head"><h3 class="menu-section-title">' + t("business_workspace_settings_menu_title") + '</h3>';
+    if (canUseScreenTabSettings) html += '<button type="button" class="btn-secondary screen-tabs-properties-entry" data-action="screen-tab-properties">' + esc(window.DcatsNineTabs.propertiesTitle()) + '</button>';
+    html += '</div>';
+    if (settingsItems.length) html += '<div class="menu-admin-panel"><div class="menu-admin-grid">';
     settingsItems.forEach(function(item) { html += renderAdminLink(item); });
-    html += '</div></div></section>';
+    if (settingsItems.length) html += '</div></div>';
+    html += '</section>';
   }
 
   grid.innerHTML = html;
 
   refreshConciergeMenuBadge(grid).catch(function () {});
 
-  grid.querySelectorAll(".menu-card:not(.disabled)[data-action], .menu-admin-link:not(.disabled)[data-action]").forEach(function(card) {
+  grid.querySelectorAll(".menu-card:not(.disabled)[data-action], .menu-admin-link:not(.disabled)[data-action], .screen-tabs-properties-entry").forEach(function(card) {
     card.addEventListener("click", function(event) {
       openAppMenuAction(card.dataset.action, event);
     });
@@ -12576,7 +12581,8 @@ function renderMenu() {
 
 function openAppMenuAction(action, event) {
   if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter(action, false)) return;
-      if (action === "search") enterSearch();
+      if (action === "screen-tab-properties") window.DcatsNineTabs.openProperties();
+      else if (action === "search") enterSearch();
       else if (action === "customer-portal") enterCustomerPortal();
       else if (action === "sales-order-mgmt") enterSalesOrderMgmt();
       else if (action === "claim-case-mgmt") enterClaimCaseMgmt();
