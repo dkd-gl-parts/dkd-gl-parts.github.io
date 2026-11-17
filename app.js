@@ -2052,6 +2052,7 @@ var TRANSLATIONS = {
     sales_conditions_title: "販売条件",
     sales_shipping_charge_rule: "送料条件",
     sales_shipping_charge_separate: "送料別途",
+    sales_shipping_charge_separate_short: "送料別途",
     sales_shipping_charge_free: "送料無料",
     sales_shipping_charge_loading: "送料条件を確認中",
     sales_shipping_separate_note: "お届け先を選択して送料をご確認ください。",
@@ -4959,6 +4960,7 @@ var TRANSLATIONS = {
     sales_conditions_title: "Sales Terms",
     sales_shipping_charge_rule: "Shipping Terms",
     sales_shipping_charge_separate: "Shipping charged separately",
+    sales_shipping_charge_separate_short: "Extra",
     sales_shipping_charge_free: "Free shipping",
     sales_shipping_charge_loading: "Checking shipping terms",
     sales_shipping_separate_note: "Select a destination to check shipping.",
@@ -7866,6 +7868,7 @@ var TRANSLATIONS = {
     sales_conditions_title: "销售条件",
     sales_shipping_charge_rule: "运费条件",
     sales_shipping_charge_separate: "运费另计",
+    sales_shipping_charge_separate_short: "运费另计",
     sales_shipping_charge_free: "免运费",
     sales_shipping_charge_loading: "正在确认运费条件",
     sales_shipping_separate_note: "请选择收货地区以确认运费。",
@@ -8849,7 +8852,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1345";
+var APP_VERSION       = "v1.1.1346";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -9415,6 +9418,7 @@ var salesShippingPrefectureCode = "";
 var salesShippingCarrierName = "";
 var salesShippingServiceName = "";
 var salesShippingPackageKeyValue = "";
+var salesShippingEstimateView = { amountHtml: "", detailsHtml: "" };
 var productShippingSizeRows = [];
 
 var FINISHED_LABEL_CATEGORIES = [
@@ -23979,6 +23983,16 @@ function bindSalesShippingDestinationGuide() {
       target.focus({ preventScroll: true });
     };
   }
+  var amount = document.getElementById("sales-shipping-charge-amount");
+  var details = document.getElementById("sales-shipping-charge-details");
+  if (amount) {
+    amount.innerHTML = available ? salesShippingEstimateView.amountHtml : "";
+    amount.hidden = !available || !salesShippingEstimateView.amountHtml;
+  }
+  if (details) {
+    details.innerHTML = available ? salesShippingEstimateView.detailsHtml : "";
+    details.hidden = !available || !salesShippingEstimateView.detailsHtml;
+  }
   if (prefecture) {
     prefecture.classList.toggle("needs-destination", pending);
     if (pending && guide) prefecture.setAttribute("aria-describedby", guide.id);
@@ -24014,6 +24028,7 @@ function bindSalesShippingEstimateActions() {
 }
 
 function renderSalesShippingEstimate(loadError) {
+  salesShippingEstimateView = { amountHtml: "", detailsHtml: "" };
   var host = document.getElementById("sales-shipping-estimate-wrap");
   if (!host) return;
   if (loadError) {
@@ -24072,17 +24087,17 @@ function renderSalesShippingEstimate(loadError) {
   } else {
     var note = shippingRateVisibleNote(selectedRate.note);
     var showIsland = !/ヤマト|yamato/i.test(salesShippingCarrierName);
-    html += "<div class='sales-shipping-result" + (showIsland ? "" : " no-island") + "'><span>" + esc(t("sales_shipping_rate")) + "</span><div>" + shippingFeeHtml(selectedRate.standard_fee_jpy, selectedRate.tax_type) + "</div></div>";
+    salesShippingEstimateView.amountHtml = shippingFeeHtml(selectedRate.standard_fee_jpy, selectedRate.tax_type);
     if (showIsland) {
       var hasIslandDetails = !!(selectedRate.remote_island_condition || note);
-      html += hasIslandDetails ? "<details class='sales-shipping-island'><summary>" : "<div class='sales-shipping-island'><span>";
-      html += "<b>" + esc(t("shipping_island_fee")) + ":</b> " + shippingFeeHtml(selectedRate.remote_island_fee_jpy, selectedRate.tax_type);
-      html += hasIslandDetails ? "</summary>" : "</span>";
-      if (selectedRate.remote_island_condition) html += "<span><b>" + esc(t("shipping_island_condition")) + ":</b> " + esc(selectedRate.remote_island_condition) + "</span>";
-      if (note) html += "<span><b>" + esc(t("shipping_note")) + ":</b> " + esc(note) + "</span>";
-      html += hasIslandDetails ? "</details>" : "</div>";
+      salesShippingEstimateView.detailsHtml += hasIslandDetails ? "<details class='sales-shipping-island'><summary>" : "<div class='sales-shipping-island'><span>";
+      salesShippingEstimateView.detailsHtml += "<b>" + esc(t("shipping_island_fee")) + ":</b> " + shippingFeeHtml(selectedRate.remote_island_fee_jpy, selectedRate.tax_type);
+      salesShippingEstimateView.detailsHtml += hasIslandDetails ? "</summary>" : "</span>";
+      if (selectedRate.remote_island_condition) salesShippingEstimateView.detailsHtml += "<span><b>" + esc(t("shipping_island_condition")) + ":</b> " + esc(selectedRate.remote_island_condition) + "</span>";
+      if (note) salesShippingEstimateView.detailsHtml += "<span><b>" + esc(t("shipping_note")) + ":</b> " + esc(note) + "</span>";
+      salesShippingEstimateView.detailsHtml += hasIslandDetails ? "</details>" : "</div>";
     } else if (note) {
-      html += "<details class='sales-shipping-method'><summary>" + esc(t("shipping_note")) + "</summary><div class='sales-shipping-message'>" + esc(note) + "</div></details>";
+      salesShippingEstimateView.detailsHtml += "<details class='sales-shipping-method'><summary>" + esc(t("shipping_note")) + "</summary><div class='sales-shipping-message'>" + esc(note) + "</div></details>";
     }
   }
   host.innerHTML = html;
@@ -24099,6 +24114,7 @@ async function loadSalesShippingEstimateForCurrent(seq) {
     return;
   }
   updateSalesShippingEstimateVisibility();
+  salesShippingEstimateView = { amountHtml: "", detailsHtml: "" };
   host.innerHTML = "<div class='sales-detail-empty'>" + esc(t("loading")) + "</div>";
   bindSalesShippingDestinationGuide();
   var dkdId = parseInt(productDkdId(currentProduct), 10);
@@ -53404,13 +53420,14 @@ async function fetchDetailCustomerDisplaySettings(customer) {
 function detailCustomerShippingRuleHtml(displaySettings) {
   var loaded = !!displaySettings;
   var rule = loaded ? normalizeCustomerShippingChargeRule(displaySettings) : "loading";
-  var labelKey = rule === "free" ? "sales_shipping_charge_free" : (rule === "separate" ? "sales_shipping_charge_separate" : "sales_shipping_charge_loading");
+  var labelKey = rule === "free" ? "sales_shipping_charge_free" : (rule === "separate" ? "sales_shipping_charge_separate_short" : "sales_shipping_charge_loading");
   var noteKey = rule === "free" ? "sales_shipping_free_note" : (rule === "separate" ? "sales_shipping_separate_note" : "");
   var html = "<div class='detail-customer-shipping-rule " + esc(rule) + "'>";
-  html += "<span>" + esc(t("sales_shipping_charge_rule")) + "</span><strong>" + esc(t(labelKey)) + "</strong>";
+  html += "<span>" + esc(t("sales_shipping_charge_rule")) + "</span><div class='sales-shipping-charge-value'><strong title='" + esc(t(rule === "separate" ? "sales_shipping_charge_separate" : labelKey)) + "'>" + esc(t(labelKey)) + "</strong><span class='sales-shipping-charge-amount' id='sales-shipping-charge-amount' aria-live='polite' hidden></span></div>";
   if (rule === "separate") {
     html += "<button class='sales-shipping-destination-guide' id='sales-shipping-destination-guide' type='button' hidden><span>" + esc(t("sales_shipping_destination_guide")) + "</span><span class='sales-shipping-guide-arrow' aria-hidden='true'></span></button>";
   } else if (noteKey) html += "<small>" + esc(t(noteKey)) + "</small>";
+  html += "<div class='sales-shipping-charge-details' id='sales-shipping-charge-details' hidden></div>";
   return html + "</div>";
 }
 

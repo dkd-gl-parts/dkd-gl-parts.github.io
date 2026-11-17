@@ -284,8 +284,8 @@ if (!compatibleLoadSource.includes('document.getElementById("sales-basic-compati
   "grid-template-columns: var(--sales-condition-label-width) minmax(0, max-content) max-content",
   "font-variant-numeric: tabular-nums",
   ".detail-customer-price-focus:not(.empty) > strong",
-  ".detail-customer-shipping-rule.separate > strong",
-  ".detail-customer-shipping-rule.free > strong",
+  ".detail-customer-shipping-rule.separate .sales-shipping-charge-value > strong",
+  ".detail-customer-shipping-rule.free .sales-shipping-charge-value > strong",
   ".sales-detail-tab-panel[hidden]",
   ".sales-basic-compatible",
   "align-items: stretch",
@@ -307,7 +307,7 @@ const stockLayout = css.match(/#screen-search \.detail-customer-section \.produc
 if (!stockLayout || !stockLayout[1].includes("text-align: left")) {
   throw new Error("sales stock must start beside its label, not at the far edge");
 }
-const shippingLayout = css.match(/#screen-search \.sales-conditions-panel \.detail-customer-shipping-rule > strong\s*\{([^}]+)\}/);
+const shippingLayout = css.match(/#screen-search \.sales-conditions-panel \.detail-customer-shipping-rule \.sales-shipping-charge-value > strong\s*\{([^}]+)\}/);
 if (!shippingLayout || !shippingLayout[1].includes("justify-self: start")) {
   throw new Error("sales shipping condition must stay next to its label");
 }
