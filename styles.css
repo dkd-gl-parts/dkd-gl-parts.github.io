@@ -12013,3 +12013,32 @@ html[data-product-3d-paused] :is(
 @media (min-width: 1024px) and (max-width: 1200px) {
   #screen-search .detail-customer-section #product-kind-stock-wrap .product-kind-stock-row { grid-template-columns: minmax(0, 1fr); gap: 0; }
 }
+
+/* Use a consistent rhythm without moving the established field columns. */
+#screen-search .sales-conditions-panel .detail-customer-head { min-height: 38px; margin-bottom: 0; align-items: center; }
+#screen-search .detail-customer-section .product-kind-control { margin-top: 0; }
+#screen-search .detail-customer-section .detail-sales-kind-row { min-height: 38px; margin-bottom: 0; padding-top: 0; align-items: center; }
+#screen-search .sales-conditions-panel .detail-customer-price-focus,
+#screen-search .sales-conditions-panel .detail-customer-price-focus.empty { min-height: 38px; padding-top: 4px; padding-bottom: 4px; box-sizing: border-box; align-items: center; }
+#screen-search .detail-customer-section #product-kind-stock-wrap .product-kind-stock-row { min-height: 38px; }
+#screen-search .detail-customer-section #product-kind-stock-wrap .detail-sales-term-label { padding-top: 9px; padding-bottom: 9px; line-height: 20px; }
+#screen-search .detail-customer-section #product-kind-stock-wrap .product-kind-stock-row:not(.sales-product-shelf-row) .detail-sales-term-value { padding-top: 5px; padding-bottom: 5px; line-height: 28px; }
+#screen-search .detail-customer-section #product-kind-stock-wrap .sales-product-shelf-row .detail-sales-term-value { padding-top: 9px; padding-bottom: 9px; line-height: 20px; }
+#screen-search .sales-conditions-panel .detail-customer-shipping-rule { margin-top: 4px; }
+#sales-shipping-estimate-wrap > .sales-shipping-result.no-island { grid-column: 1 / -1; }
+@media (min-width: 1024px) and (max-height: 820px) {
+  #screen-search .sales-conditions-panel .detail-customer-head,
+  #screen-search .detail-customer-section .detail-sales-kind-row,
+  #screen-search .detail-customer-section #product-kind-stock-wrap .product-kind-stock-row { min-height: 32px; }
+  #screen-search .sales-conditions-panel .detail-customer-select { min-height: 32px; padding-top: 2px; padding-bottom: 2px; }
+  #screen-search .detail-customer-section .product-kind-select { min-height: 32px; }
+  #screen-search .sales-conditions-panel .detail-customer-price-focus,
+  #screen-search .sales-conditions-panel .detail-customer-price-focus.empty { min-height: 32px; padding-top: 2px; padding-bottom: 2px; }
+  #screen-search .detail-customer-section #product-kind-stock-wrap .detail-sales-term-label,
+  #screen-search .detail-customer-section #product-kind-stock-wrap .sales-product-shelf-row .detail-sales-term-value { padding-top: 6px; padding-bottom: 6px; }
+  #screen-search .detail-customer-section #product-kind-stock-wrap .product-kind-stock-row:not(.sales-product-shelf-row) .detail-sales-term-value { padding-top: 2px; padding-bottom: 2px; }
+}
+
+/* Keep translated footer captions on one line without narrowing stock/shelf values. */
+#screen-search .sales-conditions-panel .detail-customer-shipping-rule,
+#screen-search .sales-conditions-terms .core-return-policy-panel.vertical .core-return-policy-item { grid-template-columns: minmax(var(--sales-condition-label-width, 76px), max-content) minmax(0, 1fr); }

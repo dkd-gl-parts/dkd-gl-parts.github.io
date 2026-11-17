@@ -264,6 +264,31 @@ const namedRate = { ...estimateRates[0], package_size_label: "BOX", max_size_cm:
 assert.match(runEstimate({ shipping_package_size_label: "BOX", shipping_weight_kg: 5 }, [namedRate]).html, /sales_shipping_weight_over/);
 assert.ok(!estimateRender.includes("weightPackage"), "Missing sizes must never fall back to weight");
 
+// Yamato has no island-fee setting in the sales estimate. Other carriers retain theirs.
+for (const carrier of ["ヤマト運輸", "クロネコヤマト", "YAMATO"]) {
+  const rows = estimateRates.map(row => ({ ...row, carrier_name: carrier,
+    remote_island_fee_jpy: 350, remote_island_condition: "synthetic island condition" }));
+  const result = runEstimate({ shipping_size_cm: 60 }, rows, { carrier });
+  const doc = parseHTML("<main>" + result.html + "</main>").document;
+  assert.equal(doc.querySelectorAll(".sales-shipping-island").length, 0, carrier + " omits island settings");
+  assert.ok(doc.querySelector(".sales-shipping-result.no-island"), carrier + " uses the full fee row");
+  assert.match(result.html, /fee=600;tax=excluded/);
+  assert.ok(!result.html.includes("fee=350;"), carrier + " does not display an island fee");
+}
+const otherCarrierRows = estimateRates.map(row => ({ ...row, carrier_name: "佐川急便",
+  remote_island_fee_jpy: 350, remote_island_condition: "synthetic island condition", note: "synthetic carrier note" }));
+const otherCarrierResult = runEstimate({ shipping_size_cm: 60 }, otherCarrierRows, { carrier: "佐川急便" });
+const otherCarrierDoc = parseHTML("<main>" + otherCarrierResult.html + "</main>").document;
+assert.ok(otherCarrierDoc.querySelector(".sales-shipping-island"), "other carriers retain island settings");
+assert.match(otherCarrierResult.html, /fee=350;tax=excluded/);
+assert.match(otherCarrierResult.html, /synthetic island condition/);
+assert.match(otherCarrierResult.html, /synthetic carrier note/);
+const yamatoNotice = runEstimate({ shipping_size_cm: 60 }, estimateRates.map(row => ({ ...row,
+  carrier_name: "ヤマト運輸", note: "generic notice <strong>text</strong>" })), { carrier: "ヤマト運輸" });
+assert.ok(yamatoNotice.html.includes("generic notice &lt;strong&gt;text&lt;/strong&gt;"), "ordinary carrier notes remain escaped and readable");
+assert.ok(!yamatoNotice.html.includes("sales-shipping-island"));
+
+
 const panelRender = sourceBetween("function renderPanelStatic", "async function loadProductVariantsForCurrent");
 if (!panelRender.includes("loadSalesShippingEstimateForCurrent(detailSeq)")) {
   throw new Error("sales detail must load the shipping estimate with its secondary data");
