@@ -8852,7 +8852,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1348";
+var APP_VERSION       = "v1.1.1349";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -26713,7 +26713,7 @@ function renderProductionComponents(rows, kind) {
   if (!rows || !rows.length) {
     return "<div class='production-component-summary-empty'>" + esc(tf("production_component_summary_empty", { kind: productionImageKindLabel(kind) })) + "</div>";
   }
-  var html = "<table class='production-component-summary-table'><thead><tr><th>" + esc(t("production_component_part_number")) + "</th><th>" + esc(t("component_name")) + "</th><th>" + esc(t("component_quantity")) + "</th><th>" + esc(t("production_component_interchange_procurement")) + "</th><th>" + esc(t("component_replacement_rate")) + "</th><th>" + esc(t("component_manufacturing_memo")) + "</th></tr></thead><tbody>";
+  var html = "<table class='production-component-summary-table'><thead><tr><th>" + esc(t("production_component_part_number")) + "</th><th>" + esc(t("component_name")) + "</th><th>" + esc(t("component_quantity")) + "</th><th>" + esc(t("production_component_interchange_procurement")) + "</th><th>" + esc(t("component_replacement_rate")) + "</th></tr></thead><tbody>";
   rows.forEach(function(row) {
     var manufacturerMeta = [row.component_manufacturer, row.component_genuine_part_number ? (t("f_genuine_pn") + " " + row.component_genuine_part_number) : ""].filter(Boolean).join(" / ");
     var partName = row.component_name || row.component_part_name || "-";
@@ -26725,8 +26725,10 @@ function renderProductionComponents(rows, kind) {
       "<td class='production-component-summary-number'>" + esc(row.quantity || "-") + "</td>" +
       "<td class='production-component-summary-procurement'><strong>" + esc(procurement || "-") + "</strong></td>" +
       "<td class='production-component-summary-number'>" + esc(formatComponentRate(row.replacement_rate)) + "</td>" +
-      "<td class='production-component-summary-memo'>" + esc(memo || "-") + "</td>" +
     "</tr>";
+    if (memo) {
+      html += "<tr class='production-component-summary-memo-row'><td class='production-component-summary-memo' colspan='5'><span class='production-component-summary-memo-label'>" + esc(t("component_manufacturing_memo")) + ":</span> " + esc(memo) + "</td></tr>";
+    }
   });
   return html + "</tbody></table>";
 }
