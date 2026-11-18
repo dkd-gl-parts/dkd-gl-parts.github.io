@@ -26,7 +26,7 @@ function fixture() {
     formatDateTime: value => value || "-"
   };
   context.respond = () => ({ data: [], error: null });
-  context.sb = { from(table) { let columns; const query = { select(c) { columns = c; return query; }, order() { return query; }, in() { return query; }, limit() { return query; }, range() { return query; }, then(resolve, reject) { return Promise.resolve().then(() => context.respond(table, columns)).then(resolve, reject); } }; return query; } };
+  context.sb = { from(table) { let columns, bounds; const query = { select(c) { columns = c; return query; }, order() { return query; }, in() { return query; }, limit() { return query; }, range(start, end) { bounds = { start, end }; return query; }, then(resolve, reject) { return Promise.resolve().then(() => context.respond(table, columns, bounds)).then(resolve, reject); } }; return query; } };
   vm.createContext(context);
   vm.runInContext(functions.map(n => source.slice(n.start, n.end)).join("\n"), context);
   return { c: context, get };
@@ -98,6 +98,32 @@ async function main() {
     await c.loadCoreListMgmt(); assert.match(get("core-list-list").innerHTML, /network rejected/); checks++;
     assert.equal(c.coreListLoadingMore, false); checks++;
   }
+
+  {
+    const { c, get } = fixture();
+    const all = Array.from({length:1078}, (_,i)=>({id:i+1,dkd_shohin_id:i+1,target_quantity:1,priority:"normal",status:"collecting"}));
+    const ranges = [];
+    c.respond = (table, columns, range) => {
+      if (table !== "core_collection_list_items") return {data:[],error:null};
+      ranges.push(range); return {data:all.slice(range.start,range.end+1),error:null};
+    };
+    await c.loadCoreCollectionList();
+    assert.equal(c.coreCollectionRows.length,1078);checks++;
+    assert.equal(c.coreCollectionFilteredRows.length,1078);checks++;
+    assert.equal(ranges.length,3);checks++;
+    assert.ok(ranges.every(r=>r.end-r.start===499));checks++;
+    assert.match(get("core-list-count").innerHTML,/1078/);checks++;
+  }
+  {
+    const { c, get } = fixture(); const original=[{id:99,dkd_shohin_id:99}]; c.coreCollectionRows=original;
+    c.respond=(table, columns, range)=>table!=="core_collection_list_items"?{data:[],error:null}:range.start===0?{data:Array.from({length:500},(_,i)=>({id:i+1})),error:null}:{data:null,error:{message:"second page unavailable"}};
+    await c.loadCoreCollectionList();
+    assert.equal(c.coreManagementDataReady,false);checks++;
+    assert.equal(c.coreCollectionRows,original);checks++;
+    assert.equal(get("btn-export-core-collection").disabled,true);checks++;
+    assert.match(get("core-list-list").innerHTML,/second page unavailable/);checks++;
+  }
+
   console.log(`Core management workspace: ${checks} behavioral checks passed.`);
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

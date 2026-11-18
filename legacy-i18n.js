@@ -9024,3 +9024,6 @@ Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"取得済みの合計（保留�
 
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"上一页":"Prev","下一页":"Next"});
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"上一页":"上一页","下一页":"下一页"});
+
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"収集対象が多いため取得を中断しました。管理者へ連絡してください。":"Loading stopped because the collection list is too large. Contact an administrator."});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"収集対象が多いため取得を中断しました。管理者へ連絡してください。":"收集对象过多，已停止加载。请联系管理员。"});

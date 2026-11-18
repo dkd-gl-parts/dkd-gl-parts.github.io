@@ -31357,14 +31357,22 @@ async function loadCoreCollectionList() {
   var list = document.getElementById("core-list-list");
   if (list) list.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
   try {
-    var r = await sb.from("core_collection_list_items")
-      .select("*")
-      .order("sort_order", { ascending: true, nullsFirst: false })
-      .order("updated_at", { ascending: false })
-      .limit(2000);
-    if (requestSeq !== coreManagementLoadSeq || coreListMode !== "collection") return;
-    if (r.error) throw r.error;
-    coreCollectionRows = r.data || [];
+    var loadedRows = [];
+    for (var offset = 0; ; offset += 500) {
+      var r = await sb.from("core_collection_list_items")
+        .select("*")
+        .order("sort_order", { ascending: true, nullsFirst: false })
+        .order("updated_at", { ascending: false })
+        .order("id", { ascending: true })
+        .range(offset, offset + 499);
+      if (requestSeq !== coreManagementLoadSeq || coreListMode !== "collection") return;
+      if (r.error) throw r.error;
+      var batch = r.data || [];
+      loadedRows = loadedRows.concat(batch);
+      if (batch.length < 500) break;
+      if (loadedRows.length >= 50000) throw new Error("収集対象が多いため取得を中断しました。管理者へ連絡してください。");
+    }
+    coreCollectionRows = loadedRows;
     coreCollectionProductMap = {};
     coreCollectionStockMap = {};
     await Promise.all([
