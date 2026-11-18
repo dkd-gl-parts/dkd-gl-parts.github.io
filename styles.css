@@ -12201,6 +12201,14 @@ html[data-product-3d-paused] :is(
 .core-reference-text { min-height:100px; margin:6px 0; padding:10px; border:1px solid #d3deea; border-radius:5px; white-space:pre-wrap; overflow-wrap:anywhere; font-size:13px; line-height:1.6; color:#34445a; }
 .core-reference-pages { display:flex; align-items:center; justify-content:center; gap:14px; }
 
+.component-catalog-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 6px;
+}
 /* Verified child counts are part of the control so they fit in one cell. */
 .component-table-verified-catalog th.component-tree-col,
 .component-table-verified-catalog td.component-tree-col { width: 56px; }

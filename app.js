@@ -2782,6 +2782,8 @@ var TRANSLATIONS = {
     catalog_figure_retry: "カタログ図を再読み込み",
     catalog_figure_count: "{count}枚",
     component_child: "子構成",
+    component_catalog_previous_page: "前へ",
+    component_catalog_next_page: "次へ",
     component_child_loading: "子構成を読み込み中...",
     component_child_load_failed: "子構成の読み込みに失敗しました",
     component_catalog_load_failed: "カタログ構成部品を読み込めませんでした。商品を開き直してください。",
@@ -5690,6 +5692,8 @@ var TRANSLATIONS = {
     catalog_figure_retry: "Reload catalog diagrams",
     catalog_figure_count: "{count} image(s)",
     component_child: "Child",
+    component_catalog_previous_page: "Previous",
+    component_catalog_next_page: "Next",
     component_child_loading: "Loading child components...",
     component_child_load_failed: "Failed to load child components",
     component_catalog_load_failed: "Catalog components could not be loaded. Reopen the product to try again.",
@@ -8595,6 +8599,8 @@ var TRANSLATIONS = {
     catalog_figure_retry: "重新加载目录图",
     catalog_figure_count: "{count}张",
     component_child: "子构成",
+    component_catalog_previous_page: "上一页",
+    component_catalog_next_page: "下一页",
     component_child_loading: "正在读取子构成...",
     component_child_load_failed: "子构成读取失败",
     component_catalog_load_failed: "无法读取目录构成部件。请重新打开商品后重试。",
@@ -52047,9 +52053,22 @@ function renderAssemblyComponentRows() {
   function catalogCellLabel(label) {
     return catalogChildren.size ? " data-component-catalog-label='" + esc(t(label)) + "'" : "";
   }
+  var catalogRootRows = rows.filter(function(row) { return !catalogChildRows.has(row); });
+  var pageSize = 8;
+  var pageTotal = Math.ceil(catalogRootRows.length / pageSize);
+  var pageNumber = Math.max(0, Math.min(Number(wrap.dataset.catalogTreePage) || 0, pageTotal - 1));
+  var pageRows = catalogChildren.size ? catalogRootRows.slice(pageNumber * pageSize, (pageNumber + 1) * pageSize) : rows;
   var colspan = 11 + (hasActions ? 1 : 0);
   if (typeof refreshCoreValuationPanel === "function") refreshCoreValuationPanel(false);
-  var html = "<table class='component-table component-table-tree" + tableModeClass + "'>";
+  var html = "";
+  if (catalogChildren.size && pageTotal > 1) {
+    html += "<nav class='component-catalog-pager'><button type='button' class='btn-sm-edit' data-catalog-tree-page='previous'" +
+      (pageNumber === 0 ? " disabled" : "") + ">" + esc(t("component_catalog_previous_page")) + "</button>" +
+      "<span>" + (pageNumber + 1) + " / " + pageTotal + "</span>" +
+      "<button type='button' class='btn-sm-edit' data-catalog-tree-page='next'" +
+      (pageNumber + 1 === pageTotal ? " disabled" : "") + ">" + esc(t("component_catalog_next_page")) + "</button></nav>";
+  }
+  html += "<table class='component-table component-table-tree" + tableModeClass + "'>";
   html += "<tr><th class='component-tree-col'>" + t("component_child") + "</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th>";
   if (catalogMode) {
     html += "<th>" + t("component_position") + "</th><th class='component-cell-qty'>" + t("component_quantity") + "</th><th class='component-cell-money'>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th>";
@@ -52141,8 +52160,8 @@ function renderAssemblyComponentRows() {
     }
   }
 
-  rows.forEach(function(row, index) {
-    if (!catalogChildRows.has(row)) renderRow(row, { index: index });
+  pageRows.forEach(function(row, index) {
+    renderRow(row, { index: index });
   });
   html += "</table>";
   if (editingComponentUsageId) {
@@ -52191,6 +52210,17 @@ function renderAssemblyComponentRows() {
   });
   wrap.querySelectorAll("[data-component-alt-delete]").forEach(function(btn) {
     btn.addEventListener("click", function() { disableComponentAlternative(btn.dataset.componentAltDelete); });
+  });
+  wrap.querySelectorAll("[data-catalog-tree-page]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var direction = btn.dataset.catalogTreePage;
+      wrap.dataset.catalogTreePage = String(pageNumber + (direction === "next" ? 1 : -1));
+      componentExpandedChildMap = {};
+      renderAssemblyComponentRows();
+      var replacement = wrap.querySelector("[data-catalog-tree-page='" + direction + "']:not([disabled])") ||
+        wrap.querySelector("[data-catalog-tree-page]:not([disabled])");
+      if (replacement) replacement.focus({ preventScroll: true });
+    });
   });
   wrap.querySelectorAll("[data-catalog-child-toggle]").forEach(function(btn) {
     btn.addEventListener("click", function() {
@@ -52419,6 +52449,7 @@ async function fetchCatalogComponentRowsByDkd(dkdId, loadRequestId) {
 async function loadAssemblyComponentsForCurrent() {
   var wrap = document.getElementById("component-wrap");
   if (!wrap) return;
+  if (wrap.dataset) delete wrap.dataset.catalogTreePage;
   var componentLoadProduct = currentProduct;
   var loadRequestId = ++componentLoadRequestId;
   if (typeof refreshCoreValuationPanel === "function") refreshCoreValuationPanel(true);
