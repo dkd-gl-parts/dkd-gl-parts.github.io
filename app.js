@@ -31165,6 +31165,7 @@ function coreCollectionShortageQty(row) {
 var coreCollectionFormSaving = false;
 var coreCollectionFormSaveUnknown = false;
 var coreCollectionPageStart = 0;
+var coreCollectionPageHistory = [];
 var coreCollectionPageSize = 1;
 
 function setCoreCollectionFormTab(tab) {
@@ -31310,7 +31311,7 @@ function applyCoreCollectionFilters(options) {
   var filterCount = document.getElementById("core-workspace-filter-count");
   var activeCount = (category ? 1 : 0) + (state !== "all" ? 1 : 0) + (priority ? 1 : 0) + (vehicle ? 1 : 0);
   if (filterCount) filterCount.textContent = activeCount ? "(" + activeCount + ")" : "";
-  if (!options.preserveRenderLimit) { coreCollectionRenderLimit = CORE_COLLECTION_RENDER_PAGE_SIZE; coreCollectionPageStart = 0; }
+  if (!options.preserveRenderLimit) { coreCollectionRenderLimit = CORE_COLLECTION_RENDER_PAGE_SIZE; coreCollectionPageStart = 0; coreCollectionPageHistory = []; }
   assignCoreCollectionCategoryRanks();
   coreCollectionFilteredRows = coreCollectionRows.filter(function(row) {
     var product = coreCollectionProductMap[String(row.dkd_shohin_id)] || {};
@@ -61116,7 +61117,7 @@ document.getElementById("core-collection-search").addEventListener("keydown", fu
 document.getElementById("ccf-tab-product").addEventListener("click", function() { setCoreCollectionFormTab("product"); });
 document.getElementById("ccf-tab-main").addEventListener("click", function() { setCoreCollectionFormTab("main"); });
 document.getElementById("ccf-tab-notes").addEventListener("click", function() { setCoreCollectionFormTab("notes"); });
-document.getElementById("core-collection-previous").addEventListener("click", function() { coreCollectionPageStart = Math.max(0, coreCollectionPageStart - coreCollectionPageSize); renderCoreCollectionList(); });
+document.getElementById("core-collection-previous").addEventListener("click", function() { coreCollectionPageStart = coreCollectionPageHistory.length ? coreCollectionPageHistory.pop() : 0; renderCoreCollectionList(); });
 window.addEventListener("resize", function() { if (coreListMode === "collection" && document.getElementById("screen-core-list-mgmt").classList.contains("active")) renderCoreCollectionList(); });
 ["core-collection-category", "core-collection-state", "core-collection-priority", "core-collection-vehicle"].forEach(function(id) {
   document.getElementById(id).addEventListener("change", function(){ applyCoreCollectionFilters(); renderCoreCollectionList(); });
@@ -61125,6 +61126,7 @@ document.getElementById("btn-core-list-search").addEventListener("click", loadCo
 document.getElementById("core-list-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadCoreListMgmt(); });
 document.getElementById("core-list-load-more").addEventListener("click", function(){
   if (coreListMode === "collection") {
+    coreCollectionPageHistory.push(coreCollectionPageStart);
     coreCollectionPageStart += coreCollectionPageSize;
     renderCoreCollectionList();
     return;

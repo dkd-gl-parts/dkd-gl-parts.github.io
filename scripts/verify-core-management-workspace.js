@@ -20,7 +20,7 @@ function fixture() {
     setCspStyle: (el, k, v) => { el.style[k] = v; }, canManageProductionRecords: () => true, canUploadCoreImages: () => true, isPC: () => true,
     coreListMode: "collection", coreManagementLoadSeq: 0, coreManagementDataReady: false,
     coreCollectionRows: [], coreCollectionFilteredRows: [], coreCollectionProductMap: {}, coreCollectionStockMap: {}, coreCollectionRenderLimit: 50,
-    CORE_COLLECTION_VEHICLE_CLASSES: [["kei","軽四"],["passenger","乗用車"],["truck","トラック"],["van","商用バン"],["bus","バス"],["machine","建機・農機"],["other","その他"]], coreCollectionPageStart: 0, coreCollectionPageSize: 1,
+    CORE_COLLECTION_VEHICLE_CLASSES: [["kei","軽四"],["passenger","乗用車"],["truck","トラック"],["van","商用バン"],["bus","バス"],["machine","建機・農機"],["other","その他"]], coreCollectionPageStart: 0, coreCollectionPageSize: 1, coreCollectionPageHistory: [],
     CORE_COLLECTION_RENDER_PAGE_SIZE: 50, CORE_COLLECTION_CATEGORY_ORDER: ["starter", "alternator", "ac_compressor", "distributor", "other"], CORE_PRODUCT_FAST_SELECT: "*",
     coreListMgmtRows: [], coreListProductMap: {}, coreListRawOffset: 0, coreListHasMore: true, coreListLoadingMore: false, coreListCurrentSearchKey: "", CORE_LIST_PAGE_SIZE: 50, CORE_LIST_SEARCH_SCAN_CHUNKS: 5,
     formatDateTime: value => value || "-"
