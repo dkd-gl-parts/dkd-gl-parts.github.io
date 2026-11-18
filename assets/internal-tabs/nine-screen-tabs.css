@@ -10,9 +10,12 @@
 .dcats-nine-tab.is-active::before { box-shadow: 3px 0 0 0 #fff; }
 .dcats-nine-tab.is-active::after { box-shadow: -3px 0 0 0 #fff; }
 .dcats-nine-tab button { min-height: 28px; border: 0; padding: 4px 10px; background: transparent; color: inherit; font: inherit; font-size: 13px; line-height: 20px; cursor: pointer; }
-.dcats-nine-tab [role="tab"] { min-width: 0; flex: 1 1 auto; max-width: 224px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+.dcats-nine-tab [role="tab"] { display: flex; align-items: center; gap: 5px; min-width: 0; flex: 1 1 auto; max-width: 224px; white-space: nowrap; text-align: left; }
+.dcats-nine-tab-icon { flex: 0 0 16px; width: 16px; font-size: 14px; line-height: 20px; text-align: center; }
+.dcats-nine-tab-icon .icon-image { width: 14px; height: 14px; }
+.dcats-nine-tab-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dcats-nine-tab [aria-selected="true"] { font-weight: 700; }
-.dcats-nine-tab .dcats-nine-tab-close { flex: 0 0 28px; width: 28px; padding: 4px; border-radius: 50%; font-size: 18px; line-height: 1; }
+.dcats-nine-tab .dcats-nine-tab-close { display: flex; align-items: center; justify-content: center; flex: 0 0 28px; width: 28px; height: 28px; padding: 0; border-radius: 50%; font-size: 18px; line-height: 1; }
 .dcats-nine-tab-close:hover { background: #d2ddec; }
 .dcats-nine-tab button:focus-visible { outline: 3px solid #e58b16; outline-offset: -3px; }
 .dcats-nine-tabs-hint, .dcats-nine-tabs-notice { margin: 0; padding: 5px 2px 9px; font-size: 13px; overflow-wrap: anywhere; }
