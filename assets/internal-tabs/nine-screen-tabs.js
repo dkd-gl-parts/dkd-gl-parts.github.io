@@ -204,6 +204,15 @@
     pageNext.setAttribute("aria-label", text("次のタブを表示", "Show next tabs", "显示下一组标签"));
     pageCount.textContent = (page.start + 1 === page.end + 1 ? String(page.start + 1) : (page.start + 1) + "–" + (page.end + 1)) + "/" + tabs.length;
   }
+  function appendMenuIcon(button, id) {
+    var menu = root.document.getElementById("menu-grid");
+    var item = menu && Array.from(menu.querySelectorAll("[data-action]")).find(function (node) { return node.dataset.action === id; });
+    var source = item && item.querySelector(".menu-icon, .menu-admin-link-icon");
+    if (!source) return;
+    var icon = element("span", "dcats-nine-tab-icon", button);
+    icon.setAttribute("aria-hidden", "true");
+    Array.from(source.childNodes).forEach(function (node) { icon.appendChild(node.cloneNode(true)); });
+  }
   function render() {
     if (!bar) return;
     var screen = context && context.screen();
@@ -218,9 +227,10 @@
       var selected = screen !== "menu" && screen !== PROPERTIES_SCREEN && active === id, group = root.document.createElement("div"); group.className = "dcats-nine-tab"; group.classList.toggle("is-active", selected);
       var button = root.document.createElement("button"); button.type = "button"; button.dataset.feature = id; button.id = "dcats-nine-tab-" + id;
       button.setAttribute("role", "tab"); button.setAttribute("aria-selected", String(selected)); button.setAttribute("aria-controls", "screen-" + id); button.tabIndex = active === id || !active && tabs[0] === id ? 0 : -1;
-      button.textContent = label(id); button.title = button.textContent; button.addEventListener("click", function () { activate(id); });
+      var name = label(id); appendMenuIcon(button, id); element("span", "dcats-nine-tab-label", button, name);
+      button.title = name; button.addEventListener("click", function () { activate(id); });
       var remove = root.document.createElement("button"); remove.type = "button"; remove.className = "dcats-nine-tab-close"; remove.dataset.closeFeature = id; remove.textContent = "×";
-      remove.setAttribute("aria-label", button.textContent + text("を閉じる", ": close", "：关闭")); remove.addEventListener("click", function () { close(id); });
+      remove.setAttribute("aria-label", name + text("を閉じる", ": close", "：关闭")); remove.addEventListener("click", function () { close(id); });
       group.append(button, remove); list.appendChild(group);
     });
     revealSelected();
