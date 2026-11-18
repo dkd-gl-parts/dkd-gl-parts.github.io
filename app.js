@@ -31107,6 +31107,10 @@ function resetCoreCollectionControls() {
 
 async function setCoreListMode(mode) {
   coreListMode = mode === "inventory" ? "inventory" : "collection";
+  ["core-collection-previous", "core-collection-page-status"].forEach(function(id) {
+    var element = document.getElementById(id);
+    if (element) element.classList.toggle("hidden", coreListMode !== "collection");
+  });
   var collectionBtn = document.getElementById("btn-core-list-mode-collection");
   var inventoryBtn = document.getElementById("btn-core-list-mode-inventory");
   var collectionToolbar = document.getElementById("core-list-collection-toolbar");
@@ -31169,7 +31173,7 @@ function setCoreCollectionFormTab(tab) {
     var panel = document.getElementById("ccf-panel-" + name);
     var button = document.getElementById("ccf-tab-" + name);
     if (panel) panel.classList.toggle("hidden", !active);
-    if (button) { button.classList.toggle("active", active); button.setAttribute("aria-selected", String(active)); }
+    if (button) { button.classList.toggle("active", active); button.setAttribute("aria-selected", String(active)); button.tabIndex = active ? 0 : -1; }
   });
 }
 
@@ -31193,9 +31197,9 @@ function fitCoreCollectionPage() {
   var next = document.getElementById("core-list-load-more");
   var wrap = document.getElementById("core-list-load-more-wrap");
   var status = document.getElementById("core-collection-page-status");
-  if (previous) { previous.classList.remove("hidden"); previous.disabled = coreCollectionPageStart <= 0; }
-  if (next) { next.disabled = coreCollectionPageStart + count >= coreCollectionFilteredRows.length; next.textContent = "次へ"; }
-  if (status) status.textContent = (coreCollectionPageStart + 1) + "–" + (coreCollectionPageStart + count) + " / " + coreCollectionFilteredRows.length + "件";
+  if (previous) { previous.classList.remove("hidden"); previous.disabled = coreCollectionPageStart <= 0; previous.textContent = coreCollectionUiLabel("前へ", "Prev", "上一页"); }
+  if (next) { next.disabled = coreCollectionPageStart + count >= coreCollectionFilteredRows.length; next.textContent = coreCollectionUiLabel("次へ", "Next", "下一页"); }
+  if (status) status.textContent = (coreCollectionPageStart + 1) + "–" + (coreCollectionPageStart + count) + " / " + coreCollectionFilteredRows.length;
   if (wrap) setCspStyle(wrap, "display", "flex");
 }
 
@@ -31452,20 +31456,22 @@ function renderCoreCollectionList() {
     { label: coreCollectionUiLabel("目標数", "Target", "目标"), value: totalTarget, unit: "台" },
     { label: coreCollectionUiLabel("現在庫", "Stock", "库存"), value: totalStock, unit: "台", tone: "stock" },
     { label: coreCollectionUiLabel("不足数", "Short", "缺口"), value: totalShortage, unit: "台", tone: totalShortage > 0 ? "shortage" : "" }
-  ], "絞り込み結果の合計（保留・完了を含む）", null, coreCollectionFilteredRows.length);
+  ], "取得済みの合計（保留・完了を含む）", null, coreCollectionFilteredRows.length);
   if (!coreCollectionRows.length) {
     list.innerHTML = "<div class='empty'>収集対象はまだ登録されていません。<br>「収集対象を追加」または「製造ランキングから追加」で、買い集めるコアを登録してください。</div>";
     updateCoreCollectionLoadMoreButton();
     fitCoreCollectionPage();
+    if (typeof requestAnimationFrame === "function") requestAnimationFrame(fitCoreCollectionPage);
     return;
   }
   if (!coreCollectionFilteredRows.length) {
     list.innerHTML = "<div class='empty'>条件に該当する収集対象はありません。</div>";
     updateCoreCollectionLoadMoreButton();
     fitCoreCollectionPage();
+    if (typeof requestAnimationFrame === "function") requestAnimationFrame(fitCoreCollectionPage);
     return;
   }
-  if (!isPC() || window.innerWidth < 1000) {
+  if (!isPC() || window.innerWidth < 1101) {
     var mobileHtml = "<div class='core-collection-mobile-cards'>";
     visibleRows.forEach(function(row) {
       var product = coreCollectionProductMap[String(row.dkd_shohin_id)] || {};
@@ -31484,6 +31490,7 @@ function renderCoreCollectionList() {
     bindCoreCollectionActions();
     updateCoreCollectionLoadMoreButton();
     fitCoreCollectionPage();
+    if (typeof requestAnimationFrame === "function") requestAnimationFrame(fitCoreCollectionPage);
     return;
   }
   var html = "<table class='mgmt-table core-collection-table' aria-label='収集リスト'><tr><th scope='col'>カテゴリ内順位<br>優先度</th><th scope='col'>対象品番</th><th>車両区分・メーカー</th><th>現在庫</th><th>目標</th><th>不足</th><th scope='col'>収集状態・メモ</th><th>操作</th></tr>";
@@ -31499,7 +31506,7 @@ function renderCoreCollectionList() {
     html += "<td>" + renderCoreCollectionStockBadge(row) + (stock.parts && stock.parts.length ? "<div class='mgmt-sub'>" + esc(stock.parts.join(" / ")) + "</div>" : "") + "</td>";
     html += "<td><span class='core-qty-pill target'>" + esc(String(row.target_quantity || 0)) + "</span></td>";
     html += "<td><span class='core-shortage-value " + (shortage > 0 ? "needed" : "enough") + "'>" + esc(String(shortage)) + "</span></td>";
-    html += "<td><span class='core-status-badge " + esc(row.status) + "'>" + esc(coreCollectionStatusLabel(row.status)) + "</span><details class='core-row-details'><summary>追加元・メモ</summary><div class='core-note'>" + esc(coreCollectionSourceDetail(row)) + "</div><div class='mgmt-sub'>" + esc(row.note || "-") + "</div></details></td>";
+    html += "<td><span class='core-status-badge " + esc(row.status) + "'>" + esc(coreCollectionStatusLabel(row.status)) + "</span><div><button class='btn-sm-edit' data-core-collection-view='" + row.id + "'>詳細</button></div></td>";
     html += "<td><div class='mgmt-actions'><button class='btn-sm-edit' data-core-collection-edit='" + row.id + "'>編集</button><button class='btn-sm-edit production-action-secondary' data-core-collection-complete='" + row.id + "'>" + (row.status === "completed" ? "再開" : "完了") + "</button><button class='btn-sm-del' data-core-collection-delete='" + row.id + "'>削除</button></div></td>";
     html += "</tr>";
   });
@@ -31507,6 +31514,7 @@ function renderCoreCollectionList() {
   bindCoreCollectionActions();
   updateCoreCollectionLoadMoreButton();
   fitCoreCollectionPage();
+  if (typeof requestAnimationFrame === "function") requestAnimationFrame(fitCoreCollectionPage);
 }
 
 function bindCoreCollectionActions() {
@@ -31555,6 +31563,8 @@ function openCoreCollectionForm(mode, rowId) {
   setProductionRankingFormValue("ccf-status", row ? row.status : "collecting");
   setProductionRankingFormValue("ccf-source-hint", row && row.source_hint);
   setProductionRankingFormValue("ccf-note", row && row.note);
+  var stockInfo = row ? coreCollectionStockMap[String(row.dkd_shohin_id)] || {} : {};
+  document.getElementById("ccf-reference-details").value = row ? coreCollectionSourceDetail(row) + (stockInfo.parts && stockInfo.parts.length ? "\n" + stockInfo.parts.join(" / ") : "") + (stockInfo.locations && stockInfo.locations.length ? "\n" + stockInfo.locations.join(" / ") : "") : "";
   setCoreCollectionVehicleForm(row);
   document.getElementById("ccf-tab-product").classList.toggle("hidden", mode !== "add");
   setCoreCollectionFormTab(mode === "add" ? "product" : "main");
@@ -31562,7 +31572,7 @@ function openCoreCollectionForm(mode, rowId) {
   var overlay = document.getElementById("core-collection-form-overlay");
   overlay.querySelectorAll("input, select, textarea").forEach(function(input) { input.disabled = mode === "view"; });
   document.getElementById("btn-core-collection-form-save").classList.toggle("hidden", mode === "view");
-  document.getElementById("core-collection-form-error").textContent = "";
+  document.getElementById("core-collection-form-error").textContent = coreCollectionFormSaveUnknown ? "保存結果を確認できません。再送せず、画面を再読み込みして登録内容を確認してください。" : "";
   var candidates = document.getElementById("ccf-product-candidates");
   candidates.innerHTML = "";
   setCspStyle(candidates, "display", "none");
@@ -61086,6 +61096,15 @@ document.getElementById("btn-create-core-list-from-ranking").addEventListener("c
 document.getElementById("btn-export-core-collection").addEventListener("click", exportCoreCollectionCsv);
 document.getElementById("btn-core-collection-search").addEventListener("click", searchCoreCollectionWorkspace);
 document.getElementById("core-collection-search").addEventListener("keydown", function(e){ if(e.key === "Enter") searchCoreCollectionWorkspace(); });
+["product", "main", "notes"].forEach(function(name) {
+  document.getElementById("ccf-tab-" + name).addEventListener("keydown", function(event) {
+    if (["ArrowLeft", "ArrowRight", "Home", "End"].indexOf(event.key) < 0) return;
+    var names = ["product", "main", "notes"].filter(function(value) { return !document.getElementById("ccf-tab-" + value).classList.contains("hidden"); });
+    var index = names.indexOf(name);
+    var next = event.key === "Home" ? 0 : (event.key === "End" ? names.length - 1 : (index + (event.key === "ArrowLeft" ? names.length - 1 : 1)) % names.length);
+    event.preventDefault(); setCoreCollectionFormTab(names[next]); document.getElementById("ccf-tab-" + names[next]).focus();
+  });
+});
 document.getElementById("ccf-tab-product").addEventListener("click", function() { setCoreCollectionFormTab("product"); });
 document.getElementById("ccf-tab-main").addEventListener("click", function() { setCoreCollectionFormTab("main"); });
 document.getElementById("ccf-tab-notes").addEventListener("click", function() { setCoreCollectionFormTab("notes"); });

@@ -9012,3 +9012,15 @@ Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"絞り込み結果の合計（�
 
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"商品選択":"Product"});
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"商品選択":"选择商品"});
+
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"収集対象の編集":"Edit collection item"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"収集対象の編集":"编辑收集对象"});
+
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"品号":"Part","目标":"Target","库存":"Stock","缺口":"Shortage","编辑":"Edit","恢复":"Resume","完成":"Done"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"品号":"品号","目标":"目标","库存":"库存","缺口":"缺口","编辑":"编辑","恢复":"恢复","完成":"完成"});
+
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"取得済みの合計（保留・完了を含む）":"Loaded / filtered totals (all statuses)","追加元・在庫の参照情報":"Source / stock reference"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"取得済みの合計（保留・完了を含む）":"已加载筛选合计（包含暂停・完成）","追加元・在庫の参照情報":"来源・库存参考信息"});
+
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"上一页":"Prev","下一页":"Next"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"上一页":"上一页","下一页":"下一页"});
