@@ -8967,3 +8967,48 @@ Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {
   "AI専用 / 商品削除以外を利用できます。": "仅限AI / 允许除删除商品之外的所有操作。",
   "業務点検はAI専用です。商品削除のみ禁止され、通常のユーザー権限画面では変更できません。": "业务检查仅供AI使用。仅禁止删除商品，无法在普通用户权限界面中更改此配置。"
 });
+
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {
+  "車両区分（複数選択可）": "Vehicle classes (multiple allowed)",
+  "すべての車両区分": "All vehicle classes",
+  "未分類": "Unclassified",
+  "建機・農機": "Construction / farm machines",
+  "商用バン": "Commercial van",
+  "軽四": "Kei vehicle",
+  "乗用車": "Passenger car",
+  "トラック": "Truck",
+  "バス": "Bus",
+  "基本・車両区分": "Basics / vehicle classes",
+  "状態・メモ": "Status / notes",
+  "登録・出力": "Add / export",
+  "収集対象の詳細": "Collection item details",
+  "絞り込み結果の合計（保留・完了を含む）": "Filtered totals (including paused/completed)",
+  "軽四は軽トラ・軽バンを含む。他区分は軽四以外。共用は複数、未確認は未選択。": "Kei includes kei trucks/vans. Other classes exclude kei. Select all confirmed classes; leave unconfirmed items unchecked.",
+  "保存結果を確認できません。再送せず、画面を再読み込みして登録内容を確認してください。": "Save result is unknown. Do not resubmit. Reload the page to verify the saved record."
+});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {
+  "車両区分（複数選択可）": "车辆类别（可多选）",
+  "すべての車両区分": "所有车辆类别",
+  "未分類": "未分类",
+  "建機・農機": "工程机械・农机",
+  "商用バン": "商用厢式车",
+  "軽四": "轻型车",
+  "乗用車": "乘用车",
+  "トラック": "卡车",
+  "バス": "巴士",
+  "基本・車両区分": "基本・车辆类别",
+  "状態・メモ": "状态・备注",
+  "登録・出力": "添加・导出",
+  "収集対象の詳細": "收集对象详情",
+  "絞り込み結果の合計（保留・完了を含む）": "筛选合计（包含暂停・完成）",
+  "軽四は軽トラ・軽バンを含む。他区分は軽四以外。共用は複数、未確認は未選択。": "轻型车包含轻型卡车和厢式车。其他类别不含轻型车。共用请选择多个，未确认请不选。",
+  "保存結果を確認できません。再送せず、画面を再読み込みして登録内容を確認してください。": "无法确认保存结果。请勿再次提交，请刷新页面确认已保存内容。"
+});
+
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"車両区分":"Vehicle class", "車両区分・メーカー":"Vehicle class / maker", "建機・農機":"Machines"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"車両区分":"车辆类别", "車両区分・メーカー":"车辆类别・制造商"});
+
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"絞り込み結果の合計（保留・完了を含む）":"Filtered total (all statuses)","基本・車両区分":"Vehicle / qty","状態・メモ":"Status / notes","車両区分（複数選択可）":"Vehicle classes (multi)","軽四は軽トラ・軽バンを含む。他区分は軽四以外。共用は複数、未確認は未選択。":"Kei includes kei trucks/vans. Other types exclude kei. Select multiple for shared fitment; leave unknown types unchecked."});
+
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"商品選択":"Product"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"商品選択":"选择商品"});
