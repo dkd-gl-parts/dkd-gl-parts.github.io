@@ -207,7 +207,7 @@ const { parseHTML } = require("linkedom");
 const packageHelpers = sourceBetween("function shippingPackageKey", "async function fetchAllShippingRateRows");
 const estimateHelpers = sourceBetween("function salesShippingUniqueValues", "async function loadSalesShippingEstimateForCurrent");
 const runEstimate = new Function("parseHTML", `
-  var document = parseHTML("<main id='qa-shipping-left'><button id='sales-shipping-destination-guide' hidden>Choose destination</button><span id='sales-shipping-charge-amount' hidden></span><div id='sales-shipping-charge-details' hidden></div></main><section id='sales-shipping-estimate-section'><div id='sales-shipping-estimate-wrap'></div></section>").document;
+  var document = parseHTML("<main id='qa-shipping-left'><button id='sales-shipping-destination-guide' hidden>Choose destination</button><div class='sales-shipping-charge-value'><strong id='qa-shipping-badge'>Separate</strong><span id='sales-shipping-charge-amount' hidden></span></div><div id='sales-shipping-charge-details' hidden></div></main><section id='sales-shipping-estimate-section'><div id='sales-shipping-estimate-wrap'></div></section>").document;
   var salesShippingRateRows, salesShippingProfile, salesShippingPrefectureCode, salesShippingCarrierName, salesShippingServiceName, salesShippingPackageKeyValue;
   var detailCustomerShippingChargeRule = "separate";
   var salesShippingEstimateView = { amountHtml: "", detailsHtml: "" };
@@ -242,6 +242,7 @@ const runEstimate = new Function("parseHTML", `
     if (guide && !guide.hidden) guide.click();
     return { html: document.getElementById("qa-shipping-left").innerHTML + document.getElementById("sales-shipping-estimate-wrap").innerHTML,
       leftHtml: document.getElementById("qa-shipping-left").innerHTML,
+      badgeHidden: document.getElementById("qa-shipping-badge").hidden,
       rightHtml: document.getElementById("sales-shipping-estimate-wrap").innerHTML,
       package: salesShippingPackageKeyValue, service: salesShippingServiceName,
       visible: salesShippingEstimateShouldShow(), guideHidden: guide.hidden, focused: focused, scrolled: scrolled,
@@ -298,6 +299,8 @@ assert.equal(destinationChosen.guideHidden, false, "the left guide remains avail
 assert.equal(destinationChosen.focused, true, "the retained guide still focuses the destination for changing it");
 assert.equal(destinationChosen.scrolled, true);
 assert.equal(destinationChosen.highlighted, false);
+assert.equal(destinationChosen.badgeHidden, true, "a selected quote shows the amount without the separate-charge badge");
+assert.equal(destinationPending.badgeHidden, false, "keep the charge condition while no quote is available");
 assert.equal(destinationChosen.describedBy, null);
 assert.equal(runEstimate({ shipping_size_cm: 60 }, estimateRates, { noDestination: true, free: true }).guideHidden, true);
 assert.equal(runEstimate({ shipping_size_cm: 60 }, [], { noDestination: true }).guideHidden, true);
@@ -318,6 +321,7 @@ const renderCustomer = new Function("parseHTML", "helpers", `
   return function(customer, settings) { return parseHTML("<main>" + renderDetailCustomerInfoHtml(customer, null, true, settings) + "</main>").document; };
 `)(parseHTML, customerRenderHelpers);
 const noCustomerRule = renderCustomer(null);
+assert.equal(noCustomerRule.querySelector(".detail-customer-shipping-rule > span").textContent, "sales_shipping_rate");
 assert.ok(noCustomerRule.querySelector(".detail-customer-shipping-rule.separate"), "default separate-shipping rule remains on the left with no customer selected");
 assert.equal(noCustomerRule.querySelectorAll("#sales-shipping-destination-guide").length, 1);
 const freeCustomerRule = renderCustomer({ id: 1 }, { shipping_charge_rule: "free" });
@@ -328,6 +332,7 @@ assert.equal(freeCustomerRule.querySelector("#sales-shipping-destination-guide")
 // The selected quote stays in the left charge rule through customer-panel replacement.
 const leftQuote = runEstimate({ shipping_size_cm: 60 }, estimateRates, { replaceLeft: true });
 assert.match(leftQuote.leftHtml, /fee=600;tax=excluded/);
+assert.equal(leftQuote.badgeHidden, true, "customer DOM replacement keeps the selected row compact");
 assert.ok(!leftQuote.rightHtml.includes("fee="));
 assert.ok(!runEstimate({ shipping_size_cm: 60 }, estimateRates, { noDestination: true }).leftHtml.includes("fee="));
 assert.ok(!runEstimate({ shipping_size_cm: 60 }, estimateRates, { free: true }).leftHtml.includes("fee="));

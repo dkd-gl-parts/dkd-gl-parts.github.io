@@ -8852,7 +8852,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1346";
+var APP_VERSION       = "v1.1.1347";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -23988,6 +23988,8 @@ function bindSalesShippingDestinationGuide() {
   if (amount) {
     amount.innerHTML = available ? salesShippingEstimateView.amountHtml : "";
     amount.hidden = !available || !salesShippingEstimateView.amountHtml;
+    var badge = amount.parentElement && amount.parentElement.querySelector("strong");
+    if (badge) badge.hidden = !amount.hidden;
   }
   if (details) {
     details.innerHTML = available ? salesShippingEstimateView.detailsHtml : "";
@@ -53423,7 +53425,7 @@ function detailCustomerShippingRuleHtml(displaySettings) {
   var labelKey = rule === "free" ? "sales_shipping_charge_free" : (rule === "separate" ? "sales_shipping_charge_separate_short" : "sales_shipping_charge_loading");
   var noteKey = rule === "free" ? "sales_shipping_free_note" : (rule === "separate" ? "sales_shipping_separate_note" : "");
   var html = "<div class='detail-customer-shipping-rule " + esc(rule) + "'>";
-  html += "<span>" + esc(t("sales_shipping_charge_rule")) + "</span><div class='sales-shipping-charge-value'><strong title='" + esc(t(rule === "separate" ? "sales_shipping_charge_separate" : labelKey)) + "'>" + esc(t(labelKey)) + "</strong><span class='sales-shipping-charge-amount' id='sales-shipping-charge-amount' aria-live='polite' hidden></span></div>";
+  html += "<span>" + esc(t("sales_shipping_rate")) + "</span><div class='sales-shipping-charge-value'><strong title='" + esc(t(rule === "separate" ? "sales_shipping_charge_separate" : labelKey)) + "'>" + esc(t(labelKey)) + "</strong><span class='sales-shipping-charge-amount' id='sales-shipping-charge-amount' aria-live='polite' hidden></span></div>";
   if (rule === "separate") {
     html += "<button class='sales-shipping-destination-guide' id='sales-shipping-destination-guide' type='button' hidden><span>" + esc(t("sales_shipping_destination_guide")) + "</span><span class='sales-shipping-guide-arrow' aria-hidden='true'></span></button>";
   } else if (noteKey) html += "<small>" + esc(t(noteKey)) + "</small>";
