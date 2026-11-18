@@ -2782,6 +2782,8 @@ var TRANSLATIONS = {
     catalog_figure_retry: "カタログ図を再読み込み",
     catalog_figure_count: "{count}枚",
     component_child: "子構成",
+    component_catalog_previous_page: "前へ",
+    component_catalog_next_page: "次へ",
     component_child_loading: "子構成を読み込み中...",
     component_child_load_failed: "子構成の読み込みに失敗しました",
     component_catalog_load_failed: "カタログ構成部品を読み込めませんでした。商品を開き直してください。",
@@ -5690,6 +5692,8 @@ var TRANSLATIONS = {
     catalog_figure_retry: "Reload catalog diagrams",
     catalog_figure_count: "{count} image(s)",
     component_child: "Child",
+    component_catalog_previous_page: "Previous",
+    component_catalog_next_page: "Next",
     component_child_loading: "Loading child components...",
     component_child_load_failed: "Failed to load child components",
     component_catalog_load_failed: "Catalog components could not be loaded. Reopen the product to try again.",
@@ -8595,6 +8599,8 @@ var TRANSLATIONS = {
     catalog_figure_retry: "重新加载目录图",
     catalog_figure_count: "{count}张",
     component_child: "子构成",
+    component_catalog_previous_page: "上一页",
+    component_catalog_next_page: "下一页",
     component_child_loading: "正在读取子构成...",
     component_child_load_failed: "子构成读取失败",
     component_catalog_load_failed: "无法读取目录构成部件。请重新打开商品后重试。",
@@ -8852,7 +8858,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1351";
+var APP_VERSION       = "v1.1.1352";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -47897,12 +47903,86 @@ function componentRowChildCount(row) {
   return parseInt(row && row.child_catalog_component_count || 0, 10) || 0;
 }
 
+// DENSO Vol.71 ES0525: the original drawing explicitly brackets 2, 3, 5 and 14.
+function verifiedCatalogComponentChildren(rows, product) {
+  var children = new Map();
+  if (!product || product.manufacturer !== "DENSO" || rows.length !== 40) return children;
+  var genuineByPart = {
+    "1022115961": "3140058J10", "1022115962": "3140058J11", "1022115963": "3140058J12"
+  };
+  var genuine = genuineByPart[normalizedPartKey(product.manufacturer_part_number)];
+  if (!genuine || normalizedPartKey(product.genuine_part_number) !== genuine) return children;
+
+  // Check the exact source rows and their conditions before using the drawing.
+  var reviewedRows = [
+    "002|121400-2320|31580-75F00||1101|",
+    "002|121400-7730||1101|1112|B",
+    "002|121400-8110||1201||B",
+    "0021|949043-2000|31587-82110|||",
+    "0022|949100-6090|31582-60G13||1101|",
+    "0022|949100-7880|31582-86L00|1201|1303|D",
+    "0022|949100-7920||1101|1112|B",
+    "0022|949100-8880|31582-86L01|1304||B",
+    "0023|021411-0450|31585-82111|||",
+    "0024|949006-6970|02112-04163|||",
+    "0025|021401-8251|||1112|",
+    "0025|121401-3960||1201||D",
+    "0026|021100-4830||||",
+    "0027|021045-0530||||",
+    "003|021501-9731|||1112|",
+    "003|121501-5570||1201||D",
+    "0031|021542-0220|31615-60G10|||",
+    "005|021620-2870|31656-60G10|||",
+    "0051|021660-0510||||",
+    "0052|949170-6990|31635-82610|||",
+    "0053|021626-0320||||",
+    "014|021200-7410|31710-75F00|||",
+    "0141|949100-3630|31612-06B00|||",
+    "0142|021506-0070|31613-82610|||"
+  ];
+  var positionsByParent = {
+    "002": ["0021", "0022", "0023", "0024", "0025", "0026", "0027"],
+    "003": ["0031"],
+    "005": ["0051", "0052", "0053"],
+    "014": ["0141", "0142"]
+  };
+  var reviewed = new Set(reviewedRows);
+  var positions = new Set(reviewedRows.map(function(key) { return key.split("|")[0]; }));
+  var matched = rows.filter(function(row) { return positions.has(row.component_position); });
+  if (matched.length !== reviewed.size) return children;
+
+  for (var row of matched) {
+    if (row.source_code !== "catalog_denso" || row.catalog_match_basis !== "catalog_exact_pair" ||
+        row.component_manufacturer !== "DENSO") return children;
+    var key = [row.component_position, row.component_manufacturer_part_number, row.component_genuine_part_number,
+      row.effective_start, row.effective_end, row.component_interchange_code].join("|");
+    if (!reviewed.delete(key)) return children;
+  }
+
+  for (var parent of matched) {
+    var childPositions = positionsByParent[parent.component_position];
+    if (!childPositions) continue;
+    var directChildren = matched.filter(function(child) {
+      if (!childPositions.includes(child.component_position)) return false;
+      // At 1101 the two revisions meet. Give the bearing to the frame whose
+      // interval it overlaps beyond that boundary, without mixing revisions.
+      if (parent.effective_start && child.effective_end && parent.effective_start >= child.effective_end) return false;
+      if (child.effective_start && parent.effective_end && child.effective_start >= parent.effective_end) return false;
+      return true;
+    });
+    if (directChildren.length) children.set(parent, directChildren);
+  }
+  return children;
+}
+
 function componentHasChildRows(row) {
+  if (selectedProductKind() === "catalog_spec") return false;
   return !!(row && !componentIsCurrentProductSelfReference(row) && (row.has_child_catalog_components || componentRowChildCount(row) > 0));
 }
 
 async function hydrateComponentChildCounts(rows) {
   rows = Array.isArray(rows) ? rows : [];
+  if (selectedProductKind() === "catalog_spec") return rows;
   var targets = rows.filter(function(row) {
     return row && !componentIsCurrentProductSelfReference(row) && !componentHasChildRows(row) && row.component_manufacturer_part_number;
   });
@@ -51963,10 +52043,32 @@ function renderAssemblyComponentRows() {
   }
   var hasActions = canManageComponentsInCurrentContext();
   var catalogMode = selectedProductKind() === "catalog_spec";
+  var catalogChildren = catalogMode ? verifiedCatalogComponentChildren(rows, currentProduct) : new Map();
+  var catalogChildRows = new Set();
+  catalogChildren.forEach(function(children) {
+    children.forEach(function(child) { catalogChildRows.add(child); });
+  });
   var tableModeClass = catalogMode ? " component-table-catalog" : " component-table-manual";
+  if (catalogChildren.size) tableModeClass += " component-table-verified-catalog";
+  function catalogCellLabel(label) {
+    return catalogChildren.size ? " data-component-catalog-label='" + esc(t(label)) + "'" : "";
+  }
+  var catalogRootRows = rows.filter(function(row) { return !catalogChildRows.has(row); });
+  var pageSize = 8;
+  var pageTotal = Math.ceil(catalogRootRows.length / pageSize);
+  var pageNumber = Math.max(0, Math.min(Number(wrap.dataset.catalogTreePage) || 0, pageTotal - 1));
+  var pageRows = catalogChildren.size ? catalogRootRows.slice(pageNumber * pageSize, (pageNumber + 1) * pageSize) : rows;
   var colspan = 11 + (hasActions ? 1 : 0);
   if (typeof refreshCoreValuationPanel === "function") refreshCoreValuationPanel(false);
-  var html = "<table class='component-table component-table-tree" + tableModeClass + "'>";
+  var html = "";
+  if (catalogChildren.size && pageTotal > 1) {
+    html += "<nav class='component-catalog-pager'><button type='button' class='btn-sm-edit' data-catalog-tree-page='previous'" +
+      (pageNumber === 0 ? " disabled" : "") + ">" + esc(t("component_catalog_previous_page")) + "</button>" +
+      "<span>" + (pageNumber + 1) + " / " + pageTotal + "</span>" +
+      "<button type='button' class='btn-sm-edit' data-catalog-tree-page='next'" +
+      (pageNumber + 1 === pageTotal ? " disabled" : "") + ">" + esc(t("component_catalog_next_page")) + "</button></nav>";
+  }
+  html += "<table class='component-table component-table-tree" + tableModeClass + "'>";
   html += "<tr><th class='component-tree-col'>" + t("component_child") + "</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th>";
   if (catalogMode) {
     html += "<th>" + t("component_position") + "</th><th class='component-cell-qty'>" + t("component_quantity") + "</th><th class='component-cell-money'>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th>";
@@ -51981,8 +52083,22 @@ function renderAssemblyComponentRows() {
     options = options || {};
     var catalogLocked = isCatalogComponentRow(row);
     var editing = canManageComponentsInCurrentContext() && !catalogLocked && String(editingComponentUsageId) === String(row.id);
-    html += "<tr" + (options.child ? " class='component-child-row'" : "") + (editing ? " data-component-edit-row='" + esc(String(row.id)) + "'" : "") + ">";
-    html += "<td class='component-tree-col'>" + (options.child ? "<span class='component-child-indent'></span>" : componentChildToggleHtml(row)) + "</td>";
+    var rowClass = (options.child ? "component-child-row " : "") + (catalogChildren.size ? "component-verified-catalog-row" : "");
+    html += "<tr" + (rowClass ? " class='" + rowClass.trim() + "'" : "") + (editing ? " data-component-edit-row='" + esc(String(row.id)) + "'" : "") + ">";
+    var verifiedChildren = catalogChildren.get(row);
+    var catalogKey = "catalog:" + options.index;
+    var catalogExpanded = !!componentExpandedChildMap[catalogKey];
+    var toggle = "";
+    if (options.child) {
+      toggle = "<span class='component-child-indent'></span>";
+    } else if (verifiedChildren) {
+      toggle = "<button class='component-tree-toggle' type='button' data-catalog-child-toggle='" + catalogKey +
+        "' aria-expanded='" + catalogExpanded + "' aria-label='" + esc(t("component_child") + " " + row.component_manufacturer_part_number) + "'>" +
+        (catalogExpanded ? "− " : "+ ") + "<span class='component-catalog-child-count'>" + verifiedChildren.length + "</span></button>";
+    } else if (!catalogMode) {
+      toggle = componentChildToggleHtml(row);
+    }
+    html += "<td class='component-tree-col'>" + toggle + "</td>";
     if (editing) {
       html += "<td>" + componentEditInput(row, "component_manufacturer_part_number", row.component_manufacturer_part_number) + "<div class='component-sub'>" + componentEditInput(row, "component_manufacturer", row.component_manufacturer || "") + "</div></td>";
       html += "<td>" + componentEditInput(row, "component_genuine_part_number", row.component_genuine_part_number || "") + "</td>";
@@ -51996,16 +52112,16 @@ function renderAssemblyComponentRows() {
       html += "<td>" + componentAlternativeCountHtml(row) + "</td>";
       html += "<td class='component-action-col'><div class='component-edit-actions'><button class='btn-sm-edit' data-component-save='" + esc(String(row.id)) + "'>" + t("component_save") + "</button><button class='btn-sm-edit production-action-secondary' data-component-cancel='1'>" + t("component_cancel") + "</button><button class='btn-sm-edit production-action-secondary' data-component-delete='" + esc(String(row.id)) + "'>" + t("component_delete") + "</button></div></td>";
     } else {
-      html += "<td><div class='component-pn'>" + esc(row.component_manufacturer_part_number || "-") + "</div><div class='component-sub'>" + esc(row.component_manufacturer || "") + "</div></td>";
-      html += "<td><div class='component-pn'>" + esc(row.component_genuine_part_number || "-") + "</div></td>";
-      html += "<td>" + componentRowNameHtml(row) + "</td>";
+      html += "<td" + catalogCellLabel("f_mfr_pn") + "><div class='component-pn'>" + esc(row.component_manufacturer_part_number || "-") + "</div><div class='component-sub'>" + esc(row.component_manufacturer || "") + "</div></td>";
+      html += "<td" + catalogCellLabel("f_genuine_pn") + "><div class='component-pn'>" + esc(row.component_genuine_part_number || "-") + "</div></td>";
+      html += "<td" + catalogCellLabel("component_name") + ">" + componentRowNameHtml(row) + "</td>";
       if (catalogMode) {
-        html += "<td>" + esc(row.component_position || row.source_code || "-") + "</td>";
-        html += "<td class='component-cell-qty'>" + esc(row.quantity || "-") + "</td>";
-        html += "<td class='component-cell-money'>" + esc(formatComponentYen(row.unit_price_jpy)) + "</td>";
-        html += "<td>" + esc(formatComponentInterchange(row)) + "</td>";
-        html += "<td>" + esc(row.effective_start || row.start_period || "-") + "</td>";
-        html += "<td>" + esc(row.effective_end || row.end_period || "-") + "</td>";
+        html += "<td" + catalogCellLabel("component_position") + ">" + esc(row.component_position || row.source_code || "-") + "</td>";
+        html += "<td class='component-cell-qty'" + catalogCellLabel("component_quantity") + ">" + esc(row.quantity || "-") + "</td>";
+        html += "<td class='component-cell-money'" + catalogCellLabel("component_unit_price") + ">" + esc(formatComponentYen(row.unit_price_jpy)) + "</td>";
+        html += "<td" + catalogCellLabel("component_interchange") + ">" + esc(formatComponentInterchange(row)) + "</td>";
+        html += "<td" + catalogCellLabel("component_start_period") + ">" + esc(row.effective_start || row.start_period || "-") + "</td>";
+        html += "<td" + catalogCellLabel("component_end_period") + ">" + esc(row.effective_end || row.end_period || "-") + "</td>";
       } else {
         html += "<td class='component-cell-qty'>" + esc(row.quantity || "-") + "</td>";
         html += "<td class='component-cell-money'>" + esc(formatComponentYen(row.unit_price_jpy)) + "</td>";
@@ -52014,7 +52130,7 @@ function renderAssemblyComponentRows() {
         html += "<td class='component-cell-rate'>" + esc(formatComponentRate(row.replacement_rate)) + "</td>";
         html += "<td>" + esc(row.manufacturing_memo || "-") + "</td>";
       }
-      html += "<td>" + componentAlternativeCountHtml(row) + "</td>";
+      html += "<td" + catalogCellLabel("component_alternative_title") + ">" + componentAlternativeCountHtml(row) + "</td>";
       if (hasActions) {
         html += "<td class='component-action-col'><div class='component-edit-actions'>";
         html += catalogLocked ? "<span class='component-sub'>" + t("component_catalog") + "</span>" : "<button class='btn-sm-edit' data-component-edit='" + esc(String(row.id)) + "'>" + t("component_edit") + "</button>";
@@ -52024,7 +52140,10 @@ function renderAssemblyComponentRows() {
     }
     html += "</tr>";
     html += renderComponentAlternatives(row, colspan);
-    if (!options.child && componentExpandedChildMap[componentTreeKey(row)]) {
+    if (!options.child && verifiedChildren && catalogExpanded) {
+      verifiedChildren.forEach(function(child) { renderRow(child, { child: true }); });
+    }
+    if (!catalogMode && !options.child && componentExpandedChildMap[componentTreeKey(row)]) {
       var childRows = componentChildRowsMap[componentTreeKey(row)] || [];
       if (componentChildLoadingMap[componentTreeKey(row)]) {
         html += "<tr class='component-child-loading'><td></td><td colspan='" + String(colspan - 1) + "'>" + esc(t("component_child_loading")) + "</td></tr>";
@@ -52041,8 +52160,8 @@ function renderAssemblyComponentRows() {
     }
   }
 
-  rows.forEach(function(row) {
-    renderRow(row);
+  pageRows.forEach(function(row, index) {
+    renderRow(row, { index: index });
   });
   html += "</table>";
   if (editingComponentUsageId) {
@@ -52091,6 +52210,28 @@ function renderAssemblyComponentRows() {
   });
   wrap.querySelectorAll("[data-component-alt-delete]").forEach(function(btn) {
     btn.addEventListener("click", function() { disableComponentAlternative(btn.dataset.componentAltDelete); });
+  });
+  wrap.querySelectorAll("[data-catalog-tree-page]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var direction = btn.dataset.catalogTreePage;
+      wrap.dataset.catalogTreePage = String(pageNumber + (direction === "next" ? 1 : -1));
+      componentExpandedChildMap = {};
+      renderAssemblyComponentRows();
+      var replacement = wrap.querySelector("[data-catalog-tree-page='" + direction + "']:not([disabled])") ||
+        wrap.querySelector("[data-catalog-tree-page]:not([disabled])");
+      if (replacement) replacement.focus({ preventScroll: true });
+    });
+  });
+  wrap.querySelectorAll("[data-catalog-child-toggle]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var key = btn.dataset.catalogChildToggle;
+      var wasExpanded = componentExpandedChildMap[key];
+      componentExpandedChildMap = {};
+      if (!wasExpanded) componentExpandedChildMap[key] = true;
+      renderAssemblyComponentRows();
+      var replacement = wrap.querySelector("[data-catalog-child-toggle='" + key + "']");
+      if (replacement) replacement.focus({ preventScroll: true });
+    });
   });
   wrap.querySelectorAll("[data-component-child-toggle]").forEach(function(btn) {
     btn.addEventListener("click", function() { toggleComponentChildRows(btn.dataset.componentChildToggle); });
@@ -52308,6 +52449,7 @@ async function fetchCatalogComponentRowsByDkd(dkdId, loadRequestId) {
 async function loadAssemblyComponentsForCurrent() {
   var wrap = document.getElementById("component-wrap");
   if (!wrap) return;
+  if (wrap.dataset) delete wrap.dataset.catalogTreePage;
   var componentLoadProduct = currentProduct;
   var loadRequestId = ++componentLoadRequestId;
   if (typeof refreshCoreValuationPanel === "function") refreshCoreValuationPanel(true);
