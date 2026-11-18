@@ -31162,6 +31162,32 @@ function coreCollectionShortageQty(row) {
   return Math.max(target - coreCollectionStockQty(row), 0);
 }
 
+var coreCollectionReferenceText = "";
+var coreCollectionReferencePage = 0;
+
+function coreCollectionReferencePages() {
+  var pages = [], part = "", breaks = 0;
+  Array.from(coreCollectionReferenceText).forEach(function(char) {
+    if (part.length >= 120 || (char === "\n" && breaks >= 3)) { pages.push(part); part = ""; breaks = 0; }
+    part += char;
+    if (char === "\n") breaks += 1;
+  });
+  if (part || !pages.length) pages.push(part);
+  return pages;
+}
+
+function renderCoreCollectionReference() {
+  var pages = coreCollectionReferencePages();
+  coreCollectionReferencePage = Math.max(0, Math.min(coreCollectionReferencePage, pages.length - 1));
+  document.getElementById("ccf-reference-details").textContent = pages[coreCollectionReferencePage] || "-";
+  document.getElementById("ccf-reference-status").textContent = (coreCollectionReferencePage + 1) + " / " + pages.length;
+  var previous = document.getElementById("ccf-reference-previous"), next = document.getElementById("ccf-reference-next");
+  previous.disabled = coreCollectionReferencePage <= 0;
+  next.disabled = coreCollectionReferencePage >= pages.length - 1;
+  previous.textContent = coreCollectionUiLabel("前へ", "Prev", "上一页");
+  next.textContent = coreCollectionUiLabel("次へ", "Next", "下一页");
+}
+
 var coreCollectionFormSaving = false;
 var coreCollectionFormSaveUnknown = false;
 var coreCollectionPageStart = 0;
@@ -31169,7 +31195,7 @@ var coreCollectionPageHistory = [];
 var coreCollectionPageSize = 1;
 
 function setCoreCollectionFormTab(tab) {
-  ["product", "main", "notes"].forEach(function(name) {
+  ["product", "main", "notes", "reference"].forEach(function(name) {
     var active = name === tab;
     var panel = document.getElementById("ccf-panel-" + name);
     var button = document.getElementById("ccf-tab-" + name);
@@ -31573,9 +31599,11 @@ function openCoreCollectionForm(mode, rowId) {
   setProductionRankingFormValue("ccf-source-hint", row && row.source_hint);
   setProductionRankingFormValue("ccf-note", row && row.note);
   var stockInfo = row ? coreCollectionStockMap[String(row.dkd_shohin_id)] || {} : {};
-  document.getElementById("ccf-reference-details").value = row ? coreCollectionSourceDetail(row) + (stockInfo.parts && stockInfo.parts.length ? "\n" + stockInfo.parts.join(" / ") : "") + (stockInfo.locations && stockInfo.locations.length ? "\n" + stockInfo.locations.join(" / ") : "") : "";
+  coreCollectionReferenceText = row ? coreCollectionSourceDetail(row) + (stockInfo.parts && stockInfo.parts.length ? "\n" + stockInfo.parts.join(" / ") : "") + (stockInfo.locations && stockInfo.locations.length ? "\n" + stockInfo.locations.join(" / ") : "") : "";
+  coreCollectionReferencePage = 0; renderCoreCollectionReference();
   setCoreCollectionVehicleForm(row);
   document.getElementById("ccf-tab-product").classList.toggle("hidden", mode !== "add");
+  document.getElementById("ccf-tab-reference").classList.toggle("hidden", mode === "add");
   setCoreCollectionFormTab(mode === "add" ? "product" : "main");
   document.getElementById("core-collection-form-title").textContent = mode === "view" ? "収集対象の詳細" : (row ? "収集対象を編集" : "収集対象を追加");
   var overlay = document.getElementById("core-collection-form-overlay");
@@ -61105,10 +61133,10 @@ document.getElementById("btn-create-core-list-from-ranking").addEventListener("c
 document.getElementById("btn-export-core-collection").addEventListener("click", exportCoreCollectionCsv);
 document.getElementById("btn-core-collection-search").addEventListener("click", searchCoreCollectionWorkspace);
 document.getElementById("core-collection-search").addEventListener("keydown", function(e){ if(e.key === "Enter") searchCoreCollectionWorkspace(); });
-["product", "main", "notes"].forEach(function(name) {
+["product", "main", "notes", "reference"].forEach(function(name) {
   document.getElementById("ccf-tab-" + name).addEventListener("keydown", function(event) {
     if (["ArrowLeft", "ArrowRight", "Home", "End"].indexOf(event.key) < 0) return;
-    var names = ["product", "main", "notes"].filter(function(value) { return !document.getElementById("ccf-tab-" + value).classList.contains("hidden"); });
+    var names = ["product", "main", "notes", "reference"].filter(function(value) { return !document.getElementById("ccf-tab-" + value).classList.contains("hidden"); });
     var index = names.indexOf(name);
     var next = event.key === "Home" ? 0 : (event.key === "End" ? names.length - 1 : (index + (event.key === "ArrowLeft" ? names.length - 1 : 1)) % names.length);
     event.preventDefault(); setCoreCollectionFormTab(names[next]); document.getElementById("ccf-tab-" + names[next]).focus();
@@ -61116,6 +61144,9 @@ document.getElementById("core-collection-search").addEventListener("keydown", fu
 });
 document.getElementById("ccf-tab-product").addEventListener("click", function() { setCoreCollectionFormTab("product"); });
 document.getElementById("ccf-tab-main").addEventListener("click", function() { setCoreCollectionFormTab("main"); });
+document.getElementById("ccf-tab-reference").addEventListener("click", function() { setCoreCollectionFormTab("reference"); });
+document.getElementById("ccf-reference-previous").addEventListener("click", function() { coreCollectionReferencePage -= 1; renderCoreCollectionReference(); });
+document.getElementById("ccf-reference-next").addEventListener("click", function() { coreCollectionReferencePage += 1; renderCoreCollectionReference(); });
 document.getElementById("ccf-tab-notes").addEventListener("click", function() { setCoreCollectionFormTab("notes"); });
 document.getElementById("core-collection-previous").addEventListener("click", function() { coreCollectionPageStart = coreCollectionPageHistory.length ? coreCollectionPageHistory.pop() : 0; renderCoreCollectionList(); });
 window.addEventListener("resize", function() { if (coreListMode === "collection" && document.getElementById("screen-core-list-mgmt").classList.contains("active")) renderCoreCollectionList(); });

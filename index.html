@@ -3231,7 +3231,7 @@
 <div class="form-overlay" id="core-collection-form-overlay">
   <div class="form-card core-collection-form-card">
     <h3 id="core-collection-form-title">収集対象を追加</h3>
-    <div class="core-form-tabs" role="tablist" aria-label="収集対象の編集"><button class="hidden" id="ccf-tab-product" type="button" role="tab" aria-controls="ccf-panel-product" aria-selected="false">商品選択</button><button class="active" id="ccf-tab-main" type="button" role="tab" aria-controls="ccf-panel-main" aria-selected="true">基本・車両区分</button><button id="ccf-tab-notes" type="button" role="tab" aria-controls="ccf-panel-notes" aria-selected="false">状態・メモ</button></div>
+    <div class="core-form-tabs" role="tablist" aria-label="収集対象の編集"><button class="hidden" id="ccf-tab-product" type="button" role="tab" aria-controls="ccf-panel-product" aria-selected="false">商品選択</button><button class="active" id="ccf-tab-main" type="button" role="tab" aria-controls="ccf-panel-main" aria-selected="true">区分・数量</button><button id="ccf-tab-notes" type="button" role="tab" aria-controls="ccf-panel-notes" aria-selected="false">状態・メモ</button><button class="hidden" id="ccf-tab-reference" type="button" role="tab" aria-controls="ccf-panel-reference" aria-selected="false">参照</button></div>
     <div id="ccf-panel-product" class="hidden" role="tabpanel" aria-labelledby="ccf-tab-product">    <div class="form-row" id="ccf-product-search-row">
       <label class="form-label">品番マスタ検索 *</label>
       <input class="form-input" id="ccf-product-search" type="search" placeholder="純正品番・メーカー品番で検索">
@@ -3256,7 +3256,7 @@
         </select>
       </div>
     </div></div>
-    <div id="ccf-panel-notes" class="hidden" role="tabpanel" aria-labelledby="ccf-tab-notes"><div class="form-row"><label class="form-label" for="ccf-reference-details">追加元・在庫の参照情報</label><textarea class="form-input" id="ccf-reference-details" rows="2" readonly></textarea></div><div class="spec-form-grid">
+    <div id="ccf-panel-notes" class="hidden" role="tabpanel" aria-labelledby="ccf-tab-notes"><div class="spec-form-grid">
       <div class="form-row">
         <label class="form-label">状態 *</label>
         <select class="form-select" id="ccf-status">
@@ -3274,7 +3274,7 @@
       <label class="form-label">メモ</label>
       <textarea class="form-input" id="ccf-note" rows="3"></textarea>
     </div>
-    </div><div class="form-footer">
+    </div><div id="ccf-panel-reference" class="hidden" role="tabpanel" aria-labelledby="ccf-tab-reference"><div class="form-label">追加元・在庫の参照情報</div><div class="core-reference-text" id="ccf-reference-details"></div><div class="core-reference-pages" aria-label="参照情報のページ"><button class="btn-sm-edit" id="ccf-reference-previous" type="button">前へ</button><span id="ccf-reference-status" role="status"></span><button class="btn-sm-edit" id="ccf-reference-next" type="button">次へ</button></div></div><div class="form-footer">
       <button class="btn-cancel" id="btn-core-collection-form-cancel" type="button">キャンセル</button>
       <button class="btn-primary" id="btn-core-collection-form-save" type="button">保存</button>
     </div>
