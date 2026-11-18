@@ -332,6 +332,8 @@ jobs:
         run: node scripts/verify-manufacturing-ranking-performance.js
       - name: Verify manufacturing ranking supplier report
         run: node scripts/verify-manufacturing-ranking-suppliers.js
+      - name: Verify manufacturing ranking ACDK relinking
+        run: node scripts/verify-manufacturing-ranking-acdk.js
       - name: Verify manufacturing ranking vehicle filters
         run: node scripts/verify-manufacturing-ranking-vehicle-filters.js
       - name: Verify mobile label printer routing
