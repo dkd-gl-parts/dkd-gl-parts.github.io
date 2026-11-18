@@ -779,12 +779,31 @@
     return quantitiesByProductId;
   }
 
+  async function fetchAcdkReplacementProductIds(rows) {
+    var keys = uniqueIds(rows.filter(function(row) { return isAcdkPart(row.maker); }).reduce(function(values, row) {
+      return values.concat([row.genuine, row.genuine2].filter(function(value) {
+        return isLikelyPartNumber(value) && !isAcdkPart(value);
+      }).map(normalizeSearch));
+    }, []));
+    var ids = [];
+    // Only exact primary identities can replace an ACDK alias; body/clutch parts cannot.
+    for (var index = 0; index < 3; index++) {
+      var field = ["normalized_genuine_part_number", "normalized_genuine_part_number_2", "normalized_manufacturer_part_number"][index];
+      var products = await fetchRowsByValuesBatched("core_products", "dkd_shohin_id,manufacturer_part_number", field, keys, 25);
+      products.filter(function(product) { return !isAcdkPart(product.manufacturer_part_number); }).forEach(function(product) {
+        ids.push(String(product.dkd_shohin_id));
+      });
+    }
+    return uniqueIds(ids);
+  }
+
   async function fetchReportReferenceData(rows) {
     var cachedProductIds = [];
     rows.forEach(function(row) {
       (row.masterProductIds || []).forEach(function(productId) { cachedProductIds.push(productId); });
     });
-    var directProductIds = uniqueIds(cachedProductIds);
+    var replacementIds = await fetchAcdkReplacementProductIds(rows);
+    var directProductIds = uniqueIds(cachedProductIds.concat(replacementIds));
     var kikan = await fetchKikanMembership(directProductIds);
     var compatibleProductIds = [];
     Object.keys(kikan.membersByGroupId).forEach(function(groupId) {
@@ -1081,7 +1100,7 @@
     if (basis === "none") return [];
     var tokens = [];
     function add(prefix, value) {
-      if (isLikelyPartNumber(value)) tokens.push(prefix + normalizePart(value));
+      if (isLikelyPartNumber(value) && !isAcdkPart(value)) tokens.push(prefix + normalizePart(value));
     }
     if (basis === "maker" || basis === "maker_genuine") add("maker:", row.maker);
     if (basis === "genuine" || basis === "maker_genuine") {
@@ -1137,7 +1156,7 @@
   function rowSearchText(row) {
     return normalizeSearch([
       row.sheet, row.productName, row.productCode, row.genuine, row.genuine2,
-      row.maker, row.body, row.clutch, row.type
+      reportManufacturerPartNumber(row), row.body, row.clutch, row.type
     ].join(" "));
   }
 
@@ -1512,7 +1531,7 @@
   function rowPartNumberEntries(row) {
     return [
       { label: "純正", value: row.genuine },
-      { label: "メーカー", value: row.maker },
+      { label: "メーカー", value: isAcdkPart(row.maker) ? "" : row.maker },
       { label: "純正2", value: row.genuine2 },
       { label: "純正本体", value: row.body },
       { label: "純正クラッチ", value: row.clutch }
@@ -1522,16 +1541,47 @@
   function rowPrimaryPartNumberEntries(row) {
     return [
       { label: "純正", value: row.genuine },
-      { label: "メーカー", value: row.maker },
+      { label: "メーカー", value: isAcdkPart(row.maker) ? "" : row.maker },
       { label: "純正2", value: row.genuine2 }
     ];
   }
 
+  function isAcdkPart(value) {
+    return /^ACDK/.test(normalizeSearch(value));
+  }
+
+  function isAcCompressorRow(row) {
+    return isAcdkPart(row.maker) || normalizeHeader(row.sheet) === "AC" || /ACコンプレッサ|エアコンコンプレッサ/.test(normalizeHeader(row.productName));
+  }
+
+  function reportManufacturerPartNumber(row) {
+    if (!isAcdkPart(row.maker)) return row.maker;
+    var numbers = uniqueIds(masterProductsForRow(row).map(function(product) {
+      return normalizeText(product.manufacturer_part_number);
+    }).filter(function(value) { return isLikelyPartNumber(value) && !isAcdkPart(value); }));
+    var keys = uniqueIds(numbers.map(normalizeSearch));
+    return keys.length === 1 ? numbers[0] : "";
+  }
+
   function masterProductsForRow(row) {
+    if (isAcdkPart(row.maker)) {
+      var sourceKeys = [row.genuine, row.genuine2].filter(function(value) {
+        return isLikelyPartNumber(value) && !isAcdkPart(value);
+      }).map(normalizeSearch);
+      var resolved = Object.create(null);
+      sourceKeys.forEach(function(key) {
+        (state.masterProductsByPart[key] || []).forEach(function(product) {
+          if (isAcdkPart(product.manufacturer_part_number)) return;
+          var primaryValues = [product.genuine_part_number, product.genuine_part_number_2, product.manufacturer_part_number];
+          if (primaryValues.some(function(value) { return normalizeSearch(value) === key; })) resolved[product.id] = product;
+        });
+      });
+      return Object.keys(resolved).map(function(id) { return resolved[id]; });
+    }
     if (row.masterCacheReady) {
       return (row.masterProductIds || []).map(function(productId) {
         return state.masterProductsById[String(productId)];
-      }).filter(Boolean);
+      }).filter(function(product) { return product && (!isAcCompressorRow(row) || !isAcdkPart(product.manufacturer_part_number)); });
     }
     var seen = Object.create(null);
     var candidates = [];
@@ -1539,7 +1589,7 @@
       if (!isLikelyPartNumber(entry.value)) return;
       var matches = state.masterProductsByPart[normalizeSearch(entry.value)] || [];
       matches.forEach(function(product) {
-        if (seen[product.id]) return;
+        if (seen[product.id] || (isAcCompressorRow(row) && isAcdkPart(product.manufacturer_part_number))) return;
         seen[product.id] = true;
         candidates.push(product);
       });
@@ -1568,7 +1618,7 @@
       product.genuine_part_number,
       product.genuine_part_number_2
     ].filter(function(value, index, list) {
-      return isLikelyPartNumber(value) && list.indexOf(value) === index;
+      return isLikelyPartNumber(value) && !isAcdkPart(value) && list.indexOf(value) === index;
     });
     return values.slice(0, 2).join(" / ") || ("商品ID " + product.id);
   }
@@ -1591,7 +1641,7 @@
     });
     return Object.keys(compatibleIds).map(function(productId) {
       return state.masterProductsById[productId];
-    }).filter(Boolean).sort(function(left, right) {
+    }).filter(function(product) { return product && !isAcdkPart(product.manufacturer_part_number); }).sort(function(left, right) {
       return right.coreStockQty - left.coreStockQty ||
         masterProductPartNumber(left).localeCompare(masterProductPartNumber(right), "ja");
     });
@@ -1621,7 +1671,7 @@
         (state.kikanGroupIdsByProductId[product.id] || []).forEach(function(groupId) {
           (state.kikanMembersByGroupId[groupId] || []).forEach(function(productId) {
             var compatible = state.masterProductsById[String(productId)];
-            if (compatible) productsById[compatible.id] = compatible;
+            if (compatible && !isAcdkPart(compatible.manufacturer_part_number)) productsById[compatible.id] = compatible;
           });
         });
       });
@@ -1802,14 +1852,14 @@
       if (row.masterCacheReady) {
         (row.missingMasterParts || []).forEach(function(entry) {
           var key = normalizeSearch(entry.value);
-          if (!key || seen[key]) return;
+          if (!key || isAcdkPart(entry.value) || seen[key]) return;
           seen[key] = true;
           missing.push({ label: entry.label, value: entry.value });
         });
         return;
       }
       rowPartNumberEntries(row).forEach(function(entry) {
-        if (!isLikelyPartNumber(entry.value)) return;
+        if (!isLikelyPartNumber(entry.value) || isAcdkPart(entry.value)) return;
         var key = normalizeSearch(entry.value);
         if (!key || state.masterPartNumbers[key] || seen[key]) return;
         seen[key] = true;
@@ -1920,7 +1970,7 @@
             supplierHtml += "<td class='ranking-report-rank-cell' rowspan='" + rowSpan + "'>" + formatNumber(result.rank) + "</td>" +
               "<td rowspan='" + rowSpan + "'><strong>" + escapeHtml(row.productName || "-") + "</strong><small>商品CD " + escapeHtml(row.productCode || "-") + "</small>" + vehicleClassificationHtml(result, options) + "</td>" +
               "<td class='ranking-report-part-cell' rowspan='" + rowSpan + "'>" + escapeHtml(row.genuine || "-") + "</td>" +
-              "<td class='ranking-report-part-cell' rowspan='" + rowSpan + "'>" + escapeHtml(row.maker || "-") + "</td>" +
+              "<td class='ranking-report-part-cell' rowspan='" + rowSpan + "'>" + escapeHtml(reportManufacturerPartNumber(row) || "-") + "</td>" +
               "<td rowspan='" + rowSpan + "'>" + status + "</td>";
           }
           if (item) {
@@ -1951,7 +2001,7 @@
       html += "<tr><td class='ranking-report-rank-cell'>" + formatNumber(result.rank) + "</td>" +
         "<td><strong>" + escapeHtml(row.productName || "-") + "</strong><small>商品CD " + escapeHtml(row.productCode || "-") + "</small>" + vehicleClassificationHtml(result, options) + "</td>" +
         "<td class='ranking-report-part-cell'>" + escapeHtml(row.genuine || "-") + "</td>" +
-        "<td class='ranking-report-part-cell'>" + escapeHtml(row.maker || "-") + "</td>" +
+        "<td class='ranking-report-part-cell'>" + escapeHtml(reportManufacturerPartNumber(row) || "-") + "</td>" +
         "<td class='ranking-report-number-cell'>" + formatNumber(result.shipment) + "</td>";
       if (options.metric !== "shipment") html += "<td class='ranking-report-number-cell ranking-report-score-cell'>" + formatNumber(result.score) + "</td>";
       if (options.showCoreStock) html += "<td class='ranking-report-stock-cell'>" + buildPreviewCoreStock(result) + "</td>";
@@ -2019,7 +2069,7 @@
             row.productCode || "",
             row.genuine || "",
             row.genuine2 || "",
-            row.maker || "",
+            reportManufacturerPartNumber(row) || "",
             items.length ? "あり" : "なし",
             item ? supplierName(item.supplier_id) : "",
             item ? supplierItemManagementNumber(item) : "",
@@ -2048,7 +2098,7 @@
         row.productCode || "",
         row.genuine || "",
         row.genuine2 || "",
-        row.maker || "",
+        reportManufacturerPartNumber(row) || "",
         Number(result.shipment || 0),
         Number(result.substitute || 0),
         Number(result.score || 0)
@@ -2123,7 +2173,7 @@
             html += "<td class='rank' rowspan='" + supplierRowSpan + "'>" + formatNumber(result.rank) + "</td>" +
               "<td class='product' rowspan='" + supplierRowSpan + "'><b>" + escapeHtml(row.productName || "-") + "</b><small>商品CD " + escapeHtml(row.productCode || "-") + "</small>" + vehicleClassificationHtml(result, options) + "</td>" +
               "<td class='part genuine-part' rowspan='" + supplierRowSpan + "'>" + escapeHtml(row.genuine || "-") + "</td>" +
-              "<td class='part maker-part' rowspan='" + supplierRowSpan + "'>" + escapeHtml(row.maker || "-") + "</td>" +
+              "<td class='part maker-part' rowspan='" + supplierRowSpan + "'>" + escapeHtml(reportManufacturerPartNumber(row) || "-") + "</td>" +
               "<td class='supplier-status-cell' rowspan='" + supplierRowSpan + "'>" + supplierStatus + "</td>";
           }
           return html + (item
@@ -2136,7 +2186,7 @@
       var html = "<tr><td class='rank'>" + formatNumber(result.rank) + "</td>" +
         "<td class='product'><b>" + escapeHtml(row.productName || "-") + "</b><small>商品CD " + escapeHtml(row.productCode || "-") + "</small>" + vehicleClassificationHtml(result, options) + "</td>" +
         "<td class='part genuine-part'>" + escapeHtml(row.genuine || "-") + "</td>" +
-        "<td class='part maker-part'>" + escapeHtml(row.maker || "-") + "</td>" +
+        "<td class='part maker-part'>" + escapeHtml(reportManufacturerPartNumber(row) || "-") + "</td>" +
         "<td class='number shipment'>" + formatNumber(result.shipment) + "</td>";
       if (options.metric !== "shipment") html += "<td class='number score'>" + formatNumber(result.score) + "</td>";
       if (options.showCoreStock) html += "<td class='stock'>" + buildPrintCoreStock(result) + "</td>";
