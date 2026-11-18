@@ -12200,3 +12200,49 @@ html[data-product-3d-paused] :is(
 
 .core-reference-text { min-height:100px; margin:6px 0; padding:10px; border:1px solid #d3deea; border-radius:5px; white-space:pre-wrap; overflow-wrap:anywhere; font-size:13px; line-height:1.6; color:#34445a; }
 .core-reference-pages { display:flex; align-items:center; justify-content:center; gap:14px; }
+
+/* Verified child counts are part of the control so they fit in one cell. */
+.component-table-verified-catalog th.component-tree-col,
+.component-table-verified-catalog td.component-tree-col { width: 56px; }
+.component-table-verified-catalog [data-catalog-child-toggle] { padding: 0 5px; white-space: nowrap; }
+@media (max-width: 760px) {
+  #screen-components:has(.component-table-verified-catalog) .page-header-right {
+    flex-wrap: wrap;
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+  .component-table-verified-catalog,
+  .component-table-verified-catalog > tbody { display: block; }
+  .component-table-verified-catalog > tbody > tr:has(> th) { display: none; }
+  .component-table-verified-catalog > tbody > .component-verified-catalog-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-bottom: 1px solid #d7dce5;
+  }
+  .component-table-verified-catalog > tbody > .component-verified-catalog-row > td {
+    width: auto;
+    min-width: 0;
+    padding: 3px 5px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: left;
+    border-bottom: 0;
+  }
+  .component-table-verified-catalog .component-verified-catalog-row > td:nth-child(4) { grid-column: span 2; }
+  .component-table-verified-catalog .component-verified-catalog-row > .component-action-col {
+    position: static;
+    box-shadow: none;
+  }
+  .component-table-verified-catalog .component-pn { white-space: normal; }
+  .component-table-verified-catalog [data-component-catalog-label]::before {
+    content: attr(data-component-catalog-label);
+    display: block;
+    color: #5f6877;
+  }
+  .component-table-verified-catalog .component-verified-catalog-row > td:nth-child(n+4)::before {
+    display: inline;
+    margin-right: 4px;
+  }
+  .component-table-verified-catalog [data-catalog-child-toggle] { min-height: 34px; }
+}

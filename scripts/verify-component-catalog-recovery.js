@@ -250,3 +250,80 @@ async function verifyOverlappingAlternatives() {
   }
 }
 verifyRecovery().catch(error => { console.error(error); process.exitCode = 1; });
+
+function verifyCatalogChildRelationships() {
+  const sourceStart = source.indexOf("function verifiedCatalogComponentChildren");
+  const sourceEnd = source.indexOf("async function hydrateComponentChildCounts", sourceStart);
+  const context = {
+    normalizedPartKey: normalize,
+    selectedProductKind: () => "catalog_spec",
+    componentIsCurrentProductSelfReference: () => false,
+    componentRowChildCount: row => row.child_catalog_component_count || 0
+  };
+  vm.createContext(context);
+  vm.runInContext(source.slice(sourceStart, sourceEnd), context);
+  const catalog = [
+    ["002","121400-2320","31580-75F00","","1101"],
+    ["002","121400-7730","","1101","1112","B"],
+    ["002","121400-8110","","1201","","B"],
+    ["0021","949043-2000","31587-82110"],
+    ["0022","949100-6090","31582-60G13","","1101"],
+    ["0022","949100-7880","31582-86L00","1201","1303","D"],
+    ["0022","949100-7920","","1101","1112","B"],
+    ["0022","949100-8880","31582-86L01","1304","","B"],
+    ["0023","021411-0450","31585-82111"],
+    ["0024","949006-6970","02112-04163"],
+    ["0025","021401-8251","","","1112"],
+    ["0025","121401-3960","","1201","","D"],
+    ["0026","021100-4830"],
+    ["0027","021045-0530"],
+    ["003","021501-9731","","","1112"],
+    ["003","121501-5570","","1201","","D"],
+    ["0031","021542-0220","31615-60G10"],
+    ["005","021620-2870","31656-60G10"],
+    ["0051","021660-0510"],
+    ["0052","949170-6990","31635-82610"],
+    ["0053","021626-0320"],
+    ["014","021200-7410","31710-75F00"],
+    ["0141","949100-3630","31612-06B00"],
+    ["0142","021506-0070","31613-82610"],
+    ["000","102211-5961","31400-58J10","","1101"],
+    ["000","102211-5962","31400-58J11","1101","1112","B"],
+    ["000","102211-5963","31400-58J12","1201","","B"]
+  ].map(([position, part, genuinePart, start, end, interchange]) => ({
+    component_position: position, component_manufacturer_part_number: part,
+    component_genuine_part_number: genuinePart, effective_start: start, effective_end: end,
+    component_interchange_code: interchange, source_code: "catalog_denso",
+    component_manufacturer: "DENSO", catalog_match_basis: "catalog_exact_pair",
+    child_catalog_component_count: position === "000" ? 40 : 0
+  }));
+  for (let n = 0; catalog.length < 40; n++) catalog.push({ component_position: "099", id: n });
+
+  const product = { manufacturer: "DENSO", manufacturer_part_number: "102211-5961", genuine_part_number: "31400-58J10" };
+  const resolved = context.verifiedCatalogComponentChildren(catalog, product);
+  const childParts = (part, position) => Array.from(resolved.get(catalog.find(row => row.component_manufacturer_part_number === part)),
+    child => child).filter(child => child.component_position === position).map(child => child.component_manufacturer_part_number);
+  assert.equal(resolved.size, 7);
+  assert.deepEqual(childParts("121400-2320", "0022"), ["949100-6090"]);
+  assert.deepEqual(childParts("121400-7730", "0022"), ["949100-7920"]);
+  assert.deepEqual(childParts("121400-8110", "0022"), ["949100-7880", "949100-8880"]);
+  assert.deepEqual(childParts("021620-2870", "0051"), ["021660-0510"]);
+  assert.equal(resolved.get(catalog[17]).length, 3);
+  assert.equal(resolved.get(catalog[21]).length, 2);
+  for (const header of catalog.filter(row => row.component_position === "000")) {
+    assert.equal(resolved.has(header), false);
+    assert.equal(context.componentHasChildRows(header), false);
+  }
+  assert.equal(context.verifiedCatalogComponentChildren(catalog, { ...product, genuine_part_number: "31400-OTHER" }).size, 0);
+  assert.equal(context.verifiedCatalogComponentChildren(catalog, { ...product, manufacturer: "OTHER" }).size, 0);
+  assert.equal(context.verifiedCatalogComponentChildren(catalog.slice(1), product).size, 0);
+  assert.equal(context.verifiedCatalogComponentChildren([catalog[1], ...catalog.slice(1)], product).size, 0);
+  assert.equal(context.verifiedCatalogComponentChildren([{ ...catalog[0], effective_end: "1102" }, ...catalog.slice(1)], product).size, 0);
+  assert.equal(context.verifiedCatalogComponentChildren([{ ...catalog[0], source_code: "unknown" }, ...catalog.slice(1)], product).size, 0);
+  assert.equal(context.verifiedCatalogComponentChildren([{ ...catalog[0], catalog_match_basis: "catalog_manufacturer_part_only" }, ...catalog.slice(1)], product).size, 0);
+  context.selectedProductKind = () => "rebuilt";
+  assert.equal(context.componentHasChildRows(catalog[24]), true);
+  console.log("catalog source relationships and legacy count isolation passed");
+}
+
+verifyCatalogChildRelationships();
