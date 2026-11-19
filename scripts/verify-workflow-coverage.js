@@ -181,6 +181,10 @@ const expectedAuxiliaryWorkflows = new Map([
           "run": "npm install --prefix \"$RUNNER_TEMP/device-browser\" --no-save --ignore-scripts --no-audit --no-fund playwright-core@1.56.1\ncommand -v google-chrome"
         },
         {
+          "name": "Install the exact Japanese font for screenshots",
+          "run": "device_font_path=\"$HOME/.local/share/fonts/NotoSansJP-Regular.otf\"\nmkdir -p \"$(dirname \"$device_font_path\")\"\ncurl --fail --silent --show-error --max-time 30 --output \"$device_font_path\" 'https://raw.githubusercontent.com/notofonts/noto-cjk/523d033d6cb47f4a80c58a35753646f5c3608a78/Sans/SubsetOTF/JP/NotoSansJP-Regular.otf'\nprintf '%s  %s\\n' 'dff723ba59d57d136764a04b9b2d03205544f7cd785a711442d6d2d085ac5073' \"$device_font_path\" | sha256sum --check --strict\nfc-cache -f \"$HOME/.local/share/fonts\""
+        },
+        {
           "name": "Check temporary access in Chrome",
           "env": {
             "DEVICE_PLAYWRIGHT_MODULE": "${{ runner.temp }}/device-browser/node_modules/playwright-core",
