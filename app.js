@@ -31983,8 +31983,8 @@ function renderCoreListMgmt() {
   var list = document.getElementById("core-list-list");
   if (!list) return;
   renderCoreManagementSummary([
-    { label: coreCollectionUiLabel("在庫明細", "Entries", "库存明细"), value: coreListFilteredRows.length, unit: "件" },
-    { label: coreCollectionUiLabel("コア合計", "Cores", "核心合计"), value: sumProductionCoreEntryQty(coreListFilteredRows), unit: "台", tone: "stock" }
+    { label: "在庫明細", value: coreListFilteredRows.length, unit: "件" },
+    { label: "コア合計", value: sumProductionCoreEntryQty(coreListFilteredRows), unit: "台", tone: "stock" }
   ]);
   if (!coreListFilteredRows.length) {
     setCspStyle(document.getElementById("core-list-load-more-wrap"), "display", "none");
