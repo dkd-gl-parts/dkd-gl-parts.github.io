@@ -3179,7 +3179,7 @@
     <div class="core-list-mode-switch" role="tablist" aria-label="コア管理表示">
       <button class="core-list-mode-btn" id="btn-core-list-mode-collection" type="button" role="tab" aria-controls="core-management-panel" aria-selected="false" tabindex="-1">収集リスト<span>集めるコアと不足数を確認</span></button>
       <button class="core-list-mode-btn active" id="btn-core-list-mode-inventory" type="button" role="tab" aria-controls="core-management-panel" aria-selected="true" tabindex="0">現在庫<span>保管中のコアと置き場を確認</span></button>
-      <button class="core-list-mode-btn" id="btn-core-list-mode-pending" type="button" role="tab" aria-controls="core-management-panel" aria-selected="false" tabindex="-1">照合待ち</button>
+      <button class="core-list-mode-btn" id="btn-core-list-mode-pending" data-i18n="core_pending_tab" type="button" role="tab" aria-controls="core-management-panel" aria-selected="false" tabindex="-1">照合待ち</button>
     </div>
     <div id="core-management-panel" role="tabpanel" aria-labelledby="btn-core-list-mode-inventory">
       <div class="core-workspace-section-heading"><div><h2 id="core-workspace-title">現在庫</h2><p id="core-workspace-help">保管中のコア品番・数量・置き場を確認し、在庫を登録・編集します。</p></div><span class="core-workspace-scope">集計は検索・絞り込み結果が対象</span></div>
@@ -3255,7 +3255,7 @@
       </div>
       <div class="mgmt-toolbar core-list-inventory-toolbar hidden" id="core-list-pending-toolbar">
         <form class="core-workspace-filters core-pending-filters" id="core-pending-search-form">
-          <label class="core-workspace-search" for="core-pending-search"><span>原票品番・パレットNO.</span><input class="mgmt-search" id="core-pending-search" type="search" placeholder="原票品番・パレットNO."></label>
+          <label class="core-workspace-search" for="core-pending-search"><span data-i18n="core_pending_search">原票品番・パレットNO.</span><input class="mgmt-search" id="core-pending-search" type="search" data-i18n-ph="core_pending_search" placeholder="原票品番・パレットNO."></label>
           <button class="btn-primary" type="submit" data-i18n="btn_search">検索</button>
         </form>
       </div>
