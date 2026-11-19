@@ -57,9 +57,9 @@ const yamlParseOptions = Object.freeze({
 });
 
 const approvedActionReferences = new Map([
-  [checkoutActionReference, 5],
-  [setupNodeActionReference, 5],
-  [uploadArtifactActionReference, 2],
+  [checkoutActionReference, 6],
+  [setupNodeActionReference, 6],
+  [uploadArtifactActionReference, 3],
   [deploymentActionReference, 1],
 ]);
 
@@ -68,6 +68,7 @@ const reviewedWorkflowFiles = [
   "postal-data-update.yml",
   "search-performance-guard.yml",
   "security-headers-guard.yml",
+  "temporary-device-browser.yml",
 ];
 
 const forbiddenPullRequestKeys = [
@@ -143,6 +144,63 @@ const postalUnchangedSummaryCommand = [
   "",
 ].join("\n");
 const expectedAuxiliaryWorkflows = new Map([
+  ["temporary-device-browser.yml", {
+  "name": "Temporary device browser QA",
+  "on": {
+    "pull_request": {
+      "paths": [
+        "assets/temporary-device/**",
+        "scripts/qa-temporary-device-access.mjs",
+        ".github/workflows/temporary-device-browser.yml"
+      ]
+    }
+  },
+  "permissions": {
+    "contents": "read"
+  },
+  "jobs": {
+    "browser": {
+      "runs-on": "ubuntu-24.04",
+      "timeout-minutes": 6,
+      "steps": [
+        {
+          "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "with": {
+            "persist-credentials": false
+          }
+        },
+        {
+          "uses": "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
+          "with": {
+            "node-version": "24.11.1",
+            "package-manager-cache": false
+          }
+        },
+        {
+          "name": "Install fixed browser test dependency",
+          "run": "npm install --prefix \"$RUNNER_TEMP/device-browser\" --no-save --ignore-scripts --no-audit --no-fund playwright-core@1.56.1\ncommand -v google-chrome"
+        },
+        {
+          "name": "Check temporary access in Chrome",
+          "env": {
+            "DEVICE_PLAYWRIGHT_MODULE": "${{ runner.temp }}/device-browser/node_modules/playwright-core",
+            "DEVICE_QA_OUTPUT": "${{ runner.temp }}/device-browser-qa"
+          },
+          "run": "DEVICE_BROWSER_PATH=\"$(command -v google-chrome)\" node scripts/qa-temporary-device-access.mjs"
+        },
+        {
+          "uses": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "if": "always()",
+          "with": {
+            "name": "temporary-device-browser-qa",
+            "path": "${{ runner.temp }}/device-browser-qa",
+            "retention-days": 7
+          }
+        }
+      ]
+    }
+  }
+}],
   ["category-warranty-ui.yml", {
   "name": "Category warranty browser QA",
   "on": {
