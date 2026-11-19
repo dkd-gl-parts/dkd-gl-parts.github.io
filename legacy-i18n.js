@@ -9032,3 +9032,6 @@ Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"区分・数量":"Class / qty",
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"区分・数量":"类别・数量","参照":"参考","参照情報のページ":"参考信息分页"});
 
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"区分・数量":"Class/qty","状態・メモ":"Notes"});
+
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"期限付き利用":"Temporary access","利用者用ページを開く":"Open the operator page"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"期限付き利用":"限期使用","利用者用ページを開く":"打开操作员页面"});
