@@ -9038,3 +9038,8 @@ Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"軽自動車":"轻型汽车","�
 
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"韓国コア":"Korean cores","除外（初期設定）":"Exclude (default)","含める":"Include","韓国コアのみ":"Korean cores only"});
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"韓国コア":"韩国旧件","除外（初期設定）":"排除（默认）","含める":"包含","韓国コアのみ":"仅韩国旧件"});
+
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"期限付き利用":"Temporary access","利用者用ページを開く":"Open the operator page"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"期限付き利用":"限期使用","利用者用ページを開く":"打开操作员页面"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"端末利用の承認":"Approve device access","端末利用の取り消し":"Revoke device access","この端末の利用を1年間承認しますか？":"Approve this device for one year?","対象端末の利用許可を取り消しますか？":"Revoke access for this device?","承認する":"Approve","取り消す":"Revoke","キャンセル":"Cancel"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"端末利用の承認":"批准设备访问","端末利用の取り消し":"撤销设备访问","この端末の利用を1年間承認しますか？":"批准此设备使用一年吗？","対象端末の利用許可を取り消しますか？":"撤销此设备的访问权限吗？","承認する":"批准","取り消す":"撤销","キャンセル":"取消"});

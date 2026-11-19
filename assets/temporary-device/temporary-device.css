@@ -1,0 +1,27 @@
+:root{color-scheme:light;font:16px/1.45 system-ui,"Yu Gothic UI",sans-serif;background:#eef3f8;color:#17293b}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0}
+.workspace{width:min(100% - 1.5rem,44rem);margin:clamp(.55rem,3vh,2rem) auto;background:#fff;border:1px solid #c0cedb;border-radius:12px;padding:clamp(.65rem,1.8vw,1.3rem)}
+header{display:flex;justify-content:space-between;align-items:center;min-height:2.25rem;border-bottom:1px solid #d4e0e9;padding-bottom:.35rem}
+header strong{font-size:1.35rem;color:#163b60}
+h1{font-size:clamp(1.05rem,3.8vw,1.45rem);margin:.5rem 0;overflow-wrap:anywhere}
+p{margin:.25rem 0 .5rem;overflow-wrap:anywhere}
+form,.grid,.results{display:grid;gap:.4rem}
+.grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+label{display:grid;gap:.15rem;font-size:.88rem}
+input,select,button{font:inherit;min-width:0;min-height:2.25rem;border-radius:6px;border:1px solid #879bad;padding:.26rem .55rem;background:#fff;color:#122c45}
+button{font-weight:600;cursor:pointer;white-space:normal;overflow-wrap:anywhere}
+button:hover,button:focus-visible{background:#e7f0f8}
+button:disabled{cursor:wait;opacity:.65}
+.primary{color:#fff;background:#1760a5;border-color:#1760a5}
+.primary:hover,.primary:focus-visible{background:#12497f}
+#notice:not(:empty){padding:.35rem .55rem;background:#eef6ff;margin-top:.4rem;overflow-wrap:anywhere}
+.pairing{font-family:ui-monospace,monospace;letter-spacing:.12em;font-size:1.3rem}
+.shortcuts{display:grid;gap:.45rem}
+.shortcuts button{text-align:left;min-height:3rem}
+.actions{display:flex;justify-content:space-between;gap:.35rem}
+.component{display:flex;align-items:center;gap:.35rem;min-width:0;font-size:.9rem;overflow-wrap:anywhere}
+.component input{min-height:0;flex:none}
+.instruction{font-size:.9rem;color:#465d73}
+[hidden]{display:none!important}
+@media(min-width:560px){.shortcuts{grid-template-columns:repeat(3,minmax(0,1fr))}}
