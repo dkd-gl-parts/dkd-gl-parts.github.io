@@ -12395,3 +12395,12 @@ html[data-product-3d-paused] :is(
   #screen-core-list-mgmt .core-list-mode-switch { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   #screen-core-list-mgmt .core-pending-filters .core-workspace-search { grid-column: auto; }
 }
+
+#screen-core-list-mgmt .core-pending-table th:nth-child(1) { width: 22%; }
+#screen-core-list-mgmt .core-pending-table th:nth-child(2) { width: 31%; }
+#screen-core-list-mgmt .core-pending-table th:nth-child(3) { width: 11%; }
+#screen-core-list-mgmt .core-pending-table th:nth-child(4) { width: 22%; }
+#screen-core-list-mgmt .core-pending-table th:nth-child(5) { width: 14%; }
+#screen-core-list-mgmt .core-pending-table :is(th, td) { text-align: left; }
+#screen-core-list-mgmt:has(#btn-core-list-mode-pending.active) #core-collection-page-status { white-space: nowrap; flex: none; }
+#screen-core-list-mgmt .core-pending-record .core-list-card-head > div { min-width: 0; flex: 1; }

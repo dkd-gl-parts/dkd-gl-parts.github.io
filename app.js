@@ -31115,7 +31115,7 @@ function resetCoreCollectionControls() {
 }
 
 async function setCoreListMode(mode) {
-  var names = { collection: "収集リスト", inventory: "現在庫", pending: "照合待ち" };
+  var names = { collection: "収集リスト", inventory: "現在庫", pending: coreCollectionUiLabel("照合待ち", "Pending match", "待核对") };
   coreListMode = Object.hasOwn(names, mode) ? mode : "collection";
   document.getElementById("core-workspace-filter-options").open = false;
   document.getElementById("core-inventory-filter-options").open = false;
@@ -31132,11 +31132,11 @@ async function setCoreListMode(mode) {
   var help = {
     collection: "目標数と現在庫を比べて、集める必要のあるコアを確認します。",
     inventory: "保管中のコア品番・数量・置き場を確認し、在庫を登録・編集します。",
-    pending: "品番の確認待ちです。表示数量は出庫可能数に含まれません。"
+    pending: coreCollectionUiLabel("品番の確認待ちです。表示数量は出庫可能数に含まれません。", "Part numbers are pending confirmation. These quantities are unavailable for withdrawal.", "零件编号有待核对，这些数量不可出库。")
   };
   document.getElementById("core-workspace-title").textContent = names[coreListMode];
   document.getElementById("core-workspace-help").textContent = help[coreListMode];
-  document.getElementById("core-list-results-title").textContent = coreListMode === "pending" ? "照合待ち一覧" : "品番一覧";
+  document.getElementById("core-list-results-title").textContent = coreListMode === "pending" ? coreCollectionUiLabel("照合待ち一覧（出庫対象外）", "Pending match · unavailable for withdrawal", "待核对（不可出库）") : "品番一覧";
   document.getElementById("core-management-panel").setAttribute("aria-labelledby", "btn-core-list-mode-" + coreListMode);
   var loadMoreWrap = document.getElementById("core-list-load-more-wrap");
   if (loadMoreWrap) setCspStyle(loadMoreWrap, "display", "none");
@@ -31177,7 +31177,7 @@ async function loadCorePendingStock() {
     corePendingStockSearch();
   } catch (error) {
     if (seq !== coreManagementLoadSeq || coreListMode !== "pending") return;
-    list.innerHTML = "<div class='empty' role='alert'>照合待ちを取得できませんでした。検索ボタンで再読み込みしてください。</div>";
+    list.innerHTML = "<div class='empty' role='alert'>" + esc(coreCollectionUiLabel("照合待ちを取得できませんでした。検索ボタンで再読み込みしてください。", "Could not load pending pallet records. Use Search to try again.", "无法加载待核对的托盘记录，请点击搜索重试。")) + "</div>";
   }
 }
 
@@ -31213,8 +31213,8 @@ function renderCorePendingStock() {
   var list = document.getElementById("core-list-list");
   var total = corePendingStockFiltered.length;
   renderCoreManagementSummary([
-    { label: "照合待ち明細", value: total.toLocaleString(), unit: "件" },
-    { label: "照合待ち数量", value: sumProductionCoreEntryQty(corePendingStockFiltered).toLocaleString(), unit: "台" }
+    { label: coreCollectionUiLabel("照合待ち明細", "Pending records", "待核对明细"), value: total.toLocaleString(), unit: "件" },
+    { label: coreCollectionUiLabel("照合待ち数量", "Pending units", "待核对数量"), value: sumProductionCoreEntryQty(corePendingStockFiltered).toLocaleString(), unit: "台" }
   ]);
   if (!total) {
     list.innerHTML = "<div class='empty' role='status'>" + esc(t("no_results")) + "</div>";
@@ -31228,7 +31228,7 @@ function renderCorePendingStock() {
     var pallet = "<span class='core-pending-pallet'>" + esc(row.pallet_no) + "</span>";
     var quantity = "<span class='core-qty-pill'>" + esc(String(row.quantity)) + "</span>";
     var source = esc(row.source_sheet + "!" + row.source_row);
-    var reference = "<button class='btn-sm-edit' type='button' data-core-pending-details='" + index + "'>詳細</button>";
+    var reference = "<button class='btn-sm-edit' type='button' data-core-pending-details='" + index + "'>" + esc(coreCollectionUiLabel("詳細", "Details", "详情")) + "</button>";
     if (cardMode) {
       return "<div class='core-list-card core-pending-record'><div class='core-list-card-head'><div>" + part +
         "<div class='mgmt-sub'>" + pallet + " / " + source + "</div></div>" + quantity + reference + "</div></div>";
@@ -31237,8 +31237,8 @@ function renderCorePendingStock() {
       "</td><td>" + source + "</td><td>" + reference + "</td></tr>";
   }).join("");
   list.innerHTML = cardMode ? "<div class='core-list-mobile-cards'>" + body + "</div>" :
-    "<table class='mgmt-table core-pending-table' aria-label='照合待ち'><thead><tr><th scope='col'>パレットNO.</th>" +
-    "<th scope='col'>原票品番</th><th scope='col'>数量</th><th scope='col'>原票の行</th><th scope='col'>詳細</th>" +
+    "<table class='mgmt-table core-pending-table' aria-label='" + esc(coreCollectionUiLabel("照合待ち", "Pending match", "待核对")) + "'><thead><tr>" +
+    [coreCollectionUiLabel("パレットNO.", "Pallet no.", "托盘编号"), coreCollectionUiLabel("原票品番", "Source part number", "原始零件编号"), coreCollectionUiLabel("数量", "Quantity", "数量"), coreCollectionUiLabel("原票の行", "Source row", "原始行号"), coreCollectionUiLabel("詳細", "Details", "详情")].map(function(label) { return "<th scope='col'>" + esc(label) + "</th>"; }).join("") +
     "</tr></thead><tbody>" + body + "</tbody></table>";
   corePendingStockSize = fitCoreManagementRows(list, Array.from(list.querySelectorAll(".core-pending-record")), list.querySelector("thead"));
   renderCoreManagementPager(corePendingStockPage, corePendingStockSize, total);
@@ -32187,7 +32187,7 @@ function renderCoreListMgmt() {
     list.innerHTML = mobileHtml;
   } else {
     var html = "<table class='mgmt-table core-list-table' aria-label='現在庫'>";
-    html += "<thead><tr><th scope='col'>コア品番</th><th scope='col'>車両区分・メーカー</th><th scope='col'>純正品番</th><th scope='col'>数量</th><th scope='col'>パレット・置き場</th><th scope='col'>メモ</th><th scope='col'>操作</th></tr></thead><tbody>";
+    html += "<thead><tr><th scope='col'>コア品番</th><th scope='col'>車両区分・メーカー</th><th scope='col'>純正品番</th><th scope='col'>数量</th><th scope='col'>" + esc(coreCollectionUiLabel("パレット・置き場", "Pallet / location", "托盘／存放位置")) + "</th><th scope='col'>メモ</th><th scope='col'>操作</th></tr></thead><tbody>";
     coreListFilteredRows.forEach(function(row) {
       var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
       var fallbackPartNumber = row.core_part_number || "";
