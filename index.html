@@ -36,6 +36,7 @@
 <link rel="stylesheet" href="assets/concierge-pet/concierge-admin.css?v=1.1.1355">
 <link rel="stylesheet" href="customer-price-report.css?v=1.1.1355">
 <link rel="stylesheet" href="assets/internal-tabs/nine-screen-tabs.css?v=1.1.1355">
+<link rel="stylesheet" href="assets/temporary-device/temporary-device-admin.css?v=1">
 </head>
 <body>
 
@@ -2277,6 +2278,7 @@
     <div class="form-footer user-permission-edit-footer">
       <span class="save-msg" id="user-permission-edit-message"></span>
       <button class="btn-cancel" id="btn-user-permission-edit-close" type="button">閉じる</button>
+      <button class="btn-cancel" id="btn-temporary-device-access" type="button" hidden>期限付き利用</button>
       <button class="btn-primary" id="btn-user-permission-edit-save" type="button">権限を保存</button>
     </div>
   </div>
@@ -6052,5 +6054,14 @@
 <script src="assets/concierge-pet/concierge-pet.js?v=1.1.1355"></script>
 <script src="manufacturing-ranking-report.js?v=1.1.1355&amp;ranking=20"></script>
 <script src="customer-price-report.js?v=1.1.1355"></script>
+<dialog id="temporary-device-access-dialog" class="temporary-device-dialog" aria-labelledby="temporary-device-access-title">
+  <header>
+    <h2 id="temporary-device-access-title">期限付き利用</h2>
+    <button type="button" class="btn-cancel" id="btn-temporary-device-access-close">閉じる</button>
+  </header>
+  <p><a href="assets/temporary-device/temporary-device.html" target="_blank" rel="noopener">利用者用ページを開く</a></p>
+  <div id="temporary-device-admin-content"></div>
+</dialog>
+<script type="module" src="assets/temporary-device/integration.mjs?v=1"></script>
 </body>
 </html>
