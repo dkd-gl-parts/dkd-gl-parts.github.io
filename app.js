@@ -8858,7 +8858,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1356";
+var APP_VERSION       = "v1.1.1357";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -8969,7 +8969,7 @@ var coreListProductCandidates = [];
 var coreListFormMode = "add";
 var corePhotoChoiceRowId = null;
 var coreListVehicleMap = {};
-var coreInventoryFilters = { keyword: "", vehicle: "", category: "", memo: "" };
+var coreInventoryFilters = { keyword: "", vehicle: "", category: "", memo: "", korea: "exclude" };
 var coreListFilteredRows = [];
 var coreListPageStart = 0;
 var coreListPageSize = 0;
@@ -31919,7 +31919,13 @@ function resetCoreInventoryFilters() {
   ["core-list-search", "core-inventory-vehicle", "core-inventory-category", "core-inventory-memo"].forEach(function(id) {
     document.getElementById(id).value = "";
   });
-  coreInventoryFilters = { keyword: "", vehicle: "", category: "", memo: "" };
+  document.getElementById("core-inventory-korea").value = "exclude";
+  coreInventoryFilters = { keyword: "", vehicle: "", category: "", memo: "", korea: "exclude" };
+}
+
+function isKoreanCoreInventoryEntry(row) {
+  // The Korean stock import records its provenance at the beginning of the entry memo.
+  return /^\s*韓国コア現存在庫\s*(?:\/|$)/.test(row.note || "");
 }
 
 function submitCoreInventorySearch() {
@@ -31927,7 +31933,8 @@ function submitCoreInventorySearch() {
     keyword: norm(document.getElementById("core-list-search").value.trim()),
     vehicle: document.getElementById("core-inventory-vehicle").value,
     category: document.getElementById("core-inventory-category").value,
-    memo: norm(document.getElementById("core-inventory-memo").value.trim())
+    memo: norm(document.getElementById("core-inventory-memo").value.trim()),
+    korea: document.getElementById("core-inventory-korea").value || "exclude"
   };
   document.getElementById("core-inventory-filter-options").open = false;
   document.getElementById("btn-core-list-search").focus({ preventScroll: true });
@@ -31939,11 +31946,13 @@ function applyCoreInventoryFilters() {
   var vehicle = coreInventoryFilters.vehicle;
   var category = coreInventoryFilters.category;
   var memo = coreInventoryFilters.memo;
-  var count = Number(!!vehicle) + Number(!!category) + Number(!!memo);
+  var korea = coreInventoryFilters.korea;
+  var count = Number(!!vehicle) + Number(!!category) + Number(!!memo) + Number(korea !== "exclude");
   document.getElementById("core-inventory-filter-count").textContent = count ? "(" + count + ")" : "";
   coreListPageStart = 0;
   coreListPageHistory = [];
   coreListFilteredRows = coreListMgmtRows.filter(function(row) {
+    if (korea !== "include" && isKoreanCoreInventoryEntry(row) !== (korea === "only")) return false;
     var id = String(row.dkd_shohin_id);
     var product = coreListProductMap[id] || {};
     var classification = coreListVehicleMap[id];

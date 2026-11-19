@@ -9036,5 +9036,8 @@ Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"区分・数量":"Class/qty","�
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"軽自動車":"Kei vehicle","軽バン":"Kei van"});
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"軽自動車":"轻型汽车","軽バン":"轻型厢式车"});
 
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"韓国コア":"Korean cores","除外（初期設定）":"Exclude (default)","含める":"Include","韓国コアのみ":"Korean cores only"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"韓国コア":"韩国旧件","除外（初期設定）":"排除（默认）","含める":"包含","韓国コアのみ":"仅韩国旧件"});
+
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"期限付き利用":"Temporary access","利用者用ページを開く":"Open the operator page"});
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"期限付き利用":"限期使用","利用者用ページを開く":"打开操作员页面"});
