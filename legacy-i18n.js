@@ -9032,3 +9032,6 @@ Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"区分・数量":"Class / qty",
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"区分・数量":"类别・数量","参照":"参考","参照情報のページ":"参考信息分页"});
 
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"区分・数量":"Class/qty","状態・メモ":"Notes"});
+
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"軽自動車":"Kei vehicle","軽バン":"Kei van"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"軽自動車":"轻型汽车","軽バン":"轻型厢式车"});

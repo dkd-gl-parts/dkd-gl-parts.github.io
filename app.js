@@ -8858,7 +8858,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1355";
+var APP_VERSION       = "v1.1.1356";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -8969,6 +8969,7 @@ var coreListProductCandidates = [];
 var coreListFormMode = "add";
 var corePhotoChoiceRowId = null;
 var coreListVehicleMap = {};
+var coreInventoryFilters = { keyword: "", vehicle: "", category: "", memo: "" };
 var coreListFilteredRows = [];
 var coreListPageStart = 0;
 var coreListPageSize = 0;
@@ -31880,23 +31881,65 @@ function exportCoreCollectionCsv() {
   URL.revokeObjectURL(url);
 }
 
-function resetCoreInventoryFilters() {
-  ["core-list-search", "core-inventory-vehicle", "core-inventory-category"].forEach(function(id) {
-    document.getElementById(id).value = "";
-  });
+function coreInventoryVehicleClasses(product) {
+  var makers = String(product.vehicle_manufacturer || "").normalize("NFKC").toLowerCase().split(/\s*[/,、]\s*/).map(function(name) { return name.trim(); });
+  var models = String(product.compatible_car_models || "").normalize("NFKC").trim().toLowerCase();
+  var chassis = String(product.model || "").normalize("NFKC").toLowerCase();
+  // The Suzuki specifications identify these Solio chassis as 996 cc and 1328 cc.
+  if (makers.includes("suzuki") && /^wagon\s*r\s*solio$/.test(models) && /\bma(?:34|64)s\b/.test(chassis)) return ["passenger"];
+
+  var bodyClasses = {
+    "kei car": "kei", "kei truck": "kei", "kei van": "kei", "軽四": "kei", "軽自動車": "kei",
+    "軽トラック": "kei", "軽バン": "kei", "sedan": "passenger", "minivan": "passenger",
+    "suv": "passenger", "passenger car": "passenger", "乗用車": "passenger",
+    "truck": "truck", "light truck": "truck", "トラック": "truck",
+    "commercial van": "van", "商用バン": "van", "bus": "bus", "バス": "bus",
+    "建機・農機": "machine", "その他": "other"
+  };
+  var body = String(product.body_type || "").normalize("NFKC").toLowerCase().split(/[/,、]/).map(function(value) {
+    var key = value.trim();
+    return Object.prototype.hasOwnProperty.call(bodyClasses, key) ? bodyClasses[key] : "";
+  }).filter(Boolean);
+  if (body.length) return Array.from(new Set(body));
+
+  // Match catalog vehicle names only within their manufacturer. Unknown variants stay unclassified.
+  var rules = [
+    ["hyundai", "truck", /(?:^|[^a-z0-9])(?:porter|e?mighty)(?![a-z])/],
+    ["kia", "truck", /(?:^|[^a-z0-9])bongo\s*(?:3|iii)(?![a-z0-9])/],
+    ["mitsubishi fuso", "truck", /(?:^|[^a-z0-9])(?:e?canter|fighter|super\s*great)(?![a-z])/],
+    ["hyundai", "passenger", /(?:^|[^a-z0-9])(?:(?:ef|nf|yf|lf|dn8)?\s*sonata|(?:hg|tg|xg|ig)?\s*grandeur|avante(?:hd|md|ad)?|santa\s*fe(?:cm|dm|tm|diesel)?|tucson(?:nx4)?|equus|veracruz|verna|i30)(?![a-z])/],
+    ["kia", "passenger", /(?:^|[^a-z0-9])(?:k[35](?!\d)|sorento(?:r)?)(?![a-z])/]
+  ];
+  return Array.from(new Set(rules.filter(function(rule) {
+    return makers.includes(rule[0]) && rule[2].test(models);
+  }).map(function(rule) { return rule[1]; })));
 }
 
-function searchCoreInventoryWorkspace() {
-  if (!coreManagementDataReady) return loadCoreListMgmt();
-  applyCoreInventoryFilters();
-  renderCoreListMgmt();
+function resetCoreInventoryFilters() {
+  ["core-list-search", "core-inventory-vehicle", "core-inventory-category", "core-inventory-memo"].forEach(function(id) {
+    document.getElementById(id).value = "";
+  });
+  coreInventoryFilters = { keyword: "", vehicle: "", category: "", memo: "" };
+}
+
+function submitCoreInventorySearch() {
+  coreInventoryFilters = {
+    keyword: norm(document.getElementById("core-list-search").value.trim()),
+    vehicle: document.getElementById("core-inventory-vehicle").value,
+    category: document.getElementById("core-inventory-category").value,
+    memo: norm(document.getElementById("core-inventory-memo").value.trim())
+  };
+  document.getElementById("core-inventory-filter-options").open = false;
+  document.getElementById("btn-core-list-search").focus({ preventScroll: true });
+  return loadCoreListMgmt();
 }
 
 function applyCoreInventoryFilters() {
-  var keyword = norm(document.getElementById("core-list-search").value.trim());
-  var vehicle = document.getElementById("core-inventory-vehicle").value;
-  var category = document.getElementById("core-inventory-category").value;
-  var count = Number(!!vehicle) + Number(!!category);
+  var keyword = coreInventoryFilters.keyword;
+  var vehicle = coreInventoryFilters.vehicle;
+  var category = coreInventoryFilters.category;
+  var memo = coreInventoryFilters.memo;
+  var count = Number(!!vehicle) + Number(!!category) + Number(!!memo);
   document.getElementById("core-inventory-filter-count").textContent = count ? "(" + count + ")" : "";
   coreListPageStart = 0;
   coreListPageHistory = [];
@@ -31905,6 +31948,7 @@ function applyCoreInventoryFilters() {
     var product = coreListProductMap[id] || {};
     var classification = coreListVehicleMap[id];
     if (!coreCollectionVehicleMatches(classification, vehicle) || !coreCollectionCategoryMatches(product, category)) return false;
+    if (memo && !normalizedContains(row.note, memo)) return false;
     return !keyword || [
       row.dkd_shohin_id, row.core_part_number, row.location, row.note,
       product.genuine_part_number, product.genuine_part_number_2,
@@ -31950,6 +31994,11 @@ async function loadCoreListMgmt() {
       rows = rows.concat(batch);
       if (batch.length < CORE_LIST_PAGE_SIZE) break;
     }
+    Object.keys(products).forEach(function(id) {
+      if (coreCollectionVehicleClasses(vehicles[id]).length) return;
+      var classes = coreInventoryVehicleClasses(products[id]);
+      if (classes.length) vehicles[id] = { vehicle_classes: classes };
+    });
     coreListMgmtRows = rows;
     coreListProductMap = products;
     coreListVehicleMap = vehicles;
@@ -61307,14 +61356,19 @@ window.addEventListener("resize", function() {
 ["core-collection-category", "core-collection-state", "core-collection-priority", "core-collection-vehicle"].forEach(function(id) {
   document.getElementById(id).addEventListener("change", function(){ applyCoreCollectionFilters(); renderCoreCollectionList(); });
 });
-document.getElementById("btn-core-list-search").addEventListener("click", loadCoreListMgmt);
-document.getElementById("core-list-search").addEventListener("keydown", function(e) { if (e.key === "Enter") loadCoreListMgmt(); });
-["core-inventory-vehicle", "core-inventory-category"].forEach(function(id) {
-  document.getElementById(id).addEventListener("change", searchCoreInventoryWorkspace);
+document.getElementById("btn-core-list-search").addEventListener("click", submitCoreInventorySearch);
+["core-list-search", "core-inventory-memo"].forEach(function(id) {
+  document.getElementById(id).addEventListener("keydown", function(event) {
+    if (event.key !== "Enter" || event.isComposing) return;
+    event.preventDefault();
+    submitCoreInventorySearch();
+  });
 });
 document.getElementById("btn-core-inventory-clear").addEventListener("click", function() {
   resetCoreInventoryFilters();
-  searchCoreInventoryWorkspace();
+  if (!coreManagementDataReady) return loadCoreListMgmt();
+  applyCoreInventoryFilters();
+  renderCoreListMgmt();
 });
 document.getElementById("core-list-load-more").addEventListener("click", function(){
   if (coreListMode === "collection") {
