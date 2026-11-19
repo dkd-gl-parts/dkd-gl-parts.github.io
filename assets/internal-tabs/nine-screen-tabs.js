@@ -344,7 +344,9 @@
     var user = response && !response.error && response.data && response.data.user;
     if (!user || user.id !== expected || !user.email_confirmed_at) { suspend(false); return; }
     context = options; context.email = String(user.email || "").toLowerCase(); verifiedId = user.id; verifiedScope = expectedScope;
-    mount(); enabled = available() && storageGet(preferenceKey()) === "on";
+    mount();
+    var preference = storageGet(preferenceKey());
+    enabled = available() && (preference === null || preference === "on");
     if (wasCurrent) { render(); refreshMenu(); return; }
     tabs = []; loaded.clear(); states.clear(); edits.clear(); active = null; prepared = null;
     if (enabled) restore(); else render();
