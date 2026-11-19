@@ -10,6 +10,36 @@ function node(tag, text) {
   return result;
 }
 
+function confirmTemporaryDeviceAction(container, title, email, details, confirmLabel) {
+  const dialog = node("dialog");
+  dialog.className = "temporary-device-dialog";
+  dialog.setAttribute("aria-label", title);
+  const buttons = node("div");
+  buttons.className = "temporary-device-dialog-actions";
+  const cancel = node("button", "キャンセル");
+  cancel.type = "button";
+  cancel.className = "btn-cancel";
+  const confirm = node("button", confirmLabel);
+  confirm.type = "button";
+  confirm.className = "btn-primary";
+  buttons.append(cancel, confirm);
+  dialog.append(node("h3", title), node("p", email), node("p", details), buttons);
+  container.append(dialog);
+  const previousFocus = document.activeElement;
+  return new Promise(resolve => {
+    cancel.addEventListener("click", () => dialog.close());
+    confirm.addEventListener("click", () => dialog.close("confirmed"));
+    dialog.addEventListener("close", () => {
+      const accepted = dialog.returnValue === "confirmed";
+      dialog.remove();
+      previousFocus?.focus();
+      resolve(accepted);
+    }, { once: true });
+    dialog.showModal();
+    cancel.focus();
+  });
+}
+
 export async function readTemporaryDeviceAdmin(options) {
   const token = await options.getAdminAccessToken();
   if (!token) return null;
@@ -146,7 +176,8 @@ export function renderTemporaryDeviceAdmin(container, { targetUser, endpoint, pu
     void perform(async () => {
       const features = new FormData(form).getAll("features");
       if (!features.length) { message.textContent = "利用する機能を選んでください。"; return; }
-      if (!active && !window.confirm(targetUser.email + " の端末利用を1年間承認しますか？")) return;
+      if (!active && !await confirmTemporaryDeviceAction(container,
+        "端末利用の承認", targetUser.email, "この端末の利用を1年間承認しますか？", "承認する")) return;
       const grant = grantValue();
       const response = await send(active
         ? { action: "configure_device", grantId: grant, features }
@@ -168,7 +199,8 @@ export function renderTemporaryDeviceAdmin(container, { targetUser, endpoint, pu
   });
   revoke.addEventListener("click", () => {
     void perform(async () => {
-      if (!window.confirm("対象端末の利用許可を取り消しますか？")) return;
+      if (!await confirmTemporaryDeviceAction(container,
+        "端末利用の取り消し", targetUser.email, "対象端末の利用許可を取り消しますか？", "取り消す")) return;
       await send({ action: "revoke_device", grantId: grantValue() });
       container.replaceChildren(node("p", "端末の利用許可を取り消しました。"));
     });
