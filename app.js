@@ -31983,8 +31983,8 @@ function renderCoreListMgmt() {
   var list = document.getElementById("core-list-list");
   if (!list) return;
   renderCoreManagementSummary([
-    { label: "在庫明細", value: coreListFilteredRows.length, unit: "件" },
-    { label: "コア合計", value: sumProductionCoreEntryQty(coreListFilteredRows), unit: "台", tone: "stock" }
+    { label: coreCollectionUiLabel("在庫明細", "Entries", "库存明细"), value: coreListFilteredRows.length, unit: "件" },
+    { label: coreCollectionUiLabel("コア合計", "Cores", "核心合计"), value: sumProductionCoreEntryQty(coreListFilteredRows), unit: "台", tone: "stock" }
   ]);
   if (!coreListFilteredRows.length) {
     setCspStyle(document.getElementById("core-list-load-more-wrap"), "display", "none");
@@ -31998,16 +31998,16 @@ function renderCoreListMgmt() {
       var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
       var fallbackPartNumber = row.core_part_number || "";
       var updatedText = formatDateTime(row.updated_at);
-      function mobileField(label, value) {
-        return "<div class='core-list-card-field'><span class='core-list-card-label'>" + esc(label) + "</span><span class='core-list-card-value'>" + value + "</span></div>";
+      function mobileField(label, value, wide) {
+        return "<div class='core-list-card-field" + (wide ? " core-list-card-field-wide" : "") + "'><span class='core-list-card-label'>" + esc(label) + "</span><span class='core-list-card-value'>" + value + "</span></div>";
       }
       mobileHtml += "<div class='core-list-card'>";
       mobileHtml += "<div class='core-list-card-head'><div><div class='core-main-pn'>" + esc(row.core_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(productionCategoryLabel(p)) + "</div></div><span class='core-qty-pill'>" + esc(String(row.quantity == null ? 0 : row.quantity)) + "</span></div>";
       mobileHtml += "<div class='core-list-card-grid'>";
-      mobileHtml += mobileField("車両区分", renderCoreCollectionVehicleHtml(coreListVehicleMap[String(row.dkd_shohin_id)]));
+      mobileHtml += mobileField("車両区分", renderCoreCollectionVehicleHtml(coreListVehicleMap[String(row.dkd_shohin_id)]), true);
       mobileHtml += mobileField(t("f_manufacturer"), "<span class='core-maker-badge'>" + esc(p.manufacturer || "-") + "</span>");
-      mobileHtml += mobileField(t("f_genuine_pn"), "<span class='mgmt-pn'>" + esc(p.genuine_part_number || fallbackPartNumber || "-") + "</span><span class='mgmt-sub core-list-maker-pn'>" + esc(p.manufacturer_part_number || fallbackPartNumber || "-") + "</span>");
       mobileHtml += mobileField(t("core_list_location"), esc(row.location || "-"));
+      mobileHtml += mobileField(t("f_genuine_pn"), "<span class='mgmt-pn'>" + esc(p.genuine_part_number || fallbackPartNumber || "-") + "</span><span class='mgmt-sub core-list-maker-pn'>" + esc(p.manufacturer_part_number || fallbackPartNumber || "-") + "</span>", true);
       mobileHtml += "</div>";
       mobileHtml += "<div class='core-list-card-note'><span class='core-list-card-label'>" + esc(t("core_list_note")) + "</span><span class='core-note'>" + esc(row.note || "-") + "</span><div class='mgmt-sub'>DKD " + esc(String(row.dkd_shohin_id || "-")) + " / " + esc(updatedText) + "</div></div>";
       mobileHtml += "<div class='core-list-card-actions'>";
