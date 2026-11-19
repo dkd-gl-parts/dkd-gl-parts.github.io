@@ -6035,10 +6035,17 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .finished-label-toolbar .finished-label-print-action { min-height: 36px; padding: 8px 15px; font-size: 15px; font-weight: 900; line-height: 1.1; }
 .finished-label-toolbar .finished-label-print-action:disabled { border-color: #cbd2dd; background: #cbd2dd; color: #fff; cursor: not-allowed; opacity: 1; }
 .finished-label-toolbar .finished-label-print-action.missing-g-number { border: 1px solid #e4ad3b; background: #fff1c9; color: #7d4b00; cursor: help; }
-.finished-label-selected { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
-.finished-label-selected-cell { border: 1px solid #edf0f4; border-radius: 8px; background: #fbfcfe; padding: 9px 10px; min-height: 54px; }
+.finished-label-selected { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.finished-label-selected-cell { flex: 1 0 auto; min-width: 0; max-width: 100%; border: 1px solid #edf0f4; border-radius: 8px; background: #fbfcfe; padding: 9px 10px; min-height: 54px; }
 .finished-label-selected-label { font-size: 11px; color: #7c8492; font-weight: 700; margin-bottom: 3px; }
-.finished-label-selected-value { font-size: 14px; color: #111a33; font-weight: 800; word-break: break-word; }
+.finished-label-selected-value { font-size: 14px; color: #111a33; font-weight: 800; overflow-wrap: anywhere; }
+.finished-label-selected-number { display: inline-block; white-space: nowrap; }
+.finished-label-selected-part [hidden] { display: none; }
+.finished-label-selected-number-view { border: 0; background: transparent; color: #174ea6; font: inherit; text-decoration: underline; cursor: pointer; }
+.finished-label-number-dialog { width: min(34rem, calc(100% - 24px)); margin: auto; padding: 16px; border: 1px solid #d7dce5; border-radius: 8px; color: #111a33; overflow-wrap: anywhere; }
+.finished-label-number-dialog::backdrop { background: #18263c66; }
+.finished-label-number-dialog p { margin: 8px 0 12px; user-select: text; }
+.finished-label-number-dialog form { display: flex; justify-content: flex-end; }
 .finished-label-form-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 .finished-label-form-grid .wide { grid-column: span 2; }
 .finished-label-form-grid .full { grid-column: 1 / -1; }
@@ -6312,7 +6319,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-finished-label-mgmt .finished-label-layout-foot { gap: 5px; margin-top: 4px; font-size: 8px; }
   #screen-finished-label-mgmt .finished-label-layout-foot strong { font-size: 9px; }
   #screen-finished-label-mgmt .finished-label-layout-sample { padding: 2px 4px; }
-  #screen-finished-label-mgmt .finished-label-selected { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin-bottom: 6px; }
+  #screen-finished-label-mgmt .finished-label-selected { gap: 4px; margin-bottom: 6px; }
   #screen-finished-label-mgmt .finished-label-selected-cell { min-height: 40px; padding: 5px 6px; }
   #screen-finished-label-mgmt .finished-label-selected-label { margin-bottom: 1px; font-size: 9px; }
   #screen-finished-label-mgmt .finished-label-selected-value { font-size: 11px; }
@@ -6540,7 +6547,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   .finished-label-workspace { height: auto; }
   .finished-label-mode-bar { align-items: flex-start; flex-direction: column; }
   .finished-label-shell { grid-template-columns: 1fr; height: auto; }
-  .finished-label-selected, .finished-label-form-grid { grid-template-columns: 1fr; }
+  .finished-label-form-grid { grid-template-columns: 1fr; }
   .finished-label-form-grid .wide { grid-column: 1 / -1; }
   .finished-label-component-picker { grid-template-columns: 1fr; }
   .finished-label-actions { position: static; flex-wrap: wrap; }

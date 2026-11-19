@@ -1240,6 +1240,7 @@ var TRANSLATIONS = {
     finished_box_label_screen_title: "箱シール印刷",
     finished_label_product_badge: "45 × 20 mm / 完品シール",
     finished_box_label_badge: "80 × 60 mm / 箱シール",
+    finished_label_view_full_number: "品番の全文を表示",
     finished_label_product_search: "完品登録対象検索",
     finished_box_label_product_search: "箱シール対象品番検索",
     finished_label_search_ph: "品番・製造予定Noで検索",
@@ -4152,6 +4153,7 @@ var TRANSLATIONS = {
     finished_box_label_product_search: "Box Label Product Search",
     finished_box_label_issue_form: "Box Label Print Details",
     finished_label_title: "Finished Unit / Manufacturing Serial Issue",
+    finished_label_view_full_number: "View full part number",
     finished_label_product_search: "Finished Unit Target Search",
     finished_label_search_ph: "Search part number or production plan No.",
     finished_label_search_hint: "Only products with an issued G part number can be searched. Enter a part number or production plan No. to search.",
@@ -7073,6 +7075,7 @@ var TRANSLATIONS = {
     finished_box_label_product_search: "箱标签对象品号搜索",
     finished_box_label_issue_form: "箱标签打印内容",
     finished_label_title: "完品登记・制造序列号发行",
+    finished_label_view_full_number: "查看完整品号",
     finished_label_product_search: "完品登记对象搜索",
     finished_label_search_ph: "按品号或生产计划编号搜索",
     finished_label_search_hint: "仅可搜索已发行G品号的商品。请输入品号或生产计划编号后搜索。",
@@ -8858,7 +8861,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1358";
+var APP_VERSION       = "v1.1.1359";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -37004,19 +37007,66 @@ async function selectFinishedLabelProduct(product, instruction) {
   }
 }
 
+var finishedLabelSummaryObserver = null;
+
 function renderFinishedLabelSelectedSummary(product) {
   var wrap = document.getElementById("finished-label-selected-summary");
   if (!wrap) return;
   var cells = [
-    [t("finished_label_g_part_number"), product && product.gltek_part_number],
-    [t("f_genuine_pn"), product && product.genuine_part_number],
-    [t("f_mfr_pn"), product && product.manufacturer_part_number],
+    [t("finished_label_g_part_number"), product && product.gltek_part_number, true],
+    [t("f_genuine_pn"), product && product.genuine_part_number, true],
+    [t("f_mfr_pn"), product && product.manufacturer_part_number, true],
     [t("f_manufacturer"), product && product.manufacturer],
     [t("product_kind_section"), product && product.default_product_kind ? productKindLabel(product.default_product_kind) : "-"]
   ];
   wrap.innerHTML = cells.map(function(row) {
-    return "<div class='finished-label-selected-cell'><div class='finished-label-selected-label'>" + esc(row[0]) + "</div><div class='finished-label-selected-value'>" + esc(row[1] || "-") + "</div></div>";
+    var value = esc(row[1] || "-");
+    if (row[2]) {
+      value = "<span class='finished-label-selected-number'>" + value + "</span>" +
+        "<button type='button' class='finished-label-selected-number-view' hidden>" + esc(t("finished_label_view_full_number")) + "</button>";
+    }
+    return "<div class='finished-label-selected-cell" + (row[2] ? " finished-label-selected-part" : "") + "'>" +
+      "<div class='finished-label-selected-label'>" + esc(row[0]) + "</div><div class='finished-label-selected-value'>" + value + "</div></div>";
   }).join("");
+  wrap.querySelectorAll(".finished-label-selected-part").forEach(function(cell) {
+    cell.querySelector("button").addEventListener("click", function() {
+      var dialog = document.getElementById("finished-label-number-dialog");
+      dialog.querySelector("h3").textContent = cell.querySelector(".finished-label-selected-label").textContent;
+      dialog.querySelector("p").textContent = cell.querySelector(".finished-label-selected-number").textContent;
+      dialog.showModal();
+    });
+  });
+  fitFinishedLabelSelectedNumbers(wrap);
+  if (!finishedLabelSummaryObserver && typeof ResizeObserver === "function") {
+    var previousWidth;
+    finishedLabelSummaryObserver = new ResizeObserver(function(entries) {
+      var width = entries[0].contentRect.width;
+      if (width === previousWidth) return;
+      previousWidth = width;
+      fitFinishedLabelSelectedNumbers(wrap);
+    });
+    finishedLabelSummaryObserver.observe(wrap);
+    if (document.fonts) document.fonts.ready.then(function() { fitFinishedLabelSelectedNumbers(wrap); });
+  }
+}
+
+function fitFinishedLabelSelectedNumbers(wrap) {
+  var width = wrap.clientWidth;
+  if (!width) return;
+  var cells = Array.from(wrap.querySelectorAll(".finished-label-selected-part"));
+  cells.forEach(function(cell) {
+    cell.querySelector(".finished-label-selected-number").hidden = false;
+    cell.querySelector("button").hidden = true;
+  });
+  var tooWide = cells.map(function(cell) {
+    var box = cell.querySelector(".finished-label-selected-value");
+    var chromeWidth = cell.getBoundingClientRect().width - box.getBoundingClientRect().width;
+    return box.firstElementChild.getBoundingClientRect().width + chromeWidth > width;
+  });
+  cells.forEach(function(cell, index) {
+    cell.querySelector(".finished-label-selected-number").hidden = tooWide[index];
+    cell.querySelector("button").hidden = !tooWide[index];
+  });
 }
 
 function updateFinishedLabelSaveButton(product) {
