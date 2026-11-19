@@ -21,7 +21,7 @@ function withStorage(mode, work) {
   });
 }
 
-export function createTemporaryDeviceClient({ endpoint, publishableKey }) {
+export function createTemporaryDeviceClient({ endpoint, publishableKey, enrollmentToken }) {
   async function post(payload) {
     const response = await fetch(endpoint, {
       method: "POST",
@@ -37,16 +37,18 @@ export function createTemporaryDeviceClient({ endpoint, publishableKey }) {
 
   async function requestDevice() {
     const previous = await withStorage("readonly", store => store.get("registered"));
-    if (previous) return { ok: true, data: { grantId: previous.grantId, pairingCode: previous.pairingCode } };
+    if (previous && !enrollmentToken) return { ok:true,data:{grantId:previous.grantId,pairingCode:previous.pairingCode} };
+    if (!enrollmentToken) return { ok:false,status:403 };
     const { publicJwk, privateKey } = await createDeviceKey();
-    const requested = await post({ action: "request_device", publicJwk });
+    const requested = await post({ action:"request_device", publicJwk, enrollmentToken });
     if (!requested.ok) return requested;
     const { grantId, pairingCode } = requested.data;
-    await withStorage("readwrite", store => store.add({ grantId, pairingCode, privateKey }, "registered"));
+    await withStorage("readwrite", store => store.put({grantId,pairingCode,privateKey},"registered"));
+    enrollmentToken = null;
     return { ok: true, data: { grantId, pairingCode } };
   }
 
-  async function perform(operation, argumentsObject = {}) {
+  async function perform(operation, argumentsObject = {}, beforeSubmit) {
     const registration = await withStorage("readonly", store => store.get("registered"));
     if (!registration) return { ok: false, status: 404 };
     const { grantId, privateKey } = registration;
@@ -54,6 +56,7 @@ export function createTemporaryDeviceClient({ endpoint, publishableKey }) {
     if (!issued.ok) return issued;
     const fields = { grantId, challenge: issued.data.challenge, operation, bodyText: JSON.stringify(argumentsObject) };
     const signature = await signDeviceRequest(privateKey, fields);
+    beforeSubmit?.(fields);
     return post({ action: "perform", ...fields, signature });
   }
 

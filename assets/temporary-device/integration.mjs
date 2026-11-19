@@ -1,6 +1,7 @@
 import { readTemporaryDeviceAdmin, renderTemporaryDeviceAdmin } from "./temporary-device-admin.mjs";
 
 const endpoint = window.SUPABASE_URL + "/functions/v1/temporary-device-access";
+const operatorUrl = new URL("./temporary-device.html",import.meta.url);
 const overlay = document.getElementById("user-permission-edit-overlay");
 const trigger = document.getElementById("btn-temporary-device-access");
 const dialog = document.getElementById("temporary-device-access-dialog");
@@ -31,10 +32,12 @@ if (overlay && trigger && dialog && container && close) {
     if (!selected || user?.id !== selected.id || dialog.open) return;
     const request = ++generation;
     trigger.disabled = true;
-    const options = { targetUser:user, endpoint, publishableKey:window.SUPABASE_KEY, getAdminAccessToken };
+    const options = { targetUser:user, endpoint, publishableKey:window.SUPABASE_KEY, getAdminAccessToken, operatorUrl };
     try {
       const state = await readTemporaryDeviceAdmin(options);
       if (!state || generation !== request || selectedAdministratorTarget()?.id !== user.id) return;
+      const returningLink = dialog.querySelector("header + p");
+      if (returningLink) returningLink.hidden = !state.existingGrant;
       renderTemporaryDeviceAdmin(container,{ ...options,...state });
       dialog.showModal();
     } catch {

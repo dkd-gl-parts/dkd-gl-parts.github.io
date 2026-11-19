@@ -22,9 +22,19 @@ export async function readTemporaryDeviceAdmin(options) {
 }
 
 export function renderTemporaryDeviceAdmin(container, { targetUser, endpoint, publishableKey,
-  getAdminAccessToken, printers, existingGrant }) {
+  getAdminAccessToken, printers, existingGrant, operatorUrl }) {
   const form = node("form");
   form.append(node("p", targetUser.email));
+  if (existingGrant?.expiresAt) {
+    const expires = new Intl.DateTimeFormat("ja-JP",{dateStyle:"long",timeZone:"Asia/Tokyo"}).format(new Date(existingGrant.expiresAt));
+    form.append(node("p","利用期限 "+expires));
+  }
+  const linkButton = node("button","利用者用リンクを発行");
+  linkButton.type="button";
+  linkButton.className="btn-cancel";
+  linkButton.hidden=!!existingGrant;
+  const linkArea=node("p");
+  form.append(linkButton,linkArea);
   const addField = (title, name, value = "", required = false) => {
     const label = node("label", title);
     const input = node("input");
@@ -119,6 +129,18 @@ export function renderTemporaryDeviceAdmin(container, { targetUser, endpoint, pu
       revoke.disabled = uncertain;
     }
   }
+  linkButton.addEventListener("click", () => {
+    void perform(async () => {
+      const reply = await send({action:"prepare_enrollment",subjectId:targetUser.id});
+      const url = new URL(operatorUrl);
+      url.hash="enroll="+encodeURIComponent(reply.enrollmentToken);
+      const link=node("a","利用者用ページを開く");
+      link.href=url.href;
+      link.target="_blank";
+      link.rel="noopener noreferrer";
+      linkArea.replaceChildren(link,document.createTextNode("（有効15分）"));
+    });
+  });
   form.addEventListener("submit", event => {
     event.preventDefault();
     void perform(async () => {
@@ -130,6 +152,8 @@ export function renderTemporaryDeviceAdmin(container, { targetUser, endpoint, pu
         ? { action: "configure_device", grantId: grant, features }
         : { action: "approve_device", grantId: grant, subjectId: targetUser.id, pairingCode: pairing.value.trim(), features });
       active = true;
+      linkArea.replaceChildren();
+      linkButton.hidden=true;
       if (pairing) { pairing.required = false; pairing.closest("label").hidden = true; }
       grantId.readOnly = true;
       primary.textContent = "利用機能を保存";

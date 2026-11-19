@@ -2,7 +2,9 @@ import { createTemporaryDeviceClient } from "./browser-device-client.mjs";
 
 const endpoint = "https://jqoeqximtwfpqwzngutj.supabase.co/functions/v1/temporary-device-access";
 const key = document.documentElement.dataset.supabasePublishableKey;
-const client = key ? createTemporaryDeviceClient({ endpoint, publishableKey: key }) : null;
+const enrollmentToken = new URLSearchParams(location.hash.slice(1)).get("enroll");
+if (enrollmentToken) history.replaceState(null,"",location.pathname+location.search);
+const client = key ? createTemporaryDeviceClient({ endpoint, publishableKey:key, enrollmentToken }) : null;
 const panel = document.querySelector("#panel");
 const notice = document.querySelector("#notice");
 const homeButton = document.querySelector("#home");
@@ -10,15 +12,19 @@ const featureNames = {part_label:"品番シール",shipping:"ピッキング・�
 let busy = false;
 let approved = null;
 let pollId = null;
-const labelRequestStorageKey = "dcats.temporary-device.pending-label";
+function labelRequestStorageKey() {
+  return "dcats.temporary-device.pending-label."+approved.grantId;
+}
 
 function pendingLabelRequest() {
-  return localStorage.getItem(labelRequestStorageKey);
+  const saved = localStorage.getItem(labelRequestStorageKey());
+  if (!saved) return null;
+  try { return JSON.parse(saved); } catch { return null; }
 }
 
 function showLabelResult(result) {
   if (!result?.job_id) throw new Error("発行結果はまだ確認できません。管理者と確認してください。");
-  localStorage.removeItem(labelRequestStorageKey);
+  localStorage.removeItem(labelRequestStorageKey());
   show("品番シールの発行を受け付けました", [
     add("p", result.issue_code ? "発行番号 "+result.issue_code : ""),
     action("印刷状況を確認", async () => {
@@ -31,9 +37,21 @@ function showLabelResult(result) {
 }
 
 async function recoverLabelRequest() {
-  const key = pendingLabelRequest();
-  if (!key) return;
-  const result = await call("get_part_label_request_result", { target_request_key:key });
+  const pending = pendingLabelRequest();
+  if (!pending) return;
+  const result = await call("get_part_label_request_result", {
+    target_request_key:pending.requestKey,target_issue_challenge:pending.challenge
+  });
+  if (result.state==="not_issued") {
+    localStorage.removeItem(labelRequestStorageKey());
+    await features.part_label();
+    notice.textContent="発行されていません。必要に応じて品番を選び直してください。";
+    return;
+  }
+  if (result.state==="pending") {
+    notice.textContent="発行結果を確認中です。少ししてから再度確認してください。";
+    return;
+  }
   showLabelResult(result);
 }
 
@@ -71,13 +89,14 @@ function input(label, name, options = {}) {
   box.append(field);
   return box;
 }
-function picker(label, name, values) {
+function picker(label, name, values, selectedValue) {
   const box = add("label",label);
   const field = add("select");
   field.name = name;
   for (const [value, title] of values) {
     const option = add("option",title);
     option.value = value;
+    if (value===selectedValue) option.selected=true;
     field.append(option);
   }
   box.append(field);
@@ -115,8 +134,8 @@ function rows(items, label, open, limit = 3) {
   display();
   return box;
 }
-async function call(name, args) {
-  const reply = await client.perform(name,args);
+async function call(name, args, beforeSubmit) {
+  const reply = await client.perform(name,args,beforeSubmit);
   if (!reply.ok) {
     const message = reply.status === 403 ? "利用できない操作です。対象と管理者の許可を確認してください。"
       : reply.status === 422 ? "登録できませんでした。入力内容と対象の状態を確認してください。"
@@ -152,7 +171,7 @@ async function updateApproval() {
 async function begin() {
   if (await updateApproval()) return;
   const request = await client.requestDevice();
-  if (!request.ok) {notice.textContent="申請できませんでした。";return;}
+  if (!request.ok) {notice.textContent=request.status===403 ? "管理者から新しい利用者用リンクを受け取ってください。" : "申請できませんでした。";return;}
   const end = Date.now()+5*60000;
   show("管理者の承認を待っています",[
     add("p","この申請番号と確認コードを管理者に見せてください。"),
@@ -203,18 +222,19 @@ async function labelEdit(product) {
     }
     if (!window.confirm("品番 "+product.gltek_part_number+" を1台登録して印刷しますか？")) return;
     const requestKey = crypto.randomUUID();
-    localStorage.setItem(labelRequestStorageKey,requestKey);
     try {
       const result = await call("issue_and_print_part_label", {
-        ...ids, target_request_key:requestKey, target_product_category:product.category_code,
+        ...ids, target_request_key:requestKey,
         target_assembly_staff:values.assembly, target_inspection_staff:values.inspection,
         target_shelf_no:values.shelf, target_memo:values.memo,
         target_components:data.filter(row=>selection.has(row.id)).map(componentData)
+      }, ({ challenge }) => {
+        localStorage.setItem(labelRequestStorageKey(),JSON.stringify({requestKey,challenge}));
       });
       showLabelResult(result);
     } catch (error) {
-      if ([400,403,422,429].includes(error.status)) {
-        localStorage.removeItem(labelRequestStorageKey);
+      if (!pendingLabelRequest() || [400,403,422,429].includes(error.status)) {
+        localStorage.removeItem(labelRequestStorageKey());
         throw error;
       }
       show("品番シールの発行結果を確認", [
@@ -261,10 +281,14 @@ const conditionOptions=[["accepted","正常"],["wrong_item","異なるコア"],[
 const resolutionOptions=[["pending","対応未決定"],["accepted_as_core","コアとして受入"],["customer_contact","得意先へ確認"]];
 async function returnDetail(row, view="receipt") {
   const item=await call("get_core_return_management_detail",{target_unit_id:row.id});
+  if (item.can_update === false) {
+    show(item.return_code_display||item.order_number,[add("p",item.customer_name||""),add("p","この返却の処理は管理者に確認してください。")]);
+    return;
+  }
   const common={target_unit_id:item.id,target_expected_version:item.version};
   const tabs=add("div",undefined,{className:"actions"});
   tabs.append(action("返却受付",()=>returnDetail(row,"receipt")),action("検品・対応",()=>returnDetail(row,"inspect")));
-  const receipt=form([picker("照合方法","source",receiptOptions),picker("返却区分","reason",reasonOptions),
+  const receipt=form([picker("照合方法","source",receiptOptions,item.receipt_source),picker("返却区分","reason",reasonOptions,item.return_reason),
     input("送り状番号","number",{value:item.return_waybill_tracking_number}),input("製造シリアル","serial",{value:item.returned_serial}),
     input("受付メモ","note",{value:item.receipt_note,maxLength:1000})],"受付を保存",async v=>{
       await call("register_core_return_receipt",{...common,target_receipt_source:v.source,target_return_reason:v.reason,
@@ -272,7 +296,7 @@ async function returnDetail(row, view="receipt") {
       await returnDetail(row,"inspect");
       notice.textContent="受付を保存しました。";
   });
-  const inspection=form([picker("検品結果","condition",conditionOptions),picker("対応","resolution",resolutionOptions),input("検品メモ","note",{maxLength:1000})],
+  const inspection=form([picker("検品結果","condition",conditionOptions,item.condition_status),picker("対応","resolution",resolutionOptions,item.resolution_status),input("検品メモ","note",{maxLength:1000})],
     "検品を保存",async v=>{
       await call("inspect_core_return",{...common,target_condition_status:v.condition,target_resolution_status:v.resolution,target_note:v.note});
       await returnDetail(row,"inspect");
