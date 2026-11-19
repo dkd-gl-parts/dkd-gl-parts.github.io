@@ -24,7 +24,7 @@ export async function readTemporaryDeviceAdmin(options) {
 export function renderTemporaryDeviceAdmin(container, { targetUser, endpoint, publishableKey,
   getAdminAccessToken, printers, existingGrant }) {
   const form = node("form");
-  form.append(node("h3", "期限付き利用"), node("p", targetUser.email));
+  form.append(node("p", targetUser.email));
   const addField = (title, name, value = "", required = false) => {
     const label = node("label", title);
     const input = node("input");
