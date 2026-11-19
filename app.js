@@ -8861,7 +8861,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1359";
+var APP_VERSION       = "v1.1.1360";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -8974,9 +8974,6 @@ var corePhotoChoiceRowId = null;
 var coreListVehicleMap = {};
 var coreInventoryFilters = { keyword: "", vehicle: "", category: "", memo: "", korea: "exclude" };
 var coreListFilteredRows = [];
-var coreListPageStart = 0;
-var coreListPageSize = 0;
-var coreListPageHistory = [];
 var coreInventoryNotePages = [];
 var coreInventoryNotePage = 0;
 var CORE_LIST_PAGE_SIZE = 100;
@@ -31141,6 +31138,9 @@ async function setCoreListMode(mode) {
   if (inventoryToolbar) inventoryToolbar.classList.toggle("hidden", coreListMode !== "inventory");
   var loadMoreWrap = document.getElementById("core-list-load-more-wrap");
   if (loadMoreWrap) setCspStyle(loadMoreWrap, "display", "none");
+  var results = document.getElementById("core-list-list");
+  results.tabIndex = coreListMode === "inventory" ? 0 : -1;
+  results.setAttribute("aria-live", coreListMode === "inventory" ? "off" : "polite");
   if (coreListMode === "collection") await loadCoreCollectionList();
   else await loadCoreListMgmt();
 }
@@ -31955,8 +31955,6 @@ function applyCoreInventoryFilters() {
   var korea = coreInventoryFilters.korea;
   var count = Number(!!vehicle) + Number(!!category) + Number(!!memo) + Number(korea !== "exclude");
   document.getElementById("core-inventory-filter-count").textContent = count ? "(" + count + ")" : "";
-  coreListPageStart = 0;
-  coreListPageHistory = [];
   coreListFilteredRows = coreListMgmtRows.filter(function(row) {
     if (korea !== "include" && isKoreanCoreInventoryEntry(row) !== (korea === "only")) return false;
     var id = String(row.dkd_shohin_id);
@@ -31977,9 +31975,7 @@ async function loadCoreListMgmt() {
   if (coreListMode !== "inventory") return;
   var requestSeq = beginCoreManagementLoad();
   var list = document.getElementById("core-list-list");
-  var wrap = document.getElementById("core-list-load-more-wrap");
-  setCspStyle(wrap, "display", "none");
-  list.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
+  list.innerHTML = "<div class='loading' role='status'>" + esc(t("loading")) + "</div>";
   try {
     var rows = [];
     var products = {};
@@ -32036,31 +32032,22 @@ async function loadCoreListProducts(ids) {
   return normalizeCoreProductFastRows(result.data || []);
 }
 
-function fitCoreInventoryPage() {
-  var list = document.getElementById("core-list-list");
-  if (!list.getBoundingClientRect || coreListMode !== "inventory") return;
-  var items = Array.from(list.querySelectorAll(".core-list-table tr:not(:first-child), .core-list-card"));
-  coreListPageSize = fitCoreManagementRows(list, items, list.querySelector(".core-list-table tr"));
-  renderCoreManagementPager(coreListPageStart, coreListPageSize, coreListFilteredRows.length);
-}
-
 function renderCoreListMgmt() {
   if (coreListMode !== "inventory" || !coreManagementDataReady) return;
   var list = document.getElementById("core-list-list");
   if (!list) return;
+  list.scrollTop = 0;
   renderCoreManagementSummary([
     { label: "在庫明細", value: coreListFilteredRows.length, unit: "件" },
     { label: "コア合計", value: sumProductionCoreEntryQty(coreListFilteredRows), unit: "台", tone: "stock" }
   ]);
   if (!coreListFilteredRows.length) {
-    setCspStyle(document.getElementById("core-list-load-more-wrap"), "display", "none");
-    list.innerHTML = "<div class='empty'>" + esc(t("no_results")) + "</div>";
+    list.innerHTML = "<div class='empty' role='status'>" + esc(t("no_results")) + "</div>";
     return;
   }
-  var visibleRows = coreListFilteredRows.slice(coreListPageStart, coreListPageStart + CORE_LIST_PAGE_SIZE);
   if (!isPC() || window.innerWidth < 1101) {
     var mobileHtml = "<div class='core-list-mobile-cards'>";
-    visibleRows.forEach(function(row) {
+    coreListFilteredRows.forEach(function(row) {
       var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
       var fallbackPartNumber = row.core_part_number || "";
       var updatedText = formatDateTime(row.updated_at);
@@ -32088,8 +32075,8 @@ function renderCoreListMgmt() {
     list.innerHTML = mobileHtml;
   } else {
     var html = "<table class='mgmt-table core-list-table' aria-label='現在庫'>";
-    html += "<tr><th>コア品番</th><th>車両区分・メーカー</th><th>純正品番</th><th>数量</th><th>置き場</th><th>メモ</th><th>操作</th></tr>";
-    visibleRows.forEach(function(row) {
+    html += "<thead><tr><th scope='col'>コア品番</th><th scope='col'>車両区分・メーカー</th><th scope='col'>純正品番</th><th scope='col'>数量</th><th scope='col'>置き場</th><th scope='col'>メモ</th><th scope='col'>操作</th></tr></thead><tbody>";
+    coreListFilteredRows.forEach(function(row) {
       var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
       var fallbackPartNumber = row.core_part_number || "";
       var updatedText = formatDateTime(row.updated_at);
@@ -32107,10 +32094,9 @@ function renderCoreListMgmt() {
       html += "</div></td>";
       html += "</tr>";
     });
-    html += "</table>";
+    html += "</tbody></table>";
     list.innerHTML = html;
   }
-  fitCoreInventoryPage();
   list.querySelectorAll("[data-core-note]").forEach(function(button) {
     button.addEventListener("click", function() { showCoreInventoryNote(Number(button.dataset.coreNote)); });
   });
@@ -61515,18 +61501,15 @@ document.getElementById("ccf-reference-previous").addEventListener("click", func
 document.getElementById("ccf-reference-next").addEventListener("click", function() { coreCollectionReferencePage += 1; renderCoreCollectionReference(); });
 document.getElementById("ccf-tab-notes").addEventListener("click", function() { setCoreCollectionFormTab("notes"); });
 document.getElementById("core-collection-previous").addEventListener("click", function() {
-  if (coreListMode === "collection") {
-    coreCollectionPageStart = coreCollectionPageHistory.pop() || 0;
-    renderCoreCollectionList();
-  } else {
-    coreListPageStart = coreListPageHistory.pop() || 0;
-    renderCoreListMgmt();
-  }
+  if (coreListMode !== "collection") return;
+  coreCollectionPageStart = coreCollectionPageHistory.pop() || 0;
+  renderCoreCollectionList();
 });
 window.addEventListener("resize", function() {
-  if (!document.getElementById("screen-core-list-mgmt").classList.contains("active")) return;
-  if (coreListMode === "collection") renderCoreCollectionList();
-  else renderCoreListMgmt();
+  if (coreListMode === "collection" && document.getElementById("screen-core-list-mgmt").classList.contains("active")) renderCoreCollectionList();
+});
+window.matchMedia("(min-width: 1101px)").addEventListener("change", function() {
+  if (coreListMode === "inventory" && document.getElementById("screen-core-list-mgmt").classList.contains("active")) renderCoreListMgmt();
 });
 ["core-collection-category", "core-collection-state", "core-collection-priority", "core-collection-vehicle"].forEach(function(id) {
   document.getElementById(id).addEventListener("change", function(){ applyCoreCollectionFilters(); renderCoreCollectionList(); });
@@ -61545,16 +61528,11 @@ document.getElementById("btn-core-inventory-clear").addEventListener("click", fu
   applyCoreInventoryFilters();
   renderCoreListMgmt();
 });
-document.getElementById("core-list-load-more").addEventListener("click", function(){
-  if (coreListMode === "collection") {
-    coreCollectionPageHistory.push(coreCollectionPageStart);
-    coreCollectionPageStart += coreCollectionPageSize;
-    renderCoreCollectionList();
-    return;
-  }
-  coreListPageHistory.push(coreListPageStart);
-  coreListPageStart += coreListPageSize;
-  renderCoreListMgmt();
+document.getElementById("core-list-load-more").addEventListener("click", function() {
+  if (coreListMode !== "collection") return;
+  coreCollectionPageHistory.push(coreCollectionPageStart);
+  coreCollectionPageStart += coreCollectionPageSize;
+  renderCoreCollectionList();
 });
 document.getElementById("btn-core-list-form-cancel").addEventListener("click", function(){ document.getElementById("core-list-form-overlay").classList.remove("show"); });
 document.getElementById("btn-core-list-form-save").addEventListener("click", saveCoreListForm);
