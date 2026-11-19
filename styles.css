@@ -12200,6 +12200,10 @@ html[data-product-3d-paused] :is(
 #screen-core-list-mgmt:has(#btn-core-list-mode-inventory.active) .core-workspace-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 #screen-core-list-mgmt .core-workspace-inventory-filters { justify-content: stretch; }
 #screen-core-list-mgmt #core-inventory-filter-options .core-workspace-filter-fields { width: min(410px, 100%); }
+#screen-core-list-mgmt .core-inventory-memo-filter { grid-column: 1 / -1; }
+@media (max-width: 360px) {
+  #screen-core-list-mgmt #core-inventory-filter-options .core-workspace-filter-fields { grid-template-columns: minmax(0, 1fr); }
+}
 #screen-core-list-mgmt #core-list-list .core-list-table { width: 100%; min-width: 0 !important; table-layout: fixed; }
 #screen-core-list-mgmt #core-list-list .core-list-table :is(th, td) { padding: 8px; }
 #screen-core-list-mgmt .core-list-table th:nth-child(1) { width: 16%; }
