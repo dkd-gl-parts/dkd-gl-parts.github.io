@@ -323,11 +323,12 @@ async function verifyDynamicScreenTabs() {
     };
     await api.afterAuthenticated(options);
     const click = selector => parsed.document.querySelector(selector).dispatchEvent(new parsed.window.Event("click", {bubbles: true}));
-    const enable = () => {
+    const setEnabled = value => {
       assert.equal(api.openProperties(), true);
-      parsed.document.getElementById("dcats-nine-tabs-toggle").checked = !api.snapshot().enabled;
+      parsed.document.getElementById("dcats-nine-tabs-toggle").checked = value;
       click("#dcats-tab-properties-apply");
     };
+    const enable = () => setEnabled(true);
     const select = id => click("#dcats-nine-tab-" + id);
     const close = id => click('[data-close-feature="' + id + '"]');
     const input = (id, value) => {
@@ -338,7 +339,7 @@ async function verifyDynamicScreenTabs() {
       node.dispatchEvent(new parsed.window.Event("input", {bubbles: true}));
       return node;
     };
-    return {api, w, ids, options, values, allowed, dirty, released, listeners, show, open, enable, select, close, input,
+    return {api, w, ids, options, values, allowed, dirty, released, listeners, show, open, enable, setEnabled, select, close, input,
       get screen() { return currentScreen; }, get confirms() { return confirms; }, get selected() { return selected; },
       set confirmResult(value) { confirmResult = value; }, set busy(value) { busy = value; }, set scope(value) { scope = value; },
       set selected(value) { selected = value; }};
@@ -354,7 +355,7 @@ async function verifyDynamicScreenTabs() {
   clean.input(clean.ids[0], "server-loaded");
   assert.equal(clean.api.hasUnsaved(), false, "Undo restores the loaded baseline");
   const t = await makeTabs();
-  assert.equal(t.api.snapshot().enabled, false, "Default stays off");
+  assert.equal(t.api.snapshot().enabled, true, "Verified eligible accounts default to ON with no saved choice");
   t.enable();
   const firstNine = t.ids.slice(0, 9);
   firstNine.forEach(t.open);
@@ -420,7 +421,7 @@ async function verifyDynamicScreenTabs() {
   assert.equal(t.values.get("dcats-nine-tabs.v1:synthetic-owner").includes("UNSAVED"), false, "Draft values never enter tab storage");
   t.close(oldest);
   assert.equal(JSON.stringify(t.api.snapshot()), inputBefore, "Manual close has the same draft guard");
-  t.enable();
+  t.setEnabled(false);
   assert.equal(t.api.snapshot().enabled, true, "Declining OFF keeps every tab enabled");
   t.select(oldest); t.input(oldest, "");
   assert.equal(t.api.hasUnsaved(), false, "Undoing an edit returns to the clean baseline");
@@ -463,7 +464,22 @@ async function verifyDynamicScreenTabs() {
   const companyOptions = {...company.options, userId: () => "synthetic-company-user", verify: async () => ({data: {user: {id: "synthetic-company-user", email: "colleague@example.invalid", email_confirmed_at: "2026-11-17"}}})};
   company.api.suspend(false); await company.api.afterAuthenticated(companyOptions);
   assert.equal(company.api.isAvailable(), true);
-  assert.equal(company.api.snapshot().enabled, false, "Company publication remains opt-in");
+  assert.equal(company.api.snapshot().enabled, true, "Every eligible company account defaults to ON");
+  const companyPreferenceKey = "dcats-nine-tabs.v1:synthetic-company-user:enabled";
+  assert.equal(company.values.has(companyPreferenceKey), false, "Default ON does not manufacture an explicit choice");
+  company.setEnabled(false);
+  assert.equal(company.values.get(companyPreferenceKey), "off");
+  company.api.suspend(false); await company.api.afterAuthenticated(companyOptions);
+  assert.equal(company.api.snapshot().enabled, false, "Explicit OFF survives authentication/reload");
+  company.values.set(companyPreferenceKey, "on");
+  company.api.suspend(false); await company.api.afterAuthenticated(companyOptions);
+  assert.equal(company.api.snapshot().enabled, true, "Explicit ON is preserved");
+  company.values.set(companyPreferenceKey, "invalid");
+  company.api.suspend(false); await company.api.afterAuthenticated(companyOptions);
+  assert.equal(company.api.snapshot().enabled, false, "Unknown stored preferences remain disabled");
+  company.values.delete(companyPreferenceKey);
+  company.api.suspend(false); await company.api.afterAuthenticated(companyOptions);
+  assert.equal(company.api.snapshot().enabled, true, "Removing a stored choice restores default ON");
   company.enable(); company.open(company.ids[0]);
   company.api.openProperties();
   const settingInput = company.w.document.getElementById("dcats-nine-tabs-toggle");
