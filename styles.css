@@ -6014,6 +6014,12 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .finished-label-result-title { font-size: 14px; font-weight: 800; color: #111a33; word-break: break-word; }
 .finished-label-result-number-row { display: flex; align-items: baseline; gap: 6px; min-width: 0; margin-top: 4px; font-size: 11px; line-height: 1.35; }
 .finished-label-result-number-label { flex: 0 0 auto; color: #667085; font-weight: 700; }
+.finished-label-search-meta { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 4px 8px; flex-wrap: wrap; }
+.finished-label-product-pages { display: flex; gap: 4px; }
+.finished-label-product-pages[hidden] { display: none; }
+.finished-label-product-pages button { min-height: 28px; }
+.finished-label-result-numbers { display: flex; gap: 0 10px; flex-wrap: wrap; }
+.finished-label-result-numbers > .finished-label-result-number-row { max-width: 100%; }
 .finished-label-result-number-value { min-width: 0; color: #26324a; font-weight: 800; overflow-wrap: anywhere; }
 .finished-label-result-priority { display: inline-flex; margin-top: 5px; border-radius: 999px; padding: 2px 7px; background: #e5f5eb; color: #1f6b3e; font-size: 9px; font-weight: 900; }
 .finished-label-result-priority.unavailable { background: #f2f4f7; color: #667085; }
@@ -6271,6 +6277,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-finished-label-mgmt .finished-label-shell { grid-template-columns: 280px minmax(0, 1fr); gap: 10px; overflow: hidden; }
   #screen-finished-label-mgmt .finished-label-left { gap: 8px; overflow: hidden; }
   #screen-finished-label-mgmt .finished-label-left > .finished-label-card { display: flex; flex: 1 1 0; flex-direction: column; min-height: 0; padding: 8px; overflow: hidden; }
+  #screen-finished-label-mgmt .is-product-mode .finished-label-left > .finished-label-card:first-child { flex-grow: 1.18; }
   #screen-finished-label-mgmt .finished-label-results,
   #screen-finished-label-mgmt .finished-label-history-list { min-height: 0; overflow-y: auto; }
   #screen-finished-label-mgmt .finished-label-result { padding: 7px 8px; }

@@ -317,7 +317,7 @@ const readinessSandbox = {
   productDkdId(product) { return product.id; }
 };
 vm.createContext(readinessSandbox);
-vm.runInContext(`${functionSource("finishedLabelProductPriority")}; ${functionSource("sortFinishedLabelProducts")}; this.sortReady = sortFinishedLabelProducts;`, readinessSandbox);
+vm.runInContext(`${functionSource("finishedLabelProductPriority")}; ${functionSource("compareFinishedLabelLocations")}; ${functionSource("sortFinishedLabelProducts")}; this.sortReady = sortFinishedLabelProducts;`, readinessSandbox);
 const readinessOrder = readinessSandbox.sortReady([
   { id: "empty" },
   { id: "rebuilt_only" },
@@ -326,6 +326,13 @@ const readinessOrder = readinessSandbox.sortReady([
   { id: "both_variants" }
 ]).map((product) => product.id);
 assert(readinessOrder.join(",") === "both_components,both_variants,rebuilt_only,variants_only,empty", "finished-label readiness priority order is incorrect");
+Object.assign(readinessSandbox.finishedLabelProductReadinessMap, {
+  both_variants: { hasStock: true, stockLocation: "R10" },
+  rebuilt_only: { hasStock: true, stockLocation: "R2" },
+  variants_only: { hasStock: true }
+});
+const stockOrder = readinessSandbox.sortReady(readinessOrder.map(id => ({ id }))).map(product => product.id);
+assert(stockOrder.join(",") === "rebuilt_only,both_variants,variants_only,both_components,empty", "finished-label search must put positive stock first and compare location numbers numerically");
 
 const qrInputs = [];
 const sandbox = {
@@ -542,6 +549,7 @@ async function verifyIssuedGLabelSearch() {
   let checked = 0;
   for (const [mode, query, rows, expected] of [
     ["product", "104210", candidates, "1,7"],
+    ["product", "104210", candidates, "1,7"],
     ["box", "104210", candidates, "1,7"],
     ["box", "", candidates, "1,7"],
     ["product", "104210", candidates.slice(1, 5), ""],
@@ -555,6 +563,7 @@ async function verifyIssuedGLabelSearch() {
     };
     let readinessIds = null;
     let rendered = 0;
+    let selected = null;
     const context = {
       finishedLabelPrintMode: mode, finishedLabelSearchRequestSeq: 0,
       FINISHED_LABEL_PAGE_STEP: 20,
@@ -569,6 +578,8 @@ async function verifyIssuedGLabelSearch() {
       async loadFinishedLabelProductReadiness(value) { readinessIds = value.map(row => row.id).join(","); return {}; },
       async loadFinishedBoxLabelProductReadiness(value) { readinessIds = value.map(row => row.id).join(","); return {}; },
       sortFinishedLabelProducts(value) { return value; },
+      renderFinishedLabelEmpty() {},
+      async selectFinishedLabelProduct(product) { selected = Number(product.id); rendered += 1; },
       renderFinishedLabelResults() { rendered += 1; }
     };
     vm.createContext(context);
@@ -577,6 +588,7 @@ async function verifyIssuedGLabelSearch() {
     assert(context.finishedLabelProducts.map(row => row.id).join(",") === expected, "unissued G number appeared in " + mode + " search");
     assert(readinessIds === expected, "excluded products reached label readiness queries");
     assert(rendered === 1, "filtered results were not rendered exactly once");
+    assert(selected === (mode === "product" && expected ? Number(expected.split(",")[0]) : null), "product search did not select the first result or auto-selected a box-label result");
     checked += 1;
   }
   console.log("Issued G label search: " + checked + " product/box cases passed.");
