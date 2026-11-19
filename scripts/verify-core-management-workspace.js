@@ -3,7 +3,7 @@ const vm = require("node:vm");
 const assert = require("node:assert/strict");
 const acorn = require("acorn");
 const source = fs.readFileSync("app.js", "utf8");
-const names = ["coreCollectionVehicleSummaryHtml", "coreCollectionUiLabel", "renderCoreCollectionVehicleHtml", "coreCollectionVehicleClasses", "coreCollectionVehicleText", "fitCoreCollectionPage", "esc", "normalizeAsciiWidth", "norm", "normalizedContains", "sumProductionCoreEntryQty", "renderCoreManagementSummary", "beginCoreManagementLoad", "searchCoreCollectionWorkspace", "clearCoreCollectionFilters", "bindCoreManagementTabs", "setCoreListMode", "coreCollectionPriorityLabel", "coreCollectionStatusLabel", "coreCollectionSourceDetail", "coreCollectionStockQty", "coreCollectionShortageQty", "coreCollectionCategoryKey", "coreCollectionCategoryOrder", "coreCollectionStoredOrder", "compareCoreCollectionStoredOrder", "assignCoreCollectionCategoryRanks", "coreCollectionCategoryRank", "coreCollectionCategoryMatches", "applyCoreCollectionFilters", "loadCoreCollectionList", "loadCoreCollectionProducts", "loadCoreCollectionStock", "renderCoreCollectionStockBadge", "updateCoreCollectionLoadMoreButton", "renderCoreCollectionList", "bindCoreCollectionActions", "coreListSearchKey", "coreListRowMatches", "updateCoreListLoadMoreButton", "fetchCoreListRawPage", "loadCoreListMgmt", "loadCoreListProductMap", "renderCoreListMgmt"];
+const names = ["coreCollectionVehicleSummaryHtml", "coreCollectionUiLabel", "renderCoreCollectionVehicleHtml", "coreCollectionVehicleClasses", "coreCollectionVehicleText", "fitCoreCollectionPage", "fitCoreManagementRows", "renderCoreManagementPager", "coreCollectionVehicleMatches", "esc", "normalizeAsciiWidth", "norm", "normalizedContains", "sumProductionCoreEntryQty", "renderCoreManagementSummary", "beginCoreManagementLoad", "searchCoreCollectionWorkspace", "clearCoreCollectionFilters", "bindCoreManagementTabs", "setCoreListMode", "coreCollectionPriorityLabel", "coreCollectionStatusLabel", "coreCollectionSourceDetail", "coreCollectionStockQty", "coreCollectionShortageQty", "coreCollectionCategoryKey", "coreCollectionCategoryOrder", "coreCollectionStoredOrder", "compareCoreCollectionStoredOrder", "assignCoreCollectionCategoryRanks", "coreCollectionCategoryRank", "coreCollectionCategoryMatches", "applyCoreCollectionFilters", "loadCoreCollectionList", "loadCoreCollectionProducts", "loadCoreCollectionStock", "renderCoreCollectionStockBadge", "updateCoreCollectionLoadMoreButton", "renderCoreCollectionList", "bindCoreCollectionActions", "enterCoreListMgmt", "resetCoreCollectionControls", "resetCoreInventoryFilters", "searchCoreInventoryWorkspace", "applyCoreInventoryFilters", "loadCoreListMgmt", "loadCoreListProducts", "fitCoreInventoryPage", "renderCoreListMgmt"];
 const ast = acorn.parse(source, { ecmaVersion: "latest" });
 const functions = ast.body.filter(n => n.type === "FunctionDeclaration" && names.includes(n.id.name));
 assert.equal(functions.length, names.length);
@@ -11,22 +11,23 @@ let checks = 0;
 function fixture() {
   const elements = new Map();
   const get = id => {
-    if (!elements.has(id)) elements.set(id, { value: id === "core-collection-state" ? "all" : "", innerHTML: "", textContent: "", disabled: false, attributes: {}, listeners: {}, style: {}, classList: { toggle() {} }, setAttribute(k, v) { this.attributes[k] = v; }, addEventListener(k, v) { this.listeners[k] = v; }, focus() { context.focused = id; }, querySelectorAll() { return []; } });
+    if (!elements.has(id)) elements.set(id, { value: id === "core-collection-state" ? "all" : "", innerHTML: "", textContent: "", disabled: false, attributes: {}, listeners: {}, style: {}, classList: { toggle() {}, remove() {} }, setAttribute(k, v) { this.attributes[k] = v; }, addEventListener(k, v) { this.listeners[k] = v; }, focus() { context.focused = id; }, querySelectorAll() { return []; } });
     return elements.get(id);
   };
   const context = {
-    document: { getElementById: get }, window: { matchMedia: () => ({ matches: true, addEventListener() {} }) }, console,
+    document: { getElementById: get, querySelector: () => null }, window: { matchMedia: () => ({ matches: true, addEventListener() {} }) }, console,
     t: key => key, productionCategoryLabel: p => p.category_code || "-", normalizeCoreProductFastRows: rows => rows,
     setCspStyle: (el, k, v) => { el.style[k] = v; }, canManageProductionRecords: () => true, canUploadCoreImages: () => true, isPC: () => true,
+    canViewCoreManagement: () => true, showScreen: () => {},
     coreListMode: "collection", coreManagementLoadSeq: 0, coreManagementDataReady: false,
     coreCollectionRows: [], coreCollectionFilteredRows: [], coreCollectionProductMap: {}, coreCollectionStockMap: {}, coreCollectionRenderLimit: 50,
     CORE_COLLECTION_VEHICLE_CLASSES: [["kei","軽四"],["passenger","乗用車"],["truck","トラック"],["van","商用バン"],["bus","バス"],["machine","建機・農機"],["other","その他"]], coreCollectionPageStart: 0, coreCollectionPageSize: 1, coreCollectionPageHistory: [],
     CORE_COLLECTION_RENDER_PAGE_SIZE: 50, CORE_COLLECTION_CATEGORY_ORDER: ["starter", "alternator", "ac_compressor", "distributor", "other"], CORE_PRODUCT_FAST_SELECT: "*",
-    coreListMgmtRows: [], coreListProductMap: {}, coreListRawOffset: 0, coreListHasMore: true, coreListLoadingMore: false, coreListCurrentSearchKey: "", CORE_LIST_PAGE_SIZE: 50, CORE_LIST_SEARCH_SCAN_CHUNKS: 5,
+    coreListMgmtRows: [], coreListProductMap: {}, coreListVehicleMap: {}, coreListFilteredRows: [], coreListPageStart: 0, coreListPageSize: 0, coreListPageHistory: [], CORE_LIST_PAGE_SIZE: 50,
     formatDateTime: value => value || "-"
   };
   context.respond = () => ({ data: [], error: null });
-  context.sb = { from(table) { let columns, bounds; const query = { select(c) { columns = c; return query; }, order() { return query; }, in() { return query; }, limit() { return query; }, range(start, end) { bounds = { start, end }; return query; }, then(resolve, reject) { return Promise.resolve().then(() => context.respond(table, columns, bounds)).then(resolve, reject); } }; return query; } };
+  context.sb = { from(table) { let columns, bounds, ids; const query = { select(c) { columns = c; return query; }, order() { return query; }, in(key, values) { ids = values; return query; }, limit() { return query; }, range(start, end) { bounds = { start, end }; return query; }, then(resolve, reject) { return Promise.resolve().then(() => context.respond(table, columns, bounds, ids)).then(resolve, reject); } }; return query; } };
   vm.createContext(context);
   vm.runInContext(functions.map(n => source.slice(n.start, n.end)).join("\n"), context);
   return { c: context, get };
@@ -83,7 +84,6 @@ async function main() {
     c.coreListMode = "collection"; ready(c); await c.loadCoreCollectionList(); const html = get("core-list-list").innerHTML;
     release({ data: [{ id: 90, dkd_shohin_id: 99, quantity: 99 }], error: null }); await old;
     assert.equal(get("core-list-list").innerHTML, html); checks++;
-    assert.equal(c.coreListRawOffset, 0); checks++;
     assert.equal(c.coreListMgmtRows.length, 0); checks++;
   }
   {
@@ -96,7 +96,7 @@ async function main() {
   {
     const { c, get } = fixture(); c.coreListMode = "inventory"; c.respond = () => Promise.reject(new Error("network rejected"));
     await c.loadCoreListMgmt(); assert.match(get("core-list-list").innerHTML, /network rejected/); checks++;
-    assert.equal(c.coreListLoadingMore, false); checks++;
+    assert.equal(c.coreManagementDataReady, false); checks++;
   }
 
   {
@@ -122,6 +122,71 @@ async function main() {
     assert.equal(c.coreCollectionRows,original);checks++;
     assert.equal(get("btn-export-core-collection").disabled,true);checks++;
     assert.match(get("core-list-list").innerHTML,/second page unavailable/);checks++;
+  }
+
+  {
+    const { c, get } = fixture();
+    const stock = [
+      ...Array.from({ length: 50 }, (_, i) => ({ id: 100 - i, dkd_shohin_id: 1, quantity: 1 })),
+      { id: 2, dkd_shohin_id: 2, quantity: 3, core_part_number: "TRUCK-200" },
+      { id: 1, dkd_shohin_id: 3, quantity: 4, location: "A-1" },
+      { id: 0, dkd_shohin_id: 4, quantity: 5, core_part_number: "PASS-400" }
+    ];
+    const lookups = [];
+    c.respond = (table, columns, bounds, ids) => {
+      if (table === "production_core_list_entries") return { data: stock.slice(bounds.start, bounds.end + 1) };
+      if (table === "core_products") return { data: products.filter(row => ids.includes(row.dkd_shohin_id)) };
+      lookups.push([...ids]);
+      assert.equal(columns, "dkd_shohin_id,vehicle_classes");
+      return { data: [
+        { dkd_shohin_id: 1, vehicle_classes: ["kei", "passenger"] },
+        { dkd_shohin_id: 2, vehicle_classes: ["truck"] },
+        { dkd_shohin_id: 4, vehicle_classes: [] }
+      ].filter(row => ids.includes(row.dkd_shohin_id)) };
+    };
+    await c.enterCoreListMgmt();
+    assert.equal(c.coreListMode, "inventory"); checks++;
+    assert.equal(c.coreListFilteredRows.length, 53); checks++;
+    assert.deepEqual(lookups, [[1], [2, 3, 4]]); checks++;
+    assert.match(get("core-list-list").innerHTML, /軽四.*乗用車/); checks++;
+    get("core-inventory-vehicle").value = "passenger";
+    c.searchCoreInventoryWorkspace();
+    assert.equal(c.coreListFilteredRows.length, 50); checks++;
+    get("core-inventory-vehicle").value = "truck";
+    get("core-list-search").value = "ＴＲＵＣＫ２００";
+    get("core-inventory-category").value = "alternator";
+    c.searchCoreInventoryWorkspace();
+    assert.deepEqual(Array.from(c.coreListFilteredRows, row => row.id), [2]); checks++;
+    assert.match(get("core-list-count").innerHTML, /3<small/); checks++;
+    assert.equal(get("core-inventory-filter-count").textContent, "(2)"); checks++;
+    get("core-inventory-category").value = "starter";
+    c.searchCoreInventoryWorkspace();
+    assert.match(get("core-list-list").innerHTML, /no_results/); checks++;
+    c.resetCoreInventoryFilters();
+    get("core-inventory-vehicle").value = "unclassified";
+    c.searchCoreInventoryWorkspace();
+    assert.deepEqual(Array.from(c.coreListFilteredRows, row => row.id), [1, 0]); checks++;
+    assert.match(get("core-list-count").innerHTML, /9<small/); checks++;
+    const removed = [];
+    c.window.innerHeight = 215;
+    const row = id => ({ getBoundingClientRect: () => ({ height: 35 }), remove: () => removed.push(id) });
+    assert.equal(c.fitCoreManagementRows({getBoundingClientRect: () => ({top: 55})}, [row(1), row(2), row(3)], {getBoundingClientRect: () => ({height: 10})}), 2); checks++;
+    assert.deepEqual(removed, [3]); checks++;
+    c.renderCoreManagementPager(2, 1, 3);
+    assert.equal(get("core-collection-page-status").textContent, "3–3 / 3"); checks++;
+    assert.equal(get("core-list-load-more").disabled, true); checks++;
+  }
+  {
+    const { c, get } = fixture();
+    c.coreListMode = "inventory";
+    c.respond = table => table === "core_collection_list_items"
+      ? { error: { message: "classification unavailable" } }
+      : { data: [{ id: 1, dkd_shohin_id: 1, quantity: 3 }] };
+    get("core-inventory-vehicle").value = "unclassified";
+    await c.loadCoreListMgmt();
+    assert.equal(c.coreManagementDataReady, false); checks++;
+    assert.match(get("core-list-list").innerHTML, /classification unavailable/); checks++;
+    assert.equal(get("core-list-count").innerHTML, ""); checks++;
   }
 
   console.log(`Core management workspace: ${checks} behavioral checks passed.`);
