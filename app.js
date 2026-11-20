@@ -2010,6 +2010,59 @@ var TRANSLATIONS = {
     core_list_product_search: "対象商品検索",
     core_list_quantity: "数量",
     core_pending_tab: "照合待ち",
+    core_inventory_physical: "現物合計",
+    core_inventory_linked: "紐づけ済み",
+    core_inventory_match_state: "紐づけ状態",
+    core_inventory_match_all: "すべての紐づけ状態",
+    core_inventory_match_help: "商品IDの有無にかかわらず、パレット別の現物在庫を確認できます。",
+    core_pallet_entry_title: "パレット別コア登録",
+    core_pallet_entry_help: "商品IDが未確定のコアを「照合待ち」に登録します。",
+    core_pallet_col_number: "No.",
+    core_pallet_col_pallet: "パレットNO.",
+    core_pallet_col_part: "品番",
+    core_pallet_col_qty: "数量",
+    core_pallet_col_note: "備考",
+    core_pallet_previous: "前の行",
+    core_pallet_next: "次の行",
+    core_pallet_add_row: "行を追加",
+    core_pallet_close: "閉じる",
+    core_pallet_linked_entry: "商品ID指定で登録",
+    core_pallet_save_entry: "照合待ちに登録",
+    core_pallet_match_title: "照合待ち在庫",
+    core_pallet_operations: "在庫操作",
+    core_pallet_adjust: "数量調整",
+    core_pallet_link: "商品IDに紐づけ",
+    core_pallet_adjust_to: "調整後の数量",
+    core_pallet_reason: "変更理由",
+    core_pallet_find_product: "商品候補を検索",
+    core_pallet_find_placeholder: "メーカー品番・純正品番・純正品番2",
+    core_pallet_find: "検索",
+    core_pallet_link_target: "紐づけ先",
+    core_pallet_choose: "商品を選択",
+    core_pallet_save_link: "現在庫に反映",
+    core_pallet_save_adjust: "数量を保存",
+    core_pallet_line_range: "{start} / {total}行",
+    core_pallet_line_field: "{row}行目 {field}",
+    core_pallet_units: "{qty}台",
+    core_pallet_same_part: "同じ品番の全パレット（{count}明細・{qty}台）",
+    core_pallet_enter_query: "検索する品番を入力してください。",
+    core_pallet_searching: "商品候補を検索中…",
+    core_pallet_choose_hint: "候補から紐づけ先を選んでください。",
+    core_pallet_no_product: "一致する商品候補がありません。",
+    core_pallet_search_failed: "商品候補を取得できませんでした。",
+    core_pallet_saving: "保存中…",
+    core_pallet_unconfirmed: "保存結果を確認できませんでした。同じ内容で再確認してください。",
+    core_pallet_added: "{count}明細を照合待ちに登録しました。",
+    core_pallet_adjusted: "{count}明細の数量を更新しました。",
+    core_pallet_linked: "{count}明細を商品IDに紐づけて現在庫に反映しました。",
+    core_pallet_invalid_entry: "{row}行目のパレットNO.、品番、数量を確認してください。",
+    core_pallet_empty_entry: "登録する行を入力してください。",
+    core_pallet_invalid_adjust: "0以上の整数と変更理由を入力してください。",
+    core_pallet_invalid_bulk: "在庫がある明細を100件以内で選んでください。",
+    core_pallet_switch_prompt: "入力中の行を保存するか、登録画面を閉じてから切り替えてください。",
+    core_pallet_link_preview: "{count}明細・{qty}台を現在庫へ反映します。",
+    core_pallet_manual: "手入力",
+    core_pallet_edit_match: "編集・紐づけ",
     core_pending_help: "品番の確認待ちです。表示数量は出庫可能数に含まれません。",
     core_pending_title: "照合待ち一覧（出庫対象外）",
     core_pending_load_failed: "照合待ちを取得できませんでした。検索ボタンで再読み込みしてください。",
@@ -4936,6 +4989,59 @@ var TRANSLATIONS = {
     core_list_product_search: "Target product search",
     core_list_quantity: "Quantity",
     core_pending_tab: "Pending match",
+    core_inventory_physical: "Physical stock",
+    core_inventory_linked: "Linked",
+    core_inventory_match_state: "Match status",
+    core_inventory_match_all: "All match statuses",
+    core_inventory_match_help: "View physical stock by pallet with or without a product ID.",
+    core_pallet_entry_title: "Register pallet stock",
+    core_pallet_entry_help: "Register cores awaiting a product match.",
+    core_pallet_col_number: "No.",
+    core_pallet_col_pallet: "Pallet no.",
+    core_pallet_col_part: "Part number",
+    core_pallet_col_qty: "Quantity",
+    core_pallet_col_note: "Notes",
+    core_pallet_previous: "Previous rows",
+    core_pallet_next: "Next rows",
+    core_pallet_add_row: "Add row",
+    core_pallet_close: "Close",
+    core_pallet_linked_entry: "Register with product ID",
+    core_pallet_save_entry: "Save as pending",
+    core_pallet_match_title: "Pending stock",
+    core_pallet_operations: "Stock actions",
+    core_pallet_adjust: "Adjust quantity",
+    core_pallet_link: "Link product ID",
+    core_pallet_adjust_to: "New quantity",
+    core_pallet_reason: "Reason for change",
+    core_pallet_find_product: "Search product candidates",
+    core_pallet_find_placeholder: "Maker part no. or OEM part no. 1 or 2",
+    core_pallet_find: "Search",
+    core_pallet_link_target: "Product to link",
+    core_pallet_choose: "Select a product",
+    core_pallet_save_link: "Move to current stock",
+    core_pallet_save_adjust: "Save quantity",
+    core_pallet_line_range: "{start} / {total} rows",
+    core_pallet_line_field: "Row {row} {field}",
+    core_pallet_units: "{qty} units",
+    core_pallet_same_part: "All pallets for this part ({count} rows, {qty} units)",
+    core_pallet_enter_query: "Enter a part number to search.",
+    core_pallet_searching: "Searching products…",
+    core_pallet_choose_hint: "Select the product to link.",
+    core_pallet_no_product: "No matching product found.",
+    core_pallet_search_failed: "Could not load product candidates.",
+    core_pallet_saving: "Saving…",
+    core_pallet_unconfirmed: "Save could not be confirmed. Retry the same operation.",
+    core_pallet_added: "Saved {count} pending stock rows.",
+    core_pallet_adjusted: "Updated quantity for {count} stock rows.",
+    core_pallet_linked: "Linked {count} rows and moved them to current stock.",
+    core_pallet_invalid_entry: "Check the pallet, part number and quantity in row {row}.",
+    core_pallet_empty_entry: "Enter a row to save.",
+    core_pallet_invalid_adjust: "Enter a non-negative integer and a reason.",
+    core_pallet_invalid_bulk: "Select up to 100 rows with stock.",
+    core_pallet_switch_prompt: "Save the entered rows or close this dialog before switching.",
+    core_pallet_link_preview: "Move {count} rows ({qty} units) to current stock.",
+    core_pallet_manual: "Manual entry",
+    core_pallet_edit_match: "Edit or link",
     core_pending_help: "Part numbers are pending confirmation. These quantities are unavailable for withdrawal.",
     core_pending_title: "Pending match · unavailable for withdrawal",
     core_pending_load_failed: "Could not load pending pallet records. Use Search to try again.",
@@ -7863,6 +7969,59 @@ var TRANSLATIONS = {
     core_list_product_search: "目标商品搜索",
     core_list_quantity: "数量",
     core_pending_tab: "待核对",
+    core_inventory_physical: "实物合计",
+    core_inventory_linked: "已关联",
+    core_inventory_match_state: "关联状态",
+    core_inventory_match_all: "全部关联状态",
+    core_inventory_match_help: "按托盘查看有无商品ID的实物库存。",
+    core_pallet_entry_title: "按托盘登记旧件",
+    core_pallet_entry_help: "将商品ID未确定的旧件登记为待核对。",
+    core_pallet_col_number: "序号",
+    core_pallet_col_pallet: "托盘编号",
+    core_pallet_col_part: "品号",
+    core_pallet_col_qty: "数量",
+    core_pallet_col_note: "备注",
+    core_pallet_previous: "上一组",
+    core_pallet_next: "下一组",
+    core_pallet_add_row: "添加一行",
+    core_pallet_close: "关闭",
+    core_pallet_linked_entry: "按商品ID登记",
+    core_pallet_save_entry: "登记为待核对",
+    core_pallet_match_title: "待核对库存",
+    core_pallet_operations: "库存操作",
+    core_pallet_adjust: "调整数量",
+    core_pallet_link: "关联商品ID",
+    core_pallet_adjust_to: "调整后数量",
+    core_pallet_reason: "变更原因",
+    core_pallet_find_product: "搜索候选商品",
+    core_pallet_find_placeholder: "厂商品号、原厂品号或原厂品号2",
+    core_pallet_find: "搜索",
+    core_pallet_link_target: "关联商品",
+    core_pallet_choose: "请选择商品",
+    core_pallet_save_link: "转入当前库存",
+    core_pallet_save_adjust: "保存数量",
+    core_pallet_line_range: "第 {start} / {total} 行",
+    core_pallet_line_field: "第 {row} 行 {field}",
+    core_pallet_units: "{qty} 件",
+    core_pallet_same_part: "该品号的全部托盘（{count} 行，{qty} 件）",
+    core_pallet_enter_query: "请输入要搜索的品号。",
+    core_pallet_searching: "正在搜索商品…",
+    core_pallet_choose_hint: "请从候选商品中选择关联商品。",
+    core_pallet_no_product: "没有匹配的候选商品。",
+    core_pallet_search_failed: "无法加载候选商品。",
+    core_pallet_saving: "正在保存…",
+    core_pallet_unconfirmed: "无法确认保存结果。请原样重试。",
+    core_pallet_added: "已登记 {count} 行待核对库存。",
+    core_pallet_adjusted: "已更新 {count} 行库存的数量。",
+    core_pallet_linked: "已关联 {count} 行并转入当前库存。",
+    core_pallet_invalid_entry: "请检查第 {row} 行的托盘、品号和数量。",
+    core_pallet_empty_entry: "请输入要登记的明细。",
+    core_pallet_invalid_adjust: "请输入非负整数及变更原因。",
+    core_pallet_invalid_bulk: "请选择不超过100行的有库存明细。",
+    core_pallet_switch_prompt: "请先保存已输入的行或关闭此窗口再切换。",
+    core_pallet_link_preview: "将 {count} 行（{qty} 件）转入当前库存。",
+    core_pallet_manual: "手动输入",
+    core_pallet_edit_match: "编辑或关联",
     core_pending_help: "零件编号有待核对，这些数量不可出库。",
     core_pending_title: "待核对（不可出库）",
     core_pending_load_failed: "无法加载待核对的托盘记录，请点击搜索重试。",
@@ -8906,7 +9065,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1365";
+var APP_VERSION       = "v1.1.1366";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -9012,12 +9171,13 @@ var currentSelectedComponentVariantId = "";
 var productionInstructionRows = [];
 var productionInstructionMap = {};
 var coreListMgmtRows = [];
+var coreInventoryPendingRows = [];
 var coreListProductMap = {};
 var coreListProductCandidates = [];
 var coreListFormMode = "add";
 var corePhotoChoiceRowId = null;
 var coreListVehicleMap = {};
-var coreInventoryFilters = { keyword: "", vehicle: "", category: "", memo: "", korea: "exclude" };
+var coreInventoryFilters = { keyword: "", vehicle: "", category: "", memo: "", korea: "exclude", matchState: "all" };
 var coreListFilteredRows = [];
 var coreInventoryNotePages = [];
 var coreInventoryNotePage = 0;
@@ -31196,6 +31356,11 @@ async function setCoreListMode(mode) {
   coreListMode = Object.hasOwn(names, mode) ? mode : "collection";
   document.getElementById("core-workspace-filter-options").open = false;
   document.getElementById("core-inventory-filter-options").open = false;
+  var pendingAdd = document.getElementById("btn-add-core-pending");
+  pendingAdd.classList.toggle("hidden", coreListMode !== "pending" || !canManageProductionRecords());
+  var pendingStatus = document.getElementById("core-pallet-save-status");
+  pendingStatus.hidden = true;
+  pendingStatus.textContent = "";
   var actions = document.querySelector("#screen-core-list-mgmt .core-actions-menu");
   if (actions) actions.open = false;
   Object.keys(names).forEach(function(name) {
@@ -31208,13 +31373,14 @@ async function setCoreListMode(mode) {
   });
   var help = {
     collection: "目標数と現在庫を比べて、集める必要のあるコアを確認します。",
-    inventory: "保管中のコア品番・数量・置き場を確認し、在庫を登録・編集します。",
+    inventory: t("core_inventory_match_help"),
     pending: t("core_pending_help")
   };
   document.getElementById("core-workspace-title").textContent = names[coreListMode];
   document.getElementById("core-workspace-help").textContent = help[coreListMode];
   document.getElementById("core-list-results-title").textContent = coreListMode === "pending" ? t("core_pending_title") : "品番一覧";
   document.getElementById("core-management-panel").setAttribute("aria-labelledby", "btn-core-list-mode-" + coreListMode);
+  document.getElementById("core-list-count").classList.toggle("core-inventory-summary", coreListMode === "inventory");
   var loadMoreWrap = document.getElementById("core-list-load-more-wrap");
   if (loadMoreWrap) setCspStyle(loadMoreWrap, "display", "none");
   var results = document.getElementById("core-list-list");
@@ -31239,9 +31405,9 @@ async function loadCorePendingStock() {
   try {
     var rows = [];
     for (var offset = 0; ; offset += CORE_LIST_PAGE_SIZE) {
-      var result = await sb.from("production_core_pallet_intake")
-        .select("source_sheet,source_row,pallet_no,source_part_number,quantity,source_reference,source_remarks,review_reason")
-        .order("source_sha256").order("source_sheet").order("source_row")
+      var result = await sb.from("production_core_pending_stock")
+        .select("entry_key,revision,source_sheet,source_row,pallet_no,source_part_number,quantity,source_reference,source_remarks,review_reason")
+        .order("source_sha256").order("source_sheet").order("source_row").order("entry_key")
         .range(offset, offset + CORE_LIST_PAGE_SIZE - 1);
       if (seq !== coreManagementLoadSeq || coreListMode !== "pending") return;
       if (result.error) throw result.error;
@@ -31263,7 +31429,7 @@ function corePendingStockSearch() {
   if (!coreManagementDataReady) return loadCorePendingStock();
   var keyword = norm(document.getElementById("core-pending-search").value.trim());
   corePendingStockFiltered = corePendingStockRows.filter(function(row) {
-    return !keyword || [row.source_part_number, row.pallet_no].some(function(value) {
+    return !keyword || [row.source_part_number, row.pallet_no, row.source_remarks].some(function(value) {
       return normalizedContains(value, keyword);
     });
   });
@@ -31304,8 +31470,12 @@ function renderCorePendingStock() {
     var part = "<span class='core-main-pn'>" + esc(row.source_part_number) + "</span>";
     var pallet = "<span class='core-pending-pallet'>" + esc(row.pallet_no) + "</span>";
     var quantity = "<span class='core-qty-pill'>" + esc(String(row.quantity)) + "</span>";
-    var source = esc(row.source_sheet + "!" + row.source_row);
-    var reference = "<button class='btn-sm-edit' type='button' data-core-pending-details='" + index + "'>" + esc(t("core_pending_details")) + "</button>";
+    var source = esc(row.source_sheet ? row.source_sheet + "!" + row.source_row : t("core_pallet_manual"));
+    var reference = "<div class='core-pallet-row-actions'><button class='btn-sm-edit' type='button' data-core-pending-details='" + index + "'>" + esc(t("core_pending_details")) + "</button>";
+    if (canManageProductionRecords()) {
+      reference += "<button class='btn-sm-edit' type='button' data-core-pending-match='" + index + "'>" + esc(t("core_pallet_edit_match")) + "</button>";
+    }
+    reference += "</div>";
     if (cardMode) {
       return "<div class='core-list-card core-pending-record'><div class='core-list-card-head'><div>" + part +
         "<div class='mgmt-sub'>" + pallet + " / " + source + "</div></div>" + quantity + reference + "</div></div>";
@@ -31323,13 +31493,13 @@ function renderCorePendingStock() {
     button.addEventListener("click", function() {
       var row = visible[Number(button.dataset.corePendingDetails)];
       if (!row) return;
-      openCoreInventoryNoteText([
-        row.pallet_no + " / " + row.source_part_number + " / " + row.quantity + "台",
-        row.source_sheet + "!" + row.source_row,
-        row.review_reason,
-        row.source_reference,
-        row.source_remarks
-      ].filter(Boolean).join("\n"));
+      coreInventoryPendingDetails(row);
+    });
+  });
+  list.querySelectorAll("[data-core-pending-match]").forEach(function(button) {
+    button.addEventListener("click", function() {
+      var row = visible[Number(button.dataset.corePendingMatch)];
+      if (row) corePalletEntry.openMatch(row);
     });
   });
 }
@@ -32115,7 +32285,8 @@ function resetCoreInventoryFilters() {
     document.getElementById(id).value = "";
   });
   document.getElementById("core-inventory-korea").value = "exclude";
-  coreInventoryFilters = { keyword: "", vehicle: "", category: "", memo: "", korea: "exclude" };
+  document.getElementById("core-inventory-match-state").value = "all";
+  coreInventoryFilters = { keyword: "", vehicle: "", category: "", memo: "", korea: "exclude", matchState: "all" };
 }
 
 function isKoreanCoreInventoryEntry(row) {
@@ -32129,11 +32300,49 @@ function submitCoreInventorySearch() {
     vehicle: document.getElementById("core-inventory-vehicle").value,
     category: document.getElementById("core-inventory-category").value,
     memo: norm(document.getElementById("core-inventory-memo").value.trim()),
-    korea: document.getElementById("core-inventory-korea").value || "exclude"
+    korea: document.getElementById("core-inventory-korea").value || "exclude",
+    matchState: document.getElementById("core-inventory-match-state").value || "all"
   };
   document.getElementById("core-inventory-filter-options").open = false;
   document.getElementById("btn-core-list-search").focus({ preventScroll: true });
   return loadCoreListMgmt();
+}
+
+function coreInventoryPendingProduct(row) {
+  var categoryCode = { "セルモーター": "starter", "オルタネーター": "alternator" }[row.source_sheet];
+  return categoryCode ? { category_code: categoryCode } : {};
+}
+
+function coreInventoryPendingDetails(row) {
+  openCoreInventoryNoteText([
+    row.pallet_no + " / " + row.source_part_number + " / " + row.quantity + "台",
+    row.source_sheet ? row.source_sheet + "!" + row.source_row : t("core_pallet_manual"),
+    row.review_reason,
+    row.source_reference,
+    row.source_remarks
+  ].filter(Boolean).join("\n"));
+}
+
+function renderCoreInventoryPendingRow(row, index, cardMode) {
+  var part = "<div class='core-main-pn'>" + esc(row.source_part_number) + "</div>";
+  var badge = "<span class='core-inventory-match-badge'>" + esc(t("core_pending_tab")) + "</span>";
+  var quantity = "<span class='core-qty-pill'>" + esc(String(row.quantity)) + "</span>";
+  var location = esc(row.pallet_no);
+  var actions = "<button class='btn-sm-edit' type='button' data-inventory-pending-detail='" + index + "'>" + esc(t("core_pending_details")) + "</button>";
+  if (canManageProductionRecords()) {
+    actions += "<button class='btn-sm-edit' type='button' data-inventory-pending-match='" + index + "'>" + esc(t("core_pallet_edit_match")) + "</button>";
+  }
+  if (cardMode) {
+    return "<div class='core-list-card'><div class='core-list-card-head'><div>" + part + badge +
+      "</div>" + quantity + "</div><div class='core-list-card-field'><span class='core-list-card-label'>" +
+      esc(t("core_list_pallet_location")) + "</span><span class='core-list-card-value'>" +
+      location + "</span></div><div class='core-pallet-row-actions'>" + actions + "</div></div>";
+  }
+  var p = coreInventoryPendingProduct(row);
+  return "<tr><td>" + part + badge + "</td><td>" + esc(p.category_code ? productionCategoryLabel(p) : "-") +
+    "</td><td>–</td><td>" + quantity + "</td><td>" + location +
+    "</td><td><div class='core-note'>" + esc(row.source_remarks || "-") +
+    "</div></td><td><div class='core-pallet-row-actions'>" + actions + "</div></td></tr>";
 }
 
 function applyCoreInventoryFilters() {
@@ -32142,13 +32351,20 @@ function applyCoreInventoryFilters() {
   var category = coreInventoryFilters.category;
   var memo = coreInventoryFilters.memo;
   var korea = coreInventoryFilters.korea;
-  var count = Number(!!vehicle) + Number(!!category) + Number(!!memo) + Number(korea !== "exclude");
+  var matchState = coreInventoryFilters.matchState || "all";
+  var count = Number(!!vehicle) + Number(!!category) + Number(!!memo) + Number(korea !== "exclude") + Number(matchState !== "all");
   document.getElementById("core-inventory-filter-count").textContent = count ? "(" + count + ")" : "";
-  coreListFilteredRows = coreListMgmtRows.filter(function(row) {
-    if (korea !== "include" && isKoreanCoreInventoryEntry(row) !== (korea === "only")) return false;
+  var pending = coreInventoryPendingRows.map(function(row) {
+    return { pending: row, quantity: row.quantity, location: row.pallet_no, core_part_number: row.source_part_number, note: row.source_remarks };
+  });
+  coreListFilteredRows = coreListMgmtRows.concat(pending).filter(function(row) {
+    if (matchState === "linked" && row.pending || matchState === "pending" && !row.pending) return false;
+    var isKorean = !row.pending && isKoreanCoreInventoryEntry(row);
+    if (korea !== "include" && isKorean !== (korea === "only")) return false;
     var id = String(row.dkd_shohin_id);
-    var product = coreListProductMap[id] || {};
+    var product = row.pending ? coreInventoryPendingProduct(row.pending) : (coreListProductMap[id] || {});
     var classification = coreListVehicleMap[id];
+    if (row.pending && category && !product.category_code) return false;
     if (!coreCollectionVehicleMatches(classification, vehicle) || !coreCollectionCategoryMatches(product, category)) return false;
     if (memo && !normalizedContains(row.note, memo)) return false;
     return !keyword || [
@@ -32166,40 +32382,34 @@ async function loadCoreListMgmt() {
   var list = document.getElementById("core-list-list");
   list.innerHTML = "<div class='loading' role='status'>" + esc(t("loading")) + "</div>";
   try {
-    var rows = [];
+    var result = await sb.rpc("read_core_inventory_snapshot");
+    if (requestSeq !== coreManagementLoadSeq || coreListMode !== "inventory") return;
+    if (result.error) throw result.error;
+    if (!Array.isArray(result.data?.linked) || !Array.isArray(result.data?.pending)) {
+      throw new Error(t("core_pending_load_failed"));
+    }
+    var rows = result.data.linked;
     var products = {};
     var vehicles = {};
-    var checkedIds = new Set();
-    for (var offset = 0; ; offset += CORE_LIST_PAGE_SIZE) {
-      var result = await sb.from("production_core_list_entries").select("*")
-        .order("updated_at", { ascending: false }).order("id", { ascending: false })
-        .range(offset, offset + CORE_LIST_PAGE_SIZE - 1);
+    var ids = [...new Set(rows.map(function(row) { return row.dkd_shohin_id; }).filter(function(id) { return id != null; }))];
+    for (var offset = 0; offset < ids.length; offset += CORE_LIST_PAGE_SIZE) {
+      var chunk = ids.slice(offset, offset + CORE_LIST_PAGE_SIZE);
+      var lookups = await Promise.all([
+        loadCoreListProducts(chunk),
+        sb.from("core_collection_list_items").select("dkd_shohin_id,vehicle_classes").in("dkd_shohin_id", chunk)
+      ]);
       if (requestSeq !== coreManagementLoadSeq || coreListMode !== "inventory") return;
-      if (result.error) throw result.error;
-      var batch = result.data || [];
-      var ids = [...new Set(batch.map(function(row) { return row.dkd_shohin_id; }).filter(function(id) {
-        return id != null && !checkedIds.has(id);
-      }))];
-      if (ids.length) {
-        var lookups = await Promise.all([
-          loadCoreListProducts(ids),
-          sb.from("core_collection_list_items").select("dkd_shohin_id,vehicle_classes").in("dkd_shohin_id", ids)
-        ]);
-        if (requestSeq !== coreManagementLoadSeq || coreListMode !== "inventory") return;
-        if (lookups[1].error) throw lookups[1].error;
-        lookups[0].forEach(function(product) { products[String(product.dkd_shohin_id)] = product; });
-        (lookups[1].data || []).forEach(function(row) { vehicles[String(row.dkd_shohin_id)] = row; });
-        ids.forEach(function(id) { checkedIds.add(id); });
-      }
-      rows = rows.concat(batch);
-      if (batch.length < CORE_LIST_PAGE_SIZE) break;
+      if (lookups[1].error) throw lookups[1].error;
+      lookups[0].forEach(function(product) { products[String(product.dkd_shohin_id)] = product; });
+      (lookups[1].data || []).forEach(function(row) { vehicles[String(row.dkd_shohin_id)] = row; });
     }
     Object.keys(products).forEach(function(id) {
       if (coreCollectionVehicleClasses(vehicles[id]).length) return;
       var classes = coreInventoryVehicleClasses(products[id]);
       if (classes.length) vehicles[id] = { vehicle_classes: classes };
     });
-    coreListMgmtRows = rows.filter(function(row) { return !row.replaced_at; });
+    coreListMgmtRows = rows;
+    coreInventoryPendingRows = result.data.pending;
     coreListProductMap = products;
     coreListVehicleMap = vehicles;
     applyCoreInventoryFilters();
@@ -32226,9 +32436,13 @@ function renderCoreListMgmt() {
   var list = document.getElementById("core-list-list");
   if (!list) return;
   list.scrollTop = 0;
+  var pendingTotal = sumProductionCoreEntryQty(coreListFilteredRows.filter(function(row) { return row.pending; }));
+  var physicalTotal = sumProductionCoreEntryQty(coreListFilteredRows);
   renderCoreManagementSummary([
     { label: "在庫明細", value: coreListFilteredRows.length, unit: "件" },
-    { label: "コア合計", value: sumProductionCoreEntryQty(coreListFilteredRows), unit: "台", tone: "stock" }
+    { label: t("core_inventory_physical"), value: physicalTotal, unit: "台", tone: "stock" },
+    { label: t("core_inventory_linked"), value: physicalTotal - pendingTotal, unit: "台" },
+    { label: t("core_pending_tab"), value: pendingTotal, unit: "台" }
   ]);
   if (!coreListFilteredRows.length) {
     list.innerHTML = "<div class='empty' role='status'>" + esc(t("no_results")) + "</div>";
@@ -32236,7 +32450,8 @@ function renderCoreListMgmt() {
   }
   if (!isPC() || window.innerWidth < 1101) {
     var mobileHtml = "<div class='core-list-mobile-cards'>";
-    coreListFilteredRows.forEach(function(row) {
+    coreListFilteredRows.forEach(function(row, index) {
+      if (row.pending) { mobileHtml += renderCoreInventoryPendingRow(row.pending, index, true); return; }
       var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
       var fallbackPartNumber = row.core_part_number || "";
       var updatedText = formatDateTime(row.updated_at);
@@ -32265,7 +32480,8 @@ function renderCoreListMgmt() {
   } else {
     var html = "<table class='mgmt-table core-list-table' aria-label='現在庫'>";
     html += "<thead><tr><th scope='col'>コア品番</th><th scope='col'>車両区分・メーカー</th><th scope='col'>純正品番</th><th scope='col'>数量</th><th scope='col'>" + esc(t("core_list_pallet_location")) + "</th><th scope='col'>メモ</th><th scope='col'>操作</th></tr></thead><tbody>";
-    coreListFilteredRows.forEach(function(row) {
+    coreListFilteredRows.forEach(function(row, index) {
+      if (row.pending) { html += renderCoreInventoryPendingRow(row.pending, index, false); return; }
       var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
       var fallbackPartNumber = row.core_part_number || "";
       var updatedText = formatDateTime(row.updated_at);
@@ -32286,6 +32502,18 @@ function renderCoreListMgmt() {
     html += "</tbody></table>";
     list.innerHTML = html;
   }
+  list.querySelectorAll("[data-inventory-pending-detail]").forEach(function(button) {
+    button.addEventListener("click", function() {
+      var row = coreListFilteredRows[Number(button.dataset.inventoryPendingDetail)];
+      if (row && row.pending) coreInventoryPendingDetails(row.pending);
+    });
+  });
+  list.querySelectorAll("[data-inventory-pending-match]").forEach(function(button) {
+    button.addEventListener("click", function() {
+      var row = coreListFilteredRows[Number(button.dataset.inventoryPendingMatch)];
+      if (row && row.pending) corePalletEntry.openMatch(row.pending);
+    });
+  });
   list.querySelectorAll("[data-core-note]").forEach(function(button) {
     button.addEventListener("click", function() { showCoreInventoryNote(Number(button.dataset.coreNote)); });
   });
@@ -61678,7 +61906,28 @@ document.getElementById("core-pending-search-form").addEventListener("submit", f
   corePendingStockSearch();
 });
 document.getElementById("btn-add-core-collection").addEventListener("click", function(){ openCoreCollectionForm("add"); });
-document.getElementById("btn-add-core-list").addEventListener("click", function(){ openCoreListForm("add"); });
+var corePalletEntry = window.DcatsCorePallet({
+  translate: t,
+  canEdit: canManageProductionRecords,
+  pendingRows: function() { return coreListMode === "inventory" ? coreInventoryPendingRows : corePendingStockRows; },
+  openLinked: function() { openCoreListForm("add"); },
+  search: function(query) {
+    return sb.rpc("search_core_products", { search_text: query, category_filter: null, require_sl: false, max_rows: 20 });
+  },
+  write: function(args) { return sb.rpc("write_core_pending_stock", args); },
+  refresh: async function(message) {
+    var mode = coreListMode;
+    if (mode !== "inventory" && mode !== "pending") return;
+    await setCoreListMode(mode);
+    if (coreListMode !== mode) return;
+    var status = document.getElementById("core-pallet-save-status");
+    status.textContent = message;
+    status.hidden = false;
+    if (coreManagementDataReady && mode === "pending") renderCorePendingStock();
+  }
+});
+document.getElementById("btn-add-core-list").addEventListener("click", corePalletEntry.openEntry);
+document.getElementById("btn-add-core-pending").addEventListener("click", corePalletEntry.openEntry);
 document.getElementById("btn-create-core-list-from-ranking").addEventListener("click", createCoreListFromRanking);
 document.getElementById("btn-export-core-collection").addEventListener("click", exportCoreCollectionCsv);
 document.getElementById("btn-core-collection-search").addEventListener("click", searchCoreCollectionWorkspace);
