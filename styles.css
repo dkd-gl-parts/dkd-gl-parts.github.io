@@ -12163,8 +12163,19 @@ html[data-product-3d-paused] :is(
 #screen-core-list-mgmt .core-actions-menu > summary { cursor: pointer; font-size: 13px; padding: 4px; }
 #screen-core-list-mgmt .core-actions-menu > .core-workspace-actions { display: none; }
 #screen-core-list-mgmt .core-actions-menu[open] > .core-workspace-actions { display: grid; position: absolute; z-index: 6; right: 0; top: 100%; max-width: 100%; padding: 10px; background: #fff; border: 1px solid #bdc8d6; box-sizing: border-box; border-radius: 6px; box-shadow: 0 4px 12px #172b4626; }
-#screen-core-list-mgmt .core-actions-menu .core-workspace-create { display: grid; }
-#screen-core-list-mgmt .core-actions-menu button { width: 100%; }
+#screen-core-list-mgmt .core-actions-menu[open] > .core-workspace-actions {
+  box-sizing: border-box;
+  width: min(360px, 100%);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+#screen-core-list-mgmt .core-actions-menu .core-workspace-create { display: contents; }
+#screen-core-list-mgmt .core-actions-menu button {
+  width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 @media (max-width: 1100px) {
  #screen-core-list-mgmt .core-collection-card-head { padding-bottom: 2px; border: 0; }
  #screen-core-list-mgmt .core-collection-card-head .core-main-pn { width: 100%; }
