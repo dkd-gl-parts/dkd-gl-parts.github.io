@@ -2388,7 +2388,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .core-collection-qty-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid #e0e6ef; border-radius: 6px; overflow: hidden; }
 .core-collection-qty-grid > div { display: grid; place-items: center; gap: 2px; padding: 7px 4px; border-right: 1px solid #e0e6ef; }
 .core-collection-qty-grid > div:last-child { border-right: 0; }
-.core-collection-qty-grid span { font-size: 10px; font-weight: 800; color: #667085; }
+.core-collection-qty-grid > div > span:not(.core-stock-badge) { font-size: 10px; font-weight: 800; color: #667085; }
 .core-collection-qty-grid strong { font-size: 18px; font-variant-numeric: tabular-nums; }
 .core-collection-qty-grid .shortage strong { color: #aa3529; }
 .core-collection-meta { padding: 8px 0; color: #596579; font-size: 12px; line-height: 1.5; }
@@ -11693,7 +11693,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-core-list-mgmt .core-collection-card-head > .core-collection-rank-badge { flex-shrink: 0; }
   #screen-core-list-mgmt .core-collection-qty-grid { margin: 4px 0 10px; }
   #screen-core-list-mgmt .core-collection-qty-grid > div { padding: 10px 4px; }
-  #screen-core-list-mgmt .core-collection-qty-grid span { font-size: 12px; }
+  #screen-core-list-mgmt .core-collection-qty-grid > div > span:not(.core-stock-badge) { font-size: 12px; }
   #screen-core-list-mgmt .core-collection-qty-grid strong { font-size: 22px; }
   #screen-core-list-mgmt .core-list-card-actions button { min-height: 40px; }
   #screen-core-list-mgmt .core-row-details { margin: 0 0 8px; }
@@ -12210,7 +12210,8 @@ html[data-product-3d-paused] :is(
  #screen-core-list-mgmt .core-collection-card-head .core-main-pn { width: 100%; }
  #screen-core-list-mgmt .core-collection-card-badges { padding: 2px 0; }
  #screen-core-list-mgmt .core-collection-card .core-collection-qty-grid { margin: 4px 0; }
- #screen-core-list-mgmt .core-collection-card .core-collection-qty-grid > div { display: flex; align-items: center; justify-content: center; gap: 5px; }
+ #screen-core-list-mgmt .core-collection-card .core-collection-qty-grid > div { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px; }
+ #screen-core-list-mgmt .core-collection-card .core-stock-badge { min-height: 20px; padding: 3px 4px; text-align: center; }
  #screen-core-list-mgmt .core-collection-card .core-list-card-actions { margin-top: 4px; gap: 4px; }
  #screen-core-list-mgmt .core-collection-card .core-list-card-actions button { padding: 4px 7px; }
  #screen-core-list-mgmt .core-summary-note { font-size: 12px; }
@@ -12300,30 +12301,30 @@ html[data-product-3d-paused] :is(
 
 
 #screen-core-list-mgmt:has(#btn-core-list-mode-inventory.active) .core-workspace-section-heading { display: none; }
-#screen-core-list-mgmt.active:has(#btn-core-list-mode-inventory.active) {
+#screen-core-list-mgmt.active:has(:is(#btn-core-list-mode-inventory, #btn-core-list-mode-collection).active) {
   height: 100dvh;
   min-height: 0;
 }
-#screen-core-list-mgmt:has(#btn-core-list-mode-inventory.active) .core-workspace {
+#screen-core-list-mgmt:has(:is(#btn-core-list-mode-inventory, #btn-core-list-mode-collection).active) .core-workspace {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   align-items: stretch;
   min-height: 0;
   overflow: visible;
 }
-#screen-core-list-mgmt:has(#btn-core-list-mode-inventory.active) #core-management-panel,
-#screen-core-list-mgmt:has(#btn-core-list-mode-inventory.active) .core-workspace-results {
+#screen-core-list-mgmt:has(:is(#btn-core-list-mode-inventory, #btn-core-list-mode-collection).active) #core-management-panel,
+#screen-core-list-mgmt:has(:is(#btn-core-list-mode-inventory, #btn-core-list-mode-collection).active) .core-workspace-results {
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
-#screen-core-list-mgmt:has(#btn-core-list-mode-inventory.active) .core-workspace-results {
+#screen-core-list-mgmt:has(:is(#btn-core-list-mode-inventory, #btn-core-list-mode-collection).active) .core-workspace-results {
   flex: 1 1 0;
 }
-#screen-core-list-mgmt:has(#btn-core-list-mode-inventory.active) :is(.core-workspace-results-heading, .mgmt-toolbar, .core-workspace-summary) {
+#screen-core-list-mgmt:has(:is(#btn-core-list-mode-inventory, #btn-core-list-mode-collection).active) :is(.core-workspace-results-heading, .mgmt-toolbar, .core-workspace-summary) {
   flex: none;
 }
-#screen-core-list-mgmt:has(#btn-core-list-mode-inventory.active) #core-list-list {
+#screen-core-list-mgmt:has(:is(#btn-core-list-mode-inventory, #btn-core-list-mode-collection).active) #core-list-list {
   flex: 1 1 0;
   min-height: 0;
   overflow-y: auto;
@@ -12333,10 +12334,10 @@ html[data-product-3d-paused] :is(
   outline: 2px solid var(--dcats-focus);
   outline-offset: -2px;
 }
-#screen-core-list-mgmt #core-list-list .core-list-table {
+#screen-core-list-mgmt #core-list-list :is(.core-list-table, .core-collection-table) {
   overflow: visible;
 }
-#screen-core-list-mgmt #core-list-list .core-list-table thead th {
+#screen-core-list-mgmt #core-list-list :is(.core-list-table, .core-collection-table) thead th {
   position: sticky;
   top: 0;
   z-index: 1;

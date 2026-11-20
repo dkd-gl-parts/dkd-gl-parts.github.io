@@ -9151,3 +9151,21 @@ Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"品番マスタ検索":"Search 
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"品番マスタ検索":"搜索品号主数据"});
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"需求量":"Required quantity","分类":"Classification"});
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"需求量":"需求量","分类":"分类"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {
+  "コア在庫": "Core stock",
+  "コアあり": "Core available",
+  "必要数・コア在庫": "Required quantity and core stock",
+  "必要数とコア在庫を比べて、集める必要のあるコアを確認します。": "Compare the required quantity with core stock to identify cores to collect.",
+  "有旧件": "Core available",
+  "旧件库存": "Core stock",
+  "无库存": "Out of stock"
+});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {
+  "コア在庫": "旧件库存",
+  "コアあり": "有旧件",
+  "必要数・コア在庫": "需求数量和旧件库存",
+  "必要数とコア在庫を比べて、集める必要のあるコアを確認します。": "对照需求数量和旧件库存，确认需要补充的旧件。",
+  "有旧件": "有旧件",
+  "旧件库存": "旧件库存",
+  "无库存": "无库存"
+});
