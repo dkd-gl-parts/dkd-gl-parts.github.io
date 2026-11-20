@@ -2070,6 +2070,7 @@ var TRANSLATIONS = {
     core_pending_units: "照合待ち数量",
     core_pending_export_print: "印刷・PDF",
     core_pending_export_excel: "Excel出力",
+    core_pending_export_filename: "GLTEK_コア照合待ち",
     core_pending_export_info: "{date}　{count}明細・{qty}台",
     core_pending_export_error: "一覧を出力できませんでした。もう一度お試しください。",
     core_pending_pallet: "パレットNO.",
@@ -5056,6 +5057,7 @@ var TRANSLATIONS = {
     core_pending_units: "Pending units",
     core_pending_export_print: "Print / PDF",
     core_pending_export_excel: "Export Excel",
+    core_pending_export_filename: "GLTEK_CORE_PENDING",
     core_pending_export_info: "{date} · {count} records · {qty} pcs",
     core_pending_export_error: "Could not export the list. Please try again.",
     core_pending_pallet: "Pallet no.",
@@ -8043,6 +8045,7 @@ var TRANSLATIONS = {
     core_pending_units: "待核对数量",
     core_pending_export_print: "打印 / PDF",
     core_pending_export_excel: "导出 Excel",
+    core_pending_export_filename: "GLTEK_待核对库存",
     core_pending_export_info: "{date}　{count}条明细・{qty}件",
     core_pending_export_error: "无法导出列表。请重试。",
     core_pending_pallet: "托盘编号",
@@ -31476,7 +31479,7 @@ function corePendingExportSnapshot() {
   var report = window.DcatsCorePendingExport.collect(corePendingStockFiltered, t("core_pallet_manual"));
   var date = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo" }).format(new Date());
   var subtitle = tf("core_pending_export_info", { date: date, count: report.count.toLocaleString(), qty: report.total.toLocaleString() });
-  return { report: report, title: t("core_pending_tab") + " " + date, subtitle: subtitle, fileName: "GLTEK_コア照合待ち_" + date };
+  return { report: report, title: t("core_pending_tab") + " " + date, subtitle: subtitle, fileName: t("core_pending_export_filename") + "_" + date };
 }
 
 function showCorePendingExportError() {

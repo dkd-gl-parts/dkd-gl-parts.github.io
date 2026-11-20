@@ -30,7 +30,7 @@ async function main() {
     'var coreListMode = "pending", coreManagementDataReady = true;',
     "var corePendingStockFiltered = " + JSON.stringify(data) + ";",
     "var canViewCoreManagement = () => true;",
-    'var t = (key) => ({core_pending_tab:"照合待ち",core_pallet_manual:"手入力"})[key] || key;',
+    'var t = (key) => ({core_pending_tab:"照合待ち",core_pallet_manual:"手入力",core_pending_export_filename:"GLTEK_コア照合待ち"})[key] || key;',
     'var tf = (key, v) => v.date + " " + v.count + "明細・" + v.qty + "台";',
     'window.print = () => { document.body.dataset.printOpened = "true"; };',
     ...funcs.map(node => app.slice(node.start, node.end)),
