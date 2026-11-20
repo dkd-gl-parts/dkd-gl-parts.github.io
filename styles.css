@@ -12427,7 +12427,7 @@ html[data-product-3d-paused] :is(
 .core-pallet-dialog .core-pallet-help { margin: 5px 0 10px; overflow-wrap: anywhere; }
 .core-pallet-entry-head, .core-pallet-entry-row {
   display: grid;
-  grid-template-columns: 36px minmax(105px, 1fr) minmax(125px, 1.35fr) 72px minmax(150px, 1.8fr);
+  grid-template-columns: 36px minmax(105px, 1fr) minmax(125px, 1.35fr) minmax(112px, .55fr) minmax(150px, 1.8fr);
 }
 .core-pallet-entry-head {
   color: white;
@@ -12439,6 +12439,14 @@ html[data-product-3d-paused] :is(
 .core-pallet-entry-row:nth-child(even) { background: #fff; }
 .core-pallet-entry-row label { min-width: 0; border-left: 1px solid #c1d0de; }
 .core-pallet-entry-row input { width: 100%; box-sizing: border-box; min-width: 0; min-height: 36px; border: 0; border-radius: 0; padding: 6px; background: transparent; color: inherit; font: inherit; }
+#core-pallet-entry-rows input[data-field="quantity"] {
+  background: #fff;
+  color: #153b26;
+  font-size: 18px;
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
 .core-pallet-entry-row input:focus-visible { outline: 2px solid #1f4e78; outline-offset: -2px; background: #fff; }
 .core-pallet-entry-mobile-label { display: none; }
 .core-pallet-line-controls, .core-pallet-footer, .core-pallet-switch { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }

@@ -9,7 +9,7 @@
     const columns = [
       { name: "pallet_no", label: "col_pallet", length: 80 },
       { name: "part_number", label: "col_part", length: 120 },
-      { name: "quantity", label: "col_qty", length: 9 },
+      { name: "quantity", label: "col_qty" },
       { name: "note", label: "col_note", length: 500 }
     ];
     const compact = window.matchMedia("(max-width: 600px), (max-height: 510px)");
@@ -17,7 +17,22 @@
     const blank = () => ({ pallet_no: "", part_number: "", quantity: "", note: "" });
     const on = (id, event, listener) => el(id).addEventListener(event, listener);
     const asKey = (value) => String(value || "").trim().normalize("NFKC").toUpperCase();
-    const readQuantity = (value) => /^[0-9]{1,9}$/.test(value) ? Number(value) : null;
+    const halfWidthQuantity = (value) => value.replace(/[０-９，]/g, (character) => (
+      String.fromCharCode(character.charCodeAt(0) - 0xfee0)
+    ));
+    function readQuantity(input) {
+      const text = halfWidthQuantity(input).trim();
+      const digits = /^[0-9]{1,3}(,[0-9]{3})+$/.test(text) ? text.replaceAll(",", "") : text;
+      return /^[0-9]{1,9}$/.test(digits) ? Number(digits) : null;
+    }
+
+    function normalizeQuantityInput(input) {
+      const value = halfWidthQuantity(input.value);
+      if (input.value === value) return;
+      const { selectionStart, selectionEnd } = input;
+      input.value = value;
+      input.setSelectionRange(selectionStart, selectionEnd);
+    }
     const containsInput = (row) => Object.values(row).some((value) => value.trim());
     const unitTotal = (rows) => rows.reduce((sum, row) => sum + Number(row.quantity), 0);
     const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => (
@@ -33,8 +48,9 @@
           '<span class="core-pallet-entry-no">' + (index + 1) + '</span>' +
           columns.map((column) => '<label><span class="core-pallet-entry-mobile-label">' + escape(label(column.label)) + '</span>' +
             '<input type="text" aria-label="' + escape(label("line_field", { row: index + 1, field: label(column.label) })) + '" data-field="' +
-            column.name + '" maxlength="' + column.length + '" value="' + escape(row[column.name]) + '"' +
-            (column.name === "quantity" ? ' inputmode="numeric"' : '') + '></label>').join("") + '</div>';
+            column.name + '" value="' + escape(row[column.name]) + '"' +
+            (column.name === "quantity" ? ' inputmode="numeric"' : ' maxlength="' + column.length + '"') +
+            '></label>').join("") + '</div>';
       }).join("");
       el("entry-page").textContent = label("line_range", { start: (state.page + 1) + (end === state.page + 1 ? "" : "–" + end), total: state.rows.length });
       el("entry-prev").disabled = state.page === 0;
@@ -165,10 +181,15 @@
         if (!containsInput(row)) continue;
         const values = Object.fromEntries(Object.entries(row).map(([key, value]) => [key, value.trim()]));
         const quantity = readQuantity(values.quantity);
-        if (!values.pallet_no || !values.part_number || quantity == null || quantity < 1) {
+        const invalidField = !values.pallet_no ? "pallet_no" : !values.part_number ? "part_number"
+          : quantity == null || quantity < 1 ? "quantity" : null;
+        if (invalidField) {
           state.page = Math.floor(index / perPage()) * perPage();
           renderEntry();
-          el("entry-message").textContent = label("invalid_entry", { row: index + 1 });
+          el("entry-message").textContent = label(invalidField === "quantity" ? "invalid_entry_quantity" : "invalid_entry", { row: index + 1 });
+          const input = el("entry-rows").querySelector('[data-row="' + index + '"] [data-field="' + invalidField + '"]');
+          input.setAttribute("aria-invalid", "true");
+          input.focus();
           return;
         }
         rows.push({ ...values, quantity });
@@ -207,10 +228,21 @@
       void commit(match, message, "link", rows.map(selector), productId);
     }
 
-    on("entry-rows", "input", (event) => {
-      const row = event.target.closest("[data-row]");
-      if (row && event.target.dataset.field) state.rows[Number(row.dataset.row)][event.target.dataset.field] = event.target.value;
+    function rememberEntryInput(event) {
+      const input = event.target;
+      const row = input.closest("[data-row]");
+      const field = input.dataset.field;
+      if (!row || !field) return;
+      if (field === "quantity" && !event.isComposing) normalizeQuantityInput(input);
+      input.removeAttribute("aria-invalid");
+      state.rows[Number(row.dataset.row)][field] = input.value;
+    }
+    on("entry-rows", "input", rememberEntryInput);
+    on("entry-rows", "compositionend", rememberEntryInput);
+    on("adjust-qty", "input", (event) => {
+      if (!event.isComposing) normalizeQuantityInput(event.target);
     });
+    on("adjust-qty", "compositionend", (event) => normalizeQuantityInput(event.target));
     on("entry-prev", "click", () => { state.page = Math.max(0, state.page - perPage()); renderEntry(); });
     on("entry-next", "click", () => { state.page += perPage(); renderEntry(); });
     on("entry-add", "click", () => {
