@@ -9092,7 +9092,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1381";
+var APP_VERSION       = "v1.1.1382";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -9207,12 +9207,15 @@ var corePhotoChoiceRowId = null;
 var coreListVehicleMap = {};
 var coreInventoryFilters = { keyword: "", vehicle: "", category: "", memo: "", korea: "exclude", matchState: "all" };
 var coreListFilteredRows = [];
+var coreInventoryRenderedCount = 0;
 var coreInventoryNotePages = [];
 var coreInventoryNotePage = 0;
 var CORE_LIST_PAGE_SIZE = 100;
 var coreListMode = "inventory";
 var coreManagementLoadSeq = 0;
 var coreManagementDataReady = false;
+var CORE_MANAGEMENT_CACHE_MS = 30000;
+var coreManagementCache = null;
 var coreCollectionRows = [];
 var coreCollectionRankingRows = [];
 var coreCollectionCategoryRanks = new Map();
@@ -9222,7 +9225,7 @@ var coreCollectionStockMap = {};
 var coreCollectionReportRank = null;
 var coreCollectionProductCandidates = [];
 var coreCollectionFormMode = "add";
-var CORE_COLLECTION_RENDER_BATCH_SIZE = 50;
+var CORE_MANAGEMENT_RENDER_BATCH_SIZE = 50;
 var coreCollectionRenderedCount = 0;
 var coreCollectionOrderedRows = [];
 var coreCollectionSearchTerms = new WeakMap();
@@ -12194,6 +12197,7 @@ function showScreen(id) {
   if (window.DcatsNineTabs && window.DcatsNineTabs.willLeave) window.DcatsNineTabs.willLeave(id);
   if (window.DcatsWarehouseStock && !window.DcatsWarehouseStock.beforeNavigate(id)) return;
   var previousScreenId = activeAppScreenName();
+  if (previousScreenId === "core-list-mgmt" && id !== previousScreenId) clearCoreManagementCache();
   if (typeof salesSlipReadonlyAccessGate !== "undefined" && salesSlipReadonlyAccessGate && id !== "sales-slip-readonly") salesSlipReadonlyAccessGate.reset();
   if (typeof salesSlipReadonlyWorkspace !== "undefined" && salesSlipReadonlyWorkspace && id !== "sales-slip-readonly") salesSlipReadonlyWorkspace.reset();
   if (typeof claimCaseWorkspace !== "undefined" && claimCaseWorkspace && id !== "claim-case-mgmt" && (!window.DcatsNineTabs || !window.DcatsNineTabs.hasTab("claim-case-mgmt") || ["login", "boot", "reset"].includes(id))) claimCaseWorkspace.reset();
@@ -12635,6 +12639,7 @@ async function doLogout() {
   if (typeof salesSlipReadonlyWorkspace !== "undefined" && salesSlipReadonlyWorkspace) salesSlipReadonlyWorkspace.reset();
   if (window.DcatsNineTabs) window.DcatsNineTabs.suspend(true);
   resetProductionReportRanks();
+  clearCoreManagementCache();
   if (typeof claimCaseWorkspace !== "undefined" && claimCaseWorkspace) claimCaseWorkspace.reset();
   claimCaseReturnContext = null;
   if (packingBoxesController) packingBoxesController.close();
@@ -31369,6 +31374,44 @@ function renderCoreManagementSummary(items, note, visible, total) {
   }).join("") + (note ? "<p class='core-summary-note'><span>" + esc(note) + "</span>" + (visible == null ? "" : " <span>表示件数</span>: " + esc(String(visible)) + " / " + esc(String(total))) + "</p>" : "");
 }
 
+function clearCoreManagementCache() {
+  coreManagementCache = null;
+  coreManagementLoadSeq += 1;
+  coreManagementDataReady = false;
+}
+
+function getCoreManagementCache() {
+  if (!currentUser?.id || !userProfile || !canViewCoreManagement()) return null;
+  var canViewRank = canViewManufacturingReport();
+  if (coreManagementCache?.userId !== currentUser.id || coreManagementCache.profile !== userProfile ||
+      coreManagementCache.canViewRank !== canViewRank) {
+    coreManagementCache = { userId: currentUser.id, profile: userProfile, canViewRank: canViewRank };
+  }
+  return coreManagementCache;
+}
+
+function readCoreInventorySnapshot(cache) {
+  if (cache?.stock?.expiresAt > Date.now()) return cache.stock.request;
+  var request = Promise.resolve(sb.rpc("read_core_inventory_snapshot"));
+  if (cache) {
+    cache.stock = { expiresAt: Date.now() + CORE_MANAGEMENT_CACHE_MS, request: request };
+    function forgetFailedSnapshot() {
+      if (cache.stock?.request === request) delete cache.stock;
+    }
+    request.then(function(result) {
+      if (result.error || !Array.isArray(result.data?.linked) || !Array.isArray(result.data?.pending)) forgetFailedSnapshot();
+    }, forgetFailedSnapshot);
+  }
+  return request;
+}
+
+function refreshCoreManagementAfterEdit() {
+  if (!isScreenActive("core-list-mgmt")) return;
+  if (coreListMode === "collection") return loadCoreCollectionList();
+  if (coreListMode === "inventory") return loadCoreListMgmt();
+  return loadCorePendingStock();
+}
+
 function beginCoreManagementLoad() {
   coreManagementLoadSeq += 1;
   var countEl = document.getElementById("core-list-count");
@@ -31426,6 +31469,7 @@ async function enterCoreListMgmt() {
   var collectionAddBtn = document.getElementById("btn-add-core-collection");
   if (addBtn) setCspStyle(addBtn, "display", canManageProductionRecords() ? "" : "none");
   if (collectionAddBtn) setCspStyle(collectionAddBtn, "display", canManageProductionRecords() ? "" : "none");
+  clearCoreManagementCache();
   resetCoreCollectionControls();
   await setCoreListMode("inventory");
 }
@@ -31474,8 +31518,19 @@ async function setCoreListMode(mode) {
   results.tabIndex = coreListMode === "pending" ? -1 : 0;
   results.scrollTop = 0;
   results.setAttribute("aria-live", coreListMode === "pending" ? "polite" : "off");
-  if (coreListMode === "collection") return loadCoreCollectionList();
   if (coreListMode === "pending") return loadCorePendingStock();
+  var cache = getCoreManagementCache();
+  if (cache?.[coreListMode] > Date.now()) {
+    coreManagementLoadSeq += 1;
+    coreManagementDataReady = true;
+    if (coreListMode === "collection") {
+      applyCoreCollectionFilters();
+      return renderCoreCollectionList();
+    }
+    applyCoreInventoryFilters();
+    return renderCoreListMgmt();
+  }
+  if (coreListMode === "collection") return loadCoreCollectionList();
   return loadCoreListMgmt();
 }
 
@@ -31931,18 +31986,26 @@ function indexCoreCollectionRows() {
 }
 
 async function loadCoreCollectionList() {
+  if (coreListMode !== "collection") return;
+  var cache = getCoreManagementCache();
+  if (!cache) return;
+  delete cache.collection;
+  var expiresAt = Date.now() + CORE_MANAGEMENT_CACHE_MS;
   var requestSeq = beginCoreManagementLoad();
   var list = document.getElementById("core-list-list");
   if (list) list.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
+  function isCurrent() {
+    return requestSeq === coreManagementLoadSeq && coreListMode === "collection" && cache === getCoreManagementCache();
+  }
   function checkCurrent() {
-    if (requestSeq !== coreManagementLoadSeq || coreListMode !== "collection") throw new Error("Collection load superseded");
+    if (!isCurrent()) throw new Error("Collection load superseded");
   }
   try {
     // Start independent reads together. The list stays available when the report alone fails.
     var rankRequest = canViewManufacturingReport()
       ? window.DCatsManufacturingRankingReport.loadCoreCollectionRanking2025(checkCurrent).catch(function() { return null; })
       : null;
-    var [loadedRows, stock] = await Promise.all([loadCoreCollectionItems(checkCurrent), readCoreCollectionStock(checkCurrent)]);
+    var [loadedRows, stock] = await Promise.all([loadCoreCollectionItems(checkCurrent), readCoreCollectionStock(cache, checkCurrent)]);
     checkCurrent();
     var [products, report] = await Promise.all([
       loadCoreCollectionProducts(loadedRows.map(function(row) { return row.dkd_shohin_id; }).concat(Object.keys(stock)), checkCurrent),
@@ -31957,11 +32020,12 @@ async function loadCoreCollectionList() {
     coreCollectionReportRank = report ? report.forProduct : null;
     coreCollectionRankingRows = buildCoreCollectionRankingRows(report);
     indexCoreCollectionRows();
+    if (report || !cache.canViewRank) cache.collection = Math.min(expiresAt, cache.stock?.expiresAt || expiresAt);
     applyCoreCollectionFilters();
     coreManagementDataReady = true;
     renderCoreCollectionList();
   } catch (error) {
-    if (requestSeq !== coreManagementLoadSeq || coreListMode !== "collection") return;
+    if (!isCurrent()) return;
     if (list) list.innerHTML = "<div class='empty' role='alert'>収集リストを取得できませんでした。検索ボタンで再読み込みしてください。<br>" + esc(error.message || "") + "</div>";
   }
 }
@@ -32078,8 +32142,8 @@ async function resolveCoreCollectionRankingCodes(products, report, checkCurrent)
   });
 }
 
-async function readCoreCollectionStock(checkCurrent) {
-  var result = await sb.rpc("read_core_inventory_snapshot");
+async function readCoreCollectionStock(cache, checkCurrent) {
+  var result = await readCoreInventorySnapshot(cache);
   checkCurrent();
   if (result.error) throw result.error;
   if (!Array.isArray(result.data?.linked)) throw new Error(t("core_pending_load_failed"));
@@ -32170,7 +32234,7 @@ function renderCoreCollectionRow(row, mobile) {
 function appendCoreCollectionRows(list) {
   var content = list.querySelector("[data-core-collection-rows]");
   if (!content) return;
-  var end = Math.min(coreCollectionRenderedCount + CORE_COLLECTION_RENDER_BATCH_SIZE, coreCollectionFilteredRows.length);
+  var end = Math.min(coreCollectionRenderedCount + CORE_MANAGEMENT_RENDER_BATCH_SIZE, coreCollectionFilteredRows.length);
   var mobile = content.tagName !== "TBODY";
   var html = coreCollectionFilteredRows.slice(coreCollectionRenderedCount, end).map(function(row) {
     return renderCoreCollectionRow(row, mobile);
@@ -32439,11 +32503,17 @@ async function saveCoreCollectionForm() {
       data.shipment_count = coreCollectionFormRank.shipment;
     }
     r = await sb.from("core_collection_list_items").insert(data).select().single();
-    if (!r.error) await writeLog("insert", "core_collection_list_items", r.data && r.data.id, "DKD " + dkdId, null, data);
+    if (!r.error) {
+      clearCoreManagementCache();
+      await writeLog("insert", "core_collection_list_items", r.data && r.data.id, "DKD " + dkdId, null, data);
+    }
   } else {
     var before = coreCollectionRows.find(function(row) { return row.id === id; });
     r = await sb.from("core_collection_list_items").update(data).eq("id", id).select().single();
-    if (!r.error) await writeLog("update", "core_collection_list_items", id, "DKD " + dkdId, before, data);
+    if (!r.error) {
+      clearCoreManagementCache();
+      await writeLog("update", "core_collection_list_items", id, "DKD " + dkdId, before, data);
+    }
   }
   if (r.error && !r.error.code) {
     coreCollectionFormSaveUnknown = true;
@@ -32455,7 +32525,7 @@ async function saveCoreCollectionForm() {
     return;
   }
   document.getElementById("core-collection-form-overlay").classList.remove("show");
-  await loadCoreCollectionList();
+  await refreshCoreManagementAfterEdit();
   } catch (error) {
     coreCollectionFormSaveUnknown = true;
     document.getElementById("core-collection-form-error").textContent = "保存結果を確認できません。再送せず、画面を再読み込みして登録内容を確認してください。";
@@ -32572,7 +32642,9 @@ function submitCoreInventorySearch() {
   };
   document.getElementById("core-inventory-filter-options").open = false;
   document.getElementById("btn-core-list-search").focus({ preventScroll: true });
-  return loadCoreListMgmt();
+  if (!coreManagementDataReady || !(getCoreManagementCache()?.inventory > Date.now())) return loadCoreListMgmt();
+  applyCoreInventoryFilters();
+  renderCoreListMgmt();
 }
 
 function coreInventoryPendingProduct(row) {
@@ -32635,12 +32707,19 @@ function applyCoreInventoryFilters() {
 
 async function loadCoreListMgmt() {
   if (coreListMode !== "inventory") return;
+  var cache = getCoreManagementCache();
+  if (!cache) return;
+  delete cache.inventory;
+  var expiresAt = Date.now() + CORE_MANAGEMENT_CACHE_MS;
   var requestSeq = beginCoreManagementLoad();
   var list = document.getElementById("core-list-list");
   list.innerHTML = "<div class='loading' role='status'>" + esc(t("loading")) + "</div>";
+  function isCurrent() {
+    return requestSeq === coreManagementLoadSeq && coreListMode === "inventory" && cache === getCoreManagementCache();
+  }
   try {
-    var result = await sb.rpc("read_core_inventory_snapshot");
-    if (requestSeq !== coreManagementLoadSeq || coreListMode !== "inventory") return;
+    var result = await readCoreInventorySnapshot(cache);
+    if (!isCurrent()) return;
     if (result.error) throw result.error;
     if (!Array.isArray(result.data?.linked) || !Array.isArray(result.data?.pending)) {
       throw new Error(t("core_pending_load_failed"));
@@ -32649,16 +32728,24 @@ async function loadCoreListMgmt() {
     var products = {};
     var vehicles = {};
     var ids = [...new Set(rows.map(function(row) { return row.dkd_shohin_id; }).filter(function(id) { return id != null; }))];
-    for (var offset = 0; offset < ids.length; offset += CORE_LIST_PAGE_SIZE) {
-      var chunk = ids.slice(offset, offset + CORE_LIST_PAGE_SIZE);
-      var lookups = await Promise.all([
-        loadCoreListProducts(chunk),
-        sb.from("core_collection_list_items").select("dkd_shohin_id,vehicle_classes").in("dkd_shohin_id", chunk)
-      ]);
-      if (requestSeq !== coreManagementLoadSeq || coreListMode !== "inventory") return;
-      if (lookups[1].error) throw lookups[1].error;
-      lookups[0].forEach(function(product) { products[String(product.dkd_shohin_id)] = product; });
-      (lookups[1].data || []).forEach(function(row) { vehicles[String(row.dkd_shohin_id)] = row; });
+    var chunkSize = 250;
+    var concurrency = 4;
+    for (var start = 0; start < ids.length; start += chunkSize * concurrency) {
+      var requests = [];
+      for (var offset = start; offset < Math.min(ids.length, start + chunkSize * concurrency); offset += chunkSize) {
+        var chunk = ids.slice(offset, offset + chunkSize);
+        requests.push(Promise.all([
+          loadCoreListProducts(chunk),
+          sb.from("core_collection_list_items").select("dkd_shohin_id,vehicle_classes").in("dkd_shohin_id", chunk)
+        ]));
+      }
+      var batches = await Promise.all(requests);
+      if (!isCurrent()) return;
+      batches.forEach(function(lookups) {
+        if (lookups[1].error) throw lookups[1].error;
+        lookups[0].forEach(function(product) { products[String(product.dkd_shohin_id)] = product; });
+        (lookups[1].data || []).forEach(function(row) { vehicles[String(row.dkd_shohin_id)] = row; });
+      });
     }
     Object.keys(products).forEach(function(id) {
       if (coreCollectionVehicleClasses(vehicles[id]).length) return;
@@ -32669,11 +32756,12 @@ async function loadCoreListMgmt() {
     coreInventoryPendingRows = result.data.pending;
     coreListProductMap = products;
     coreListVehicleMap = vehicles;
+    cache.inventory = Math.min(expiresAt, cache.stock.expiresAt);
     applyCoreInventoryFilters();
     coreManagementDataReady = true;
     renderCoreListMgmt();
   } catch (error) {
-    if (requestSeq === coreManagementLoadSeq && coreListMode === "inventory") {
+    if (isCurrent()) {
       list.innerHTML = "<div class='empty' role='alert'>在庫を取得できませんでした。検索ボタンで再読み込みしてください。<br>" + esc(error.message || "") + "</div>";
     }
   }
@@ -32693,6 +32781,7 @@ function renderCoreListMgmt() {
   var list = document.getElementById("core-list-list");
   if (!list) return;
   list.scrollTop = 0;
+  coreInventoryRenderedCount = 0;
   var pendingTotal = sumProductionCoreEntryQty(coreListFilteredRows.filter(function(row) { return row.pending; }));
   var physicalTotal = sumProductionCoreEntryQty(coreListFilteredRows);
   renderCoreManagementSummary([
@@ -32705,82 +32794,92 @@ function renderCoreListMgmt() {
     list.innerHTML = "<div class='empty' role='status'>" + esc(t("no_results")) + "</div>";
     return;
   }
-  if (!isPC() || window.innerWidth < 1101) {
-    var mobileHtml = "<div class='core-list-mobile-cards'>";
-    coreListFilteredRows.forEach(function(row, index) {
-      if (row.pending) { mobileHtml += renderCoreInventoryPendingRow(row.pending, index, true); return; }
-      var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
-      var fallbackPartNumber = row.core_part_number || "";
-      var updatedText = formatDateTime(row.updated_at);
-      function mobileField(label, value, wide) {
-        return "<div class='core-list-card-field" + (wide ? " core-list-card-field-wide" : "") + "'><span class='core-list-card-label'>" + esc(label) + "</span><span class='core-list-card-value'>" + value + "</span></div>";
-      }
-      mobileHtml += "<div class='core-list-card'>";
-      mobileHtml += "<div class='core-list-card-head'><div><div class='core-main-pn'>" + esc(row.core_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(productionCategoryLabel(p)) + "</div></div><span class='core-qty-pill'>" + esc(String(row.quantity == null ? 0 : row.quantity)) + "</span></div>";
-      mobileHtml += "<div class='core-list-card-grid'>";
-      mobileHtml += mobileField("車両区分", renderCoreCollectionVehicleHtml(coreListVehicleMap[String(row.dkd_shohin_id)]), true);
-      mobileHtml += mobileField(t("f_manufacturer"), "<span class='core-maker-badge'>" + esc(p.manufacturer || "-") + "</span>");
-      mobileHtml += mobileField(t("core_list_location"), esc(row.location || "-"));
-      mobileHtml += mobileField(t("f_genuine_pn"), "<span class='mgmt-pn'>" + esc(p.genuine_part_number || fallbackPartNumber || "-") + "</span><span class='mgmt-sub core-list-maker-pn'>" + esc(p.manufacturer_part_number || fallbackPartNumber || "-") + "</span>", true);
-      mobileHtml += "</div>";
-      mobileHtml += "<div class='core-list-card-note'><div class='mgmt-sub'>DKD " + esc(String(row.dkd_shohin_id || "-")) + " / " + esc(updatedText) + "</div>";
-      if (row.note) mobileHtml += "<button type='button' class='btn-sm-edit' data-core-note='" + esc(String(row.id)) + "'>" + esc(t("core_list_note")) + "</button>";
-      mobileHtml += "</div>";
-      mobileHtml += "<div class='core-list-card-actions'>";
-      mobileHtml += "<button class='btn-sm-edit production-action-secondary' data-core-image='" + esc(String(row.id)) + "'>" + esc(t("btn_upload")) + "</button>";
-      mobileHtml += "<button class='btn-sm-edit' data-core-edit='" + esc(String(row.id)) + "'>" + esc(t("btn_edit")) + "</button>";
-      mobileHtml += "</div></div>";
-    });
-    mobileHtml += "</div>";
-    list.innerHTML = mobileHtml;
-  } else {
-    var html = "<table class='mgmt-table core-list-table' aria-label='現在庫'>";
-    html += "<thead><tr><th scope='col'>コア品番</th><th scope='col'>車両区分・メーカー</th><th scope='col'>純正品番</th><th scope='col'>" + esc(t("core_list_pallet_location")) + "</th><th scope='col'>メモ</th><th scope='col'>操作</th><th scope='col' class='core-inventory-quantity'>" + esc(t("core_list_quantity")) + "</th></tr></thead><tbody>";
-    coreListFilteredRows.forEach(function(row, index) {
-      if (row.pending) { html += renderCoreInventoryPendingRow(row.pending, index, false); return; }
-      var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
-      var fallbackPartNumber = row.core_part_number || "";
-      var updatedText = formatDateTime(row.updated_at);
-      html += "<tr>";
-      html += "<td><div class='core-main-pn'>" + esc(row.core_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(productionCategoryLabel(p)) + "</div></td>";
-      html += "<td><div class='core-vehicle-label'>" + renderCoreCollectionVehicleHtml(coreListVehicleMap[String(row.dkd_shohin_id)]) + "</div><div class='mgmt-sub'>" + esc(p.manufacturer || "-") + "</div></td>";
-      html += "<td><div class='mgmt-pn'>" + esc(p.genuine_part_number || fallbackPartNumber || "-") + "</div><div class='mgmt-sub'>" + esc(p.manufacturer_part_number || fallbackPartNumber || "-") + " / DKD " + esc(String(row.dkd_shohin_id || "-")) + "</div></td>";
-      html += "<td>" + esc(row.location || "-") + "</td>";
-      html += "<td><div class='core-note'>" + esc(row.note || "-") + "</div><div class='mgmt-sub'>" + esc(updatedText) + "</div></td>";
-      html += "<td><div class='mgmt-actions'>";
-      html += "<button class='btn-sm-edit production-action-secondary' data-core-image='" + row.id + "'>" + esc(t("btn_upload")) + "</button>";
-      html += "<button class='btn-sm-edit' data-core-edit='" + row.id + "'>" + t("btn_edit") + "</button>";
-      html += "</div></td>";
-      html += "<td class='core-inventory-quantity'><span class='core-qty-pill'>" + esc(String(row.quantity == null ? 0 : row.quantity)) + "</span></td>";
-      html += "</tr>";
-    });
-    html += "</tbody></table>";
-    list.innerHTML = html;
-  }
-  list.querySelectorAll("[data-inventory-pending-match]").forEach(function(button) {
-    button.addEventListener("click", function() {
-      var row = coreListFilteredRows[Number(button.dataset.inventoryPendingMatch)];
-      if (row && row.pending) corePalletEntry.openMatch(row.pending);
-    });
-  });
-  list.querySelectorAll("[data-core-note]").forEach(function(button) {
-    button.addEventListener("click", function() { showCoreInventoryNote(Number(button.dataset.coreNote)); });
-  });
-  if (!canUploadCoreImages()) {
-    list.querySelectorAll("[data-core-image]").forEach(function(btn) { btn.remove(); });
-  } else {
-    list.querySelectorAll("[data-core-image]").forEach(function(btn) {
-      btn.addEventListener("click", function() { openCorePhotoChoice(parseInt(btn.dataset.coreImage, 10)); });
-    });
-  }
-  if (!canManageProductionRecords()) {
-    list.querySelectorAll("[data-core-edit]").forEach(function(btn) { btn.remove(); });
-    return;
-  }
+  list.innerHTML = !isPC() || window.innerWidth < 1101
+    ? "<div class='core-list-mobile-cards' data-core-inventory-rows></div>"
+    : "<table class='mgmt-table core-list-table' aria-label='現在庫'><thead><tr><th scope='col'>コア品番</th><th scope='col'>車両区分・メーカー</th><th scope='col'>純正品番</th><th scope='col'>" + esc(t("core_list_pallet_location")) + "</th><th scope='col'>メモ</th><th scope='col'>操作</th><th scope='col' class='core-inventory-quantity'>" + esc(t("core_list_quantity")) + "</th></tr></thead><tbody data-core-inventory-rows></tbody></table>";
+  appendCoreInventoryRows(list);
+  loadMoreCoreInventoryRowsOnScroll();
+}
 
-  list.querySelectorAll("[data-core-edit]").forEach(function(btn) {
-    btn.addEventListener("click", function() { openCoreListForm("edit", parseInt(btn.dataset.coreEdit, 10)); });
-  });
+function renderCoreInventoryRow(row, index, mobile, canEdit, canUpload) {
+  if (row.pending) return renderCoreInventoryPendingRow(row.pending, index, mobile);
+  var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
+  var fallbackPartNumber = row.core_part_number || "";
+  var updatedText = formatDateTime(row.updated_at);
+  if (mobile) {
+    function mobileField(label, value, wide) {
+      return "<div class='core-list-card-field" + (wide ? " core-list-card-field-wide" : "") + "'><span class='core-list-card-label'>" + esc(label) + "</span><span class='core-list-card-value'>" + value + "</span></div>";
+    }
+    var mobileHtml = "<div class='core-list-card'>";
+    mobileHtml += "<div class='core-list-card-head'><div><div class='core-main-pn'>" + esc(row.core_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(productionCategoryLabel(p)) + "</div></div><span class='core-qty-pill'>" + esc(String(row.quantity == null ? 0 : row.quantity)) + "</span></div>";
+    mobileHtml += "<div class='core-list-card-grid'>";
+    mobileHtml += mobileField("車両区分", renderCoreCollectionVehicleHtml(coreListVehicleMap[String(row.dkd_shohin_id)]), true);
+    mobileHtml += mobileField(t("f_manufacturer"), "<span class='core-maker-badge'>" + esc(p.manufacturer || "-") + "</span>");
+    mobileHtml += mobileField(t("core_list_location"), esc(row.location || "-"));
+    mobileHtml += mobileField(t("f_genuine_pn"), "<span class='mgmt-pn'>" + esc(p.genuine_part_number || fallbackPartNumber || "-") + "</span><span class='mgmt-sub core-list-maker-pn'>" + esc(p.manufacturer_part_number || fallbackPartNumber || "-") + "</span>", true);
+    mobileHtml += "</div>";
+    mobileHtml += "<div class='core-list-card-note'><div class='mgmt-sub'>DKD " + esc(String(row.dkd_shohin_id || "-")) + " / " + esc(updatedText) + "</div>";
+    if (row.note) mobileHtml += "<button type='button' class='btn-sm-edit' data-core-note='" + esc(String(row.id)) + "'>" + esc(t("core_list_note")) + "</button>";
+    mobileHtml += "</div>";
+    mobileHtml += "<div class='core-list-card-actions'>";
+    if (canUpload) mobileHtml += "<button class='btn-sm-edit production-action-secondary' data-core-image='" + esc(String(row.id)) + "'>" + esc(t("btn_upload")) + "</button>";
+    if (canEdit) mobileHtml += "<button class='btn-sm-edit' data-core-edit='" + esc(String(row.id)) + "'>" + esc(t("btn_edit")) + "</button>";
+    mobileHtml += "</div></div>";
+    return mobileHtml;
+  }
+  var html = "<tr>";
+  html += "<td><div class='core-main-pn'>" + esc(row.core_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(productionCategoryLabel(p)) + "</div></td>";
+  html += "<td><div class='core-vehicle-label'>" + renderCoreCollectionVehicleHtml(coreListVehicleMap[String(row.dkd_shohin_id)]) + "</div><div class='mgmt-sub'>" + esc(p.manufacturer || "-") + "</div></td>";
+  html += "<td><div class='mgmt-pn'>" + esc(p.genuine_part_number || fallbackPartNumber || "-") + "</div><div class='mgmt-sub'>" + esc(p.manufacturer_part_number || fallbackPartNumber || "-") + " / DKD " + esc(String(row.dkd_shohin_id || "-")) + "</div></td>";
+  html += "<td>" + esc(row.location || "-") + "</td>";
+  html += "<td><div class='core-note'>" + esc(row.note || "-") + "</div><div class='mgmt-sub'>" + esc(updatedText) + "</div></td>";
+  html += "<td><div class='mgmt-actions'>";
+  if (canUpload) html += "<button class='btn-sm-edit production-action-secondary' data-core-image='" + esc(String(row.id)) + "'>" + esc(t("btn_upload")) + "</button>";
+  if (canEdit) html += "<button class='btn-sm-edit' data-core-edit='" + esc(String(row.id)) + "'>" + t("btn_edit") + "</button>";
+  html += "</div></td>";
+  html += "<td class='core-inventory-quantity'><span class='core-qty-pill'>" + esc(String(row.quantity == null ? 0 : row.quantity)) + "</span></td>";
+  html += "</tr>";
+  return html;
+}
+
+function appendCoreInventoryRows(list) {
+  var content = list.querySelector("[data-core-inventory-rows]");
+  if (!content) return;
+  var start = coreInventoryRenderedCount;
+  var end = Math.min(start + CORE_MANAGEMENT_RENDER_BATCH_SIZE, coreListFilteredRows.length);
+  var mobile = content.tagName !== "TBODY";
+  var canEdit = canManageProductionRecords();
+  var canUpload = canUploadCoreImages();
+  var html = coreListFilteredRows.slice(start, end).map(function(row, index) {
+    return renderCoreInventoryRow(row, start + index, mobile, canEdit, canUpload);
+  }).join("");
+  content.insertAdjacentHTML("beforeend", html);
+  coreInventoryRenderedCount = end;
+}
+
+function loadMoreCoreInventoryRowsOnScroll() {
+  if (coreListMode !== "inventory" || !coreManagementDataReady || coreInventoryRenderedCount >= coreListFilteredRows.length) return;
+  var list = document.getElementById("core-list-list");
+  if (list.clientHeight > 0 && list.scrollHeight - list.clientHeight - list.scrollTop <= Math.max(120, list.clientHeight)) {
+    appendCoreInventoryRows(list);
+  }
+}
+
+function handleCoreInventoryAction(event) {
+  if (coreListMode !== "inventory" || !coreManagementDataReady) return;
+  var button = event.target.closest("[data-inventory-pending-match], [data-core-note], [data-core-image], [data-core-edit]");
+  if (!button) return;
+  var data = button.dataset;
+  if (data.inventoryPendingMatch !== undefined) {
+    var row = coreListFilteredRows[Number(data.inventoryPendingMatch)];
+    if (row?.pending && canManageProductionRecords()) corePalletEntry.openMatch(row.pending);
+  } else if (data.coreNote !== undefined) {
+    showCoreInventoryNote(Number(data.coreNote));
+  } else if (data.coreImage !== undefined && canUploadCoreImages()) {
+    openCorePhotoChoice(Number(data.coreImage));
+  } else if (data.coreEdit !== undefined && canManageProductionRecords()) {
+    openCoreListForm("edit", Number(data.coreEdit));
+  }
 }
 
 function showCoreInventoryNote(rowId) {
@@ -33118,16 +33217,18 @@ async function saveCoreListForm() {
     r = await sb.from("production_core_list_entries").insert(data).select();
     if (r.error) { errEl.textContent = t("msg_part_err") + ": " + r.error.message; return; }
     var newId = (r.data && r.data[0]) ? r.data[0].id : null;
+    clearCoreManagementCache();
     await writeLog("insert", "production_core_list_entries", newId, "DKD " + dkdId, null, data);
   } else {
     var before = coreListMgmtRows.find(function(x) { return x.id === parseInt(id, 10); });
     r = await sb.from("production_core_list_entries").update(data).eq("id", id);
     if (r.error) { errEl.textContent = t("msg_part_err") + ": " + r.error.message; return; }
+    clearCoreManagementCache();
     await writeLog("update", "production_core_list_entries", parseInt(id, 10), "DKD " + dkdId, before, data);
   }
   closeCoreListForm();
   productionLoaded = false;
-  await loadCoreListMgmt();
+  await refreshCoreManagementAfterEdit();
 }
 
 function closeCoreListForm() {
@@ -33178,10 +33279,11 @@ async function deleteCoreListRow() {
       error.textContent = t("core_inventory_delete_changed");
       return;
     }
+    clearCoreManagementCache();
     closeCoreListForm();
     productionLoaded = false;
     await writeLog("delete", "production_core_list_entries", row.id, "DKD " + row.dkd_shohin_id, row, null);
-    await loadCoreListMgmt();
+    await refreshCoreManagementAfterEdit();
   } catch (failure) {
     error.textContent = t("msg_part_err") + ": " + failure.message;
   } finally {
@@ -62147,8 +62249,10 @@ var corePalletEntry = window.DcatsCorePallet({
   },
   write: function(args) { return sb.rpc("write_core_pending_stock", args); },
   refresh: async function(message) {
+    clearCoreManagementCache();
+    if (!isScreenActive("core-list-mgmt")) return;
     var mode = coreListMode;
-    if (mode !== "inventory" && mode !== "pending") return;
+    if (mode === "collection") return loadCoreCollectionList();
     await setCoreListMode(mode);
     if (coreListMode !== mode) return;
     var status = document.getElementById("core-pallet-save-status");
@@ -62167,6 +62271,8 @@ document.getElementById("btn-core-collection-search").addEventListener("click", 
 document.getElementById("core-collection-search").addEventListener("keydown", function(e){ if(e.key === "Enter") searchCoreCollectionWorkspace(); });
 document.getElementById("core-list-list").addEventListener("scroll", loadMoreCoreCollectionRowsOnScroll, { passive: true });
 document.getElementById("core-list-list").addEventListener("click", handleCoreCollectionAction);
+document.getElementById("core-list-list").addEventListener("scroll", loadMoreCoreInventoryRowsOnScroll, { passive: true });
+document.getElementById("core-list-list").addEventListener("click", handleCoreInventoryAction);
 document.getElementById("core-collection-previous").addEventListener("click", function() {
   if (coreListMode === "pending") return moveCorePendingStockPage(-1);
 });
@@ -62174,6 +62280,7 @@ window.addEventListener("resize", function() {
   if (!document.getElementById("screen-core-list-mgmt").classList.contains("active")) return;
   if (coreListMode === "pending") renderCorePendingStock();
   if (coreListMode === "collection") loadMoreCoreCollectionRowsOnScroll();
+  if (coreListMode === "inventory") loadMoreCoreInventoryRowsOnScroll();
 });
 window.matchMedia("(min-width: 1101px)").addEventListener("change", function() {
   if (!document.getElementById("screen-core-list-mgmt").classList.contains("active")) return;
