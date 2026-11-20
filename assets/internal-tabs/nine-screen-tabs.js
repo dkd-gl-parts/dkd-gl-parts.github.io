@@ -4,7 +4,7 @@
   var LIMIT = 9;
   var context = null, verifiedId = null, verifiedScope = null, epoch = 0;
   var tabs = [], opened = [], active = null, loaded = new Set(), states = new Map(), edits = new Map(), prepared = null, navigating = false;
-  var bar, list, notice, toggle, hint, enabled = false;
+  var bar, list, notice, toggle, hint, enabled = false, persistedSnapshot = null;
 
   var PROPERTIES_SCREEN = "screen-tab-properties";
   var properties, propertiesStatus, propertiesApply, pagePrev, pageNext, pageCount, pages = [], pageNumber = 0;
@@ -67,8 +67,8 @@
       limit: text("保持数", "Tab limit", "保留数量"), limitValue: text("最大9個", "Up to 9", "最多9个"),
       overflow: text("10個目", "Tenth tab", "第10个标签"), overflowValue: text("一番古いタブを閉じる", "Close the oldest tab", "关闭最早的标签"),
       unsaved: text("未保存の入力", "Unsaved input", "未保存的输入"), unsavedValue: text("閉じる前に必ず確認", "Always confirm before closing", "关闭前始终确认"),
-      restore: text("再読み込み後", "After reload", "重新加载后"), restoreValue: text("画面・順番・選択を復元", "Restore screens, order and selection", "恢复屏幕、顺序和选择"),
-      note: text("同じ画面は1つのタブです。入力内容そのものは再読み込みで復元されません。", "Each screen uses one tab. Unsaved input is not restored after reload.", "每个屏幕仅使用一个标签。重新加载不会恢复未保存的输入。"),
+      restore: text("再読込・開き直し", "After reopening", "重新打开后"), restoreValue: text("画面・順番・選択を復元", "Restore screens, order and selection", "恢复屏幕、顺序和选择"),
+      note: text("同じブラウザーで開き直すと復元されます。未保存の入力は復元されません。", "Tabs are restored in the same browser. Unsaved input is not restored.", "在同一浏览器中重新打开时会恢复标签。未保存的输入不会恢复。"),
       cancel: text("キャンセル", "Cancel", "取消"), apply: text("適用して閉じる", "Apply & close", "应用并关闭")
     };
     properties.querySelectorAll("[data-property-text]").forEach(function (node) { node.textContent = words[node.dataset.propertyText]; });
@@ -99,7 +99,26 @@
   function label(id) { var entry = entries().find(function (item) { return item.id === id; }); return entry ? entry.label : text("画面", "Screen", "屏幕"); }
   function storageGet(key) { try { return root.sessionStorage.getItem(key); } catch (_) { return null; } }
   function storageSet(key, value) { try { root.sessionStorage.setItem(key, value); } catch (_) { announce(text("タブを保存できません。再読込後の復元は利用できません。", "Tabs cannot be saved for reload.", "无法保存标签以供重新加载。")); } }
-  function save() { if (current()) storageSet(ownerKey(), JSON.stringify({version: 2, tabs: opened.slice(), displayOrder: tabs.slice(), active: active})); }
+  function persistentGet(key) { try { return root.localStorage.getItem(key); } catch (_) { return null; } }
+  function savedTabs(value) {
+    try {
+      var saved = JSON.parse(value);
+      return saved && [1, 2].includes(saved.version) && Array.isArray(saved.tabs) ? saved : null;
+    } catch (_) { return null; }
+  }
+  function save() {
+    if (!current()) return;
+    var key = ownerKey(), value = JSON.stringify({version: 2, tabs: opened, displayOrder: tabs, active: active});
+    storageSet(key, value);
+    // A window with unchanged tabs must not overwrite a newer order from another window.
+    if (value === persistedSnapshot || persistedSnapshot === null && !opened.length) return;
+    try {
+      root.localStorage.setItem(key, value);
+      persistedSnapshot = value;
+    } catch (_) {
+      announce(text("タブを保存できません。画面を閉じると復元できない場合があります。", "Tabs could not be saved for reopening.", "无法保存标签以供重新打开。"));
+    }
+  }
   function announce(message) { if (notice) notice.textContent = message; }
   function capture() { if (current() && context.screen() !== "menu" && active && loaded.has(active) && context.capture) states.set(active, context.capture()); }
   function restoreContext(id) { if (context.restore && states.has(id)) context.restore(states.get(id)); }
@@ -383,9 +402,10 @@
     announce(""); render(); return enabled;
   }
   function restore(openSavedScreen) {
-    var saved;
-    try { saved = JSON.parse(storageGet(ownerKey()) || "null"); } catch (_) { saved = null; }
-    opened = saved && [1, 2].includes(saved.version) && Array.isArray(saved.tabs) ? Array.from(new Set(saved.tabs.filter(allowed))).slice(-LIMIT) : [];
+    var key = ownerKey();
+    persistedSnapshot = persistentGet(key);
+    var saved = savedTabs(persistedSnapshot) || savedTabs(storageGet(key));
+    opened = saved ? Array.from(new Set(saved.tabs.filter(allowed))).slice(-LIMIT) : [];
     var displayOrder = opened.length && Array.isArray(saved.displayOrder) ? saved.displayOrder.filter(function (id) { return opened.includes(id); }) : [];
     tabs = Array.from(new Set(displayOrder.concat(opened)));
     active = saved && tabs.includes(saved.active) ? saved.active : tabs[0] || null;
@@ -469,7 +489,11 @@
     return true;
   }
   function suspend(forgetSaved) {
-    if (forgetSaved && verifiedId) { try { root.sessionStorage.removeItem(ownerKey()); root.sessionStorage.removeItem(preferenceKey()); } catch (_) {} }
+    if (forgetSaved && verifiedId) {
+      try { root.sessionStorage.removeItem(ownerKey()); root.sessionStorage.removeItem(preferenceKey()); } catch (_) {}
+      try { root.localStorage.removeItem(ownerKey()); } catch (_) {}
+    }
+    persistedSnapshot = null;
     epoch += 1; enabled = false; context = null; verifiedId = null; verifiedScope = null; tabs = []; opened = []; active = null; loaded.clear(); states.clear(); edits.clear(); prepared = null; render();
   }
   async function afterAuthenticated(options, openSavedScreen) {

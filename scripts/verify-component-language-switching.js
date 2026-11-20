@@ -118,7 +118,7 @@ const productionImagesSource = sourceBetween(app, "function renderProductionImag
 requireFragment(productionImagesSource, 'tf("image_count", { n: images.length })', "localized production image count");
 requireFragment(html, 'data-i18n="production_detail_title"', "localized production detail title");
 
-requireFragment(html, 'content="v1.1.1364"', "release version");
-requireFragment(app, 'var APP_VERSION       = "v1.1.1364"', "runtime version");
+requireFragment(html, 'content="v1.1.1365"', "release version");
+requireFragment(app, 'var APP_VERSION       = "v1.1.1365"', "runtime version");
 
 console.log("Component language switching verified.");
