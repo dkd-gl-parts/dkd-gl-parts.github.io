@@ -9092,7 +9092,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1380";
+var APP_VERSION       = "v1.1.1381";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -31949,6 +31949,8 @@ async function loadCoreCollectionList() {
       rankRequest
     ]);
     checkCurrent();
+    if (report) await resolveCoreCollectionRankingCodes(products, report, checkCurrent);
+    checkCurrent();
     coreCollectionRows = loadedRows;
     coreCollectionProductMap = products;
     coreCollectionStockMap = stock;
@@ -32027,6 +32029,53 @@ async function loadCoreCollectionProducts(productIds, checkCurrent) {
     });
   }
   return products;
+}
+
+async function resolveCoreCollectionRankingCodes(products, report, checkCurrent) {
+  var direct = new Set();
+  var unresolved = [];
+  Object.values(products).forEach(function(product) {
+    var rank = report.forProduct(product);
+    if (rank) direct.add(rank.rank);
+    else if (!product.dks_shohin_cd && norm(product.genuine_part_number) && norm(product.manufacturer_part_number) &&
+      ["alternator", "starter", "ac_compressor"].includes(coreCollectionCategoryKey(product))) unresolved.push(product.dkd_shohin_id);
+  });
+  var byProduct = new Map();
+  for (var start = 0; start < unresolved.length; start += 1000) {
+    var requests = [];
+    for (var offset = start; offset < Math.min(unresolved.length, start + 1000); offset += 250) {
+      requests.push(sb.from("core_product_dks_links")
+        .select("dkd_shohin_id,dks_search_parts!inner(dks_shohin_cd,genuine_part_number,manufacturer_part_number)")
+        .eq("relation_type", "core_pair_match").eq("match_basis", "normalized_genuine_manufacturer_pair")
+        .in("dkd_shohin_id", unresolved.slice(offset, offset + 250)));
+    }
+    var results;
+    try { results = await Promise.all(requests); } catch (_) { return; }
+    checkCurrent();
+    if (results.some(function(result) { return result.error; })) return;
+    results.forEach(function(result) {
+      (result.data || []).forEach(function(link) {
+        var product = products[link.dkd_shohin_id];
+        var dks = link.dks_search_parts;
+        if (!product || !dks?.dks_shohin_cd || norm(dks.genuine_part_number) !== norm(product.genuine_part_number) ||
+          norm(dks.manufacturer_part_number) !== norm(product.manufacturer_part_number)) return;
+        var code = String(dks.dks_shohin_cd);
+        var rank = report.forProduct(Object.assign({}, product, { dks_shohin_cd: code }));
+        if (!rank || norm(rank.genuine) !== norm(product.genuine_part_number) ||
+          norm(rank.maker) !== norm(product.manufacturer_part_number)) return;
+        var prev = byProduct.get(link.dkd_shohin_id);
+        if (!byProduct.has(link.dkd_shohin_id)) byProduct.set(link.dkd_shohin_id, { code: code, rank: rank.rank });
+        else if (!prev || prev.code !== code) byProduct.set(link.dkd_shohin_id, null);
+      });
+    });
+  }
+  var rankUse = new Map();
+  byProduct.forEach(function(link) { if (link) rankUse.set(link.rank, (rankUse.get(link.rank) || 0) + 1); });
+  byProduct.forEach(function(link, id) {
+    if (!link || direct.has(link.rank) || rankUse.get(link.rank) !== 1) return;
+    products[id].dks_shohin_cd = link.code;
+    products[id].shohin_cd = products[id].shohin_cd || link.code;
+  });
 }
 
 async function readCoreCollectionStock(checkCurrent) {
