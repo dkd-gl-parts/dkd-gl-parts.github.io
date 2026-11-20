@@ -489,6 +489,8 @@ var TRANSLATIONS = {
     business_workspace_settings_menu_title: "設定",
     menu_screen_tabs_title: "画面タブ",
     menu_screen_tabs_desc: "画面タブのON・OFFと動作を確認します。",
+    menu_screen_tabs_checking: "ログイン状態を確認しています…",
+    menu_screen_tabs_retry: "確認できませんでした。もう一度押してください。",
     business_workspace_settings_title: "D-CATS業務連携設定",
     business_workspace_settings_desc: "初回登録・Google接続・CSV保存先を設定します。",
     business_workspace_settings_location: "初回登録・接続・保存先の設定は、メニューの「設定」→「D-CATS業務連携設定」から行います。",
@@ -3413,6 +3415,8 @@ var TRANSLATIONS = {
     business_workspace_settings_menu_title: "Settings",
     menu_screen_tabs_title: "Screen tabs",
     menu_screen_tabs_desc: "Turn screen tabs on or off and review their behavior.",
+    menu_screen_tabs_checking: "Checking your login…",
+    menu_screen_tabs_retry: "Could not verify your login. Select this card again.",
     business_workspace_settings_title: "D-CATS Integration Settings",
     business_workspace_settings_desc: "Set up passwords, Google connection and CSV folders.",
     business_workspace_settings_location: "For initial registration, connections and save folders, go to Menu → Settings → D-CATS Integration Settings.",
@@ -6281,6 +6285,8 @@ var TRANSLATIONS = {
     business_workspace_settings_menu_title: "设置",
     menu_screen_tabs_title: "屏幕标签页",
     menu_screen_tabs_desc: "开启或关闭屏幕标签页并查看其行为。",
+    menu_screen_tabs_checking: "正在确认登录状态…",
+    menu_screen_tabs_retry: "无法确认登录状态，请再次选择此卡片。",
     business_workspace_settings_title: "D-CATS业务联动设置",
     business_workspace_settings_desc: "设置首次注册、Google连接和CSV保存位置。",
     business_workspace_settings_location: "首次注册、连接及保存位置请通过菜单 → 设置 → D-CATS业务联动设置操作。",
@@ -8900,7 +8906,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1362";
+var APP_VERSION       = "v1.1.1363";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -11478,18 +11484,20 @@ function releaseScreenTab(id) {
   resetScreenStateForMenu(id);
 }
 
-function showAuthenticatedHome() {
-  if (isCustomerViewer()) {
-    showScreen("customer-portal");
-    renderCustomerPortal();
-    return;
-  }
-  showScreen("menu");
-  renderMenu();
-  if (window.DcatsNineTabs) window.DcatsNineTabs.afterAuthenticated({
+function hasInternalScreenTabProfile() {
+  return !!(currentUser && userProfile && userProfile.id === currentUser.id &&
+    userProfile.status !== "pending" && userProfile.status !== "suspended" && !isCustomerViewer() && !isExternalViewer());
+}
+
+function canShowScreenTabSettings() {
+  return !!(window.DcatsNineTabs && hasInternalScreenTabProfile() && window.DcatsNineTabs.canShowSettings(currentUser.id));
+}
+
+function screenTabAuthOptions() {
+  return {
     userId: function () { return currentUser && currentUser.id; },
     scope: function () { return JSON.stringify([currentUser && currentUser.id, userProfile && userProfile.id, conciergeNavigationProfileStamp(userProfile), userProfile && userProfile.permission_profile_code]); },
-    external: !userProfile || isCustomerViewer() || isExternalViewer(),
+    external: !hasInternalScreenTabProfile(),
     verify: function () { return sb.auth.getUser(); },
     screen: activeAppScreenName,
     show: showScreen,
@@ -11504,7 +11512,37 @@ function showAuthenticatedHome() {
     resetControl: resetScreenControlState,
     closeState: screenTabCloseState,
     refreshMenu: renderMenu
-  }).catch(function () { console.warn("Screen tabs are unavailable"); });
+  };
+}
+
+function showAuthenticatedHome() {
+  if (isCustomerViewer()) {
+    showScreen("customer-portal");
+    renderCustomerPortal();
+    return;
+  }
+  showScreen("menu");
+  renderMenu();
+  if (window.DcatsNineTabs) window.DcatsNineTabs.afterAuthenticated(screenTabAuthOptions()).catch(function () { console.warn("Screen tabs are unavailable"); });
+}
+
+async function openScreenTabSettings(card) {
+  if (!canShowScreenTabSettings() || !card || card.getAttribute("aria-busy") === "true") return;
+  var tabs = window.DcatsNineTabs;
+  if (tabs.openProperties()) return;
+  var options = screenTabAuthOptions(), id = options.userId(), scope = options.scope();
+  var status = card.querySelector("small");
+  card.setAttribute("aria-busy", "true");
+  status.textContent = t("menu_screen_tabs_checking");
+  try {
+    await tabs.afterAuthenticated(options, false);
+    if (id === options.userId() && scope === options.scope() && activeAppScreenName() === "menu" && tabs.openProperties()) return;
+  } catch (_) {
+    console.warn("Screen tabs are unavailable");
+  } finally {
+    card.removeAttribute("aria-busy");
+  }
+  if (card.isConnected) status.textContent = t("menu_screen_tabs_retry");
 }
 
 function openRequestedPrintStationAfterAuth() {
@@ -12644,7 +12682,7 @@ function renderMenu() {
     html += "</div></div></section>";
   }
 
-  var canUseScreenTabSettings = !!(window.DcatsNineTabs && window.DcatsNineTabs.isAvailable && window.DcatsNineTabs.isAvailable());
+  var canUseScreenTabSettings = canShowScreenTabSettings();
   if (settingsItems.length || canUseScreenTabSettings) {
     html += '<section class="menu-section" id="menu-settings-section">';
     html += '<div class="menu-section-head"><h3 class="menu-section-title">' + t("business_workspace_settings_menu_title") + '</h3></div>';
@@ -12668,7 +12706,7 @@ function renderMenu() {
 
 function openAppMenuAction(action, event) {
   if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter(action, false)) return;
-      if (action === "screen-tab-properties") window.DcatsNineTabs.openProperties();
+      if (action === "screen-tab-properties") return openScreenTabSettings(event && event.currentTarget);
       else if (action === "search") enterSearch();
       else if (action === "customer-portal") enterCustomerPortal();
       else if (action === "sales-order-mgmt") enterSalesOrderMgmt();
