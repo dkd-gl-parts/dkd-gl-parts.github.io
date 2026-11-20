@@ -2079,6 +2079,7 @@ var TRANSLATIONS = {
     core_list_note: "メモ",
     core_list_delete_confirm: "このコア行を削除しますか？",
     core_inventory_delete_review: "削除手続き…",
+    core_inventory_delete_back: "修正に戻る",
     core_inventory_delete_ack: "この在庫明細を削除する",
     core_inventory_delete_changed: "在庫が更新されています。閉じて一覧を検索し直してください。",
     core_list_created_from_ranking: "ランキングからコアリストを{n}件作成しました",
@@ -5061,6 +5062,7 @@ var TRANSLATIONS = {
     core_list_note: "Memo",
     core_list_delete_confirm: "Delete this CORE row?",
     core_inventory_delete_review: "Review deletion…",
+    core_inventory_delete_back: "Back to edit",
     core_inventory_delete_ack: "Delete this inventory record",
     core_inventory_delete_changed: "Inventory has changed. Close this window and search again.",
     core_list_created_from_ranking: "Created {n} CORE rows from ranking",
@@ -8044,6 +8046,7 @@ var TRANSLATIONS = {
     core_list_note: "备注",
     core_list_delete_confirm: "删除此CORE行？",
     core_inventory_delete_review: "确认删除…",
+    core_inventory_delete_back: "返回修改",
     core_inventory_delete_ack: "删除此库存记录",
     core_inventory_delete_changed: "库存已更新。请关闭此窗口并重新搜索。",
     core_list_created_from_ranking: "已从排行创建{n}条CORE记录",
@@ -9074,7 +9077,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1368";
+var APP_VERSION       = "v1.1.1369";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};

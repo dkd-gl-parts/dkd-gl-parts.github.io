@@ -374,6 +374,7 @@ async function main() {
     assert.equal(history[0][2], 5); checks++;
     assert.equal(get("core-list-delete-panel").hidden, true); checks++;
   }
+  assert.match(fs.readFileSync("index.html", "utf8"), /id="btn-core-list-delete-back" data-i18n="core_inventory_delete_back"/); checks++;
   console.log(`Core management workspace: ${checks} behavioral checks passed.`);
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });
