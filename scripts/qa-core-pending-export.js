@@ -45,10 +45,10 @@ async function main() {
     "}",
     'const palletForm = window.DcatsCorePallet({translate:t, canEdit:() => true, pendingRows:() => [], openLinked:() => {},',
     '  write: async (params) => {document.body.dataset.quantityWrite = JSON.stringify(params); return {data:{affected:params.p_rows}};},',
-    '  refresh: async () => {}, search: async () => ({data:[]})});',
+    '  refresh: async () => {}, search: async (q) => {document.body.dataset.quantityLookup = q; return {data:[]};}});',
     'document.getElementById("qa-pallet-entry").addEventListener("click", palletForm.openEntry);',
     'document.getElementById("qa-pallet-adjust").addEventListener("click", () => palletForm.openMatch({entry_key:"qa", revision:1,',
-    '  pallet_no:"QA-P-001", source_part_number:"000001", quantity:0}));'
+    '  pallet_no:"QA-P-001", source_part_number:"000001", quantity:4}));'
   ].join("\n");
   const html = '<!doctype html><html lang="ja"><meta charset="utf-8"><title>D-CATS</title>' +
     '<link rel="stylesheet" href="/styles.css"><body><main id="screen-core-list-mgmt" class="active">' +
@@ -135,6 +135,19 @@ async function main() {
     await page.getByRole("button", { name: "数量調整の検査", exact: true }).click();
     const adjustQty = page.locator("#core-pallet-adjust-qty");
     assert.equal(await adjustQty.getAttribute("type"), "text");
+    assert.equal(await adjustQty.inputValue(), "4");
+    assert.equal(await adjustQty.isVisible(), true);
+    assert.equal(await page.locator("#core-pallet-mode-adjust").getAttribute("aria-pressed"), "true");
+    assert.equal(await page.locator("#core-pallet-link-controls").isVisible(), false);
+    assert.equal(await page.locator("body").getAttribute("data-quantity-lookup"), null);
+    await page.locator("#core-pallet-mode-link").click();
+    assert.equal(await page.locator("#core-pallet-link-search").inputValue(), "000001");
+    assert.equal(await page.locator("#core-pallet-match-save").getAttribute("data-i18n"), "core_pallet_save_link");
+    await page.locator("#core-pallet-link-find").click();
+    assert.equal(await page.locator("body").getAttribute("data-quantity-lookup"), "000001");
+    await page.locator("#core-pallet-mode-adjust").click();
+    assert.equal(await adjustQty.isVisible(), true);
+    assert.equal(await page.locator("#core-pallet-match-save").getAttribute("data-i18n"), "core_pallet_save_adjust");
     await adjustQty.fill("０");
     assert.equal(await adjustQty.inputValue(), "0");
     await page.locator("#core-pallet-adjust-reason").fill("QA");

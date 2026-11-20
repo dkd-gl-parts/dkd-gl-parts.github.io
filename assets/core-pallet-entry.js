@@ -13,7 +13,7 @@
       { name: "note", label: "col_note", length: 500 }
     ];
     const compact = window.matchMedia("(max-width: 600px), (max-height: 510px)");
-    const state = { rows: [], page: 0, row: null, mode: "link", revision: 0, busy: false, request: null };
+    const state = { rows: [], page: 0, row: null, mode: "adjust", revision: 0, busy: false, request: null };
     const blank = () => ({ pallet_no: "", part_number: "", quantity: "", note: "" });
     const on = (id, event, listener) => el(id).addEventListener(event, listener);
     const asKey = (value) => String(value || "").trim().normalize("NFKC").toUpperCase();
@@ -81,9 +81,8 @@
       el("batch-label").hidden = matchingRows().length < 2;
       el("batch-label-text").textContent = label("same_part", { count: matchingRows().length, qty: unitTotal(matchingRows()) });
       resetCandidates();
-      setMatchMode(row.quantity > 0 ? "link" : "adjust");
+      setMatchMode("adjust");
       match.showModal();
-      if (state.mode === "link") void findCandidates();
     }
 
     function matchingRows() {
@@ -97,7 +96,10 @@
       el("link-controls").hidden = mode !== "link";
       el("mode-adjust").setAttribute("aria-pressed", String(mode === "adjust"));
       el("mode-link").setAttribute("aria-pressed", String(mode === "link"));
-      el("match-save").textContent = mode === "adjust" ? label("save_adjust") : label("save_link");
+      const save = el("match-save");
+      const action = mode === "adjust" ? "save_adjust" : "save_link";
+      save.dataset.i18n = "core_pallet_" + action;
+      save.textContent = label(action);
       el("match-message").textContent = "";
     }
 
