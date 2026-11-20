@@ -2363,12 +2363,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 #core-list-list .core-collection-table td:nth-child(7) { width: auto; text-align: left; }
 #core-list-list .core-collection-table th:nth-child(8),
 #core-list-list .core-collection-table td:nth-child(8) { width: 190px; text-align: right; }
-.core-priority-badge,
+.core-collection-rank-badge,
 .core-status-badge,
 .core-stock-badge { display: inline-flex; align-items: center; justify-content: center; min-height: 24px; padding: 3px 8px; border-radius: 5px; font-size: 12px; font-weight: 800; line-height: 1.2; }
-.core-priority-badge.high { background: #fde7e4; color: #a62e23; }
-.core-priority-badge.normal { background: #fff2c9; color: #725400; }
-.core-priority-badge.low { background: #edf0f4; color: #536070; }
 .core-category-rank { display: grid; justify-items: center; gap: 1px; margin-bottom: 5px; line-height: 1.2; }
 .core-category-rank span { color: #667085; font-size: 10px; font-weight: 800; }
 .core-category-rank strong { color: #173b6d; font-size: 15px; font-variant-numeric: tabular-nums; }
@@ -11655,8 +11652,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 #screen-core-list-mgmt #core-list-list .core-collection-table th:nth-child(8), #screen-core-list-mgmt #core-list-list .core-collection-table td:nth-child(8) { width: 165px; }
 #screen-core-list-mgmt .core-category-rank { margin-bottom: 6px; }
 #screen-core-list-mgmt .core-category-rank strong { font-size: 17px; }
-#screen-core-list-mgmt .core-priority-badge.normal { background: #f0f2f5; color: #596579; }
-#screen-core-list-mgmt .core-priority-badge { font-size: 12px; }
+#screen-core-list-mgmt .core-collection-rank-badge { font-size: 12px; }
 #screen-core-list-mgmt .core-qty-pill, #screen-core-list-mgmt .core-shortage-value { min-width: 34px; padding: 4px 7px; font-size: 18px; font-variant-numeric: tabular-nums; }
 #screen-core-list-mgmt .core-row-details { margin-top: 7px; color: #596579; font-size: 12px; line-height: 1.6; }
 #screen-core-list-mgmt .core-row-details summary { cursor: pointer; padding: 5px 0; }
@@ -11700,7 +11696,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-core-list-mgmt .core-collection-card, #screen-core-list-mgmt .core-list-card { padding: 15px; border-color: #d5dde7; box-shadow: none; border-radius: 8px; }
   #screen-core-list-mgmt .core-collection-card-head { gap: 6px; }
   #screen-core-list-mgmt .core-collection-card-head > div { min-width: 0; }
-  #screen-core-list-mgmt .core-collection-card-head > .core-priority-badge { flex-shrink: 0; }
+  #screen-core-list-mgmt .core-collection-card-head > .core-collection-rank-badge { flex-shrink: 0; }
   #screen-core-list-mgmt .core-collection-qty-grid { margin: 4px 0 10px; }
   #screen-core-list-mgmt .core-collection-qty-grid > div { padding: 10px 4px; }
   #screen-core-list-mgmt .core-collection-qty-grid span { font-size: 12px; }
@@ -12095,6 +12091,38 @@ html[data-product-3d-paused] :is(
 .core-vehicle-options { display: flex; flex-wrap: wrap; gap: 6px 14px; }
 .core-vehicle-options label { display: inline-flex; align-items: center; gap: 4px; min-height: 30px; font-size: 14px; cursor: pointer; }
 .core-vehicle-options input { width: 17px; height: 17px; accent-color: #d4002b; }
+#screen-core-list-mgmt #core-collection-vehicle-filters {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 3px 8px 5px;
+}
+#core-collection-vehicle-filters .core-vehicle-options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0 8px;
+}
+#screen-core-list-mgmt #core-collection-vehicle-filters .core-vehicle-options label {
+  display: flex;
+  gap: 5px;
+  min-height: 28px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+#core-collection-vehicle-filters .core-vehicle-options input {
+  flex: none;
+  margin: 0;
+}
+#screen-core-list-mgmt #core-workspace-filter-options > .core-workspace-filter-fields {
+  gap: 6px 10px;
+}
+@media (max-width: 540px) {
+  #core-collection-vehicle-filters .core-vehicle-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #screen-core-list-mgmt #core-workspace-filter-options > .core-workspace-filter-fields {
+    position: fixed;
+    inset: auto 10px 12px;
+    width: auto;
+  }
+}
 .core-vehicle-help { margin: 5px 0 0; font-size: 12px; line-height: 1.5; color: #52657a; }
 #screen-core-list-mgmt .core-workspace-filter-fields { grid-template-columns: repeat(4, minmax(0, 1fr)) auto; }
 @media (max-width: 1100px) { #screen-core-list-mgmt .core-workspace-filter-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
