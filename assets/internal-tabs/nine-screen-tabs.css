@@ -10,7 +10,10 @@
 .dcats-nine-tab.is-active::before { box-shadow: 3px 0 0 0 #fff; }
 .dcats-nine-tab.is-active::after { box-shadow: -3px 0 0 0 #fff; }
 .dcats-nine-tab button { min-height: 28px; border: 0; padding: 4px 10px; background: transparent; color: inherit; font: inherit; font-size: 13px; line-height: 20px; cursor: pointer; }
-.dcats-nine-tab [role="tab"] { display: flex; align-items: center; gap: 5px; min-width: 0; flex: 1 1 auto; max-width: 224px; white-space: nowrap; text-align: left; }
+.dcats-nine-tab [role="tab"] { display: flex; align-items: center; gap: 5px; min-width: 0; flex: 1 1 auto; max-width: 224px; white-space: nowrap; text-align: left; cursor: grab; touch-action: none; user-select: none; }
+.dcats-nine-tab.is-tab-dragging { opacity: .55; }
+.dcats-nine-tab.is-drop-before { box-shadow: inset 3px 0 #176bc0; }
+.dcats-nine-tab.is-drop-after { box-shadow: inset -3px 0 #176bc0; }
 .dcats-nine-tab-icon { flex: 0 0 16px; width: 16px; font-size: 14px; line-height: 20px; text-align: center; }
 .dcats-nine-tab-icon .icon-image { width: 14px; height: 14px; }
 .dcats-nine-tab-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

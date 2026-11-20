@@ -459,6 +459,26 @@ async function verifyDynamicScreenTabs() {
   assert.equal(t.api.snapshot().enabled, false, "Changed account scope invalidates retained tabs");
   t.api.authEvent("SIGNED_OUT");
   assert.equal(t.values.has("dcats-nine-tabs.v1:synthetic-owner"), false);
+  const reorder = await makeTabs();
+  const reorderKey = "dcats-nine-tabs.v1:synthetic-owner";
+  const openedBefore = reorder.ids.slice(0, 9);
+  openedBefore.forEach(reorder.open);
+  const moving = reorder.w.document.getElementById("dcats-nine-tab-" + openedBefore[0]);
+  const shiftRight = new moving.ownerDocument.defaultView.Event("keydown", {bubbles: true, cancelable: true});
+  Object.defineProperties(shiftRight, {key: {value: "ArrowRight"}, shiftKey: {value: true}});
+  moving.dispatchEvent(shiftRight);
+  const positioned = [openedBefore[1], openedBefore[0], ...openedBefore.slice(2)];
+  assert.deepEqual(Array.from(reorder.api.snapshot().tabs), positioned, "Keyboard move inserts at the adjacent position");
+  assert.equal(reorder.api.snapshot().active, openedBefore[8], "Moving a tab does not change the current screen");
+  const retainedMetadata = JSON.parse(reorder.values.get(reorderKey));
+  assert.deepEqual(retainedMetadata.tabs, openedBefore, "Opening order is still stored for FIFO and older versions");
+  assert.deepEqual(retainedMetadata.displayOrder, positioned);
+  reorder.api.suspend(false); await reorder.api.afterAuthenticated(reorder.options);
+  assert.deepEqual(Array.from(reorder.api.snapshot().tabs), positioned, "Reload restores the custom display order");
+  reorder.open(reorder.ids[9]);
+  assert.deepEqual(Array.from(reorder.api.snapshot().tabs), openedBefore.slice(1).concat(reorder.ids[9]), "The first-opened tab is evicted even when it was moved");
+  assert.deepEqual(reorder.released, [openedBefore[0]]);
+
   const company = await makeTabs();
   company.w.DcatsNineTabsPolicy = {mode: "all"};
   const companyOptions = {...company.options, userId: () => "synthetic-company-user", verify: async () => ({data: {user: {id: "synthetic-company-user", email: "colleague@example.invalid", email_confirmed_at: "2026-11-17"}}})};
