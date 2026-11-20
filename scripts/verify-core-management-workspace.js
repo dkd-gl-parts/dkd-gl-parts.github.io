@@ -3,7 +3,7 @@ const vm = require("node:vm");
 const assert = require("node:assert/strict");
 const acorn = require("acorn");
 const source = fs.readFileSync("app.js", "utf8");
-const names = ["coreInventoryPendingProduct", "coreInventoryPendingDetails", "renderCoreInventoryPendingRow", "loadCorePendingStock","corePendingStockSearch","moveCorePendingStockPage","renderCorePendingStock"].concat(["coreCollectionVehicleSummaryHtml", "coreCollectionUiLabel", "renderCoreCollectionVehicleHtml", "coreCollectionVehicleClasses", "coreCollectionVehicleText", "fitCoreCollectionPage", "fitCoreManagementRows", "renderCoreManagementPager", "coreCollectionVehicleMatches", "esc", "normalizeAsciiWidth", "norm", "normalizedContains", "sumProductionCoreEntryQty", "renderCoreManagementSummary", "beginCoreManagementLoad", "searchCoreCollectionWorkspace", "clearCoreCollectionFilters", "bindCoreManagementTabs", "setCoreListMode", "coreCollectionPriorityLabel", "coreCollectionStatusLabel", "coreCollectionSourceDetail", "coreCollectionStockQty", "coreCollectionShortageQty", "coreCollectionCategoryKey", "coreCollectionCategoryOrder", "coreCollectionStoredOrder", "compareCoreCollectionStoredOrder", "assignCoreCollectionCategoryRanks", "coreCollectionCategoryRank", "coreCollectionCategoryMatches", "applyCoreCollectionFilters", "loadCoreCollectionList", "loadCoreCollectionProducts", "loadCoreCollectionStock", "renderCoreCollectionStockBadge", "updateCoreCollectionLoadMoreButton", "renderCoreCollectionList", "bindCoreCollectionActions", "enterCoreListMgmt", "resetCoreCollectionControls", "resetCoreInventoryFilters", "submitCoreInventorySearch", "isKoreanCoreInventoryEntry", "coreInventoryVehicleClasses", "applyCoreInventoryFilters", "loadCoreListMgmt", "loadCoreListProducts", "renderCoreListMgmt"]);
+const names = ["showCoreListDeleteConfirmation", "openCoreListDeleteConfirmation", "deleteCoreListRow", "closeCoreListForm", "coreInventoryPendingProduct", "coreInventoryPendingDetails", "renderCoreInventoryPendingRow", "loadCorePendingStock","corePendingStockSearch","moveCorePendingStockPage","renderCorePendingStock"].concat(["coreCollectionVehicleSummaryHtml", "coreCollectionUiLabel", "renderCoreCollectionVehicleHtml", "coreCollectionVehicleClasses", "coreCollectionVehicleText", "fitCoreCollectionPage", "fitCoreManagementRows", "renderCoreManagementPager", "coreCollectionVehicleMatches", "esc", "normalizeAsciiWidth", "norm", "normalizedContains", "sumProductionCoreEntryQty", "renderCoreManagementSummary", "beginCoreManagementLoad", "searchCoreCollectionWorkspace", "clearCoreCollectionFilters", "bindCoreManagementTabs", "setCoreListMode", "coreCollectionPriorityLabel", "coreCollectionStatusLabel", "coreCollectionSourceDetail", "coreCollectionStockQty", "coreCollectionShortageQty", "coreCollectionCategoryKey", "coreCollectionCategoryOrder", "coreCollectionStoredOrder", "compareCoreCollectionStoredOrder", "assignCoreCollectionCategoryRanks", "coreCollectionCategoryRank", "coreCollectionCategoryMatches", "applyCoreCollectionFilters", "loadCoreCollectionList", "loadCoreCollectionProducts", "loadCoreCollectionStock", "renderCoreCollectionStockBadge", "updateCoreCollectionLoadMoreButton", "renderCoreCollectionList", "bindCoreCollectionActions", "enterCoreListMgmt", "resetCoreCollectionControls", "resetCoreInventoryFilters", "submitCoreInventorySearch", "isKoreanCoreInventoryEntry", "coreInventoryVehicleClasses", "applyCoreInventoryFilters", "loadCoreListMgmt", "loadCoreListProducts", "renderCoreListMgmt"]);
 const ast = acorn.parse(source, { ecmaVersion: "latest" });
 const functions = ast.body.filter(n => n.type === "FunctionDeclaration" && names.includes(n.id.name));
 assert.equal(functions.length, names.length);
@@ -329,6 +329,50 @@ async function main() {
     assert.deepEqual(ids(), [2, 1]); checks++;
     assert.equal(get("core-inventory-korea").value, "exclude"); checks++;
     assert.equal(c.isKoreanCoreInventoryEntry({ note: "韓国コア現存在庫の数量を照合した" }), false); checks++;
+  }
+  {
+    const { c, get } = fixture();
+    const row = { id: 5, dkd_shohin_id: 42, core_part_number: "CORE-5", quantity: 21, location: "PALLET-A", updated_at: "2026-11-20T01:00:00Z" };
+    c.coreListMgmtRows = [row];
+    c.coreListFormMode = "edit";
+    c.coreListMode = "inventory";
+    c.coreManagementDataReady = true;
+    c.coreListFilteredRows = [row];
+    c.renderCoreListMgmt();
+    assert.doesNotMatch(get("core-list-list").innerHTML, /data-core-del/); checks++;
+    assert.match(get("core-list-list").innerHTML, /<td class='core-inventory-quantity'><span class='core-qty-pill'>21<\/span><\/td><\/tr>/); checks++;
+    get("clf-id").value = "5";
+    c.openCoreListDeleteConfirmation();
+    assert.equal(get("core-list-delete-part").textContent, "CORE-5"); checks++;
+    assert.equal(get("core-list-delete-pallet").textContent, "PALLET-A"); checks++;
+    assert.equal(get("core-list-delete-quantity").textContent, 21); checks++;
+    let filterCalls = [];
+    let deleteResult = [];
+    const query = {
+      delete() { filterCalls.push(["delete"]); return this; },
+      eq(column, value) { filterCalls.push([column, value]); return this; },
+      is(column, value) { filterCalls.push([column, value]); return this; },
+      async select() { return { data: deleteResult }; }
+    };
+    c.sb.from = () => query;
+    c.loadCoreListMgmt = async () => {};
+    let history = [];
+    c.writeLog = async (...args) => history.push(args);
+    await c.deleteCoreListRow();
+    assert.equal(filterCalls.length, 0); checks++;
+    get("core-list-delete-ack").checked = true;
+    get("btn-core-list-delete-confirm").disabled = false;
+    await c.deleteCoreListRow();
+    assert.deepEqual(filterCalls, [["delete"], ["id", 5], ["replaced_at", null], ["updated_at", row.updated_at]]); checks++;
+    assert.equal(get("core-list-delete-error").textContent, "core_inventory_delete_changed"); checks++;
+    assert.equal(get("btn-core-list-delete-confirm").disabled, true); checks++;
+    assert.equal(history.length, 0); checks++;
+    deleteResult = [{ id: 5 }];
+    get("core-list-delete-ack").checked = true;
+    get("btn-core-list-delete-confirm").disabled = false;
+    await c.deleteCoreListRow();
+    assert.equal(history[0][2], 5); checks++;
+    assert.equal(get("core-list-delete-panel").hidden, true); checks++;
   }
   console.log(`Core management workspace: ${checks} behavioral checks passed.`);
 }
