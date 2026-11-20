@@ -9092,7 +9092,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1379";
+var APP_VERSION       = "v1.1.1380";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -9224,6 +9224,8 @@ var coreCollectionProductCandidates = [];
 var coreCollectionFormMode = "add";
 var CORE_COLLECTION_RENDER_BATCH_SIZE = 50;
 var coreCollectionRenderedCount = 0;
+var coreCollectionOrderedRows = [];
+var coreCollectionSearchTerms = new WeakMap();
 var productKindStockRows = [];
 var productKindStockProductMap = {};
 var productKindStockDirtyMap = {};
@@ -31878,87 +31880,81 @@ function applyCoreCollectionFilters() {
   document.getElementById("core-list-results-title").textContent = state === "replenishment" ? "コア補充リスト" : "品番一覧";
   var activeCount = [category, state !== "all", vehicles.length > 0, source].filter(Boolean).length;
   if (filterCount) filterCount.textContent = activeCount ? "(" + activeCount + ")" : "";
-  coreCollectionFilteredRows = coreCollectionRows.concat(coreCollectionRankingRows).filter(function(row) {
-    var product = coreCollectionDisplayProduct(row);
-    var stock = coreCollectionStockMap[String(row.dkd_shohin_id)] || {};
-    if (q && ![
-      row.dkd_shohin_id,
-      row.source_hint,
-      row.note,
-      coreCollectionRank(row)?.productCode,
-      coreCollectionVehicleText(row),
-      product.genuine_part_number,
-      product.genuine_part_number_2,
-      product.manufacturer_part_number,
-      product.manufacturer,
-      product.daiko_part_number,
-      (stock.parts || []).join(" "),
-      (stock.locations || []).join(" ")
-    ].some(function(value) { return normalizedContains(value, q); })) return false;
+  coreCollectionFilteredRows = coreCollectionOrderedRows.filter(function(row) {
     if (source && row.source_type !== source) return false;
-    if (state === "replenishment" && !isCoreReplenishmentRow(row)) return false;
-    if (!coreCollectionCategoryMatches(product, category)) return false;
+    if (category && !coreCollectionCategoryMatches(coreCollectionDisplayProduct(row), category)) return false;
     if (vehicles.length && !vehicles.some(function(vehicle) { return coreCollectionVehicleMatches(row, vehicle); })) return false;
-    var stockQty = coreCollectionStockQty(row);
-    var shortage = coreCollectionShortageQty(row);
-    if (state === "needed" && shortage <= 0) return false;
-    if (state === "in_stock" && stockQty <= 0) return false;
-    if (state === "sufficient" && (!(row.target_quantity > 0) || shortage > 0)) return false;
+    if (state === "replenishment" && !isCoreReplenishmentRow(row)) return false;
+    if (state === "needed" && coreCollectionShortageQty(row) <= 0) return false;
+    if (state === "in_stock" && coreCollectionStockQty(row) <= 0) return false;
+    if (state === "sufficient" && (!(row.target_quantity > 0) || coreCollectionShortageQty(row) > 0)) return false;
     if (state === "unregistered" && row.id) return false;
-    return true;
+    return !q || getCoreCollectionSearchTerms(row).some(function(term) { return term.includes(q); });
   });
-  coreCollectionFilteredRows.sort(function(a, b) {
+}
+
+function getCoreCollectionSearchTerms(row) {
+  var terms = coreCollectionSearchTerms.get(row);
+  if (terms) return terms;
+  var product = coreCollectionDisplayProduct(row);
+  var stock = coreCollectionStockMap[String(row.dkd_shohin_id)] || {};
+  terms = [
+    row.dkd_shohin_id,
+    row.source_hint,
+    row.note,
+    coreCollectionRank(row)?.productCode,
+    coreCollectionVehicleText(row),
+    product.genuine_part_number,
+    product.genuine_part_number_2,
+    product.manufacturer_part_number,
+    product.manufacturer,
+    product.daiko_part_number,
+    (stock.parts || []).join(" "),
+    (stock.locations || []).join(" ")
+  ].map(norm);
+  coreCollectionSearchTerms.set(row, terms);
+  return terms;
+}
+
+function indexCoreCollectionRows() {
+  var rows = coreCollectionRows.concat(coreCollectionRankingRows);
+  coreCollectionCategoryRanks = assignCoreCollectionCategoryRanks(rows);
+  rows.sort(function(a, b) {
     var aRank = coreCollectionCategoryRank(a);
     var bRank = coreCollectionCategoryRank(b);
     if (aRank && bRank) return aRank - bRank || coreCollectionRank(a).rank - coreCollectionRank(b).rank;
     if (aRank || bRank) return aRank ? -1 : 1;
     return compareCoreCollectionStoredOrder(a, b);
   });
+  coreCollectionOrderedRows = rows;
+  coreCollectionSearchTerms = new WeakMap();
 }
 
 async function loadCoreCollectionList() {
   var requestSeq = beginCoreManagementLoad();
   var list = document.getElementById("core-list-list");
   if (list) list.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
+  function checkCurrent() {
+    if (requestSeq !== coreManagementLoadSeq || coreListMode !== "collection") throw new Error("Collection load superseded");
+  }
   try {
-    var loadedRows = [];
-    for (var offset = 0; ; offset += 500) {
-      var r = await sb.from("core_collection_list_items")
-        .select("*")
-        .order("sort_order", { ascending: true, nullsFirst: false })
-        .order("updated_at", { ascending: false })
-        .order("id", { ascending: true })
-        .range(offset, offset + 499);
-      if (requestSeq !== coreManagementLoadSeq || coreListMode !== "collection") return;
-      if (r.error) throw r.error;
-      var batch = r.data || [];
-      loadedRows = loadedRows.concat(batch);
-      if (batch.length < 500) break;
-      if (loadedRows.length >= 50000) throw new Error("収集対象が多いため取得を中断しました。管理者へ連絡してください。");
-    }
-    function checkCurrent() {
-      if (requestSeq !== coreManagementLoadSeq || coreListMode !== "collection") throw new Error("Collection load superseded");
-    }
-    // Keep the stored collection status available if the report is unavailable or restricted.
+    // Start independent reads together. The list stays available when the report alone fails.
     var rankRequest = canViewManufacturingReport()
       ? window.DCatsManufacturingRankingReport.loadCoreCollectionRanking2025(checkCurrent).catch(function() { return null; })
       : null;
-    coreCollectionProductMap = {};
-    coreCollectionStockMap = {};
-    coreCollectionReportRank = null;
-    await loadCoreCollectionStock(requestSeq);
+    var [loadedRows, stock] = await Promise.all([loadCoreCollectionItems(checkCurrent), readCoreCollectionStock(checkCurrent)]);
     checkCurrent();
-    var productsAndRank = await Promise.all([
-      loadCoreCollectionProducts(loadedRows.map(function(row) { return row.dkd_shohin_id; })
-        .concat(Object.keys(coreCollectionStockMap)), requestSeq),
+    var [products, report] = await Promise.all([
+      loadCoreCollectionProducts(loadedRows.map(function(row) { return row.dkd_shohin_id; }).concat(Object.keys(stock)), checkCurrent),
       rankRequest
     ]);
     checkCurrent();
     coreCollectionRows = loadedRows;
-    var report = productsAndRank[1];
+    coreCollectionProductMap = products;
+    coreCollectionStockMap = stock;
     coreCollectionReportRank = report ? report.forProduct : null;
     coreCollectionRankingRows = buildCoreCollectionRankingRows(report);
-    coreCollectionCategoryRanks = assignCoreCollectionCategoryRanks(coreCollectionRows.concat(coreCollectionRankingRows));
+    indexCoreCollectionRows();
     applyCoreCollectionFilters();
     coreManagementDataReady = true;
     renderCoreCollectionList();
@@ -31968,36 +31964,87 @@ async function loadCoreCollectionList() {
   }
 }
 
-async function loadCoreCollectionProducts(productIds, requestSeq) {
-  var ids = Array.from(new Set(productIds.map(Number).filter(Number.isSafeInteger)));
-  var requests = [];
-  for (var i = 0; i < ids.length; i += 200) {
-    requests.push(sb.from("core_products").select(CORE_PRODUCT_FAST_SELECT).in("dkd_shohin_id", ids.slice(i, i + 200)));
+async function loadCoreCollectionItems(checkCurrent) {
+  var pageSize = 1000;
+  var maxRows = 50000;
+  function fetchPage(offset, size, options) {
+    return sb.from("core_collection_list_items").select("*", options)
+      .order("id", { ascending: true }).range(offset, offset + size - 1);
   }
-  var results = await Promise.all(requests);
-  if (requestSeq != null && requestSeq !== coreManagementLoadSeq) return;
-  results.forEach(function(r) {
-    if (r.error) throw r.error;
-    normalizeCoreProductFastRows(r.data || []).forEach(function(product) {
-      coreCollectionProductMap[String(product.dkd_shohin_id)] = product;
-    });
-  });
+  var first = await fetchPage(0, pageSize, { count: "exact" });
+  checkCurrent();
+  if (first.error) throw first.error;
+  var rows = first.data || [];
+  if (first.count >= maxRows) throw new Error("収集対象が多いため取得を中断しました。管理者へ連絡してください。");
+  if (Number.isInteger(first.count)) {
+    if (rows.length === 0 && first.count !== 0) throw new Error("Incomplete core collection records");
+    var step = rows.length || pageSize;
+    for (var start = step; start < first.count; start += step * 4) {
+      var group = [];
+      for (var offset = start; offset < Math.min(first.count, start + step * 4); offset += step) group.push(fetchPage(offset, step));
+      var pages = await Promise.all(group);
+      checkCurrent();
+      pages.forEach(function(page) {
+        if (page.error) throw page.error;
+        rows = rows.concat(page.data || []);
+      });
+    }
+    if (rows.length !== first.count) throw new Error("Incomplete core collection records");
+  } else {
+    var previousCount = rows.length;
+    while (previousCount === pageSize) {
+      if (rows.length >= maxRows) throw new Error("収集対象が多いため取得を中断しました。管理者へ連絡してください。");
+      var page = await fetchPage(rows.length, pageSize);
+      checkCurrent();
+      if (page.error) throw page.error;
+      var batch = page.data || [];
+      previousCount = batch.length;
+      rows = rows.concat(batch);
+    }
+  }
+  if (new Set(rows.map(function(row) { return row.id; })).size !== rows.length) throw new Error("Incomplete core collection records");
+  return rows;
 }
 
-async function loadCoreCollectionStock(requestSeq) {
+async function loadCoreCollectionProducts(productIds, checkCurrent) {
+  var ids = Array.from(new Set(productIds.map(Number).filter(Number.isSafeInteger)));
+  var columns = "dkd_shohin_id,category_code,category,dks_shohin_cd,manufacturer,manufacturer_part_number,genuine_part_number,genuine_part_number_2,daiko_part_number";
+  var products = {};
+  var chunkSize = 300;
+  var concurrency = 6;
+  for (var start = 0; start < ids.length; start += chunkSize * concurrency) {
+    var requests = [];
+    for (var offset = start; offset < Math.min(ids.length, start + chunkSize * concurrency); offset += chunkSize) {
+      requests.push(sb.from("core_products").select(columns).in("dkd_shohin_id", ids.slice(offset, offset + chunkSize)));
+    }
+    var results = await Promise.all(requests);
+    checkCurrent();
+    results.forEach(function(result) {
+      if (result.error) throw result.error;
+      normalizeCoreProductFastRows(result.data || []).forEach(function(product) {
+        products[String(product.dkd_shohin_id)] = product;
+      });
+    });
+  }
+  return products;
+}
+
+async function readCoreCollectionStock(checkCurrent) {
   var result = await sb.rpc("read_core_inventory_snapshot");
-  if (requestSeq !== coreManagementLoadSeq || coreListMode !== "collection") return;
+  checkCurrent();
   if (result.error) throw result.error;
   if (!Array.isArray(result.data?.linked)) throw new Error(t("core_pending_load_failed"));
+  var stockByProduct = {};
   result.data.linked.forEach(function(row) {
     if (row.dkd_shohin_id == null || row.replaced_at || isKoreanCoreInventoryEntry(row)) return;
     var key = String(row.dkd_shohin_id);
-    var stock = coreCollectionStockMap[key] || { quantity: 0, parts: [], locations: [] };
+    var stock = stockByProduct[key] || { quantity: 0, parts: [], locations: [] };
     stock.quantity += Number(row.quantity) || 0;
     if (row.core_part_number && !stock.parts.includes(row.core_part_number)) stock.parts.push(row.core_part_number);
     if (row.location && !stock.locations.includes(row.location)) stock.locations.push(row.location);
-    coreCollectionStockMap[key] = stock;
+    stockByProduct[key] = stock;
   });
+  return stockByProduct;
 }
 
 function renderCoreCollectionStockBadge(row) {
@@ -32053,7 +32100,7 @@ function renderCoreCollectionRow(row, mobile) {
   if (mobile) {
     var mobileHtml = "<div class='core-collection-card'>";
     mobileHtml += "<div class='core-collection-card-head'><div class='core-main-pn'>" + esc(product.manufacturer_part_number || product.genuine_part_number || (ranking && ranking.productCode) || ("DKD " + row.dkd_shohin_id)) + "</div>" + (categoryRank ? "<span class='core-collection-rank-badge' aria-label='2025年カテゴリ内順位'>" + esc("#" + categoryRank) + "</span>" : "") + "</div>";
-    mobileHtml += "<div class='core-collection-qty-grid'><div><span>" + coreCollectionUiLabel("必要数", "Required", "需求量") + "</span><strong>" + esc(String(row.target_quantity ?? "-")) + "</strong></div><div><span>" + coreCollectionUiLabel("コア在庫", "Core stock", "旧件库存") + "</span>" + renderCoreCollectionStockBadge(row) + "</div><div class='shortage'><span>" + coreCollectionUiLabel("不足", "Short", "缺口") + "</span><strong>" + esc(String(row.target_quantity == null ? "-" : shortage)) + "</strong></div></div>";
+    mobileHtml += "<div class='core-collection-qty-grid'><div><span>" + coreCollectionUiLabel("必要数", "Required", "需求量") + "</span>" + renderCoreCollectionQuantity(row) + "</div><div><span>" + coreCollectionUiLabel("コア在庫", "Core stock", "旧件库存") + "</span>" + renderCoreCollectionStockBadge(row) + "</div><div class='shortage'><span>" + coreCollectionUiLabel("不足", "Short", "缺口") + "</span><strong>" + esc(String(row.target_quantity == null ? "-" : shortage)) + "</strong></div></div>";
     mobileHtml += "<div class='core-vehicle-label' aria-label='車両区分'>" + coreCollectionVehicleSummaryHtml(row) + "</div>";
     mobileHtml += "<div class='core-list-card-actions'>" + renderCoreCollectionClassifyButton(row) + "</div>";
     mobileHtml += "</div>";
@@ -32065,7 +32112,7 @@ function renderCoreCollectionRow(row, mobile) {
   html += "<td><div class='core-main-pn'>" + esc(product.manufacturer_part_number || product.genuine_part_number || (ranking && ranking.productCode) || ("DKD " + row.dkd_shohin_id)) + "</div><div class='mgmt-pn'>純正 " + esc(product.genuine_part_number || "-") + "</div><div class='mgmt-sub'>" + (row.dkd_shohin_id == null ? esc(ranking?.productCode || "-") : "DKD " + esc(String(row.dkd_shohin_id))) + "</div></td>";
   html += "<td><div class='core-vehicle-label'>" + renderCoreCollectionVehicleHtml(row) + "</div><div class='mgmt-sub'>" + esc(product.manufacturer || "-") + "</div></td>";
   html += "<td>" + renderCoreCollectionStockBadge(row) + (stock.parts && stock.parts.length ? "<div class='mgmt-sub'>" + esc(stock.parts.join(" / ")) + "</div>" : "") + "</td>";
-  html += "<td><span class='core-qty-pill target'>" + esc(String(row.target_quantity ?? "-")) + "</span></td>";
+  html += "<td>" + renderCoreCollectionQuantity(row) + "</td>";
   html += "<td><span class='core-shortage-value " + (shortage > 0 ? "needed" : "enough") + "'>" + esc(String(row.target_quantity == null ? "-" : shortage)) + "</span></td>";
   html += "<td>" + renderCoreCollectionClassifyButton(row) + "</td></tr>";
   return html;
@@ -32091,10 +32138,22 @@ function loadMoreCoreCollectionRowsOnScroll() {
   }
 }
 
+function coreCollectionEditAttributes(row) {
+  return "data-core-classify='" + esc(String(row.id || "")) + "' data-report-rank='" + esc(String(row.reportRank?.rank || "")) + "'";
+}
+
+function renderCoreCollectionQuantity(row) {
+  var value = esc(String(row.target_quantity ?? "-"));
+  if (!canManageProductionRecords()) return "<span class='core-qty-pill target'>" + value + "</span>";
+  return "<button type='button' class='core-qty-pill target core-quantity-edit' aria-label='" +
+    esc(coreCollectionUiLabel("必要数を編集", "Edit required quantity", "编辑需求数量")) + "' " +
+    coreCollectionEditAttributes(row) + ">" + value + "</button>";
+}
+
 function renderCoreCollectionClassifyButton(row) {
   if (!row.id && !canManageProductionRecords()) return "";
-  return "<button type='button' class='btn-sm-edit' data-core-classify='" + esc(String(row.id || "")) + "' data-report-rank='" +
-    esc(String(row.reportRank?.rank || "")) + "'>" + coreCollectionUiLabel("分類", "Classification", "分类") + "</button>";
+  return "<button type='button' class='btn-sm-edit' " + coreCollectionEditAttributes(row) + ">" +
+    coreCollectionUiLabel("分類", "Classification", "分类") + "</button>";
 }
 
 function handleCoreCollectionAction(event) {
@@ -62118,6 +62177,11 @@ document.getElementById("btn-core-collection-form-cancel").addEventListener("cli
   document.getElementById("core-collection-form-overlay").classList.remove("show");
 });
 document.getElementById("btn-core-collection-form-save").addEventListener("click", saveCoreCollectionForm);
+document.getElementById("ccf-target-quantity").addEventListener("keydown", function(event) {
+  if (event.key !== "Enter" || event.isComposing) return;
+  event.preventDefault();
+  saveCoreCollectionForm();
+});
 document.getElementById("core-collection-form-overlay").addEventListener("click", function(e){ if (e.target === this) this.classList.remove("show"); });
 document.getElementById("ccf-product-search").addEventListener("input", function() {
   clearTimeout(this._timer);

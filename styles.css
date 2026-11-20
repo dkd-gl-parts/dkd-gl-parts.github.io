@@ -12608,3 +12608,7 @@ html[data-product-3d-paused] :is(
   #core-pending-print-sheet th:nth-child(6) { width: 15%; }
   #core-pending-print-sheet td:nth-child(4) { text-align: right; font-variant-numeric: tabular-nums; }
 }
+
+#screen-core-list-mgmt #core-list-list button.core-quantity-edit { border: 1px solid #9db9dd; border-radius: 5px; cursor: pointer; }
+#screen-core-list-mgmt #core-list-list button.core-quantity-edit:hover { background: #d9e7fb; }
+#screen-core-list-mgmt #core-list-list button.core-quantity-edit:focus-visible { outline: 2px solid var(--dcats-focus); outline-offset: 2px; }
