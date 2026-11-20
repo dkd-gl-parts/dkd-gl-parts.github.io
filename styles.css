@@ -12122,6 +12122,16 @@ html[data-product-3d-paused] :is(
     inset: auto 10px 12px;
     width: auto;
   }
+  #screen-core-list-mgmt #core-workspace-filter-options .core-workspace-filter-fields > label {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(78px, 1fr) minmax(0, 2fr);
+    align-items: center;
+  }
+  #screen-core-list-mgmt #core-workspace-filter-options .core-workspace-filter-fields :is(.form-select, .core-workspace-clear) {
+    height: 36px;
+    min-height: 36px;
+    padding-block: 5px;
+  }
 }
 .core-vehicle-help { margin: 5px 0 0; font-size: 12px; line-height: 1.5; color: #52657a; }
 #screen-core-list-mgmt .core-workspace-filter-fields { grid-template-columns: repeat(4, minmax(0, 1fr)) auto; }
