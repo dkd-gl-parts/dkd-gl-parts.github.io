@@ -57,6 +57,27 @@ var CORE_AI_CAMERA_TEST_URL = "https://script.google.com/macros/s/AKfycbxlaPJSNT
 var TRANSLATIONS = {
 
   ja: {
+    order_print_checking: "印刷端末の起動を確認中",
+    order_print_checking_note: "印刷端末の応答とプリンターの準備状態を確認しています。",
+    order_print_ready: "印刷端末：起動確認済み",
+    order_print_stopped: "印刷端末：起動を確認できません",
+    order_print_check_failed: "印刷端末を確認できません。",
+    order_print_recovery_note: "自動印刷は現在利用できません。接続設定で印刷プログラムの起動・接続を確認し、「再確認」を押してください。登録済みの印刷待ちは再送しないでください。",
+    order_print_connection_open: "接続設定を開く",
+    order_print_recheck: "再確認",
+    sales_inventory_title: "棚番・在庫数",
+    sales_inventory_shelf: "棚番",
+    sales_inventory_stock: "在庫数",
+    sales_inventory_loading: "取得中",
+    sales_inventory_denied: "在庫の閲覧権限がありません",
+    sales_inventory_missing: "在庫区分未登録",
+    sales_inventory_error: "取得できません。詳細を再読込してください。",
+    sales_inventory_unassigned: "場所未登録",
+    sales_inventory_legacy: "（旧登録）",
+    sales_inventory_recount: "棚番の数量は要実数確認",
+    sales_inventory_note: "在庫数は表示時点の合計在庫です。棚番の括弧内は場所別数量です。",
+    sales_order_claim_intake: "クレーム受付",
+    sales_order_claim_intake_order: "受注 {order} のクレーム受付",
     finished_label_component_load_failed: "部品を読み込めませんでした。「100%使用部品を再セット」を押して読み直してください。",
     finished_label_setup_guide_driver_title: "Windowsにもプリンターを追加したい場合",
     finished_label_setup_guide_driver_desc: "Windowsの通常印刷やP-touch Editorを使う場合は、Brother公式ページで、このPCのWindowsに合うプリンタードライバーを選んでください。D-CATSのIP直接指定による設定は、Windowsのプリンター一覧が0台でも進められます。",
@@ -452,8 +473,8 @@ var TRANSLATIONS = {
     customer_order_subtotal: "小計",
     customer_order_total: "合計",
     sales_order_id_label: "受注ID",
-    claim_case_mgmt_title: "クレーム受付・対応",
-    claim_case_mgmt_desc: "受付・代替受注・発送・旧品返却・検査を案件ごとに管理します。",
+    claim_case_mgmt_title: "受付管理",
+    claim_case_mgmt_desc: "連絡メモ・問い合わせ・クレームを受け付け、必要に応じて代替対応へ進みます。",
     sales_order_mgmt_title: "受注・出荷管理",
     sales_order_internal_print_timing: "受注書（出荷指示書）は、保証書などと一緒に印刷時に発行します。",
     sales_order_documents_queued: "受注書を含む{n}件の帳票を印刷待ちに登録しました。",
@@ -466,6 +487,10 @@ var TRANSLATIONS = {
     sales_order_mgmt_note: "注文受付、B2発送データ取込、現場の製造シリアル照合を管理します。",
     business_workspace_open: "業務連携",
     business_workspace_settings_menu_title: "設定",
+    menu_screen_tabs_title: "画面タブ",
+    menu_screen_tabs_desc: "画面タブのON・OFFと動作を確認します。",
+    menu_screen_tabs_checking: "ログイン状態を確認しています…",
+    menu_screen_tabs_retry: "確認できませんでした。もう一度押してください。",
     business_workspace_settings_title: "D-CATS業務連携設定",
     business_workspace_settings_desc: "初回登録・Google接続・CSV保存先を設定します。",
     business_workspace_settings_location: "初回登録・接続・保存先の設定は、メニューの「設定」→「D-CATS業務連携設定」から行います。",
@@ -1210,9 +1235,14 @@ var TRANSLATIONS = {
     finished_label_mobile_station_error: "Windows印刷端末でエラーが発生しました: {message}",
     finished_label_mode_back: "← 印刷画面を選び直す",
     finished_label_product_screen_title: "完品シール印刷・完品登録",
+    finished_label_print_quantity: "印刷枚数",
+    finished_label_skip_stock: "在庫計上しない（シールのみ）",
+    finished_label_skip_stock_help: "シリアルと印刷履歴を発行し、在庫数・入庫履歴は増やしません。",
+    finished_label_stock_not_posted: "在庫計上なし",
     finished_box_label_screen_title: "箱シール印刷",
     finished_label_product_badge: "45 × 20 mm / 完品シール",
     finished_box_label_badge: "80 × 60 mm / 箱シール",
+    finished_label_view_full_number: "品番の全文を表示",
     finished_label_product_search: "完品登録対象検索",
     finished_box_label_product_search: "箱シール対象品番検索",
     finished_label_search_ph: "品番・製造予定Noで検索",
@@ -1430,6 +1460,8 @@ var TRANSLATIONS = {
     finished_label_priority_both_kinds: "リビルト・新品 部品登録済",
     finished_label_history_empty: "この品番の発行履歴はありません。",
     screen_product_kind_stock_title: "在庫管理",
+    container_stock_title: "コンテナ一括入庫",
+    container_stock_back: "← 在庫管理",
     img_section: "画像",
     image_actions_title: "画像操作",
     product_photo_tools_title: "商品撮影・画像整理",
@@ -1950,6 +1982,7 @@ var TRANSLATIONS = {
     lbl_model: "型式",
     lbl_category: "カテゴリ",
     btn_add_part: "商品を追加",
+    parts_mgmt_search_incomplete: "検索の一部を取得できませんでした。再検索してください。",
     parts_mgmt_search_label: "商品を検索",
     parts_mgmt_create_label: "新規登録",
     part_form_add_title: "商品追加",
@@ -1976,13 +2009,92 @@ var TRANSLATIONS = {
     core_list_search_ph: "DKD商品ID・コア品番・品番・置き場で検索",
     core_list_product_search: "対象商品検索",
     core_list_quantity: "数量",
+    core_pending_tab: "照合待ち",
+    core_inventory_physical: "現物合計",
+    core_inventory_linked: "紐づけ済み",
+    core_inventory_match_state: "紐づけ状態",
+    core_inventory_match_all: "すべての紐づけ状態",
+    core_inventory_match_help: "商品IDの有無にかかわらず、パレット別の現物在庫を確認できます。",
+    core_pallet_entry_title: "パレット別コア登録",
+    core_pallet_entry_help: "商品IDが未確定のコアを「照合待ち」に登録します。",
+    core_pallet_col_number: "No.",
+    core_pallet_col_pallet: "パレットNO.",
+    core_pallet_col_part: "品番",
+    core_pallet_col_qty: "数量",
+    core_pallet_col_note: "備考",
+    core_pallet_previous: "前の行",
+    core_pallet_next: "次の行",
+    core_pallet_add_row: "行を追加",
+    core_pallet_close: "閉じる",
+    core_pallet_linked_entry: "商品ID指定で登録",
+    core_pallet_save_entry: "照合待ちに登録",
+    core_pallet_match_title: "照合待ち在庫",
+    core_pallet_operations: "在庫操作",
+    core_pallet_adjust: "数量調整",
+    core_pallet_link: "商品IDに紐づけ",
+    core_pallet_adjust_to: "調整後の数量",
+    core_pallet_reason: "変更理由",
+    core_pallet_find_product: "商品候補を検索",
+    core_pallet_find_placeholder: "メーカー品番・純正品番・純正品番2",
+    core_pallet_find: "検索",
+    core_pallet_link_target: "紐づけ先",
+    core_pallet_choose: "商品を選択",
+    core_pallet_save_link: "現在庫に反映",
+    core_pallet_save_adjust: "数量を保存",
+    core_pallet_line_range: "{start} / {total}行",
+    core_pallet_line_field: "{row}行目 {field}",
+    core_pallet_units: "{qty}台",
+    core_pallet_same_part: "同じ品番の全パレット（{count}明細・{qty}台）",
+    core_pallet_enter_query: "検索する品番を入力してください。",
+    core_pallet_searching: "商品候補を検索中…",
+    core_pallet_choose_hint: "候補から紐づけ先を選んでください。",
+    core_pallet_no_product: "一致する商品候補がありません。",
+    core_pallet_search_failed: "商品候補を取得できませんでした。",
+    core_pallet_saving: "保存中…",
+    core_pallet_unconfirmed: "保存結果を確認できませんでした。同じ内容で再確認してください。",
+    core_pallet_added: "{count}明細を照合待ちに登録しました。",
+    core_pallet_adjusted: "{count}明細の数量を更新しました。",
+    core_pallet_linked: "{count}明細を商品IDに紐づけて現在庫に反映しました。",
+    core_pallet_invalid_entry: "{row}行目のパレットNO.、品番、数量を確認してください。",
+    core_pallet_invalid_entry_quantity: "{row}行目の数量は、1〜999,999,999の整数で入力してください。",
+    core_pallet_empty_entry: "登録する行を入力してください。",
+    core_pallet_invalid_adjust: "0以上の整数と変更理由を入力してください。",
+    core_pallet_invalid_bulk: "在庫がある明細を100件以内で選んでください。",
+    core_pallet_switch_prompt: "入力中の行を保存するか、登録画面を閉じてから切り替えてください。",
+    core_pallet_link_preview: "{count}明細・{qty}台を現在庫へ反映します。",
+    core_pallet_manual: "手入力",
+    core_pallet_edit_match: "編集・紐づけ",
+    core_pending_help: "品番の確認待ちです。表示数量は出庫可能数に含まれません。",
+    core_pending_title: "照合待ち一覧（出庫対象外）",
+    core_pending_load_failed: "照合待ちを取得できませんでした。検索ボタンで再読み込みしてください。",
+    core_pending_records: "照合待ち明細",
+    core_pending_units: "照合待ち数量",
+    core_pending_export_print: "印刷・PDF",
+    core_pending_export_excel: "Excel出力",
+    core_pending_export_filename: "GLTEK_コア照合待ち",
+    core_pending_export_info: "{date}　{count}明細・{qty}台",
+    core_pending_export_error: "一覧を出力できませんでした。もう一度お試しください。",
+    core_pending_pallet: "パレットNO.",
+    core_pending_part: "原票品番",
+    core_pending_quantity: "数量",
+    core_pending_row: "原票の行",
+    core_list_pallet_location: "パレット・置き場",
+    core_pending_search: "原票品番・パレットNO.",
     core_list_location: "置き場",
     core_list_note: "メモ",
     core_list_delete_confirm: "このコア行を削除しますか？",
+    core_inventory_delete_review: "削除手続き…",
+    core_inventory_delete_back: "修正に戻る",
+    core_inventory_delete_ack: "この在庫明細を削除する",
+    core_inventory_delete_changed: "在庫が更新されています。閉じて一覧を検索し直してください。",
     core_list_created_from_ranking: "ランキングからコアリストを{n}件作成しました",
     core_list_no_ranking_source: "ランキング側に追加できるコア候補がありません",
     production_ranking_search_ph: "順位・品番・メーカー・DKD商品IDで検索",
     production_ranking_rank: "順位",
+    production_report_rank_loading: "順位取得中",
+    production_report_rank_error: "順位未取得",
+    production_report_rank_denied: "順位閲覧権限なし",
+    production_report_rank_source: "{year}年 製造ランキング：出荷数・全体集計／本人順位を優先、未掲載のみ登録互換から継承",
     production_ranking_year: "年度",
     production_ranking_source: "元リスト",
     production_ranking_status: "状態",
@@ -2018,9 +2130,11 @@ var TRANSLATIONS = {
     sales_conditions_title: "販売条件",
     sales_shipping_charge_rule: "送料条件",
     sales_shipping_charge_separate: "送料別途",
+    sales_shipping_charge_separate_short: "送料別途",
     sales_shipping_charge_free: "送料無料",
     sales_shipping_charge_loading: "送料条件を確認中",
     sales_shipping_separate_note: "お届け先を選択して送料をご確認ください。",
+    sales_shipping_destination_guide: "送料一覧で都道府県を選択してください",
     sales_shipping_free_note: "この得意先は送料無料です。",
     sales_shipping_estimate_title: "登録済み品番の送料試算",
     sales_shipping_destination: "お届け先",
@@ -2703,6 +2817,14 @@ var TRANSLATIONS = {
     component_mode_same: "一致",
     component_mode_all: "全件",
     component_add_title: "構成部品を追加",
+    component_input_master_name: "部品名を選択",
+    component_input_master_maker: "メーカーを入力または候補から選択",
+    component_input_master_part: "メーカーを選ぶと品番候補を表示",
+    component_input_master_empty: "登録候補なし（直接入力可）",
+    component_input_master_loading: "登録済み品番を確認中",
+    component_input_master_failed: "候補を取得できません（直接入力可）",
+    component_input_master_count: "候補 {n}件",
+    component_input_master_genuine: "純正",
     component_add_title_for_kind: "{kind} の構成部品を追加",
     component_add_open: "構成部品を追加",
     component_target_kind_title: "構成部品の対象",
@@ -2738,6 +2860,8 @@ var TRANSLATIONS = {
     catalog_figure_retry: "カタログ図を再読み込み",
     catalog_figure_count: "{count}枚",
     component_child: "子構成",
+    component_catalog_previous_page: "前へ",
+    component_catalog_next_page: "次へ",
     component_child_loading: "子構成を読み込み中...",
     component_child_load_failed: "子構成の読み込みに失敗しました",
     component_catalog_load_failed: "カタログ構成部品を読み込めませんでした。商品を開き直してください。",
@@ -2921,6 +3045,27 @@ var TRANSLATIONS = {
   },
 
   en: {
+    order_print_checking: "Checking print station",
+    order_print_checking_note: "Checking the station heartbeat and printer readiness.",
+    order_print_ready: "Print station: running",
+    order_print_stopped: "Print station: unavailable",
+    order_print_check_failed: "Cannot verify the print station.",
+    order_print_recovery_note: "Automatic printing is unavailable. Open connection settings, check that the print agent is running and connected, then check again. Do not resend pending requests.",
+    order_print_connection_open: "Open connection settings",
+    order_print_recheck: "Check again",
+    sales_inventory_title: "Shelf locations and stock",
+    sales_inventory_shelf: "Shelf",
+    sales_inventory_stock: "Stock",
+    sales_inventory_loading: "Loading",
+    sales_inventory_denied: "Stock view permission required",
+    sales_inventory_missing: "Stock variant unavailable",
+    sales_inventory_error: "Unavailable. Reload order details.",
+    sales_inventory_unassigned: "Unassigned",
+    sales_inventory_legacy: "(legacy)",
+    sales_inventory_recount: "Location quantities need recount",
+    sales_inventory_note: "Stock is the current total. Quantities in parentheses are per location.",
+    sales_order_claim_intake: "Start claim",
+    sales_order_claim_intake_order: "Start a claim for order {order}",
     finished_label_component_load_failed: "Unable to load parts. Select Reset 100% Usage Parts to try again.",
     finished_label_setup_guide_driver_title: "Adding the printer to Windows",
     finished_label_setup_guide_driver_desc: "For regular Windows printing or P-touch Editor, choose the printer driver for this PC on the official Brother download page. D-CATS setup by IP address can continue even if Windows lists no printers.",
@@ -3316,8 +3461,8 @@ var TRANSLATIONS = {
     customer_order_subtotal: "Subtotal",
     customer_order_total: "Total",
     sales_order_id_label: "Order ID",
-    claim_case_mgmt_title: "Claim cases",
-    claim_case_mgmt_desc: "Track reception, replacements, shipping, returns and inspection by case.",
+    claim_case_mgmt_title: "Reception management",
+    claim_case_mgmt_desc: "Record customer contacts and inquiries, then continue to replacement handling when needed.",
     sales_order_mgmt_title: "Orders / Shipping",
     sales_order_internal_print_timing: "The order / shipment instruction is issued with the warranty and other documents when printing.",
     sales_order_documents_queued: "Queued {n} documents, including the order / shipment instruction, for printing.",
@@ -3330,6 +3475,10 @@ var TRANSLATIONS = {
     sales_order_mgmt_note: "Manage order acceptance, B2 shipping-data imports, and shop-floor serial verification.",
     business_workspace_open: "Shared Folder",
     business_workspace_settings_menu_title: "Settings",
+    menu_screen_tabs_title: "Screen tabs",
+    menu_screen_tabs_desc: "Turn screen tabs on or off and review their behavior.",
+    menu_screen_tabs_checking: "Checking your login…",
+    menu_screen_tabs_retry: "Could not verify your login. Select this card again.",
     business_workspace_settings_title: "D-CATS Integration Settings",
     business_workspace_settings_desc: "Set up passwords, Google connection and CSV folders.",
     business_workspace_settings_location: "For initial registration, connections and save folders, go to Menu → Settings → D-CATS Integration Settings.",
@@ -4073,12 +4222,17 @@ var TRANSLATIONS = {
     finished_label_mobile_station_error: "The Windows print station reported an error: {message}",
     finished_label_mode_back: "← Choose Another Print Screen",
     finished_label_product_screen_title: "Finished Label Printing / Registration",
+    finished_label_print_quantity: "Print quantity",
+    finished_label_skip_stock: "Do not add stock (labels only)",
+    finished_label_skip_stock_help: "Issue serials and print history without increasing stock or recording a stock receipt.",
+    finished_label_stock_not_posted: "Stock not posted",
     finished_box_label_screen_title: "Box Label Printing",
     finished_label_product_badge: "45 × 20 mm / Finished Label",
     finished_box_label_badge: "80 × 60 mm / Box Label",
     finished_box_label_product_search: "Box Label Product Search",
     finished_box_label_issue_form: "Box Label Print Details",
     finished_label_title: "Finished Unit / Manufacturing Serial Issue",
+    finished_label_view_full_number: "View full part number",
     finished_label_product_search: "Finished Unit Target Search",
     finished_label_search_ph: "Search part number or production plan No.",
     finished_label_search_hint: "Only products with an issued G part number can be searched. Enter a part number or production plan No. to search.",
@@ -4294,6 +4448,8 @@ var TRANSLATIONS = {
     finished_label_priority_both_kinds: "Rebuilt + New Parts Ready",
     finished_label_history_empty: "No issue history for this product.",
     screen_product_kind_stock_title: "Stock Management",
+    container_stock_title: "Container stock receipt",
+    container_stock_back: "← Stock management",
     img_section: "Images",
     image_actions_title: "Image Actions",
     product_photo_tools_title: "Product Photos",
@@ -4814,6 +4970,7 @@ var TRANSLATIONS = {
     lbl_model: "Model Code",
     lbl_category: "Category",
     btn_add_part: "Add Part",
+    parts_mgmt_search_incomplete: "Some search results could not be loaded. Please search again.",
     parts_mgmt_search_label: "Search products",
     parts_mgmt_create_label: "New product",
     part_form_add_title: "Add Part",
@@ -4840,13 +4997,92 @@ var TRANSLATIONS = {
     core_list_search_ph: "Search by DKD ID, CORE part, part number, or location",
     core_list_product_search: "Target product search",
     core_list_quantity: "Quantity",
+    core_pending_tab: "Pending match",
+    core_inventory_physical: "Physical stock",
+    core_inventory_linked: "Linked",
+    core_inventory_match_state: "Match status",
+    core_inventory_match_all: "All match statuses",
+    core_inventory_match_help: "View physical stock by pallet with or without a product ID.",
+    core_pallet_entry_title: "Register pallet stock",
+    core_pallet_entry_help: "Register cores awaiting a product match.",
+    core_pallet_col_number: "No.",
+    core_pallet_col_pallet: "Pallet no.",
+    core_pallet_col_part: "Part number",
+    core_pallet_col_qty: "Quantity",
+    core_pallet_col_note: "Notes",
+    core_pallet_previous: "Previous rows",
+    core_pallet_next: "Next rows",
+    core_pallet_add_row: "Add row",
+    core_pallet_close: "Close",
+    core_pallet_linked_entry: "Register with product ID",
+    core_pallet_save_entry: "Save as pending",
+    core_pallet_match_title: "Pending stock",
+    core_pallet_operations: "Stock actions",
+    core_pallet_adjust: "Adjust quantity",
+    core_pallet_link: "Link product ID",
+    core_pallet_adjust_to: "New quantity",
+    core_pallet_reason: "Reason for change",
+    core_pallet_find_product: "Search product candidates",
+    core_pallet_find_placeholder: "Maker part no. or OEM part no. 1 or 2",
+    core_pallet_find: "Search",
+    core_pallet_link_target: "Product to link",
+    core_pallet_choose: "Select a product",
+    core_pallet_save_link: "Move to current stock",
+    core_pallet_save_adjust: "Save quantity",
+    core_pallet_line_range: "{start} / {total} rows",
+    core_pallet_line_field: "Row {row} {field}",
+    core_pallet_units: "{qty} units",
+    core_pallet_same_part: "All pallets for this part ({count} rows, {qty} units)",
+    core_pallet_enter_query: "Enter a part number to search.",
+    core_pallet_searching: "Searching products…",
+    core_pallet_choose_hint: "Select the product to link.",
+    core_pallet_no_product: "No matching product found.",
+    core_pallet_search_failed: "Could not load product candidates.",
+    core_pallet_saving: "Saving…",
+    core_pallet_unconfirmed: "Save could not be confirmed. Retry the same operation.",
+    core_pallet_added: "Saved {count} pending stock rows.",
+    core_pallet_adjusted: "Updated quantity for {count} stock rows.",
+    core_pallet_linked: "Linked {count} rows and moved them to current stock.",
+    core_pallet_invalid_entry: "Check the pallet, part number and quantity in row {row}.",
+    core_pallet_invalid_entry_quantity: "Enter a whole number from 1 to 999,999,999 in row {row}.",
+    core_pallet_empty_entry: "Enter a row to save.",
+    core_pallet_invalid_adjust: "Enter a non-negative integer and a reason.",
+    core_pallet_invalid_bulk: "Select up to 100 rows with stock.",
+    core_pallet_switch_prompt: "Save the entered rows or close this dialog before switching.",
+    core_pallet_link_preview: "Move {count} rows ({qty} units) to current stock.",
+    core_pallet_manual: "Manual entry",
+    core_pallet_edit_match: "Edit or link",
+    core_pending_help: "Part numbers are pending confirmation. These quantities are unavailable for withdrawal.",
+    core_pending_title: "Pending match · unavailable for withdrawal",
+    core_pending_load_failed: "Could not load pending pallet records. Use Search to try again.",
+    core_pending_records: "Pending records",
+    core_pending_units: "Pending units",
+    core_pending_export_print: "Print / PDF",
+    core_pending_export_excel: "Export Excel",
+    core_pending_export_filename: "GLTEK_CORE_PENDING",
+    core_pending_export_info: "{date} · {count} records · {qty} pcs",
+    core_pending_export_error: "Could not export the list. Please try again.",
+    core_pending_pallet: "Pallet no.",
+    core_pending_part: "Source part number",
+    core_pending_quantity: "Quantity",
+    core_pending_row: "Source row",
+    core_list_pallet_location: "Pallet / location",
+    core_pending_search: "Source part / pallet no.",
     core_list_location: "Location",
     core_list_note: "Memo",
     core_list_delete_confirm: "Delete this CORE row?",
+    core_inventory_delete_review: "Review deletion…",
+    core_inventory_delete_back: "Back to edit",
+    core_inventory_delete_ack: "Delete this inventory record",
+    core_inventory_delete_changed: "Inventory has changed. Close this window and search again.",
     core_list_created_from_ranking: "Created {n} CORE rows from ranking",
     core_list_no_ranking_source: "No CORE candidates available in ranking",
     production_ranking_search_ph: "Search by rank, part number, manufacturer, or DKD ID",
     production_ranking_rank: "Rank",
+    production_report_rank_loading: "Loading rank",
+    production_report_rank_error: "Rank unavailable",
+    production_report_rank_denied: "Rank access denied",
+    production_report_rank_source: "{year} manufacturing ranking: overall shipments / own rank first; registered compatibility is used only when unlisted",
     production_ranking_year: "Year",
     production_ranking_source: "Source",
     production_ranking_status: "Status",
@@ -4882,9 +5118,11 @@ var TRANSLATIONS = {
     sales_conditions_title: "Sales Terms",
     sales_shipping_charge_rule: "Shipping Terms",
     sales_shipping_charge_separate: "Shipping charged separately",
+    sales_shipping_charge_separate_short: "Extra",
     sales_shipping_charge_free: "Free shipping",
     sales_shipping_charge_loading: "Checking shipping terms",
     sales_shipping_separate_note: "Select a destination to check shipping.",
+    sales_shipping_destination_guide: "Select a prefecture in the shipping list",
     sales_shipping_free_note: "This customer receives free shipping.",
     sales_shipping_estimate_title: "Registered Product Shipping Estimate",
     sales_shipping_destination: "Destination",
@@ -5567,6 +5805,14 @@ var TRANSLATIONS = {
     component_mode_same: "Same",
     component_mode_all: "All",
     component_add_title: "Add Component Part",
+    component_input_master_name: "Select a part name",
+    component_input_master_maker: "Enter or choose a manufacturer",
+    component_input_master_part: "Choose a manufacturer for part numbers",
+    component_input_master_empty: "No registered choices; manual entry available",
+    component_input_master_loading: "Loading registered part numbers",
+    component_input_master_failed: "Choices unavailable; manual entry available",
+    component_input_master_count: "{n} choices",
+    component_input_master_genuine: "Genuine",
     component_add_title_for_kind: "Add {kind} Component Part",
     component_add_open: "Add Component Part",
     component_target_kind_title: "Component Target",
@@ -5602,6 +5848,8 @@ var TRANSLATIONS = {
     catalog_figure_retry: "Reload catalog diagrams",
     catalog_figure_count: "{count} image(s)",
     component_child: "Child",
+    component_catalog_previous_page: "Previous",
+    component_catalog_next_page: "Next",
     component_child_loading: "Loading child components...",
     component_child_load_failed: "Failed to load child components",
     component_catalog_load_failed: "Catalog components could not be loaded. Reopen the product to try again.",
@@ -5785,6 +6033,27 @@ var TRANSLATIONS = {
   },
 
   zh: {
+    order_print_checking: "正在检查打印终端",
+    order_print_checking_note: "正在检查终端响应和打印机准备状态。",
+    order_print_ready: "打印终端：已确认运行",
+    order_print_stopped: "打印终端：无法确认运行",
+    order_print_check_failed: "无法检查打印终端。",
+    order_print_recovery_note: "当前无法自动打印。请打开连接设置，确认打印程序已启动并连接后，点击重新检查。请勿重复发送待打印任务。",
+    order_print_connection_open: "打开连接设置",
+    order_print_recheck: "重新检查",
+    sales_inventory_title: "货位与库存数量",
+    sales_inventory_shelf: "货位",
+    sales_inventory_stock: "库存数量",
+    sales_inventory_loading: "读取中",
+    sales_inventory_denied: "没有库存查看权限",
+    sales_inventory_missing: "未登记库存类别",
+    sales_inventory_error: "无法读取，请重新加载订单详情。",
+    sales_inventory_unassigned: "未分配货位",
+    sales_inventory_legacy: "（旧登记）",
+    sales_inventory_recount: "货位数量需实物盘点",
+    sales_inventory_note: "库存数量为显示时的总库存。括号内为各货位数量。",
+    sales_order_claim_intake: "投诉受理",
+    sales_order_claim_intake_order: "受理订单 {order} 的投诉",
     finished_label_component_load_failed: "无法读取零件。请点击“重新设置100%使用零件”重试。",
     finished_label_setup_guide_driver_title: "如需将打印机添加到Windows",
     finished_label_setup_guide_driver_desc: "如需使用Windows常规打印或P-touch Editor，请在Brother官方页面选择适合此电脑Windows版本的打印机驱动。即使Windows打印机列表为空，也可继续通过IP设置D-CATS。",
@@ -6124,8 +6393,8 @@ var TRANSLATIONS = {
     customer_order_subtotal: "小计",
     customer_order_total: "合计",
     sales_order_id_label: "订单ID",
-    claim_case_mgmt_title: "投诉受理与处理",
-    claim_case_mgmt_desc: "按案件分别跟踪受理、替换订单、发货、旧品退回和检验。",
+    claim_case_mgmt_title: "受理管理",
+    claim_case_mgmt_desc: "记录客户联系、咨询与投诉，并在需要时转入替换处理。",
     sales_order_mgmt_title: "订单・出货管理",
     sales_order_internal_print_timing: "订单（出货指示书）将在打印时与保修书等一起签发。",
     sales_order_documents_queued: "已将包含订单在内的{n}份单据加入打印队列。",
@@ -6138,6 +6407,10 @@ var TRANSLATIONS = {
     sales_order_mgmt_note: "管理订单受理、B2发货数据导入和现场序列号核对。",
     business_workspace_open: "业务协作",
     business_workspace_settings_menu_title: "设置",
+    menu_screen_tabs_title: "屏幕标签页",
+    menu_screen_tabs_desc: "开启或关闭屏幕标签页并查看其行为。",
+    menu_screen_tabs_checking: "正在确认登录状态…",
+    menu_screen_tabs_retry: "无法确认登录状态，请再次选择此卡片。",
     business_workspace_settings_title: "D-CATS业务联动设置",
     business_workspace_settings_desc: "设置首次注册、Google连接和CSV保存位置。",
     business_workspace_settings_location: "首次注册、连接及保存位置请通过菜单 → 设置 → D-CATS业务联动设置操作。",
@@ -6948,12 +7221,17 @@ var TRANSLATIONS = {
     finished_label_mobile_station_error: "Windows打印终端发生错误：{message}",
     finished_label_mode_back: "← 重新选择打印画面",
     finished_label_product_screen_title: "完品标签打印・完品登记",
+    finished_label_print_quantity: "打印张数",
+    finished_label_skip_stock: "不计入库存（仅打印标签）",
+    finished_label_skip_stock_help: "生成序列号和打印记录，不增加库存或入库记录。",
+    finished_label_stock_not_posted: "未计入库存",
     finished_box_label_screen_title: "箱标签打印",
     finished_label_product_badge: "45 × 20 mm / 完品标签",
     finished_box_label_badge: "80 × 60 mm / 箱标签",
     finished_box_label_product_search: "箱标签对象品号搜索",
     finished_box_label_issue_form: "箱标签打印内容",
     finished_label_title: "完品登记・制造序列号发行",
+    finished_label_view_full_number: "查看完整品号",
     finished_label_product_search: "完品登记对象搜索",
     finished_label_search_ph: "按品号或生产计划编号搜索",
     finished_label_search_hint: "仅可搜索已发行G品号的商品。请输入品号或生产计划编号后搜索。",
@@ -7169,6 +7447,8 @@ var TRANSLATIONS = {
     finished_label_priority_both_kinds: "再制造・新品零件已登记",
     finished_label_history_empty: "此品号没有发行历史。",
     screen_product_kind_stock_title: "库存管理",
+    container_stock_title: "集装箱批量入库",
+    container_stock_back: "← 库存管理",
     img_section: "图片",
     image_actions_title: "图片操作",
     product_photo_tools_title: "商品拍摄与图片整理",
@@ -7688,6 +7968,7 @@ var TRANSLATIONS = {
     lbl_model: "型号代码",
     lbl_category: "类别",
     btn_add_part: "添加零件",
+    parts_mgmt_search_incomplete: "部分搜索结果未能加载，请重新搜索。",
     parts_mgmt_search_label: "搜索商品",
     parts_mgmt_create_label: "新建商品",
     btn_add_core_list: "添加库存CORE",
@@ -7705,13 +7986,92 @@ var TRANSLATIONS = {
     core_list_search_ph: "按DKD ID、CORE编号、零件编号或位置搜索",
     core_list_product_search: "目标商品搜索",
     core_list_quantity: "数量",
+    core_pending_tab: "待核对",
+    core_inventory_physical: "实物合计",
+    core_inventory_linked: "已关联",
+    core_inventory_match_state: "关联状态",
+    core_inventory_match_all: "全部关联状态",
+    core_inventory_match_help: "按托盘查看有无商品ID的实物库存。",
+    core_pallet_entry_title: "按托盘登记旧件",
+    core_pallet_entry_help: "将商品ID未确定的旧件登记为待核对。",
+    core_pallet_col_number: "序号",
+    core_pallet_col_pallet: "托盘编号",
+    core_pallet_col_part: "品号",
+    core_pallet_col_qty: "数量",
+    core_pallet_col_note: "备注",
+    core_pallet_previous: "上一组",
+    core_pallet_next: "下一组",
+    core_pallet_add_row: "添加一行",
+    core_pallet_close: "关闭",
+    core_pallet_linked_entry: "按商品ID登记",
+    core_pallet_save_entry: "登记为待核对",
+    core_pallet_match_title: "待核对库存",
+    core_pallet_operations: "库存操作",
+    core_pallet_adjust: "调整数量",
+    core_pallet_link: "关联商品ID",
+    core_pallet_adjust_to: "调整后数量",
+    core_pallet_reason: "变更原因",
+    core_pallet_find_product: "搜索候选商品",
+    core_pallet_find_placeholder: "厂商品号、原厂品号或原厂品号2",
+    core_pallet_find: "搜索",
+    core_pallet_link_target: "关联商品",
+    core_pallet_choose: "请选择商品",
+    core_pallet_save_link: "转入当前库存",
+    core_pallet_save_adjust: "保存数量",
+    core_pallet_line_range: "第 {start} / {total} 行",
+    core_pallet_line_field: "第 {row} 行 {field}",
+    core_pallet_units: "{qty} 件",
+    core_pallet_same_part: "该品号的全部托盘（{count} 行，{qty} 件）",
+    core_pallet_enter_query: "请输入要搜索的品号。",
+    core_pallet_searching: "正在搜索商品…",
+    core_pallet_choose_hint: "请从候选商品中选择关联商品。",
+    core_pallet_no_product: "没有匹配的候选商品。",
+    core_pallet_search_failed: "无法加载候选商品。",
+    core_pallet_saving: "正在保存…",
+    core_pallet_unconfirmed: "无法确认保存结果。请原样重试。",
+    core_pallet_added: "已登记 {count} 行待核对库存。",
+    core_pallet_adjusted: "已更新 {count} 行库存的数量。",
+    core_pallet_linked: "已关联 {count} 行并转入当前库存。",
+    core_pallet_invalid_entry: "请检查第 {row} 行的托盘、品号和数量。",
+    core_pallet_invalid_entry_quantity: "请在第 {row} 行输入 1 至 999,999,999 的整数。",
+    core_pallet_empty_entry: "请输入要登记的明细。",
+    core_pallet_invalid_adjust: "请输入非负整数及变更原因。",
+    core_pallet_invalid_bulk: "请选择不超过100行的有库存明细。",
+    core_pallet_switch_prompt: "请先保存已输入的行或关闭此窗口再切换。",
+    core_pallet_link_preview: "将 {count} 行（{qty} 件）转入当前库存。",
+    core_pallet_manual: "手动输入",
+    core_pallet_edit_match: "编辑或关联",
+    core_pending_help: "零件编号有待核对，这些数量不可出库。",
+    core_pending_title: "待核对（不可出库）",
+    core_pending_load_failed: "无法加载待核对的托盘记录，请点击搜索重试。",
+    core_pending_records: "待核对明细",
+    core_pending_units: "待核对数量",
+    core_pending_export_print: "打印 / PDF",
+    core_pending_export_excel: "导出 Excel",
+    core_pending_export_filename: "GLTEK_待核对库存",
+    core_pending_export_info: "{date}　{count}条明细・{qty}件",
+    core_pending_export_error: "无法导出列表。请重试。",
+    core_pending_pallet: "托盘编号",
+    core_pending_part: "原始零件编号",
+    core_pending_quantity: "数量",
+    core_pending_row: "原始行号",
+    core_list_pallet_location: "托盘／存放位置",
+    core_pending_search: "原始零件编号／托盘编号",
     core_list_location: "位置",
     core_list_note: "备注",
     core_list_delete_confirm: "删除此CORE行？",
+    core_inventory_delete_review: "确认删除…",
+    core_inventory_delete_back: "返回修改",
+    core_inventory_delete_ack: "删除此库存记录",
+    core_inventory_delete_changed: "库存已更新。请关闭此窗口并重新搜索。",
     core_list_created_from_ranking: "已从排行创建{n}条CORE记录",
     core_list_no_ranking_source: "排行中没有可添加的CORE候选",
     production_ranking_search_ph: "按排名、零件编号、制造商或DKD ID搜索",
     production_ranking_rank: "排名",
+    production_report_rank_loading: "排名加载中",
+    production_report_rank_error: "排名未获取",
+    production_report_rank_denied: "无排名查看权限",
+    production_report_rank_source: "{year}年生产排名：总出货量／优先自身排名，未收录时才采用已登记互换排名",
     production_ranking_year: "年度",
     production_ranking_source: "来源",
     production_ranking_status: "状态",
@@ -7746,9 +8106,11 @@ var TRANSLATIONS = {
     sales_conditions_title: "销售条件",
     sales_shipping_charge_rule: "运费条件",
     sales_shipping_charge_separate: "运费另计",
+    sales_shipping_charge_separate_short: "运费另计",
     sales_shipping_charge_free: "免运费",
     sales_shipping_charge_loading: "正在确认运费条件",
     sales_shipping_separate_note: "请选择收货地区以确认运费。",
+    sales_shipping_destination_guide: "请在运费列表中选择都道府县",
     sales_shipping_free_note: "此客户免运费。",
     sales_shipping_estimate_title: "已登记商品运费试算",
     sales_shipping_destination: "收货地区",
@@ -8428,6 +8790,14 @@ var TRANSLATIONS = {
     component_mode_same: "一致",
     component_mode_all: "全部",
     component_add_title: "添加构成部件",
+    component_input_master_name: "请选择部件名称",
+    component_input_master_maker: "输入或选择制造商",
+    component_input_master_part: "选择制造商以显示品号",
+    component_input_master_empty: "无已登记候选，可手动输入",
+    component_input_master_loading: "正在读取已登记品号",
+    component_input_master_failed: "候选读取失败，可手动输入",
+    component_input_master_count: "候选{n}项",
+    component_input_master_genuine: "原厂",
     component_add_title_for_kind: "添加{kind}构成部件",
     component_add_open: "添加构成部件",
     component_target_kind_title: "构成部件对象",
@@ -8463,6 +8833,8 @@ var TRANSLATIONS = {
     catalog_figure_retry: "重新加载目录图",
     catalog_figure_count: "{count}张",
     component_child: "子构成",
+    component_catalog_previous_page: "上一页",
+    component_catalog_next_page: "下一页",
     component_child_loading: "正在读取子构成...",
     component_child_load_failed: "子构成读取失败",
     component_catalog_load_failed: "无法读取目录构成部件。请重新打开商品后重试。",
@@ -8720,7 +9092,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1304";
+var APP_VERSION       = "v1.1.1375";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -8783,6 +9155,7 @@ var componentIllustrationSignedUrlCache = null;
 var componentIllustrationLastTiming = null;
 if (sb.auth && typeof sb.auth.onAuthStateChange === "function") {
   sb.auth.onAuthStateChange(function(event) {
+    if (window.DcatsNineTabs) window.DcatsNineTabs.authEvent(event);
     if (["SIGNED_OUT", "SIGNED_IN", "TOKEN_REFRESHED", "USER_UPDATED", "PASSWORD_RECOVERY"].indexOf(event) >= 0) {
       clearCatalogIllustrationSignedUrlCache(event === "SIGNED_OUT");
     }
@@ -8825,23 +9198,27 @@ var currentSelectedComponentVariantId = "";
 var productionInstructionRows = [];
 var productionInstructionMap = {};
 var coreListMgmtRows = [];
+var coreInventoryPendingRows = [];
 var coreListProductMap = {};
 var coreListProductCandidates = [];
 var coreListFormMode = "add";
+var coreListDeleteTarget = null;
 var corePhotoChoiceRowId = null;
-var coreListRawOffset = 0;
-var coreListHasMore = true;
-var coreListLoadingMore = false;
-var coreListCurrentSearchKey = "";
-var CORE_LIST_PAGE_SIZE = 50;
-var CORE_LIST_SEARCH_SCAN_CHUNKS = 5;
-var coreListMode = "collection";
+var coreListVehicleMap = {};
+var coreInventoryFilters = { keyword: "", vehicle: "", category: "", memo: "", korea: "exclude", matchState: "all" };
+var coreListFilteredRows = [];
+var coreInventoryNotePages = [];
+var coreInventoryNotePage = 0;
+var CORE_LIST_PAGE_SIZE = 100;
+var coreListMode = "pending";
 var coreManagementLoadSeq = 0;
 var coreManagementDataReady = false;
 var coreCollectionRows = [];
 var coreCollectionFilteredRows = [];
 var coreCollectionProductMap = {};
 var coreCollectionStockMap = {};
+var coreCollectionReportRank = null;
+var coreCollectionCreating = false;
 var coreCollectionProductCandidates = [];
 var coreCollectionFormMode = "add";
 var CORE_COLLECTION_RENDER_PAGE_SIZE = 100;
@@ -8882,6 +9259,7 @@ var finishedLabelBoxReadinessMap = {};
 var finishedLabelVisibleLimit = 10;
 var finishedLabelSearchRequestSeq = 0;
 var FINISHED_LABEL_PAGE_STEP = 10;
+var finishedLabelProductPage = 0;
 var finishedLabelInstructionMap = {};
 var finishedLabelSelectedProduct = null;
 var finishedLabelSelectedInstruction = null;
@@ -8932,6 +9310,7 @@ var finishedShipmentCandidateOrderItemId = null;
 var finishedShipmentCandidateRows = [];
 var finishedWarrantyPolicyRows = [];
 var salesProductWarrantyState = null;
+var salesProductShelfState = null;
 var finishedWarrantyPolicySaving = false;
 var finishedShipmentReplacementTargetId = null;
 var finishedShipmentReplacementSaving = false;
@@ -9284,6 +9663,7 @@ var salesShippingPrefectureCode = "";
 var salesShippingCarrierName = "";
 var salesShippingServiceName = "";
 var salesShippingPackageKeyValue = "";
+var salesShippingEstimateView = { amountHtml: "", detailsHtml: "" };
 var productShippingSizeRows = [];
 
 var FINISHED_LABEL_CATEGORIES = [
@@ -9513,6 +9893,7 @@ function conciergeNavigationProfileStamp(profile) {
     Object.keys(overrides).sort().map(function (key) { return [key, overrides[key]]; })]);
 }
 function conciergeNavigationBusy() {
+  if (window.DcatsContainerStockImport && !window.DcatsContainerStockImport.canLeave()) return true;
   if (customerOrderSaving || customerOrderCart.length || salesOrderSaving || salesOrderPricingSaving || salesOrderB2ImportSaving || salesOrderB2ExportSaving || salesOrderB2ContractSettingsSaving || salesOrderPrintSettingsSaving ||
       salesAccountingExportSaving || salesAccountingExportCodeSavingKey || salesAccountingProductOnboardingSaving || shippingDocumentSaving || shippingDocumentBatchSelectionDirty || coreReturnManagementSaving ||
       shippingWaybillLayoutSaving || shippingHandwrittenWaybillSaving || shippingRateFormSaving || shippingServiceVisibilitySavingKey || customerAccessSettingsSaving || customerAccessRegistrationSaving || customerAccessRegistrationReading ||
@@ -9536,6 +9917,7 @@ function createConciergeScreenRoutes() { return Object.freeze({
   "finished-product-shipping": { allowed: canManageFinishedProductShipping, open: function () { return enterFinishedProductShipping(); } },
   "core-list-mgmt": { allowed: canViewCoreManagement, open: function () { return enterCoreListMgmt(); } },
   "product-kind-stock-mgmt": { allowed: canViewProductKindStockMgmt, open: function () { return enterProductKindStockMgmt(); } },
+  "container-stock-mgmt": { allowed: canEditProductKindStockMgmt, open: function () { return enterContainerStockMgmt(); } },
   "manufacturing-cost-mgmt": { allowed: canViewManufacturingCostMgmt, open: function () { return enterManufacturingCostMgmt(); } },
   "rakuten-price": { allowed: canUseRakutenResearch, open: function () { return enterRakutenPrice(); } },
   "rakuten-bulk": { allowed: canUseRakutenResearch, destination: "rakuten-price", open: function () { return enterRakutenBulk(); } },
@@ -9602,6 +9984,7 @@ var CONCIERGE_AI_SCREEN_IDS = Object.freeze({
   "finished-product-shipping": true,
   "core-list-mgmt": true,
   "product-kind-stock-mgmt": true,
+  "container-stock-mgmt": true,
   "manufacturing-cost-mgmt": true,
   "rakuten-price": true,
   users: true,
@@ -9767,8 +10150,9 @@ function closeConciergeAdmin() {
   if (host) host.replaceChildren();
 }
 function enterConciergeAdmin() {
-  closeConciergeAdmin();
   if (!currentUser || !isSystemAdmin() || !window.DcatsConciergeAdmin) return;
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("concierge-admin", false)) return;
+  closeConciergeAdmin();
   showScreen("concierge-admin");
   conciergeAdminController = window.DcatsConciergeAdmin.mount(document.getElementById("concierge-admin-host"), {
     context: function () { return { id: currentUser && currentUser.id, admin: !!currentUser && isSystemAdmin(), language: currentLang }; },
@@ -9864,7 +10248,7 @@ function canManageAllImages() {
 }
 function canUseProductPhotoTools() {
   if (!userProfile || isExternalViewer() || isCustomerPortalSearchMode()) return false;
-  return hasAccessRole(userProfile, ["master_editor", "dept_admin"]) && userPermissionAllowed(userProfile, "image.manage", true);
+  return (isBusinessInspectionProfile(userProfile) || hasAccessRole(userProfile, ["master_editor", "dept_admin"])) && userPermissionAllowed(userProfile, "image.manage", true);
 }
 function openProductPhotoTools(product, context, tab) {
   if (!canUseProductPhotoTools()) { showPermissionDenied("open_product_photo_tools", "core_product_images"); return; }
@@ -9916,7 +10300,7 @@ function canDeleteImageTarget(target, context) {
   return context !== "production" && kind === "used_core" && origin !== "production" && !productionShown;
 }
 function canDelete() {
-  if (isCustomerPortalSearchMode()) return false;
+  if (isBusinessInspectionProfile(userProfile) || isCustomerPortalSearchMode()) return false;
   return userPermissionAllowed(userProfile, "product.delete", isCompanyAdminRole(userProfile));
 }
 function isAdmin() {
@@ -9926,6 +10310,7 @@ function canUseUserManagement() {
   return userPermissionAllowed(userProfile, "users.manage", hasAccessRole(userProfile, ["system_admin", "company_admin", "dept_admin", "master_editor", "sales_editor", "business_admin"]));
 }
 function canAssignUserRole(roleCode) {
+  if (roleCode === "business_inspection") return false;
   if (isSystemAdmin()) return true;
   var currentRole = accessRoleCode(userProfile);
   if (currentRole === "company_admin") return roleCode !== "system_admin";
@@ -9934,7 +10319,7 @@ function canAssignUserRole(roleCode) {
 
 // 業務管理者は、自社かつ同じ業務のスタッフだけを管理する。
 function canManageUser(targetProfile) {
-  if (!userProfile || !targetProfile) return false;
+  if (!userProfile || !targetProfile || isBusinessInspectionProfile(targetProfile)) return false;
   if (isSystemAdmin()) return true;
   if (!canUseUserManagement()) return false;
   if (userCompanyCode(targetProfile) !== userCompanyCode(userProfile)) return false;
@@ -10348,9 +10733,15 @@ function accessRoleLabel(roleCode) {
   var opt = USER_ACCESS_ROLE_OPTIONS.find(function(item) { return item[0] === roleCode; });
   return opt ? opt[1] : (roleCode || "");
 }
+function isBusinessInspectionProfile(profile) {
+  return !!profile && profile.permission_profile_code === "business_inspection";
+}
+function profileAccessRoleLabel(profile) {
+  if (isBusinessInspectionProfile(profile)) return "業務点検";
+  return accessRoleLabel(userAccessRoleCode(profile)) || roleLabel(profile && profile.role);
+}
 function currentRoleDisplayLabel() {
-  var roleCode = userAccessRoleCode(userProfile);
-  return accessRoleLabel(roleCode) || roleLabel(userProfile && userProfile.role);
+  return profileAccessRoleLabel(userProfile);
 }
 function roleClass(role) {
   return {
@@ -11221,6 +11612,101 @@ async function refreshCustomerOrderFeatureStatus() {
   return customerOrderFeatureStatus;
 }
 
+
+function screenTabEntries() {
+  var definitions = createScreenMenuDefinitions();
+  return definitions.mainItems.concat(definitions.adminItems, definitions.settingsItems).filter(function (item) {
+    return !!document.getElementById("screen-" + item.action);
+  }).map(function (item) { return {id: item.action, label: t(item.titleKey), allowed: item.available}; });
+}
+function screenTabCanAccess(id) {
+  if (!currentUser || !userProfile || isCustomerViewer()) return false;
+  var mode = customerPortalSearchActive;
+  // A temporary customer-preview UI mode is not an account permission change.
+  try {
+    customerPortalSearchActive = false;
+    var entry = screenTabEntries().find(function (item) { return item.id === id; });
+    return !!entry && entry.allowed === true;
+  } finally { customerPortalSearchActive = mode; }
+}
+function captureScreenTabContext() {
+  return {currentProduct: currentProduct, currentProductionRow: currentProductionRow,
+    customerPortalSearchActive: customerPortalSearchActive, customerPortalPreviewContext: customerPortalPreviewContext,
+    componentReturnScreen: componentReturnScreen, componentParallelReturnScreen: componentParallelReturnScreen,
+    currentSalesDetailTab: currentSalesDetailTab, currentSelectedProductKind: currentSelectedProductKind,
+    rakutenActiveTarget: rakutenActiveTarget};
+}
+function restoreScreenTabContext(state) {
+  if (!state) return;
+  currentProduct = state.currentProduct; currentProductionRow = state.currentProductionRow;
+  customerPortalSearchActive = state.customerPortalSearchActive; customerPortalPreviewContext = state.customerPortalPreviewContext;
+  componentReturnScreen = state.componentReturnScreen; componentParallelReturnScreen = state.componentParallelReturnScreen;
+  currentSalesDetailTab = state.currentSalesDetailTab; currentSelectedProductKind = state.currentSelectedProductKind;
+  rakutenActiveTarget = state.rakutenActiveTarget;
+}
+function resumeScreenTab(id) {
+  if (id === "api-settings" || id === "rakuten-price") relocateRakutenSections(id === "api-settings" ? "api" : "price");
+  if (id === "search") configureCustomerSearchShell();
+}
+function screenTabCloseState(id) {
+  var reception = claimCaseWorkspace && claimCaseWorkspace.tabState ? claimCaseWorkspace.tabState() : {};
+  var warehouse = window.DcatsWarehouseStock && window.DcatsWarehouseStock._state;
+  var busy = !!(customerOrderSaving || salesOrderSaving || salesOrderPricingSaving || salesOrderB2ImportSaving ||
+    salesOrderB2ExportSaving || salesOrderB2ContractSettingsSaving || salesOrderPrintSettingsSaving ||
+    salesAccountingExportSaving || salesAccountingExportCodeSavingKey || salesAccountingProductOnboardingSaving ||
+    shippingDocumentSaving || coreReturnManagementSaving || shippingWaybillLayoutSaving || shippingHandwrittenWaybillSaving ||
+    shippingRateFormSaving || shippingServiceVisibilitySavingKey || customerAccessSettingsSaving || customerAccessRegistrationSaving ||
+    componentAddSaving || componentNameMasterSaving || finishedShipmentSaving || finishedWarrantyPolicySaving ||
+    finishedShipmentReplacementSaving || salesPricingSavePending || salesRank1SavePending || finishedLabelPrintInProgress ||
+    reception.busy || warehouse && (warehouse.working || warehouse.pending) ||
+    window.DcatsSalesPricingLists && window.DcatsSalesPricingLists.isBusy && window.DcatsSalesPricingLists.isBusy() ||
+    window.DcatsCustomerPriceReportTabState && window.DcatsCustomerPriceReportTabState().busy ||
+    window.DcatsRecycleOrders && window.DcatsRecycleOrders.isBusy() ||
+    window.DcatsFactoringPricing && window.DcatsFactoringPricing.isBusy());
+  var dirty = id === "product-kind-stock-mgmt" && Object.keys(productKindStockDirtyMap).some(function (key) { return !!productKindStockDirtyMap[key]; }) ||
+    id === "customer-access-mgmt" && !!currentCustomerAccessCustomer && customerAccessHasUnsavedChanges() ||
+    id === "shipping-document-mgmt" && shippingDocumentBatchSelectionDirty ||
+    id === "claim-case-mgmt" && reception.dirty ||
+    id === "customer-portal" && customerOrderCart.length > 0;
+  return {busy: busy, dirty: !!dirty};
+}
+function releaseScreenTab(id) {
+  if (id === "claim-case-mgmt" && claimCaseWorkspace) claimCaseWorkspace.reset();
+  if (id === "concierge-admin") closeConciergeAdmin();
+  resetScreenStateForMenu(id);
+}
+
+function hasInternalScreenTabProfile() {
+  return !!(currentUser && userProfile && userProfile.id === currentUser.id &&
+    userProfile.status !== "pending" && userProfile.status !== "suspended" && !isCustomerViewer() && !isExternalViewer());
+}
+
+function canShowScreenTabSettings() {
+  return !!(window.DcatsNineTabs && hasInternalScreenTabProfile() && window.DcatsNineTabs.canShowSettings(currentUser.id));
+}
+
+function screenTabAuthOptions() {
+  return {
+    userId: function () { return currentUser && currentUser.id; },
+    scope: function () { return JSON.stringify([currentUser && currentUser.id, userProfile && userProfile.id, conciergeNavigationProfileStamp(userProfile), userProfile && userProfile.permission_profile_code]); },
+    external: !hasInternalScreenTabProfile(),
+    verify: function () { return sb.auth.getUser(); },
+    screen: activeAppScreenName,
+    show: showScreen,
+    home: returnToMenuFresh,
+    entries: screenTabEntries,
+    canAccess: screenTabCanAccess,
+    enter: function (id) { return openAppMenuAction(id); },
+    capture: captureScreenTabContext,
+    restore: restoreScreenTabContext,
+    resume: resumeScreenTab,
+    release: releaseScreenTab,
+    resetControl: resetScreenControlState,
+    closeState: screenTabCloseState,
+    refreshMenu: renderMenu
+  };
+}
+
 function showAuthenticatedHome() {
   if (isCustomerViewer()) {
     showScreen("customer-portal");
@@ -11229,6 +11715,26 @@ function showAuthenticatedHome() {
   }
   showScreen("menu");
   renderMenu();
+  if (window.DcatsNineTabs) window.DcatsNineTabs.afterAuthenticated(screenTabAuthOptions()).catch(function () { console.warn("Screen tabs are unavailable"); });
+}
+
+async function openScreenTabSettings(card) {
+  if (!canShowScreenTabSettings() || !card || card.getAttribute("aria-busy") === "true") return;
+  var tabs = window.DcatsNineTabs;
+  if (tabs.openProperties()) return;
+  var options = screenTabAuthOptions(), id = options.userId(), scope = options.scope();
+  var status = card.querySelector("small");
+  card.setAttribute("aria-busy", "true");
+  status.textContent = t("menu_screen_tabs_checking");
+  try {
+    await tabs.afterAuthenticated(options, false);
+    if (id === options.userId() && scope === options.scope() && activeAppScreenName() === "menu" && tabs.openProperties()) return;
+  } catch (_) {
+    console.warn("Screen tabs are unavailable");
+  } finally {
+    card.removeAttribute("aria-busy");
+  }
+  if (card.isConnected) status.textContent = t("menu_screen_tabs_retry");
 }
 
 function openRequestedPrintStationAfterAuth() {
@@ -11345,7 +11851,9 @@ async function restoreAppStateAfterRefresh() {
       if (restoreFinishedLabelMode === "station") {
         resumeFinishedLabelPrintStationIfEnabled();
       } else {
-        if (state.finishedLabelQuery || restoreFinishedLabelMode === "box") await searchFinishedLabelProducts();
+        if (state.finishedLabelQuery || restoreFinishedLabelMode === "box") {
+          await searchFinishedLabelProducts({ autoSelect: !state.selectedDkdId });
+        }
         if (state.selectedDkdId) {
           var restoreFinishedLabelProduct = finishedLabelProducts.find(function(row) {
             return String(productDkdId(row)) === String(state.selectedDkdId);
@@ -11454,6 +11962,7 @@ document.addEventListener("freeze", function() {
 });
 
 function isAppSafeForAutoReload() {
+  if (window.DcatsNineTabs && window.DcatsNineTabs.hasUnsaved && window.DcatsNineTabs.hasUnsaved()) return false;
   if (window.DcatsRecycleOrders && window.DcatsRecycleOrders.isBusy()) return false;
   if (window.DcatsFactoringPricing && window.DcatsFactoringPricing.isBusy()) return false;
   if (componentAddSaving) return false;
@@ -11662,6 +12171,7 @@ function resetScreenRuntimeStateForMenu(screenId) {
 }
 
 function resetScreenStateForMenu(screenId) {
+  if (window.DcatsNineTabs && window.DcatsNineTabs.hasTab(screenId)) return;
   var screen = document.getElementById("screen-" + screenId);
   if (!screen) return;
   screen.querySelectorAll("input, select, textarea").forEach(resetScreenControlState);
@@ -11677,15 +12187,18 @@ function resetScreenStateForMenu(screenId) {
 }
 
 function showScreen(id) {
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeShow && !window.DcatsNineTabs.beforeShow(id)) return;
+  if (window.DcatsNineTabs && window.DcatsNineTabs.willLeave) window.DcatsNineTabs.willLeave(id);
+  if (window.DcatsWarehouseStock && !window.DcatsWarehouseStock.beforeNavigate(id)) return;
+  var previousScreenId = activeAppScreenName();
   if (typeof salesSlipReadonlyAccessGate !== "undefined" && salesSlipReadonlyAccessGate && id !== "sales-slip-readonly") salesSlipReadonlyAccessGate.reset();
   if (typeof salesSlipReadonlyWorkspace !== "undefined" && salesSlipReadonlyWorkspace && id !== "sales-slip-readonly") salesSlipReadonlyWorkspace.reset();
-  var previousScreenId = activeAppScreenName();
-  if (typeof claimCaseWorkspace !== "undefined" && claimCaseWorkspace && id !== "claim-case-mgmt") claimCaseWorkspace.reset();
+  if (typeof claimCaseWorkspace !== "undefined" && claimCaseWorkspace && id !== "claim-case-mgmt" && (!window.DcatsNineTabs || !window.DcatsNineTabs.hasTab("claim-case-mgmt") || ["login", "boot", "reset"].includes(id))) claimCaseWorkspace.reset();
   if ((id === "login" || id === "boot") && window.DcatsProductPhotoTools) window.DcatsProductPhotoTools.forceClose();
   if ((id === "login" || id === "boot") && typeof conciergeNavigation !== "undefined" && conciergeNavigation) conciergeNavigation.clear();
-  if (id !== "concierge-admin") closeConciergeAdmin();
+  if (id !== "concierge-admin" && (!window.DcatsNineTabs || !window.DcatsNineTabs.hasTab("concierge-admin") || ["login", "boot", "reset"].includes(id))) closeConciergeAdmin();
   if (previousScreenId === "sales-order-mgmt" && id !== previousScreenId) {
-    setSalesOrderDetailView("overview", false);
+    if (!window.DcatsNineTabs || !window.DcatsNineTabs.hasTab(previousScreenId) || ["login", "boot", "reset"].includes(id)) setSalesOrderDetailView("overview", false);
   }
   if (id === "menu" && previousScreenId) {
     resetScreenStateForMenu(previousScreenId);
@@ -11697,6 +12210,7 @@ function showScreen(id) {
   if (el) el.classList.add("active");
   window.scrollTo(0, 0);
   logScreenOpen(id);
+  if (window.DcatsNineTabs) window.DcatsNineTabs.screenChanged(id);
 }
 captureInitialScreenControlState();
 function isScreenActive(id) {
@@ -12052,7 +12566,7 @@ function updateAllHeaders() {
   var cls   = roleClass(userProfile.role);
   var greet = tf("greeting", { name: name });
 
-  ["menu","customer-portal","customer-shipping","customer-catalog","customer-orders","claim-case-mgmt","sales-slip-readonly","sales-order-mgmt","shipping-document-mgmt","core-return-mgmt","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","component-name-master-mgmt","component-compat-mgmt","product-kind-stock-mgmt","manufacturing-cost-mgmt","finished-label-mgmt","finished-product-shipping","production-ranking-mgmt","report-hub","customer-price-report","manufacturing-ranking-report","sales-pricing-mgmt","purchase-mgmt","customer-access-mgmt","shipping-rate-mgmt","logs"].forEach(function(sc) {
+  ["menu","customer-portal","customer-shipping","customer-catalog","customer-orders","claim-case-mgmt","sales-slip-readonly","sales-order-mgmt","shipping-document-mgmt","core-return-mgmt","search","production-search","components","component-parallel","rakuten-price","rakuten-bulk","api-settings","rakuten-price-list","core-list-mgmt","component-name-master-mgmt","component-compat-mgmt","product-kind-stock-mgmt","container-stock-mgmt","manufacturing-cost-mgmt","finished-label-mgmt","finished-product-shipping","production-ranking-mgmt","report-hub","customer-price-report","manufacturing-ranking-report","sales-pricing-mgmt","purchase-mgmt","customer-access-mgmt","shipping-rate-mgmt","logs"].forEach(function(sc) {
     var nameEl  = document.getElementById(sc + "-username");
     var badgeEl = document.getElementById(sc + "-role-badge");
     if (nameEl)  nameEl.textContent = name;
@@ -12116,6 +12630,8 @@ async function signOutAllDevices() {
 async function doLogout() {
   if (typeof salesSlipReadonlyAccessGate !== "undefined" && salesSlipReadonlyAccessGate) salesSlipReadonlyAccessGate.reset();
   if (typeof salesSlipReadonlyWorkspace !== "undefined" && salesSlipReadonlyWorkspace) salesSlipReadonlyWorkspace.reset();
+  if (window.DcatsNineTabs) window.DcatsNineTabs.suspend(true);
+  resetProductionReportRanks();
   if (typeof claimCaseWorkspace !== "undefined" && claimCaseWorkspace) claimCaseWorkspace.reset();
   claimCaseReturnContext = null;
   if (packingBoxesController) packingBoxesController.close();
@@ -12179,6 +12695,11 @@ async function doLogout() {
   if (postalSettingsOverlay) postalSettingsOverlay.classList.remove("show");
   salesOrderPrintSettings = null;
   salesOrderPrintSettingsSaving = false;
+  salesOrderPrintReadinessSeq += 1;
+  if (salesOrderPrintReadinessTimer) clearTimeout(salesOrderPrintReadinessTimer);
+  salesOrderPrintReadinessTimer = null;
+  salesOrderPrintReadinessState = "checking";
+  document.querySelectorAll("[data-order-print-readiness]").forEach(function(host) { host.hidden = true; host.innerHTML = ""; });
   salesAccountingExportState = null;
   salesAccountingExportLoading = false;
   salesAccountingExportSaving = false;
@@ -12260,14 +12781,11 @@ async function doLogout() {
 // =============================================
 // メニュー（翻訳辞書のキーを使って生成）
 // =============================================
-function renderMenu() {
-  syncDcatsIntegrationReadinessContext();
-  var grid = document.getElementById("menu-grid");
-  if (!grid || !userProfile) return;
+function createScreenMenuDefinitions() {
   var canManageUsers = canUseUserManagement();
-
-  var mainItems = [
-    { icon: "&#x1F50D;", titleKey: "mi_search_title", descKey: "mi_search_desc", action: "search", available: canViewProductSearch(), tag: null },
+  return {
+    mainItems: [
+    { icon: "&#x1F91D;", titleKey: "mi_search_title", descKey: "mi_search_desc", action: "search", available: canViewProductSearch(), tag: null },
     { icon: "&#x1F6CD;", titleKey: "customer_portal_title", descKey: "customer_portal_preview_desc", action: "customer-portal", available: canShowCustomerPortalMenu(), tag: null },
     { icon: "&#x1F4E5;", titleKey: "sales_order_mgmt_title", descKey: "sales_order_mgmt_desc", action: "sales-order-mgmt", available: canManageSalesOrders(), tag: null },
     { icon: "&#x1F5A8;", titleKey: "shipping_document_mgmt_title", descKey: "shipping_document_mgmt_desc", action: "shipping-document-mgmt", available: canManageSalesOrders(), tag: null },
@@ -12277,23 +12795,17 @@ function renderMenu() {
     { icon: "<span class='icon-image' aria-hidden='true'></span>", titleKey: "product_photo_tools_title", descKey: "product_photo_tools_desc", action: "product-photo-tools", available: canUseProductPhotoTools(), tag: null },
     { icon: "&#x1F3F7;", titleKey: "mi_finished_label_title", descKey: "mi_finished_label_desc", action: "finished-label-mgmt", available: canViewFinishedLabelMgmt(), tag: null },
     { icon: "&#x1F69A;", titleKey: "mi_finished_shipping_title", descKey: "mi_finished_shipping_desc", action: "finished-product-shipping", available: canManageFinishedProductShipping(), tag: null },
-    { icon: "&#x1F4E6;", titleKey: "mi_core_list_title", descKey: "mi_core_list_desc", action: "core-list-mgmt", available: canViewCoreManagement(), tag: null },
+    { icon: "&#x267B;&#xFE0F;", titleKey: "mi_core_list_title", descKey: "mi_core_list_desc", action: "core-list-mgmt", available: canViewCoreManagement(), tag: null },
     { icon: "&#x1F4E6;", titleKey: "mi_product_kind_stock_title", descKey: "mi_product_kind_stock_desc", action: "product-kind-stock-mgmt", available: canViewProductKindStockMgmt(), tag: null },
     { icon: "&#x1F9EE;", titleKey: "mi_manufacturing_cost_title", descKey: "mi_manufacturing_cost_desc", action: "manufacturing-cost-mgmt", available: canViewManufacturingCostMgmt(), tag: null },
     { icon: "&#x1F4C8;", titleKey: "mi_rakuten_title", descKey: "mi_rakuten_desc", action: canUseRakutenResearch() ? "rakuten-price" : "rakuten-price-list", available: canUseRakutenResearch() || canViewPriceResearchHistory(), tag: null },
     { icon: "&#x1F512;", titleKey: "mi_changepw_title", descKey: "mi_changepw_desc", action: "change-pw", available: true, tag: null }
-  ].filter(function(item) { return item.available; });
-
-  if (hasAccessRole(userProfile, ["sales_editor", "shipping_staff"])) {
-    var shippingIndex = mainItems.findIndex(function(item) { return item.action === "finished-product-shipping"; });
-    if (shippingIndex > 0) mainItems.unshift(mainItems.splice(shippingIndex, 1)[0]);
-  }
-
-  var adminItems = [
-    { icon: "&#x2699;", titleKey: "cw_title", descKey: "cw_menuDesc", action: "category-warranty-settings", available: canManageSharedSettings() || canManageFinishedProductShipping() },
+  ],
+    adminItems: [
+    { icon: "&#x1F6E1;", titleKey: "cw_title", descKey: "cw_menuDesc", action: "category-warranty-settings", available: canManageSharedSettings() || canManageFinishedProductShipping() },
     { icon: "&#x1F465;", titleKey: "mi_users_title",  descKey: "mi_users_desc",  action: "users",  available: canManageUsers },
     { icon: "&#x1F6AA;", titleKey: "mi_customer_access_title", descKey: "mi_customer_access_desc", action: "customer-access-mgmt", available: canManageCustomerAccess() },
-    { icon: "&#x1F69A;", titleKey: "mi_shipping_title", descKey: "mi_shipping_desc", action: "shipping-rate-mgmt", available: canManageShippingRates() },
+    { icon: "&#x1F5FA;", titleKey: "mi_shipping_title", descKey: "mi_shipping_desc", action: "shipping-rate-mgmt", available: canManageShippingRates() },
     { icon: "&#x1F527;", titleKey: "mi_parts_title", descKey: "mi_parts_desc", action: "parts-mgmt", available: canViewManagementScreen() },
     { icon: "&#x1F524;", titleKey: "mi_component_name_master_title", descKey: "mi_component_name_master_desc", action: "component-name-master-mgmt", available: canManageComponentNameMaster() },
     { icon: "&#x1F517;", titleKey: "mi_component_compat_title", descKey: "mi_component_compat_desc", action: "component-compat-mgmt", available: canManageComponentCompatibility() },
@@ -12302,13 +12814,31 @@ function renderMenu() {
     { icon: "&#x1F4CA;", titleKey: "mi_report_title", descKey: "mi_report_desc", action: "report-hub", available: canViewManufacturingReport() || canManageCustomerAccess() },
     { icon: "&#x1F504;", titleKey: "mi_kikan_title", descKey: "mi_kikan_desc", action: "kikan-mgmt", available: canManageCompatibility() },
     { icon: "&#x2699;", titleKey: "mi_api_settings_title", descKey: "mi_api_settings_desc", action: "api-settings", available: canManageSharedSettings() },
-    { icon: "&#x1F4CB;", titleKey: "mi_logs_title", descKey: "mi_logs_desc", action: "logs", available: canViewOperationLogs() },
+    { icon: "&#x1F4DC;", titleKey: "mi_logs_title", descKey: "mi_logs_desc", action: "logs", available: canViewOperationLogs() },
     { icon: "&#x1F4E8;", titleKey: "mi_concierge_admin_title", descKey: "mi_concierge_admin_desc", action: "concierge-admin", available: isSystemAdmin() }
-  ].filter(function(item) { return item.available; });
+  ],
+    settingsItems: [
+    { icon: "&#x1F50C;", titleKey: "business_workspace_settings_title", descKey: "business_workspace_settings_desc", action: "business-workspace-settings", available: canManageSalesOrders() }
+  ]
+  };
+}
 
-  var settingsItems = [
-    { icon: "&#x1F517;", titleKey: "business_workspace_settings_title", descKey: "business_workspace_settings_desc", action: "business-workspace-settings", available: canManageSalesOrders() }
-  ].filter(function(item) { return item.available; });
+function renderMenu() {
+  syncDcatsIntegrationReadinessContext();
+  var grid = document.getElementById("menu-grid");
+  if (!grid || !userProfile) return;
+  var menuItems = createScreenMenuDefinitions();
+
+  var mainItems = menuItems.mainItems.filter(function(item) { return item.available; });
+
+  if (hasAccessRole(userProfile, ["sales_editor", "shipping_staff"])) {
+    var shippingIndex = mainItems.findIndex(function(item) { return item.action === "finished-product-shipping"; });
+    if (shippingIndex > 0) mainItems.unshift(mainItems.splice(shippingIndex, 1)[0]);
+  }
+
+  var adminItems = menuItems.adminItems.filter(function(item) { return item.available; });
+
+  var settingsItems = menuItems.settingsItems.filter(function(item) { return item.available; });
 
   function renderCard(item) {
     var act = item.action ? " data-action=\"" + item.action + "\"" : "";
@@ -12348,12 +12878,15 @@ function renderMenu() {
     html += "</div></div></section>";
   }
 
-  if (settingsItems.length) {
+  var canUseScreenTabSettings = canShowScreenTabSettings();
+  if (settingsItems.length || canUseScreenTabSettings) {
     html += '<section class="menu-section" id="menu-settings-section">';
     html += '<div class="menu-section-head"><h3 class="menu-section-title">' + t("business_workspace_settings_menu_title") + '</h3></div>';
     html += '<div class="menu-admin-panel"><div class="menu-admin-grid">';
     settingsItems.forEach(function(item) { html += renderAdminLink(item); });
-    html += '</div></div></section>';
+    if (canUseScreenTabSettings) html += renderAdminLink({ action: "screen-tab-properties", icon: "&#x1F5C2;", titleKey: "menu_screen_tabs_title", descKey: "menu_screen_tabs_desc" });
+    html += '</div></div>';
+    html += '</section>';
   }
 
   grid.innerHTML = html;
@@ -12362,41 +12895,47 @@ function renderMenu() {
 
   grid.querySelectorAll(".menu-card:not(.disabled)[data-action], .menu-admin-link:not(.disabled)[data-action]").forEach(function(card) {
     card.addEventListener("click", function(event) {
-      if (card.dataset.action === "search") enterSearch();
-      else if (card.dataset.action === "customer-portal") enterCustomerPortal();
-      else if (card.dataset.action === "sales-order-mgmt") enterSalesOrderMgmt();
-      else if (card.dataset.action === "claim-case-mgmt") enterClaimCaseMgmt();
-      else if (card.dataset.action === "shipping-document-mgmt") enterShippingDocumentMgmt();
-      else if (card.dataset.action === "core-return-mgmt") enterCoreReturnManagement();
-      else if (card.dataset.action === "production-search") enterProductionSearch();
-      else if (card.dataset.action === "product-photo-tools") openProductPhotoTools();
-      else if (card.dataset.action === "finished-label-mgmt") enterFinishedLabelMgmt();
-      else if (card.dataset.action === "finished-product-shipping") enterFinishedProductShipping();
-      else if (card.dataset.action === "users") enterUsers();
-      else if (card.dataset.action === "customer-access-mgmt") enterCustomerAccessMgmt();
-      else if (card.dataset.action === "shipping-rate-mgmt") enterShippingRateMgmt();
-      else if (card.dataset.action === "change-pw") enterChangePw();
-      else if (card.dataset.action === "parts-mgmt") enterPartsMgmt();
-      else if (card.dataset.action === "component-name-master-mgmt") enterComponentNameMasterMgmt();
-      else if (card.dataset.action === "component-compat-mgmt") enterComponentCompatMgmt();
-      else if (card.dataset.action === "sales-pricing-mgmt") enterSalesPricingMgmt();
-      else if (card.dataset.action === "purchase-mgmt") enterPurchaseMgmt();
-      else if (card.dataset.action === "core-list-mgmt") enterCoreListMgmt();
-      else if (card.dataset.action === "product-kind-stock-mgmt") enterProductKindStockMgmt();
-      else if (card.dataset.action === "manufacturing-cost-mgmt") enterManufacturingCostMgmt();
-      else if (card.dataset.action === "production-ranking-mgmt") enterProductionRankingMgmt();
-      else if (card.dataset.action === "report-hub") enterReportHub();
-      else if (card.dataset.action === "kikan-mgmt") enterKikanMgmt();
-      else if (card.dataset.action === "rakuten-price") enterRakutenPrice();
-      else if (card.dataset.action === "rakuten-bulk") enterRakutenBulk();
-      else if (card.dataset.action === "rakuten-price-list") enterRakutenPriceList();
-      else if (card.dataset.action === "business-workspace-settings") openDcatsBusinessWorkspaceSettings(event);
-      else if (card.dataset.action === "category-warranty-settings") openFinishedWarrantyPolicySettings();
-      else if (card.dataset.action === "api-settings") enterApiSettings();
-      else if (card.dataset.action === "logs") enterLogs();
-      else if (card.dataset.action === "concierge-admin") enterConciergeAdmin();
+      openAppMenuAction(card.dataset.action, event);
     });
   });
+}
+
+function openAppMenuAction(action, event) {
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter(action, false)) return;
+      if (action === "screen-tab-properties") return openScreenTabSettings(event && event.currentTarget);
+      else if (action === "search") enterSearch();
+      else if (action === "customer-portal") enterCustomerPortal();
+      else if (action === "sales-order-mgmt") enterSalesOrderMgmt();
+      else if (action === "claim-case-mgmt") enterClaimCaseMgmt();
+      else if (action === "shipping-document-mgmt") enterShippingDocumentMgmt();
+      else if (action === "core-return-mgmt") enterCoreReturnManagement();
+      else if (action === "production-search") enterProductionSearch();
+      else if (action === "product-photo-tools") openProductPhotoTools();
+      else if (action === "finished-label-mgmt") enterFinishedLabelMgmt();
+      else if (action === "finished-product-shipping") enterFinishedProductShipping();
+      else if (action === "users") enterUsers();
+      else if (action === "customer-access-mgmt") enterCustomerAccessMgmt();
+      else if (action === "shipping-rate-mgmt") enterShippingRateMgmt();
+      else if (action === "change-pw") enterChangePw();
+      else if (action === "parts-mgmt") enterPartsMgmt();
+      else if (action === "component-name-master-mgmt") enterComponentNameMasterMgmt();
+      else if (action === "component-compat-mgmt") enterComponentCompatMgmt();
+      else if (action === "sales-pricing-mgmt") enterSalesPricingMgmt();
+      else if (action === "purchase-mgmt") enterPurchaseMgmt();
+      else if (action === "core-list-mgmt") enterCoreListMgmt();
+      else if (action === "product-kind-stock-mgmt") enterProductKindStockMgmt();
+      else if (action === "manufacturing-cost-mgmt") enterManufacturingCostMgmt();
+      else if (action === "production-ranking-mgmt") enterProductionRankingMgmt();
+      else if (action === "report-hub") enterReportHub();
+      else if (action === "kikan-mgmt") enterKikanMgmt();
+      else if (action === "rakuten-price") enterRakutenPrice();
+      else if (action === "rakuten-bulk") enterRakutenBulk();
+      else if (action === "rakuten-price-list") enterRakutenPriceList();
+      else if (action === "business-workspace-settings") openDcatsBusinessWorkspaceSettings(event);
+      else if (action === "category-warranty-settings") openFinishedWarrantyPolicySettings();
+      else if (action === "api-settings") enterApiSettings();
+      else if (action === "logs") enterLogs();
+      else if (action === "concierge-admin") enterConciergeAdmin();
 }
 
 function customerPortalValue(id, value) {
@@ -12534,6 +13073,7 @@ async function enterCustomerPortal() {
     showPermissionDenied("open_customer_portal", "sales_customers");
     return;
   }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("customer-portal", false)) return;
   customerPortalSearchActive = false;
   showScreen("customer-portal");
   if (canPreviewCustomerPortal()) await loadDetailSalesCustomerOptions();
@@ -17122,11 +17662,79 @@ async function refreshSalesOrderPrinterSetup(showMessage) {
     : "";
 }
 
+var salesOrderPrintReadinessTimer = null;
+var salesOrderPrintReadinessSeq = 0;
+var salesOrderPrintReadinessState = "checking";
+
+function salesOrderPrintReadinessActive() {
+  return canManageSalesOrders() && ["sales-order-mgmt", "shipping-document-mgmt", "customer-portal"].indexOf(activeScreenId()) >= 0;
+}
+
+function renderSalesOrderPrintReadiness() {
+  var active = salesOrderPrintReadinessActive();
+  var problem = salesOrderPrintReadinessState === "error" ? t("order_print_check_failed") : shippingDocumentManualPrintProblem();
+  var checking = salesOrderPrintReadinessState === "checking";
+  var ready = !checking && !problem;
+  var config = (salesOrderPrintSettings || {}).config || {};
+  document.querySelectorAll("[data-order-print-readiness]").forEach(function(host) {
+    host.hidden = !active;
+    if (!active) { host.innerHTML = ""; return; }
+    host.className = "order-print-readiness " + (checking ? "checking" : ready ? "ready" : "stopped");
+    host.innerHTML = "<div><strong>" + esc(t(checking ? "order_print_checking" : ready ? "order_print_ready" : "order_print_stopped")) + "</strong><p>" + esc(checking ? t("order_print_checking_note") : ready ? (config.station_name || config.station_code || "") + " / " + (config.printer_name || "") : t("order_print_recovery_note")) + "</p></div>" +
+      "<div class='order-print-readiness-actions'>" + (!ready && !checking ? "<a href='dcats-print-settings://open'>" + esc(t("order_print_connection_open")) + "</a>" : "") + "<button type='button' data-order-print-recheck" + (checking ? " disabled" : "") + ">" + esc(t("order_print_recheck")) + "</button></div>";
+    var button = host.querySelector("[data-order-print-recheck]");
+    if (button) button.addEventListener("click", checkSalesOrderPrintReadiness);
+  });
+}
+
+async function checkSalesOrderPrintReadiness() {
+  if (salesOrderPrintReadinessTimer) clearTimeout(salesOrderPrintReadinessTimer);
+  salesOrderPrintReadinessTimer = null;
+  if (!salesOrderPrintReadinessActive()) { renderSalesOrderPrintReadiness(); return false; }
+  var seq = ++salesOrderPrintReadinessSeq;
+  var actorId = currentUser && currentUser.id;
+  var screenId = activeScreenId();
+  var isCurrent = function() {
+    return seq === salesOrderPrintReadinessSeq && actorId === (currentUser && currentUser.id)
+      && screenId === activeScreenId() && salesOrderPrintReadinessActive();
+  };
+  salesOrderPrintReadinessState = "checking";
+  renderSalesOrderPrintReadiness();
+  var timeout;
+  try {
+    var result = await Promise.race([
+      sb.rpc("get_customer_order_print_settings"),
+      new Promise(function(resolve) { timeout = setTimeout(function() { resolve({ error: true }); }, 12000); })
+    ]);
+    if (!isCurrent()) return false;
+    if (!result || result.error) throw new Error("print readiness unavailable");
+    salesOrderPrintSettings = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
+    salesOrderPrintReadinessState = "loaded";
+    renderSalesOrderPrintSettings();
+    renderSalesOrderPrinterSetup();
+    return !shippingDocumentManualPrintProblem();
+  } catch (error) {
+    if (isCurrent()) {
+      salesOrderPrintSettings = null;
+      salesOrderPrintReadinessState = "error";
+    }
+    return false;
+  } finally {
+    if (timeout) clearTimeout(timeout);
+    if (isCurrent()) {
+      renderSalesOrderPrintReadiness();
+      if (screenId === "shipping-document-mgmt" && !shippingDocumentSaving) renderShippingDocumentDetail();
+      salesOrderPrintReadinessTimer = setTimeout(checkSalesOrderPrintReadiness, 30000);
+    }
+  }
+}
+
 async function enterSalesOrderMgmt(options) {
   if (!canManageSalesOrders()) {
     showPermissionDenied("open_sales_order_management", "customer_orders");
     return;
   }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("sales-order-mgmt", options && (options.orderId || options.order))) return;
   options = options || {};
   var requestedOrderId = parseInt(options.orderId || (options.order && options.order.id), 10);
   salesOrderSelectedId = isNaN(requestedOrderId) ? null : requestedOrderId;
@@ -17166,7 +17774,7 @@ async function enterSalesOrderMgmt(options) {
   renderSalesOrderDashboard();
   renderSalesOrderPrintSettings();
   refreshSalesSlipsReadonlyAccess();
-  await Promise.all([refreshSalesOrderManagement(), loadSalesOrderPrintSettings()]);
+  await Promise.all([refreshSalesOrderManagement(), checkSalesOrderPrintReadiness()]);
   if (salesOrderSelectedId) await loadSalesOrderDetail(salesOrderSelectedId);
 }
 
@@ -17177,6 +17785,7 @@ async function enterInternalCustomerOrderEntry() {
   }
   customerOrderActiveView = "cart";
   await enterCustomerPortal();
+  checkSalesOrderPrintReadiness();
   var customerSelect = document.getElementById("customer-portal-customer-select");
   if (customerSelect) {
     customerSelect.focus();
@@ -19067,15 +19676,17 @@ var claimCaseReturnContext = null;
 async function enterClaimCaseMgmt(options) {
   if (!canManageSalesOrders()) { showPermissionDenied("open_claim_cases", "customer_claim_cases"); return; }
   if (!window.DcatsClaimCases) return;
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("claim-case-mgmt", options && Object.keys(options).length)) return;
   showScreen("claim-case-mgmt");
   updateAllHeaders();
-  if (!claimCaseWorkspace) claimCaseWorkspace = window.DcatsClaimCases.create({
+  if (!claimCaseWorkspace) claimCaseWorkspace = (window.DcatsReceptionManagement || window.DcatsClaimCases).create({
     host: document.getElementById("claim-case-workspace"),
     rpc: function(name, payload) { return sb.rpc(name, payload); },
     currentUserId: function() { return currentUser && currentUser.id; },
     canManage: canManageSalesOrders,
     canShip: canManageFinishedProductShipping,
-    active: function() { return isScreenActive("claim-case-mgmt"); },
+    active: function() { return isScreenActive("claim-case-mgmt") || !!(window.DcatsNineTabs && window.DcatsNineTabs.hasTab("claim-case-mgmt")); },
+    onSaved: function() { if (window.DcatsNineTabs) window.DcatsNineTabs.markClean("claim-case-mgmt"); },
     openOrder: function(id, claim) { claimCaseReturnContext = claim || null; return enterSalesOrderMgmt({orderId:id}); }
   });
   await claimCaseWorkspace.enter(options || {});
@@ -19085,6 +19696,7 @@ async function enterCoreReturnManagement() {
     showPermissionDenied("open_core_return_management", "customer_order_core_return_units");
     return;
   }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("core-return-mgmt", false)) return;
   coreReturnManagementRows = [];
   coreReturnManagementSelectedId = null;
   coreReturnManagementDetail = null;
@@ -19447,6 +20059,7 @@ async function enterShippingDocumentMgmt(options) {
     showPermissionDenied("open_shipping_document_management", "customer_orders");
     return;
   }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("shipping-document-mgmt", options && options.order)) return;
   options = options || {};
   shippingDocumentRows = [];
   shippingDocumentSelectedId = null;
@@ -19472,7 +20085,9 @@ async function enterShippingDocumentMgmt(options) {
   var stateSelect = document.getElementById("shipping-document-print-state");
   if (input) input.value = options.order ? (options.order.order_number || String(options.order.id || "")) : "";
   if (statusSelect) statusSelect.value = options.order ? "all" : "active";
-  if (stateSelect) stateSelect.value = options.order ? "all" : "unprinted";
+  if (stateSelect) stateSelect.value = "all";
+  var endDateInput = document.getElementById("shipping-document-date-to");
+  if (endDateInput) endDateInput.value = salesAccountingExportLocalDate();
   syncShippingDocumentBatchDefaults(salesOrderPrintSettings ? "loaded" : "loading");
   setShippingDocumentLookupMessage("", false);
   if (options.order) {
@@ -19482,7 +20097,8 @@ async function enterShippingDocumentMgmt(options) {
   }
   renderShippingDocumentList();
   renderShippingDocumentDetail();
-  var printSettingsLoaded = await loadSalesOrderPrintSettings();
+  await checkSalesOrderPrintReadiness();
+  var printSettingsLoaded = !!salesOrderPrintSettings;
   if (!shippingDocumentBatchSelectionDirty) syncShippingDocumentBatchDefaults(printSettingsLoaded ? "loaded" : "error");
   if (options.order && options.order.id) {
     await loadShippingDocumentDetail(options.order.id);
@@ -20011,24 +20627,46 @@ function shippingDocumentHasTemporaryOutput(order, type) {
 }
 
 function shippingDocumentOutputModeLabel(mode) {
-  return mode === "browser" ? "表示・PDF" : "端末印刷";
+  return mode === "browser" ? "表示・PDF" : "印刷";
 }
 
 function shippingDocumentTemporaryOutputHtml(order, type) {
   var mode = shippingDocumentTemporaryOutputMode(order, type);
   var documentName = salesOrderDocumentTypeLabel(type);
   return "<div class='shipping-document-temporary-setting'>" +
-    "<div class='shipping-document-temporary-setting-note'><strong>今回の発行方法</strong><p>この変更は、この画面でこの受注を開いている間だけ有効です。自動印刷や保存済みの標準プリンターは変更しません。</p></div>" +
-    "<label><span>" + esc(documentName) + "の出力先</span><select id='shipping-document-temporary-output'><option value='terminal'" + (mode === "terminal" ? " selected" : "") + ">端末印刷（保存済みの標準プリンター）</option><option value='browser'" + (mode === "browser" ? " selected" : "") + ">表示・PDF（印刷画面でプリンターを選択）</option></select></label>" +
+    "<div class='shipping-document-temporary-setting-note'><strong>今回の発行方法</strong><p>この変更は、この画面でこの受注を開いている間だけ有効です。自動印刷や保存済みの標準プリンターは変更しません。設定を開く・適用するだけでは印刷依頼や印刷状態は変わりません。</p></div>" +
+    "<label><span>" + esc(documentName) + "の出力先</span><select id='shipping-document-temporary-output'><option value='terminal'" + (mode === "terminal" ? " selected" : "") + ">印刷（保存済みの標準プリンター）</option><option value='browser'" + (mode === "browser" ? " selected" : "") + ">表示・PDF（印刷画面でプリンターを選択）</option></select></label>" +
     "<div class='shipping-document-temporary-setting-actions'><a href='dcats-print-settings://open'>標準プリンターを変更</a><button type='button' id='shipping-document-temporary-reset'" + (shippingDocumentHasTemporaryOutput(order, type) ? "" : " disabled") + ">標準に戻す</button><button type='button' class='primary' id='shipping-document-temporary-apply'>今回だけ適用</button></div>" +
   "</div>";
 }
 
+function shippingDocumentManualPrintBusy(order, type) {
+  var job = shippingDocumentPrintJob(order, type);
+  return !!(job && ["queued", "claimed"].indexOf(job.status) >= 0);
+}
+
+function shippingDocumentManualPrintProblem() {
+  var config = (salesOrderPrintSettings || {}).config || {};
+  if (!config.station_code) return "印刷先を確認できません。帳票・プリンター設定で接続設定を確認してください。";
+  if (config.station_state !== "ready") return "印刷端末が" + salesOrderPrintStationStateLabel(config.station_state) + "です。帳票・プリンター設定で接続を確認してください。";
+  var heartbeat = new Date(config.last_heartbeat_at || "").getTime();
+  if (!Number.isFinite(heartbeat) || Date.now() - heartbeat > 120000) return "印刷端末の応答が途絶えています。帳票・プリンター設定で接続を確認してください。";
+  return "";
+}
+
+function shippingDocumentManualPrintNoticeHtml(order) {
+  var problem = shippingDocumentManualPrintProblem();
+  if (!problem) return "";
+  var pending = shippingDocumentHasActivePrintJob(order);
+  return "<p class='shipping-document-guidance' role='status' data-shipping-document-print-notice>" + esc(problem + (pending ? " 登録済みの印刷依頼は待機中です。追加の印刷依頼は送信しません。" : " 接続が回復するまで印刷依頼は送信しません。")) + "</p>";
+}
+
 function shippingDocumentManualOutputActions(order, type, ready) {
+  ready = ready && !shippingDocumentSaving && !shippingDocumentManualPrintBusy(order, type);
   var mode = shippingDocumentTemporaryOutputMode(order, type);
   var action = mode === "browser"
     ? "<button type='button' class='primary' data-shipping-document-print='" + esc(type) + "'" + (ready ? "" : " disabled") + ">表示・PDF</button>"
-    : "<button type='button' class='primary' data-shipping-document-queue='" + esc(type) + "'" + (ready ? "" : " disabled") + ">端末印刷</button>";
+    : "<button type='button' class='primary' data-shipping-document-queue='" + esc(type) + "'" + (ready ? "" : " disabled") + ">印刷</button>";
   return action + "<button type='button' data-shipping-document-open-settings='" + esc(type) + "'>" + esc(t("shipping_document_temporary_settings")) + "</button>";
 }
 
@@ -20037,8 +20675,8 @@ function shippingDocumentDefaultStateHtml() {
   var rows = [
     { name: "出荷指示書", standard: dispatchStandard, condition: "受付後に再印刷・PDF保存可" },
     { name: "商品発送送り状", standard: "B2クラウド / ヤマト宅急便 元払い", condition: "注文ごとに作成方法を変更可", carrierCode: "yamato_prepaid" },
-    { name: "製品保証書", standard: "A5横 / モノクロ / 商品数量分 / 端末印刷", condition: "出荷指示発行後・製造シリアル不要" },
-    { name: "コア返却シート", standard: "A5横 / モノクロ / コア返却必要時 / 端末印刷", condition: "コア返却が不要な注文は発行不要" },
+    { name: "製品保証書", standard: "A5横 / モノクロ / 商品数量分 / 印刷", condition: "出荷指示発行後・製造シリアル不要" },
+    { name: "コア返却シート", standard: "A5横 / モノクロ / コア返却必要時 / 印刷", condition: "コア返却が不要な注文は発行不要" },
     { name: "コア返却用複写伝票", standard: "対象商品1個につき1枚 / 佐川急便 着払い", condition: "ヤマト宅急便・ドットプリンタへ変更可", carrierCode: "sagawa_collect" }
   ];
   return "<section class='shipping-document-defaults'><div class='shipping-document-defaults-head'><span>DEFAULT DOCUMENTS</span><h2>帳票の標準設定</h2><p>受注IDまたは出荷指示番号を検索すると、各帳票の現在状態と発行操作を表示します。</p></div>" +
@@ -20114,7 +20752,7 @@ function shippingDocumentShipmentDocumentsHtml(order) {
   var returnPrintBusy = !!(returnJob && ["queued", "claimed"].indexOf(returnJob.status) >= 0);
   var returnCanPrint = !!(dispatch && order.core_return_required && returnWaybillCopyCount > 0 && returnMethod === "dot_matrix" && waybill.id && shippingDocumentWaybillNumberIsValid(waybill.tracking_number) && !returnPrintBusy && !shippingDocumentSaving);
   var returnPrintActionLabel = returnJob && returnJob.status === "printed" ? "再印刷"
-    : returnJob && returnJob.status === "error" ? "再送" : "端末印刷";
+    : returnJob && returnJob.status === "error" ? "再送" : "印刷";
   var returnHandwrittenComplete = returnMethod === "handwritten" && (waybill.status === "printed" || !!waybill.handwritten_completed_at);
   var returnCanHandwrite = !!(dispatch && order.core_return_required && returnWaybillCopyCount > 0 && returnMethod === "handwritten" && !returnHandwrittenComplete && !shippingDocumentSaving);
   var b2Issued = Array.isArray(order.b2_exports) && order.b2_exports.length > 0;
@@ -20154,16 +20792,16 @@ function shippingDocumentShipmentDocumentsHtml(order) {
       key: "outbound_waybill", name: "商品発送送り状", standard: outboundModeLabel, detail: outboundCarrierLabel,
       carrierCode: outboundWaybill.carrier_code || "yamato_prepaid",
       state: outboundState, ready: !!dispatch,
-      actions: (outboundMethod === "b2_cloud" ? b2Action : (outboundMethod === "dot_matrix" ? "<button type='button' class='primary' data-shipping-document-outbound-print" + (outboundCanPrint ? "" : " disabled") + ">端末印刷</button>" : "<button type='button' class='primary' data-shipping-document-handwritten='outbound_waybill'" + (outboundCanHandwrite ? "" : " disabled") + ">手書き内容を表示</button>") + (b2Issued ? b2Action : "")) + "<button type='button' data-shipping-document-open-settings='outbound'>発送方法設定</button>"
+      actions: (outboundMethod === "b2_cloud" ? b2Action : (outboundMethod === "dot_matrix" ? "<button type='button' class='primary' data-shipping-document-outbound-print" + (outboundCanPrint ? "" : " disabled") + ">印刷</button>" : "<button type='button' class='primary' data-shipping-document-handwritten='outbound_waybill'" + (outboundCanHandwrite ? "" : " disabled") + ">手書き内容を表示</button>") + (b2Issued ? b2Action : "")) + "<button type='button' data-shipping-document-open-settings='outbound'>発送方法設定</button>"
     },
     {
-      key: "warranty", name: "製品保証書", standard: "A5横 / モノクロ / 端末印刷", detail: "商品数量分",
+      key: "warranty", name: "製品保証書", standard: "A5横 / モノクロ / 印刷", detail: "商品数量分",
       state: warrantyRequired ? shippingDocumentPrintStateView(warrantyJob, "未発行") : { label: "不要", tone: "neutral", note: "交換品" }, ready: warrantyReady,
       temporary: shippingDocumentHasTemporaryOutput(order, "warranty") ? "今回のみ: " + shippingDocumentOutputModeLabel(shippingDocumentTemporaryOutputMode(order, "warranty")) : "",
       actions: warrantyRequired ? shippingDocumentManualOutputActions(order, "warranty", warrantyReady) : "<span class='shipping-document-no-action'>発行不要</span>"
     },
     {
-      key: "core_return", name: "コア返却シート", standard: "A5横 / モノクロ / 端末印刷", detail: "コア返却必要時",
+      key: "core_return", name: "コア返却シート", standard: "A5横 / モノクロ / 印刷", detail: "コア返却必要時",
       state: order.core_return_required ? shippingDocumentPrintStateView(coreJob, "未発行") : { label: "不要", tone: "neutral", note: "" }, ready: coreReturnReady,
       temporary: shippingDocumentHasTemporaryOutput(order, "core_return") ? "今回のみ: " + shippingDocumentOutputModeLabel(shippingDocumentTemporaryOutputMode(order, "core_return")) : "",
       actions: order.core_return_required ? shippingDocumentManualOutputActions(order, "core_return", coreReturnReady) : "<span class='shipping-document-no-action'>発行不要</span>"
@@ -20177,6 +20815,7 @@ function shippingDocumentShipmentDocumentsHtml(order) {
   ];
   return "<section class='shipping-document-section shipping-document-required-documents'><div class='shipping-document-section-head'><div><h3>帳票の状態と発行</h3><p>" + esc(t("shipping_document_issuance_guidance")) + "</p></div><span class='shipping-document-ready-state " + (documentsPrinted ? "ready" : "pending") + "'>" + esc(documentsPrinted ? "印刷済み" : "未印刷 " + pendingDocumentCount + "件") + "</span></div>" +
     (reason ? "<p class='shipping-document-guidance'>" + esc(reason) + "</p>" : "") +
+    shippingDocumentManualPrintNoticeHtml(order) +
     "<div class='shipping-document-required-list' role='table' aria-label='帳票の状態と発行'><div class='shipping-document-required-head' role='row'><span role='columnheader'>帳票</span><span role='columnheader'>用紙・発行方法</span><span role='columnheader'>現在の状態</span><span role='columnheader'>発行操作</span></div>" + rows.map(function(row) {
       return "<div class='shipping-document-required-row " + (row.ready ? "ready" : "pending") + "' role='row' data-document-type='" + esc(row.key) + "' data-state='" + esc(row.state.tone) + "'><div class='shipping-document-name-cell' role='cell'><strong>" + esc(row.name) + "</strong>" + (row.carrierCode ? shippingCarrierBrandHtml(row.carrierCode, true) : "") + "</div><div class='shipping-document-standard' role='cell'><strong>" + esc(row.standard) + "</strong><small class='shipping-document-standard-detail'>" + esc(row.detail) + "</small>" + (row.temporary ? "<small class='shipping-document-temporary-note'>" + esc(row.temporary) + "</small>" : "") + "</div><div class='shipping-document-state-cell' role='cell'><em class='shipping-document-state-badge'>" + esc(row.state.label) + "</em>" + (row.state.note ? "<small>" + esc(row.state.note) + "</small>" : "") + "</div><div class='shipping-document-row-actions' role='cell'>" + row.actions + "</div></div>";
     }).join("") + "</div></section>";
@@ -20275,26 +20914,28 @@ function renderShippingDocumentDetail() {
 }
 
 function bindShippingDocumentDetailActions() {
+  var host = document.getElementById("shipping-document-detail");
+  if (!host) return;
   var issue = document.getElementById("shipping-document-b2-issue");
   if (issue) issue.addEventListener("click", issueShippingDocumentB2);
   var openOrder = document.getElementById("shipping-document-open-order");
   if (openOrder) openOrder.addEventListener("click", openShippingDocumentOrderInSalesOrderMgmt);
-  document.querySelectorAll("[data-shipping-document-print]").forEach(function(button) {
+  host.querySelectorAll("[data-shipping-document-print]").forEach(function(button) {
     button.addEventListener("click", function() { printSalesOrderDocument(button.dataset.shippingDocumentPrint, shippingDocumentDetail); });
   });
-  document.querySelectorAll("[data-shipping-document-queue]").forEach(function(button) {
+  host.querySelectorAll("[data-shipping-document-queue]").forEach(function(button) {
     button.addEventListener("click", function() { queueCurrentShippingDocument(button.dataset.shippingDocumentQueue); });
   });
-  document.querySelectorAll("[data-shipping-document-open-settings]").forEach(function(button) {
+  host.querySelectorAll("[data-shipping-document-open-settings]").forEach(function(button) {
     button.addEventListener("click", function() { openShippingDocumentSettings(button.dataset.shippingDocumentOpenSettings); });
   });
-  document.querySelectorAll("[data-shipping-document-outbound-print]").forEach(function(button) {
+  host.querySelectorAll("[data-shipping-document-outbound-print]").forEach(function(button) {
     button.addEventListener("click", queueShippingDocumentOutboundWaybillPrint);
   });
-  document.querySelectorAll("[data-shipping-document-return-print]").forEach(function(button) {
+  host.querySelectorAll("[data-shipping-document-return-print]").forEach(function(button) {
     button.addEventListener("click", queueShippingDocumentReturnWaybillPrint);
   });
-  document.querySelectorAll("[data-shipping-document-handwritten]").forEach(function(button) {
+  host.querySelectorAll("[data-shipping-document-handwritten]").forEach(function(button) {
     button.addEventListener("click", function() {
       openCurrentShippingHandwrittenWaybill(button.dataset.shippingDocumentHandwritten);
     });
@@ -20461,26 +21102,65 @@ async function queueShippingDocumentOutboundWaybillPrint() {
 
 async function queueCurrentShippingDocument(documentType) {
   var order = shippingDocumentDetail;
-  if (!order || shippingDocumentSaving || ["dispatch", "warranty", "core_return"].indexOf(documentType) < 0) return;
+  if (!canManageSalesOrders() || !order || shippingDocumentSaving || ["dispatch", "warranty", "core_return"].indexOf(documentType) < 0) return;
+  var actorId = currentUser && currentUser.id;
+  var isCurrent = function() {
+    return canManageSalesOrders() && actorId === (currentUser && currentUser.id)
+      && shippingDocumentDetail && String(shippingDocumentDetail.id) === String(order.id)
+      && activeScreenId() === "shipping-document-mgmt";
+  };
   shippingDocumentSaving = true;
   renderShippingDocumentDetail();
-  var result = await sb.rpc("queue_sales_order_fulfillment_documents", {
-    target_order_ids: [order.id],
-    target_document_types: [documentType]
-  });
-  shippingDocumentSaving = false;
-  if (result.error) {
-    renderShippingDocumentDetail();
-    setShippingDocumentMessage(result.error.message || salesOrderDocumentTypeLabel(documentType) + "を印刷端末へ送信できませんでした。", true);
-    return;
+  var message = "";
+  var isError = false;
+  var sent = false;
+  try {
+    // Re-read before sending: a pending request must never be submitted twice.
+    var refreshed = await loadShippingDocumentDetail(order.id);
+    if (!isCurrent()) return;
+    if (!refreshed) throw new Error("印刷状態を確認できません。再読込して確認してください。");
+    if (shippingDocumentManualPrintBusy(refreshed, documentType)) {
+      message = "この帳票は印刷待ちまたは印刷中です。追加の印刷依頼は送信していません。";
+      return;
+    }
+    var loaded = await loadSalesOrderPrintSettings();
+    if (!isCurrent()) return;
+    var problem = loaded ? shippingDocumentManualPrintProblem() : "印刷端末の接続を確認できません。印刷依頼は送信していません。";
+    if (problem) {
+      message = problem;
+      isError = true;
+      return;
+    }
+    sent = true;
+    var result = await sb.rpc("queue_sales_order_fulfillment_documents", {
+      target_order_ids: [order.id],
+      target_document_types: [documentType]
+    });
+    if (result.error) {
+      message = result.error.message || "印刷依頼を登録できませんでした。";
+      isError = true;
+      return;
+    }
+    var data = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
+    if (!isCurrent()) return;
+    await loadShippingDocumentDetail(order.id);
+    var queuedCount = parseInt(data.queued_count, 10) || 0;
+    message = queuedCount > 0
+      ? queuedCount > 1 ? tf("sales_order_documents_queued", { n: queuedCount })
+        : salesOrderDocumentTypeLabel(documentType) + "の印刷を依頼しました。印刷完了までお待ちください。"
+      : "同じ帳票はすでに印刷待ち、印刷中、または発行不要です。";
+  } catch (error) {
+    isError = true;
+    message = sent
+      ? "印刷依頼の結果を確認できません。再送せず、印刷状態を再読込して確認してください。"
+      : "印刷状態または端末の接続を確認できません。印刷依頼は送信していません。";
+  } finally {
+    shippingDocumentSaving = false;
+    if (isCurrent()) {
+      renderShippingDocumentDetail();
+      setShippingDocumentMessage(message, isError);
+    }
   }
-  var data = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
-  await loadShippingDocumentDetail(order.id);
-  var queuedCount = parseInt(data.queued_count, 10) || 0;
-  setShippingDocumentMessage(queuedCount > 0
-    ? queuedCount > 1 ? tf("sales_order_documents_queued", { n: queuedCount })
-      : salesOrderDocumentTypeLabel(documentType) + "を印刷待ちに登録しました。"
-    : "同じ帳票はすでに印刷待ち、印刷中、または発行不要です。", false);
 }
 
 function setShippingDocumentMessage(message, isError) {
@@ -20784,6 +21464,18 @@ function clearSalesOrderDetailSelection() {
   renderSalesOrderDetail();
 }
 
+function salesOrderCanStartClaim(order) {
+  return !!order && ["shipped", "completed"].indexOf(order.status) >= 0
+    && /^[1-9][0-9]*$/.test(String(order.id)) && String(order.order_number || "").trim().length >= 3;
+}
+
+async function startSalesOrderClaimIntake(order) {
+  if (!canManageSalesOrders()) { showPermissionDenied("open_claim_cases", "customer_claim_cases"); return; }
+  if (!salesOrderCanStartClaim(order)) return;
+  claimCaseReturnContext = null;
+  await enterClaimCaseMgmt({ sourceOrderId: order.id, sourceOrderNumber: order.order_number, search: order.order_number, state: "all" });
+}
+
 function salesOrderListRowHtml(order) {
   var selected = String(order.id) === String(salesOrderSelectedId);
   var checked = salesOrderCheckedIdsState.has(parseInt(order.id, 10));
@@ -20791,6 +21483,7 @@ function salesOrderListRowHtml(order) {
   return "<div class='sales-order-list-row" + (selected ? " selected" : "") + "' data-sales-order-open='" + esc(order.id) + "'>" +
     "<label class='sales-order-check' aria-label='処理対象'><input type='checkbox' data-sales-order-check value='" + esc(order.id) + "'" + (checked ? " checked" : "") + "></label>" +
     "<div class='sales-order-list-main'><div class='sales-order-list-identity'><strong class='sales-order-list-number'>" + esc(orderNumber) + "</strong><span class='sales-order-list-total'><small>合計</small><strong>" + esc(customerOrderCurrency(order.total_jpy)) + "</strong></span></div><span class='sales-order-list-customer' title='" + esc(order.customer_name || "-") + "'>" + esc(order.customer_name || "-") + "</span><div class='sales-order-list-context'><div class='sales-order-list-meta'>" + customerOrderSourceBadgeHtml(order.order_source) + "</div><div class='sales-order-list-next'><span aria-label='次の操作'>次</span><strong>" + esc(salesOrderNextOperationLabel(order)) + "</strong></div></div></div>" +
+    (canManageSalesOrders() && salesOrderCanStartClaim(order) ? "<div class='sales-order-claim-entry'><button type='button' data-sales-order-claim-new='" + esc(order.id) + "' aria-label='" + esc(tf("sales_order_claim_intake_order", { order: orderNumber })) + "'>" + esc(t("sales_order_claim_intake")) + "</button></div>" : "") +
   "</div>";
 }
 
@@ -20819,7 +21512,7 @@ function renderSalesOrderList() {
   }
   host.querySelectorAll("[data-sales-order-open]").forEach(function(row) {
     row.addEventListener("click", function(event) {
-      if (event.target && event.target.matches("input[type='checkbox']")) return;
+      if (event.target && (event.target.closest("[data-sales-order-claim-new]") || event.target.matches("input[type='checkbox']"))) return;
       loadSalesOrderDetail(parseInt(row.dataset.salesOrderOpen, 10));
     });
   });
@@ -21638,6 +22331,86 @@ async function saveSalesOrderScheduledShippingDate() {
   setSalesOrderDetailMessage(t("sales_order_shipping_date_updated"), false);
 }
 
+function salesOrderInventoryItems(order) {
+  var items = Array.isArray(order && order.items) ? order.items.slice() : [];
+  var dispatch = salesOrderDispatch(order);
+  (Array.isArray(dispatch && dispatch.items) ? dispatch.items : []).forEach(function(entry) {
+    if (entry && entry.order_item) items.push(entry.order_item);
+  });
+  return items;
+}
+
+async function hydrateSalesOrderInventory(order) {
+  var actor = currentUser && currentUser.id;
+  if (!order || !actor || !canManageSalesOrders()) return;
+  var snapshot = { owner: actor, rows: Object.create(null) };
+  order.inventory_display = snapshot;
+  var items = salesOrderInventoryItems(order);
+  var ids = items.map(function(item) { return String(item.product_variant_id || ""); }).filter(function(id, index, all) {
+    return /^[1-9][0-9]*$/.test(id) && all.indexOf(id) === index;
+  });
+  ids.forEach(function(id) { snapshot.rows[id] = { status: "loading" }; });
+  var cursor = 0;
+  async function worker() {
+    while (cursor < ids.length) {
+      if (!currentUser || currentUser.id !== actor || !canManageSalesOrders()) return;
+      var id = ids[cursor++];
+      try {
+        var result = await sb.rpc("get_warehouse_stock", {
+          p_query: "", p_kind: "", p_location: "", p_variant_id: id, p_offset: 0, p_limit: 1
+        });
+        if (!currentUser || currentUser.id !== actor || !canManageSalesOrders() || order.inventory_display !== snapshot) return;
+        if (result.error) throw result.error;
+        var data = result.data;
+        if (!data || !Array.isArray(data.variants) || !Array.isArray(data.positions)) throw new Error("Invalid inventory response");
+        var variant = data.variants.find(function(row) { return String(row.variant_id) === id; });
+        if (!variant) { snapshot.rows[id] = { status: "missing" }; continue; }
+        var matchingItems = items.filter(function(item) { return String(item.product_variant_id || "") === id; });
+        if (!matchingItems.every(function(item) {
+          return (!item.dkd_shohin_id || String(item.dkd_shohin_id) === String(variant.product_id))
+            && (!item.product_kind || item.product_kind === variant.kind);
+        }) || variant.stock_qty == null || !Number.isSafeInteger(Number(variant.stock_qty))) throw new Error("Inventory identity mismatch");
+        var locations = Object.create(null), allocated = 0, needsRecount = variant.needs_recount === true;
+        data.positions.filter(function(row) { return String(row.variant_id) === id; }).forEach(function(row) {
+          var quantity = Number(row.quantity), location = String(row.location || "").trim();
+          if (!Number.isSafeInteger(quantity) || quantity <= 0 || !location) throw new Error("Invalid inventory position");
+          locations[location] = (locations[location] || 0) + quantity;
+          allocated += quantity;
+          if (row.needs_recount) needsRecount = true;
+        });
+        var stock = Number(variant.stock_qty);
+        snapshot.rows[id] = { status: "ready", stock: stock, locations: locations,
+          legacy: String(variant.legacy_location || "").trim(), unassigned: stock - allocated,
+          needsRecount: needsRecount || allocated > stock };
+      } catch (error) {
+        if (currentUser && currentUser.id === actor && order.inventory_display === snapshot) {
+          snapshot.rows[id] = { status: error && error.code === "42501" ? "denied" : "error" };
+        }
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(4, ids.length) }, worker));
+}
+
+function salesOrderInventoryItemHtml(order, item) {
+  var snapshot = order && order.inventory_display;
+  var row = snapshot && currentUser && snapshot.owner === currentUser.id && canManageSalesOrders()
+    ? snapshot.rows[String(item && item.product_variant_id || "")] : null;
+  if (!row || row.status !== "ready") {
+    var key = row && row.status === "loading" ? "sales_inventory_loading"
+      : row && row.status === "denied" ? "sales_inventory_denied"
+      : !item || !item.product_variant_id || row && row.status === "missing" ? "sales_inventory_missing" : "sales_inventory_error";
+    return "<div class='sales-order-inventory-values'><span>" + esc(t("sales_inventory_shelf")) + " / " + esc(t("sales_inventory_stock")) + ": " + esc(t(key)) + "</span></div>";
+  }
+  var locations = Object.keys(row.locations).sort().map(function(code) {
+    return code + " (" + row.locations[code] + ")";
+  }).join(" / ") || (row.legacy ? row.legacy + " " + t("sales_inventory_legacy") : t("sales_inventory_unassigned"));
+  return "<div class='sales-order-inventory-values'><span><b>" + esc(t("sales_inventory_shelf")) + "</b> " + esc(locations) + "</span>" +
+    "<span><b>" + esc(t("sales_inventory_stock")) + "</b> " + esc(String(row.stock)) +
+    (row.unassigned > 0 ? " / " + esc(t("sales_inventory_unassigned")) + " " + esc(String(row.unassigned)) : "") + "</span>" +
+    (row.needsRecount ? "<strong class='sales-order-inventory-warning'>" + esc(t("sales_inventory_recount")) + "</strong>" : "") + "</div>";
+}
+
 function renderSalesOrderDetail() {
   var host = document.getElementById("sales-order-detail");
   var order = salesOrderDetail;
@@ -21658,6 +22431,7 @@ function renderSalesOrderDetail() {
   var actions = allowed.filter(function(action) { return action !== "cancel" && action !== "cancel_after_picking"; }).map(function(action) {
     return "<button type='button' class='sales-order-action " + esc(action) + "' data-sales-order-action='" + esc(action) + "'>" + esc(actionLabels[action] || action) + "</button>";
   }).join("");
+  if (canManageSalesOrders() && salesOrderCanStartClaim(order)) actions += "<button type='button' data-sales-order-claim-new='" + esc(order.id) + "'>" + esc(t("sales_order_claim_intake")) + "</button>";
   actions += "<button type='button' data-sales-order-claim-open>クレーム案件を開く</button>";
   var purgeStatus = order.development_test_order_purge || {};
   var cancellationAction = salesOrderCancellationAction(order);
@@ -21920,7 +22694,7 @@ function buildSalesOrderDispatchPage(order, pageItems, pageIndex, pageCount, bar
     var serials = (Array.isArray(entry.serials) ? entry.serials : []).map(function(row) {
       return row && row.manufacturing_serial || "";
     }).filter(Boolean).join(", ") || "照合時に記録";
-    return "<tr><td>" + esc(String(startIndex + index + 1)) + "</td><td><strong>" + esc(item.gltek_part_number || "GLTEK未発行") + "</strong><small>" + esc(reference) + "</small><div class='dispatch-packing'><b>出荷サイズ " + esc(packing.sizeText) + "</b><span>箱: " + esc(packing.boxText) + "</span></div></td><td>" + esc(customerProductKindLabel(item.product_kind)) + "</td><td>" + esc(String(entry.quantity || 0)) + "</td><td>" + esc(item.core_return_required ? "必要" : "不要") + "</td><td>" + esc(serials) + "</td></tr>";
+    return "<tr><td>" + esc(String(startIndex + index + 1)) + "</td><td><strong>" + esc(item.gltek_part_number || "GLTEK未発行") + "</strong><small>" + esc(reference) + "</small><div class='dispatch-packing'><b>出荷サイズ " + esc(packing.sizeText) + "</b><span>箱: " + esc(packing.boxText) + "</span></div>" + salesOrderInventoryItemHtml(order, item) + "</td><td>" + esc(customerProductKindLabel(item.product_kind)) + "</td><td>" + esc(String(entry.quantity || 0)) + "</td><td>" + esc(item.core_return_required ? "必要" : "不要") + "</td><td>" + esc(serials) + "</td></tr>";
   }).join("");
   var documentRows = salesOrderDispatchDocumentSet(order).map(function(row) {
     return "<tr><th scope='row'>" + esc(row.name) + "</th><td>" + esc(row.detail) + "</td><td>" + (row.required ? "<span class='dispatch-check-box'></span>確認" : "—") + "</td></tr>";
@@ -22236,6 +23010,8 @@ async function printSalesOrderDocument(type, targetOrder) {
       await hydrateSalesOrderWarrantyPrintData(order);
     }
     popup.document.open();
+    if (type === "dispatch") await hydrateSalesOrderInventory(order);
+    if (!currentUser || currentUser.id !== printActorId || !canManageSalesOrders()) throw new Error(t("permission_denied"));
     popup.document.write(buildSalesOrderDocumentHtml(order, type));
     popup.document.close();
     var button = popup.document.getElementById("dcats-print-shipment-document");
@@ -23523,9 +24299,44 @@ function updateSalesShippingEstimateVisibility() {
   if (section) setCspStyle(section, "display", show ? "block" : "none");
   var conditions = document.getElementById("panel-right");
   if (conditions) conditions.classList.toggle("sales-conditions-without-shipping", !show);
+  bindSalesShippingDestinationGuide();
+}
+
+function bindSalesShippingDestinationGuide() {
+  var guide = document.getElementById("sales-shipping-destination-guide");
+  var prefecture = document.getElementById("sales-shipping-prefecture");
+  var available = !!prefecture && salesShippingEstimateShouldShow();
+  var pending = available && !salesShippingPrefectureCode;
+  if (guide) {
+    guide.hidden = !available;
+    guide.onclick = function() {
+      var target = document.getElementById("sales-shipping-prefecture");
+      if (!target || !salesShippingEstimateShouldShow()) return;
+      target.scrollIntoView({ block: "nearest", inline: "nearest" });
+      target.focus({ preventScroll: true });
+    };
+  }
+  var amount = document.getElementById("sales-shipping-charge-amount");
+  var details = document.getElementById("sales-shipping-charge-details");
+  if (amount) {
+    amount.innerHTML = available ? salesShippingEstimateView.amountHtml : "";
+    amount.hidden = !available || !salesShippingEstimateView.amountHtml;
+    var badge = amount.parentElement && amount.parentElement.querySelector("strong");
+    if (badge) badge.hidden = !amount.hidden;
+  }
+  if (details) {
+    details.innerHTML = available ? salesShippingEstimateView.detailsHtml : "";
+    details.hidden = !available || !salesShippingEstimateView.detailsHtml;
+  }
+  if (prefecture) {
+    prefecture.classList.toggle("needs-destination", pending);
+    if (pending && guide) prefecture.setAttribute("aria-describedby", guide.id);
+    else prefecture.removeAttribute("aria-describedby");
+  }
 }
 
 function bindSalesShippingEstimateActions() {
+  bindSalesShippingDestinationGuide();
   var prefecture = document.getElementById("sales-shipping-prefecture");
   var carrier = document.getElementById("sales-shipping-carrier");
   var service = document.getElementById("sales-shipping-service");
@@ -23552,16 +24363,19 @@ function bindSalesShippingEstimateActions() {
 }
 
 function renderSalesShippingEstimate(loadError) {
+  salesShippingEstimateView = { amountHtml: "", detailsHtml: "" };
   var host = document.getElementById("sales-shipping-estimate-wrap");
   if (!host) return;
   if (loadError) {
     host.innerHTML = "<div class='sales-shipping-message error'>" + esc(t("sales_shipping_profile_load_error")) + "</div>";
+    bindSalesShippingDestinationGuide();
     return;
   }
   var rows = salesShippingRateRows || [];
   var carriers = salesShippingUniqueValues(rows, "carrier_name");
   if (!carriers.length) {
     host.innerHTML = "<div class='sales-shipping-message'>" + esc(t("shipping_no_rates")) + "</div>";
+    bindSalesShippingDestinationGuide();
     return;
   }
   if (carriers.indexOf(salesShippingCarrierName) < 0) salesShippingCarrierName = carriers[0];
@@ -23602,19 +24416,24 @@ function renderSalesShippingEstimate(loadError) {
   if (selectedPackage && !salesShippingIgnoresWeight(selectedPackage) && salesShippingProfile && salesShippingProfile.shipping_weight_kg != null && selectedPackage.max_weight_kg != null && Number(salesShippingProfile.shipping_weight_kg) > Number(selectedPackage.max_weight_kg)) {
     html += "<div class='sales-shipping-message warning'>" + esc(t("sales_shipping_weight_over")) + "</div>";
   } else if (!salesShippingPrefectureCode || !selectedPackage) {
-    html += "<div class='sales-shipping-result pending'>" + esc(!salesShippingPrefectureCode ? t("sales_shipping_select_prefecture") : t("sales_shipping_select_size")) + "</div>";
+    if (salesShippingPrefectureCode) html += "<div class='sales-shipping-result pending'>" + esc(t("sales_shipping_select_size")) + "</div>";
   } else if (!selectedRate) {
     html += "<div class='sales-shipping-message warning'>" + esc(t("sales_shipping_no_rate")) + "</div>";
   } else {
     var note = shippingRateVisibleNote(selectedRate.note);
-    html += "<div class='sales-shipping-result'><span>" + esc(t("sales_shipping_rate")) + "</span><div>" + shippingFeeHtml(selectedRate.standard_fee_jpy, selectedRate.tax_type) + "</div></div>";
-    var hasIslandDetails = !!(selectedRate.remote_island_condition || note);
-    html += hasIslandDetails ? "<details class='sales-shipping-island'><summary>" : "<div class='sales-shipping-island'><span>";
-    html += "<b>" + esc(t("shipping_island_fee")) + ":</b> " + shippingFeeHtml(selectedRate.remote_island_fee_jpy, selectedRate.tax_type);
-    html += hasIslandDetails ? "</summary>" : "</span>";
-    if (selectedRate.remote_island_condition) html += "<span><b>" + esc(t("shipping_island_condition")) + ":</b> " + esc(selectedRate.remote_island_condition) + "</span>";
-    if (note) html += "<span><b>" + esc(t("shipping_note")) + ":</b> " + esc(note) + "</span>";
-    html += hasIslandDetails ? "</details>" : "</div>";
+    var showIsland = !/ヤマト|yamato/i.test(salesShippingCarrierName);
+    salesShippingEstimateView.amountHtml = shippingFeeHtml(selectedRate.standard_fee_jpy, selectedRate.tax_type);
+    if (showIsland) {
+      var hasIslandDetails = !!(selectedRate.remote_island_condition || note);
+      salesShippingEstimateView.detailsHtml += hasIslandDetails ? "<details class='sales-shipping-island'><summary>" : "<div class='sales-shipping-island'><span>";
+      salesShippingEstimateView.detailsHtml += "<b>" + esc(t("shipping_island_fee")) + ":</b> " + shippingFeeHtml(selectedRate.remote_island_fee_jpy, selectedRate.tax_type);
+      salesShippingEstimateView.detailsHtml += hasIslandDetails ? "</summary>" : "</span>";
+      if (selectedRate.remote_island_condition) salesShippingEstimateView.detailsHtml += "<span><b>" + esc(t("shipping_island_condition")) + ":</b> " + esc(selectedRate.remote_island_condition) + "</span>";
+      if (note) salesShippingEstimateView.detailsHtml += "<span><b>" + esc(t("shipping_note")) + ":</b> " + esc(note) + "</span>";
+      salesShippingEstimateView.detailsHtml += hasIslandDetails ? "</details>" : "</div>";
+    } else if (note) {
+      salesShippingEstimateView.detailsHtml += "<details class='sales-shipping-method'><summary>" + esc(t("shipping_note")) + "</summary><div class='sales-shipping-message'>" + esc(note) + "</div></details>";
+    }
   }
   host.innerHTML = html;
   var prefectureSelect = document.getElementById("sales-shipping-prefecture");
@@ -23630,7 +24449,9 @@ async function loadSalesShippingEstimateForCurrent(seq) {
     return;
   }
   updateSalesShippingEstimateVisibility();
+  salesShippingEstimateView = { amountHtml: "", detailsHtml: "" };
   host.innerHTML = "<div class='sales-detail-empty'>" + esc(t("loading")) + "</div>";
+  bindSalesShippingDestinationGuide();
   var dkdId = parseInt(productDkdId(currentProduct), 10);
   if (isNaN(dkdId)) return;
   try {
@@ -23778,6 +24599,7 @@ async function enterShippingRateMgmt() {
     showPermissionDenied("open_shipping_rate_management", "customer_shipping_rates");
     return;
   }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("shipping-rate-mgmt", false)) return;
   showScreen("shipping-rate-mgmt");
   var b2SettingsButton = document.getElementById("shipping-rate-b2-settings-open");
   if (b2SettingsButton) b2SettingsButton.hidden = !isSystemAdmin();
@@ -24362,8 +25184,9 @@ async function enterSearch(options) {
     await enterCustomerCatalog({ runSearch: false });
     return;
   }
-  customerPortalSearchActive = false;
   if (!canViewProductSearch()) { showPermissionDenied("open_product_search", "core_products"); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("search", false)) return;
+  customerPortalSearchActive = false;
   resetScreenStateForMenu("search");
   showScreen("search");
   configureCustomerSearchShell();
@@ -24373,6 +25196,7 @@ async function enterSearch(options) {
 
 async function enterProductionSearch() {
   if (!canViewProductionFeatures()) { showPermissionDenied("open_production_search", "core_products"); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("production-search", false)) return;
   showScreen("production-search");
   var productionAddBtn = document.getElementById("production-add-core-product");
   if (productionAddBtn) setCspStyle(productionAddBtn, "display", canEdit() ? "" : "none");
@@ -24636,6 +25460,46 @@ async function selectProductionFilter(filter) {
   }
 }
 
+function productionReportRankFor(row) {
+  var service = window.DCatsManufacturingRankingReport;
+  return service && typeof service.productionRankFor === "function" ? service.productionRankFor(row) : null;
+}
+
+function resetProductionReportRanks() {
+  var service = window.DCatsManufacturingRankingReport;
+  if (service && typeof service.resetProductionRanks === "function") service.resetProductionRanks();
+}
+
+async function loadProductionReportRanks(products) {
+  var service = window.DCatsManufacturingRankingReport;
+  if (service && typeof service.loadProductionRanks === "function") await service.loadProductionRanks(products || productionRows);
+}
+
+function renderProductionReportRank(row, detail) {
+  var service = window.DCatsManufacturingRankingReport;
+  var rank = productionReportRankFor(row);
+  var status = service && typeof service.productionRankStatus === "function" ? service.productionRankStatus(row) : "error";
+  var label = rank ? (detail ? t("production_ranking_rank") + " #" : "#") + rank.rank
+    : status === "ready" ? "" : t(status === "denied" ? "production_report_rank_denied"
+      : status === "error" ? "production_report_rank_error" : "production_report_rank_loading");
+  if (!label) return detail ? "" : "<div></div>";
+  var title = rank ? tf("production_report_rank_source", { year: rank.reportYear }) : label;
+  var tag = detail ? "span" : "div";
+  return "<" + tag + " class='" + (detail ? "production-priority" : "production-rank") +
+    "' title='" + esc(title) + "'>" + esc(label) + "</" + tag + ">";
+}
+
+function refreshProductionReportRankViews() {
+  sortProductionRows();
+  renderProductionList();
+  var context = document.querySelector("#production-detail .production-head-context");
+  if (!context || !currentProductionRow || context.dataset.productionRankDkd !== productDkdId(currentProductionRow)) return;
+  var badge = context.querySelector(".production-priority");
+  if (badge) badge.remove();
+  var html = renderProductionReportRank(currentProductionRow, true);
+  if (html) context.insertAdjacentHTML("beforeend", html);
+}
+
 function enrichProductionProduct(row) {
   var inst = productionInstructionFor(row);
   var coreKey = productDkdId(row);
@@ -24656,9 +25520,9 @@ function enrichProductionProduct(row) {
 
 function sortProductionRows() {
   productionRows.sort(function(a,b) {
-    var ai = productionInstructionFor(a), bi = productionInstructionFor(b);
-    var ar = ai ? ai.priority_rank : 999999;
-    var br = bi ? bi.priority_rank : 999999;
+    var ai = productionReportRankFor(a), bi = productionReportRankFor(b);
+    var ar = ai ? ai.rank : 999999;
+    var br = bi ? bi.rank : 999999;
     if (ar !== br) return ar - br;
     var arc = productRebuiltComponentCount(a);
     var brc = productRebuiltComponentCount(b);
@@ -24812,6 +25676,10 @@ async function loadProductionProducts(options) {
 async function loadProductionAuxiliaryData(products, options) {
   options = options || {};
   var auxSeq = ++productionAuxRequestSeq;
+  loadProductionReportRanks(products).then(function() {
+    if (auxSeq !== productionAuxRequestSeq) return;
+    refreshProductionReportRankViews();
+  }).catch(function() { console.warn("production rank refresh failed"); });
   var fast = await Promise.all([
     fetchProductionPartRegistrationCountMap(products),
     fetchCoreStockQtyMap(products),
@@ -24923,7 +25791,7 @@ function renderProductionList() {
     var hasSL = productHasSlPart(row, slNums);
     var hasKikan = hasProductKikanCompatible(row);
     var imageCount = getProductionImageCount(row);
-    var rankHtml = inst ? "<div class='production-rank'>#" + esc(inst.priority_rank || "-") + "</div>" : "<div></div>";
+    var rankHtml = renderProductionReportRank(row, false);
     var meta = [
       row.manufacturer || "-",
       productionCategoryLabel(row),
@@ -26026,12 +26894,10 @@ async function renderProductionDetail(row) {
   var detail = await loadProductionDetailData(row);
   if (seq !== productionDetailRequestSeq) return;
   var title = row.manufacturer_part_number || row.genuine_part_number || row.daiko_part_number || ("DKD " + row.dkd_shohin_id);
-  var priorityHtml = inst
-    ? "<span class='production-priority'>" + esc(t("production_ranking_rank")) + " #" + esc(inst.priority_rank || "-") + "</span>"
-    : "";
+  var priorityHtml = renderProductionReportRank(row, true);
   var html = "";
   html += "<div class='production-detail-head'>";
-  html += "<div class='production-head-main'><div class='production-head-context'><span>" + esc(productionCategoryLabel(row)) + "</span>" + priorityHtml + "</div>";
+  html += "<div class='production-head-main'><div class='production-head-context' data-production-rank-dkd='" + esc(productDkdId(row)) + "'><span>" + esc(productionCategoryLabel(row)) + "</span>" + priorityHtml + "</div>";
   html += "<div class='production-detail-title'>" + esc(title) + "</div>";
   html += "<div class='production-detail-meta'>";
   html += "<span><small>" + esc(t("f_genuine_pn")) + "</small><strong>" + esc(row.genuine_part_number || "-") + "</strong></span>";
@@ -26180,7 +27046,7 @@ function renderProductionComponents(rows, kind) {
   if (!rows || !rows.length) {
     return "<div class='production-component-summary-empty'>" + esc(tf("production_component_summary_empty", { kind: productionImageKindLabel(kind) })) + "</div>";
   }
-  var html = "<table class='production-component-summary-table'><thead><tr><th>" + esc(t("production_component_part_number")) + "</th><th>" + esc(t("component_name")) + "</th><th>" + esc(t("component_quantity")) + "</th><th>" + esc(t("production_component_interchange_procurement")) + "</th><th>" + esc(t("component_replacement_rate")) + "</th><th>" + esc(t("component_manufacturing_memo")) + "</th></tr></thead><tbody>";
+  var html = "<table class='production-component-summary-table'><thead><tr><th>" + esc(t("production_component_part_number")) + "</th><th>" + esc(t("component_name")) + "</th><th>" + esc(t("component_quantity")) + "</th><th>" + esc(t("production_component_interchange_procurement")) + "</th><th>" + esc(t("component_replacement_rate")) + "</th></tr></thead><tbody>";
   rows.forEach(function(row) {
     var manufacturerMeta = [row.component_manufacturer, row.component_genuine_part_number ? (t("f_genuine_pn") + " " + row.component_genuine_part_number) : ""].filter(Boolean).join(" / ");
     var partName = row.component_name || row.component_part_name || "-";
@@ -26192,8 +27058,10 @@ function renderProductionComponents(rows, kind) {
       "<td class='production-component-summary-number'>" + esc(row.quantity || "-") + "</td>" +
       "<td class='production-component-summary-procurement'><strong>" + esc(procurement || "-") + "</strong></td>" +
       "<td class='production-component-summary-number'>" + esc(formatComponentRate(row.replacement_rate)) + "</td>" +
-      "<td class='production-component-summary-memo'>" + esc(memo || "-") + "</td>" +
     "</tr>";
+    if (memo) {
+      html += "<tr class='production-component-summary-memo-row'><td class='production-component-summary-memo' colspan='5'><span class='production-component-summary-memo-label'>" + esc(t("component_manufacturing_memo")) + ":</span> " + esc(memo) + "</td></tr>";
+    }
   });
   return html + "</tbody></table>";
 }
@@ -26863,6 +27731,7 @@ function openRakutenForCurrentProduct() {
 
 async function enterRakutenPrice(seedKeyword) {
   if (!canUseRakutenResearch()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("rakuten-price", seedKeyword)) return;
   if (window.DcatsEcCostListTargets) window.DcatsEcCostListTargets.refresh();
   relocateRakutenSections("price");
   showScreen("rakuten-price");
@@ -26888,6 +27757,7 @@ async function enterRakutenBulk() {
 
 async function enterApiSettings() {
   if (!canManageSharedSettings()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("api-settings", false)) return;
   relocateRakutenSections("api");
   showScreen("api-settings");
   await loadRakutenKeyFields();
@@ -29279,6 +30149,7 @@ function clearEcMallPriceListInitialState() {
 
 async function enterRakutenPriceList() {
   if (!canViewPriceResearchHistory()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("rakuten-price-list", false)) return;
   showScreen("rakuten-price-list");
   var nameEl = document.getElementById("rakuten-price-list-username");
   if (nameEl && userProfile) nameEl.textContent = userProfile.name || userProfile.email.split("@")[0];
@@ -30040,6 +30911,7 @@ var partsMgmtData = [];
 var partsMgmtWeightLoadFailed = false;
 var partsMgmtWeightSortDirection = ""; // "", "ascending", or "descending"
 var partsMgmtSearchInFlight = false;
+var partsMgmtSearchFailed = false;
 var partFormMode  = "add"; // "add" or "edit"
 var partFormSource = "parts"; // "parts" or "core_products"
 var coreProductFormContext = "sales"; // "sales", "production", or "management"
@@ -30049,6 +30921,7 @@ var partFormShippingLoadSequence = 0;
 
 async function enterPartsMgmt() {
   if (!canViewManagementScreen()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("parts-mgmt", false)) return;
   showScreen("parts-mgmt");
   var nameEl  = document.getElementById("parts-mgmt-username");
   var badgeEl = document.getElementById("parts-mgmt-role-badge");
@@ -30155,6 +31028,7 @@ function togglePartsMgmtWeightSort() {
 
 async function loadPartsMgmt() {
   var q = document.getElementById("parts-mgmt-search").value.trim();
+  partsMgmtSearchFailed = false;
 
   if (!isDaikoGroup()) {
     var visibleDkdIds = await fetchActiveSlLinkedDkdIds(10000);
@@ -30204,7 +31078,31 @@ async function loadPartsMgmt() {
     );
   }
   var r = await query;
+  partsMgmtSearchFailed = !!r.error;
   partsMgmtData = r.data || [];
+
+  if (q && !/^\d+$/.test(q)) {
+    var coreMatches = await fetchCoreProductMasterMatches(q, null, 200);
+    if (coreMatches.error) {
+      partsMgmtSearchFailed = true;
+      console.warn("core product management search failed", coreMatches.error);
+    } else {
+      var seenCoreIds = {};
+      partsMgmtData.forEach(function(row) {
+        var id = row.dkd_shohin_id;
+        if (id) seenCoreIds[String(id)] = true;
+      });
+      (coreMatches.data || []).forEach(function(row) {
+        var id = String(row.dkd_shohin_id);
+        if (seenCoreIds[id]) return;
+        seenCoreIds[id] = true;
+        var product = Object.assign({}, row);
+        product._coreManaged = true;
+        partsMgmtData.push(product);
+      });
+      partsMgmtData = partsMgmtData.slice(0, 200);
+    }
+  }
 
   if (q && /^\d+$/.test(q)) {
     var coreId = parseInt(q, 10);
@@ -30228,7 +31126,8 @@ function renderPartsMgmt() {
   var list     = document.getElementById("parts-mgmt-list");
   var countEl  = document.getElementById("parts-mgmt-count");
   if (countEl) countEl.textContent = partsMgmtData.length + " 件";
-  if (!partsMgmtData.length) { list.innerHTML = "<div class='empty'>該当する商品がありません</div>"; return; }
+  var searchWarning = partsMgmtSearchFailed ? "<div class='parts-mgmt-weight-error' role='status'>" + esc(t("parts_mgmt_search_incomplete")) + "</div>" : "";
+  if (!partsMgmtData.length) { list.innerHTML = searchWarning || "<div class='empty'>該当する商品がありません</div>"; return; }
   var weightSortAria = partsMgmtWeightSortDirection || "none";
   var weightSortIndicator = partsMgmtWeightSortDirection === "ascending" ? "▲" : (partsMgmtWeightSortDirection === "descending" ? "▼" : "↕");
   var weightSortOrderLabel = partsMgmtWeightSortOrderLabel();
@@ -30257,7 +31156,7 @@ function renderPartsMgmt() {
   if (partsMgmtWeightLoadFailed) {
     html = "<div class='parts-mgmt-weight-error' role='status'>" + esc(t("product_weight_list_load_failed")) + "</div>" + html;
   }
-  list.innerHTML = html;
+  list.innerHTML = searchWarning + html;
   var weightSortButton = list.querySelector("[data-parts-weight-sort]");
   if (weightSortButton) weightSortButton.addEventListener("click", togglePartsMgmtWeightSort);
   if (!canEdit()) {
@@ -30464,7 +31363,7 @@ function renderCoreManagementSummary(items, note, visible, total) {
   if (!countEl) return;
   countEl.innerHTML = items.map(function(item) {
     return "<div class='core-summary-item " + (item.tone || "") + "'><span>" + esc(item.label) + "</span><strong>" + esc(String(item.value)) + "<small>" + esc(item.unit) + "</small></strong></div>";
-  }).join("") + "<p class='core-summary-note'><span>" + esc(note) + "</span>" + (visible == null ? "" : " <span>表示件数</span>: " + esc(String(visible)) + " / " + esc(String(total))) + "</p>";
+  }).join("") + (note ? "<p class='core-summary-note'><span>" + esc(note) + "</span>" + (visible == null ? "" : " <span>表示件数</span>: " + esc(String(visible)) + " / " + esc(String(total))) + "</p>" : "");
 }
 
 function beginCoreManagementLoad() {
@@ -30472,103 +31371,307 @@ function beginCoreManagementLoad() {
   var countEl = document.getElementById("core-list-count");
   if (countEl) countEl.textContent = "";
   coreManagementDataReady = false;
-  var exportBtn = document.getElementById("btn-export-core-collection");
-  if (exportBtn) exportBtn.disabled = true;
+  ["btn-export-core-collection", "btn-export-core-replenishment", "btn-create-core-list-from-ranking"].forEach(function(id) {
+    var button = document.getElementById(id);
+    if (button) button.disabled = true;
+  });
+  updateCorePendingOutputs();
   return coreManagementLoadSeq;
 }
 
 function searchCoreCollectionWorkspace() {
-  if (!coreManagementDataReady) return loadCoreCollectionList();
+  if (!coreManagementDataReady || (canViewManufacturingReport() && !coreCollectionReportRank)) return loadCoreCollectionList();
   applyCoreCollectionFilters();
   renderCoreCollectionList();
 }
 
 function clearCoreCollectionFilters() {
-  document.getElementById("core-collection-search").value = "";
-  document.getElementById("core-collection-category").value = "";
-  document.getElementById("core-collection-state").value = "all";
-  document.getElementById("core-collection-priority").value = "";
+  resetCoreCollectionFilters();
   searchCoreCollectionWorkspace();
 }
 
+function resetCoreCollectionFilters() {
+  document.getElementById("core-collection-search").value = "";
+  document.getElementById("core-collection-category").value = "";
+  document.getElementById("core-collection-state").value = "all";
+  document.getElementById("core-collection-source").value = "";
+  document.querySelectorAll("[data-core-vehicle-filter]:checked").forEach(function(input) {
+    input.checked = false;
+  });
+}
+
 function bindCoreManagementTabs() {
-  var layoutQuery = window.matchMedia("(min-width: 768px)");
-  var options = document.getElementById("core-workspace-filter-options");
-  if (options) {
-    options.open = layoutQuery.matches;
-    layoutQuery.addEventListener("change", function(event) { options.open = event.matches; });
-  }
-  var ids = ["btn-core-list-mode-collection", "btn-core-list-mode-inventory"];
+  var modes = ["collection", "inventory", "pending"];
+  var ids = modes.map(function(mode) { return "btn-core-list-mode-" + mode; });
   ids.forEach(function(id, index) {
     document.getElementById(id).addEventListener("keydown", function(event) {
       if (["ArrowLeft", "ArrowRight", "Home", "End"].indexOf(event.key) < 0) return;
       event.preventDefault();
-      var next = event.key === "Home" ? 0 : (event.key === "End" ? 1 : 1 - index);
+      var step = event.key === "ArrowLeft" ? -1 : 1;
+      var next = event.key === "Home" ? 0 : (event.key === "End" ? modes.length - 1 : (index + step + modes.length) % modes.length);
       document.getElementById(ids[next]).focus();
-      setCoreListMode(next === 0 ? "collection" : "inventory");
+      setCoreListMode(modes[next]);
     });
   });
 }
 
 async function enterCoreListMgmt() {
   if (!canViewCoreManagement()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("core-list-mgmt", false)) return;
   showScreen("core-list-mgmt");
   var addBtn = document.getElementById("btn-add-core-list");
   var collectionAddBtn = document.getElementById("btn-add-core-collection");
   var createBtn = document.getElementById("btn-create-core-list-from-ranking");
   if (addBtn) setCspStyle(addBtn, "display", canManageProductionRecords() ? "" : "none");
   if (collectionAddBtn) setCspStyle(collectionAddBtn, "display", canManageProductionRecords() ? "" : "none");
-  if (createBtn) setCspStyle(createBtn, "display", canManageProductionRecords() ? "" : "none");
+  if (createBtn) setCspStyle(createBtn, "display", canManageProductionRecords() && canViewManufacturingReport() ? "" : "none");
   resetCoreCollectionControls();
-  await setCoreListMode("collection");
+  var pendingSearch = document.getElementById("core-pending-search");
+  if (pendingSearch) pendingSearch.value = "";
+  await setCoreListMode("pending");
 }
 
 function resetCoreCollectionControls() {
-  var search = document.getElementById("core-collection-search");
-  var category = document.getElementById("core-collection-category");
-  var state = document.getElementById("core-collection-state");
-  var priority = document.getElementById("core-collection-priority");
-  var inventorySearch = document.getElementById("core-list-search");
-  if (search) search.value = "";
-  if (category) category.value = "";
-  if (state) state.value = "all";
-  if (priority) priority.value = "";
-  if (inventorySearch) inventorySearch.value = "";
+  resetCoreCollectionFilters();
+  resetCoreInventoryFilters();
+  document.getElementById("core-pending-search").value = "";
 }
 
 async function setCoreListMode(mode) {
-  coreListMode = mode === "inventory" ? "inventory" : "collection";
-  var collectionBtn = document.getElementById("btn-core-list-mode-collection");
-  var inventoryBtn = document.getElementById("btn-core-list-mode-inventory");
-  var collectionToolbar = document.getElementById("core-list-collection-toolbar");
-  var inventoryToolbar = document.getElementById("core-list-inventory-toolbar");
-  if (collectionBtn) {
-    collectionBtn.classList.toggle("active", coreListMode === "collection");
-    collectionBtn.setAttribute("aria-selected", coreListMode === "collection" ? "true" : "false");
-    collectionBtn.tabIndex = coreListMode === "collection" ? 0 : -1;
-  }
-  if (inventoryBtn) {
-    inventoryBtn.classList.toggle("active", coreListMode === "inventory");
-    inventoryBtn.setAttribute("aria-selected", coreListMode === "inventory" ? "true" : "false");
-    inventoryBtn.tabIndex = coreListMode === "inventory" ? 0 : -1;
-  }
-  document.getElementById("core-workspace-title").textContent = coreListMode === "collection" ? "収集リスト" : "現在庫";
-  document.getElementById("core-workspace-help").textContent = coreListMode === "collection" ? "目標数と現在庫を比べて、集める必要のあるコアを確認します。" : "保管中のコア品番・数量・置き場を確認し、在庫を登録・編集します。";
-  document.getElementById("core-management-panel").setAttribute("aria-labelledby", coreListMode === "collection" ? "btn-core-list-mode-collection" : "btn-core-list-mode-inventory");
-  if (collectionToolbar) collectionToolbar.classList.toggle("hidden", coreListMode !== "collection");
-  if (inventoryToolbar) inventoryToolbar.classList.toggle("hidden", coreListMode !== "inventory");
+  var names = { collection: "収集リスト", inventory: "現在庫", pending: t("core_pending_tab") };
+  coreListMode = Object.hasOwn(names, mode) ? mode : "pending";
+  document.getElementById("core-pending-outputs").hidden = coreListMode !== "pending";
+  document.getElementById("core-workspace-filter-options").open = false;
+  document.getElementById("core-inventory-filter-options").open = false;
+  var pendingAdd = document.getElementById("btn-add-core-pending");
+  pendingAdd.classList.toggle("hidden", coreListMode !== "pending" || !canManageProductionRecords());
+  var pendingStatus = document.getElementById("core-pallet-save-status");
+  pendingStatus.hidden = true;
+  pendingStatus.textContent = "";
+  var actions = document.querySelector("#screen-core-list-mgmt .core-actions-menu");
+  if (actions) actions.open = false;
+  Object.keys(names).forEach(function(name) {
+    var active = name === coreListMode;
+    var tab = document.getElementById("btn-core-list-mode-" + name);
+    tab.classList.toggle("active", active);
+    tab.setAttribute("aria-selected", String(active));
+    tab.tabIndex = active ? 0 : -1;
+    document.getElementById("core-list-" + name + "-toolbar").classList.toggle("hidden", !active);
+  });
+  var help = {
+    collection: "目標数と現在庫を比べて、集める必要のあるコアを確認します。",
+    inventory: t("core_inventory_match_help"),
+    pending: t("core_pending_help")
+  };
+  document.getElementById("core-workspace-title").textContent = names[coreListMode];
+  document.getElementById("core-workspace-help").textContent = help[coreListMode];
+  document.getElementById("core-list-results-title").textContent = coreListMode === "pending" ? t("core_pending_title") : "品番一覧";
+  document.getElementById("core-management-panel").setAttribute("aria-labelledby", "btn-core-list-mode-" + coreListMode);
+  document.getElementById("core-list-count").classList.toggle("core-inventory-summary", coreListMode === "inventory");
   var loadMoreWrap = document.getElementById("core-list-load-more-wrap");
   if (loadMoreWrap) setCspStyle(loadMoreWrap, "display", "none");
-  if (coreListMode === "collection") await loadCoreCollectionList();
-  else await loadCoreListMgmt();
+  var results = document.getElementById("core-list-list");
+  results.tabIndex = coreListMode === "inventory" ? 0 : -1;
+  results.setAttribute("aria-live", coreListMode === "inventory" ? "off" : "polite");
+  if (coreListMode === "collection") return loadCoreCollectionList();
+  if (coreListMode === "pending") return loadCorePendingStock();
+  return loadCoreListMgmt();
 }
 
-function coreCollectionPriorityLabel(value) {
-  return value === "high" ? "高" : (value === "low" ? "低" : "通常");
+var corePendingStockRows = [];
+var corePendingStockFiltered = [];
+var corePendingStockPage = 0;
+var corePendingStockSize = 0;
+var corePendingStockHistory = [];
+
+async function loadCorePendingStock() {
+  if (coreListMode !== "pending") return;
+  var seq = beginCoreManagementLoad();
+  var list = document.getElementById("core-list-list");
+  list.innerHTML = "<div class='loading' role='status'>" + esc(t("loading")) + "</div>";
+  try {
+    var rows = [];
+    for (var offset = 0; ; offset += CORE_LIST_PAGE_SIZE) {
+      var result = await sb.from("production_core_pending_stock")
+        .select("entry_key,revision,source_sheet,source_row,pallet_no,source_part_number,quantity,source_reference,source_remarks")
+        .order("source_sha256").order("source_sheet").order("source_row").order("entry_key")
+        .range(offset, offset + CORE_LIST_PAGE_SIZE - 1);
+      if (seq !== coreManagementLoadSeq || coreListMode !== "pending") return;
+      if (result.error) throw result.error;
+      var batch = result.data || [];
+      rows = rows.concat(batch);
+      if (batch.length < CORE_LIST_PAGE_SIZE) break;
+    }
+    corePendingStockRows = rows;
+    coreManagementDataReady = true;
+    corePendingStockSearch();
+  } catch (error) {
+    if (seq !== coreManagementLoadSeq || coreListMode !== "pending") return;
+    list.innerHTML = "<div class='empty' role='alert'>" + esc(t("core_pending_load_failed")) + "</div>";
+  }
+}
+
+function corePendingStockSearch() {
+  if (coreListMode !== "pending") return;
+  if (!coreManagementDataReady) return loadCorePendingStock();
+  var keyword = norm(document.getElementById("core-pending-search").value.trim());
+  corePendingStockFiltered = corePendingStockRows.filter(function(row) {
+    return !keyword || [row.source_part_number, row.pallet_no, row.source_remarks].some(function(value) {
+      return normalizedContains(value, keyword);
+    });
+  });
+  corePendingStockPage = 0;
+  corePendingStockHistory = [];
+  renderCorePendingStock();
+}
+
+function updateCorePendingOutputs() {
+  var enabled = coreListMode === "pending" && coreManagementDataReady && corePendingStockFiltered.length > 0;
+  document.getElementById("btn-core-pending-print").disabled = !enabled;
+  document.getElementById("btn-core-pending-excel").disabled = !enabled;
+}
+
+function corePendingExportSnapshot() {
+  if (coreListMode !== "pending" || !canViewCoreManagement() || !coreManagementDataReady ||
+      !corePendingStockFiltered.length || !document.getElementById("screen-core-list-mgmt").classList.contains("active")) return null;
+  var report = window.DcatsCorePendingExport.collect(corePendingStockFiltered, t("core_pallet_manual"));
+  var date = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo" }).format(new Date());
+  var subtitle = tf("core_pending_export_info", { date: date, count: report.count.toLocaleString(), qty: report.total.toLocaleString() });
+  return { report: report, title: t("core_pending_tab") + " " + date, subtitle: subtitle, fileName: t("core_pending_export_filename") + "_" + date };
+}
+
+function showCorePendingExportError() {
+  if (coreListMode !== "pending" || !canViewCoreManagement()) return;
+  var status = document.getElementById("core-pallet-save-status");
+  status.textContent = t("core_pending_export_error");
+  status.hidden = false;
+}
+
+function printCorePendingStock() {
+  var cleanup;
+  try {
+    var snapshot = corePendingExportSnapshot();
+    if (!snapshot || document.body.classList.contains("core-pending-printing")) return;
+    var area = document.getElementById("core-pending-print-sheet");
+    var title = document.title;
+    cleanup = function() {
+      document.body.classList.remove("core-pending-printing");
+      document.title = title;
+      area.replaceChildren();
+      window.removeEventListener("afterprint", cleanup);
+    };
+    area.replaceChildren(window.DcatsCorePendingExport.printContent(snapshot.report, snapshot.title, snapshot.subtitle, document));
+    document.title = snapshot.fileName;
+    document.body.classList.add("core-pending-printing");
+    window.addEventListener("afterprint", cleanup, { once: true });
+    window.print();
+  } catch (error) {
+    if (cleanup) cleanup();
+    showCorePendingExportError();
+  }
+}
+
+function exportCorePendingExcel() {
+  try {
+    var snapshot = corePendingExportSnapshot();
+    if (!snapshot) return;
+    var output = window.DcatsCorePendingExport.workbook(snapshot.report, snapshot.subtitle, window.fflate);
+    var blob = new Blob([output], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement("a");
+    link.href = url;
+    link.download = snapshot.fileName + ".xlsx";
+    document.body.appendChild(link);
+    try { link.click(); }
+    finally {
+      link.remove();
+      setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+    }
+  } catch (error) {
+    showCorePendingExportError();
+  }
+}
+
+function moveCorePendingStockPage(direction) {
+  if (!coreManagementDataReady) return;
+  if (direction < 0) {
+    if (!corePendingStockHistory.length) return;
+    corePendingStockPage = corePendingStockHistory.pop();
+  } else {
+    if (corePendingStockPage + corePendingStockSize >= corePendingStockFiltered.length) return;
+    corePendingStockHistory.push(corePendingStockPage);
+    corePendingStockPage += corePendingStockSize;
+  }
+  renderCorePendingStock();
+}
+
+function renderCorePendingStock() {
+  if (coreListMode !== "pending" || !coreManagementDataReady) return;
+  var list = document.getElementById("core-list-list");
+  var total = corePendingStockFiltered.length;
+  updateCorePendingOutputs();
+  renderCoreManagementSummary([
+    { label: t("core_pending_records"), value: total.toLocaleString(), unit: "件" },
+    { label: t("core_pending_units"), value: sumProductionCoreEntryQty(corePendingStockFiltered).toLocaleString(), unit: "台" }
+  ]);
+  if (!total) {
+    list.innerHTML = "<div class='empty' role='status'>" + esc(t("no_results")) + "</div>";
+    renderCoreManagementPager(0, 0, 0);
+    return;
+  }
+  var visible = corePendingStockFiltered.slice(corePendingStockPage, corePendingStockPage + 30);
+  var cardMode = !isPC() || window.innerWidth < 1101;
+  var editable = canManageProductionRecords();
+  var body = visible.map(function(row, index) {
+    var part = "<span class='core-main-pn'>" + esc(row.source_part_number) + "</span>";
+    var pallet = "<span class='core-pending-pallet'>" + esc(row.pallet_no) + "</span>";
+    var quantity = "<span class='core-qty-pill'>" + esc(String(row.quantity)) + "</span>";
+    var source = esc(row.source_sheet ? row.source_sheet + "!" + row.source_row : t("core_pallet_manual"));
+    var action = editable
+      ? "<button class='btn-sm-edit' type='button' data-core-pending-match='" + index + "'>" + esc(t("core_pallet_edit_match")) + "</button>"
+      : "";
+    if (cardMode) {
+      return "<div class='core-list-card core-pending-record'><div class='core-list-card-head'><div>" + part +
+        "<div class='mgmt-sub'>" + pallet + " / " + source + "</div></div>" + quantity + "</div>" +
+        (editable ? "<div class='core-pallet-row-actions'>" + action + "</div>" : "") + "</div>";
+    }
+    return "<tr class='core-pending-record'><td>" + pallet + "</td><td>" + part + "</td><td>" + source + "</td>" +
+      (editable ? "<td>" + action + "</td>" : "") + "<td class='core-inventory-quantity'>" + quantity + "</td></tr>";
+  }).join("");
+  var headers = [t("core_pending_pallet"), t("core_pending_part"), t("core_pending_row")];
+  if (editable) headers.push(t("core_pallet_operations"));
+  headers.push(t("core_pending_quantity"));
+  list.innerHTML = cardMode ? "<div class='core-list-mobile-cards'>" + body + "</div>" :
+    "<table class='mgmt-table core-pending-table' aria-label='" + esc(t("core_pending_tab")) + "'><thead><tr>" +
+    headers.map(function(label, index) {
+      var attr = index === headers.length - 1 ? " class='core-inventory-quantity'" : "";
+      return "<th scope='col'" + attr + ">" + esc(label) + "</th>";
+    }).join("") + "</tr></thead><tbody>" + body + "</tbody></table>";
+  corePendingStockSize = fitCoreManagementRows(list, Array.from(list.querySelectorAll(".core-pending-record")), list.querySelector("thead"));
+  renderCoreManagementPager(corePendingStockPage, corePendingStockSize, total);
+  list.querySelectorAll("[data-core-pending-match]").forEach(function(button) {
+    button.addEventListener("click", function() {
+      var row = visible[Number(button.dataset.corePendingMatch)];
+      if (row) corePalletEntry.openMatch(row);
+    });
+  });
 }
 
 function coreCollectionStatusLabel(value) {
   return value === "completed" ? "完了" : (value === "paused" ? "保留" : "収集中");
+}
+
+function coreCollectionSourceLabel(value) {
+  return { ranking: "2025出荷ランキング", production: "製造リスト", gltek: "GLTEK欲しいコア", manual: "手動登録" }[value] || "";
+}
+
+function coreCollectionRank(row) {
+  var product = coreCollectionProductMap[String(row.dkd_shohin_id)];
+  return coreCollectionReportRank ? coreCollectionReportRank(product) : null;
+}
+
+function isCoreReplenishmentRow(row) {
+  return row.status === "collecting" && coreCollectionShortageQty(row) > 0 && Boolean(coreCollectionRank(row));
 }
 
 function coreCollectionSourceDetail(row) {
@@ -30587,6 +31690,135 @@ function coreCollectionStockQty(row) {
 function coreCollectionShortageQty(row) {
   var target = parseInt(row && row.target_quantity || 0, 10) || 0;
   return Math.max(target - coreCollectionStockQty(row), 0);
+}
+
+var coreCollectionReferenceText = "";
+var coreCollectionReferencePage = 0;
+
+function coreCollectionReferencePages(text = coreCollectionReferenceText) {
+  var pages = [], part = "", breaks = 0;
+  Array.from(text).forEach(function(char) {
+    if (part.length >= 120 || (char === "\n" && breaks >= 3)) { pages.push(part); part = ""; breaks = 0; }
+    part += char;
+    if (char === "\n") breaks += 1;
+  });
+  if (part || !pages.length) pages.push(part);
+  return pages;
+}
+
+function renderCoreCollectionReference() {
+  var pages = coreCollectionReferencePages();
+  coreCollectionReferencePage = Math.max(0, Math.min(coreCollectionReferencePage, pages.length - 1));
+  document.getElementById("ccf-reference-details").textContent = pages[coreCollectionReferencePage] || "-";
+  document.getElementById("ccf-reference-status").textContent = (coreCollectionReferencePage + 1) + " / " + pages.length;
+  var previous = document.getElementById("ccf-reference-previous"), next = document.getElementById("ccf-reference-next");
+  previous.disabled = coreCollectionReferencePage <= 0;
+  next.disabled = coreCollectionReferencePage >= pages.length - 1;
+  previous.textContent = coreCollectionUiLabel("前へ", "Prev", "上一页");
+  next.textContent = coreCollectionUiLabel("次へ", "Next", "下一页");
+}
+
+var coreCollectionFormSaving = false;
+var coreCollectionFormSaveUnknown = false;
+var coreCollectionPageStart = 0;
+var coreCollectionPageHistory = [];
+var coreCollectionPageSize = 1;
+
+function setCoreCollectionFormTab(tab) {
+  ["product", "main", "notes", "reference"].forEach(function(name) {
+    var active = name === tab;
+    var panel = document.getElementById("ccf-panel-" + name);
+    var button = document.getElementById("ccf-tab-" + name);
+    if (panel) panel.classList.toggle("hidden", !active);
+    if (button) { button.classList.toggle("active", active); button.setAttribute("aria-selected", String(active)); button.tabIndex = active ? 0 : -1; }
+  });
+}
+
+function fitCoreCollectionPage() {
+  var list = document.getElementById("core-list-list");
+  if (!list || !list.getBoundingClientRect || coreListMode !== "collection") return;
+  var items = Array.from(list.querySelectorAll(".core-collection-table tr:not(:first-child), .core-collection-card"));
+  if (!items.length) return;
+  var header = list.querySelector(".core-collection-table tr");
+  coreCollectionPageSize = fitCoreManagementRows(list, items, header);
+  renderCoreManagementPager(coreCollectionPageStart, coreCollectionPageSize, coreCollectionFilteredRows.length);
+}
+
+function fitCoreManagementRows(list, items, header) {
+  var available = window.innerHeight - list.getBoundingClientRect().top - 65;
+  var used = header ? header.getBoundingClientRect().height : 0;
+  var count = 0;
+  for (var item of items) {
+    var height = item.getBoundingClientRect().height;
+    if (count && used + height > available) break;
+    used += height;
+    count += 1;
+  }
+  items.slice(count).forEach(function(item) { item.remove(); });
+  return count;
+}
+
+function renderCoreManagementPager(start, count, total) {
+  var previous = document.getElementById("core-collection-previous");
+  var next = document.getElementById("core-list-load-more");
+  var wrap = document.getElementById("core-list-load-more-wrap");
+  var status = document.getElementById("core-collection-page-status");
+  if (previous) { previous.classList.remove("hidden"); previous.disabled = start === 0; previous.textContent = coreCollectionUiLabel("前へ", "Prev", "上一页"); }
+  if (next) { next.disabled = start + count >= total; next.textContent = coreCollectionUiLabel("次へ", "Next", "下一页"); }
+  if (status) status.textContent = (start + 1) + "–" + (start + count) + " / " + total;
+  if (wrap) setCspStyle(wrap, "display", count ? "flex" : "none");
+}
+
+var CORE_COLLECTION_VEHICLE_CLASSES = [
+  ["kei", "軽四"], ["passenger", "乗用車"], ["truck", "トラック"],
+  ["van", "商用バン"], ["bus", "バス"], ["machine", "建機・農機"], ["other", "その他"]
+];
+
+function coreCollectionUiLabel(ja, en, zh) {
+  return typeof currentLang === "undefined" || currentLang === "ja" ? ja : (currentLang === "zh" ? zh : en);
+}
+
+function coreCollectionVehicleClasses(row) {
+  var values = row && row.vehicle_classes;
+  return CORE_COLLECTION_VEHICLE_CLASSES.filter(function(item) {
+    return Array.isArray(values) && values.indexOf(item[0]) >= 0;
+  }).map(function(item) { return item[0]; });
+}
+
+function coreCollectionVehicleMatches(row, filter) {
+  if (!filter) return true;
+  var classes = coreCollectionVehicleClasses(row);
+  return filter === "unclassified" ? classes.length === 0 : classes.indexOf(filter) >= 0;
+}
+
+function coreCollectionVehicleText(row) {
+  var values = coreCollectionVehicleClasses(row);
+  return CORE_COLLECTION_VEHICLE_CLASSES.filter(function(item) { return values.indexOf(item[0]) >= 0; })
+    .map(function(item) { return item[1]; }).join("・") || "未分類";
+}
+
+function renderCoreCollectionVehicleHtml(row) {
+  var values = coreCollectionVehicleClasses(row);
+  var labels = CORE_COLLECTION_VEHICLE_CLASSES.filter(function(item) { return values.indexOf(item[0]) >= 0; }).map(function(item) { return item[1]; });
+  return (labels.length ? labels : ["未分類"]).map(function(label) { return "<span>" + esc(label) + "</span>"; }).join("・");
+}
+
+function coreCollectionVehicleSummaryHtml(row) {
+  var values = coreCollectionVehicleClasses(row);
+  return renderCoreCollectionVehicleHtml({ vehicle_classes: values.slice(0, 2) }) + (values.length > 2 ? " <span>(+" + (values.length - 2) + ")</span>" : "");
+}
+
+function setCoreCollectionVehicleForm(row) {
+  var values = coreCollectionVehicleClasses(row);
+  document.querySelectorAll("[data-core-vehicle-class]").forEach(function(input) {
+    input.checked = values.indexOf(input.value) >= 0;
+  });
+}
+
+function readCoreCollectionVehicleForm() {
+  var values = [];
+  document.querySelectorAll("[data-core-vehicle-class]:checked").forEach(function(input) { values.push(input.value); });
+  return coreCollectionVehicleClasses({ vehicle_classes: values });
 }
 
 var CORE_COLLECTION_CATEGORY_ORDER = ["starter", "alternator", "ac_compressor", "distributor", "other"];
@@ -30640,15 +31872,18 @@ function applyCoreCollectionFilters(options) {
   var qEl = document.getElementById("core-collection-search");
   var categoryEl = document.getElementById("core-collection-category");
   var stateEl = document.getElementById("core-collection-state");
-  var priorityEl = document.getElementById("core-collection-priority");
   var q = qEl ? norm(qEl.value.trim()) : "";
   var category = categoryEl ? categoryEl.value : "";
   var state = stateEl ? stateEl.value : "all";
-  var priority = priorityEl ? priorityEl.value : "";
+  var vehicles = Array.from(document.querySelectorAll("[data-core-vehicle-filter]:checked"), function(input) {
+    return input.value;
+  });
   var filterCount = document.getElementById("core-workspace-filter-count");
-  var activeCount = (category ? 1 : 0) + (state !== "all" ? 1 : 0) + (priority ? 1 : 0);
+  var source = document.getElementById("core-collection-source").value;
+  document.getElementById("core-list-results-title").textContent = state === "replenishment" ? "コア補充リスト" : "品番一覧";
+  var activeCount = [category, state !== "all", vehicles.length > 0, source].filter(Boolean).length;
   if (filterCount) filterCount.textContent = activeCount ? "(" + activeCount + ")" : "";
-  if (!options.preserveRenderLimit) coreCollectionRenderLimit = CORE_COLLECTION_RENDER_PAGE_SIZE;
+  if (!options.preserveRenderLimit) { coreCollectionRenderLimit = CORE_COLLECTION_RENDER_PAGE_SIZE; coreCollectionPageStart = 0; coreCollectionPageHistory = []; }
   assignCoreCollectionCategoryRanks();
   coreCollectionFilteredRows = coreCollectionRows.filter(function(row) {
     var product = coreCollectionProductMap[String(row.dkd_shohin_id)] || {};
@@ -30657,6 +31892,7 @@ function applyCoreCollectionFilters(options) {
       row.dkd_shohin_id,
       row.source_hint,
       row.note,
+      coreCollectionVehicleText(row),
       product.genuine_part_number,
       product.genuine_part_number_2,
       product.manufacturer_part_number,
@@ -30665,8 +31901,10 @@ function applyCoreCollectionFilters(options) {
       (stock.parts || []).join(" "),
       (stock.locations || []).join(" ")
     ].some(function(value) { return normalizedContains(value, q); })) return false;
+    if (source && row.source_type !== source) return false;
+    if (state === "replenishment" && !isCoreReplenishmentRow(row)) return false;
     if (!coreCollectionCategoryMatches(product, category)) return false;
-    if (priority && row.priority !== priority) return false;
+    if (vehicles.length && !vehicles.some(function(vehicle) { return coreCollectionVehicleMatches(row, vehicle); })) return false;
     var stockQty = coreCollectionStockQty(row);
     var shortage = coreCollectionShortageQty(row);
     if (state === "needed" && !(row.status === "collecting" && shortage > 0)) return false;
@@ -30676,6 +31914,10 @@ function applyCoreCollectionFilters(options) {
     return true;
   });
   coreCollectionFilteredRows.sort(function(a, b) {
+    var aRank = coreCollectionRank(a);
+    var bRank = coreCollectionRank(b);
+    if (aRank && bRank) return aRank.rank - bRank.rank || Number(a.dkd_shohin_id) - Number(b.dkd_shohin_id);
+    if (aRank || bRank) return aRank ? -1 : 1;
     var ap = coreCollectionProductMap[String(a.dkd_shohin_id)] || {};
     var bp = coreCollectionProductMap[String(b.dkd_shohin_id)] || {};
     var rankDiff = (coreCollectionCategoryRank(a) || Number.MAX_SAFE_INTEGER) - (coreCollectionCategoryRank(b) || Number.MAX_SAFE_INTEGER);
@@ -30691,21 +31933,41 @@ async function loadCoreCollectionList() {
   var list = document.getElementById("core-list-list");
   if (list) list.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
   try {
-    var r = await sb.from("core_collection_list_items")
-      .select("*")
-      .order("sort_order", { ascending: true, nullsFirst: false })
-      .order("updated_at", { ascending: false })
-      .limit(2000);
-    if (requestSeq !== coreManagementLoadSeq || coreListMode !== "collection") return;
-    if (r.error) throw r.error;
-    coreCollectionRows = r.data || [];
+    var loadedRows = [];
+    for (var offset = 0; ; offset += 500) {
+      var r = await sb.from("core_collection_list_items")
+        .select("*")
+        .order("sort_order", { ascending: true, nullsFirst: false })
+        .order("updated_at", { ascending: false })
+        .order("id", { ascending: true })
+        .range(offset, offset + 499);
+      if (requestSeq !== coreManagementLoadSeq || coreListMode !== "collection") return;
+      if (r.error) throw r.error;
+      var batch = r.data || [];
+      loadedRows = loadedRows.concat(batch);
+      if (batch.length < 500) break;
+      if (loadedRows.length >= 50000) throw new Error("収集対象が多いため取得を中断しました。管理者へ連絡してください。");
+    }
+    function checkCurrent() {
+      if (requestSeq !== coreManagementLoadSeq || coreListMode !== "collection") throw new Error("Collection load superseded");
+    }
+    // Keep the stored collection status available if the report is unavailable or restricted.
+    var rankRequest = canViewManufacturingReport()
+      ? window.DCatsManufacturingRankingReport.loadCoreCollectionRanking2025(checkCurrent).catch(function() { return null; })
+      : null;
     coreCollectionProductMap = {};
     coreCollectionStockMap = {};
-    await Promise.all([
-      loadCoreCollectionProducts(coreCollectionRows, requestSeq),
-      loadCoreCollectionStock(coreCollectionRows, requestSeq)
+    coreCollectionReportRank = null;
+    await loadCoreCollectionStock(requestSeq);
+    checkCurrent();
+    var productsAndRank = await Promise.all([
+      loadCoreCollectionProducts(loadedRows.map(function(row) { return row.dkd_shohin_id; })
+        .concat(Object.keys(coreCollectionStockMap)), requestSeq),
+      rankRequest
     ]);
-    if (requestSeq !== coreManagementLoadSeq || coreListMode !== "collection") return;
+    checkCurrent();
+    coreCollectionRows = loadedRows;
+    coreCollectionReportRank = productsAndRank[1];
     applyCoreCollectionFilters();
     coreManagementDataReady = true;
     renderCoreCollectionList();
@@ -30715,8 +31977,8 @@ async function loadCoreCollectionList() {
   }
 }
 
-async function loadCoreCollectionProducts(rows, requestSeq) {
-  var ids = Array.from(new Set((rows || []).map(function(row) { return parseInt(row.dkd_shohin_id, 10); }).filter(function(id) { return !isNaN(id); })));
+async function loadCoreCollectionProducts(productIds, requestSeq) {
+  var ids = Array.from(new Set(productIds.map(Number).filter(Number.isSafeInteger)));
   var requests = [];
   for (var i = 0; i < ids.length; i += 200) {
     requests.push(sb.from("core_products").select(CORE_PRODUCT_FAST_SELECT).in("dkd_shohin_id", ids.slice(i, i + 200)));
@@ -30731,26 +31993,19 @@ async function loadCoreCollectionProducts(rows, requestSeq) {
   });
 }
 
-async function loadCoreCollectionStock(rows, requestSeq) {
-  var ids = Array.from(new Set((rows || []).map(function(row) { return parseInt(row.dkd_shohin_id, 10); }).filter(function(id) { return !isNaN(id); })));
-  var requests = [];
-  for (var i = 0; i < ids.length; i += 200) {
-    requests.push(sb.from("production_core_list_entries")
-      .select("dkd_shohin_id, quantity, core_part_number, location")
-      .in("dkd_shohin_id", ids.slice(i, i + 200)));
-  }
-  var results = await Promise.all(requests);
-  if (requestSeq != null && requestSeq !== coreManagementLoadSeq) return;
-  results.forEach(function(r) {
-    if (r.error) throw r.error;
-    (r.data || []).forEach(function(stockRow) {
-      var key = String(stockRow.dkd_shohin_id);
-      var stock = coreCollectionStockMap[key] || { quantity: 0, parts: [], locations: [] };
-      stock.quantity += parseInt(stockRow.quantity || 0, 10) || 0;
-      if (stockRow.core_part_number && stock.parts.indexOf(stockRow.core_part_number) < 0) stock.parts.push(stockRow.core_part_number);
-      if (stockRow.location && stock.locations.indexOf(stockRow.location) < 0) stock.locations.push(stockRow.location);
-      coreCollectionStockMap[key] = stock;
-    });
+async function loadCoreCollectionStock(requestSeq) {
+  var result = await sb.rpc("read_core_inventory_snapshot");
+  if (requestSeq !== coreManagementLoadSeq || coreListMode !== "collection") return;
+  if (result.error) throw result.error;
+  if (!Array.isArray(result.data?.linked)) throw new Error(t("core_pending_load_failed"));
+  result.data.linked.forEach(function(row) {
+    if (row.dkd_shohin_id == null || row.replaced_at || isKoreanCoreInventoryEntry(row)) return;
+    var key = String(row.dkd_shohin_id);
+    var stock = coreCollectionStockMap[key] || { quantity: 0, parts: [], locations: [] };
+    stock.quantity += Number(row.quantity) || 0;
+    if (row.core_part_number && !stock.parts.includes(row.core_part_number)) stock.parts.push(row.core_part_number);
+    if (row.location && !stock.locations.includes(row.location)) stock.locations.push(row.location);
+    coreCollectionStockMap[key] = stock;
   });
 }
 
@@ -30776,7 +32031,10 @@ function renderCoreCollectionList() {
   if (!list) return;
   var exportBtn = document.getElementById("btn-export-core-collection");
   if (exportBtn) exportBtn.disabled = false;
-  var visibleRows = coreCollectionFilteredRows.slice(0, coreCollectionRenderLimit);
+  document.getElementById("btn-export-core-replenishment").disabled = !coreCollectionReportRank;
+  document.getElementById("btn-create-core-list-from-ranking").disabled = !coreCollectionReportRank || coreCollectionCreating;
+  document.getElementById("core-collection-replenishment").disabled = !coreCollectionReportRank;
+  var visibleRows = coreCollectionFilteredRows.slice(coreCollectionPageStart, coreCollectionPageStart + coreCollectionRenderLimit);
   var totalTarget = 0;
   var totalStock = 0;
   var totalShortage = 0;
@@ -30786,67 +32044,79 @@ function renderCoreCollectionList() {
     totalShortage += coreCollectionShortageQty(row);
   });
   renderCoreManagementSummary([
-    { label: "対象品番", value: coreCollectionFilteredRows.length, unit: "件" },
-    { label: "目標数", value: totalTarget, unit: "台" },
-    { label: "現在庫", value: totalStock, unit: "台", tone: "stock" },
-    { label: "不足数", value: totalShortage, unit: "台", tone: totalShortage > 0 ? "shortage" : "" }
-  ], "取得済みの絞り込み結果です。保留・完了の品番も含みます。", visibleRows.length, coreCollectionFilteredRows.length);
+    { label: coreCollectionUiLabel("対象品番", "Parts", "品号"), value: coreCollectionFilteredRows.length, unit: "件" },
+    { label: coreCollectionUiLabel("目標数", "Target", "目标"), value: totalTarget, unit: "台" },
+    { label: coreCollectionUiLabel("現在庫", "Stock", "库存"), value: totalStock, unit: "台", tone: "stock" },
+    { label: coreCollectionUiLabel("不足数", "Short", "缺口"), value: totalShortage, unit: "台", tone: totalShortage > 0 ? "shortage" : "" }
+  ], coreCollectionReportRank ? "" : (canViewManufacturingReport()
+    ? "2025年の順位を取得できませんでした。検索ボタンで再読み込みしてください。"
+    : "2025年の順位と補充リストには製造ランキングの閲覧権限が必要です。"), null, coreCollectionFilteredRows.length);
   if (!coreCollectionRows.length) {
-    list.innerHTML = "<div class='empty'>収集対象はまだ登録されていません。<br>「収集対象を追加」または「製造ランキングから追加」で、買い集めるコアを登録してください。</div>";
+    list.innerHTML = "<div class='empty'>収集対象はまだ登録されていません。<br>「収集対象を追加」または「2025年ランキングから追加」で登録できます。</div>";
     updateCoreCollectionLoadMoreButton();
+    fitCoreCollectionPage();
+    if (typeof requestAnimationFrame === "function") requestAnimationFrame(fitCoreCollectionPage);
     return;
   }
   if (!coreCollectionFilteredRows.length) {
     list.innerHTML = "<div class='empty'>条件に該当する収集対象はありません。</div>";
     updateCoreCollectionLoadMoreButton();
+    fitCoreCollectionPage();
+    if (typeof requestAnimationFrame === "function") requestAnimationFrame(fitCoreCollectionPage);
     return;
   }
-  if (!isPC()) {
+  if (!isPC() || window.innerWidth < 1101) {
     var mobileHtml = "<div class='core-collection-mobile-cards'>";
     visibleRows.forEach(function(row) {
       var product = coreCollectionProductMap[String(row.dkd_shohin_id)] || {};
       var stock = coreCollectionStockMap[String(row.dkd_shohin_id)] || {};
       var shortage = coreCollectionShortageQty(row);
-      var categoryRank = coreCollectionCategoryRank(row);
+      var ranking = coreCollectionRank(row);
       mobileHtml += "<div class='core-collection-card'>";
-      mobileHtml += "<div class='core-collection-card-head'><div><div class='core-main-pn'>" + esc(product.manufacturer_part_number || product.genuine_part_number || ("DKD " + row.dkd_shohin_id)) + "</div><div class='mgmt-sub'>" + esc(productionCategoryLabel(product)) + (categoryRank ? " #" + esc(String(categoryRank)) : "") + " / " + esc(product.genuine_part_number || "-") + " / " + esc(product.manufacturer || "-") + "</div></div><span class='core-priority-badge " + esc(row.priority) + "'>" + esc("優先度: " + coreCollectionPriorityLabel(row.priority)) + "</span></div>";
-      mobileHtml += "<div class='core-collection-card-badges'>" + renderCoreCollectionStockBadge(row) + "<span class='core-status-badge " + esc(row.status) + "'>" + esc(coreCollectionStatusLabel(row.status)) + "</span></div>";
-      mobileHtml += "<div class='core-collection-qty-grid'><div><span>目標</span><strong>" + esc(String(row.target_quantity || 0)) + "</strong></div><div><span>現在庫</span><strong>" + esc(String(coreCollectionStockQty(row))) + "</strong></div><div class='shortage'><span>不足</span><strong>" + esc(String(shortage)) + "</strong></div></div>";
-      mobileHtml += "<div class='core-collection-meta'>" + esc(productionCategoryLabel(product)) + " / DKD " + esc(String(row.dkd_shohin_id)) + (stock.parts && stock.parts.length ? "<br>在庫品番: " + esc(stock.parts.join(" / ")) : "") + "</div>";
-      mobileHtml += "<details class='core-row-details'><summary>追加元・メモ</summary><div class='core-collection-note'><strong>追加元</strong> " + esc(coreCollectionSourceDetail(row)) + "<br><strong>メモ</strong> " + esc(row.note || "-") + "</div></details>";
-      mobileHtml += "<div class='core-list-card-actions'><button class='btn-sm-edit' data-core-collection-edit='" + row.id + "'>編集</button><button class='btn-sm-edit production-action-secondary' data-core-collection-complete='" + row.id + "'>" + (row.status === "completed" ? "収集再開" : "完了") + "</button><button class='btn-sm-del' data-core-collection-delete='" + row.id + "'>削除</button></div>";
+      mobileHtml += "<div class='core-collection-card-head'><div class='core-main-pn'>" + esc(product.manufacturer_part_number || product.genuine_part_number || ("DKD " + row.dkd_shohin_id)) + "</div>" + (ranking ? "<span class='core-collection-rank-badge' aria-label='2025年順位'>" + esc("#" + ranking.rank) + "</span>" : "") + "</div>";
+      mobileHtml += "<div class='core-collection-card-badges core-collection-secondary-badges'><span class='core-status-badge " + esc(row.status) + "'>" + esc(coreCollectionStatusLabel(row.status)) + "</span></div>";
+      mobileHtml += "<div class='core-collection-qty-grid'><div><span>" + coreCollectionUiLabel("目標", "Target", "目标") + "</span><strong>" + esc(String(row.target_quantity || 0)) + "</strong></div><div><span>" + coreCollectionUiLabel("現在庫", "Stock", "库存") + "</span><strong>" + esc(String(coreCollectionStockQty(row))) + "</strong></div><div class='shortage'><span>" + coreCollectionUiLabel("不足", "Short", "缺口") + "</span><strong>" + esc(String(shortage)) + "</strong></div></div>";
+      mobileHtml += "<div class='core-vehicle-label' aria-label='車両区分'>" + coreCollectionVehicleSummaryHtml(row) + "</div>";
+      mobileHtml += "<div class='core-list-card-actions'><button class='btn-sm-edit' data-core-collection-view='" + row.id + "'>詳細</button><button class='btn-sm-edit' data-core-collection-edit='" + row.id + "'>" + coreCollectionUiLabel("編集", "Edit", "编辑") + "</button><button class='btn-sm-edit production-action-secondary' data-core-collection-complete='" + row.id + "'>" + (row.status === "completed" ? coreCollectionUiLabel("収集再開", "Resume", "恢复") : coreCollectionUiLabel("完了", "Done", "完成")) + "</button><button class='btn-sm-del' data-core-collection-delete='" + row.id + "'>削除</button></div>";
       mobileHtml += "</div>";
     });
     list.innerHTML = mobileHtml + "</div>";
     bindCoreCollectionActions();
     updateCoreCollectionLoadMoreButton();
+    fitCoreCollectionPage();
+    if (typeof requestAnimationFrame === "function") requestAnimationFrame(fitCoreCollectionPage);
     return;
   }
-  var html = "<table class='mgmt-table core-collection-table' aria-label='収集リスト'><tr><th scope='col'>カテゴリ内順位<br>優先度</th><th scope='col'>対象品番</th><th>区分・メーカー</th><th>現在庫</th><th>目標</th><th>不足</th><th scope='col'>収集状態・メモ</th><th>操作</th></tr>";
+  var html = "<table class='mgmt-table core-collection-table' aria-label='収集リスト'><tr><th scope='col'>2025年順位</th><th scope='col'>対象品番</th><th>車両区分・メーカー</th><th>現在庫</th><th>目標</th><th>不足</th><th scope='col'>収集状態・メモ</th><th>操作</th></tr>";
   visibleRows.forEach(function(row) {
     var product = coreCollectionProductMap[String(row.dkd_shohin_id)] || {};
     var stock = coreCollectionStockMap[String(row.dkd_shohin_id)] || {};
     var shortage = coreCollectionShortageQty(row);
-    var categoryRank = coreCollectionCategoryRank(row);
+    var ranking = coreCollectionRank(row);
     html += "<tr>";
-    html += "<td><div class='core-category-rank'><span>" + esc(productionCategoryLabel(product)) + "</span>" + (categoryRank ? "<strong>#" + esc(String(categoryRank)) + "</strong>" : "") + "</div><span class='core-priority-badge " + esc(row.priority) + "'>" + esc("優先度: " + coreCollectionPriorityLabel(row.priority)) + "</span></td>";
+    html += "<td><div class='core-category-rank'><span>" + esc(productionCategoryLabel(product)) + "</span>" + (ranking ? "<strong>#" + esc(String(ranking.rank)) + "</strong>" : "<span>順位なし</span>") + "</div></td>";
     html += "<td><div class='core-main-pn'>" + esc(product.manufacturer_part_number || product.genuine_part_number || ("DKD " + row.dkd_shohin_id)) + "</div><div class='mgmt-pn'>純正 " + esc(product.genuine_part_number || "-") + "</div><div class='mgmt-sub'>DKD " + esc(String(row.dkd_shohin_id)) + "</div></td>";
-    html += "<td>" + esc(productionCategoryLabel(product)) + "<div class='mgmt-sub'>" + esc(product.manufacturer || "-") + "</div></td>";
+    html += "<td><div class='core-vehicle-label'>" + renderCoreCollectionVehicleHtml(row) + "</div><div class='mgmt-sub'>" + esc(product.manufacturer || "-") + "</div></td>";
     html += "<td>" + renderCoreCollectionStockBadge(row) + (stock.parts && stock.parts.length ? "<div class='mgmt-sub'>" + esc(stock.parts.join(" / ")) + "</div>" : "") + "</td>";
     html += "<td><span class='core-qty-pill target'>" + esc(String(row.target_quantity || 0)) + "</span></td>";
     html += "<td><span class='core-shortage-value " + (shortage > 0 ? "needed" : "enough") + "'>" + esc(String(shortage)) + "</span></td>";
-    html += "<td><span class='core-status-badge " + esc(row.status) + "'>" + esc(coreCollectionStatusLabel(row.status)) + "</span><details class='core-row-details'><summary>追加元・メモ</summary><div class='core-note'>" + esc(coreCollectionSourceDetail(row)) + "</div><div class='mgmt-sub'>" + esc(row.note || "-") + "</div></details></td>";
+    html += "<td><span class='core-status-badge " + esc(row.status) + "'>" + esc(coreCollectionStatusLabel(row.status)) + "</span><div><button class='btn-sm-edit' data-core-collection-view='" + row.id + "'>詳細</button></div></td>";
     html += "<td><div class='mgmt-actions'><button class='btn-sm-edit' data-core-collection-edit='" + row.id + "'>編集</button><button class='btn-sm-edit production-action-secondary' data-core-collection-complete='" + row.id + "'>" + (row.status === "completed" ? "再開" : "完了") + "</button><button class='btn-sm-del' data-core-collection-delete='" + row.id + "'>削除</button></div></td>";
     html += "</tr>";
   });
   list.innerHTML = html + "</table>";
   bindCoreCollectionActions();
   updateCoreCollectionLoadMoreButton();
+  fitCoreCollectionPage();
+  if (typeof requestAnimationFrame === "function") requestAnimationFrame(fitCoreCollectionPage);
 }
 
 function bindCoreCollectionActions() {
   var list = document.getElementById("core-list-list");
   if (!list) return;
+  list.querySelectorAll("[data-core-collection-view]").forEach(function(btn) {
+    btn.addEventListener("click", function() { openCoreCollectionForm("view", parseInt(btn.dataset.coreCollectionView, 10)); });
+  });
   if (!canManageProductionRecords()) {
     list.querySelectorAll("[data-core-collection-edit], [data-core-collection-complete], [data-core-collection-delete]").forEach(function(btn) { btn.remove(); });
     return;
@@ -30875,20 +32145,29 @@ function renderCoreCollectionSelectedProduct(product) {
 }
 
 function openCoreCollectionForm(mode, rowId) {
-  if (!canManageProductionRecords()) { alert(t("err_perm")); return; }
-  coreCollectionFormMode = mode === "edit" ? "edit" : "add";
-  var row = coreCollectionFormMode === "edit" ? coreCollectionRows.find(function(item) { return item.id === rowId; }) : null;
+  if (mode === "view" ? !canViewCoreManagement() : !canManageProductionRecords()) { alert(t("err_perm")); return; }
+  coreCollectionFormMode = mode === "view" ? "view" : (mode === "edit" ? "edit" : "add");
+  var row = coreCollectionFormMode !== "add" ? coreCollectionRows.find(function(item) { return item.id === rowId; }) : null;
   var product = row ? (coreCollectionProductMap[String(row.dkd_shohin_id)] || {}) : null;
   setProductionRankingFormValue("ccf-id", row && row.id);
   setProductionRankingFormValue("ccf-dkd-id", row && row.dkd_shohin_id);
   setProductionRankingFormValue("ccf-product-search", "");
   setProductionRankingFormValue("ccf-target-quantity", row ? row.target_quantity : 1);
-  setProductionRankingFormValue("ccf-priority", row ? row.priority : "normal");
   setProductionRankingFormValue("ccf-status", row ? row.status : "collecting");
   setProductionRankingFormValue("ccf-source-hint", row && row.source_hint);
   setProductionRankingFormValue("ccf-note", row && row.note);
-  document.getElementById("core-collection-form-title").textContent = row ? "収集対象を編集" : "収集対象を追加";
-  document.getElementById("core-collection-form-error").textContent = "";
+  var stockInfo = row ? coreCollectionStockMap[String(row.dkd_shohin_id)] || {} : {};
+  coreCollectionReferenceText = row ? coreCollectionSourceDetail(row) + (stockInfo.parts && stockInfo.parts.length ? "\n" + stockInfo.parts.join(" / ") : "") + (stockInfo.locations && stockInfo.locations.length ? "\n" + stockInfo.locations.join(" / ") : "") : "";
+  coreCollectionReferencePage = 0; renderCoreCollectionReference();
+  setCoreCollectionVehicleForm(row);
+  document.getElementById("ccf-tab-product").classList.toggle("hidden", mode !== "add");
+  document.getElementById("ccf-tab-reference").classList.toggle("hidden", mode === "add");
+  setCoreCollectionFormTab(mode === "add" ? "product" : "main");
+  document.getElementById("core-collection-form-title").textContent = mode === "view" ? "収集対象の詳細" : (row ? "収集対象を編集" : "収集対象を追加");
+  var overlay = document.getElementById("core-collection-form-overlay");
+  overlay.querySelectorAll("input, select, textarea").forEach(function(input) { input.disabled = mode === "view"; });
+  document.getElementById("btn-core-collection-form-save").classList.toggle("hidden", mode === "view");
+  document.getElementById("core-collection-form-error").textContent = coreCollectionFormSaveUnknown ? "保存結果を確認できません。再送せず、画面を再読み込みして登録内容を確認してください。" : "";
   var candidates = document.getElementById("ccf-product-candidates");
   candidates.innerHTML = "";
   setCspStyle(candidates, "display", "none");
@@ -31007,9 +32286,15 @@ async function selectCoreCollectionProductCandidate(index) {
     await loadCoreCollectionStock([{ dkd_shohin_id: product.dkd_shohin_id }]);
   }
   renderCoreCollectionSelectedProduct(product);
+  setCoreCollectionFormTab("main");
 }
 
 async function saveCoreCollectionForm() {
+  if (coreCollectionFormSaving || coreCollectionFormSaveUnknown) return;
+  coreCollectionFormSaving = true;
+  var saveButton = document.getElementById("btn-core-collection-form-save");
+  if (saveButton) saveButton.disabled = true;
+  try {
   var errorEl = document.getElementById("core-collection-form-error");
   errorEl.textContent = "";
   if (!canManageProductionRecords()) { errorEl.textContent = t("err_perm"); return; }
@@ -31031,10 +32316,10 @@ async function saveCoreCollectionForm() {
   var data = {
     dkd_shohin_id: dkdId,
     target_quantity: targetQty,
-    priority: document.getElementById("ccf-priority").value,
     status: document.getElementById("ccf-status").value,
     source_hint: nullableTextFromInput("ccf-source-hint"),
     note: nullableTextFromInput("ccf-note"),
+    vehicle_classes: readCoreCollectionVehicleForm(),
     updated_by: currentUser ? currentUser.id : null,
     updated_at: new Date().toISOString()
   };
@@ -31054,14 +32339,25 @@ async function saveCoreCollectionForm() {
     r = await sb.from("core_collection_list_items").update(data).eq("id", id).select().single();
     if (!r.error) await writeLog("update", "core_collection_list_items", id, "DKD " + dkdId, before, data);
   }
+  if (r.error && !r.error.code) {
+    coreCollectionFormSaveUnknown = true;
+    errorEl.textContent = "保存結果を確認できません。再送せず、画面を再読み込みして登録内容を確認してください。";
+    return;
+  }
   if (r.error) {
     errorEl.textContent = r.error.code === "23505" ? "この商品は収集リストに登録済みです。" : (t("msg_part_err") + ": " + r.error.message);
     return;
   }
   document.getElementById("core-collection-form-overlay").classList.remove("show");
   await loadCoreCollectionList();
+  } catch (error) {
+    coreCollectionFormSaveUnknown = true;
+    document.getElementById("core-collection-form-error").textContent = "保存結果を確認できません。再送せず、画面を再読み込みして登録内容を確認してください。";
+  } finally {
+    coreCollectionFormSaving = false;
+    if (saveButton) saveButton.disabled = coreCollectionFormSaveUnknown;
+  }
 }
-
 async function toggleCoreCollectionCompleted(id) {
   if (!canManageProductionRecords()) { alert(t("err_perm")); return; }
   var row = coreCollectionRows.find(function(item) { return item.id === id; });
@@ -31085,23 +32381,29 @@ async function deleteCoreCollectionRow(id) {
 }
 
 function csvCoreCollectionCell(value) {
-  return '"' + String(value == null ? "" : value).replace(/"/g, '""') + '"';
+  var text = String(value == null ? "" : value);
+  if (typeof value === "string" && /^\s*[=+@\-]|^[\t\r\n]/.test(text)) text = "'" + text;
+  return '"' + text.replace(/"/g, '""') + '"';
 }
 
-function exportCoreCollectionCsv() {
+function exportCoreCollectionCsv(replenishment) {
+  if (coreListMode !== "collection" || !coreManagementDataReady || (replenishment && !coreCollectionReportRank)) return;
   applyCoreCollectionFilters({ preserveRenderLimit: true });
-  if (!coreCollectionFilteredRows.length) { alert("出力する収集対象がありません。"); return; }
-  var lines = [["カテゴリ順位", "追加元", "元順位", "2025出荷数", "優先度", "状態", "カテゴリ", "メーカー", "メーカー品番", "純正品番", "DKD商品ID", "現在庫", "目標数", "不足数", "入手先候補", "メモ"]];
-  coreCollectionFilteredRows.forEach(function(row) {
+  var rows = replenishment ? coreCollectionFilteredRows.filter(isCoreReplenishmentRow) : coreCollectionFilteredRows;
+  if (!rows.length) { alert("現在の条件で出力する品番はありません。"); return; }
+  var lines = [["2025年総合順位", "2025出荷数", "リスト分類", "追加元", "登録時の元順位", "状態", "カテゴリ", "車両区分", "メーカー", "メーカー品番", "純正品番", "DKD商品ID", "現在庫", "目標数", "不足数", "メモ"]];
+  rows.forEach(function(row) {
     var product = coreCollectionProductMap[String(row.dkd_shohin_id)] || {};
+    var ranking = coreCollectionRank(row);
     lines.push([
-      coreCollectionCategoryRank(row),
+      ranking ? ranking.rank : "",
+      ranking ? ranking.shipment : "",
+      coreCollectionSourceLabel(row.source_type),
       row.source_hint || "",
       row.source_rank || "",
-      row.shipment_count == null ? "" : row.shipment_count,
-      coreCollectionPriorityLabel(row.priority),
       coreCollectionStatusLabel(row.status),
       productionCategoryLabel(product),
+      coreCollectionVehicleText(row),
       product.manufacturer || "",
       product.manufacturer_part_number || "",
       product.genuine_part_number || "",
@@ -31109,7 +32411,6 @@ function exportCoreCollectionCsv() {
       coreCollectionStockQty(row),
       row.target_quantity || 0,
       coreCollectionShortageQty(row),
-      row.source_hint || "",
       row.note || ""
     ]);
   });
@@ -31118,214 +32419,268 @@ function exportCoreCollectionCsv() {
   var url = URL.createObjectURL(blob);
   var link = document.createElement("a");
   link.href = url;
-  link.download = "D-CATS_コア収集リスト_" + new Date().toISOString().slice(0, 10) + ".csv";
+  var classification = coreCollectionSourceLabel(document.getElementById("core-collection-source").value);
+  link.download = "D-CATS_コア" + (replenishment ? "補充リスト" : "収集状況") +
+    (classification ? "_" + classification : "") + "_" + new Date().toISOString().slice(0, 10) + ".csv";
   document.body.appendChild(link);
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
 }
 
-function coreListSearchKey() {
-  var input = document.getElementById("core-list-search");
-  return input ? norm(input.value.trim()) : "";
+function coreInventoryVehicleClasses(product) {
+  var makers = String(product.vehicle_manufacturer || "").normalize("NFKC").toLowerCase().split(/\s*[/,、]\s*/).map(function(name) { return name.trim(); });
+  var models = String(product.compatible_car_models || "").normalize("NFKC").trim().toLowerCase();
+  var chassis = String(product.model || "").normalize("NFKC").toLowerCase();
+  // The Suzuki specifications identify these Solio chassis as 996 cc and 1328 cc.
+  if (makers.includes("suzuki") && /^wagon\s*r\s*solio$/.test(models) && /\bma(?:34|64)s\b/.test(chassis)) return ["passenger"];
+
+  var bodyClasses = {
+    "kei car": "kei", "kei truck": "kei", "kei van": "kei", "軽四": "kei", "軽自動車": "kei",
+    "軽トラック": "kei", "軽バン": "kei", "sedan": "passenger", "minivan": "passenger",
+    "suv": "passenger", "passenger car": "passenger", "乗用車": "passenger",
+    "truck": "truck", "light truck": "truck", "トラック": "truck",
+    "commercial van": "van", "商用バン": "van", "bus": "bus", "バス": "bus",
+    "建機・農機": "machine", "その他": "other"
+  };
+  var body = String(product.body_type || "").normalize("NFKC").toLowerCase().split(/[/,、]/).map(function(value) {
+    var key = value.trim();
+    return Object.prototype.hasOwnProperty.call(bodyClasses, key) ? bodyClasses[key] : "";
+  }).filter(Boolean);
+  if (body.length) return Array.from(new Set(body));
+
+  // Match catalog vehicle names only within their manufacturer. Unknown variants stay unclassified.
+  var rules = [
+    ["hyundai", "truck", /(?:^|[^a-z0-9])(?:porter|e?mighty)(?![a-z])/],
+    ["kia", "truck", /(?:^|[^a-z0-9])bongo\s*(?:3|iii)(?![a-z0-9])/],
+    ["mitsubishi fuso", "truck", /(?:^|[^a-z0-9])(?:e?canter|fighter|super\s*great)(?![a-z])/],
+    ["hyundai", "passenger", /(?:^|[^a-z0-9])(?:(?:ef|nf|yf|lf|dn8)?\s*sonata|(?:hg|tg|xg|ig)?\s*grandeur|avante(?:hd|md|ad)?|santa\s*fe(?:cm|dm|tm|diesel)?|tucson(?:nx4)?|equus|veracruz|verna|i30)(?![a-z])/],
+    ["kia", "passenger", /(?:^|[^a-z0-9])(?:k[35](?!\d)|sorento(?:r)?)(?![a-z])/]
+  ];
+  return Array.from(new Set(rules.filter(function(rule) {
+    return makers.includes(rule[0]) && rule[2].test(models);
+  }).map(function(rule) { return rule[1]; })));
 }
 
-function coreListRowMatches(row, q) {
-  if (!q) return true;
-  var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
-  return [
-    row.dkd_shohin_id,
-    row.core_part_number,
-    row.location,
-    row.note,
-    p.genuine_part_number,
-    p.manufacturer_part_number,
-    p.manufacturer,
-    p.daiko_part_number
-  ].some(function(v) { return normalizedContains(v, q); });
+function resetCoreInventoryFilters() {
+  ["core-list-search", "core-inventory-vehicle", "core-inventory-category", "core-inventory-memo"].forEach(function(id) {
+    document.getElementById(id).value = "";
+  });
+  document.getElementById("core-inventory-korea").value = "exclude";
+  document.getElementById("core-inventory-match-state").value = "all";
+  coreInventoryFilters = { keyword: "", vehicle: "", category: "", memo: "", korea: "exclude", matchState: "all" };
 }
 
-function updateCoreListLoadMoreButton() {
-  var wrap = document.getElementById("core-list-load-more-wrap");
-  var btn = document.getElementById("core-list-load-more");
-  if (!wrap || !btn || coreListMode !== "inventory") return;
-  setCspStyle(wrap, "display", coreListHasMore ? "block" : "none");
-  btn.disabled = !!coreListLoadingMore;
-  btn.textContent = coreListLoadingMore ? t("loading") : t("btn_load_more");
+function isKoreanCoreInventoryEntry(row) {
+  // The Korean stock import records its provenance at the beginning of the entry memo.
+  return /^\s*韓国コア現存在庫\s*(?:\/|$)/.test(row.note || "");
 }
 
-async function fetchCoreListRawPage(limit, requestSeq) {
-  var from = coreListRawOffset;
-  var to = from + limit - 1;
-  var r = await sb.from("production_core_list_entries")
-    .select("*")
-    .order("updated_at", { ascending: false })
-    .order("id", { ascending: false })
-    .range(from, to);
-  if (r.error) return r;
-  var rows = r.data || [];
-  if (requestSeq != null && requestSeq !== coreManagementLoadSeq) return r;
-  coreListRawOffset += rows.length;
-  coreListHasMore = rows.length === limit;
-  return { data: rows, error: null };
+function submitCoreInventorySearch() {
+  coreInventoryFilters = {
+    keyword: norm(document.getElementById("core-list-search").value.trim()),
+    vehicle: document.getElementById("core-inventory-vehicle").value,
+    category: document.getElementById("core-inventory-category").value,
+    memo: norm(document.getElementById("core-inventory-memo").value.trim()),
+    korea: document.getElementById("core-inventory-korea").value || "exclude",
+    matchState: document.getElementById("core-inventory-match-state").value || "all"
+  };
+  document.getElementById("core-inventory-filter-options").open = false;
+  document.getElementById("btn-core-list-search").focus({ preventScroll: true });
+  return loadCoreListMgmt();
 }
 
-async function loadCoreListMgmt(options) {
-  options = options || {};
-  var q = coreListSearchKey();
-  var append = !!options.append && q === coreListCurrentSearchKey;
-  var list = document.getElementById("core-list-list");
-  if (coreListLoadingMore && append) return;
-  var requestSeq = beginCoreManagementLoad();
-  if (!append) {
-    coreListMgmtRows = [];
-    coreListProductMap = {};
-    coreListRawOffset = 0;
-    coreListHasMore = true;
-    coreListCurrentSearchKey = q;
-    if (list) list.innerHTML = "<div class='loading'>" + t("loading") + "</div>";
+function coreInventoryPendingProduct(row) {
+  var categoryCode = { "セルモーター": "starter", "オルタネーター": "alternator" }[row.source_sheet];
+  return categoryCode ? { category_code: categoryCode } : {};
+}
+
+function renderCoreInventoryPendingRow(row, index, cardMode) {
+  var part = "<div class='core-main-pn'>" + esc(row.source_part_number) + "</div>";
+  var badge = "<span class='core-inventory-match-badge'>" + esc(t("core_pending_tab")) + "</span>";
+  var quantity = "<span class='core-qty-pill'>" + esc(String(row.quantity)) + "</span>";
+  var location = esc(row.pallet_no);
+  var actions = "";
+  if (canManageProductionRecords()) {
+    actions += "<button class='btn-sm-edit' type='button' data-inventory-pending-match='" + index + "'>" + esc(t("core_pallet_edit_match")) + "</button>";
   }
+  if (cardMode) {
+    return "<div class='core-list-card'><div class='core-list-card-head'><div>" + part + badge +
+      "</div>" + quantity + "</div><div class='core-list-card-field'><span class='core-list-card-label'>" +
+      esc(t("core_list_pallet_location")) + "</span><span class='core-list-card-value'>" +
+      location + "</span></div><div class='core-pallet-row-actions'>" + actions + "</div></div>";
+  }
+  var p = coreInventoryPendingProduct(row);
+  return "<tr><td>" + part + badge + "</td><td>" + esc(p.category_code ? productionCategoryLabel(p) : "-") +
+    "</td><td>–</td><td>" + location +
+    "</td><td><div class='core-note'>" + esc(row.source_remarks || "-") +
+    "</div></td><td><div class='core-pallet-row-actions'>" + actions + "</div></td><td class='core-inventory-quantity'>" + quantity + "</td></tr>";
+}
 
-  coreListLoadingMore = true;
-  updateCoreListLoadMoreButton();
+function applyCoreInventoryFilters() {
+  var keyword = coreInventoryFilters.keyword;
+  var vehicle = coreInventoryFilters.vehicle;
+  var category = coreInventoryFilters.category;
+  var memo = coreInventoryFilters.memo;
+  var korea = coreInventoryFilters.korea;
+  var matchState = coreInventoryFilters.matchState || "all";
+  var count = Number(!!vehicle) + Number(!!category) + Number(!!memo) + Number(korea !== "exclude") + Number(matchState !== "all");
+  document.getElementById("core-inventory-filter-count").textContent = count ? "(" + count + ")" : "";
+  var pending = coreInventoryPendingRows.map(function(row) {
+    return { pending: row, quantity: row.quantity, location: row.pallet_no, core_part_number: row.source_part_number, note: row.source_remarks };
+  });
+  coreListFilteredRows = coreListMgmtRows.concat(pending).filter(function(row) {
+    if (matchState === "linked" && row.pending || matchState === "pending" && !row.pending) return false;
+    var isKorean = !row.pending && isKoreanCoreInventoryEntry(row);
+    if (korea !== "include" && isKorean !== (korea === "only")) return false;
+    var id = String(row.dkd_shohin_id);
+    var product = row.pending ? coreInventoryPendingProduct(row.pending) : (coreListProductMap[id] || {});
+    var classification = coreListVehicleMap[id];
+    if (row.pending && category && !product.category_code) return false;
+    if (!coreCollectionVehicleMatches(classification, vehicle) || !coreCollectionCategoryMatches(product, category)) return false;
+    if (memo && !normalizedContains(row.note, memo)) return false;
+    return !keyword || [
+      row.dkd_shohin_id, row.core_part_number, row.location, row.note,
+      product.genuine_part_number, product.genuine_part_number_2,
+      product.manufacturer_part_number, product.manufacturer, product.daiko_part_number,
+      coreCollectionVehicleText(classification)
+    ].some(function(value) { return normalizedContains(value, keyword); });
+  });
+}
+
+async function loadCoreListMgmt() {
+  if (coreListMode !== "inventory") return;
+  var requestSeq = beginCoreManagementLoad();
+  var list = document.getElementById("core-list-list");
+  list.innerHTML = "<div class='loading' role='status'>" + esc(t("loading")) + "</div>";
   try {
-    var added = 0;
-    var chunks = 0;
-    var maxChunks = q ? CORE_LIST_SEARCH_SCAN_CHUNKS : 1;
-    while (coreListHasMore && added < CORE_LIST_PAGE_SIZE && chunks < maxChunks) {
-      chunks += 1;
-      var r = await fetchCoreListRawPage(CORE_LIST_PAGE_SIZE, requestSeq);
-      if (requestSeq !== coreManagementLoadSeq || coreListMode !== "inventory") return;
-      if (r.error) {
-        if (list) list.innerHTML = "<div class='empty'>" + esc(t("msg_part_err") + ": " + r.error.message) + "</div>";
-        return;
-      }
-      var rawRows = r.data || [];
-      if (!rawRows.length) break;
-      await loadCoreListProductMap(rawRows, requestSeq);
-      if (requestSeq !== coreManagementLoadSeq || coreListMode !== "inventory") return;
-      var rows = rawRows.filter(function(row) { return coreListRowMatches(row, q); });
-      coreListMgmtRows = coreListMgmtRows.concat(rows);
-      added += rows.length;
-      if (!q) break;
+    var result = await sb.rpc("read_core_inventory_snapshot");
+    if (requestSeq !== coreManagementLoadSeq || coreListMode !== "inventory") return;
+    if (result.error) throw result.error;
+    if (!Array.isArray(result.data?.linked) || !Array.isArray(result.data?.pending)) {
+      throw new Error(t("core_pending_load_failed"));
     }
+    var rows = result.data.linked;
+    var products = {};
+    var vehicles = {};
+    var ids = [...new Set(rows.map(function(row) { return row.dkd_shohin_id; }).filter(function(id) { return id != null; }))];
+    for (var offset = 0; offset < ids.length; offset += CORE_LIST_PAGE_SIZE) {
+      var chunk = ids.slice(offset, offset + CORE_LIST_PAGE_SIZE);
+      var lookups = await Promise.all([
+        loadCoreListProducts(chunk),
+        sb.from("core_collection_list_items").select("dkd_shohin_id,vehicle_classes").in("dkd_shohin_id", chunk)
+      ]);
+      if (requestSeq !== coreManagementLoadSeq || coreListMode !== "inventory") return;
+      if (lookups[1].error) throw lookups[1].error;
+      lookups[0].forEach(function(product) { products[String(product.dkd_shohin_id)] = product; });
+      (lookups[1].data || []).forEach(function(row) { vehicles[String(row.dkd_shohin_id)] = row; });
+    }
+    Object.keys(products).forEach(function(id) {
+      if (coreCollectionVehicleClasses(vehicles[id]).length) return;
+      var classes = coreInventoryVehicleClasses(products[id]);
+      if (classes.length) vehicles[id] = { vehicle_classes: classes };
+    });
+    coreListMgmtRows = rows;
+    coreInventoryPendingRows = result.data.pending;
+    coreListProductMap = products;
+    coreListVehicleMap = vehicles;
+    applyCoreInventoryFilters();
     coreManagementDataReady = true;
     renderCoreListMgmt();
   } catch (error) {
-    if (requestSeq === coreManagementLoadSeq && coreListMode === "inventory" && list) {
+    if (requestSeq === coreManagementLoadSeq && coreListMode === "inventory") {
       list.innerHTML = "<div class='empty' role='alert'>在庫を取得できませんでした。検索ボタンで再読み込みしてください。<br>" + esc(error.message || "") + "</div>";
-    }
-  } finally {
-    if (requestSeq === coreManagementLoadSeq) {
-      coreListLoadingMore = false;
-      updateCoreListLoadMoreButton();
     }
   }
 }
 
-async function loadCoreListProductMap(rows, requestSeq) {
-  var ids = [];
-  (rows || []).forEach(function(row) {
-    if (row.dkd_shohin_id != null && !coreListProductMap[String(row.dkd_shohin_id)] && ids.indexOf(row.dkd_shohin_id) < 0) ids.push(row.dkd_shohin_id);
-  });
-  if (!ids.length) return;
-  var r = await sb.from("core_products").select(CORE_PRODUCT_FAST_SELECT).in("dkd_shohin_id", ids).limit(500);
-  if (requestSeq != null && requestSeq !== coreManagementLoadSeq) return;
-  if (r.error) {
-    console.warn("core list product lookup failed", r.error);
-    r = await sb.from("core_product_search_view").select("*").in("dkd_shohin_id", ids).limit(500);
-    if (r.error) {
-      console.warn("core list product view fallback failed", r.error);
-      return;
-    }
+async function loadCoreListProducts(ids) {
+  var result = await sb.from("core_products").select(CORE_PRODUCT_FAST_SELECT).in("dkd_shohin_id", ids).limit(500);
+  if (result.error) {
+    result = await sb.from("core_product_search_view").select("*").in("dkd_shohin_id", ids).limit(500);
   }
-  if (requestSeq != null && requestSeq !== coreManagementLoadSeq) return;
-  normalizeCoreProductFastRows(r.data || []).forEach(function(p) {
-    coreListProductMap[String(p.dkd_shohin_id)] = p;
-  });
+  if (result.error) throw result.error;
+  return normalizeCoreProductFastRows(result.data || []);
 }
 
 function renderCoreListMgmt() {
   if (coreListMode !== "inventory" || !coreManagementDataReady) return;
   var list = document.getElementById("core-list-list");
-  var countEl = document.getElementById("core-list-count");
   if (!list) return;
+  list.scrollTop = 0;
+  var pendingTotal = sumProductionCoreEntryQty(coreListFilteredRows.filter(function(row) { return row.pending; }));
+  var physicalTotal = sumProductionCoreEntryQty(coreListFilteredRows);
   renderCoreManagementSummary([
-    { label: "在庫明細", value: coreListMgmtRows.length, unit: "件" },
-    { label: "コア合計", value: sumProductionCoreEntryQty(coreListMgmtRows), unit: "台", tone: "stock" }
-  ], coreListHasMore ? "読み込み済みの在庫を集計しています。「さらに表示」で続きを確認できます。" : "検索結果の在庫をすべて表示しています。");
-  if (!coreListMgmtRows.length) {
-    list.innerHTML = coreListHasMore
-      ? "<div class='empty'>" + esc(t("no_results")) + "</div>"
-      : "<div class='empty'>コアリストはまだ登録されていません。<br>「コアを追加」から基幹商品に紐づくコア品番・数量・置き場を登録してください。</div>";
+    { label: "在庫明細", value: coreListFilteredRows.length, unit: "件" },
+    { label: t("core_inventory_physical"), value: physicalTotal, unit: "台", tone: "stock" },
+    { label: t("core_inventory_linked"), value: physicalTotal - pendingTotal, unit: "台" },
+    { label: t("core_pending_tab"), value: pendingTotal, unit: "台" }
+  ]);
+  if (!coreListFilteredRows.length) {
+    list.innerHTML = "<div class='empty' role='status'>" + esc(t("no_results")) + "</div>";
     return;
   }
-  if (!isPC()) {
+  if (!isPC() || window.innerWidth < 1101) {
     var mobileHtml = "<div class='core-list-mobile-cards'>";
-    coreListMgmtRows.forEach(function(row) {
+    coreListFilteredRows.forEach(function(row, index) {
+      if (row.pending) { mobileHtml += renderCoreInventoryPendingRow(row.pending, index, true); return; }
       var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
       var fallbackPartNumber = row.core_part_number || "";
       var updatedText = formatDateTime(row.updated_at);
-      function mobileField(label, value) {
-        return "<div class='core-list-card-field'><span class='core-list-card-label'>" + esc(label) + "</span><div class='core-list-card-value'>" + value + "</div></div>";
+      function mobileField(label, value, wide) {
+        return "<div class='core-list-card-field" + (wide ? " core-list-card-field-wide" : "") + "'><span class='core-list-card-label'>" + esc(label) + "</span><span class='core-list-card-value'>" + value + "</span></div>";
       }
       mobileHtml += "<div class='core-list-card'>";
       mobileHtml += "<div class='core-list-card-head'><div><div class='core-main-pn'>" + esc(row.core_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(productionCategoryLabel(p)) + "</div></div><span class='core-qty-pill'>" + esc(String(row.quantity == null ? 0 : row.quantity)) + "</span></div>";
       mobileHtml += "<div class='core-list-card-grid'>";
+      mobileHtml += mobileField("車両区分", renderCoreCollectionVehicleHtml(coreListVehicleMap[String(row.dkd_shohin_id)]), true);
       mobileHtml += mobileField(t("f_manufacturer"), "<span class='core-maker-badge'>" + esc(p.manufacturer || "-") + "</span>");
-      mobileHtml += mobileField(t("f_genuine_pn"), "<span class='mgmt-pn'>" + esc(p.genuine_part_number || fallbackPartNumber || "-") + "</span><div class='mgmt-sub'>" + esc(p.manufacturer_part_number || fallbackPartNumber || "-") + "</div>");
       mobileHtml += mobileField(t("core_list_location"), esc(row.location || "-"));
+      mobileHtml += mobileField(t("f_genuine_pn"), "<span class='mgmt-pn'>" + esc(p.genuine_part_number || fallbackPartNumber || "-") + "</span><span class='mgmt-sub core-list-maker-pn'>" + esc(p.manufacturer_part_number || fallbackPartNumber || "-") + "</span>", true);
       mobileHtml += "</div>";
-      mobileHtml += "<div class='core-list-card-note'><span class='core-list-card-label'>" + esc(t("core_list_note")) + "</span><div class='core-note'>" + esc(row.note || "-") + "</div><div class='mgmt-sub'>DKD " + esc(String(row.dkd_shohin_id || "-")) + " / " + esc(updatedText) + "</div></div>";
+      mobileHtml += "<div class='core-list-card-note'><div class='mgmt-sub'>DKD " + esc(String(row.dkd_shohin_id || "-")) + " / " + esc(updatedText) + "</div>";
+      if (row.note) mobileHtml += "<button type='button' class='btn-sm-edit' data-core-note='" + esc(String(row.id)) + "'>" + esc(t("core_list_note")) + "</button>";
+      mobileHtml += "</div>";
       mobileHtml += "<div class='core-list-card-actions'>";
       mobileHtml += "<button class='btn-sm-edit production-action-secondary' data-core-image='" + esc(String(row.id)) + "'>" + esc(t("btn_upload")) + "</button>";
       mobileHtml += "<button class='btn-sm-edit' data-core-edit='" + esc(String(row.id)) + "'>" + esc(t("btn_edit")) + "</button>";
-      mobileHtml += "<button class='btn-sm-del' data-core-del='" + esc(String(row.id)) + "'>" + esc(t("btn_delete")) + "</button>";
       mobileHtml += "</div></div>";
     });
     mobileHtml += "</div>";
     list.innerHTML = mobileHtml;
-    if (!canUploadCoreImages()) {
-      list.querySelectorAll("[data-core-image]").forEach(function(btn) { btn.remove(); });
-    } else {
-      list.querySelectorAll("[data-core-image]").forEach(function(btn) {
-        btn.addEventListener("click", function() { openCorePhotoChoice(parseInt(btn.dataset.coreImage, 10)); });
-      });
-    }
-    if (!canManageProductionRecords()) {
-      list.querySelectorAll("[data-core-edit], [data-core-del]").forEach(function(btn) { btn.remove(); });
-      return;
-    }
-    list.querySelectorAll("[data-core-edit]").forEach(function(btn) {
-      btn.addEventListener("click", function() { openCoreListForm("edit", parseInt(btn.dataset.coreEdit, 10)); });
+  } else {
+    var html = "<table class='mgmt-table core-list-table' aria-label='現在庫'>";
+    html += "<thead><tr><th scope='col'>コア品番</th><th scope='col'>車両区分・メーカー</th><th scope='col'>純正品番</th><th scope='col'>" + esc(t("core_list_pallet_location")) + "</th><th scope='col'>メモ</th><th scope='col'>操作</th><th scope='col' class='core-inventory-quantity'>" + esc(t("core_list_quantity")) + "</th></tr></thead><tbody>";
+    coreListFilteredRows.forEach(function(row, index) {
+      if (row.pending) { html += renderCoreInventoryPendingRow(row.pending, index, false); return; }
+      var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
+      var fallbackPartNumber = row.core_part_number || "";
+      var updatedText = formatDateTime(row.updated_at);
+      html += "<tr>";
+      html += "<td><div class='core-main-pn'>" + esc(row.core_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(productionCategoryLabel(p)) + "</div></td>";
+      html += "<td><div class='core-vehicle-label'>" + renderCoreCollectionVehicleHtml(coreListVehicleMap[String(row.dkd_shohin_id)]) + "</div><div class='mgmt-sub'>" + esc(p.manufacturer || "-") + "</div></td>";
+      html += "<td><div class='mgmt-pn'>" + esc(p.genuine_part_number || fallbackPartNumber || "-") + "</div><div class='mgmt-sub'>" + esc(p.manufacturer_part_number || fallbackPartNumber || "-") + " / DKD " + esc(String(row.dkd_shohin_id || "-")) + "</div></td>";
+      html += "<td>" + esc(row.location || "-") + "</td>";
+      html += "<td><div class='core-note'>" + esc(row.note || "-") + "</div><div class='mgmt-sub'>" + esc(updatedText) + "</div></td>";
+      html += "<td><div class='mgmt-actions'>";
+      html += "<button class='btn-sm-edit production-action-secondary' data-core-image='" + row.id + "'>" + esc(t("btn_upload")) + "</button>";
+      html += "<button class='btn-sm-edit' data-core-edit='" + row.id + "'>" + t("btn_edit") + "</button>";
+      html += "</div></td>";
+      html += "<td class='core-inventory-quantity'><span class='core-qty-pill'>" + esc(String(row.quantity == null ? 0 : row.quantity)) + "</span></td>";
+      html += "</tr>";
     });
-    list.querySelectorAll("[data-core-del]").forEach(function(btn) {
-      btn.addEventListener("click", function() { deleteCoreListRow(parseInt(btn.dataset.coreDel, 10)); });
-    });
-    return;
+    html += "</tbody></table>";
+    list.innerHTML = html;
   }
-  var html = "<table class='mgmt-table core-list-table'>";
-  html += "<tr><th>コア品番</th><th>メーカー</th><th>純正品番</th><th>数量</th><th>置き場</th><th>メモ</th><th>操作</th></tr>";
-  coreListMgmtRows.forEach(function(row) {
-    var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
-    var fallbackPartNumber = row.core_part_number || "";
-    var updatedText = formatDateTime(row.updated_at);
-    html += "<tr>";
-    html += "<td><div class='core-main-pn'>" + esc(row.core_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(productionCategoryLabel(p)) + "</div></td>";
-    html += "<td><span class='core-maker-badge'>" + esc(p.manufacturer || "-") + "</span></td>";
-    html += "<td><div class='mgmt-pn'>" + esc(p.genuine_part_number || fallbackPartNumber || "-") + "</div><div class='mgmt-sub'>" + esc(p.manufacturer_part_number || fallbackPartNumber || "-") + " / DKD " + esc(String(row.dkd_shohin_id || "-")) + "</div></td>";
-    html += "<td><span class='core-qty-pill'>" + esc(String(row.quantity == null ? 0 : row.quantity)) + "</span></td>";
-    html += "<td>" + esc(row.location || "-") + "</td>";
-    html += "<td><div class='core-note'>" + esc(row.note || "-") + "</div><div class='mgmt-sub'>" + esc(updatedText) + "</div></td>";
-    html += "<td><div class='mgmt-actions'>";
-    html += "<button class='btn-sm-edit production-action-secondary' data-core-image='" + row.id + "'>" + esc(t("btn_upload")) + "</button>";
-    html += "<button class='btn-sm-edit' data-core-edit='" + row.id + "'>" + t("btn_edit") + "</button>";
-    html += "<button class='btn-sm-del' data-core-del='" + row.id + "'>" + t("btn_delete") + "</button>";
-    html += "</div></td>";
-    html += "</tr>";
+  list.querySelectorAll("[data-inventory-pending-match]").forEach(function(button) {
+    button.addEventListener("click", function() {
+      var row = coreListFilteredRows[Number(button.dataset.inventoryPendingMatch)];
+      if (row && row.pending) corePalletEntry.openMatch(row.pending);
+    });
   });
-  html += "</table>";
-  list.innerHTML = html;
+  list.querySelectorAll("[data-core-note]").forEach(function(button) {
+    button.addEventListener("click", function() { showCoreInventoryNote(Number(button.dataset.coreNote)); });
+  });
   if (!canUploadCoreImages()) {
     list.querySelectorAll("[data-core-image]").forEach(function(btn) { btn.remove(); });
   } else {
@@ -31334,16 +32689,39 @@ function renderCoreListMgmt() {
     });
   }
   if (!canManageProductionRecords()) {
-    list.querySelectorAll("[data-core-edit], [data-core-del]").forEach(function(btn) { btn.remove(); });
+    list.querySelectorAll("[data-core-edit]").forEach(function(btn) { btn.remove(); });
     return;
   }
 
   list.querySelectorAll("[data-core-edit]").forEach(function(btn) {
     btn.addEventListener("click", function() { openCoreListForm("edit", parseInt(btn.dataset.coreEdit, 10)); });
   });
-  list.querySelectorAll("[data-core-del]").forEach(function(btn) {
-    btn.addEventListener("click", function() { deleteCoreListRow(parseInt(btn.dataset.coreDel, 10)); });
-  });
+}
+
+function showCoreInventoryNote(rowId) {
+  var row = coreListRowAndProduct(rowId).row;
+  if (!row || !row.note) return;
+  openCoreInventoryNoteText(row.note);
+}
+
+function openCoreInventoryNoteText(text) {
+  coreInventoryNotePages = coreCollectionReferencePages(String(text));
+  coreInventoryNotePage = 0;
+  renderCoreInventoryNote();
+  document.getElementById("core-inventory-note-dialog").showModal();
+}
+
+function renderCoreInventoryNote() {
+  var total = coreInventoryNotePages.length;
+  document.getElementById("core-inventory-note-text").textContent = coreInventoryNotePages[coreInventoryNotePage];
+  document.getElementById("core-inventory-note-status").textContent = (coreInventoryNotePage + 1) + " / " + total;
+  document.getElementById("core-inventory-note-pages").hidden = total < 2;
+  var previous = document.getElementById("core-inventory-note-prev");
+  var next = document.getElementById("core-inventory-note-next");
+  previous.disabled = coreInventoryNotePage === 0;
+  next.disabled = coreInventoryNotePage + 1 === total;
+  previous.textContent = coreCollectionUiLabel("前へ", "Prev", "上一页");
+  next.textContent = coreCollectionUiLabel("次へ", "Next", "下一页");
 }
 
 function coreListRowAndProduct(rowId) {
@@ -31561,6 +32939,9 @@ function openCoreListForm(mode, rowId) {
   if (!canManageProductionRecords()) { alert(t("err_perm")); return; }
   coreListFormMode = mode;
   var row = mode === "edit" ? coreListMgmtRows.find(function(x) { return x.id === rowId; }) : null;
+  if (mode === "edit" && !row) return;
+  showCoreListDeleteConfirmation(null);
+  document.getElementById("btn-core-list-delete-review").hidden = !row;
   var p = row ? (coreListProductMap[String(row.dkd_shohin_id)] || {}) : {};
   document.getElementById("core-list-form-error").textContent = "";
   document.getElementById("core-list-form-title").textContent = mode === "add" ? t("btn_add_core_list") : t("core_list_edit_title");
@@ -31591,12 +32972,7 @@ async function searchCoreListProductCandidates() {
     wrap.innerHTML = "";
     return;
   }
-  var r = await sb.rpc("search_core_products", {
-    search_text: q,
-    category_filter: null,
-    require_sl: false,
-    max_rows: 20
-  });
+  var r = await fetchCoreProductMasterMatches(q, null, 20);
   if (r.error) {
     wrap.innerHTML = "<div class='candidate-empty'>" + esc(r.error.message) + "</div>";
     return;
@@ -31664,83 +33040,130 @@ async function saveCoreListForm() {
     if (r.error) { errEl.textContent = t("msg_part_err") + ": " + r.error.message; return; }
     await writeLog("update", "production_core_list_entries", parseInt(id, 10), "DKD " + dkdId, before, data);
   }
-  document.getElementById("core-list-form-overlay").classList.remove("show");
+  closeCoreListForm();
   productionLoaded = false;
   await loadCoreListMgmt();
+}
+
+function closeCoreListForm() {
+  document.getElementById("core-list-form-overlay").classList.remove("show");
+  showCoreListDeleteConfirmation(null);
 }
 
 async function createCoreListFromRanking() {
-  if (!canManageProductionRecords()) { alert(t("err_perm")); return; }
-  var btn = document.getElementById("btn-create-core-list-from-ranking");
-  if (btn) btn.disabled = true;
+  if (!canManageProductionRecords() || !canViewManufacturingReport()) { alert(t("err_perm")); return; }
+  if (coreListMode !== "collection" || !coreManagementDataReady || !coreCollectionReportRank || coreCollectionCreating) return;
+  var targetText = prompt("商品に紐づいた在庫と2025年の順位を使い、目標に届かない未登録品番を探します。1品番あたりの目標台数を入力してください。", "1");
+  if (targetText == null) return;
+  var targetQty = Number(targetText);
+  if (!/^\d+$/.test(targetText.trim()) || !Number.isInteger(targetQty) || targetQty < 1 || targetQty > 2147483647) {
+    alert("目標数は1以上の整数で入力してください。");
+    return;
+  }
+  coreCollectionCreating = true;
+  var button = document.getElementById("btn-create-core-list-from-ranking");
+  button.disabled = true;
+  var owner = currentUser?.id;
+  var expectedLoad = coreManagementLoadSeq + 1;
   try {
-    var targetText = prompt("製造ランキングの商品について、確保したいコア在庫数を入力してください。", "1");
-    if (targetText == null) return;
-    var targetQty = parseInt(targetText, 10);
-    if (isNaN(targetQty) || targetQty < 0) {
-      alert("目標数は0以上の整数で入力してください。");
-      return;
-    }
-    var existing = await sb.from("core_collection_list_items").select("dkd_shohin_id, sort_order").limit(10000);
-    if (existing.error) { alert(t("msg_part_err") + ": " + existing.error.message); return; }
-    var existingIds = {};
-    var nextSortOrder = 1;
-    (existing.data || []).forEach(function(row) {
-      if (row.dkd_shohin_id != null) existingIds[String(row.dkd_shohin_id)] = true;
-      var sortOrder = parseInt(row.sort_order, 10);
-      if (!isNaN(sortOrder)) nextSortOrder = Math.max(nextSortOrder, sortOrder + 1);
-    });
-    var src = await sb.from("production_instruction_candidates")
-      .select("dkd_shohin_id, priority_rank, source_year")
-      .not("dkd_shohin_id", "is", null)
-      .order("priority_rank", { ascending: true })
-      .limit(500);
-    if (src.error) { alert(t("msg_part_err") + ": " + src.error.message); return; }
-    var rows = [];
-    (src.data || []).forEach(function(row) {
-      var key = String(row.dkd_shohin_id);
-      if (existingIds[key]) return;
-      existingIds[key] = true;
-      var rank = parseInt(row.priority_rank || 0, 10) || 0;
-      rows.push({
-        dkd_shohin_id: row.dkd_shohin_id,
-        target_quantity: targetQty,
-        priority: rank > 0 && rank <= 30 ? "high" : (rank > 100 ? "low" : "normal"),
-        status: "collecting",
-        source_hint: "製造ランキング",
-        sort_order: nextSortOrder++,
-        source_type: "production",
-        source_rank: rank || null,
-        shipment_count: null,
-        note: [rank ? "順位 #" + rank : "", row.source_year ? String(row.source_year) + "年度" : ""].filter(Boolean).join(" / ") || null,
-        created_by: currentUser ? currentUser.id : null,
-        updated_by: currentUser ? currentUser.id : null,
-        updated_at: new Date().toISOString()
-      });
-    });
-    if (!rows.length) {
-      alert(t("core_list_no_ranking_source"));
-      return;
-    }
-    var ins = await sb.from("core_collection_list_items").insert(rows).select("id");
-    if (ins.error) { alert(t("msg_part_err") + ": " + ins.error.message); return; }
-    await writeLog("insert", "core_collection_list_items", null, "ranking import", null, { count: rows.length, target_quantity: targetQty });
-    alert("製造ランキングから収集対象を" + rows.length + "件追加しました。現在庫が目標数以上の商品は「目標数あり」で確認できます。");
     await loadCoreCollectionList();
+    if (expectedLoad !== coreManagementLoadSeq || coreListMode !== "collection" || currentUser?.id !== owner ||
+        !coreManagementDataReady || !coreCollectionReportRank) return;
+    var existingIds = new Set(coreCollectionRows.map(function(row) { return String(row.dkd_shohin_id); }));
+    var nextOrder = coreCollectionRows.reduce(function(order, row) {
+      return Math.max(order, (Number(row.sort_order) || 0) + 1);
+    }, 1);
+    var rows = Object.keys(coreCollectionStockMap).filter(function(id) {
+      return !existingIds.has(id) && coreCollectionStockMap[id].quantity < targetQty;
+    }).map(function(id) {
+      return { id: Number(id), ranking: coreCollectionRank({ dkd_shohin_id: id }) };
+    }).filter(function(candidate) { return candidate.ranking; }).sort(function(a, b) {
+      return a.ranking.rank - b.ranking.rank || a.id - b.id;
+    }).map(function(candidate) {
+      var rank = candidate.ranking.rank;
+      return {
+        dkd_shohin_id: candidate.id,
+        target_quantity: targetQty,
+        status: "collecting",
+        source_hint: "2025出荷ランキング",
+        sort_order: nextOrder++,
+        source_type: "ranking",
+        source_rank: rank,
+        shipment_count: candidate.ranking.shipment,
+        created_by: owner,
+        updated_by: owner
+      };
+    });
+    if (!rows.length) { alert("現在庫と目標数を確認した結果、新たに追加する品番はありません。"); return; }
+    if (!confirm("2025年の順位がある登録済み在庫から、目標 " + targetQty + " 台に満たない " + rows.length + " 品番を収集対象に追加しますか？")) return;
+    var result = await sb.from("core_collection_list_items")
+      .upsert(rows, { onConflict: "dkd_shohin_id", ignoreDuplicates: true }).select("id");
+    if (result.error) throw result.error;
+    var count = (result.data || []).length;
+    if (count) await writeLog("insert", "core_collection_list_items", null, "2025 ranking import", null, { count: count, target_quantity: targetQty });
+    if (expectedLoad !== coreManagementLoadSeq || coreListMode !== "collection" || currentUser?.id !== owner) return;
+    alert("2025年ランキングから " + count + " 品番を追加しました。");
+    await loadCoreCollectionList();
+  } catch (error) {
+    alert(t("msg_part_err") + ": " + (error.message || ""));
   } finally {
-    if (btn) btn.disabled = false;
+    coreCollectionCreating = false;
+    button.disabled = coreListMode !== "collection" || !coreManagementDataReady || !coreCollectionReportRank;
   }
 }
 
-async function deleteCoreListRow(id) {
-  if (!canManageProductionRecords()) { alert(t("err_perm")); return; }
-  var row = coreListMgmtRows.find(function(x) { return x.id === id; });
-  if (!confirm(t("core_list_delete_confirm"))) return;
-  var r = await sb.from("production_core_list_entries").delete().eq("id", id);
-  if (r.error) { alert(t("msg_part_err") + ": " + r.error.message); return; }
-  await writeLog("delete", "production_core_list_entries", id, row ? ("DKD " + row.dkd_shohin_id) : String(id), row, null);
-  productionLoaded = false;
-  await loadCoreListMgmt();
+function showCoreListDeleteConfirmation(row) {
+  coreListDeleteTarget = row;
+  document.getElementById("core-list-form-fields").hidden = Boolean(row);
+  document.getElementById("core-list-delete-panel").hidden = !row;
+  document.getElementById("core-list-delete-ack").checked = false;
+  document.getElementById("btn-core-list-delete-confirm").disabled = true;
+  document.getElementById("core-list-delete-error").textContent = "";
+  if (row) {
+    document.getElementById("core-list-form-title").textContent = t("core_list_delete_confirm");
+    document.getElementById("core-list-delete-part").textContent = row.core_part_number || ("DKD " + row.dkd_shohin_id);
+    document.getElementById("core-list-delete-pallet").textContent = row.location || "-";
+    document.getElementById("core-list-delete-quantity").textContent = row.quantity;
+    document.getElementById("btn-core-list-delete-back").focus();
+  }
+}
+
+function openCoreListDeleteConfirmation() {
+  if (!canManageProductionRecords() || coreListFormMode !== "edit") return;
+  var id = Number(document.getElementById("clf-id").value);
+  var row = coreListMgmtRows.find(function(entry) { return entry.id === id; });
+  if (row) showCoreListDeleteConfirmation(row);
+}
+
+async function deleteCoreListRow() {
+  var row = coreListDeleteTarget;
+  var acknowledge = document.getElementById("core-list-delete-ack");
+  var button = document.getElementById("btn-core-list-delete-confirm");
+  if (!row || !acknowledge.checked || button.disabled || !canManageProductionRecords()) return;
+  var back = document.getElementById("btn-core-list-delete-back");
+  var error = document.getElementById("core-list-delete-error");
+  error.textContent = "";
+  acknowledge.disabled = button.disabled = back.disabled = true;
+  try {
+    var request = sb.from("production_core_list_entries").delete().eq("id", row.id).is("replaced_at", null);
+    request = row.updated_at == null ? request.is("updated_at", null) : request.eq("updated_at", row.updated_at);
+    var result = await request.select("id");
+    if (result.error) throw result.error;
+    if (!result.data || result.data.length !== 1) {
+      error.textContent = t("core_inventory_delete_changed");
+      return;
+    }
+    closeCoreListForm();
+    productionLoaded = false;
+    await writeLog("delete", "production_core_list_entries", row.id, "DKD " + row.dkd_shohin_id, row, null);
+    await loadCoreListMgmt();
+  } catch (failure) {
+    error.textContent = t("msg_part_err") + ": " + failure.message;
+  } finally {
+    acknowledge.checked = false;
+    acknowledge.disabled = back.disabled = false;
+    button.disabled = true;
+  }
 }
 
 // =============================================
@@ -31789,13 +33212,39 @@ function configureProductKindStockMode(mode) {
 
 async function enterProductKindStockMgmt() {
   if (!canViewProductKindStockMgmt()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("product-kind-stock-mgmt", false)) return;
   showScreen("product-kind-stock-mgmt");
   configureProductKindStockMode();
+  if (window.DcatsWarehouseStock) window.DcatsWarehouseStock.refreshAccess();
   var saveBtn = document.getElementById("btn-product-kind-stock-save");
   if (saveBtn) setCspStyle(saveBtn, "display", canEditProductKindStockMgmt() ? "" : "none");
-  if (window.DcatsContainerStockImport) window.DcatsContainerStockImport.enter();
+  var containerBtn = document.getElementById("btn-container-stock-open");
+  if (containerBtn) containerBtn.hidden = !canEditProductKindStockMgmt();
   await populateProductKindStockCategoryOptions();
   renderProductKindStockEmpty();
+}
+
+function enterContainerStockMgmt() {
+  if (!canViewProductKindStockMgmt() || !canEditProductKindStockMgmt()) { alert(t("err_perm")); return; }
+  var importer = window.DcatsContainerStockImport;
+  if (!importer || !importer.canLeave()) return;
+  showScreen("container-stock-mgmt");
+  updateAllHeaders();
+  importer.enter();
+  var back = document.getElementById("btn-back-container-stock-mgmt");
+  if (back) back.focus();
+}
+
+function returnFromContainerStockMgmt() {
+  var importer = window.DcatsContainerStockImport;
+  if (importer && !importer.canLeave()) return;
+  if (!canViewProductKindStockMgmt()) { returnToMenuFresh(); return; }
+  showScreen("product-kind-stock-mgmt");
+  var launcher = document.getElementById("btn-container-stock-open");
+  if (launcher) {
+    launcher.hidden = !canEditProductKindStockMgmt();
+    if (!launcher.hidden) launcher.focus();
+  }
 }
 
 function renderProductKindStockEmpty() {
@@ -32683,6 +34132,7 @@ async function saveProductKindStockChanges() {
 // =============================================
 async function enterManufacturingCostMgmt() {
   if (!canViewManufacturingCostMgmt()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("manufacturing-cost-mgmt", false)) return;
   showScreen("manufacturing-cost-mgmt");
   updateAllHeaders();
   setManufacturingCostEditControls();
@@ -34652,6 +36102,7 @@ async function deleteManufacturingCostList() {
 // =============================================
 async function enterFinishedLabelMgmt(options) {
   if (!canViewFinishedLabelMgmt()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("finished-label-mgmt", options && (options.product || options.mode))) return;
   showScreen("finished-label-mgmt");
   probeFinishedLabelSetup({ selectGuide: false }).catch(function() {});
   renderFinishedLabelCategoryOptions();
@@ -35480,6 +36931,10 @@ function setFinishedLabelPrintMode(mode) {
   mode = mode === "station" ? "station" : (mode === "box" ? "box" : (mode === "product" ? "product" : ""));
   var previousMode = finishedLabelPrintMode;
   finishedLabelPrintMode = mode;
+  if (previousMode !== mode) {
+    finishedLabelSearchRequestSeq += 1;
+    finishedLabelProductSelectionSeq += 1;
+  }
   if (previousMode === "station" && mode !== "station") pauseFinishedLabelPrintStation();
   if (!mode || (previousMode && previousMode !== mode)) {
     finishedLabelLastIssuedRecord = null;
@@ -35508,6 +36963,7 @@ function setFinishedLabelPrintMode(mode) {
   document.querySelectorAll("[data-finished-label-box-only]").forEach(function(el) {
     el.hidden = mode !== "box";
   });
+  renderFinishedLabelStockOption(previousMode !== mode);
   var title = document.getElementById("finished-label-screen-title");
   var badge = document.getElementById("finished-label-mode-badge");
   var searchTitle = document.getElementById("finished-label-product-search-title");
@@ -35548,6 +37004,9 @@ function renderFinishedLabelEmpty() {
   finishedLabelProductReadinessMap = {};
   finishedLabelBoxReadinessMap = {};
   finishedLabelVisibleLimit = FINISHED_LABEL_PAGE_STEP;
+  finishedLabelProductPage = 0;
+  var pager = document.getElementById("finished-label-product-pages");
+  if (pager) pager.hidden = true;
   finishedLabelSearchRequestSeq += 1;
   finishedLabelInstructionMap = {};
   finishedLabelSelectedProduct = null;
@@ -35713,7 +37172,7 @@ function isFinishedLabelSearchCompositionFollowup(event, composing) {
   return !!composing || !!event.isComposing || inputType === "insertCompositionText" || inputType === "insertText";
 }
 
-async function loadFinishedLabelProductReadiness(products) {
+async function loadFinishedLabelProductReadiness(products, requestSeq) {
   var readinessMap = {};
   var ids = Array.from(new Set((products || []).map(function(product) {
     return parseInt(productDkdId(product), 10);
@@ -35725,11 +37184,12 @@ async function loadFinishedLabelProductReadiness(products) {
   var requests = await Promise.all([
     fetchProductionPartRegistrationCountMap(products),
     sb.from("core_product_variants")
-      .select("dkd_shohin_id,product_kind")
+      .select("dkd_shohin_id,product_kind,product_variant_id,stock_qty,stock_location")
       .in("dkd_shohin_id", ids)
       .in("product_kind", ["rebuilt", "aftermarket_new"])
       .eq("is_active", true)
-      .limit(Math.max(ids.length * 3, 100))
+      .order("product_variant_id")
+      .limit(1000)
   ]);
   var componentCounts = requests[0] && requests[0].byKind || {};
   var variantResult = requests[1] || {};
@@ -35740,21 +37200,64 @@ async function loadFinishedLabelProductReadiness(products) {
       rebuiltComponents: parseInt(counts.rebuilt || 0, 10) || 0,
       aftermarketNewComponents: parseInt(counts.aftermarket_new || 0, 10) || 0,
       hasRebuiltVariant: false,
-      hasAftermarketNewVariant: false
+      hasAftermarketNewVariant: false,
+      hasStock: false,
+      stockLocation: ""
     };
   });
   if (variantResult.error) {
     console.warn("finished label product-kind readiness lookup failed", variantResult.error);
     return readinessMap;
   }
+  var stockedVariants = [];
   (variantResult.data || []).forEach(function(row) {
     var readiness = readinessMap[String(row.dkd_shohin_id || "")];
     if (!readiness) return;
     var kind = normalizeProductKind(row.product_kind);
     if (kind === "rebuilt") readiness.hasRebuiltVariant = true;
     if (kind === "aftermarket_new") readiness.hasAftermarketNewVariant = true;
+    if (Number(row.stock_qty) > 0) {
+      readiness.hasStock = true;
+      stockedVariants.push(row);
+    }
   });
+  // Only products whose relative order can change need a shelf lookup.
+  var hasStockTie = new Set(stockedVariants.map(function(row) { return row.dkd_shohin_id; })).size > 1;
+  var cursor = 0;
+  async function loadLocations() {
+    while (cursor < stockedVariants.length && requestSeq === finishedLabelSearchRequestSeq) {
+      var row = stockedVariants[cursor++];
+      var location = String(row.stock_location || "").trim();
+      if (hasStockTie) {
+        try {
+          var result = await sb.rpc("get_warehouse_stock", {
+            p_query: "", p_kind: "", p_location: "", p_variant_id: row.product_variant_id, p_offset: 0, p_limit: 1
+          });
+          if (!result.error && result.data && Array.isArray(result.data.positions)) {
+            var locations = result.data.positions.filter(function(position) {
+              return String(position.variant_id) === String(row.product_variant_id) &&
+                Number(position.quantity) > 0 && !position.needs_recount;
+            }).map(function(position) {
+              return String(position.location || "").trim();
+            }).filter(Boolean).sort(compareFinishedLabelLocations);
+            if (locations.length) location = locations[0];
+          }
+        } catch (error) {
+          console.warn("finished label warehouse location lookup failed", error);
+        }
+      }
+      var readiness = readinessMap[String(row.dkd_shohin_id)];
+      if (location && (!readiness.stockLocation || compareFinishedLabelLocations(location, readiness.stockLocation) < 0)) {
+        readiness.stockLocation = location;
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(4, stockedVariants.length) }, loadLocations));
   return readinessMap;
+}
+
+function compareFinishedLabelLocations(a, b) {
+  return a.localeCompare(b, "ja", { numeric: true, sensitivity: "base" });
 }
 
 async function loadFinishedBoxLabelProductReadiness(products) {
@@ -35813,6 +37316,18 @@ function sortFinishedLabelProducts(products) {
   return (products || []).map(function(product, index) {
     return { product: product, index: index };
   }).sort(function(a, b) {
+    if (finishedLabelPrintMode === "product") {
+      var aStock = finishedLabelProductReadinessMap[String(productDkdId(a.product))] || {};
+      var bStock = finishedLabelProductReadinessMap[String(productDkdId(b.product))] || {};
+      var stockDiff = Number(!!bStock.hasStock) - Number(!!aStock.hasStock);
+      if (stockDiff) return stockDiff;
+      var locationDiff = Number(!!bStock.stockLocation) - Number(!!aStock.stockLocation);
+      if (locationDiff) return locationDiff;
+      if (aStock.stockLocation && bStock.stockLocation) {
+        var locationOrder = compareFinishedLabelLocations(aStock.stockLocation, bStock.stockLocation);
+        if (locationOrder) return locationOrder;
+      }
+    }
     var priorityDiff = finishedLabelProductPriority(a.product) - finishedLabelProductPriority(b.product);
     if (priorityDiff) return priorityDiff;
     if (finishedLabelPrintMode === "box") {
@@ -35833,8 +37348,10 @@ function sortFinishedLabelProducts(products) {
   });
 }
 
-async function searchFinishedLabelProducts() {
+async function searchFinishedLabelProducts(options) {
   if (!canViewFinishedLabelMgmt()) return;
+  var productMode = finishedLabelPrintMode === "product";
+  if (productMode) renderFinishedLabelEmpty();
   var requestSeq = ++finishedLabelSearchRequestSeq;
   finishedLabelVisibleLimit = FINISHED_LABEL_PAGE_STEP;
   finishedLabelProductReadinessMap = {};
@@ -35845,7 +37362,7 @@ async function searchFinishedLabelProducts() {
   var count = document.getElementById("finished-label-search-count");
   var loadMore = document.getElementById("btn-finished-label-load-more");
   if (!q && finishedLabelPrintMode !== "box") {
-    renderFinishedLabelEmpty();
+    if (!productMode) renderFinishedLabelEmpty();
     if (qEl) qEl.focus();
     return;
   }
@@ -35857,6 +37374,7 @@ async function searchFinishedLabelProducts() {
   finishedLabelInstructionMap = {};
   if (q) {
     var pr = await fetchCoreProductMasterMatches(q, null, 80);
+    if (requestSeq !== finishedLabelSearchRequestSeq) return;
     if (pr.error) {
       if (results) results.innerHTML = "<div class='empty'>" + esc(pr.error.message || t("msg_part_err")) + "</div>";
       if (count) count.textContent = "";
@@ -35876,7 +37394,7 @@ async function searchFinishedLabelProducts() {
   try {
     readinessMap = finishedLabelPrintMode === "box"
       ? await loadFinishedBoxLabelProductReadiness(visibleProducts)
-      : await loadFinishedLabelProductReadiness(visibleProducts);
+      : await loadFinishedLabelProductReadiness(visibleProducts, requestSeq);
   } catch (error) {
     console.warn("finished label readiness ranking failed", error);
   }
@@ -35884,7 +37402,11 @@ async function searchFinishedLabelProducts() {
   if (finishedLabelPrintMode === "box") finishedLabelBoxReadinessMap = readinessMap;
   else finishedLabelProductReadinessMap = readinessMap;
   finishedLabelProducts = sortFinishedLabelProducts(visibleProducts);
-  renderFinishedLabelResults();
+  if (productMode && finishedLabelProducts.length && (!options || options.autoSelect !== false)) {
+    await selectFinishedLabelProduct(finishedLabelProducts[0], null);
+  } else {
+    renderFinishedLabelResults();
+  }
 }
 
 async function fetchFinishedBoxLabelProducts() {
@@ -35959,6 +37481,25 @@ function renderFinishedLabelResults() {
   var visibleProducts = finishedLabelProducts.slice(0, finishedLabelVisibleLimit);
   if (count) count.textContent = tf("finished_label_count_summary", { shown: visibleProducts.length, total: finishedLabelProducts.length });
   if (loadMore) loadMore.hidden = visibleProducts.length >= finishedLabelProducts.length;
+  var productMode = finishedLabelPrintMode === "product";
+  var pager = document.getElementById("finished-label-product-pages");
+  if (productMode && finishedLabelProducts.length) {
+    var pageSize = finishedLabelProductPageSize();
+    var start = finishedLabelProductPage * pageSize;
+    visibleProducts = finishedLabelProducts.slice(start, start + pageSize);
+    if (count) count.textContent = tf("finished_label_count_summary", {
+      shown: visibleProducts.length === 1 ? start + 1 : (start + 1) + "–" + (start + visibleProducts.length),
+      total: finishedLabelProducts.length
+    });
+    if (pager) {
+      pager.hidden = finishedLabelProducts.length <= pageSize;
+      pager.firstElementChild.disabled = start === 0;
+      pager.lastElementChild.disabled = start + pageSize >= finishedLabelProducts.length;
+    }
+    if (loadMore) loadMore.hidden = true;
+  } else if (pager) {
+    pager.hidden = true;
+  }
   if (!results) return;
   if (!finishedLabelProducts.length) {
     results.innerHTML = "<div class='empty'>" + esc(t("no_results")) + "</div>";
@@ -35975,9 +37516,13 @@ function renderFinishedLabelResults() {
     var hasBoxHistory = !!boxReadiness && Number(boxReadiness.issueCount) > 0;
     var active = selectedId && String(selectedId) === String(dkdId) ? " active" : "";
     var title = p.gltek_part_number || p.genuine_part_number || p.manufacturer_part_number || p.daiko_part_number || ("DKD " + dkdId);
-    html += "<button type='button' class='finished-label-result" + active + ((finishedLabelPrintMode === "box" ? hasBoxHistory : hasBothComponentKinds) ? " priority" : "") + "' data-finished-label-dkd='" + esc(String(dkdId || "")) + "'>";
+    html += "<button type='button' class='finished-label-result" + active + ((finishedLabelPrintMode === "box" ? hasBoxHistory : hasBothComponentKinds) ? " priority" : "") + "' data-finished-label-dkd='" + esc(String(dkdId || "")) + "' aria-pressed='" + (active ? "true" : "false") + "'>";
     html += "<div class='finished-label-result-title'>" + esc(title || "-") + "</div>";
-    html += "<div class='finished-label-result-number-row'><span class='finished-label-result-number-label'>" + esc(t("f_genuine_pn")) + "</span><span class='finished-label-result-number-value'>" + esc(p.genuine_part_number || "-") + "</span></div>";
+    html += "<div class='finished-label-result-numbers'><div class='finished-label-result-number-row'><span class='finished-label-result-number-label'>" + esc(t("f_genuine_pn")) + "</span><span class='finished-label-result-number-value'>" + esc(p.genuine_part_number || "-") + "</span></div>";
+    if (productMode && p.genuine_part_number_2) {
+      html += "<div class='finished-label-result-number-row'><span class='finished-label-result-number-label'>" + esc(t("f_genuine_pn2")) + "</span><span class='finished-label-result-number-value'>" + esc(p.genuine_part_number_2) + "</span></div>";
+    }
+    html += "</div>";
     if (finishedLabelPrintMode === "box" && boxReadiness) {
       var boxStatus = hasBoxHistory
         ? tf("finished_box_label_ready_summary", { n: boxReadiness.issueCount, date: formatDateTime(boxReadiness.latestIssuedAt) })
@@ -35996,8 +37541,27 @@ function renderFinishedLabelResults() {
       var id = btn.dataset.finishedLabelDkd;
       var p = finishedLabelProducts.find(function(row) { return String(productDkdId(row)) === String(id); });
       selectFinishedLabelProduct(p, finishedLabelInstructionMap[String(id)] || null);
+      if (productMode) {
+        var activeButton = results.querySelector("[data-finished-label-dkd][aria-pressed='true']");
+        if (activeButton) activeButton.focus({ preventScroll: true });
+      }
     });
   });
+}
+
+function finishedLabelProductPageSize() {
+  return window.matchMedia("(min-width: 1180px) and (min-height: 880px)").matches ? 2 : 1;
+}
+
+function changeFinishedLabelProductPage(direction) {
+  var page = finishedLabelProductPage + direction;
+  if (page < 0 || page * finishedLabelProductPageSize() >= finishedLabelProducts.length) return;
+  finishedLabelProductPage = page;
+  renderFinishedLabelResults();
+  var pager = document.getElementById("finished-label-product-pages");
+  if (document.activeElement && pager.contains(document.activeElement) && document.activeElement.disabled) {
+    (direction > 0 ? pager.firstElementChild : pager.lastElementChild).focus();
+  }
 }
 
 function showMoreFinishedLabelProducts() {
@@ -36018,6 +37582,7 @@ async function selectFinishedLabelProduct(product, instruction) {
   finishedLabelSelectedComponentIds = {};
   finishedLabelSelectedProduct = product;
   var componentRequestSeq = null;
+  if (finishedLabelPrintMode === "product") renderFinishedLabelResults();
   renderFinishedLabelComponents();
   try {
     var full = product;
@@ -36026,7 +37591,7 @@ async function selectFinishedLabelProduct(product, instruction) {
     if (!r.error && r.data) full = Object.assign({}, product, normalizeCoreProductFastRows([r.data])[0]);
     finishedLabelSelectedProduct = full;
     finishedLabelSelectedInstruction = instruction || finishedLabelInstructionMap[String(dkdId)] || null;
-    renderFinishedLabelResults();
+    if (finishedLabelPrintMode !== "product") renderFinishedLabelResults();
     renderFinishedLabelSelectedSummary(full);
     resetFinishedLabelForm(full, finishedLabelSelectedInstruction);
     await loadFinishedLabelVariants(dkdId);
@@ -36055,19 +37620,66 @@ async function selectFinishedLabelProduct(product, instruction) {
   }
 }
 
+var finishedLabelSummaryObserver = null;
+
 function renderFinishedLabelSelectedSummary(product) {
   var wrap = document.getElementById("finished-label-selected-summary");
   if (!wrap) return;
   var cells = [
-    [t("finished_label_g_part_number"), product && product.gltek_part_number],
-    [t("f_genuine_pn"), product && product.genuine_part_number],
-    [t("f_mfr_pn"), product && product.manufacturer_part_number],
+    [t("finished_label_g_part_number"), product && product.gltek_part_number, true],
+    [t("f_genuine_pn"), product && product.genuine_part_number, true],
+    [t("f_mfr_pn"), product && product.manufacturer_part_number, true],
     [t("f_manufacturer"), product && product.manufacturer],
     [t("product_kind_section"), product && product.default_product_kind ? productKindLabel(product.default_product_kind) : "-"]
   ];
   wrap.innerHTML = cells.map(function(row) {
-    return "<div class='finished-label-selected-cell'><div class='finished-label-selected-label'>" + esc(row[0]) + "</div><div class='finished-label-selected-value'>" + esc(row[1] || "-") + "</div></div>";
+    var value = esc(row[1] || "-");
+    if (row[2]) {
+      value = "<span class='finished-label-selected-number'>" + value + "</span>" +
+        "<button type='button' class='finished-label-selected-number-view' hidden>" + esc(t("finished_label_view_full_number")) + "</button>";
+    }
+    return "<div class='finished-label-selected-cell" + (row[2] ? " finished-label-selected-part" : "") + "'>" +
+      "<div class='finished-label-selected-label'>" + esc(row[0]) + "</div><div class='finished-label-selected-value'>" + value + "</div></div>";
   }).join("");
+  wrap.querySelectorAll(".finished-label-selected-part").forEach(function(cell) {
+    cell.querySelector("button").addEventListener("click", function() {
+      var dialog = document.getElementById("finished-label-number-dialog");
+      dialog.querySelector("h3").textContent = cell.querySelector(".finished-label-selected-label").textContent;
+      dialog.querySelector("p").textContent = cell.querySelector(".finished-label-selected-number").textContent;
+      dialog.showModal();
+    });
+  });
+  fitFinishedLabelSelectedNumbers(wrap);
+  if (!finishedLabelSummaryObserver && typeof ResizeObserver === "function") {
+    var previousWidth;
+    finishedLabelSummaryObserver = new ResizeObserver(function(entries) {
+      var width = entries[0].contentRect.width;
+      if (width === previousWidth) return;
+      previousWidth = width;
+      fitFinishedLabelSelectedNumbers(wrap);
+    });
+    finishedLabelSummaryObserver.observe(wrap);
+    if (document.fonts) document.fonts.ready.then(function() { fitFinishedLabelSelectedNumbers(wrap); });
+  }
+}
+
+function fitFinishedLabelSelectedNumbers(wrap) {
+  var width = wrap.clientWidth;
+  if (!width) return;
+  var cells = Array.from(wrap.querySelectorAll(".finished-label-selected-part"));
+  cells.forEach(function(cell) {
+    cell.querySelector(".finished-label-selected-number").hidden = false;
+    cell.querySelector("button").hidden = true;
+  });
+  var tooWide = cells.map(function(cell) {
+    var box = cell.querySelector(".finished-label-selected-value");
+    var chromeWidth = cell.getBoundingClientRect().width - box.getBoundingClientRect().width;
+    return box.firstElementChild.getBoundingClientRect().width + chromeWidth > width;
+  });
+  cells.forEach(function(cell, index) {
+    cell.querySelector(".finished-label-selected-number").hidden = tooWide[index];
+    cell.querySelector("button").hidden = !tooWide[index];
+  });
 }
 
 function updateFinishedLabelSaveButton(product) {
@@ -36084,12 +37696,32 @@ function updateFinishedLabelSaveButton(product) {
   save.setAttribute("aria-disabled", save.disabled ? "true" : "false");
 }
 
+function renderFinishedLabelStockOption(reset) {
+  var field = document.getElementById("finished-label-stock-option");
+  var input = document.getElementById("finished-label-skip-stock");
+  if (!field || !input) return;
+  var company = userCompanyCode(userProfile);
+  var owner = String(currentUser && currentUser.id || "") + ":" + company;
+  var isDaiko = company === "daiko";
+  if (reset || field.dataset.owner !== owner) input.checked = isDaiko;
+  field.dataset.owner = owner;
+  field.hidden = !isDaiko;
+  input.disabled = !isDaiko || !canEditFinishedLabelMgmt();
+}
+
+function finishedLabelSkipStock() {
+  if (userCompanyCode(userProfile) !== "daiko") return false;
+  var input = document.getElementById("finished-label-skip-stock");
+  return !input || input.checked;
+}
+
 function resetFinishedLabelForm(product, instruction) {
+  renderFinishedLabelStockOption(false);
   finishedLabelLastIssuedRecord = null;
   finishedLabelSelectedHistoryId = null;
   setFinishedLabelValue("finished-label-issue-code", t("finished_label_issue_pending"));
   setFinishedLabelValue("finished-label-instruction-id", instruction && instruction.id ? String(instruction.id) : "");
-  setFinishedLabelValue("finished-label-quantity", instruction && instruction.merged_source_count ? String(instruction.merged_source_count) : "1");
+  setFinishedLabelValue("finished-label-quantity", "1");
   setFinishedLabelValue("finished-label-print-count", "1");
   setFinishedLabelValue("finished-label-assembly-staff", "");
   setFinishedLabelValue("finished-label-inspection-staff", "");
@@ -36438,6 +38070,7 @@ function readFinishedLabelRecord() {
     shelfNo: finishedLabelValue("finished-label-shelf-no"),
     memo: finishedLabelValue("finished-label-memo"),
     printCount: 1,
+    skipStock: finishedLabelSkipStock(),
     issuedAt: null,
     units: [],
     components: readFinishedLabelComponents()
@@ -36627,7 +38260,7 @@ async function saveFinishedLabelIssue() {
       printWindow.document.write("<!doctype html><meta charset='utf-8'><title>D-CATS</title><p>" + esc(t("finished_label_issuing")) + "</p>");
       printWindow.document.close();
     }
-    var r = await sb.rpc("issue_finished_product_serials", {
+    var issueArgs = {
       target_dkd_shohin_id: record.dkdShohinId,
       target_product_variant_id: record.productVariantId,
       target_quantity: record.quantity,
@@ -36638,7 +38271,14 @@ async function saveFinishedLabelIssue() {
       target_shelf_no: record.shelfNo || null,
       target_memo: record.memo || null,
       target_components: record.components
-    });
+    };
+    var r;
+    if (record.skipStock) {
+      issueArgs.target_skip_stock = true;
+      r = await sb.rpc("issue_finished_product_serials_with_stock_option", issueArgs);
+    } else {
+      r = await sb.rpc("issue_finished_product_serials", issueArgs);
+    }
     if (r.error) throw r.error;
     var issued = r.data || {};
     record.issueCode = issued.issue_code || "";
@@ -36646,6 +38286,7 @@ async function saveFinishedLabelIssue() {
     record.issuedAt = issued.issued_at ? new Date(issued.issued_at) : new Date();
     record.quantity = Number(issued.quantity) || record.quantity;
     record.stockQtyAfter = Number(issued.stock_qty_after);
+    record.stockPosted = issued.stock_posted !== false;
     record.units = Array.isArray(issued.units) ? issued.units : [];
     if (!record.units.length) throw new Error("Manufacturing serial response was empty");
     finishedLabelLastIssuedRecord = record;
@@ -36661,7 +38302,8 @@ async function saveFinishedLabelIssue() {
       quantity: record.quantity,
       first_serial: issued.first_serial,
       last_serial: issued.last_serial,
-      stock_qty_after: issued.stock_qty_after
+      stock_qty_after: issued.stock_qty_after,
+      stock_posted: record.stockPosted
     });
     var queueResult = null;
     var queueError = null;
@@ -36686,8 +38328,6 @@ async function saveFinishedLabelIssue() {
       } else {
         showDcatsAutoNotice(t("finished_label_mobile_queue_saved"));
       }
-    } else {
-      alert(t("finished_label_saved"));
     }
     await loadFinishedLabelHistory();
   } catch (e) {
@@ -36710,9 +38350,9 @@ function renderFinishedLabelIssuedResult(record) {
   var serials = record.units.map(function(unit) {
     return "<span class='finished-label-serial-chip'>" + esc(unit.manufacturing_serial || "") + "</span>";
   }).join("");
-  var stockText = Number.isFinite(record.stockQtyAfter)
-    ? tf("finished_label_stock_after", { n: record.stockQtyAfter })
-    : "";
+  var stockText = record.stockPosted === false
+    ? t("finished_label_stock_not_posted")
+    : (Number.isFinite(record.stockQtyAfter) ? tf("finished_label_stock_after", { n: record.stockQtyAfter }) : "");
   var isBox = finishedLabelPrintMode === "box";
   var mobileQueue = !isBox && finishedLabelUsesRemotePrintQueue();
   var sourceRow = record.sourceHistoryRow || null;
@@ -36966,6 +38606,7 @@ function renderFinishedLabelHistory() {
   var html = "";
   finishedLabelHistoryRows.forEach(function(row) {
     var comps = Array.isArray(row.components_json) ? row.components_json.length : 0;
+    var stockNotice = row.stock_posted === false ? t("finished_label_stock_not_posted") : "";
     var units = Array.isArray(row.finishedUnits) ? row.finishedUnits : [];
     var serialText = units.length ? units[0].manufacturing_serial : "-";
     if (units.length > 1) serialText += " ～ " + units[units.length - 1].manufacturing_serial;
@@ -36996,7 +38637,7 @@ function renderFinishedLabelHistory() {
     html += "<div class='finished-label-history-main'><span class='finished-label-history-serial'>" + esc(serialText) + "</span><div class='finished-label-history-actions'>" + actionHtml + "</div></div>";
     html += "<dl class='finished-label-history-part-numbers'><div><dt>" + esc(t("f_genuine_pn")) + "</dt><dd>" + esc(genuineNumbers.join(" / ") || "-") + "</dd></div>" +
       "<div><dt>" + esc(t("f_mfr_pn")) + "</dt><dd>" + esc(String(row.manufacturer_part_number || "").trim() || "-") + "</dd></div></dl>";
-    html += "<div class='finished-label-history-sub'>" + esc([formatDateTime(row.issued_at), row.product_category ? tCat(row.product_category) : "", productKindLabel(row.product_kind), tf("finished_label_history_units", { n: row.quantity }), tf("finished_label_history_parts", { n: comps })].filter(Boolean).join(" / ")) + "</div>";
+    html += "<div class='finished-label-history-sub'>" + esc([formatDateTime(row.issued_at), stockNotice, row.product_category ? tCat(row.product_category) : "", productKindLabel(row.product_kind), tf("finished_label_history_units", { n: row.quantity }), tf("finished_label_history_parts", { n: comps })].filter(Boolean).join(" / ")) + "</div>";
     html += statusHtml;
     html += "</div>";
   });
@@ -37025,6 +38666,7 @@ function finishedLabelRecordFromHistory(row, issued) {
   issued = issued || {};
   var units = Array.isArray(issued.units) ? issued.units : (row.finishedUnits || []);
   return {
+    stockPosted: row.stock_posted !== false,
     issueCode: row.issue_code,
     issueId: row.id,
     productionInstructionId: row.production_instruction_id,
@@ -38300,6 +39942,7 @@ function setFinishedShipmentDispatchLoadVisible(visible) {
 
 async function enterFinishedProductShipping(options) {
   if (!canManageFinishedProductShipping()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("finished-product-shipping", options && options.order)) return;
   options = options || {};
   closeFinishedShipmentCamera();
   finishedShipmentOrderContext = options.order || null;
@@ -38877,6 +40520,7 @@ async function cancelFinishedProductShipment(shipmentId) {
 // =============================================
 async function enterProductionRankingMgmt() {
   if (!canViewManufacturingReport()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("production-ranking-mgmt", false)) return;
   showScreen("production-ranking-mgmt");
   var addBtn = document.getElementById("btn-add-production-ranking");
   if (addBtn) setCspStyle(addBtn, "display", canEdit() ? "" : "none");
@@ -40452,6 +42096,7 @@ function renderKikanMgmtInitialState() {
 
 async function enterKikanMgmt() {
   if (!canManageCompatibility()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("kikan-mgmt", false)) return;
   showScreen("kikan-mgmt");
   var nameEl = document.getElementById("kikan-mgmt-username");
   if (nameEl) nameEl.textContent = userProfile.name || userProfile.email.split("@")[0];
@@ -40981,36 +42626,197 @@ async function removeKikanMember(groupId, dkdGokanId, keepFormOpen) {
 // =============================================
 async function enterLogs() {
   if (!canViewOperationLogs()) { showPermissionDenied("open_logs", "operation_logs"); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("logs", false)) return;
   showScreen("logs");
   await loadLogs();
 }
 
 async function loadLogs() {
+  if (!canViewOperationLogs()) { showPermissionDenied("open_logs", "operation_logs"); return; }
+  var actorId = userProfile && userProfile.id;
+  var list = document.getElementById("logs-list");
+  if (list) list.textContent = t("loading");
   var r = await sb.from("operation_logs").select("*").order("created_at", { ascending: false }).limit(200);
+  if (!canViewOperationLogs() || !userProfile || userProfile.id !== actorId) return;
+  if (r.error) {
+    if (list) list.textContent = operationLogText("ログを取得できませんでした。再度開いてください。", "Unable to load logs. Please reopen this screen.", "无法加载日志，请重新打开此页面。");
+    var count = document.getElementById("logs-count");
+    if (count) count.textContent = "";
+    return;
+  }
   renderLogs(r.data || []);
+}
+
+function operationLogText(ja, en, zh) {
+  return currentLang === "ja" ? ja : (currentLang === "zh" ? zh : en);
+}
+
+function operationLogFieldLabel(key) {
+  var labels = {
+    settings: ["コア査定設定","Core valuation settings","旧件评估设置"],
+    result: ["コア査定結果","Core valuation result","旧件评估结果"],
+    body_appraisal_jpy: ["コア本体評価額","Core body value","旧件本体估值"],
+    net_weight_kg: ["正味コア重量（kg）","Net core weight (kg)","旧件净重（kg）"],
+    weight_source: ["重量の確認元","Weight source","重量确认来源"],
+    component_bases: ["部品評価基準","Component value bases","零件估值基准"],
+    components: ["構成部品","Components","组成零件"],
+    base_jpy: ["評価基準単価","Valuation unit price","估值基准单价"],
+    appraisal_jpy: ["部品評価額","Component value","零件估值"],
+    recovery_rate: ["回収率","Recovery rate","回收率"],
+    variant_key: ["在庫区分ID","Variant ID","库存类别ID"],
+    parts_cost_jpy: ["部品原価","Parts cost","零件成本"],
+    labor_cost_jpy: ["工賃","Labor cost","人工费"],
+    total_cost_jpy: ["総原価","Total cost","总成本"],
+    component_quantity: ["使用数量","Usage quantity","使用数量"],
+    carrier_name: ["配送会社","Carrier","承运商"],
+    service_name: ["配送サービス","Service","配送服务"],
+    package_size_label: ["梱包サイズ","Package size","包装尺寸"],
+    prefecture_code: ["都道府県コード","Prefecture code","地区代码"],
+    price_jpy: ["価格", "Price", "价格"], base_price_jpy: ["基準価格", "Base price", "基准价格"],
+    rank1_price_jpy: ["売値区分1", "Sales price 1", "售价等级1"], unit_price_jpy: ["部品単価", "Unit price", "零件单价"],
+    unit_price: ["仕入単価", "Purchase unit price", "采购单价"], cost_unit_jpy: ["原価単価", "Cost per unit", "成本单价"],
+    core_charge_jpy: ["コア代金", "Core charge", "旧件费用"], core_cost_jpy: ["コア原価", "Core cost", "旧件成本"],
+    stock_qty: ["在庫数", "Stock quantity", "库存数量"],
+    stock_qty_before: ["保存前在庫数", "Stock before save", "保存前库存数量"], stock_qty_after: ["保存後在庫数", "Stock after save", "保存后库存数量"],
+    shared_price_updated_count: ["単価を更新した件数", "Unit prices updated", "单价更新数量"], stock_location: ["棚番", "Stock location", "货位"],
+    stock_note: ["在庫メモ", "Stock note", "库存备注"], core_stock_qty: ["コア在庫数", "Core stock", "旧件库存"],
+    core_pallet_no: ["コア棚番", "Core location", "旧件货位"], quantity: ["数量", "Quantity", "数量"],
+    rate_multiplier: ["掛率", "Price multiplier", "价格倍率"], customer_rate_multiplier: ["顧客掛率", "Customer multiplier", "客户倍率"],
+    amount_adjustment_jpy: ["加減算額", "Price adjustment", "价格调整额"], price_rank_code: ["売値区分", "Price rank", "售价等级"],
+    rounding_unit_jpy: ["丸め単位", "Rounding unit", "取整单位"], rounding_method: ["端数処理", "Rounding method", "取整方式"],
+    tax_included: ["税込設定", "Tax included", "含税设置"], tax_type: ["税区分", "Tax type", "税别"],
+    price_basis: ["価格根拠", "Price basis", "定价依据"], basis_note: ["価格の説明", "Price note", "价格说明"],
+    effective_start: ["適用開始日", "Effective from", "生效日期"], effective_end: ["適用終了日", "Effective until", "结束日期"],
+    effective_from: ["適用開始日", "Effective from", "生效日期"], is_current: ["現行価格", "Current price", "当前价格"],
+    core_return_required: ["コア返却要否", "Core return required", "是否退回旧件"],
+    genuine_part_number: ["純正品番", "Genuine part number", "原厂件号"], manufacturer_part_number: ["メーカー品番", "Manufacturer part number", "制造商件号"],
+    product_kind: ["商品区分", "Product kind", "商品类别"], dkd_shohin_id: ["商品ID", "Product ID", "商品ID"],
+    product_variant_id: ["在庫区分ID", "Variant ID", "库存类别ID"], part_number: ["品番", "Part number", "件号"],
+    part_name: ["部品名", "Part name", "零件名"], component_name: ["部品名", "Part name", "零件名"],
+    component_position: ["構成位置", "Component position", "零件位置"], replacement_rate: ["交換率", "Replacement rate", "更换率"],
+    procurement_category: ["調達区分", "Procurement category", "采购类别"], manufacturing_memo: ["製造メモ", "Manufacturing note", "制造备注"],
+    labor_rate_percent: ["工賃率", "Labor rate", "人工费率"], labor_amount_jpy: ["工賃", "Labor cost", "人工费"],
+    selling_expense_jpy: ["販売経費", "Selling expense", "销售费用"], packaging_cost_jpy: ["梱包費", "Packaging cost", "包装费"],
+    included_documents_cost_jpy: ["同梱書類費", "Document cost", "随附文件费"], transport_cost_jpy: ["輸送費", "Transport cost", "运输费"],
+    core_return_shipping_cost_jpy: ["コア返却送料", "Core return shipping cost", "旧件退回运费"],
+    standard_fee_jpy: ["基本送料", "Standard shipping fee", "基本运费"], remote_island_fee_jpy: ["離島送料", "Remote island fee", "离岛运费"],
+    shipping_fee_jpy: ["送料", "Shipping fee", "运费"], shipping_charge_rule: ["送料請求ルール", "Shipping charge rule", "运费规则"],
+    subtotal_jpy: ["小計", "Subtotal", "小计"], total_jpy: ["合計", "Total", "合计"], tax_jpy: ["消費税", "Tax", "税额"],
+    discount_jpy: ["値引額", "Discount", "折扣额"], order_discount_jpy: ["受注値引額", "Order discount", "订单折扣"],
+    line_total_jpy: ["明細金額", "Line total", "明细金额"], tax_rate_basis_points: ["税率（万分率）", "Tax rate (basis points)", "税率（万分比）"],
+    shipping_tax_rate_basis_points: ["送料税率（万分率）", "Shipping tax rate (basis points)", "运费税率（万分比）"],
+    tax_category_code: ["課税区分", "Tax category", "纳税类别"], tax_rate_percent: ["消費税率", "Tax rate", "税率"],
+    factoring_rate_percent: ["ファクタリング料率", "Factoring rate", "保理费率"], sales_fee_rate_percent: ["販売手数料率", "Sales fee rate", "销售手续费率"],
+    shipping_allocation_rate_percent: ["送料配賦率", "Shipping allocation rate", "运费分摊率"], fee_rate_percent: ["手数料率", "Fee rate", "手续费率"],
+    fee_basis: ["手数料計算基準", "Fee basis", "手续费依据"], include_shipping: ["送料を計算に含める", "Include shipping", "包含运费"],
+    include_core: ["コア代を計算に含める", "Include core charge", "包含旧件费"], rounding: ["端数処理", "Rounding", "取整方式"],
+    currency: ["通貨", "Currency", "币种"], note: ["備考", "Note", "备注"], status: ["状態", "Status", "状态"],
+    is_active: ["有効設定", "Active", "有效设置"], display_label: ["表示名", "Display name", "显示名"],
+    source_type: ["設定方法", "Price source", "设置方式"], source_list_id: ["原価表ID", "Cost list ID", "成本表ID"],
+    source_strain_price_jpy: ["算定価格", "Calculated price", "计算价格"], source_total_cost_jpy: ["算定原価", "Calculated cost", "计算成本"],
+    rank_code: ["売値区分コード", "Price rank code", "售价等级代码"], rank_name: ["売値区分名", "Price rank name", "售价等级名"],
+    list_name: ["原価表名", "Cost list name", "成本表名"], count: ["件数", "Count", "数量"],
+    issue_code: ["発行番号", "Issue number", "发行编号"], first_serial: ["開始シリアル", "First serial", "起始序列号"],
+    last_serial: ["終了シリアル", "Last serial", "结束序列号"], target_quantity: ["対象数量", "Target quantity", "目标数量"]
+  };
+  var value = labels[key];
+  if (value) return value[currentLang === "ja" ? 0 : (currentLang === "zh" ? 2 : 1)];
+  if (/_snapshot$/.test(key)) return operationLogFieldLabel(key.replace(/_snapshot$/, "")) + operationLogText("（保存時）", " (at save)", "（保存时）");
+  return key;
+}
+
+function operationLogValue(value, key) {
+  if (value === undefined) return operationLogText("記録なし", "Not recorded", "无记录");
+  if (value === null || value === "") return operationLogText("未設定", "Not set", "未设置");
+  if (typeof value === "boolean") return value ? operationLogText("はい", "Yes", "是") : operationLogText("いいえ", "No", "否");
+  var enums = { round: ["四捨五入", "Round", "四舍五入"], ceil: ["切り上げ", "Round up", "向上取整"], floor: ["切り捨て", "Round down", "向下取整"], manual: ["手動設定", "Manual", "手动设置"], cost_list: ["原価表から設定", "From cost list", "根据成本表"] };
+  if (enums[value]) return enums[value][currentLang === "ja" ? 0 : (currentLang === "zh" ? 2 : 1)];
+  if (key === "product_kind") return productKindLabel(value);
+  if (typeof value !== "object" && /^-?\d+(\.\d+)?$/.test(String(value))) {
+    var number = Number(value).toLocaleString(currentLang === "ja" ? "ja-JP" : "en-US", { maximumFractionDigits: 10 });
+    if (/_jpy$/.test(key) || key === "price_jpy") return formatYenCurrency(Number(value));
+    if (/_percent$/.test(key)) return number + "%";
+    return number;
+  }
+  return String(value);
+}
+
+function operationLogChanges(log) {
+  var changes = [];
+  var ignore = /^(id|created_at|updated_at|created_by|updated_by|_audit_source|revision|version)$/;
+  var secret = /password|token|secret|credential|authorization|raw_payload|payment_evidence/i;
+  function walk(before, after, prefix, depth) {
+    if (depth > 10) return;
+    if (Array.isArray(before) && before.length === 1 && !Array.isArray(after) && after && typeof after === "object") before = before[0];
+    if (Array.isArray(before) || Array.isArray(after)) {
+      var oldRows = Array.isArray(before) ? before : [], newRows = Array.isArray(after) ? after : [];
+      var identity = function(row, index) { return row && typeof row === "object" ? String(row.product_variant_id || row.id || index) : String(index); };
+      var oldMap = {}, newMap = {};
+      oldRows.forEach(function(row, index) { oldMap[identity(row, index)] = row; });
+      newRows.forEach(function(row, index) { newMap[identity(row, index)] = row; });
+      Array.from(new Set(Object.keys(oldMap).concat(Object.keys(newMap)))).forEach(function(id) { walk(oldMap[id], newMap[id], prefix + " [" + id + "]", depth + 1); });
+      return;
+    }
+    var keys = Object.keys(before && typeof before === "object" ? before : {}).concat(Object.keys(after && typeof after === "object" ? after : {}));
+    Array.from(new Set(keys)).forEach(function(key) {
+      if (ignore.test(key) || secret.test(key)) return;
+      var oldValue = before && Object.prototype.hasOwnProperty.call(before, key) ? before[key] : undefined;
+      var newValue = after && Object.prototype.hasOwnProperty.call(after, key) ? after[key] : undefined;
+      // Update payloads can be partial. An omitted field is not a deletion.
+      if (log.operation === "update" && newValue === undefined) return;
+      if (JSON.stringify(oldValue) === JSON.stringify(newValue)) return;
+      var label = prefix + operationLogFieldLabel(log.table_name === "product_rank1_prices" && key === "price_jpy" ? "rank1_price_jpy" : key);
+      if ((oldValue && typeof oldValue === "object") || (newValue && typeof newValue === "object")) {
+        walk(oldValue, newValue, label + " / ", depth + 1);
+      } else {
+        var text = label + ": ";
+        if (log.operation === "insert") text += operationLogValue(newValue, key);
+        else if (log.operation === "delete") text += operationLogValue(oldValue, key) + operationLogText(" を削除", " removed", " 已删除");
+        else text += operationLogValue(oldValue, key) + " → " + operationLogValue(newValue, key);
+        changes.push(text);
+      }
+    });
+  }
+  walk(log.before_data, log.after_data, "", 0);
+  return changes;
+}
+
+function operationLogDetailsHtml(log) {
+  var changes = operationLogChanges(log);
+  if (!changes.length) {
+    var before = log.before_data, after = log.after_data;
+    var unchanged = log.operation === "update" && before && after && Object.keys(after).length && Object.keys(after).every(function(key) {
+      return /^(created_at|updated_at|created_by|updated_by|revision|version)$/.test(key) || JSON.stringify(before[key]) === JSON.stringify(after[key]);
+    });
+    var message = unchanged ? operationLogText("変更なし（同じ内容で保存）", "No values changed (saved again)", "未更改（重复保存）") : operationLogText("変更内容の記録なし", "No change details recorded", "无变更详情记录");
+    return "<span class='mgmt-sub'>" + esc(message) + "</span>";
+  }
+  function lines(rows) { return rows.map(function(text) { return "<div class='log-change'>" + esc(text) + "</div>"; }).join(""); }
+  var html = lines(changes.slice(0, 4));
+  if (changes.length > 4) html += "<details class='log-change-more'><summary>" + esc(operationLogText("残り", "More", "其余")) + " " + (changes.length - 4) + "</summary>" + lines(changes.slice(4)) + "</details>";
+  return html;
 }
 
 function renderLogs(logs) {
   var countEl = document.getElementById("logs-count");
-  if (countEl) countEl.textContent = logs.length + " 件（最新200件）";
+  if (countEl) countEl.textContent = logs.length + operationLogText(" 件（最新200件）", " entries (latest 200)", " 条（最近200条）");
   if (!logs.length) {
     document.getElementById("logs-list").innerHTML = "<div class='empty'>" + t("log_no_data") + "</div>";
     return;
   }
   var opLabels = { insert: t("log_insert"), update: t("log_update"), delete: t("log_delete") };
   var opClasses = { insert: "log-insert", update: "log-update", delete: "log-delete" };
-  var html = "<table class='log-table'><tr><th>" + t("log_date") + "</th><th>" + t("log_operation") + "</th><th>" + t("log_user") + "</th><th>" + t("log_target") + "</th><th>詳細</th></tr>";
+  var html = "<table class='log-table'><tr><th>" + t("log_date") + "</th><th>" + t("log_operation") + "</th><th>" + t("log_user") + "</th><th>" + t("log_target") + "</th><th>" + operationLogText("詳細", "Details", "详情") + "</th></tr>";
   logs.forEach(function(log) {
     var dt  = log.created_at ? new Date(log.created_at).toLocaleString("ja-JP") : "-";
     var op  = opLabels[log.operation] || log.operation;
     var cls = opClasses[log.operation] || "";
-    var after = log.after_data ? JSON.stringify(log.after_data).slice(0,80) + "..." : "";
     html += "<tr>";
     html += "<td data-dcats-inline-style='s-eb99a4c193ed'>" + esc(dt) + "</td>";
     html += "<td><span class='" + cls + "'>" + esc(op) + "</span></td>";
     html += "<td>" + esc(log.user_name || log.user_email || "-") + "</td>";
     html += "<td><div class='mgmt-pn'>" + esc(log.target_desc || "-") + "</div><div class='mgmt-sub'>" + esc(log.table_name) + "</div></td>";
-    html += "<td><div class='log-json'>" + esc(after) + "</div></td>";
+    html += "<td class='log-details'>" + operationLogDetailsHtml(log) + "</td>";
     html += "</tr>";
   });
   html += "</table>";
@@ -41018,6 +42824,7 @@ function renderLogs(logs) {
 }
 
 function enterChangePw() {
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("change-pw", false)) return;
   showScreen("change-pw");
   var nameEl = document.getElementById("change-pw-username");
   if (nameEl && userProfile) nameEl.textContent = userProfile.name || userProfile.email.split("@")[0];
@@ -41033,6 +42840,7 @@ function enterChangePw() {
 
 async function enterUsers() {
   if (!userProfile || !canUseUserManagement()) { showPermissionDenied("open_users", "profiles"); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("users", false)) return;
   userManagementRows = [];
   userManagementLoaded = false;
   userManagementLoadError = null;
@@ -42214,7 +44022,7 @@ function renderProductKindStockHtml(summary) {
   var html = "<div class='product-kind-stock-grid'><div class='product-kind-stock-row detail-sales-term-row active " + productKindClass(selected) + "' data-product-kind-row='" + esc(selected) + "'>";
   html += "<div class='product-kind-stock-label detail-sales-term-label'>" + esc(t("product_kind_stock_qty")) + "</div>";
   html += "<div class='product-kind-stock-value detail-sales-term-value'>" + esc(stockText) + "</div>";
-  html += "</div></div>";
+  html += "</div><div class='product-kind-stock-row detail-sales-term-row sales-product-shelf-row' id='sales-product-shelf' hidden aria-live='polite'></div></div>";
   return html;
 }
 
@@ -42269,7 +44077,10 @@ function renderProductKindWrapForCurrent() {
   var summary = productKindSummaryForProduct(currentProduct);
   wrap.innerHTML = renderProductKindPanelHtml(summary);
   var stock = document.getElementById("product-kind-stock-wrap");
-  if (stock) stock.innerHTML = renderProductKindStockHtml(summary);
+  if (stock) {
+    stock.innerHTML = renderProductKindStockHtml(summary);
+    loadSalesProductShelfForCurrent(detailSecondaryRequestSeq);
+  }
   positionSalesConditionFields();
   bindProductKindPanelActions();
   var select = document.getElementById("product-kind-select");
@@ -43163,10 +44974,25 @@ async function fetchSlPartProducts(q, categoryFilter, maxRows) {
   return { data: rows, error: null };
 }
 
+function mitsubishiManufacturerSearchAliases(value) {
+  var key = normalizePartQuery(value);
+  var longForm = key.match(/^([AM])00([0-9]T[A-Z0-9]*)$/);
+  var shortForm = key.match(/^([AM])([0-9]T[A-Z0-9]*)$/);
+  if (longForm) return [longForm[1] + longForm[2]];
+  if (shortForm) return [shortForm[1] + "00" + shortForm[2]];
+  return [];
+}
+
 async function fetchCoreProductMasterMatches(q, categoryFilter, maxRows, options) {
   options = options || {};
   var normalized = normalizePartQuery(q);
   var raw = String(q || "").trim();
+  var mitsubishiAliases = mitsubishiManufacturerSearchAliases(q);
+  function manufacturerAliasFilters(operator, suffix) {
+    return mitsubishiAliases.map(function(alias) {
+      return "and(manufacturer.eq.MITSUBISHI,normalized_manufacturer_part_number." + operator + "." + alias + (suffix || "") + ")";
+    });
+  }
   if (!normalized && !raw) return { data: [] };
   maxRows = maxRows || productSearchLimit;
   var normalizedFields = [
@@ -43205,12 +45031,15 @@ async function fetchCoreProductMasterMatches(q, categoryFilter, maxRows, options
   }).concat(directExactFields.map(function(column) {
     return column + ".eq." + normalized;
   })) : [];
+  if (!options.preferPrefix) exactParts = exactParts.concat(manufacturerAliasFilters("eq"));
   var exact = await runCoreProductQuery(exactParts, 1);
   if (exact.error || (exact.data || []).length || options.exactOnly) return exact;
 
   var prefixParts = normalized ? normalizedFields.map(function(column) {
     return column + ".like." + normalized + "%";
   }) : [];
+
+  prefixParts = prefixParts.concat(manufacturerAliasFilters("like", "%"));
 
   var fast = normalized ? await sb.rpc("search_core_products_by_prefix_fast", {
     search_prefix: normalized,
@@ -43221,13 +45050,37 @@ async function fetchCoreProductMasterMatches(q, categoryFilter, maxRows, options
     console.warn("Fast core product prefix search failed; falling back to direct lookup", fast.error);
     fast = await runCoreProductQuery(prefixParts, 2);
   } else {
-    fast.data = normalizeCoreProductFastRows(fast.data || []).slice(0, maxRows);
+    fast.data = normalizeCoreProductFastRows(fast.data || []);
+    if (mitsubishiAliases.length) {
+      var aliasPrefix = await sb.rpc("search_core_products_by_prefix_fast", {
+        search_prefix: mitsubishiAliases[0],
+        category_filter: categoryFilter || null,
+        max_rows: maxRows
+      });
+      if (aliasPrefix.error) {
+        aliasPrefix = await runCoreProductQuery(manufacturerAliasFilters("like", "%"), 2);
+      }
+      if (aliasPrefix.error) return aliasPrefix;
+      fast.data = fast.data.concat(normalizeCoreProductFastRows(aliasPrefix.data || []).filter(function(row) {
+        return String(row.manufacturer || "").trim().toUpperCase() === "MITSUBISHI";
+      }));
+    }
+    var seen = {};
+    fast.data = fast.data.filter(function(row) {
+      var id = String(row.dkd_shohin_id);
+      if (seen[id]) return false;
+      seen[id] = true;
+      return true;
+    }).slice(0, maxRows);
   }
   if (fast.error || (fast.data || []).length) return fast;
 
   var orParts = normalized ? normalizedFields.map(function(column) {
     return column + ".ilike.%" + normalized + "%";
   }) : [];
+  orParts = orParts.concat(mitsubishiAliases.map(function(alias) {
+    return "and(manufacturer.eq.MITSUBISHI,normalized_manufacturer_part_number.ilike.%" + alias + "%)";
+  }));
   return await runCoreProductQuery(orParts, 2);
 }
 
@@ -43435,7 +45288,7 @@ function waitForProductSearchEnrichmentDelay(ms) {
 }
 
 function isProductSearchEnrichmentStale(seq, auxSeq) {
-  return seq !== searchRequestSeq || auxSeq !== productAuxSeq || !isScreenActive("search");
+  return seq !== searchRequestSeq || auxSeq !== productAuxSeq || (!isScreenActive("search") && !(window.DcatsNineTabs && window.DcatsNineTabs.hasTab("search")));
 }
 
 async function waitForProductSearchDetailLoads(seq, auxSeq) {
@@ -44101,6 +45954,11 @@ async function openProductionProductByDkdId(dkdId, options) {
   showScreen("production-search");
   updateAllHeaders();
   renderProductionList();
+  var rankUserId = currentUser && currentUser.id;
+  loadProductionReportRanks([row]).then(function() {
+    if (!currentUser || currentUser.id !== rankUserId || !currentProductionRow || productDkdId(currentProductionRow) !== productDkdId(row)) return;
+    refreshProductionReportRankViews();
+  }).catch(function() { console.warn("production direct rank refresh failed"); });
   var selectedIndex = productionFilteredRows.findIndex(function(p) { return parseInt(productDkdId(p), 10) === id; });
   await renderProductionDetail(row);
   if (selectedIndex >= 0) focusProductionResultIndex(selectedIndex);
@@ -44243,6 +46101,82 @@ function salesDetailPrimaryPartNumber(product) {
   return product.genuine_part_number || product.genuine_part_number_2 || product.manufacturer_part_number || "-";
 }
 
+function salesProductShelfMatchesCurrent(state) {
+  return !!state && !!currentProduct && state.actor === userProfile
+    && state.seq === detailSecondaryRequestSeq && state.productId === String(productDkdId(currentProduct))
+    && state.kind === selectedProductKind() && canViewProductInfo() && !isCustomerPortalSearchMode()
+    && productKindStockKindAllowed(state.kind);
+}
+
+function renderSalesProductShelf() {
+  var host = document.getElementById("sales-product-shelf");
+  if (!host) return;
+  var state = salesProductShelfState;
+  var allowed = !!currentProduct && canViewProductInfo() && !isCustomerPortalSearchMode() && productKindStockKindAllowed(selectedProductKind());
+  host.hidden = !allowed;
+  if (!allowed) { host.textContent = ""; return; }
+  var value = t("sales_inventory_loading");
+  if (salesProductShelfMatchesCurrent(state)) {
+    if (state.status === "ready") {
+      value = Object.keys(state.locations).sort().map(function(code) { return code + " (" + state.locations[code] + ")"; }).join(" / ");
+      if (!value) value = state.legacy.length ? state.legacy.join(" / ") + " " + t("sales_inventory_legacy") : t("sales_inventory_unassigned");
+      if (state.unassigned > 0 && Object.keys(state.locations).length) value += " / " + t("sales_inventory_unassigned") + " (" + state.unassigned + ")";
+    } else if (state.status !== "loading") {
+      value = t(state.status === "denied" ? "sales_inventory_denied" : state.status === "missing" ? "sales_inventory_missing" : "sales_inventory_error");
+    }
+  }
+  host.innerHTML = "<div class='detail-sales-term-label'>" + esc(t("sales_inventory_shelf")) + "</div><div class='detail-sales-term-value'>" + esc(value) +
+    (salesProductShelfMatchesCurrent(state) && state.status === "ready" && state.needsRecount ? "<strong class='sales-order-inventory-warning'>" + esc(t("sales_inventory_recount")) + "</strong>" : "") + "</div>";
+}
+
+async function loadSalesProductShelfForCurrent(seq) {
+  var host = document.getElementById("sales-product-shelf");
+  if (!host || !currentProduct || !userProfile || !canViewProductInfo() || isCustomerPortalSearchMode() || !productKindStockKindAllowed(selectedProductKind())) {
+    renderSalesProductShelf(); return;
+  }
+  var kind = selectedProductKind(), productId = String(productDkdId(currentProduct));
+  var ids = productKindRowsForCurrent().filter(function(row) {
+    return row.is_active !== false && String(row.dkd_shohin_id) === productId && row.product_kind === kind && /^[1-9][0-9]*$/.test(String(row.product_variant_id || ""));
+  }).map(function(row) { return String(row.product_variant_id); }).filter(function(id, index, all) { return all.indexOf(id) === index; }).sort();
+  var old = salesProductShelfState;
+  if (salesProductShelfMatchesCurrent(old) && old.ids.join(",") === ids.join(",")) { renderSalesProductShelf(); return; }
+  var state = { seq: seq, actor: userProfile, productId: productId, kind: kind, ids: ids, status: ids.length ? "loading" : "missing", locations: Object.create(null), legacy: [], unassigned: 0, needsRecount: false };
+  salesProductShelfState = state;
+  renderSalesProductShelf();
+  var cursor = 0;
+  async function worker() {
+    while (cursor < ids.length) {
+      if (!salesProductShelfMatchesCurrent(state) || salesProductShelfState !== state) return;
+      var id = ids[cursor++];
+      var result = await sb.rpc("get_warehouse_stock", {p_query:"",p_kind:"",p_location:"",p_variant_id:id,p_offset:0,p_limit:1});
+      if (!salesProductShelfMatchesCurrent(state) || salesProductShelfState !== state) return;
+      if (result.error) throw result.error;
+      var data = result.data;
+      if (!data || !Array.isArray(data.variants) || !Array.isArray(data.positions)) throw new Error("Invalid shelf response");
+      var v = data.variants.find(function(row) { return String(row.variant_id) === id && String(row.product_id) === productId && row.kind === kind; });
+      if (!v || v.stock_qty == null || !Number.isSafeInteger(Number(v.stock_qty))) throw new Error("Shelf identity mismatch");
+      var allocated = 0;
+      data.positions.filter(function(row) { return String(row.variant_id) === id; }).forEach(function(row) {
+        var quantity = Number(row.quantity), code = String(row.location || "").trim();
+        if (!Number.isSafeInteger(quantity) || quantity <= 0 || !code) throw new Error("Invalid shelf quantity");
+        state.locations[code] = (state.locations[code] || 0) + quantity;
+        allocated += quantity;
+        if (row.needs_recount) state.needsRecount = true;
+      });
+      var unassigned = Number(v.stock_qty) - allocated;
+      state.unassigned += Math.max(0, unassigned);
+      if (v.needs_recount || unassigned < 0) state.needsRecount = true;
+      var legacy = String(v.legacy_location || "").trim();
+      if (legacy && state.legacy.indexOf(legacy) < 0) state.legacy.push(legacy);
+    }
+  }
+  try {
+    await Promise.all(Array.from({length:Math.min(4,ids.length)},worker));
+    if (ids.length) state.status = "ready";
+  } catch (error) { state.status = error && error.code === "42501" ? "denied" : "error"; }
+  if (salesProductShelfMatchesCurrent(state) && salesProductShelfState === state) renderSalesProductShelf();
+}
+
 function salesDetailSelectedStock() {
   var summary = productKindSummaryForProduct(currentProduct);
   var selected = selectedProductKind();
@@ -44282,6 +46216,12 @@ function salesWarrantyTermsText(policy) {
   return text;
 }
 
+function salesProductWarrantyMatchesCurrent(state) {
+  if (!state || !currentProduct || state.actor !== userProfile) return false;
+  var id = productDkdId(state.product);
+  return state.product === currentProduct || (!!id && id === productDkdId(currentProduct));
+}
+
 function renderSalesProductWarranty() {
   var host = document.getElementById("sales-product-warranty");
   if (!host) return;
@@ -44290,7 +46230,7 @@ function renderSalesProductWarranty() {
   host.hidden = !allowed;
   if (!allowed) { host.textContent = ""; return; }
   var state = salesProductWarrantyState;
-  if (!state || state.product !== currentProduct || state.actor !== userProfile || state.status === "loading") {
+  if (!salesProductWarrantyMatchesCurrent(state) || state.status === "loading") {
     host.textContent = t("sales_warranty_loading");
     return;
   }
@@ -44317,7 +46257,7 @@ async function loadSalesProductWarrantyForCurrent(seq) {
   } catch (error) {
     state.status = "error";
   }
-  if (seq !== detailSecondaryRequestSeq || currentProduct !== state.product || userProfile !== state.actor || salesProductWarrantyState !== state) return;
+  if (seq !== detailSecondaryRequestSeq || !salesProductWarrantyMatchesCurrent(state) || salesProductWarrantyState !== state) return;
   renderSalesProductWarranty();
 }
 
@@ -44325,14 +46265,13 @@ function renderSalesProductIdentity(product) {
   var wrap = document.getElementById("sales-product-identity");
   if (!wrap) return;
   product = product || {};
-  var makerLine = [product.manufacturer, product.manufacturer_part_number].filter(Boolean).join(" / ") || "-";
   var editHtml = canEdit()
     ? "<button class='btn-sm-edit sales-product-edit' id='btn-edit-current-product' type='button'>" + esc(t("btn_edit_part")) + "</button>"
     : "";
   wrap.innerHTML = "<div class='sales-product-identity-copy'>" +
     "<h2>" + esc(salesDetailPrimaryPartNumber(product)) + "</h2>" +
     "<div class='sales-product-category'>" + esc(productCategoryLabel(product) || "-") + "</div>" +
-    "<div class='sales-product-maker'>" + esc(makerLine) + "</div>" +
+    "<div class='sales-product-id'>" + esc(t("f_product_id")) + ": " + esc(productDkdId(product) || "-") + "</div>" +
     "<div class='sales-product-status' id='sales-detail-status'></div>" +
     "<div class='sales-product-warranty' id='sales-product-warranty' aria-live='polite'></div>" +
   "</div>" + editHtml;
@@ -45636,6 +47575,8 @@ async function openComponentAddForm() {
   if (btn) { btn.disabled = false; btn.textContent = t("component_add"); }
   var overlay = document.getElementById("component-add-overlay");
   if (overlay) overlay.classList.add("show");
+  bindComponentInputMasterAssist(null);
+  refreshComponentInputMasterAssist(null);
   var name = document.getElementById("component-add-name");
   if (name) name.focus();
   loadComponentCatalogNameCandidatesForCurrent().then(function() {
@@ -45647,6 +47588,166 @@ async function openComponentAddForm() {
     console.warn("component name candidates load failed", err);
   });
 }
+
+
+/* Registered-component input master. Reading choices never changes input or money. */
+function componentInputMasterText(key, count) {
+  return String(t("component_input_master_" + key)).replace("{n}", String(count == null ? 0 : count));
+}
+
+function componentInputMasterControls(tr) {
+  var add = !tr;
+  var owner = tr || document.getElementById("component-add-overlay");
+  if (!owner) return null;
+  var fields = add ? {
+    name: document.getElementById("component-add-name"),
+    maker: document.getElementById("component-add-mfr"),
+    part: document.getElementById("component-add-mfr-pn")
+  } : {
+    name: tr.querySelector("[data-component-edit-field='component_part_name']"),
+    maker: tr.querySelector("[data-component-edit-field='component_manufacturer']"),
+    part: tr.querySelector("[data-component-edit-field='component_manufacturer_part_number']")
+  };
+  if (!fields.name || !fields.maker || !fields.part) return null;
+  fields.owner = owner;
+  fields.add = add;
+  return fields;
+}
+
+function componentInputMasterContext(c) {
+  return [
+    currentUser && currentUser.id || "",
+    currentProduct ? productDkdId(currentProduct) : "",
+    selectedProductKind(),
+    currentSelectedComponentVariantId || "",
+    currentLang || "ja",
+    componentCatalogCategoryCode(currentProduct),
+    canonicalComponentNameForStorage(c.name.value),
+    String(c.maker.value || "").trim().toUpperCase(),
+    String(c.part.value || "").trim()
+  ].join("|");
+}
+
+function componentInputMasterList(input, id) {
+  var list = document.getElementById(id);
+  if (!list) {
+    list = document.createElement("datalist");
+    list.id = id;
+    input.parentNode.appendChild(list);
+  }
+  input.setAttribute("list", id);
+  input.setAttribute("autocomplete", "off");
+  return list;
+}
+
+function componentInputMasterListOptions(list, choices) {
+  list.replaceChildren();
+  choices.forEach(function(choice) {
+    var option = document.createElement("option");
+    option.value = String(choice.value || "");
+    option.label = String(choice.label || "");
+    list.appendChild(option);
+  });
+}
+
+async function refreshComponentInputMasterAssist(tr, searchTyped) {
+  var c = componentInputMasterControls(tr);
+  if (!c) return;
+  var tag = c.add ? "add" : "edit-" + String(c.owner.dataset.componentEditRow || "").replace(/[^a-zA-Z0-9_-]/g, "");
+  var makers = componentInputMasterList(c.maker, "component-input-master-" + tag + "-makers");
+  var parts = componentInputMasterList(c.part, "component-input-master-" + tag + "-parts");
+  var seq = (c.owner.componentInputMasterSeq || 0) + 1;
+  c.owner.componentInputMasterSeq = seq;
+  componentInputMasterListOptions(parts, []);
+  componentInputMasterListOptions(makers, []);
+  delete c.part.dataset.masterCandidateCount;
+  delete c.part.dataset.masterHasMore;
+  delete c.part.dataset.masterAssistError;
+  if (!canManageComponentsInCurrentContext() || !currentProduct || (c.add && !c.owner.classList.contains("show"))) {
+    componentInputMasterListOptions(makers, []);
+    return;
+  }
+  var name = canonicalComponentNameForStorage(c.name.value);
+  if (!name) {
+    componentInputMasterListOptions(makers, []);
+    c.maker.placeholder = componentInputMasterText("name");
+    c.part.placeholder = componentInputMasterText("name");
+    return;
+  }
+  var context = componentInputMasterContext(c);
+  var maker = String(c.maker.value || "").trim().toUpperCase();
+  c.maker.placeholder = componentInputMasterText("maker");
+  c.part.placeholder = maker ? componentInputMasterText("loading") : componentInputMasterText("part");
+  c.part.title = c.part.placeholder;
+  function current() {
+    return c.owner.isConnected !== false &&
+      c.owner.componentInputMasterSeq === seq &&
+      canManageComponentsInCurrentContext() &&
+      (!c.add || c.owner.classList.contains("show")) &&
+      componentInputMasterContext(c) === context;
+  }
+  try {
+    var result = await sb.rpc("get_component_input_master_choices", {
+      target_component_name: name,
+      target_category_code: componentCatalogCategoryCode(currentProduct) || null,
+      target_manufacturer: maker || null,
+      part_search_text: searchTyped ? (String(c.part.value || "").trim() || null) : null,
+      page_size: 60
+    });
+    if (!current()) return;
+    if (result.error) throw new Error(result.error.message || "component input choices failed");
+    var data = result.data || {};
+    if (!Array.isArray(data.manufacturers) || !Array.isArray(data.parts)) throw new Error("Invalid component input choice response");
+    componentInputMasterListOptions(makers, data.manufacturers.map(function(row) {
+      return { value: row.manufacturer, label: row.manufacturer };
+    }));
+    var seen = {};
+    var choices = [];
+    data.parts.forEach(function(row) {
+      var pn = String(row.part_number || "").trim();
+      if (!pn || seen[pn]) return;
+      seen[pn] = true;
+      choices.push({ value: pn, label: row.genuine_part_number ? componentInputMasterText("genuine") + ": " + row.genuine_part_number : pn });
+    });
+    componentInputMasterListOptions(parts, choices);
+    var total = Number(data.total_parts);
+    if (!Number.isFinite(total) || total < 0) total = choices.length;
+    c.part.dataset.masterCandidateCount = String(total);
+    c.part.dataset.masterHasMore = data.has_more === true ? "1" : "0";
+    c.part.placeholder = !maker ? componentInputMasterText("part") : total ? componentInputMasterText("count", total) : componentInputMasterText("empty");
+    c.part.title = c.part.placeholder;
+  } catch (error) {
+    if (!current()) return;
+    componentInputMasterListOptions(makers, []);
+    componentInputMasterListOptions(parts, []);
+    c.part.placeholder = componentInputMasterText("failed");
+    c.part.title = c.part.placeholder;
+    c.part.dataset.masterAssistError = "1";
+    console.warn("component input master choices unavailable", error.message);
+  }
+}
+
+function bindComponentInputMasterAssist(tr) {
+  var c = componentInputMasterControls(tr);
+  if (!c || c.owner.componentInputMasterBound) return;
+  c.owner.componentInputMasterBound = true;
+  function schedule(event) {
+    var searchTyped = !!(event && event.type === "input" && event.target === c.part);
+    c.owner.componentInputMasterSeq = (c.owner.componentInputMasterSeq || 0) + 1;
+    clearTimeout(c.owner.componentInputMasterTimer);
+    c.owner.componentInputMasterTimer = setTimeout(function() {
+      refreshComponentInputMasterAssist(tr, searchTyped);
+    }, 180);
+  }
+  c.name.addEventListener("change", schedule);
+  c.maker.addEventListener("input", schedule);
+  c.maker.addEventListener("change", schedule);
+  c.part.addEventListener("input", schedule);
+  c.part.addEventListener("focus", schedule);
+  c.maker.addEventListener("focus", schedule);
+  refreshComponentInputMasterAssist(tr);
+}
+/* End registered-component input master. */
 
 function componentAddValue(id) {
   var el = document.getElementById(id);
@@ -46333,6 +48434,7 @@ async function reconcileComponentEditPartNumbers(usageId) {
 
 function bindComponentEditManufacturerLookup(wrap) {
   if (!wrap) return;
+  wrap.querySelectorAll("[data-component-edit-row]").forEach(function(tr) { bindComponentInputMasterAssist(tr); });
   wrap.querySelectorAll("[data-component-edit-field='component_manufacturer']").forEach(function(input) {
     var handler = function() {
       input.value = normalizeComponentManufacturerInput(input.value) || "UNKNOWN";
@@ -46638,12 +48740,86 @@ function componentRowChildCount(row) {
   return parseInt(row && row.child_catalog_component_count || 0, 10) || 0;
 }
 
+// DENSO Vol.71 ES0525: the original drawing explicitly brackets 2, 3, 5 and 14.
+function verifiedCatalogComponentChildren(rows, product) {
+  var children = new Map();
+  if (!product || product.manufacturer !== "DENSO" || rows.length !== 40) return children;
+  var genuineByPart = {
+    "1022115961": "3140058J10", "1022115962": "3140058J11", "1022115963": "3140058J12"
+  };
+  var genuine = genuineByPart[normalizedPartKey(product.manufacturer_part_number)];
+  if (!genuine || normalizedPartKey(product.genuine_part_number) !== genuine) return children;
+
+  // Check the exact source rows and their conditions before using the drawing.
+  var reviewedRows = [
+    "002|121400-2320|31580-75F00||1101|",
+    "002|121400-7730||1101|1112|B",
+    "002|121400-8110||1201||B",
+    "0021|949043-2000|31587-82110|||",
+    "0022|949100-6090|31582-60G13||1101|",
+    "0022|949100-7880|31582-86L00|1201|1303|D",
+    "0022|949100-7920||1101|1112|B",
+    "0022|949100-8880|31582-86L01|1304||B",
+    "0023|021411-0450|31585-82111|||",
+    "0024|949006-6970|02112-04163|||",
+    "0025|021401-8251|||1112|",
+    "0025|121401-3960||1201||D",
+    "0026|021100-4830||||",
+    "0027|021045-0530||||",
+    "003|021501-9731|||1112|",
+    "003|121501-5570||1201||D",
+    "0031|021542-0220|31615-60G10|||",
+    "005|021620-2870|31656-60G10|||",
+    "0051|021660-0510||||",
+    "0052|949170-6990|31635-82610|||",
+    "0053|021626-0320||||",
+    "014|021200-7410|31710-75F00|||",
+    "0141|949100-3630|31612-06B00|||",
+    "0142|021506-0070|31613-82610|||"
+  ];
+  var positionsByParent = {
+    "002": ["0021", "0022", "0023", "0024", "0025", "0026", "0027"],
+    "003": ["0031"],
+    "005": ["0051", "0052", "0053"],
+    "014": ["0141", "0142"]
+  };
+  var reviewed = new Set(reviewedRows);
+  var positions = new Set(reviewedRows.map(function(key) { return key.split("|")[0]; }));
+  var matched = rows.filter(function(row) { return positions.has(row.component_position); });
+  if (matched.length !== reviewed.size) return children;
+
+  for (var row of matched) {
+    if (row.source_code !== "catalog_denso" || row.catalog_match_basis !== "catalog_exact_pair" ||
+        row.component_manufacturer !== "DENSO") return children;
+    var key = [row.component_position, row.component_manufacturer_part_number, row.component_genuine_part_number,
+      row.effective_start, row.effective_end, row.component_interchange_code].join("|");
+    if (!reviewed.delete(key)) return children;
+  }
+
+  for (var parent of matched) {
+    var childPositions = positionsByParent[parent.component_position];
+    if (!childPositions) continue;
+    var directChildren = matched.filter(function(child) {
+      if (!childPositions.includes(child.component_position)) return false;
+      // At 1101 the two revisions meet. Give the bearing to the frame whose
+      // interval it overlaps beyond that boundary, without mixing revisions.
+      if (parent.effective_start && child.effective_end && parent.effective_start >= child.effective_end) return false;
+      if (child.effective_start && parent.effective_end && child.effective_start >= parent.effective_end) return false;
+      return true;
+    });
+    if (directChildren.length) children.set(parent, directChildren);
+  }
+  return children;
+}
+
 function componentHasChildRows(row) {
+  if (selectedProductKind() === "catalog_spec") return false;
   return !!(row && !componentIsCurrentProductSelfReference(row) && (row.has_child_catalog_components || componentRowChildCount(row) > 0));
 }
 
 async function hydrateComponentChildCounts(rows) {
   rows = Array.isArray(rows) ? rows : [];
+  if (selectedProductKind() === "catalog_spec") return rows;
   var targets = rows.filter(function(row) {
     return row && !componentIsCurrentProductSelfReference(row) && !componentHasChildRows(row) && row.component_manufacturer_part_number;
   });
@@ -48717,6 +50893,7 @@ async function submitComponentNameRequestForm() {
 
 async function enterComponentNameMasterMgmt() {
   if (!canManageComponentNameMaster()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("component-name-master-mgmt", false)) return;
   showScreen("component-name-master-mgmt");
   updateAllHeaders();
   var category = document.getElementById("component-name-master-category");
@@ -49134,6 +51311,7 @@ function componentCompatReset() {
 
 async function enterComponentCompatMgmt() {
   if (!canManageComponentCompatibility()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("component-compat-mgmt", false)) return;
   showScreen("component-compat-mgmt");
   updateAllHeaders();
   var search = document.getElementById("component-compat-search");
@@ -50702,10 +52880,32 @@ function renderAssemblyComponentRows() {
   }
   var hasActions = canManageComponentsInCurrentContext();
   var catalogMode = selectedProductKind() === "catalog_spec";
+  var catalogChildren = catalogMode ? verifiedCatalogComponentChildren(rows, currentProduct) : new Map();
+  var catalogChildRows = new Set();
+  catalogChildren.forEach(function(children) {
+    children.forEach(function(child) { catalogChildRows.add(child); });
+  });
   var tableModeClass = catalogMode ? " component-table-catalog" : " component-table-manual";
+  if (catalogChildren.size) tableModeClass += " component-table-verified-catalog";
+  function catalogCellLabel(label) {
+    return catalogChildren.size ? " data-component-catalog-label='" + esc(t(label)) + "'" : "";
+  }
+  var catalogRootRows = rows.filter(function(row) { return !catalogChildRows.has(row); });
+  var pageSize = 8;
+  var pageTotal = Math.ceil(catalogRootRows.length / pageSize);
+  var pageNumber = Math.max(0, Math.min(Number(wrap.dataset.catalogTreePage) || 0, pageTotal - 1));
+  var pageRows = catalogChildren.size ? catalogRootRows.slice(pageNumber * pageSize, (pageNumber + 1) * pageSize) : rows;
   var colspan = 11 + (hasActions ? 1 : 0);
   if (typeof refreshCoreValuationPanel === "function") refreshCoreValuationPanel(false);
-  var html = "<table class='component-table component-table-tree" + tableModeClass + "'>";
+  var html = "";
+  if (catalogChildren.size && pageTotal > 1) {
+    html += "<nav class='component-catalog-pager'><button type='button' class='btn-sm-edit' data-catalog-tree-page='previous'" +
+      (pageNumber === 0 ? " disabled" : "") + ">" + esc(t("component_catalog_previous_page")) + "</button>" +
+      "<span>" + (pageNumber + 1) + " / " + pageTotal + "</span>" +
+      "<button type='button' class='btn-sm-edit' data-catalog-tree-page='next'" +
+      (pageNumber + 1 === pageTotal ? " disabled" : "") + ">" + esc(t("component_catalog_next_page")) + "</button></nav>";
+  }
+  html += "<table class='component-table component-table-tree" + tableModeClass + "'>";
   html += "<tr><th class='component-tree-col'>" + t("component_child") + "</th><th>" + t("f_mfr_pn") + "</th><th>" + t("f_genuine_pn") + "</th><th>" + t("component_name") + "</th>";
   if (catalogMode) {
     html += "<th>" + t("component_position") + "</th><th class='component-cell-qty'>" + t("component_quantity") + "</th><th class='component-cell-money'>" + t("component_unit_price") + "</th><th>" + t("component_interchange") + "</th><th>" + t("component_start_period") + "</th><th>" + t("component_end_period") + "</th>";
@@ -50720,8 +52920,22 @@ function renderAssemblyComponentRows() {
     options = options || {};
     var catalogLocked = isCatalogComponentRow(row);
     var editing = canManageComponentsInCurrentContext() && !catalogLocked && String(editingComponentUsageId) === String(row.id);
-    html += "<tr" + (options.child ? " class='component-child-row'" : "") + (editing ? " data-component-edit-row='" + esc(String(row.id)) + "'" : "") + ">";
-    html += "<td class='component-tree-col'>" + (options.child ? "<span class='component-child-indent'></span>" : componentChildToggleHtml(row)) + "</td>";
+    var rowClass = (options.child ? "component-child-row " : "") + (catalogChildren.size ? "component-verified-catalog-row" : "");
+    html += "<tr" + (rowClass ? " class='" + rowClass.trim() + "'" : "") + (editing ? " data-component-edit-row='" + esc(String(row.id)) + "'" : "") + ">";
+    var verifiedChildren = catalogChildren.get(row);
+    var catalogKey = "catalog:" + options.index;
+    var catalogExpanded = !!componentExpandedChildMap[catalogKey];
+    var toggle = "";
+    if (options.child) {
+      toggle = "<span class='component-child-indent'></span>";
+    } else if (verifiedChildren) {
+      toggle = "<button class='component-tree-toggle' type='button' data-catalog-child-toggle='" + catalogKey +
+        "' aria-expanded='" + catalogExpanded + "' aria-label='" + esc(t("component_child") + " " + row.component_manufacturer_part_number) + "'>" +
+        (catalogExpanded ? "− " : "+ ") + "<span class='component-catalog-child-count'>" + verifiedChildren.length + "</span></button>";
+    } else if (!catalogMode) {
+      toggle = componentChildToggleHtml(row);
+    }
+    html += "<td class='component-tree-col'>" + toggle + "</td>";
     if (editing) {
       html += "<td>" + componentEditInput(row, "component_manufacturer_part_number", row.component_manufacturer_part_number) + "<div class='component-sub'>" + componentEditInput(row, "component_manufacturer", row.component_manufacturer || "") + "</div></td>";
       html += "<td>" + componentEditInput(row, "component_genuine_part_number", row.component_genuine_part_number || "") + "</td>";
@@ -50735,16 +52949,16 @@ function renderAssemblyComponentRows() {
       html += "<td>" + componentAlternativeCountHtml(row) + "</td>";
       html += "<td class='component-action-col'><div class='component-edit-actions'><button class='btn-sm-edit' data-component-save='" + esc(String(row.id)) + "'>" + t("component_save") + "</button><button class='btn-sm-edit production-action-secondary' data-component-cancel='1'>" + t("component_cancel") + "</button><button class='btn-sm-edit production-action-secondary' data-component-delete='" + esc(String(row.id)) + "'>" + t("component_delete") + "</button></div></td>";
     } else {
-      html += "<td><div class='component-pn'>" + esc(row.component_manufacturer_part_number || "-") + "</div><div class='component-sub'>" + esc(row.component_manufacturer || "") + "</div></td>";
-      html += "<td><div class='component-pn'>" + esc(row.component_genuine_part_number || "-") + "</div></td>";
-      html += "<td>" + componentRowNameHtml(row) + "</td>";
+      html += "<td" + catalogCellLabel("f_mfr_pn") + "><div class='component-pn'>" + esc(row.component_manufacturer_part_number || "-") + "</div><div class='component-sub'>" + esc(row.component_manufacturer || "") + "</div></td>";
+      html += "<td" + catalogCellLabel("f_genuine_pn") + "><div class='component-pn'>" + esc(row.component_genuine_part_number || "-") + "</div></td>";
+      html += "<td" + catalogCellLabel("component_name") + ">" + componentRowNameHtml(row) + "</td>";
       if (catalogMode) {
-        html += "<td>" + esc(row.component_position || row.source_code || "-") + "</td>";
-        html += "<td class='component-cell-qty'>" + esc(row.quantity || "-") + "</td>";
-        html += "<td class='component-cell-money'>" + esc(formatComponentYen(row.unit_price_jpy)) + "</td>";
-        html += "<td>" + esc(formatComponentInterchange(row)) + "</td>";
-        html += "<td>" + esc(row.effective_start || row.start_period || "-") + "</td>";
-        html += "<td>" + esc(row.effective_end || row.end_period || "-") + "</td>";
+        html += "<td" + catalogCellLabel("component_position") + ">" + esc(row.component_position || row.source_code || "-") + "</td>";
+        html += "<td class='component-cell-qty'" + catalogCellLabel("component_quantity") + ">" + esc(row.quantity || "-") + "</td>";
+        html += "<td class='component-cell-money'" + catalogCellLabel("component_unit_price") + ">" + esc(formatComponentYen(row.unit_price_jpy)) + "</td>";
+        html += "<td" + catalogCellLabel("component_interchange") + ">" + esc(formatComponentInterchange(row)) + "</td>";
+        html += "<td" + catalogCellLabel("component_start_period") + ">" + esc(row.effective_start || row.start_period || "-") + "</td>";
+        html += "<td" + catalogCellLabel("component_end_period") + ">" + esc(row.effective_end || row.end_period || "-") + "</td>";
       } else {
         html += "<td class='component-cell-qty'>" + esc(row.quantity || "-") + "</td>";
         html += "<td class='component-cell-money'>" + esc(formatComponentYen(row.unit_price_jpy)) + "</td>";
@@ -50753,7 +52967,7 @@ function renderAssemblyComponentRows() {
         html += "<td class='component-cell-rate'>" + esc(formatComponentRate(row.replacement_rate)) + "</td>";
         html += "<td>" + esc(row.manufacturing_memo || "-") + "</td>";
       }
-      html += "<td>" + componentAlternativeCountHtml(row) + "</td>";
+      html += "<td" + catalogCellLabel("component_alternative_title") + ">" + componentAlternativeCountHtml(row) + "</td>";
       if (hasActions) {
         html += "<td class='component-action-col'><div class='component-edit-actions'>";
         html += catalogLocked ? "<span class='component-sub'>" + t("component_catalog") + "</span>" : "<button class='btn-sm-edit' data-component-edit='" + esc(String(row.id)) + "'>" + t("component_edit") + "</button>";
@@ -50763,7 +52977,10 @@ function renderAssemblyComponentRows() {
     }
     html += "</tr>";
     html += renderComponentAlternatives(row, colspan);
-    if (!options.child && componentExpandedChildMap[componentTreeKey(row)]) {
+    if (!options.child && verifiedChildren && catalogExpanded) {
+      verifiedChildren.forEach(function(child) { renderRow(child, { child: true }); });
+    }
+    if (!catalogMode && !options.child && componentExpandedChildMap[componentTreeKey(row)]) {
       var childRows = componentChildRowsMap[componentTreeKey(row)] || [];
       if (componentChildLoadingMap[componentTreeKey(row)]) {
         html += "<tr class='component-child-loading'><td></td><td colspan='" + String(colspan - 1) + "'>" + esc(t("component_child_loading")) + "</td></tr>";
@@ -50780,8 +52997,8 @@ function renderAssemblyComponentRows() {
     }
   }
 
-  rows.forEach(function(row) {
-    renderRow(row);
+  pageRows.forEach(function(row, index) {
+    renderRow(row, { index: index });
   });
   html += "</table>";
   if (editingComponentUsageId) {
@@ -50830,6 +53047,28 @@ function renderAssemblyComponentRows() {
   });
   wrap.querySelectorAll("[data-component-alt-delete]").forEach(function(btn) {
     btn.addEventListener("click", function() { disableComponentAlternative(btn.dataset.componentAltDelete); });
+  });
+  wrap.querySelectorAll("[data-catalog-tree-page]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var direction = btn.dataset.catalogTreePage;
+      wrap.dataset.catalogTreePage = String(pageNumber + (direction === "next" ? 1 : -1));
+      componentExpandedChildMap = {};
+      renderAssemblyComponentRows();
+      var replacement = wrap.querySelector("[data-catalog-tree-page='" + direction + "']:not([disabled])") ||
+        wrap.querySelector("[data-catalog-tree-page]:not([disabled])");
+      if (replacement) replacement.focus({ preventScroll: true });
+    });
+  });
+  wrap.querySelectorAll("[data-catalog-child-toggle]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var key = btn.dataset.catalogChildToggle;
+      var wasExpanded = componentExpandedChildMap[key];
+      componentExpandedChildMap = {};
+      if (!wasExpanded) componentExpandedChildMap[key] = true;
+      renderAssemblyComponentRows();
+      var replacement = wrap.querySelector("[data-catalog-child-toggle='" + key + "']");
+      if (replacement) replacement.focus({ preventScroll: true });
+    });
   });
   wrap.querySelectorAll("[data-component-child-toggle]").forEach(function(btn) {
     btn.addEventListener("click", function() { toggleComponentChildRows(btn.dataset.componentChildToggle); });
@@ -51047,6 +53286,7 @@ async function fetchCatalogComponentRowsByDkd(dkdId, loadRequestId) {
 async function loadAssemblyComponentsForCurrent() {
   var wrap = document.getElementById("component-wrap");
   if (!wrap) return;
+  if (wrap.dataset) delete wrap.dataset.catalogTreePage;
   var componentLoadProduct = currentProduct;
   var loadRequestId = ++componentLoadRequestId;
   if (typeof refreshCoreValuationPanel === "function") refreshCoreValuationPanel(true);
@@ -51527,6 +53767,7 @@ function salesPricingRankCountMap(rows) {
 }
 
 function salesRankDisplayName(rank) {
+  if (rank && rank.rank_code === "RECYCLE_FACTORING") return "Recycle＋";
   var name = String((rank && (rank.rank_name || rank.rank_code)) || "-");
   name = name.replace(/^販売王\s*/, "");
   name = name.replace(/^売値区分\s+/, "売値区分");
@@ -51879,7 +54120,9 @@ function renderSalesRankPreview() {
     html += "<th>" + esc(t("sales_rate_adjust")) + "</th>";
   }
   html += "</tr>";
-  salesPricingRanks.forEach(function(rank) {
+  var displayRanks = salesPricingRanks.filter(function(rank) { return rank.rank_code === "RECYCLE_FACTORING"; })
+    .concat(salesPricingRanks.filter(function(rank) { return rank.rank_code !== "RECYCLE_FACTORING"; }));
+  displayRanks.forEach(function(rank) {
     var price = calculateSalesPriceClient(base, rank);
     var isRank1 = rank.rank_code === "HANBAIOU_URI_1";
     if (isRank1) {
@@ -52333,11 +54576,14 @@ async function fetchDetailCustomerDisplaySettings(customer) {
 function detailCustomerShippingRuleHtml(displaySettings) {
   var loaded = !!displaySettings;
   var rule = loaded ? normalizeCustomerShippingChargeRule(displaySettings) : "loading";
-  var labelKey = rule === "free" ? "sales_shipping_charge_free" : (rule === "separate" ? "sales_shipping_charge_separate" : "sales_shipping_charge_loading");
+  var labelKey = rule === "free" ? "sales_shipping_charge_free" : (rule === "separate" ? "sales_shipping_charge_separate_short" : "sales_shipping_charge_loading");
   var noteKey = rule === "free" ? "sales_shipping_free_note" : (rule === "separate" ? "sales_shipping_separate_note" : "");
   var html = "<div class='detail-customer-shipping-rule " + esc(rule) + "'>";
-  html += "<span>" + esc(t("sales_shipping_charge_rule")) + "</span><strong>" + esc(t(labelKey)) + "</strong>";
-  if (noteKey) html += "<small>" + esc(t(noteKey)) + "</small>";
+  html += "<span>" + esc(t("sales_shipping_rate")) + "</span><div class='sales-shipping-charge-value'><strong title='" + esc(t(rule === "separate" ? "sales_shipping_charge_separate" : labelKey)) + "'>" + esc(t(labelKey)) + "</strong><span class='sales-shipping-charge-amount' id='sales-shipping-charge-amount' aria-live='polite' hidden></span></div>";
+  if (rule === "separate") {
+    html += "<button class='sales-shipping-destination-guide' id='sales-shipping-destination-guide' type='button' hidden><span>" + esc(t("sales_shipping_destination_guide")) + "</span><span class='sales-shipping-guide-arrow' aria-hidden='true'></span></button>";
+  } else if (noteKey) html += "<small>" + esc(t(noteKey)) + "</small>";
+  html += "<div class='sales-shipping-charge-details' id='sales-shipping-charge-details' hidden></div>";
   return html + "</div>";
 }
 
@@ -52362,6 +54608,7 @@ function renderDetailCustomerInfoHtml(customer, priceInfo, canSelect, displaySet
       html += "<div class='detail-customer-note'>" + esc(t("detail_customer_no_customers")) + "</div>";
     }
     html += "<div class='detail-customer-price-focus empty'><span>" + esc(t("sales_price_section")) + "</span><strong>" + esc(t("detail_customer_no_price")) + "</strong></div>";
+    html += detailCustomerShippingRuleHtml({ shipping_charge_rule: "separate" });
     html += "</div>";
     return html;
   }
@@ -52435,6 +54682,7 @@ async function fetchDetailCustomerPriceInfo(customer, dkdId) {
 }
 
 function bindDetailSalesCustomerSelect() {
+  bindSalesShippingDestinationGuide();
   var select = document.getElementById("detail-sales-customer-select");
   if (!select) return;
   select.addEventListener("change", function() {
@@ -52832,6 +55080,7 @@ function isSalesPricingMgmtSearchCurrent(epoch) {
 
 async function enterSalesPricingMgmt() {
   if (!canViewSalesPricing()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("sales-pricing-mgmt", false)) return;
   showScreen("sales-pricing-mgmt");
   updateAllHeaders();
   var q = document.getElementById("sales-pricing-mgmt-search");
@@ -52977,6 +55226,7 @@ async function openSalesPricingMgmtRow(dkdId) {
 
 async function enterPurchaseMgmt() {
   if (!canViewPurchaseMgmt()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("purchase-mgmt", false)) return;
   showScreen("purchase-mgmt");
   updateAllHeaders();
   var supplierEl = document.getElementById("purchase-mgmt-supplier");
@@ -53920,6 +56170,7 @@ function bindCustomerAccessWorkspaceNavigation() {
 
 async function enterCustomerAccessMgmt() {
   if (!canManageCustomerAccess()) { alert(t("err_perm")); return; }
+  if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("customer-access-mgmt", false)) return;
   currentCustomerAccessCustomer = null;
   customerAccessDetailRequestSeq += 1;
   customerAccessSavedDisplayDraft = null;
@@ -57153,6 +59404,7 @@ function permissionOverviewUserContext(user, roleCode, manufacturingCostAllowed)
     roleCode: roleCode,
     companyCode: companyCode,
     ownRole: true,
+    businessInspection: isBusinessInspectionProfile(user),
     scope: accessScopeLabel(roleCode, companyLabel),
     manufacturingCostAllowed: !!manufacturingCostAllowed,
     permissionOverrides: userPermissionOverrides(user),
@@ -57398,7 +59650,7 @@ function permissionOverviewScreenGroups(context) {
         {
           title: "商品撮影・画像整理",
           items: [
-            { label: "撮影・登録・整理・選択ダウンロード", state: yesNo(roleIsInternal && permissionOverviewRoleIn(role, ["master_editor", "dept_admin"]), "責任者のみ利用可（画像管理の拒否設定を優先）", "利用不可") }
+            { label: "撮影・登録・整理・選択ダウンロード", state: yesNo(roleIsInternal && (context.businessInspection || permissionOverviewRoleIn(role, ["master_editor", "dept_admin"])), "責任者のみ利用可（画像管理の拒否設定を優先）", "利用不可") }
           ]
         },
         {
@@ -58196,7 +60448,7 @@ function permissionOverviewCountHtml(context) {
 }
 
 function canEditUserPermission(user) {
-  if (!user || !isSystemAdmin()) return false;
+  if (!user || isBusinessInspectionProfile(user) || !isSystemAdmin()) return false;
   var actorId = (currentUser && currentUser.id) || (userProfile && userProfile.id) || "";
   return !!actorId && String(user.id) !== String(actorId);
 }
@@ -58216,6 +60468,7 @@ function canEditUserPermissionStates(user, roleCode) {
 }
 
 function permissionOverridesForRole(user, roleCode, overrides) {
+  if (isBusinessInspectionProfile(user)) return Object.assign({}, userPermissionOverrides(user));
   var clean = {};
   var context = permissionOverviewUserContext(user, roleCode, false);
   context.canEditStates = true;
@@ -58252,7 +60505,7 @@ function renderUserPermissionOverview() {
       user.name,
       user.email,
       optionLabel(USER_COMPANY_OPTIONS, userCompanyCode(user)),
-      accessRoleLabel(roleCode),
+      profileAccessRoleLabel(user),
       accessRoleScopeText(roleCode)
     ].filter(Boolean).join(" ")).indexOf(query) >= 0;
   });
@@ -58287,7 +60540,7 @@ function renderUserPermissionOverview() {
     html += "<td><div class='user-permission-person'><strong>" + esc(user.name || "-") + "</strong>" + statusBadge + "</div><div class='mgmt-sub'>ログインID: " + esc(user.email || "-") + "</div></td>";
     html += "<td><div class='mgmt-pn'>" + esc(optionLabel(USER_COMPANY_OPTIONS, companyCode)) + "</div></td>";
     var overrideCount = Object.keys(userPermissionOverrides(user)).filter(function(key) { return typeof userPermissionOverrides(user)[key] === "boolean"; }).length;
-    html += "<td><div class='mgmt-pn'>" + esc(accessRoleLabel(roleCode)) + "</div><div class='mgmt-sub'>" + esc(accessRoleScopeText(roleCode)) + "</div>" + (overrideCount ? "<div class='mgmt-sub permission-override-count'>個別設定: " + overrideCount + "件</div>" : "") + (customerText ? "<div class='mgmt-sub'>得意先: " + esc(customerText) + "</div>" : "") + "</td>";
+    html += "<td><div class='mgmt-pn'>" + esc(profileAccessRoleLabel(user)) + "</div><div class='mgmt-sub'>" + esc(accessRoleScopeText(roleCode)) + "</div>" + (overrideCount ? "<div class='mgmt-sub permission-override-count'>個別設定: " + overrideCount + "件</div>" : "") + (customerText ? "<div class='mgmt-sub'>得意先: " + esc(customerText) + "</div>" : "") + "</td>";
     html += "<td>" + permissionOverviewStatusHtml(costState) + "</td>";
     html += "<td><button class='btn-user-permission-open' type='button' data-uid='" + esc(user.id) + "'>" + (canEditUserPermission(user) ? "確認・変更" : "確認") + "</button></td>";
     html += "</tr>";
@@ -58333,12 +60586,14 @@ function openUserPermissionEditor(user) {
   var roleCode = normalizeAccessRoleForCompany(userAccessRoleCode(user), companyCode);
   var canManage = canEditUserPermission(user);
   currentPermissionEditOverrides = Object.assign({}, userPermissionOverrides(user));
-  roleDisplay.innerHTML = internalAccessRoleOptionHtmlForCompany(companyCode, roleCode);
+  roleDisplay.innerHTML = isBusinessInspectionProfile(user)
+    ? optionHtml([[roleCode, profileAccessRoleLabel(user)]], roleCode)
+    : internalAccessRoleOptionHtmlForCompany(companyCode, roleCode);
   roleDisplay.disabled = !canManage;
   customerSelect.innerHTML = customerOptionHtml(customerUserLinkMap[user.id] || "");
   customerSelect.disabled = !canManage;
   if (summary) {
-    summary.innerHTML = "<strong>" + esc(user.name || user.email || "-") + "</strong><span>" + esc(user.email || "-") + "</span><span>会社: " + esc(optionLabel(USER_COMPANY_OPTIONS, companyCode)) + " / 基準権限: " + esc(accessRoleLabel(roleCode)) + "</span>";
+    summary.innerHTML = "<strong>" + esc(user.name || user.email || "-") + "</strong><span>" + esc(user.email || "-") + "</span><span>会社: " + esc(optionLabel(USER_COMPANY_OPTIONS, companyCode)) + " / 基準権限: " + esc(profileAccessRoleLabel(user)) + "</span>";
   }
   if (message) { message.className = "save-msg"; message.textContent = ""; }
   overlay.classList.add("show");
@@ -58362,12 +60617,16 @@ function refreshUserPermissionEditor() {
   var optionalAllowed = manufacturingCostOptionalAllowedFor(roleCode, companyCode);
   var canManage = canEditUserPermission(user);
   var canEditStates = canEditUserPermissionStates(user, roleCode);
-  if (roleNote) roleNote.textContent = accessRoleScopeText(roleCode);
+  if (roleNote) roleNote.textContent = isBusinessInspectionProfile(user)
+    ? "AI専用 / 商品削除以外を利用できます。"
+    : accessRoleScopeText(roleCode);
   if (controls) controls.classList.toggle("has-customer-field", roleCode === "customer_viewer");
   if (customerField) setCspStyle(customerField, "display", roleCode === "customer_viewer" ? "" : "none");
   if (saveButton) setCspStyle(saveButton, "display", canManage ? "" : "none");
   if (guide) {
-    if (!canManage) {
+    if (isBusinessInspectionProfile(user)) {
+      guide.textContent = "業務点検はAI専用です。商品削除のみ禁止され、通常のユーザー権限画面では変更できません。";
+    } else if (!canManage) {
       guide.textContent = "表示ルール: 利用可・制限は表示、不可は非表示です。自分自身の基準権限はこの画面では変更できません。";
     } else if (roleCode === "system_admin") {
       guide.textContent = "表示ルール: 利用可・制限は表示、不可は非表示です。システム管理者は全機能を利用できるため、個別設定は使用しません。";
@@ -58655,7 +60914,7 @@ async function openUserAuthHistory(user, options) {
   }
   summary.textContent = options.customerAccount && currentCustomerAccessCustomer
     ? [currentCustomerAccessCustomer.source_customer_code, currentCustomerAccessCustomer.customer_name, user.name, user.email].filter(Boolean).join(" / ")
-    : (user.email || "-") + " / " + accessRoleLabel(normalizeAccessRoleForCompany(userAccessRoleCode(user), userCompanyCode(user)));
+    : (user.email || "-") + " / " + profileAccessRoleLabel(user);
   list.innerHTML = "<div class='loading'>" + t("loading") + "</div>";
   overlay.classList.add("show");
 
@@ -58791,7 +61050,7 @@ function renderUsers(users) {
     html += "<div data-dcats-inline-style='s-286372957b99'>";
     html += "<div class='user-email'>ログインID: "+esc(u.email)+" "+sbadge+"</div>";
     html += "<div class='user-summary-line'>";
-    html += "<span class='user-summary-chip user-affiliation-summary'>会社: "+esc(companyLabel)+" / 基準権限: "+esc(accessRoleLabel(roleCode))+"</span>";
+    html += "<span class='user-summary-chip user-affiliation-summary'>会社: "+esc(companyLabel)+" / 基準権限: "+esc(profileAccessRoleLabel(u))+"</span>";
     html += "</div>";
     if (u.company) html += "<div class='user-created'>申請会社名: "+esc(u.company)+"</div>";
     html += "<div class='user-created'>"+t("lbl_registered")+" "+(u.created_at?u.created_at.slice(0,10):"-")+"</div>";
@@ -59201,7 +61460,7 @@ document.getElementById("current-password").addEventListener("keydown", function
   if(e.key==="Enter") doChangePassword();
 });
 document.getElementById("login-password").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
-["btn-logout-menu","btn-logout-customer-portal","btn-logout-customer-shipping","btn-logout-customer-users","btn-logout-customer-catalog","btn-logout-customer-orders","btn-logout-sales-order-mgmt","btn-logout-shipping-document-mgmt","btn-logout-core-return-mgmt","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-purchase-mgmt","btn-logout-customer-access-mgmt","btn-logout-shipping-rate-mgmt","btn-logout-core-list-mgmt","btn-logout-component-name-master-mgmt","btn-logout-component-compat-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-manufacturing-cost-mgmt","btn-logout-finished-label-mgmt","btn-logout-finished-product-shipping","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
+["btn-logout-menu","btn-logout-customer-portal","btn-logout-customer-shipping","btn-logout-customer-users","btn-logout-customer-catalog","btn-logout-customer-orders","btn-logout-sales-order-mgmt","btn-logout-shipping-document-mgmt","btn-logout-core-return-mgmt","btn-logout-search","btn-logout-production-search","btn-logout-components","btn-logout-component-parallel","btn-logout-users","btn-logout-change-pw","btn-logout-parts-mgmt","btn-logout-sales-pricing-mgmt","btn-logout-purchase-mgmt","btn-logout-customer-access-mgmt","btn-logout-shipping-rate-mgmt","btn-logout-core-list-mgmt","btn-logout-component-name-master-mgmt","btn-logout-component-compat-mgmt","btn-logout-product-kind-stock-mgmt","btn-logout-container-stock-mgmt","btn-logout-manufacturing-cost-mgmt","btn-logout-finished-label-mgmt","btn-logout-finished-product-shipping","btn-logout-production-ranking-mgmt","btn-logout-kikan-mgmt","btn-logout-rakuten-price","btn-logout-rakuten-bulk","btn-logout-api-settings","btn-logout-rakuten-price-list","btn-logout-logs"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("click",doLogout); });
 document.getElementById("customer-portal-search-btn").addEventListener("click", function(){ openCustomerPortalSearch(); });
 document.getElementById("customer-portal-q").addEventListener("keydown", function(e){ if (e.key === "Enter") openCustomerPortalSearch(); });
 document.getElementById("customer-portal-customer-select").addEventListener("change", function(){ loadCustomerPortalPreviewContext(this.value); });
@@ -59745,6 +62004,8 @@ document.getElementById("btn-component-compat-form-cancel").addEventListener("cl
 document.getElementById("btn-component-compat-form-save").addEventListener("click", saveComponentCompatForm);
 document.getElementById("component-compat-form-overlay").addEventListener("click", function(e){ if (e.target === this) closeComponentCompatForm(); });
 document.getElementById("component-compat-form-part-number").addEventListener("blur", function(){ normalizeComponentPartNumberElement(this); });
+document.getElementById("btn-container-stock-open").addEventListener("click", enterContainerStockMgmt);
+document.getElementById("btn-back-container-stock-mgmt").addEventListener("click", returnFromContainerStockMgmt);
 document.getElementById("btn-back-product-kind-stock-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-manufacturing-cost-mgmt").addEventListener("click", returnToMenuFresh);
 document.getElementById("btn-back-finished-label-mgmt").addEventListener("click", returnFromFinishedLabelMgmtToMenu);
@@ -59845,27 +62106,114 @@ bindCoreManagementTabs();
 document.getElementById("btn-core-collection-clear").addEventListener("click", clearCoreCollectionFilters);
 document.getElementById("btn-core-list-mode-collection").addEventListener("click", function(){ setCoreListMode("collection"); });
 document.getElementById("btn-core-list-mode-inventory").addEventListener("click", function(){ setCoreListMode("inventory"); });
+document.getElementById("btn-core-list-mode-pending").addEventListener("click", function(){ setCoreListMode("pending"); });
+document.getElementById("core-pending-search-form").addEventListener("submit", function(event) {
+  event.preventDefault();
+  corePendingStockSearch();
+});
 document.getElementById("btn-add-core-collection").addEventListener("click", function(){ openCoreCollectionForm("add"); });
-document.getElementById("btn-add-core-list").addEventListener("click", function(){ openCoreListForm("add"); });
+var corePalletEntry = window.DcatsCorePallet({
+  translate: t,
+  canEdit: canManageProductionRecords,
+  pendingRows: function() { return coreListMode === "inventory" ? coreInventoryPendingRows : corePendingStockRows; },
+  openLinked: function() { openCoreListForm("add"); },
+  search: function(query) {
+    return fetchCoreProductMasterMatches(query, null, 20);
+  },
+  write: function(args) { return sb.rpc("write_core_pending_stock", args); },
+  refresh: async function(message) {
+    var mode = coreListMode;
+    if (mode !== "inventory" && mode !== "pending") return;
+    await setCoreListMode(mode);
+    if (coreListMode !== mode) return;
+    var status = document.getElementById("core-pallet-save-status");
+    status.textContent = message;
+    status.hidden = false;
+    if (coreManagementDataReady && mode === "pending") renderCorePendingStock();
+  }
+});
+document.getElementById("btn-add-core-list").addEventListener("click", corePalletEntry.openEntry);
+document.getElementById("btn-add-core-pending").addEventListener("click", corePalletEntry.openEntry);
+document.getElementById("btn-core-pending-print").addEventListener("click", printCorePendingStock);
+document.getElementById("btn-core-pending-excel").addEventListener("click", exportCorePendingExcel);
 document.getElementById("btn-create-core-list-from-ranking").addEventListener("click", createCoreListFromRanking);
-document.getElementById("btn-export-core-collection").addEventListener("click", exportCoreCollectionCsv);
+document.getElementById("btn-export-core-collection").addEventListener("click", function() { exportCoreCollectionCsv(false); });
+document.getElementById("btn-export-core-replenishment").addEventListener("click", function() { exportCoreCollectionCsv(true); });
 document.getElementById("btn-core-collection-search").addEventListener("click", searchCoreCollectionWorkspace);
 document.getElementById("core-collection-search").addEventListener("keydown", function(e){ if(e.key === "Enter") searchCoreCollectionWorkspace(); });
-["core-collection-category", "core-collection-state", "core-collection-priority"].forEach(function(id) {
+["product", "main", "notes", "reference"].forEach(function(name) {
+  document.getElementById("ccf-tab-" + name).addEventListener("keydown", function(event) {
+    if (["ArrowLeft", "ArrowRight", "Home", "End"].indexOf(event.key) < 0) return;
+    var names = ["product", "main", "notes", "reference"].filter(function(value) { return !document.getElementById("ccf-tab-" + value).classList.contains("hidden"); });
+    var index = names.indexOf(name);
+    var next = event.key === "Home" ? 0 : (event.key === "End" ? names.length - 1 : (index + (event.key === "ArrowLeft" ? names.length - 1 : 1)) % names.length);
+    event.preventDefault(); setCoreCollectionFormTab(names[next]); document.getElementById("ccf-tab-" + names[next]).focus();
+  });
+});
+document.getElementById("ccf-tab-product").addEventListener("click", function() { setCoreCollectionFormTab("product"); });
+document.getElementById("ccf-tab-main").addEventListener("click", function() { setCoreCollectionFormTab("main"); });
+document.getElementById("ccf-tab-reference").addEventListener("click", function() { setCoreCollectionFormTab("reference"); });
+document.getElementById("ccf-reference-previous").addEventListener("click", function() { coreCollectionReferencePage -= 1; renderCoreCollectionReference(); });
+document.getElementById("ccf-reference-next").addEventListener("click", function() { coreCollectionReferencePage += 1; renderCoreCollectionReference(); });
+document.getElementById("ccf-tab-notes").addEventListener("click", function() { setCoreCollectionFormTab("notes"); });
+document.getElementById("core-collection-previous").addEventListener("click", function() {
+  if (coreListMode === "pending") return moveCorePendingStockPage(-1);
+  if (coreListMode !== "collection") return;
+  coreCollectionPageStart = coreCollectionPageHistory.pop() || 0;
+  renderCoreCollectionList();
+});
+window.addEventListener("resize", function() {
+  if (!document.getElementById("screen-core-list-mgmt").classList.contains("active")) return;
+  if (coreListMode === "collection") renderCoreCollectionList();
+  if (coreListMode === "pending") renderCorePendingStock();
+});
+window.matchMedia("(min-width: 1101px)").addEventListener("change", function() {
+  if (coreListMode === "inventory" && document.getElementById("screen-core-list-mgmt").classList.contains("active")) renderCoreListMgmt();
+});
+["core-collection-category", "core-collection-state", "core-collection-vehicle-filters", "core-collection-source"].forEach(function(id) {
   document.getElementById(id).addEventListener("change", function(){ applyCoreCollectionFilters(); renderCoreCollectionList(); });
 });
-document.getElementById("btn-core-list-search").addEventListener("click", loadCoreListMgmt);
-document.getElementById("core-list-search").addEventListener("keydown", function(e){ if(e.key==="Enter") loadCoreListMgmt(); });
-document.getElementById("core-list-load-more").addEventListener("click", function(){
-  if (coreListMode === "collection") {
-    coreCollectionRenderLimit += CORE_COLLECTION_RENDER_PAGE_SIZE;
-    renderCoreCollectionList();
-    return;
-  }
-  loadCoreListMgmt({ append: true });
+document.getElementById("btn-core-list-search").addEventListener("click", submitCoreInventorySearch);
+["core-list-search", "core-inventory-memo"].forEach(function(id) {
+  document.getElementById(id).addEventListener("keydown", function(event) {
+    if (event.key !== "Enter" || event.isComposing) return;
+    event.preventDefault();
+    submitCoreInventorySearch();
+  });
 });
-document.getElementById("btn-core-list-form-cancel").addEventListener("click", function(){ document.getElementById("core-list-form-overlay").classList.remove("show"); });
+document.getElementById("btn-core-inventory-clear").addEventListener("click", function() {
+  resetCoreInventoryFilters();
+  if (!coreManagementDataReady) return loadCoreListMgmt();
+  applyCoreInventoryFilters();
+  renderCoreListMgmt();
+});
+document.getElementById("core-list-load-more").addEventListener("click", function() {
+  if (coreListMode === "pending") return moveCorePendingStockPage(1);
+  if (coreListMode !== "collection") return;
+  coreCollectionPageHistory.push(coreCollectionPageStart);
+  coreCollectionPageStart += coreCollectionPageSize;
+  renderCoreCollectionList();
+});
+document.getElementById("btn-core-list-form-cancel").addEventListener("click", closeCoreListForm);
 document.getElementById("btn-core-list-form-save").addEventListener("click", saveCoreListForm);
+document.getElementById("btn-core-list-delete-review").addEventListener("click", openCoreListDeleteConfirmation);
+document.getElementById("btn-core-list-delete-back").addEventListener("click", function() {
+  showCoreListDeleteConfirmation(null);
+  document.getElementById("core-list-form-title").textContent = t("core_list_edit_title");
+  document.getElementById("btn-core-list-delete-review").focus();
+});
+document.getElementById("core-list-delete-ack").addEventListener("change", function(event) {
+  document.getElementById("btn-core-list-delete-confirm").disabled = !event.currentTarget.checked;
+});
+document.getElementById("btn-core-list-delete-confirm").addEventListener("click", deleteCoreListRow);
+document.getElementById("core-inventory-note-prev").addEventListener("click", function() {
+  coreInventoryNotePage -= 1;
+  renderCoreInventoryNote();
+});
+document.getElementById("core-inventory-note-next").addEventListener("click", function() {
+  coreInventoryNotePage += 1;
+  renderCoreInventoryNote();
+});
 document.getElementById("btn-core-collection-form-cancel").addEventListener("click", function(){ document.getElementById("core-collection-form-overlay").classList.remove("show"); });
 document.getElementById("btn-core-collection-form-save").addEventListener("click", saveCoreCollectionForm);
 document.getElementById("core-collection-form-overlay").addEventListener("click", function(e){ if (e.target === this) this.classList.remove("show"); });
@@ -60117,6 +62465,17 @@ finishedLabelSearchInput.addEventListener("keyup", function(e) {
   }
 });
 document.getElementById("btn-finished-label-load-more").addEventListener("click", showMoreFinishedLabelProducts);
+var finishedLabelProductPager = document.getElementById("finished-label-product-pages");
+finishedLabelProductPager.firstElementChild.addEventListener("click", function() { changeFinishedLabelProductPage(-1); });
+finishedLabelProductPager.lastElementChild.addEventListener("click", function() { changeFinishedLabelProductPage(1); });
+window.matchMedia("(min-width: 1180px) and (min-height: 880px)").addEventListener("change", function() {
+  if (finishedLabelPrintMode !== "product" || !finishedLabelProducts.length) return;
+  var index = finishedLabelProducts.findIndex(function(product) {
+    return productDkdId(product) === productDkdId(finishedLabelSelectedProduct);
+  });
+  finishedLabelProductPage = Math.floor(Math.max(0, index) / finishedLabelProductPageSize());
+  renderFinishedLabelResults();
+});
 document.querySelectorAll("[data-label-printer-setup-guide-open]").forEach(function(button) {
   button.addEventListener("click", function() {
     openFinishedLabelSetupGuide(button.dataset.labelPrinterSetupDefaultView || "first", button);
@@ -60837,6 +63196,15 @@ document.getElementById("shipping-packing-boxes-open").addEventListener("click",
 document.getElementById("btn-back-claim-case-mgmt").addEventListener("click",returnToMenuFresh);
 document.getElementById("btn-logout-claim-case-mgmt").addEventListener("click",doLogout);
 document.getElementById("core-return-claim-cases").addEventListener("click",function(){enterClaimCaseMgmt({state:"awaiting_return"});});
+document.addEventListener("click", function(event) {
+  var button = event.target.closest("[data-sales-order-claim-new]");
+  if (!button) return;
+  var id = button.dataset.salesOrderClaimNew;
+  var order = button.closest("#sales-order-list")
+    ? salesOrderRows.find(function(row) { return String(row.id) === id; })
+    : salesOrderDetail && String(salesOrderDetail.id) === id ? salesOrderDetail : null;
+  startSalesOrderClaimIntake(order);
+});
 document.addEventListener("click",function(event){var button=event.target.closest("[data-sales-order-claim-open]");if(!button||!salesOrderDetail||!canManageSalesOrders())return;var c=claimCaseReturnContext;var same=c&&[String(c.original_order_id),String(c.replacement_order_id)].indexOf(String(salesOrderDetail.id))>=0;enterClaimCaseMgmt(same?{caseId:c.id}:{search:salesOrderDetail.order_number,state:"all"});});
 
 document.getElementById("sales-order-slips-readonly").addEventListener("click", enterSalesSlipsReadonly);

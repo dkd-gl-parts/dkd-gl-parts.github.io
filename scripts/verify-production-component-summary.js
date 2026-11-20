@@ -107,14 +107,16 @@ if (summarySource.includes("unit_price_jpy") || summarySource.includes("formatCo
   ".production-component-summary-section { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }",
   ".production-component-kind-switch { display: grid; grid-template-columns: repeat(2, minmax(64px, 1fr));",
   ".production-component-summary-wrap { flex: 1 1 auto; min-height: 0; overflow: auto; }",
-  ".production-component-summary-table { width: 100%; min-width: 700px; border-collapse: collapse; table-layout: fixed;",
-  ".production-component-summary-table th:nth-child(2) { width: 150px; }",
-  ".production-component-summary-table td:nth-child(2) { overflow-wrap: normal; word-break: normal; }",
-  "html:lang(ja) .production-component-summary-table td:nth-child(2) { white-space: nowrap; }",
+  ".production-component-summary-table { width: 100%; min-width: 0; border-collapse: collapse; table-layout: fixed;",
+  ".production-component-summary-table th:nth-child(2) { width: auto; }",
+  ".production-component-summary-table td:nth-child(2) { overflow-wrap: anywhere; word-break: normal; white-space: normal; }",
   ".production-component-summary-table th { position: sticky; top: 0;",
-  ".production-component-summary-procurement { overflow-wrap: normal; word-break: normal; }",
-  ".production-component-summary-table td.production-component-summary-memo { line-height: 1.4; white-space: pre-wrap; }",
-  ".production-component-summary-table { min-width: 700px; }"
+  ".production-component-summary-procurement { overflow-wrap: anywhere; word-break: normal; }",
+  ".production-component-summary-table td.production-component-summary-memo { padding-top: 0; color: #667085; line-height: 1.4; white-space: pre-wrap; }",
+  ".production-component-summary-table { min-width: 0; }"
 ].forEach((fragment) => requireFragment(css, fragment, "production component summary CSS"));
 
+if (summarySource.includes('esc(memo || "-")')) throw new Error("Empty manufacturing memos must not add a row");
+requireFragment(summarySource, "if (memo)", "optional memo row");
+requireFragment(summarySource, "colspan='5'", "full-width manufacturing memo");
 console.log("Production component summary verified.");

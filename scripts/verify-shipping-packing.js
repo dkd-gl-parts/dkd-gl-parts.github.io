@@ -7,6 +7,7 @@ function eq(a,b){assert.deepEqual(a,b);count++;}
 const context={Number,Array,Math,parseInt,APP_VERSION:"v-test",encodeURIComponent,
  esc:s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])),
  salesOrderDispatch:o=>o.dispatch,
+ salesOrderInventoryItemHtml:()=>"<div class='sales-order-inventory-values'>合成在庫表示</div>",
  shippingDocumentDestinationContext:()=>({type:"direct",label:"配送先",badge:"合成",recipient:"合成宛先",postalAddress:"合成住所",phone:"000"}),
  customerProductKindLabel:k=>k==="rebuilt"?"リビルト品":"新品",
  customerOrderShippingMethodLabel:(s,f)=>s?s.carrier_name+" / "+s.service_name:f,

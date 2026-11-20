@@ -7,7 +7,7 @@ function extract(name){const n=ast.body.find(n=>n.type==='FunctionDeclaration'&&
 const trans=ast.body.filter(n=>n.type==='VariableDeclaration').flatMap(n=>n.declarations).find(n=>n.id.name==='TRANSLATIONS').init;
 const start=html.indexOf('<div class="form-overlay" id="finished-warranty-policy-overlay"'),end=html.indexOf('<div class="form-overlay" id="finished-shipment-replacement-overlay"',start);
 assert(start>=0&&end>start);
-const menu=extract('renderMenu');
+const menu=extract('createScreenMenuDefinitions')+'\n'+extract('renderMenu')+'\n'+extract('openAppMenuAction');
 const deps=[...new Set(menu.match(/\b(?:can\w+|isSystemAdmin)\(/g))].map(x=>x.slice(0,-1)).filter(n=>!['canManageSharedSettings','canManageFinishedProductShipping'].includes(n));
 const runtime='var TRANSLATIONS='+app.slice(trans.start,trans.end)+';\n'+
 String.raw`var currentLang='ja',userProfile={id:'fixture'},categoryOptions=[],finishedWarrantyPolicyRows=[],salesOrderWarrantyPolicies=[],currentProduct=null,detailSecondaryRequestSeq=0;
@@ -37,7 +37,7 @@ qaStore.revision=(++qaCounter).toString(16).padStart(32,'0');return {data:clone(
 }};
 qaSeed();
 `+deps.map(n=>'function '+n+'(){return false;}').join('\n')+'\n'+
-['esc','renderMenu','openFinishedWarrantyPolicySettings','closeFinishedWarrantyPolicySettings','saveFinishedWarrantyPolicies','renderFinishedWarrantyPolicyTable','categoryTranslationSource','tCat','categoryOptionLabel','productCategoryLabel','categoryCodeFromForm','formValueFromCategoryCode','renderCategoryChips','refreshCategorySelectLabels'].map(extract).join('\n')+'\n'+
+['esc','createScreenMenuDefinitions','openAppMenuAction','renderMenu','openFinishedWarrantyPolicySettings','closeFinishedWarrantyPolicySettings','saveFinishedWarrantyPolicies','renderFinishedWarrantyPolicyTable','categoryTranslationSource','tCat','categoryOptionLabel','productCategoryLabel','categoryCodeFromForm','formValueFromCategoryCode','renderCategoryChips','refreshCategorySelectLabels'].map(extract).join('\n')+'\n'+
 String.raw`document.getElementById('finished-warranty-policy-close').addEventListener('click',closeFinishedWarrantyPolicySettings);
 document.getElementById('finished-warranty-policy-cancel').addEventListener('click',closeFinishedWarrantyPolicySettings);
 document.getElementById('finished-warranty-policy-save').addEventListener('click',saveFinishedWarrantyPolicies);

@@ -104,7 +104,8 @@ const searchControlSource = sourceBetween("function setPartsMgmtSearchPending", 
     throw new Error("search controls must be restored after the query finishes");
   }
 
-  console.log("Product management search action verification passed.");
+  const regression = await require("../tests/mitsubishi-master-search.cjs").verify(source);
+  console.log("Product management search action verification passed; Mitsubishi/catalog regression cases: " + regression.cases);
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

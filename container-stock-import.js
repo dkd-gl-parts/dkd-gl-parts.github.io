@@ -1434,7 +1434,12 @@
       }
     });
   }
+  function canLeave() {
+    var dialog = byId("container-stock-confirm");
+    return !state.working && !(dialog && dialog.open);
+  }
   root.DcatsContainerStockImport = {
+    canLeave: canLeave,
     enter: enter, _collectRows: collectedRows, _renderPreview: renderPreview,
     _validPartNumber: validPartNumber, _useFileNameAsReference: useFileNameAsReference,
     _automaticTarget: automaticTarget, _automaticFamilyTarget: automaticFamilyTarget, _state: state,

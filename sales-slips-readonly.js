@@ -38,6 +38,8 @@
   function create(options) {
     var host = options.host, doc = host.ownerDocument;
     var life = 0, listSeq = 0, detailSeq = 0, owner = null, cursor = null, filters = null, ui = null;
+    var pageLayouts = new Map();
+    function resizePages() { pageLayouts.forEach(function(update) { update(); }); }
     function allowed() { return !!options.currentUserId() && options.canRead() === true; }
     function live(stamp) { return stamp === life && owner === options.currentUserId() && allowed() && options.active(); }
     function node(tag, text, className) {
@@ -51,6 +53,8 @@
     }
     function status(text, error) { ui.status.textContent = text; ui.status.className = error ? "slip-status slip-error" : "slip-status"; }
     function reset() {
+      if (root.removeEventListener) root.removeEventListener("resize", resizePages);
+      pageLayouts.clear();
       life++; listSeq++; detailSeq++; owner = null; cursor = null; filters = null; ui = null; host.replaceChildren();
     }
     function invalidate(stamp) {
@@ -79,6 +83,37 @@
       var head=node("thead"), tr=node("tr"); headers.forEach(function(t){var th=node("th",t);th.scope="col";tr.append(th);});
       head.append(tr); var body=node("tbody"); el.append(head,body); wrap.append(el); return {wrap:wrap,body:body};
     }
+    function paginate(tableView, section) {
+      pageLayouts.delete(section);
+      var rows = Array.from(tableView.body.children);
+      var labels = Array.from(tableView.body.parentNode.querySelectorAll("th"), function(th) { return th.textContent; });
+      rows.forEach(function(row) {
+        Array.from(row.children).forEach(function(cell, index) { cell.setAttribute("data-label", labels[index]); });
+      });
+      if (rows.length < 2) return;
+      var controls = node("nav", undefined, "slip-pager");
+      controls.setAttribute("aria-label", "表示範囲");
+      var start = 0;
+      var count = node("span");
+      function pageSize() {
+        if (root.innerWidth <= 700) return 1;
+        return root.innerHeight < 800 ? 3 : 5;
+      }
+      function show(offset) {
+        var size = pageSize();
+        start = Math.max(0, Math.min(rows.length - 1, offset));
+        rows.forEach(function(row, i) { row.hidden = i < start || i >= start + size; });
+        previous.disabled = start === 0;
+        next.disabled = start + size >= rows.length;
+        count.textContent = (start + 1) + "–" + Math.min(start + size, rows.length) + " / " + rows.length;
+      }
+      var previous = button("前へ", function() { show(Math.max(0, start - pageSize())); });
+      var next = button("次へ", function() { show(start + pageSize()); });
+      controls.append(previous, count, next);
+      tableView.wrap.append(controls);
+      pageLayouts.set(section, function() { show(start); });
+      show(0);
+    }
     function renderRows(rows) {
       ui.list.replaceChildren();
       if (!rows.length) { ui.list.append(node("p","条件に一致する売上伝票はありません。")); return; }
@@ -93,6 +128,7 @@
         cell(tr,r.tax_state === "pending_closing" ? "締め時に確定" : money(r.total_jpy));
         t.body.append(tr);
       });
+      paginate(t, "list");
       ui.list.append(t.wrap);
     }
     function readFilters() {
@@ -106,8 +142,11 @@
       if (!live(stamp)) { invalidate(stamp); return; }
       var current=readFilters();
       if (!current) { status("検索条件を確認してください。日付は開始日から終了日の順に指定してください。",true);return; }
+      host.setAttribute("data-view", "list");
       var after=next && JSON.stringify(current)===JSON.stringify(filters) ? cursor : null;
       filters=current; cursor=null;
+      if (root.innerWidth <= 700 && ui.searchPanel) ui.searchPanel.open = false;
+      pageLayouts.clear();
       var seq=++listSeq; detailSeq++;
       ui.list.replaceChildren(); ui.detail.replaceChildren(); ui.next.hidden=true; ui.next.disabled=true;
       ui.list.setAttribute("aria-busy","true"); status("売上伝票を読み込んでいます。",false);
@@ -151,7 +190,28 @@
         cell(tr,i.cost_state==="unknown" ? "未確定" : i.cost_state==="not_applicable" ? "対象外" : money(i.cost_total_jpy));
         t.body.append(tr);
       });
-      ui.detail.replaceChildren(title,dl,t.wrap);
+      paginate(t, "detail");
+      var sectionNav = node("nav", undefined, "slip-detail-nav");
+      sectionNav.setAttribute("aria-label", "売上伝票詳細");
+      var facts = button("伝票情報", function() { choose(true); });
+      var lines = button("商品明細", function() { choose(false); });
+      function choose(showFacts) {
+        dl.hidden = !showFacts;
+        t.wrap.hidden = showFacts;
+        facts.setAttribute("aria-pressed", String(showFacts));
+        lines.setAttribute("aria-pressed", String(!showFacts));
+      }
+      var back = button("一覧に戻る", function() {
+        detailSeq++;
+        host.setAttribute("data-view", "list");
+        ui.detail.replaceChildren();
+        var selected = Array.from(ui.list.querySelectorAll("button")).find(function(el) { return el.textContent === r.slip_number; });
+        (selected || ui.search).focus();
+      });
+      sectionNav.append(back, facts, lines);
+      choose(false);
+      host.setAttribute("data-view", "detail");
+      ui.detail.replaceChildren(title,sectionNav,dl,t.wrap);
       if(r.original_slip_id)ui.detail.append(button("元の売上伝票を見る",function(){return detail(r.original_slip_id);}));
       if(r.reversal_slip_id)ui.detail.append(button("取消の赤伝票を見る",function(){return detail(r.reversal_slip_id);}));
       title.focus();
@@ -160,6 +220,8 @@
       var stamp=life;
       if(!live(stamp)){invalidate(stamp);return;}
       if(typeof id!=="string" || !identifier.test(id))return;
+      pageLayouts.delete("detail");
+      host.setAttribute("data-view", "list");
       var seq=++detailSeq;ui.detail.replaceChildren(node("p","伝票明細を読み込んでいます。"));ui.detail.setAttribute("aria-busy","true");
       try {
         var data=await read("get_sales_slip_readonly",{p_slip_id:id});
@@ -185,8 +247,9 @@
       } finally {if(live(stamp)&&seq===detailSeq)ui.detail.setAttribute("aria-busy","false");}
     }
     async function enter() {
-      reset(); if(!allowed() || !options.active())return;
+      reset(); host.setAttribute("data-view", "list"); if(!allowed() || !options.active())return;
       owner=options.currentUserId();
+      if (root.addEventListener) root.addEventListener("resize", resizePages);
       var title=node("h1","売上伝票"), note=node("p",undefined,"slip-posting");
       var form=node("form",undefined,"slip-filters");
       var search=node("input");search.type="search";search.maxLength=80;search.value="";search.name="search";
@@ -203,7 +266,12 @@
       var next=button("次の50件",function(){return list(true);});next.hidden=true;
       var detailHost=node("section",undefined,"slip-detail");detailHost.setAttribute("aria-label","売上伝票詳細");detailHost.setAttribute("aria-live","polite");
       ui={search:search,from:from,to:to,type:type,status:message,posting:note,list:rows,next:next,detail:detailHost};
-      host.replaceChildren(title,note,form,message,rows,next,detailHost);
+      var searchPanel = node("details", undefined, "slip-search-panel");
+      ui.searchPanel = searchPanel;
+      var searchSummary = node("summary", "検索条件");
+      searchPanel.append(searchSummary, form);
+      if (root.innerWidth > 700 && root.innerHeight >= 800) searchPanel.open = true;
+      host.replaceChildren(title,note,searchPanel,message,rows,next,detailHost);
       await list(false);
     }
     return {enter:enter,reset:reset};

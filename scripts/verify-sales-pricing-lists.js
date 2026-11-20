@@ -7,12 +7,15 @@ function selectVisible(f){const all=f.doc.querySelector('[data-spl-visible-all]'
 function bulkReview(f){selectVisible(f);f.doc.getElementById('spl-bulk').click();}
 const tick=()=>new Promise(r=>setImmediate(r));
 async function fixture(lang='ja'){
- const {window}=parseHTML('<html><body><div id="screen-sales-pricing-mgmt" class="screen active"><section id="sales-pricing-lists"></section></div></body></html>');
+ const {window:domWindow}=parseHTML('<html><body><div id="screen-sales-pricing-mgmt" class="screen active"><section id="sales-pricing-lists"></section></div></body></html>');
+ let copyNavigator;const window=new Proxy(domWindow,{get:(target,key)=>key==='navigator'?copyNavigator:Reflect.get(target,key)});
  const doc=window.document,selectValue=new WeakMap();
+ Object.defineProperty(window.HTMLTextAreaElement.prototype,'select',{configurable:true,value:function(){this.dataset.selected='1';}});
  const scrollPositions=new WeakMap();Object.defineProperty(window.HTMLElement.prototype,'scrollTop',{configurable:true,get(){return scrollPositions.get(this)||0;},set(v){scrollPositions.set(this,Number(v));}});
  Object.defineProperty(window.HTMLSelectElement.prototype,'value',{configurable:true,get(){return selectValue.has(this)?selectValue.get(this):(this.querySelector('option[selected],option')?.getAttribute('value')||'');},set(v){selectValue.set(this,String(v));}});
  const inputChecked=new WeakMap();Object.defineProperty(window.HTMLInputElement.prototype,'checked',{configurable:true,get(){return inputChecked.has(this)?inputChecked.get(this):this.hasAttribute('checked');},set(v){inputChecked.set(this,!!v);}});
- const create=doc.createElement.bind(doc);doc.createElement=(tag)=>{const n=create(tag);if(tag==='dialog'){n.showModal=()=>{n.open=true;n.querySelector('form').reportValidity=()=>Array.from(n.querySelectorAll('[required]')).every(x=>!!x.value);};n.close=()=>{n.open=false;n.dispatchEvent(new window.Event('close'));};}return n;};
+ const create=doc.createElement.bind(doc);doc.createElement=(tag)=>{const n=create(tag);if(tag==='dialog'){n.showModal=()=>{n.open=true;if(n.querySelector('form'))n.querySelector('form').reportValidity=()=>Array.from(n.querySelectorAll('[required]')).every(x=>!!x.value);};n.close=()=>{n.open=false;n.dispatchEvent(new window.Event('close'));};}if(tag==='textarea')n.select=()=>{n.dataset.selected='1';};return n;};
+ const clipboard=[];let copyHandler=async()=>{};const navigator=copyNavigator={clipboard:{writeText(text){clipboard.push(text);return copyHandler(text);}}};
  const timers=new Map();let timerSeq=0,clockOffset=0;const fakeSetTimeout=(fn)=>{timers.set(++timerSeq,fn);return timerSeq;};const fakeClearTimeout=(id)=>timers.delete(id);class ClockDate extends Date{static now(){return Date.now()+clockOffset;}}
  const individual=[],calls=[],rows=[{item_id:1,dkd_shohin_id:100,manufacturer_part_number:'OEM-100',genuine_part_number:'G-100',manufacturer:'DENSO',state:'ready',cost_jpy:8000,minimum_jpy:11500,suggested_jpy:11500,dks_price_jpy:10000,target_jpy:8000,ec_price_jpy:10500,ec_tax_basis:'unknown'},
  {item_id:2,dkd_shohin_id:101,manufacturer_part_number:'<script>bad</script>',state:'dks_missing',cost_jpy:3510,minimum_jpy:5100},
@@ -29,9 +32,30 @@ async function fixture(lang='ja'){
  throw Error('unexpected_action');}}});
  vm.runInContext(source,vm.createContext({window,document:doc,MutationObserver:window.MutationObserver,crypto:webcrypto,Set,console,AbortSignal,Date:ClockDate,setTimeout:fakeSetTimeout,clearTimeout:fakeClearTimeout}));
  await window.DcatsSalesPricingLists.enter();doc.getElementById('spl-list').value='1';doc.getElementById('spl-load').click();await tick();await tick();
- return {window,doc,calls,edgeCalls,individual,gCalls,setGHandler(fn){gHandler=fn;},setReceipt(fn){receiptHandler=fn;},setPreview(fn){previewHandler=fn;},setCommitFailure(error){commitFailure=error;},setReview(reason){configured=true;reviewFailure=reason;},async enableEc(){ecEnabled=true;await window.DcatsSalesPricingLists.enter();},completeEc(){ecComplete=true;},blockEc(){ecBlocked=true;},loseEcResponse(){ecLost=true;},async pollEc(){for(const [id,fn] of [...timers]){timers.delete(id);await fn();}await tick();await tick();},async advanceTime(ms){clockOffset+=ms;for(const [id,fn] of [...timers]){timers.delete(id);await fn();}await tick();},timerCount(){return timers.size;},loseCredentialResponse(){credentialLost=true;},setUnknown(){unknown=true;},deny(){allowed=false;},rows};
+ return {window,doc,calls,edgeCalls,individual,gCalls,clipboard,setCopyHandler(fn){copyHandler=fn;},disableClipboard(){navigator.clipboard=null;},setGHandler(fn){gHandler=fn;},setReceipt(fn){receiptHandler=fn;},setPreview(fn){previewHandler=fn;},setCommitFailure(error){commitFailure=error;},setReview(reason){configured=true;reviewFailure=reason;},async enableEc(){ecEnabled=true;await window.DcatsSalesPricingLists.enter();},completeEc(){ecComplete=true;},blockEc(){ecBlocked=true;},loseEcResponse(){ecLost=true;},async pollEc(){for(const [id,fn] of [...timers]){timers.delete(id);await fn();}await tick();await tick();},async advanceTime(ms){clockOffset+=ms;for(const [id,fn] of [...timers]){timers.delete(id);await fn();}await tick();},timerCount(){return timers.size;},loseCredentialResponse(){credentialLost=true;},setUnknown(){unknown=true;},deny(){allowed=false;},rows};
 }
 (async()=>{
+ // Copy all current filtered rows, independently of bulk selection, without server writes.
+ for(const lang of ['ja','en','zh']){
+  const f=await fixture(lang),doc=f.doc,Event=f.window.Event,button=()=>doc.getElementById('spl-copy');
+  assert.equal(f.clipboard.length,0,'opening a list must not write to the clipboard');
+  assert.match(button().textContent,/\(2\)/);
+  const check=doc.querySelector('[data-spl-select="1"]');check.checked=true;check.dispatchEvent(new Event('change'));
+  const draft=doc.querySelector('[data-spl-price="1"]');draft.value='12000';draft.dispatchEvent(new Event('input'));
+  const before=f.calls.length;button().click();await tick();assert.equal(f.calls.length,before);
+  assert.equal(f.clipboard.length,1);assert.match(f.clipboard[0],/1\. G-100/);assert.match(f.clipboard[0],/2\. <script>bad<\/script>/);assert.match(f.clipboard[0],/12,000/);assert.doesNotMatch(f.clipboard[0],/OEM-102/);assert.equal(doc.querySelectorAll('script').length,0);assert.ok(doc.getElementById('spl-copy-status').textContent.includes('2'));
+  doc.querySelector('[data-spl-filter="configured"]').click();button().click();await tick();assert.match(f.clipboard.at(-1),/OEM-102/);assert.match(f.clipboard.at(-1),/9,000/);assert.doesNotMatch(f.clipboard.at(-1),/G-100/);
+  doc.querySelector('[data-spl-filter="any"]').click();const q=doc.getElementById('spl-query');q.value='OEM-100';q.dispatchEvent(new Event('input'));button().click();await tick();assert.match(f.clipboard.at(-1),/1\. G-100/);assert.doesNotMatch(f.clipboard.at(-1),/OEM-102|bad/);
+  q.value='no-matching-part';q.dispatchEvent(new Event('input'));assert.equal(button().disabled,true);const count=f.clipboard.length;button().click();await tick();assert.equal(f.clipboard.length,count);
+  q.value='';q.dispatchEvent(new Event('input'));let release;f.setCopyHandler(()=>new Promise(r=>release=r));button().click();button().click();assert.equal(f.clipboard.length,count+1,'duplicate clicks while copying are ignored');assert.equal(button().disabled,true);f.window.currentUser={id:'changed'};release();await tick();assert.equal(doc.getElementById('spl-copy-status').textContent,'','late result must not publish after an account change');f.window.DcatsSalesPricingLists.reset();
+ }
+ for(const mode of ['rejected','missing']){
+  const f=await fixture();if(mode==='rejected')f.setCopyHandler(async()=>{throw Error('permission denied');});else f.disableClipboard();
+  f.doc.getElementById('spl-copy').click();await tick();const d=f.doc.querySelector('.spl-copy-dialog');assert.ok(d?.open);assert.ok(d.querySelector('textarea').hasAttribute('readonly'));assert.match(d.querySelector('textarea').value,/G-100/);assert.equal(d.querySelector('textarea').dataset.selected,'1');assert.equal(f.doc.querySelectorAll('script').length,0);assert.equal(f.calls.filter(c=>c.action==='commit').length,0);f.window.DcatsSalesPricingLists.reset();assert.equal(f.doc.querySelector('dialog'),null);
+ }
+ {const f=await fixture();f.deny();f.doc.getElementById('spl-copy').click();await tick();assert.equal(f.clipboard.length,0);f.window.DcatsSalesPricingLists.reset();}
+ {const f=await fixture();f.doc.getElementById('spl-list').value='999';f.doc.getElementById('spl-list').dispatchEvent(new f.window.Event('change'));assert.equal(f.doc.getElementById('spl-copy').disabled,true);f.doc.getElementById('spl-copy').click();assert.equal(f.clipboard.length,0);f.window.DcatsSalesPricingLists.reset();}
+
  // The unavailable filter follows both displayed unavailable statuses, independently of review/configured states.
  for(const lang of ['ja','en','zh']){
   const f=await fixture(lang),doc=f.doc,Event=f.window.Event;

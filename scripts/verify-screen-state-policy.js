@@ -273,3 +273,318 @@ async function verifySalesSearchReset() {
   console.log("screen state policy verification passed (sales reset, entry guards, child return and stale reads)");
 }
 verifySalesSearchReset().catch(error => { console.error(error); process.exitCode = 1; });
+
+// Retained pilot tabs keep the native workspace while ordinary navigation resets it.
+active = "sales-order-mgmt";
+context.salesOrderDetailView = "history";
+context.window.DcatsNineTabs = { hasTab: id => ["sales-order-mgmt", "claim-case-mgmt"].includes(id), screenChanged() {} };
+let claimResets = 0;
+context.claimCaseWorkspace = { reset() { claimResets += 1; } };
+context.showScreen("shipping-document-mgmt");
+assert.equal(context.salesOrderDetailView, "history", "Switching retained order tabs keeps the current detail view");
+assert.equal(claimResets, 0, "The retained reception workspace survives tab and menu navigation");
+context.showScreen("login");
+assert.equal(claimResets, 1, "Sign-out clears a retained reception workspace");
+assert.equal(context.salesOrderDetailView, "overview", "Sign-out resets retained order details");
+delete context.window.DcatsNineTabs;
+delete context.claimCaseWorkspace;
+
+
+// Dynamic FIFO tabs use the real runtime and independent synthetic screens.
+async function verifyDynamicScreenTabs() {
+  const tabSource = fs.readFileSync(path.join(root, "assets/internal-tabs/nine-screen-tabs.js"), "utf8");
+  async function makeTabs() {
+    const ids = Array.from({length: 14}, (_, i) => "synthetic-menu-" + (i + 1));
+    const parsed = parseHTML('<html><body><div id="screen-menu"><div class="menu-body"><div class="menu-welcome"></div></div></div>' + ids.map(id => '<div id="screen-' + id + '" class="screen"><input id="input-' + id + '" value=""></div>').join("") + '</body></html>');
+    parsed.window.HTMLElement.prototype.focus = function () {};
+    parsed.window.HTMLElement.prototype.getBoundingClientRect = function () { return {left: 0, right: 100, top: 0, bottom: 35, height: 35}; };
+    const values = new Map(), persistent = new Map(), allowed = new Set(ids), dirty = new Set(), released = [], listeners = new Map();
+    let currentScreen = "menu", scope = "initial", busy = false, confirmResult = true, confirms = 0, selected = null;
+    const w = {
+      document: parsed.document, currentLang: "ja",
+      DcatsNineTabsPolicy: {mode: "pilot", pilotUserIds: ["synthetic-owner"], pilotEmails: ["owner@example.invalid"]},
+      sessionStorage: {getItem: key => values.has(key) ? values.get(key) : null, setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key)},
+      localStorage: {getItem: key => persistent.get(key) ?? null, setItem: (key, value) => persistent.set(key, value), removeItem: key => persistent.delete(key)},
+      addEventListener(event, handler) { listeners.set(event, handler); },
+      confirm(message) { assert.match(message, /入力内容の変更/); confirms += 1; return confirmResult; }
+    };
+    vm.runInNewContext(tabSource, {window: w, Promise, Set, Map, Array, JSON});
+    const api = w.DcatsNineTabs;
+    const show = id => { if (!api.beforeShow(id)) return false; if (id === "menu") api.willLeave(id); currentScreen = id; api.screenChanged(id); return true; };
+    const open = id => { if (api.beforeEnter(id, false)) return false; selected = id; return show(id); };
+    const options = {
+      userId: () => "synthetic-owner", scope: () => scope, external: false,
+      verify: async () => ({data: {user: {id: "synthetic-owner", email: "owner@example.invalid", email_confirmed_at: "2026-11-16"}}}),
+      entries: () => ids.map(id => ({id, label: id})), canAccess: id => allowed.has(id),
+      screen: () => currentScreen, show, home: () => show("menu"), enter: open,
+      capture: () => ({selected}), restore: state => { selected = state.selected; },
+      release: id => { released.push(id); dirty.delete(id); },
+      resetControl: node => { node.value = ""; },
+      closeState: id => ({dirty: dirty.has(id), busy})
+    };
+    await api.afterAuthenticated(options);
+    const click = selector => parsed.document.querySelector(selector).dispatchEvent(new parsed.window.Event("click", {bubbles: true}));
+    const setEnabled = value => {
+      assert.equal(api.openProperties(), true);
+      parsed.document.getElementById("dcats-nine-tabs-toggle").checked = value;
+      click("#dcats-tab-properties-apply");
+    };
+    const enable = () => setEnabled(true);
+    const select = id => click("#dcats-nine-tab-" + id);
+    const close = id => click('[data-close-feature="' + id + '"]');
+    const input = (id, value) => {
+      const node = parsed.document.getElementById("input-" + id);
+      node.dispatchEvent(new parsed.window.Event("focusin", {bubbles: true}));
+      node.dispatchEvent(new parsed.window.Event("beforeinput", {bubbles: true}));
+      node.value = value;
+      node.dispatchEvent(new parsed.window.Event("input", {bubbles: true}));
+      return node;
+    };
+    return {api, w, ids, options, values, persistent, allowed, dirty, released, listeners, show, open, enable, setEnabled, select, close, input,
+      get screen() { return currentScreen; }, get confirms() { return confirms; }, get selected() { return selected; },
+      set confirmResult(value) { confirmResult = value; }, set busy(value) { busy = value; }, set scope(value) { scope = value; },
+      set selected(value) { selected = value; }};
+  }
+  const clean = await makeTabs();
+  clean.enable(); clean.open(clean.ids[0]);
+  const loadedInput = clean.w.document.getElementById("input-" + clean.ids[0]);
+  loadedInput.dispatchEvent(new (loadedInput.ownerDocument.defaultView.Event)("focusin", {bubbles: true}));
+  loadedInput.value = "server-loaded";
+  assert.equal(clean.api.hasUnsaved(), false, "Programmatic server loading is not a user edit");
+  clean.input(clean.ids[0], "edited");
+  assert.equal(clean.api.hasUnsaved(), true);
+  clean.input(clean.ids[0], "server-loaded");
+  assert.equal(clean.api.hasUnsaved(), false, "Undo restores the loaded baseline");
+  const t = await makeTabs();
+  assert.equal(t.api.snapshot().enabled, true, "Verified eligible accounts default to ON with no saved choice");
+  t.enable();
+  const firstNine = t.ids.slice(0, 9);
+  firstNine.forEach(t.open);
+  assert.equal(t.api.retainedLimit, 9);
+  assert.equal(Array.from(t.api.snapshot().tabs).join("|"), firstNine.join("|"));
+  const strip = t.w.document.querySelector("[role=tablist]"), selectedNode = strip.querySelector(".is-active");
+  const beforeResize = JSON.stringify(t.api.snapshot());
+  strip.scrollLeft = 0;
+  strip.getBoundingClientRect = () => ({left: 0, right: 100, width: 100});
+  t.listeners.get("resize")();
+  assert.equal(strip.scrollLeft, 0, "Narrow tab strips use pages instead of hidden scrollbars");
+  assert.equal(selectedNode.hidden, false);
+  assert.equal(Array.from(strip.children).filter(node => !node.hidden).length, 1);
+  const previousPage = t.w.document.getElementById("dcats-tabs-previous");
+  previousPage.dispatchEvent(new selectedNode.ownerDocument.defaultView.Event("click", {bubbles: true}));
+  assert.equal(JSON.stringify(t.api.snapshot()), beforeResize, "Paging does not switch business screens or change FIFO order");
+  strip.getBoundingClientRect = () => ({left: 0, right: 2000, width: 2000});
+  t.listeners.get("resize")();
+  assert.equal(Array.from(strip.children).filter(node => !node.hidden).length, 9, "Wider layouts reveal every tab without scrolling");
+  assert.equal(previousPage.hidden, true);
+  assert.equal(JSON.stringify(t.api.snapshot()), beforeResize);
+  assert.equal(strip.querySelector(".is-active"), selectedNode, "Resizing preserves existing controls");
+  t.select(firstNine[0]);
+  assert.equal(Array.from(t.api.snapshot().tabs).join("|"), firstNine.join("|"), "Switching is FIFO, not LRU");
+  t.open(t.ids[9]);
+  assert.equal(Array.from(t.api.snapshot().tabs).join("|"), t.ids.slice(1, 10).join("|"), "Tenth replaces only the oldest");
+  assert.deepEqual(t.released, [t.ids[0]]);
+  t.select(t.ids[1]); t.selected = "per-screen-selection";
+  t.select(t.ids[2]); t.select(t.ids[1]);
+  assert.equal(t.selected, "per-screen-selection", "Shared presentation context follows each tab");
+
+  t.show("menu");
+  t.dirty.add(t.ids[1]); t.confirmResult = false;
+  const before = JSON.stringify(t.api.snapshot()), stored = t.values.get("dcats-nine-tabs.v1:synthetic-owner"), released = t.released.length;
+  assert.equal(t.open(t.ids[10]), false);
+  assert.equal(JSON.stringify(t.api.snapshot()), before, "Cancel leaves order, active and count intact");
+  assert.equal(t.values.get("dcats-nine-tabs.v1:synthetic-owner"), stored, "Cancel does not change saved tab metadata");
+  assert.equal(t.released.length, released);
+  assert.equal(t.confirms, 1);
+  t.confirmResult = true; t.open(t.ids[10]);
+  assert.equal(Array.from(t.api.snapshot().tabs).join("|"), t.ids.slice(2, 11).join("|"));
+  assert.equal(t.confirms, 2);
+
+  t.show("menu"); t.busy = true;
+  const busyBefore = JSON.stringify(t.api.snapshot()), busyConfirms = t.confirms;
+  t.open(t.ids[11]);
+  assert.equal(JSON.stringify(t.api.snapshot()), busyBefore, "Saving/unknown outcomes must not be evicted");
+  assert.equal(t.confirms, busyConfirms, "Busy operations cannot be discarded through a confirmation");
+  t.busy = false; t.open(t.ids[11]);
+  assert.equal(t.api.snapshot().tabs.length, 9);
+
+  const oldest = t.api.snapshot().tabs[0];
+  t.select(oldest);
+  const node = t.input(oldest, "UNSAVED SYNTHETIC INPUT");
+  assert.equal(t.api.hasUnsaved(), true);
+  const reloadGuard = sourceBetween("function isAppSafeForAutoReload()", "function getAppUpdateBanner");
+  assert.equal(vm.runInNewContext(reloadGuard + "; isAppSafeForAutoReload();", {window: {DcatsNineTabs: t.api}}), false, "Hidden draft tabs block automatic reload");
+  t.show("menu"); t.confirmResult = false;
+  const inputBefore = JSON.stringify(t.api.snapshot());
+  t.open(t.ids[12]);
+  assert.equal(JSON.stringify(t.api.snapshot()), inputBefore);
+  assert.equal(node.value, "UNSAVED SYNTHETIC INPUT", "Declined eviction keeps the actual DOM draft");
+  assert.equal(t.values.get("dcats-nine-tabs.v1:synthetic-owner").includes("UNSAVED"), false, "Draft values never enter tab storage");
+  t.close(oldest);
+  assert.equal(JSON.stringify(t.api.snapshot()), inputBefore, "Manual close has the same draft guard");
+  t.setEnabled(false);
+  assert.equal(t.api.snapshot().enabled, true, "Declining OFF keeps every tab enabled");
+  t.select(oldest); t.input(oldest, "");
+  assert.equal(t.api.hasUnsaved(), false, "Undoing an edit returns to the clean baseline");
+  t.show("menu"); t.confirmResult = true; t.open(t.ids[12]);
+  assert.equal(t.api.snapshot().tabs.length, 9);
+  assert.equal(t.api.snapshot().tabs.includes(oldest), false);
+
+  const newId = "menu-added-after-initialization";
+  t.ids.push(newId); t.allowed.add(newId);
+  const screen = t.w.document.createElement("div"); screen.id = "screen-" + newId; t.w.document.body.appendChild(screen);
+  t.open(newId);
+  assert.equal(t.api.snapshot().tabs.at(-1), newId, "A newly supplied menu screen needs no fixed tab whitelist");
+  const deniedId = t.ids[13]; t.allowed.delete(deniedId); t.show("menu");
+  const deniedBefore = JSON.stringify(t.api.snapshot());
+  t.open(deniedId);
+  assert.equal(JSON.stringify(t.api.snapshot()), deniedBefore, "Unauthorized new menus neither open nor evict another tab");
+
+  const savedOrder = Array.from(t.api.snapshot().tabs), savedActive = t.api.snapshot().active;
+  t.api.suspend(false);
+  await t.api.afterAuthenticated(t.options);
+  assert.equal(Array.from(t.api.snapshot().tabs).join("|"), savedOrder.join("|"), "Reload restores nine in original opening order");
+  assert.equal(t.api.snapshot().active, savedActive);
+  t.w.DcatsNineTabsPolicy.mode = "off";
+  t.api.suspend(false); await t.api.afterAuthenticated(t.options);
+  assert.equal(t.api.snapshot().enabled, false);
+  assert.equal(t.w.document.getElementById("dcats-nine-tabs-toggle").disabled, true);
+  assert.equal(t.api.openProperties(), false);
+  assert.equal(t.api.beforeShow("screen-tab-properties"), false);
+  t.w.DcatsNineTabsPolicy.mode = "pilot"; t.w.DcatsNineTabsPolicy.pilotUserIds = ["another-user"];
+  t.api.suspend(false); await t.api.afterAuthenticated(t.options);
+  assert.equal(t.api.snapshot().enabled, false, "Non-pilot accounts cannot enable tabs from a saved ON preference");
+  t.w.DcatsNineTabsPolicy.pilotUserIds = ["synthetic-owner"];
+  t.api.suspend(false); await t.api.afterAuthenticated(t.options);
+  t.scope = "permission-scope-changed";
+  assert.equal(t.api.snapshot().enabled, false, "Changed account scope invalidates retained tabs");
+  t.api.authEvent("SIGNED_OUT");
+  assert.equal(t.values.has("dcats-nine-tabs.v1:synthetic-owner"), false);
+  const reorder = await makeTabs();
+  const reorderKey = "dcats-nine-tabs.v1:synthetic-owner";
+  const openedBefore = reorder.ids.slice(0, 9);
+  openedBefore.forEach(reorder.open);
+  const moving = reorder.w.document.getElementById("dcats-nine-tab-" + openedBefore[0]);
+  const shiftRight = new moving.ownerDocument.defaultView.Event("keydown", {bubbles: true, cancelable: true});
+  Object.defineProperties(shiftRight, {key: {value: "ArrowRight"}, shiftKey: {value: true}});
+  moving.dispatchEvent(shiftRight);
+  const positioned = [openedBefore[1], openedBefore[0], ...openedBefore.slice(2)];
+  assert.deepEqual(Array.from(reorder.api.snapshot().tabs), positioned, "Keyboard move inserts at the adjacent position");
+  assert.equal(reorder.api.snapshot().active, openedBefore[8], "Moving a tab does not change the current screen");
+  const retainedMetadata = JSON.parse(reorder.values.get(reorderKey));
+  assert.deepEqual(retainedMetadata.tabs, openedBefore, "Opening order is still stored for FIFO and older versions");
+  assert.deepEqual(retainedMetadata.displayOrder, positioned);
+  reorder.api.suspend(false); await reorder.api.afterAuthenticated(reorder.options);
+  assert.deepEqual(Array.from(reorder.api.snapshot().tabs), positioned, "Reload restores the custom display order");
+  assert.equal(reorder.persistent.get(reorderKey), reorder.values.get(reorderKey), "Only tab metadata is saved for reopening");
+  const otherUser = {...reorder.options, userId: () => "another-user", verify: async () => ({data: {user: {id: "another-user", email: "another@example.invalid", email_confirmed_at: "2026-11-20"}}})};
+  reorder.w.DcatsNineTabsPolicy = {mode: "all"};
+  reorder.api.suspend(false); reorder.values.clear();
+  await reorder.api.afterAuthenticated(otherUser);
+  assert.deepEqual(Array.from(reorder.api.snapshot().tabs), [], "A different account cannot restore these tabs");
+  reorder.api.suspend(false); await reorder.api.afterAuthenticated(reorder.options);
+  assert.deepEqual(Array.from(reorder.api.snapshot().tabs), positioned, "A fresh session restores the custom display order");
+  assert.equal(reorder.api.snapshot().active, openedBefore[8]);
+  reorder.open(reorder.ids[9]);
+  assert.deepEqual(Array.from(reorder.api.snapshot().tabs), openedBefore.slice(1).concat(reorder.ids[9]), "The first-opened tab is evicted even when it was moved");
+  assert.deepEqual(reorder.released, [openedBefore[0]]);
+  reorder.api.suspend(false); reorder.values.clear(); reorder.allowed.delete(positioned[0]);
+  await reorder.api.afterAuthenticated(reorder.options);
+  assert.equal(reorder.api.snapshot().tabs.includes(positioned[0]), false, "Reopen filters out a screen whose permission was removed");
+  reorder.api.authEvent("SIGNED_OUT");
+  assert.equal(reorder.persistent.has(reorderKey), false, "Explicit sign-out clears saved tab metadata");
+  await reorder.api.afterAuthenticated(reorder.options);
+  reorder.open(reorder.ids[3]);
+  reorder.setEnabled(false);
+  reorder.api.suspend(false); reorder.values.clear();
+  await reorder.api.afterAuthenticated(reorder.options);
+  assert.deepEqual(Array.from(reorder.api.snapshot().tabs), [], "Disabling tabs clears the saved screens");
+
+  const legacy = await makeTabs();
+  legacy.values.set(reorderKey, JSON.stringify({version: 2, tabs: openedBefore, displayOrder: positioned, active: positioned[0]}));
+  legacy.api.suspend(false); await legacy.api.afterAuthenticated(legacy.options);
+  assert.deepEqual(JSON.parse(legacy.persistent.get(reorderKey)).displayOrder, positioned, "An existing session is migrated without changing its order");
+  legacy.w.localStorage.getItem = () => { throw new Error("persistent storage unavailable"); };
+  legacy.w.localStorage.setItem = () => { throw new Error("persistent storage unavailable"); };
+  legacy.api.suspend(false); await legacy.api.afterAuthenticated(legacy.options);
+  assert.deepEqual(Array.from(legacy.api.snapshot().tabs), positioned, "Session restore still works when persistent storage is unavailable");
+
+  const company = await makeTabs();
+  company.w.DcatsNineTabsPolicy = {mode: "all"};
+  const companyOptions = {...company.options, userId: () => "synthetic-company-user", verify: async () => ({data: {user: {id: "synthetic-company-user", email: "colleague@example.invalid", email_confirmed_at: "2026-11-17"}}})};
+  company.api.suspend(false); await company.api.afterAuthenticated(companyOptions);
+  assert.equal(company.api.isAvailable(), true);
+  assert.equal(company.api.snapshot().enabled, true, "Every eligible company account defaults to ON");
+  const companyPreferenceKey = "dcats-nine-tabs.v1:synthetic-company-user:enabled";
+  assert.equal(company.values.has(companyPreferenceKey), false, "Default ON does not manufacture an explicit choice");
+  company.setEnabled(false);
+  assert.equal(company.values.get(companyPreferenceKey), "off");
+  company.api.suspend(false); await company.api.afterAuthenticated(companyOptions);
+  assert.equal(company.api.snapshot().enabled, false, "Explicit OFF survives authentication/reload");
+  company.values.set(companyPreferenceKey, "on");
+  company.api.suspend(false); await company.api.afterAuthenticated(companyOptions);
+  assert.equal(company.api.snapshot().enabled, true, "Explicit ON is preserved");
+  company.values.set(companyPreferenceKey, "invalid");
+  company.api.suspend(false); await company.api.afterAuthenticated(companyOptions);
+  assert.equal(company.api.snapshot().enabled, false, "Unknown stored preferences remain disabled");
+  company.values.delete(companyPreferenceKey);
+  company.api.suspend(false); await company.api.afterAuthenticated(companyOptions);
+  assert.equal(company.api.snapshot().enabled, true, "Removing a stored choice restores default ON");
+  company.enable(); company.open(company.ids[0]);
+  company.api.openProperties();
+  const settingInput = company.w.document.getElementById("dcats-nine-tabs-toggle");
+  settingInput.dispatchEvent(new settingInput.ownerDocument.defaultView.Event("focusin", {bubbles: true}));
+  settingInput.checked = false;
+  settingInput.dispatchEvent(new settingInput.ownerDocument.defaultView.Event("change", {bubbles: true}));
+  assert.equal(company.api.hasUnsaved(), false, "Preference edits are not business drafts");
+  company.show("menu");
+  const deniedCompanyMenu = company.ids[2]; company.allowed.delete(deniedCompanyMenu);
+  const companyBeforeDenied = JSON.stringify(company.api.snapshot());
+  assert.equal(company.open(deniedCompanyMenu), false);
+  assert.equal(JSON.stringify(company.api.snapshot()), companyBeforeDenied, "Public tabs never grant an unauthorized menu");
+  company.api.suspend(false);
+  await company.api.afterAuthenticated({...companyOptions, external: true});
+  assert.equal(company.api.isAvailable(), false, "External customers cannot enable company tabs");
+  assert.equal(company.api.openProperties(), false);
+  assert.equal(company.api.beforeShow("screen-tab-properties"), false);
+  await company.api.afterAuthenticated({...companyOptions, verify: async () => ({error: new Error("expired")})});
+  assert.equal(company.api.isAvailable(), false, "Unverified and expired sessions fail closed");
+  assert.equal(company.api.openProperties(), false);
+  assert.equal(company.api.canShowSettings("synthetic-company-user"), true, "A logged-in internal menu can offer a retry after verification fails");
+  assert.equal(company.api.canShowSettings(null), false, "No settings card without a signed-in account");
+  const savedScreen = company.ids[0];
+  company.values.set("dcats-nine-tabs.v1:synthetic-company-user", JSON.stringify({version: 2, tabs: [savedScreen], active: savedScreen}));
+  company.show("menu");
+  await company.api.afterAuthenticated(companyOptions, false);
+  assert.equal(company.api.isAvailable(), true);
+  assert.equal(company.screen, "menu", "A settings retry should not navigate to the saved business screen");
+  assert.equal(Array.from(company.api.snapshot().tabs).join("|"), savedScreen, "A settings retry still restores tab metadata");
+  assert.equal(company.api.openProperties(), true, "Successful re-verification opens settings");
+  company.api.authEvent("SIGNED_OUT");
+  assert.equal(company.api.openProperties(), false);
+  company.w.DcatsNineTabsPolicy.mode = "off";
+  assert.equal(company.api.canShowSettings("synthetic-company-user"), false);
+  company.w.DcatsNineTabsPolicy.mode = "pilot";
+  assert.equal(company.api.canShowSettings("synthetic-company-user"), false, "Pilot settings are hidden before verified pilot enrollment");
+  console.log("dynamic screen tabs passed (FIFO 9, dirty cancel/accept, busy, dynamic menus, reload, settings retry and pilot isolation)");
+}
+verifyDynamicScreenTabs().catch(error => { console.error(error); process.exitCode = 1; });
+
+async function verifySearchCancelKeepsPreviewMode() {
+  const entry = sourceBetween("async function enterSearch(options)", "async function enterProductionSearch");
+  const state = {window: {DcatsNineTabs: {beforeEnter: () => true}}, customerPortalSearchActive: true, isCustomerViewer: () => false, canViewProductSearch: () => true};
+  vm.runInNewContext(entry, state);
+  await state.enterSearch();
+  assert.equal(state.customerPortalSearchActive, true, "A cancelled direct entry must not alter the current customer-preview mode");
+}
+verifySearchCancelKeepsPreviewMode().catch(error => { console.error(error); process.exitCode = 1; });
+
+// A retained private inbox survives ordinary switches, but never authentication exit.
+active = "concierge-admin";
+context.window.DcatsNineTabs = {hasTab: id => id === "concierge-admin", screenChanged() {}};
+const retainedConciergeCloses = context.conciergeCloseCount;
+context.showScreen("menu");
+assert.equal(context.conciergeCloseCount, retainedConciergeCloses, "Retained same-account concierge is not disposed on a tab switch");
+context.showScreen("login");
+assert.equal(context.conciergeCloseCount, retainedConciergeCloses + 1, "Authentication exit always clears private concierge DOM");
+delete context.window.DcatsNineTabs;

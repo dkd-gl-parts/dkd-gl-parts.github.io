@@ -32,6 +32,8 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check app.js
+          node --check reception-management.js
+          node --check claim-cases.js
           node --check sales-order-revision.js
           node --check install-app.js
           node --check assets/concierge-pet/concierge-pet.js
@@ -41,6 +43,8 @@ jobs:
         run: node scripts/verify-recycle-orders.js
       - name: Verify configurable factoring sale prices
         run: node scripts/verify-factoring-pricing.js
+      - name: Verify operation log descriptions
+        run: node scripts/verify-operation-logs.js
       - name: Verify sales order revision workflow
         run: node scripts/verify-sales-order-revision.js
       - name: Verify animated concierge pets
@@ -103,6 +107,8 @@ jobs:
         run: node scripts/verify-catalog-illustration-states.js
       - name: Verify manual component add
         run: node scripts/verify-component-manual-add.js
+      - name: Verify registered component name/manufacturer/part-number assist
+        run: node scripts/verify-component-input-master-assist.js
       - name: Verify shared component unit prices
         run: node scripts/verify-component-shared-unit-price.js
       - name: Verify component screen transition
@@ -143,6 +149,8 @@ jobs:
         run: node scripts/verify-internal-shipping-permission.js
       - name: Verify password-reset permission overview
         run: node scripts/verify-password-reset-permission-overview.js
+      - name: Verify AI-only business inspection permissions
+        run: node scripts/verify-business-inspection-permissions.js
       - name: Verify customer price list
         run: node scripts/verify-customer-price-list.js
       - name: Verify Recycle＋ price reports
@@ -181,6 +189,8 @@ jobs:
         run: node scripts/verify-customer-order-batch-accept.js
       - name: Verify sales order operations dashboard
         run: node scripts/verify-sales-order-dashboard.js
+      - name: Verify sales order shelf locations and stock
+        run: node scripts/verify-sales-order-inventory.js
       - name: Verify sales order detail usability
         run: node scripts/verify-sales-order-detail-usability.js
       - name: Verify readable sales order layout
@@ -232,6 +242,8 @@ jobs:
         run: |
           node scripts/verify-manufacturing-cost-import.js
           node scripts/verify-document-import-parsers.js
+      - name: Verify warehouse locations and pending-operation recovery
+        run: node scripts/verify-warehouse-stock.js
       - name: Verify container rebuilt stock import
         run: node scripts/verify-container-stock-import.js
       - name: Verify manufacturing cost snapshot status
@@ -257,7 +269,9 @@ jobs:
       - name: Verify core return policy
         run: node scripts/verify-core-return-policy.js
       - name: Verify core management workspace
-        run: node scripts/verify-core-management-workspace.js
+        run: |
+          node scripts/verify-core-management-workspace.js
+          node scripts/verify-core-vehicle-classification.js
       - name: Verify core return management
         run: node scripts/verify-core-return-management.js
       - name: Verify core refund eligibility
@@ -312,10 +326,14 @@ jobs:
         run: node scripts/verify-security-response-headers.js
       - name: Verify purchase multiple-link management
         run: node scripts/verify-purchase-multiple-links.js
+      - name: Verify production report ranks and compatibility inheritance
+        run: node scripts/verify-production-report-ranks.js
       - name: Verify manufacturing ranking performance
         run: node scripts/verify-manufacturing-ranking-performance.js
       - name: Verify manufacturing ranking supplier report
         run: node scripts/verify-manufacturing-ranking-suppliers.js
+      - name: Verify manufacturing ranking ACDK relinking
+        run: node scripts/verify-manufacturing-ranking-acdk.js
       - name: Verify manufacturing ranking vehicle filters
         run: node scripts/verify-manufacturing-ranking-vehicle-filters.js
       - name: Verify mobile label printer routing

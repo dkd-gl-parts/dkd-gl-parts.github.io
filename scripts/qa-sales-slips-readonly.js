@@ -47,7 +47,7 @@ async function verifyEntryWiring() {
   const results = await verifyEntryWiring();
   const browser = await chromium.launch({ headless: true });
   try {
-    for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }]) {
+    for (const viewport of [{ width: 1440, height: 1000 }, { width: 1280, height: 650 }, { width: 390, height: 844 }]) {
       const context = await browser.newContext({ viewport });
       let networkRequests = 0;
       await context.route("**/*", route => { networkRequests++; return route.abort(); });
@@ -82,6 +82,15 @@ async function verifyEntryWiring() {
         await page.getByRole("heading", { name:"SYNTHETIC-READONLY-001", exact:true }).waitFor();
         const fits = await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
         results.push({ viewport: viewport.width, name:"画面全体に横はみ出しなし", pass: fits });
+        for (const name of ["商品明細", "伝票情報", "一覧に戻る"]) {
+          await page.getByRole("button", {name, exact:true}).click();
+          const overflows = await page.evaluate(() => {
+            const visible = Array.from(document.querySelectorAll(".slip-body, .slip-table-scroll, .slip-detail, .slip-facts")).filter(el => el.getClientRects().length);
+            return document.documentElement.scrollHeight > window.innerHeight + 1 ||
+              visible.some(el => el.scrollWidth > el.clientWidth + 1 || el.getBoundingClientRect().bottom > window.innerHeight + 1);
+          });
+          results.push({viewport:viewport.width, name:name+"で表示領域に収まる", pass:!overflows});
+        }
         if (output) {
           fs.mkdirSync(output,{recursive:true});
           await page.screenshot({path:path.join(output, "sales-slips-readonly-"+viewport.width+".png"),fullPage:true});

@@ -284,8 +284,8 @@ if (!compatibleLoadSource.includes('document.getElementById("sales-basic-compati
   "grid-template-columns: var(--sales-condition-label-width) minmax(0, max-content) max-content",
   "font-variant-numeric: tabular-nums",
   ".detail-customer-price-focus:not(.empty) > strong",
-  ".detail-customer-shipping-rule.separate > strong",
-  ".detail-customer-shipping-rule.free > strong",
+  ".detail-customer-shipping-rule.separate .sales-shipping-charge-value > strong",
+  ".detail-customer-shipping-rule.free .sales-shipping-charge-value > strong",
   ".sales-detail-tab-panel[hidden]",
   ".sales-basic-compatible",
   "align-items: stretch",
@@ -307,7 +307,7 @@ const stockLayout = css.match(/#screen-search \.detail-customer-section \.produc
 if (!stockLayout || !stockLayout[1].includes("text-align: left")) {
   throw new Error("sales stock must start beside its label, not at the far edge");
 }
-const shippingLayout = css.match(/#screen-search \.sales-conditions-panel \.detail-customer-shipping-rule > strong\s*\{([^}]+)\}/);
+const shippingLayout = css.match(/#screen-search \.sales-conditions-panel \.detail-customer-shipping-rule \.sales-shipping-charge-value > strong\s*\{([^}]+)\}/);
 if (!shippingLayout || !shippingLayout[1].includes("justify-self: start")) {
   throw new Error("sales shipping condition must stay next to its label");
 }
@@ -344,6 +344,8 @@ const fieldsContext = {
   document: fieldsDocument, currentProduct: { dkd_shohin_id: 1 },
   currentSelectedProductKind: "rebuilt", detailSelectedSalesCustomerId: "1",
   detailSecondaryRequestSeq: 1, priceVisible: true,
+  shelfLoadCount: 0,
+  loadSalesProductShelfForCurrent(seq) { assert.equal(seq, fieldsContext.detailSecondaryRequestSeq); fieldsContext.shelfLoadCount++; },
   t: key => key, esc: value => String(value == null ? "" : value),
   formatYen: value => String(value),
   productKindSummaryForProduct: () => fixtureSummary,
@@ -381,6 +383,7 @@ vm.runInContext(
   fieldsContext
 );
 fieldsContext.renderProductKindWrapForCurrent();
+assert.equal(fieldsContext.shelfLoadCount, 1, "Product kind layout starts shelf loading for the selected detail");
 const stableKindHost = fieldsDocument.getElementById("product-kind-wrap");
 const stableStockHost = fieldsDocument.getElementById("product-kind-stock-wrap");
 const firstSelect = fieldsDocument.getElementById("product-kind-select");

@@ -8,7 +8,8 @@ assert(html.includes('id="screen-concierge-admin"') && html.includes('id="concie
 const version = /concierge-pet\.js\?v=([^"<]+)/.exec(html)[1];
 assert(html.includes('concierge-admin.js?v=' + version) && html.includes('concierge-admin.css?v=' + version));
 assert(app.includes('action: "concierge-admin", available: isSystemAdmin()'));
-assert(app.includes('if (id !== "concierge-admin") closeConciergeAdmin()'));
+assert(app.includes('if (id !== "concierge-admin" && (!window.DcatsNineTabs || !window.DcatsNineTabs.hasTab("concierge-admin") || ["login", "boot", "reset"].includes(id))) closeConciergeAdmin()'));
+assert(app.includes('if (id === "concierge-admin") closeConciergeAdmin();'), 'Discarding a retained concierge tab must clear private DOM');
 assert(app.includes('body.submission_id = window.crypto.randomUUID()'));
 assert(read("assets/concierge-pet/concierge-pet.js").includes('messageId: data.message_id'));
 assert(read("assets/concierge-pet/concierge-requests.js").includes('draftId = draft.messageId || uuid()'));

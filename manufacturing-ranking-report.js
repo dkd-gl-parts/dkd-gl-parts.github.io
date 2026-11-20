@@ -377,6 +377,255 @@
     return rows;
   }
 
+
+  // Rank inheritance uses product codes and explicit membership only.
+  // No part-number match, report master-match candidate, or group chain is an edge.
+  var productionRanks;
+  function resetProductionRanks() {
+    productionRanks = { owner: "", status: "idle", map: Object.create(null), index: null,
+      products: Object.create(null), groups: Object.create(null), complete: new Set(),
+      failed: new Set(), pending: null, basePending: null, loadedAt: 0 };
+  }
+  resetProductionRanks();
+
+  function productionRankOwner() {
+    if (typeof currentUser === "undefined" || !currentUser ||
+        typeof userProfile === "undefined" || !userProfile ||
+        String(currentUser.id) !== String(userProfile.id) ||
+        typeof canViewProductionFeatures !== "function" || !canViewProductionFeatures() ||
+        typeof canViewManufacturingReport !== "function" || !canViewManufacturingReport()) return "";
+    return String(currentUser.id);
+  }
+
+  function productionRankStatus(product) {
+    var owner = productionRankOwner();
+    if (!owner) return "denied";
+    if (owner !== productionRanks.owner) return "idle";
+    if (productionRanks.loadedAt && Date.now() - productionRanks.loadedAt >= 300000) return "idle";
+    if (product) {
+      var id = String(product.dkd_shohin_id || "");
+      if (productionRanks.complete.has(id)) return "ready";
+      if (productionRanks.failed.has(id)) return "error";
+    }
+    return productionRanks.status === "error" ? "error" : product ? "loading" : productionRanks.status;
+  }
+
+  function productionRankFor(product) {
+    if (productionRankStatus(product) !== "ready") return null;
+    return productionRanks.map[String(product && product.dkd_shohin_id || "")] || null;
+  }
+
+  function productionRankCode(value) {
+    var code = normalizeText(value);
+    return /^\d+$/.test(code) ? code.replace(/^0+(?=\d)/, "") : code;
+  }
+
+  function rankProductionSources(rows, sheets) {
+    return buildRanking(rows, {
+      categories: defaultSourceCategories(sheets), reportType: "manufacturing", metric: "shipment",
+      rankScope: "overall", startRank: 1, endRank: MAX_SOURCE_ROWS,
+      minShipment: 0, query: "", compatibilityMode: "all",
+      compatibilityBasis: "none", productCategories: [], vehicleTargets: []
+    }).results;
+  }
+
+  function indexProductionRankSources(rows, sheets) {
+    var byCode = Object.create(null);
+    rankProductionSources(rows, sheets).forEach(function(result) {
+      var code = productionRankCode(result.row.productCode);
+      if (code && (!byCode[code] || result.rank < byCode[code])) byCode[code] = result.rank;
+    });
+    return byCode;
+  }
+
+  function buildProductionRankMap(rows, sheets, membership, products, sourceIndex) {
+    var byCode = sourceIndex || indexProductionRankSources(rows, sheets);
+    var own = Object.create(null), groups = Object.create(null), best = Object.create(null);
+    (products || []).forEach(function(product) {
+      var id = String(product.dkd_shohin_id);
+      var rank = byCode[productionRankCode(product.dks_shohin_cd)];
+      if (rank) own[id] = { rank: rank, sourceProductId: id };
+    });
+    (membership || []).forEach(function(member) {
+      if (member.kikan_group_id == null || member.dkd_gokan_id == null) return;
+      var id = String(member.dkd_gokan_id), group = String(member.kikan_group_id);
+      if (!groups[id]) groups[id] = [];
+      if (groups[id].indexOf(group) < 0) groups[id].push(group);
+      if (own[id] && (!best[group] || own[id].rank < best[group].rank)) best[group] = own[id];
+    });
+    var map = Object.create(null);
+    (products || []).forEach(function(product) {
+      var id = String(product.dkd_shohin_id), rank = own[id];
+      // A ranked product keeps its own position; compatibility is a fallback only.
+      if (!rank) {
+        (groups[id] || []).forEach(function(group) {
+          if (best[group] && (!rank || best[group].rank < rank.rank)) rank = best[group];
+        });
+      }
+      if (rank) map[id] = { rank: rank.rank, sourceProductId: rank.sourceProductId, inherited: id !== rank.sourceProductId };
+    });
+    return map;
+  }
+
+  async function fetchProductionRankPages(table, columns, field, ids, checkCurrent, size) {
+    var values = uniqueIds(ids), chunks = [], all = [];
+    for (var i = 0; i < values.length; i += size) chunks.push(values.slice(i, i + size));
+    for (var start = 0; start < chunks.length; start += REFERENCE_QUERY_CONCURRENCY) {
+      checkCurrent();
+      var responses = await Promise.all(chunks.slice(start, start + REFERENCE_QUERY_CONCURRENCY).map(async function(chunk) {
+        var rows = [];
+        for (var offset = 0; ; offset += DATA_PAGE_SIZE) {
+          checkCurrent();
+          var response = await sb.from(table).select(columns).in(field, chunk)
+            .order(table === "core_products" ? "dkd_shohin_id" : "id", { ascending: true })
+            .range(offset, offset + DATA_PAGE_SIZE - 1);
+          if (response.error) throw response.error;
+          var page = response.data || [];
+          rows = rows.concat(page);
+          if (page.length < DATA_PAGE_SIZE) return rows;
+        }
+      }));
+      responses.forEach(function(rows) { all = all.concat(rows); });
+    }
+    return all;
+  }
+
+  async function fetchProductionRankSource(checkCurrent, reportYear) {
+    checkCurrent();
+    var query = sb.from("manufacturing_report_datasets")
+      .select("id,report_year,sheet_manifest").eq("is_active", true);
+    if (reportYear != null) query = query.eq("report_year", reportYear);
+    var response = await query.order("report_year", { ascending: false })
+      .order("imported_at", { ascending: false }).order("id", { ascending: true }).limit(1).maybeSingle();
+    if (response.error) throw response.error;
+    if (!response.data) throw new Error("Manufacturing ranking unavailable");
+    var dataset = response.data;
+    var sheets = (dataset.sheet_manifest || []).map(function(sheet) {
+      return { name: normalizeText(sheet.name), isAggregate: !!sheet.is_aggregate, count: Number(sheet.count) };
+    });
+    var categories = defaultSourceCategories(sheets);
+    var count = sheets.filter(function(sheet) { return categories.indexOf(sheet.name) >= 0; })
+      .reduce(function(total, sheet) { return total + sheet.count; }, 0);
+    if (!categories.length || !Number.isInteger(count) || count < 1 || count > MAX_SOURCE_ROWS) throw new Error("Invalid manufacturing ranking row count");
+    var columns = "id,dataset_id,category_name,category_order,source_row_number,is_aggregate,product_code,genuine_part_number,manufacturer_part_number,shipment_count";
+    if (reportYear != null) columns += ",master_product_ids";
+    var offsets = [], rows = [];
+    for (var offset = 0; offset < count; offset += DATA_PAGE_SIZE) offsets.push(offset);
+    for (var start = 0; start < offsets.length; start += DATA_PAGE_CONCURRENCY) {
+      checkCurrent();
+      var pages = await Promise.all(offsets.slice(start, start + DATA_PAGE_CONCURRENCY).map(function(pageOffset) {
+        return sb.from("manufacturing_report_rows").select(columns)
+          .eq("dataset_id", dataset.id).in("category_name", categories)
+          .order("category_order", { ascending: true }).order("source_row_number", { ascending: true })
+          .order("id", { ascending: true }).range(pageOffset, pageOffset + DATA_PAGE_SIZE - 1);
+      }));
+      pages.forEach(function(page) {
+        if (page.error) throw page.error;
+        rows = rows.concat(page.data || []);
+      });
+    }
+    checkCurrent();
+    if (rows.length !== count || new Set(rows.map(function(row) { return row.id; })).size !== count) {
+      throw new Error("Incomplete manufacturing ranking");
+    }
+    return { rows: rows.map(mapDatabaseRow), sheets: sheets, year: Number(dataset.report_year) };
+  }
+
+  async function loadProductionRankIndex(cache, checkCurrent) {
+    if (cache.index) return;
+    if (cache.basePending) return cache.basePending;
+    cache.basePending = (async function() {
+      var source = await fetchProductionRankSource(checkCurrent);
+      cache.index = indexProductionRankSources(source.rows, source.sheets);
+      cache.reportYear = source.year;
+      cache.loadedAt = Date.now();
+    })();
+    try { await cache.basePending; } finally { cache.basePending = null; }
+  }
+
+  async function loadCoreCollectionRanking2025(checkCurrent) {
+    var source = await fetchProductionRankSource(checkCurrent, 2025);
+    return indexCoreCollectionRanks(source.rows, source.sheets);
+  }
+
+  function indexCoreCollectionRanks(rows, sheets) {
+    var byCode = new Map(), byId = new Map();
+    rankProductionSources(rows, sheets).forEach(function(result) {
+      var detail = { rank: result.rank, shipment: result.shipment };
+      var code = productionRankCode(result.row.productCode);
+      if (code && !byCode.has(code)) byCode.set(code, detail);
+      var ids = uniqueIds(result.row.masterProductIds || []);
+      if (ids.length === 1 && !byId.has(ids[0])) byId.set(ids[0], detail);
+    });
+    return function(product) {
+      if (!product || isAcdkPart(product.manufacturer_part_number)) return null;
+      return byCode.get(productionRankCode(product.dks_shohin_cd)) || byId.get(String(product.dkd_shohin_id)) || null;
+    };
+  }
+
+  async function loadProductionRanks(products) {
+    var owner = productionRankOwner();
+    if (!owner) { resetProductionRanks(); return; }
+    if (productionRanks.owner !== owner ||
+        (productionRanks.loadedAt && Date.now() - productionRanks.loadedAt >= 300000)) resetProductionRanks();
+    var cache = productionRanks;
+    cache.owner = owner;
+    var ids = uniqueIds((products || []).map(function(product) { return product && product.dkd_shohin_id; }));
+    if (!ids.length || ids.every(function(id) { return cache.complete.has(id); })) return;
+    function checkCurrent() {
+      if (productionRanks !== cache || productionRankOwner() !== owner) throw new Error("Production rank request superseded");
+    }
+    var previous = cache.pending || Promise.resolve();
+    var job = previous.then(async function() {
+      var targets = ids.filter(function(id) { return !cache.complete.has(id); });
+      if (!targets.length) return;
+      cache.status = "loading";
+      targets.forEach(function(id) { cache.failed.delete(id); });
+      try {
+        checkCurrent();
+        var loaded = await Promise.all([
+          loadProductionRankIndex(cache, checkCurrent),
+          fetchProductionRankPages("kikan_group_members", "id,kikan_group_id,dkd_gokan_id",
+            "dkd_gokan_id", targets, checkCurrent, 150)
+        ]);
+        var direct = loaded[1];
+        var groupIds = uniqueIds(direct.map(function(member) { return member.kikan_group_id; }));
+        var missingGroups = groupIds.filter(function(id) { return !cache.groups[id]; });
+        var members = await fetchProductionRankPages("kikan_group_members", "id,kikan_group_id,dkd_gokan_id",
+          "kikan_group_id", missingGroups, checkCurrent, 25);
+        checkCurrent();
+        missingGroups.forEach(function(group) { cache.groups[group] = []; });
+        members.forEach(function(member) { cache.groups[String(member.kikan_group_id)].push(member); });
+        var membership = [];
+        groupIds.forEach(function(group) { membership = membership.concat(cache.groups[group]); });
+        var productIds = uniqueIds(targets.concat(membership.map(function(member) { return member.dkd_gokan_id; })));
+        var missingProducts = productIds.filter(function(id) { return !Object.prototype.hasOwnProperty.call(cache.products, id); });
+        var records = await fetchProductionRankPages("core_products", "dkd_shohin_id,dks_shohin_cd",
+          "dkd_shohin_id", missingProducts, checkCurrent, 200);
+        checkCurrent();
+        missingProducts.forEach(function(id) { cache.products[id] = null; });
+        records.forEach(function(product) { cache.products[String(product.dkd_shohin_id)] = product; });
+        var rankMap = buildProductionRankMap([], [], membership,
+          productIds.map(function(id) { return cache.products[id]; }).filter(Boolean), cache.index);
+        targets.forEach(function(id) {
+          var rank = rankMap[id];
+          if (rank) { rank.reportYear = cache.reportYear; cache.map[id] = rank; }
+          else delete cache.map[id];
+          cache.complete.add(id);
+        });
+        cache.status = "ready";
+      } catch (error) {
+        if (productionRanks === cache && productionRankOwner() === owner) {
+          targets.forEach(function(id) { delete cache.map[id]; cache.failed.add(id); });
+          cache.status = "error";
+          console.warn("production manufacturing ranking lookup failed");
+        }
+      }
+    });
+    cache.pending = job;
+    try { await job; } finally { if (cache.pending === job) cache.pending = null; }
+  }
+
   function uniqueIds(values) {
     var seen = Object.create(null);
     return (values || []).filter(function(value) {
@@ -566,12 +815,31 @@
     return quantitiesByProductId;
   }
 
+  async function fetchAcdkReplacementProductIds(rows) {
+    var keys = uniqueIds(rows.filter(function(row) { return isAcdkPart(row.maker); }).reduce(function(values, row) {
+      return values.concat([row.genuine, row.genuine2].filter(function(value) {
+        return isLikelyPartNumber(value) && !isAcdkPart(value);
+      }).map(normalizeSearch));
+    }, []));
+    var ids = [];
+    // Only exact primary identities can replace an ACDK alias; body/clutch parts cannot.
+    for (var index = 0; index < 3; index++) {
+      var field = ["normalized_genuine_part_number", "normalized_genuine_part_number_2", "normalized_manufacturer_part_number"][index];
+      var products = await fetchRowsByValuesBatched("core_products", "dkd_shohin_id,manufacturer_part_number", field, keys, 25);
+      products.filter(function(product) { return !isAcdkPart(product.manufacturer_part_number); }).forEach(function(product) {
+        ids.push(String(product.dkd_shohin_id));
+      });
+    }
+    return uniqueIds(ids);
+  }
+
   async function fetchReportReferenceData(rows) {
     var cachedProductIds = [];
     rows.forEach(function(row) {
       (row.masterProductIds || []).forEach(function(productId) { cachedProductIds.push(productId); });
     });
-    var directProductIds = uniqueIds(cachedProductIds);
+    var replacementIds = await fetchAcdkReplacementProductIds(rows);
+    var directProductIds = uniqueIds(cachedProductIds.concat(replacementIds));
     var kikan = await fetchKikanMembership(directProductIds);
     var compatibleProductIds = [];
     Object.keys(kikan.membersByGroupId).forEach(function(groupId) {
@@ -597,6 +865,7 @@
 
   async function loadDcatsSource() {
     if (state.isLoading) return;
+    resetProductionRanks();
     state.dataset = null;
     state.fileName = "";
     state.rows = [];
@@ -867,7 +1136,7 @@
     if (basis === "none") return [];
     var tokens = [];
     function add(prefix, value) {
-      if (isLikelyPartNumber(value)) tokens.push(prefix + normalizePart(value));
+      if (isLikelyPartNumber(value) && !isAcdkPart(value)) tokens.push(prefix + normalizePart(value));
     }
     if (basis === "maker" || basis === "maker_genuine") add("maker:", row.maker);
     if (basis === "genuine" || basis === "maker_genuine") {
@@ -923,7 +1192,7 @@
   function rowSearchText(row) {
     return normalizeSearch([
       row.sheet, row.productName, row.productCode, row.genuine, row.genuine2,
-      row.maker, row.body, row.clutch, row.type
+      reportManufacturerPartNumber(row), row.body, row.clutch, row.type
     ].join(" "));
   }
 
@@ -1298,7 +1567,7 @@
   function rowPartNumberEntries(row) {
     return [
       { label: "純正", value: row.genuine },
-      { label: "メーカー", value: row.maker },
+      { label: "メーカー", value: isAcdkPart(row.maker) ? "" : row.maker },
       { label: "純正2", value: row.genuine2 },
       { label: "純正本体", value: row.body },
       { label: "純正クラッチ", value: row.clutch }
@@ -1308,16 +1577,47 @@
   function rowPrimaryPartNumberEntries(row) {
     return [
       { label: "純正", value: row.genuine },
-      { label: "メーカー", value: row.maker },
+      { label: "メーカー", value: isAcdkPart(row.maker) ? "" : row.maker },
       { label: "純正2", value: row.genuine2 }
     ];
   }
 
+  function isAcdkPart(value) {
+    return /^ACDK/.test(normalizeSearch(value));
+  }
+
+  function isAcCompressorRow(row) {
+    return isAcdkPart(row.maker) || normalizeHeader(row.sheet) === "AC" || /ACコンプレッサ|エアコンコンプレッサ/.test(normalizeHeader(row.productName));
+  }
+
+  function reportManufacturerPartNumber(row) {
+    if (!isAcdkPart(row.maker)) return row.maker;
+    var numbers = uniqueIds(masterProductsForRow(row).map(function(product) {
+      return normalizeText(product.manufacturer_part_number);
+    }).filter(function(value) { return isLikelyPartNumber(value) && !isAcdkPart(value); }));
+    var keys = uniqueIds(numbers.map(normalizeSearch));
+    return keys.length === 1 ? numbers[0] : "";
+  }
+
   function masterProductsForRow(row) {
+    if (isAcdkPart(row.maker)) {
+      var sourceKeys = [row.genuine, row.genuine2].filter(function(value) {
+        return isLikelyPartNumber(value) && !isAcdkPart(value);
+      }).map(normalizeSearch);
+      var resolved = Object.create(null);
+      sourceKeys.forEach(function(key) {
+        (state.masterProductsByPart[key] || []).forEach(function(product) {
+          if (isAcdkPart(product.manufacturer_part_number)) return;
+          var primaryValues = [product.genuine_part_number, product.genuine_part_number_2, product.manufacturer_part_number];
+          if (primaryValues.some(function(value) { return normalizeSearch(value) === key; })) resolved[product.id] = product;
+        });
+      });
+      return Object.keys(resolved).map(function(id) { return resolved[id]; });
+    }
     if (row.masterCacheReady) {
       return (row.masterProductIds || []).map(function(productId) {
         return state.masterProductsById[String(productId)];
-      }).filter(Boolean);
+      }).filter(function(product) { return product && (!isAcCompressorRow(row) || !isAcdkPart(product.manufacturer_part_number)); });
     }
     var seen = Object.create(null);
     var candidates = [];
@@ -1325,7 +1625,7 @@
       if (!isLikelyPartNumber(entry.value)) return;
       var matches = state.masterProductsByPart[normalizeSearch(entry.value)] || [];
       matches.forEach(function(product) {
-        if (seen[product.id]) return;
+        if (seen[product.id] || (isAcCompressorRow(row) && isAcdkPart(product.manufacturer_part_number))) return;
         seen[product.id] = true;
         candidates.push(product);
       });
@@ -1354,7 +1654,7 @@
       product.genuine_part_number,
       product.genuine_part_number_2
     ].filter(function(value, index, list) {
-      return isLikelyPartNumber(value) && list.indexOf(value) === index;
+      return isLikelyPartNumber(value) && !isAcdkPart(value) && list.indexOf(value) === index;
     });
     return values.slice(0, 2).join(" / ") || ("商品ID " + product.id);
   }
@@ -1377,7 +1677,7 @@
     });
     return Object.keys(compatibleIds).map(function(productId) {
       return state.masterProductsById[productId];
-    }).filter(Boolean).sort(function(left, right) {
+    }).filter(function(product) { return product && !isAcdkPart(product.manufacturer_part_number); }).sort(function(left, right) {
       return right.coreStockQty - left.coreStockQty ||
         masterProductPartNumber(left).localeCompare(masterProductPartNumber(right), "ja");
     });
@@ -1407,7 +1707,7 @@
         (state.kikanGroupIdsByProductId[product.id] || []).forEach(function(groupId) {
           (state.kikanMembersByGroupId[groupId] || []).forEach(function(productId) {
             var compatible = state.masterProductsById[String(productId)];
-            if (compatible) productsById[compatible.id] = compatible;
+            if (compatible && !isAcdkPart(compatible.manufacturer_part_number)) productsById[compatible.id] = compatible;
           });
         });
       });
@@ -1588,14 +1888,14 @@
       if (row.masterCacheReady) {
         (row.missingMasterParts || []).forEach(function(entry) {
           var key = normalizeSearch(entry.value);
-          if (!key || seen[key]) return;
+          if (!key || isAcdkPart(entry.value) || seen[key]) return;
           seen[key] = true;
           missing.push({ label: entry.label, value: entry.value });
         });
         return;
       }
       rowPartNumberEntries(row).forEach(function(entry) {
-        if (!isLikelyPartNumber(entry.value)) return;
+        if (!isLikelyPartNumber(entry.value) || isAcdkPart(entry.value)) return;
         var key = normalizeSearch(entry.value);
         if (!key || state.masterPartNumbers[key] || seen[key]) return;
         seen[key] = true;
@@ -1706,7 +2006,7 @@
             supplierHtml += "<td class='ranking-report-rank-cell' rowspan='" + rowSpan + "'>" + formatNumber(result.rank) + "</td>" +
               "<td rowspan='" + rowSpan + "'><strong>" + escapeHtml(row.productName || "-") + "</strong><small>商品CD " + escapeHtml(row.productCode || "-") + "</small>" + vehicleClassificationHtml(result, options) + "</td>" +
               "<td class='ranking-report-part-cell' rowspan='" + rowSpan + "'>" + escapeHtml(row.genuine || "-") + "</td>" +
-              "<td class='ranking-report-part-cell' rowspan='" + rowSpan + "'>" + escapeHtml(row.maker || "-") + "</td>" +
+              "<td class='ranking-report-part-cell' rowspan='" + rowSpan + "'>" + escapeHtml(reportManufacturerPartNumber(row) || "-") + "</td>" +
               "<td rowspan='" + rowSpan + "'>" + status + "</td>";
           }
           if (item) {
@@ -1737,7 +2037,7 @@
       html += "<tr><td class='ranking-report-rank-cell'>" + formatNumber(result.rank) + "</td>" +
         "<td><strong>" + escapeHtml(row.productName || "-") + "</strong><small>商品CD " + escapeHtml(row.productCode || "-") + "</small>" + vehicleClassificationHtml(result, options) + "</td>" +
         "<td class='ranking-report-part-cell'>" + escapeHtml(row.genuine || "-") + "</td>" +
-        "<td class='ranking-report-part-cell'>" + escapeHtml(row.maker || "-") + "</td>" +
+        "<td class='ranking-report-part-cell'>" + escapeHtml(reportManufacturerPartNumber(row) || "-") + "</td>" +
         "<td class='ranking-report-number-cell'>" + formatNumber(result.shipment) + "</td>";
       if (options.metric !== "shipment") html += "<td class='ranking-report-number-cell ranking-report-score-cell'>" + formatNumber(result.score) + "</td>";
       if (options.showCoreStock) html += "<td class='ranking-report-stock-cell'>" + buildPreviewCoreStock(result) + "</td>";
@@ -1805,7 +2105,7 @@
             row.productCode || "",
             row.genuine || "",
             row.genuine2 || "",
-            row.maker || "",
+            reportManufacturerPartNumber(row) || "",
             items.length ? "あり" : "なし",
             item ? supplierName(item.supplier_id) : "",
             item ? supplierItemManagementNumber(item) : "",
@@ -1834,7 +2134,7 @@
         row.productCode || "",
         row.genuine || "",
         row.genuine2 || "",
-        row.maker || "",
+        reportManufacturerPartNumber(row) || "",
         Number(result.shipment || 0),
         Number(result.substitute || 0),
         Number(result.score || 0)
@@ -1909,7 +2209,7 @@
             html += "<td class='rank' rowspan='" + supplierRowSpan + "'>" + formatNumber(result.rank) + "</td>" +
               "<td class='product' rowspan='" + supplierRowSpan + "'><b>" + escapeHtml(row.productName || "-") + "</b><small>商品CD " + escapeHtml(row.productCode || "-") + "</small>" + vehicleClassificationHtml(result, options) + "</td>" +
               "<td class='part genuine-part' rowspan='" + supplierRowSpan + "'>" + escapeHtml(row.genuine || "-") + "</td>" +
-              "<td class='part maker-part' rowspan='" + supplierRowSpan + "'>" + escapeHtml(row.maker || "-") + "</td>" +
+              "<td class='part maker-part' rowspan='" + supplierRowSpan + "'>" + escapeHtml(reportManufacturerPartNumber(row) || "-") + "</td>" +
               "<td class='supplier-status-cell' rowspan='" + supplierRowSpan + "'>" + supplierStatus + "</td>";
           }
           return html + (item
@@ -1922,7 +2222,7 @@
       var html = "<tr><td class='rank'>" + formatNumber(result.rank) + "</td>" +
         "<td class='product'><b>" + escapeHtml(row.productName || "-") + "</b><small>商品CD " + escapeHtml(row.productCode || "-") + "</small>" + vehicleClassificationHtml(result, options) + "</td>" +
         "<td class='part genuine-part'>" + escapeHtml(row.genuine || "-") + "</td>" +
-        "<td class='part maker-part'>" + escapeHtml(row.maker || "-") + "</td>" +
+        "<td class='part maker-part'>" + escapeHtml(reportManufacturerPartNumber(row) || "-") + "</td>" +
         "<td class='number shipment'>" + formatNumber(result.shipment) + "</td>";
       if (options.metric !== "shipment") html += "<td class='number score'>" + formatNumber(result.score) + "</td>";
       if (options.showCoreStock) html += "<td class='stock'>" + buildPrintCoreStock(result) + "</td>";
@@ -2082,6 +2382,14 @@
   window.enterManufacturingRankingReport = enterManufacturingRankingReport;
   window.DCatsManufacturingRankingReport = {
     buildRanking: buildRanking,
+    buildProductionRankMap: buildProductionRankMap,
+    indexProductionRankSources: indexProductionRankSources,
+    loadCoreCollectionRanking2025: loadCoreCollectionRanking2025,
+    indexCoreCollectionRanks: indexCoreCollectionRanks,
+    loadProductionRanks: loadProductionRanks,
+    productionRankFor: productionRankFor,
+    productionRankStatus: productionRankStatus,
+    resetProductionRanks: resetProductionRanks,
     matchesVehicleFilters: matchesVehicleFilters,
     defaultSourceCategories: defaultSourceCategories,
     vehicleClassificationText: vehicleClassificationText,

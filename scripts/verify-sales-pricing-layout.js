@@ -107,6 +107,23 @@ requireFragment(sandbox.wrap.innerHTML, "¥6500", "class 1 must follow the singl
 if (sandbox.wrap.innerHTML.includes('¥5800') || html.includes('id="sales-rank1-price"') || html.includes('id="btn-sales-rank1-save"')) throw new Error('Independent class-1 price controls must not remain');
 requireFragment(html, 'data-i18n="sales_rank1_price"', 'The single price input must be labelled class 1');
 
+// Display ordering must not change stored rank order or calculation settings.
+const displayNameStart = source.indexOf("function salesRankDisplayName(");
+const displayNameEnd = source.indexOf("function parsePriceNumber(", displayNameStart);
+vm.runInNewContext(source.slice(displayNameStart, displayNameEnd), sandbox);
+sandbox.salesPricingRanks = [sandbox.salesPricingRanks[0], {
+  rank_code: "RECYCLE_FACTORING", rank_name: "ファクタリング", rate_multiplier: 1,
+  amount_adjustment_jpy: 0, rounding_unit_jpy: 100, rounding_method: "ceil"
+}];
+const originalRanks = JSON.stringify(sandbox.salesPricingRanks);
+sandbox.window = {};
+vm.runInNewContext(source.slice(start, end) + "\nrenderSalesRankPreview();", sandbox);
+if (sandbox.wrap.innerHTML.indexOf("Recycle＋") > sandbox.wrap.innerHTML.indexOf("売値区分1")) {
+  throw new Error("Recycle＋ must appear before the other price ranks");
+}
+requireFragment(sandbox.wrap.innerHTML, "Recycle＋", "the factoring rank must use its current product name");
+if (JSON.stringify(sandbox.salesPricingRanks) !== originalRanks) throw new Error("display ordering must preserve stored rank settings");
+
 async function verifyReadonlyGNumbers() {
   const assert = require("node:assert/strict");
   for (const id of ["pf-g-part-number", "sales-g-part-number"]) {
