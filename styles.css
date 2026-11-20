@@ -12228,9 +12228,9 @@ html[data-product-3d-paused] :is(
 #screen-core-list-mgmt .core-list-table th:nth-child(1) { width: 16%; }
 #screen-core-list-mgmt .core-list-table th:nth-child(2) { width: 13%; }
 #screen-core-list-mgmt .core-list-table th:nth-child(3) { width: 17%; }
-#screen-core-list-mgmt .core-list-table th:nth-child(4) { width: 7%; }
-#screen-core-list-mgmt .core-list-table th:nth-child(5) { width: 12%; }
-#screen-core-list-mgmt .core-list-table th:nth-child(7) { width: 16%; }
+#screen-core-list-mgmt .core-list-table th:nth-child(4) { width: 12%; }
+#screen-core-list-mgmt .core-list-table th:nth-child(6) { width: 15%; }
+#screen-core-list-mgmt .core-list-table th:nth-child(7) { width: 13%; }
 #screen-core-list-mgmt .core-list-table .mgmt-actions { flex-wrap: wrap; }
 #screen-core-list-mgmt .core-inventory-add { min-height: 30px; padding: 4px 10px; font-size: 13px; }
 #screen-core-list-mgmt .core-list-card { overflow-wrap: anywhere; }
@@ -12470,3 +12470,61 @@ html[data-product-3d-paused] :is(
 @media (max-width: 600px) { #core-list-count.core-inventory-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 #screen-core-list-mgmt #btn-add-core-pending.hidden { display: none !important; }
+
+#screen-core-list-mgmt .core-list-table :is(th, td).core-inventory-quantity { text-align: right; }
+#screen-core-list-mgmt #core-list-list .core-qty-pill {
+  font-size: clamp(19px, 1.8vw, 24px);
+  line-height: 1.2;
+}
+#core-list-form-overlay .form-card { box-sizing: border-box; }
+#core-list-form-overlay .form-label { color: #475569; }
+#core-list-form-overlay .form-row { margin-bottom: 8px; }
+#core-list-form-overlay .spec-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+#core-list-form-overlay .spec-form-grid > * { min-width: 0; }
+#core-list-form-overlay .core-inventory-quantity label { text-align: right; }
+#clf-quantity, #core-pallet-adjust-qty {
+  color: #153b26;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+#core-pallet-adjust-controls:not([hidden]) {
+  display: grid;
+  align-items: end;
+  grid-template-columns: minmax(0, 1fr) minmax(100px, 28%);
+  gap: 8px;
+}
+#core-pallet-adjust-controls > label:last-child { text-align: right; }
+#core-pallet-adjust-controls > label:last-child span { overflow-wrap: anywhere; }
+#core-list-form-overlay .core-list-edit-footer { flex-wrap: wrap; align-items: center; }
+#core-list-form-overlay .core-list-edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-inline-start: auto;
+}
+#core-list-form-overlay #btn-core-list-delete-review { margin-inline-end: auto; }
+#core-list-form-overlay .core-list-delete-details {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+}
+#core-list-form-overlay .core-list-delete-details dt { color: #475569; }
+#core-list-form-overlay .core-list-delete-details dd { margin: 0; overflow-wrap: anywhere; }
+#core-list-form-overlay #core-list-delete-quantity { font-size: 23px; font-weight: 800; text-align: right; }
+#core-list-form-overlay .core-list-delete-acknowledgement { display: flex; align-items: flex-start; gap: 8px; }
+#core-list-form-overlay .core-list-delete-acknowledgement input { margin-top: 3px; }
+#core-list-form-overlay #btn-core-list-delete-confirm { min-width: 76px; }
+#core-list-form-overlay #btn-core-list-delete-confirm:disabled { opacity: .45; cursor: default; }
+@media (max-width: 480px), (max-height: 640px) {
+  #core-list-form-overlay .form-card { margin: 8px; padding: 14px; }
+  #core-list-form-overlay .form-card h3 { margin-bottom: 8px; }
+  #core-list-form-overlay .form-footer { margin-top: 8px; padding-top: 8px; }
+}
+#core-list-form-overlay [hidden] { display: none !important; }

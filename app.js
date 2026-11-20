@@ -2078,6 +2078,9 @@ var TRANSLATIONS = {
     core_list_location: "置き場",
     core_list_note: "メモ",
     core_list_delete_confirm: "このコア行を削除しますか？",
+    core_inventory_delete_review: "削除手続き…",
+    core_inventory_delete_ack: "この在庫明細を削除する",
+    core_inventory_delete_changed: "在庫が更新されています。閉じて一覧を検索し直してください。",
     core_list_created_from_ranking: "ランキングからコアリストを{n}件作成しました",
     core_list_no_ranking_source: "ランキング側に追加できるコア候補がありません",
     production_ranking_search_ph: "順位・品番・メーカー・DKD商品IDで検索",
@@ -5057,6 +5060,9 @@ var TRANSLATIONS = {
     core_list_location: "Location",
     core_list_note: "Memo",
     core_list_delete_confirm: "Delete this CORE row?",
+    core_inventory_delete_review: "Review deletion…",
+    core_inventory_delete_ack: "Delete this inventory record",
+    core_inventory_delete_changed: "Inventory has changed. Close this window and search again.",
     core_list_created_from_ranking: "Created {n} CORE rows from ranking",
     core_list_no_ranking_source: "No CORE candidates available in ranking",
     production_ranking_search_ph: "Search by rank, part number, manufacturer, or DKD ID",
@@ -8037,6 +8043,9 @@ var TRANSLATIONS = {
     core_list_location: "位置",
     core_list_note: "备注",
     core_list_delete_confirm: "删除此CORE行？",
+    core_inventory_delete_review: "确认删除…",
+    core_inventory_delete_ack: "删除此库存记录",
+    core_inventory_delete_changed: "库存已更新。请关闭此窗口并重新搜索。",
     core_list_created_from_ranking: "已从排行创建{n}条CORE记录",
     core_list_no_ranking_source: "排行中没有可添加的CORE候选",
     production_ranking_search_ph: "按排名、零件编号、制造商或DKD ID搜索",
@@ -9065,7 +9074,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1367";
+var APP_VERSION       = "v1.1.1368";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -9175,6 +9184,7 @@ var coreInventoryPendingRows = [];
 var coreListProductMap = {};
 var coreListProductCandidates = [];
 var coreListFormMode = "add";
+var coreListDeleteTarget = null;
 var corePhotoChoiceRowId = null;
 var coreListVehicleMap = {};
 var coreInventoryFilters = { keyword: "", vehicle: "", category: "", memo: "", korea: "exclude", matchState: "all" };
@@ -32340,9 +32350,9 @@ function renderCoreInventoryPendingRow(row, index, cardMode) {
   }
   var p = coreInventoryPendingProduct(row);
   return "<tr><td>" + part + badge + "</td><td>" + esc(p.category_code ? productionCategoryLabel(p) : "-") +
-    "</td><td>–</td><td>" + quantity + "</td><td>" + location +
+    "</td><td>–</td><td>" + location +
     "</td><td><div class='core-note'>" + esc(row.source_remarks || "-") +
-    "</div></td><td><div class='core-pallet-row-actions'>" + actions + "</div></td></tr>";
+    "</div></td><td><div class='core-pallet-row-actions'>" + actions + "</div></td><td class='core-inventory-quantity'>" + quantity + "</td></tr>";
 }
 
 function applyCoreInventoryFilters() {
@@ -32472,14 +32482,13 @@ function renderCoreListMgmt() {
       mobileHtml += "<div class='core-list-card-actions'>";
       mobileHtml += "<button class='btn-sm-edit production-action-secondary' data-core-image='" + esc(String(row.id)) + "'>" + esc(t("btn_upload")) + "</button>";
       mobileHtml += "<button class='btn-sm-edit' data-core-edit='" + esc(String(row.id)) + "'>" + esc(t("btn_edit")) + "</button>";
-      mobileHtml += "<button class='btn-sm-del' data-core-del='" + esc(String(row.id)) + "'>" + esc(t("btn_delete")) + "</button>";
       mobileHtml += "</div></div>";
     });
     mobileHtml += "</div>";
     list.innerHTML = mobileHtml;
   } else {
     var html = "<table class='mgmt-table core-list-table' aria-label='現在庫'>";
-    html += "<thead><tr><th scope='col'>コア品番</th><th scope='col'>車両区分・メーカー</th><th scope='col'>純正品番</th><th scope='col'>数量</th><th scope='col'>" + esc(t("core_list_pallet_location")) + "</th><th scope='col'>メモ</th><th scope='col'>操作</th></tr></thead><tbody>";
+    html += "<thead><tr><th scope='col'>コア品番</th><th scope='col'>車両区分・メーカー</th><th scope='col'>純正品番</th><th scope='col'>" + esc(t("core_list_pallet_location")) + "</th><th scope='col'>メモ</th><th scope='col'>操作</th><th scope='col' class='core-inventory-quantity'>" + esc(t("core_list_quantity")) + "</th></tr></thead><tbody>";
     coreListFilteredRows.forEach(function(row, index) {
       if (row.pending) { html += renderCoreInventoryPendingRow(row.pending, index, false); return; }
       var p = coreListProductMap[String(row.dkd_shohin_id)] || {};
@@ -32489,14 +32498,13 @@ function renderCoreListMgmt() {
       html += "<td><div class='core-main-pn'>" + esc(row.core_part_number || "-") + "</div><div class='mgmt-sub'>" + esc(productionCategoryLabel(p)) + "</div></td>";
       html += "<td><div class='core-vehicle-label'>" + renderCoreCollectionVehicleHtml(coreListVehicleMap[String(row.dkd_shohin_id)]) + "</div><div class='mgmt-sub'>" + esc(p.manufacturer || "-") + "</div></td>";
       html += "<td><div class='mgmt-pn'>" + esc(p.genuine_part_number || fallbackPartNumber || "-") + "</div><div class='mgmt-sub'>" + esc(p.manufacturer_part_number || fallbackPartNumber || "-") + " / DKD " + esc(String(row.dkd_shohin_id || "-")) + "</div></td>";
-      html += "<td><span class='core-qty-pill'>" + esc(String(row.quantity == null ? 0 : row.quantity)) + "</span></td>";
       html += "<td>" + esc(row.location || "-") + "</td>";
       html += "<td><div class='core-note'>" + esc(row.note || "-") + "</div><div class='mgmt-sub'>" + esc(updatedText) + "</div></td>";
       html += "<td><div class='mgmt-actions'>";
       html += "<button class='btn-sm-edit production-action-secondary' data-core-image='" + row.id + "'>" + esc(t("btn_upload")) + "</button>";
       html += "<button class='btn-sm-edit' data-core-edit='" + row.id + "'>" + t("btn_edit") + "</button>";
-      html += "<button class='btn-sm-del' data-core-del='" + row.id + "'>" + t("btn_delete") + "</button>";
       html += "</div></td>";
+      html += "<td class='core-inventory-quantity'><span class='core-qty-pill'>" + esc(String(row.quantity == null ? 0 : row.quantity)) + "</span></td>";
       html += "</tr>";
     });
     html += "</tbody></table>";
@@ -32525,15 +32533,12 @@ function renderCoreListMgmt() {
     });
   }
   if (!canManageProductionRecords()) {
-    list.querySelectorAll("[data-core-edit], [data-core-del]").forEach(function(btn) { btn.remove(); });
+    list.querySelectorAll("[data-core-edit]").forEach(function(btn) { btn.remove(); });
     return;
   }
 
   list.querySelectorAll("[data-core-edit]").forEach(function(btn) {
     btn.addEventListener("click", function() { openCoreListForm("edit", parseInt(btn.dataset.coreEdit, 10)); });
-  });
-  list.querySelectorAll("[data-core-del]").forEach(function(btn) {
-    btn.addEventListener("click", function() { deleteCoreListRow(parseInt(btn.dataset.coreDel, 10)); });
   });
 }
 
@@ -32778,6 +32783,9 @@ function openCoreListForm(mode, rowId) {
   if (!canManageProductionRecords()) { alert(t("err_perm")); return; }
   coreListFormMode = mode;
   var row = mode === "edit" ? coreListMgmtRows.find(function(x) { return x.id === rowId; }) : null;
+  if (mode === "edit" && !row) return;
+  showCoreListDeleteConfirmation(null);
+  document.getElementById("btn-core-list-delete-review").hidden = !row;
   var p = row ? (coreListProductMap[String(row.dkd_shohin_id)] || {}) : {};
   document.getElementById("core-list-form-error").textContent = "";
   document.getElementById("core-list-form-title").textContent = mode === "add" ? t("btn_add_core_list") : t("core_list_edit_title");
@@ -32808,12 +32816,7 @@ async function searchCoreListProductCandidates() {
     wrap.innerHTML = "";
     return;
   }
-  var r = await sb.rpc("search_core_products", {
-    search_text: q,
-    category_filter: null,
-    require_sl: false,
-    max_rows: 20
-  });
+  var r = await fetchCoreProductMasterMatches(q, null, 20);
   if (r.error) {
     wrap.innerHTML = "<div class='candidate-empty'>" + esc(r.error.message) + "</div>";
     return;
@@ -32881,9 +32884,14 @@ async function saveCoreListForm() {
     if (r.error) { errEl.textContent = t("msg_part_err") + ": " + r.error.message; return; }
     await writeLog("update", "production_core_list_entries", parseInt(id, 10), "DKD " + dkdId, before, data);
   }
-  document.getElementById("core-list-form-overlay").classList.remove("show");
+  closeCoreListForm();
   productionLoaded = false;
   await loadCoreListMgmt();
+}
+
+function closeCoreListForm() {
+  document.getElementById("core-list-form-overlay").classList.remove("show");
+  showCoreListDeleteConfirmation(null);
 }
 
 async function createCoreListFromRanking() {
@@ -32949,15 +32957,58 @@ async function createCoreListFromRanking() {
   }
 }
 
-async function deleteCoreListRow(id) {
-  if (!canManageProductionRecords()) { alert(t("err_perm")); return; }
-  var row = coreListMgmtRows.find(function(x) { return x.id === id; });
-  if (!confirm(t("core_list_delete_confirm"))) return;
-  var r = await sb.from("production_core_list_entries").delete().eq("id", id);
-  if (r.error) { alert(t("msg_part_err") + ": " + r.error.message); return; }
-  await writeLog("delete", "production_core_list_entries", id, row ? ("DKD " + row.dkd_shohin_id) : String(id), row, null);
-  productionLoaded = false;
-  await loadCoreListMgmt();
+function showCoreListDeleteConfirmation(row) {
+  coreListDeleteTarget = row;
+  document.getElementById("core-list-form-fields").hidden = Boolean(row);
+  document.getElementById("core-list-delete-panel").hidden = !row;
+  document.getElementById("core-list-delete-ack").checked = false;
+  document.getElementById("btn-core-list-delete-confirm").disabled = true;
+  document.getElementById("core-list-delete-error").textContent = "";
+  if (row) {
+    document.getElementById("core-list-form-title").textContent = t("core_list_delete_confirm");
+    document.getElementById("core-list-delete-part").textContent = row.core_part_number || ("DKD " + row.dkd_shohin_id);
+    document.getElementById("core-list-delete-pallet").textContent = row.location || "-";
+    document.getElementById("core-list-delete-quantity").textContent = row.quantity;
+    document.getElementById("btn-core-list-delete-back").focus();
+  }
+}
+
+function openCoreListDeleteConfirmation() {
+  if (!canManageProductionRecords() || coreListFormMode !== "edit") return;
+  var id = Number(document.getElementById("clf-id").value);
+  var row = coreListMgmtRows.find(function(entry) { return entry.id === id; });
+  if (row) showCoreListDeleteConfirmation(row);
+}
+
+async function deleteCoreListRow() {
+  var row = coreListDeleteTarget;
+  var acknowledge = document.getElementById("core-list-delete-ack");
+  var button = document.getElementById("btn-core-list-delete-confirm");
+  if (!row || !acknowledge.checked || button.disabled || !canManageProductionRecords()) return;
+  var back = document.getElementById("btn-core-list-delete-back");
+  var error = document.getElementById("core-list-delete-error");
+  error.textContent = "";
+  acknowledge.disabled = button.disabled = back.disabled = true;
+  try {
+    var request = sb.from("production_core_list_entries").delete().eq("id", row.id).is("replaced_at", null);
+    request = row.updated_at == null ? request.is("updated_at", null) : request.eq("updated_at", row.updated_at);
+    var result = await request.select("id");
+    if (result.error) throw result.error;
+    if (!result.data || result.data.length !== 1) {
+      error.textContent = t("core_inventory_delete_changed");
+      return;
+    }
+    closeCoreListForm();
+    productionLoaded = false;
+    await writeLog("delete", "production_core_list_entries", row.id, "DKD " + row.dkd_shohin_id, row, null);
+    await loadCoreListMgmt();
+  } catch (failure) {
+    error.textContent = t("msg_part_err") + ": " + failure.message;
+  } finally {
+    acknowledge.checked = false;
+    acknowledge.disabled = back.disabled = false;
+    button.disabled = true;
+  }
 }
 
 // =============================================
@@ -61985,8 +62036,18 @@ document.getElementById("core-list-load-more").addEventListener("click", functio
   coreCollectionPageStart += coreCollectionPageSize;
   renderCoreCollectionList();
 });
-document.getElementById("btn-core-list-form-cancel").addEventListener("click", function(){ document.getElementById("core-list-form-overlay").classList.remove("show"); });
+document.getElementById("btn-core-list-form-cancel").addEventListener("click", closeCoreListForm);
 document.getElementById("btn-core-list-form-save").addEventListener("click", saveCoreListForm);
+document.getElementById("btn-core-list-delete-review").addEventListener("click", openCoreListDeleteConfirmation);
+document.getElementById("btn-core-list-delete-back").addEventListener("click", function() {
+  showCoreListDeleteConfirmation(null);
+  document.getElementById("core-list-form-title").textContent = t("core_list_edit_title");
+  document.getElementById("btn-core-list-delete-review").focus();
+});
+document.getElementById("core-list-delete-ack").addEventListener("change", function(event) {
+  document.getElementById("btn-core-list-delete-confirm").disabled = !event.currentTarget.checked;
+});
+document.getElementById("btn-core-list-delete-confirm").addEventListener("click", deleteCoreListRow);
 document.getElementById("core-inventory-note-prev").addEventListener("click", function() {
   coreInventoryNotePage -= 1;
   renderCoreInventoryNote();
