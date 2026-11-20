@@ -9119,3 +9119,35 @@ Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {
 
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"2025年カテゴリ内順位":"2025 category rank"});
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"2025年カテゴリ内順位":"2025年分类排名"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {
+  "品番分類": "Part classification",
+  "品番分類を設定": "Set part classification",
+  "商品コード・純正品番・メーカー品番で検索": "Search by product code, OEM part number or manufacturer part number",
+  "必要数": "Required quantity",
+  "必要数・在庫": "Required quantity and stock",
+  "必要数を確保済み": "Required quantity in stock",
+  "分類未設定": "Classification unset",
+  "分類": "Classification",
+  "表示する品番がありません。": "There are no parts to display.",
+  "条件に該当する品番はありません。": "No parts match these filters.",
+  "必要数は0以上の整数で入力してください。": "Enter a non-negative whole number for the required quantity.",
+  "この品番は分類済みです。一覧を再読み込みしてください。": "This part already has a classification. Reload the list."
+});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {
+  "品番分類": "品号分类",
+  "品番分類を設定": "设置品号分类",
+  "商品コード・純正品番・メーカー品番で検索": "按商品代码、原厂品号或制造商品号搜索",
+  "必要数": "需求数量",
+  "必要数・在庫": "需求数量和库存",
+  "必要数を確保済み": "需求数量已备齐",
+  "分類未設定": "未设置分类",
+  "分類": "分类",
+  "表示する品番がありません。": "没有可显示的品号。",
+  "条件に該当する品番はありません。": "没有符合筛选条件的品号。",
+  "必要数は0以上の整数で入力してください。": "请输入大于或等于 0 的整数作为需求数量。",
+  "この品番は分類済みです。一覧を再読み込みしてください。": "此品号已有分类，请重新加载列表。"
+});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"品番マスタ検索":"Search the parts master"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"品番マスタ検索":"搜索品号主数据"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"需求量":"Required quantity","分类":"Classification"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"需求量":"需求量","分类":"分类"});
