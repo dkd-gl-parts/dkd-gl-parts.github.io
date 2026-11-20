@@ -3,7 +3,7 @@ const vm = require("node:vm");
 const assert = require("node:assert/strict");
 const acorn = require("acorn");
 const source = fs.readFileSync("app.js", "utf8");
-const names = ["showCoreListDeleteConfirmation", "openCoreListDeleteConfirmation", "deleteCoreListRow", "closeCoreListForm", "coreInventoryPendingProduct", "updateCorePendingOutputs", "renderCoreInventoryPendingRow", "loadCorePendingStock","corePendingStockSearch","moveCorePendingStockPage","renderCorePendingStock"].concat(["coreCollectionVehicleSummaryHtml", "coreCollectionUiLabel", "renderCoreCollectionVehicleHtml", "coreCollectionVehicleClasses", "coreCollectionVehicleText", "fitCoreManagementRows", "renderCoreManagementPager", "coreCollectionVehicleMatches", "esc", "normalizeAsciiWidth", "norm", "normalizedContains", "sumProductionCoreEntryQty", "renderCoreManagementSummary", "beginCoreManagementLoad", "searchCoreCollectionWorkspace", "clearCoreCollectionFilters", "resetCoreCollectionFilters", "bindCoreManagementTabs", "setCoreListMode", "coreCollectionStatusLabel", "coreCollectionRank", "coreCollectionDisplayProduct", "buildCoreCollectionRankingRows", "isCoreReplenishmentRow", "coreCollectionStockQty", "coreCollectionShortageQty", "coreCollectionCategoryKey", "coreCollectionStoredOrder", "compareCoreCollectionStoredOrder", "assignCoreCollectionCategoryRanks", "coreCollectionCategoryRank", "coreCollectionCategoryMatches", "applyCoreCollectionFilters", "loadCoreCollectionList", "loadCoreCollectionProducts", "loadCoreCollectionStock", "renderCoreCollectionStockBadge", "renderCoreCollectionList", "renderCoreCollectionClassifyButton", "renderCoreCollectionRow", "appendCoreCollectionRows", "loadMoreCoreCollectionRowsOnScroll", "enterCoreListMgmt", "resetCoreCollectionControls", "resetCoreInventoryFilters", "submitCoreInventorySearch", "isKoreanCoreInventoryEntry", "coreInventoryVehicleClasses", "applyCoreInventoryFilters", "loadCoreListMgmt", "loadCoreListProducts", "renderCoreListMgmt"]);
+const names = ["showCoreListDeleteConfirmation", "openCoreListDeleteConfirmation", "deleteCoreListRow", "closeCoreListForm", "coreInventoryPendingProduct", "updateCorePendingOutputs", "renderCoreInventoryPendingRow", "loadCorePendingStock","corePendingStockSearch","moveCorePendingStockPage","renderCorePendingStock"].concat(["coreCollectionVehicleSummaryHtml", "coreCollectionUiLabel", "renderCoreCollectionVehicleHtml", "coreCollectionVehicleClasses", "coreCollectionVehicleText", "fitCoreManagementRows", "renderCoreManagementPager", "coreCollectionVehicleMatches", "esc", "normalizeAsciiWidth", "norm", "normalizedContains", "sumProductionCoreEntryQty", "renderCoreManagementSummary", "beginCoreManagementLoad", "searchCoreCollectionWorkspace", "clearCoreCollectionFilters", "resetCoreCollectionFilters", "bindCoreManagementTabs", "setCoreListMode", "coreCollectionStatusLabel", "coreCollectionRank", "coreCollectionDisplayProduct", "buildCoreCollectionRankingRows", "isCoreReplenishmentRow", "coreCollectionStockQty", "coreCollectionShortageQty", "coreCollectionCategoryKey", "coreCollectionStoredOrder", "compareCoreCollectionStoredOrder", "assignCoreCollectionCategoryRanks", "coreCollectionCategoryRank", "coreCollectionCategoryMatches", "applyCoreCollectionFilters", "getCoreCollectionSearchTerms", "indexCoreCollectionRows", "loadCoreCollectionList", "loadCoreCollectionItems", "loadCoreCollectionProducts", "readCoreCollectionStock", "renderCoreCollectionStockBadge", "renderCoreCollectionList", "renderCoreCollectionClassifyButton", "coreCollectionEditAttributes", "renderCoreCollectionQuantity", "renderCoreCollectionRow", "appendCoreCollectionRows", "loadMoreCoreCollectionRowsOnScroll", "enterCoreListMgmt", "resetCoreCollectionControls", "resetCoreInventoryFilters", "submitCoreInventorySearch", "isKoreanCoreInventoryEntry", "coreInventoryVehicleClasses", "applyCoreInventoryFilters", "loadCoreListMgmt", "loadCoreListProducts", "renderCoreListMgmt"]);
 const ast = acorn.parse(source, { ecmaVersion: "latest" });
 const functions = ast.body.filter(n => n.type === "FunctionDeclaration" && names.includes(n.id.name));
 assert.equal(functions.length, names.length);
@@ -27,7 +27,7 @@ function fixture() {
     coreCollectionReportRank: null,
     coreListMode: "collection", coreManagementLoadSeq: 0, coreManagementDataReady: false,
     corePendingStockRows: [], corePendingStockFiltered: [], corePendingStockPage: 0, corePendingStockSize: 0, corePendingStockHistory: [],
-    coreCollectionRows: [], coreCollectionRankingRows: [], coreCollectionCategoryRanks: new Map(), coreCollectionFilteredRows: [], coreCollectionProductMap: {}, coreCollectionStockMap: {}, coreCollectionRenderedCount: 0,
+    coreCollectionRows: [], coreCollectionRankingRows: [], coreCollectionCategoryRanks: new Map(), coreCollectionFilteredRows: [], coreCollectionProductMap: {}, coreCollectionStockMap: {}, coreCollectionRenderedCount: 0, coreCollectionOrderedRows: [], coreCollectionSearchTerms: new WeakMap(),
     CORE_COLLECTION_VEHICLE_CLASSES: [["kei","軽四"],["passenger","乗用車"],["truck","トラック"],["van","商用バン"],["bus","バス"],["machine","建機・農機"],["other","その他"]],
     CORE_COLLECTION_RENDER_BATCH_SIZE: 50, CORE_COLLECTION_CATEGORY_ORDER: ["starter", "alternator", "ac_compressor", "distributor", "other"], CORE_PRODUCT_FAST_SELECT: "*",
     coreInventoryFilters: { keyword: "", vehicle: "", category: "", memo: "", korea: "exclude" },
@@ -143,6 +143,7 @@ async function main() {
     const list = get("core-list-list");
     assert.equal(c.coreCollectionRenderedCount, 1); checks++;
     assert.match(list.innerHTML, /コアあり 3/); checks++;
+    assert.match(list.innerHTML, /aria-label='必要数を編集' data-core-classify='1'/); checks++;
     assert.doesNotMatch(list.innerHTML, /TEST-456/); checks++;
     c.loadMoreCoreCollectionRowsOnScroll();
     assert.equal(c.coreCollectionRenderedCount, 1); checks++;
@@ -312,9 +313,12 @@ async function main() {
   }
   {
     const { c } = fixture(); let release; const pending = new Promise(r => { release = r; }); c.respond = () => pending;
-    const old = c.loadCoreCollectionStock(0); await Promise.resolve(); await Promise.resolve();
+    const old = c.readCoreCollectionStock(() => {
+      if (c.coreManagementLoadSeq !== 0) throw new Error("superseded");
+    });
+    const rejected = assert.rejects(old, /superseded/);
     c.coreManagementLoadSeq = 1; c.coreCollectionStockMap = { 1: { quantity: 5, parts: [], locations: [] } };
-    release({ data: [{ dkd_shohin_id: 1, quantity: 99 }], error: null }); await old;
+    release({ data: [{ dkd_shohin_id: 1, quantity: 99 }], error: null }); await rejected;
     assert.equal(c.coreCollectionStockMap[1].quantity, 5); checks++;
   }
   {
@@ -329,18 +333,18 @@ async function main() {
     const ranges = [];
     c.respond = (table, columns, range) => {
       if (table !== "core_collection_list_items") return {data:[],error:null};
-      ranges.push(range); return {data:all.slice(range.start,range.end+1),error:null};
+      ranges.push(range); return {data:all.slice(range.start,range.end+1),count:all.length,error:null};
     };
     await c.loadCoreCollectionList();
     assert.equal(c.coreCollectionRows.length,1078);checks++;
     assert.equal(c.coreCollectionFilteredRows.length,1078);checks++;
-    assert.equal(ranges.length,3);checks++;
-    assert.ok(ranges.every(r=>r.end-r.start===499));checks++;
+    assert.equal(ranges.length,2);checks++;
+    assert.ok(ranges.every(r=>r.end-r.start===999));checks++;
     assert.match(get("core-list-count").innerHTML,/1078/);checks++;
   }
   {
     const { c, get } = fixture(); const original=[{id:99,dkd_shohin_id:99}]; c.coreCollectionRows=original;
-    c.respond=(table, columns, range)=>table!=="core_collection_list_items"?{data:[],error:null}:range.start===0?{data:Array.from({length:500},(_,i)=>({id:i+1})),error:null}:{data:null,error:{message:"second page unavailable"}};
+    c.respond=(table, columns, range)=>table!=="core_collection_list_items"?{data:[],error:null}:range.start===0?{data:Array.from({length:1000},(_,i)=>({id:i+1})),count:1200,error:null}:{data:null,error:{message:"second page unavailable"}};
     await c.loadCoreCollectionList();
     assert.equal(c.coreManagementDataReady,false);checks++;
     assert.equal(c.coreCollectionRows,original);checks++;

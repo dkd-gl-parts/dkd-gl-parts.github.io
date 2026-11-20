@@ -381,7 +381,9 @@
   // Rank inheritance uses product codes and explicit membership only.
   // No part-number match, report master-match candidate, or group chain is an edge.
   var productionRanks;
+  var coreCollectionRankingCache;
   function resetProductionRanks() {
+    coreCollectionRankingCache = {};
     productionRanks = { owner: "", status: "idle", map: Object.create(null), index: null,
       products: Object.create(null), groups: Object.create(null), complete: new Set(),
       failed: new Set(), pending: null, basePending: null, loadedAt: 0 };
@@ -544,8 +546,21 @@
   }
 
   async function loadCoreCollectionRanking2025(checkCurrent) {
+    checkCurrent();
+    // The historical report is reusable within the same authorised profile. Current stock and settings are always fetched separately.
+    var profile = typeof userProfile !== "undefined" ? userProfile : null;
+    var user = typeof currentUser !== "undefined" ? currentUser : null;
+    var canCache = user && profile && user.id === profile.id &&
+      typeof canViewManufacturingReport === "function" && canViewManufacturingReport();
+    var cache = coreCollectionRankingCache;
+    if (canCache && cache.profile === profile && cache.userId === user.id && Date.now() - cache.loadedAt < 300000) return cache.report;
     var source = await fetchProductionRankSource(checkCurrent, 2025);
-    return indexCoreCollectionRanks(source.rows, source.sheets);
+    checkCurrent();
+    var report = indexCoreCollectionRanks(source.rows, source.sheets);
+    if (canCache && cache === coreCollectionRankingCache && profile === userProfile && currentUser?.id === user.id && canViewManufacturingReport()) {
+      coreCollectionRankingCache = { profile: profile, userId: user.id, loadedAt: Date.now(), report: report };
+    }
+    return report;
   }
 
   function indexCoreCollectionRanks(rows, sheets) {

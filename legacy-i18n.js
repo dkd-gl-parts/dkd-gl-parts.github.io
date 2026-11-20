@@ -9169,3 +9169,5 @@ Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {
   "旧件库存": "旧件库存",
   "无库存": "无库存"
 });
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"必要数を編集":"Edit required quantity","编辑需求数量":"Edit required quantity"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"必要数を編集":"编辑需求数量","编辑需求数量":"编辑需求数量"});
