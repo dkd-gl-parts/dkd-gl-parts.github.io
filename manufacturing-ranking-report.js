@@ -508,7 +508,7 @@
       .reduce(function(total, sheet) { return total + sheet.count; }, 0);
     if (!categories.length || !Number.isInteger(count) || count < 1 || count > MAX_SOURCE_ROWS) throw new Error("Invalid manufacturing ranking row count");
     var columns = "id,dataset_id,category_name,category_order,source_row_number,is_aggregate,product_code,genuine_part_number,manufacturer_part_number,shipment_count";
-    if (reportYear != null) columns += ",master_product_ids";
+    if (reportYear != null) columns += ",master_product_ids,product_name,genuine_part_number_2";
     var offsets = [], rows = [];
     for (var offset = 0; offset < count; offset += DATA_PAGE_SIZE) offsets.push(offset);
     for (var start = 0; start < offsets.length; start += DATA_PAGE_CONCURRENCY) {
@@ -550,16 +550,22 @@
 
   function indexCoreCollectionRanks(rows, sheets) {
     var byCode = new Map(), byId = new Map();
-    rankProductionSources(rows, sheets).forEach(function(result) {
-      var detail = { rank: result.rank, shipment: result.shipment };
-      var code = productionRankCode(result.row.productCode);
+    var ranked = rankProductionSources(rows, sheets).map(function(result) {
+      var row = result.row;
+      var detail = { rank: result.rank, shipment: result.shipment, productCode: row.productCode,
+        productName: row.productName, maker: row.maker, genuine: row.genuine, genuine2: row.genuine2 };
+      var code = productionRankCode(row.productCode);
       if (code && !byCode.has(code)) byCode.set(code, detail);
-      var ids = uniqueIds(result.row.masterProductIds || []);
+      var ids = uniqueIds(row.masterProductIds || []);
       if (ids.length === 1 && !byId.has(ids[0])) byId.set(ids[0], detail);
+      return detail;
     });
-    return function(product) {
-      if (!product || isAcdkPart(product.manufacturer_part_number)) return null;
-      return byCode.get(productionRankCode(product.dks_shohin_cd)) || byId.get(String(product.dkd_shohin_id)) || null;
+    return {
+      rows: ranked,
+      forProduct: function(product) {
+        if (!product || isAcdkPart(product.manufacturer_part_number)) return null;
+        return byCode.get(productionRankCode(product.dks_shohin_cd)) || byId.get(String(product.dkd_shohin_id)) || null;
+      }
     };
   }
 
