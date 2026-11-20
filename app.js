@@ -2068,7 +2068,10 @@ var TRANSLATIONS = {
     core_pending_load_failed: "照合待ちを取得できませんでした。検索ボタンで再読み込みしてください。",
     core_pending_records: "照合待ち明細",
     core_pending_units: "照合待ち数量",
-    core_pending_details: "詳細",
+    core_pending_export_print: "印刷・PDF",
+    core_pending_export_excel: "Excel出力",
+    core_pending_export_info: "{date}　{count}明細・{qty}台",
+    core_pending_export_error: "一覧を出力できませんでした。もう一度お試しください。",
     core_pending_pallet: "パレットNO.",
     core_pending_part: "原票品番",
     core_pending_quantity: "数量",
@@ -5051,7 +5054,10 @@ var TRANSLATIONS = {
     core_pending_load_failed: "Could not load pending pallet records. Use Search to try again.",
     core_pending_records: "Pending records",
     core_pending_units: "Pending units",
-    core_pending_details: "Details",
+    core_pending_export_print: "Print / PDF",
+    core_pending_export_excel: "Export Excel",
+    core_pending_export_info: "{date} · {count} records · {qty} pcs",
+    core_pending_export_error: "Could not export the list. Please try again.",
     core_pending_pallet: "Pallet no.",
     core_pending_part: "Source part number",
     core_pending_quantity: "Quantity",
@@ -8035,7 +8041,10 @@ var TRANSLATIONS = {
     core_pending_load_failed: "无法加载待核对的托盘记录，请点击搜索重试。",
     core_pending_records: "待核对明细",
     core_pending_units: "待核对数量",
-    core_pending_details: "详情",
+    core_pending_export_print: "打印 / PDF",
+    core_pending_export_excel: "导出 Excel",
+    core_pending_export_info: "{date}　{count}条明细・{qty}件",
+    core_pending_export_error: "无法导出列表。请重试。",
     core_pending_pallet: "托盘编号",
     core_pending_part: "原始零件编号",
     core_pending_quantity: "数量",
@@ -9077,7 +9086,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1369";
+var APP_VERSION       = "v1.1.1370";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -9195,7 +9204,7 @@ var coreListFilteredRows = [];
 var coreInventoryNotePages = [];
 var coreInventoryNotePage = 0;
 var CORE_LIST_PAGE_SIZE = 100;
-var coreListMode = "inventory";
+var coreListMode = "pending";
 var coreManagementLoadSeq = 0;
 var coreManagementDataReady = false;
 var coreCollectionRows = [];
@@ -31302,6 +31311,7 @@ function beginCoreManagementLoad() {
   coreManagementDataReady = false;
   var exportBtn = document.getElementById("btn-export-core-collection");
   if (exportBtn) exportBtn.disabled = true;
+  updateCorePendingOutputs();
   return coreManagementLoadSeq;
 }
 
@@ -31346,7 +31356,9 @@ async function enterCoreListMgmt() {
   if (collectionAddBtn) setCspStyle(collectionAddBtn, "display", canManageProductionRecords() ? "" : "none");
   if (createBtn) setCspStyle(createBtn, "display", canManageProductionRecords() ? "" : "none");
   resetCoreCollectionControls();
-  await setCoreListMode("inventory");
+  var pendingSearch = document.getElementById("core-pending-search");
+  if (pendingSearch) pendingSearch.value = "";
+  await setCoreListMode("pending");
 }
 
 function resetCoreCollectionControls() {
@@ -31366,7 +31378,8 @@ function resetCoreCollectionControls() {
 
 async function setCoreListMode(mode) {
   var names = { collection: "収集リスト", inventory: "現在庫", pending: t("core_pending_tab") };
-  coreListMode = Object.hasOwn(names, mode) ? mode : "collection";
+  coreListMode = Object.hasOwn(names, mode) ? mode : "pending";
+  document.getElementById("core-pending-outputs").hidden = coreListMode !== "pending";
   document.getElementById("core-workspace-filter-options").open = false;
   document.getElementById("core-inventory-filter-options").open = false;
   var pendingAdd = document.getElementById("btn-add-core-pending");
@@ -31419,7 +31432,7 @@ async function loadCorePendingStock() {
     var rows = [];
     for (var offset = 0; ; offset += CORE_LIST_PAGE_SIZE) {
       var result = await sb.from("production_core_pending_stock")
-        .select("entry_key,revision,source_sheet,source_row,pallet_no,source_part_number,quantity,source_reference,source_remarks,review_reason")
+        .select("entry_key,revision,source_sheet,source_row,pallet_no,source_part_number,quantity,source_reference,source_remarks")
         .order("source_sha256").order("source_sheet").order("source_row").order("entry_key")
         .range(offset, offset + CORE_LIST_PAGE_SIZE - 1);
       if (seq !== coreManagementLoadSeq || coreListMode !== "pending") return;
@@ -31451,6 +31464,73 @@ function corePendingStockSearch() {
   renderCorePendingStock();
 }
 
+function updateCorePendingOutputs() {
+  var enabled = coreListMode === "pending" && coreManagementDataReady && corePendingStockFiltered.length > 0;
+  document.getElementById("btn-core-pending-print").disabled = !enabled;
+  document.getElementById("btn-core-pending-excel").disabled = !enabled;
+}
+
+function corePendingExportSnapshot() {
+  if (coreListMode !== "pending" || !canViewCoreManagement() || !coreManagementDataReady ||
+      !corePendingStockFiltered.length || !document.getElementById("screen-core-list-mgmt").classList.contains("active")) return null;
+  var report = window.DcatsCorePendingExport.collect(corePendingStockFiltered, t("core_pallet_manual"));
+  var date = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo" }).format(new Date());
+  var subtitle = tf("core_pending_export_info", { date: date, count: report.count.toLocaleString(), qty: report.total.toLocaleString() });
+  return { report: report, title: t("core_pending_tab") + " " + date, subtitle: subtitle, fileName: "GLTEK_コア照合待ち_" + date };
+}
+
+function showCorePendingExportError() {
+  if (coreListMode !== "pending" || !canViewCoreManagement()) return;
+  var status = document.getElementById("core-pallet-save-status");
+  status.textContent = t("core_pending_export_error");
+  status.hidden = false;
+}
+
+function printCorePendingStock() {
+  var cleanup;
+  try {
+    var snapshot = corePendingExportSnapshot();
+    if (!snapshot || document.body.classList.contains("core-pending-printing")) return;
+    var area = document.getElementById("core-pending-print-sheet");
+    var title = document.title;
+    cleanup = function() {
+      document.body.classList.remove("core-pending-printing");
+      document.title = title;
+      area.replaceChildren();
+      window.removeEventListener("afterprint", cleanup);
+    };
+    area.replaceChildren(window.DcatsCorePendingExport.printContent(snapshot.report, snapshot.title, snapshot.subtitle, document));
+    document.title = snapshot.fileName;
+    document.body.classList.add("core-pending-printing");
+    window.addEventListener("afterprint", cleanup, { once: true });
+    window.print();
+  } catch (error) {
+    if (cleanup) cleanup();
+    showCorePendingExportError();
+  }
+}
+
+function exportCorePendingExcel() {
+  try {
+    var snapshot = corePendingExportSnapshot();
+    if (!snapshot) return;
+    var output = window.DcatsCorePendingExport.workbook(snapshot.report, snapshot.subtitle, window.fflate);
+    var blob = new Blob([output], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement("a");
+    link.href = url;
+    link.download = snapshot.fileName + ".xlsx";
+    document.body.appendChild(link);
+    try { link.click(); }
+    finally {
+      link.remove();
+      setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+    }
+  } catch (error) {
+    showCorePendingExportError();
+  }
+}
+
 function moveCorePendingStockPage(direction) {
   if (!coreManagementDataReady) return;
   if (direction < 0) {
@@ -31468,6 +31548,7 @@ function renderCorePendingStock() {
   if (coreListMode !== "pending" || !coreManagementDataReady) return;
   var list = document.getElementById("core-list-list");
   var total = corePendingStockFiltered.length;
+  updateCorePendingOutputs();
   renderCoreManagementSummary([
     { label: t("core_pending_records"), value: total.toLocaleString(), unit: "件" },
     { label: t("core_pending_units"), value: sumProductionCoreEntryQty(corePendingStockFiltered).toLocaleString(), unit: "台" }
@@ -31479,36 +31560,34 @@ function renderCorePendingStock() {
   }
   var visible = corePendingStockFiltered.slice(corePendingStockPage, corePendingStockPage + 30);
   var cardMode = !isPC() || window.innerWidth < 1101;
+  var editable = canManageProductionRecords();
   var body = visible.map(function(row, index) {
     var part = "<span class='core-main-pn'>" + esc(row.source_part_number) + "</span>";
     var pallet = "<span class='core-pending-pallet'>" + esc(row.pallet_no) + "</span>";
     var quantity = "<span class='core-qty-pill'>" + esc(String(row.quantity)) + "</span>";
     var source = esc(row.source_sheet ? row.source_sheet + "!" + row.source_row : t("core_pallet_manual"));
-    var reference = "<div class='core-pallet-row-actions'><button class='btn-sm-edit' type='button' data-core-pending-details='" + index + "'>" + esc(t("core_pending_details")) + "</button>";
-    if (canManageProductionRecords()) {
-      reference += "<button class='btn-sm-edit' type='button' data-core-pending-match='" + index + "'>" + esc(t("core_pallet_edit_match")) + "</button>";
-    }
-    reference += "</div>";
+    var action = editable
+      ? "<button class='btn-sm-edit' type='button' data-core-pending-match='" + index + "'>" + esc(t("core_pallet_edit_match")) + "</button>"
+      : "";
     if (cardMode) {
       return "<div class='core-list-card core-pending-record'><div class='core-list-card-head'><div>" + part +
-        "<div class='mgmt-sub'>" + pallet + " / " + source + "</div></div>" + quantity + reference + "</div></div>";
+        "<div class='mgmt-sub'>" + pallet + " / " + source + "</div></div>" + quantity + "</div>" +
+        (editable ? "<div class='core-pallet-row-actions'>" + action + "</div>" : "") + "</div>";
     }
-    return "<tr class='core-pending-record'><td>" + pallet + "</td><td>" + part + "</td><td>" + quantity +
-      "</td><td>" + source + "</td><td>" + reference + "</td></tr>";
+    return "<tr class='core-pending-record'><td>" + pallet + "</td><td>" + part + "</td><td>" + source + "</td>" +
+      (editable ? "<td>" + action + "</td>" : "") + "<td class='core-inventory-quantity'>" + quantity + "</td></tr>";
   }).join("");
+  var headers = [t("core_pending_pallet"), t("core_pending_part"), t("core_pending_row")];
+  if (editable) headers.push(t("core_pallet_operations"));
+  headers.push(t("core_pending_quantity"));
   list.innerHTML = cardMode ? "<div class='core-list-mobile-cards'>" + body + "</div>" :
     "<table class='mgmt-table core-pending-table' aria-label='" + esc(t("core_pending_tab")) + "'><thead><tr>" +
-    [t("core_pending_pallet"), t("core_pending_part"), t("core_pending_quantity"), t("core_pending_row"), t("core_pending_details")].map(function(label) { return "<th scope='col'>" + esc(label) + "</th>"; }).join("") +
-    "</tr></thead><tbody>" + body + "</tbody></table>";
+    headers.map(function(label, index) {
+      var attr = index === headers.length - 1 ? " class='core-inventory-quantity'" : "";
+      return "<th scope='col'" + attr + ">" + esc(label) + "</th>";
+    }).join("") + "</tr></thead><tbody>" + body + "</tbody></table>";
   corePendingStockSize = fitCoreManagementRows(list, Array.from(list.querySelectorAll(".core-pending-record")), list.querySelector("thead"));
   renderCoreManagementPager(corePendingStockPage, corePendingStockSize, total);
-  list.querySelectorAll("[data-core-pending-details]").forEach(function(button) {
-    button.addEventListener("click", function() {
-      var row = visible[Number(button.dataset.corePendingDetails)];
-      if (!row) return;
-      coreInventoryPendingDetails(row);
-    });
-  });
   list.querySelectorAll("[data-core-pending-match]").forEach(function(button) {
     button.addEventListener("click", function() {
       var row = visible[Number(button.dataset.corePendingMatch)];
@@ -32326,22 +32405,12 @@ function coreInventoryPendingProduct(row) {
   return categoryCode ? { category_code: categoryCode } : {};
 }
 
-function coreInventoryPendingDetails(row) {
-  openCoreInventoryNoteText([
-    row.pallet_no + " / " + row.source_part_number + " / " + row.quantity + "台",
-    row.source_sheet ? row.source_sheet + "!" + row.source_row : t("core_pallet_manual"),
-    row.review_reason,
-    row.source_reference,
-    row.source_remarks
-  ].filter(Boolean).join("\n"));
-}
-
 function renderCoreInventoryPendingRow(row, index, cardMode) {
   var part = "<div class='core-main-pn'>" + esc(row.source_part_number) + "</div>";
   var badge = "<span class='core-inventory-match-badge'>" + esc(t("core_pending_tab")) + "</span>";
   var quantity = "<span class='core-qty-pill'>" + esc(String(row.quantity)) + "</span>";
   var location = esc(row.pallet_no);
-  var actions = "<button class='btn-sm-edit' type='button' data-inventory-pending-detail='" + index + "'>" + esc(t("core_pending_details")) + "</button>";
+  var actions = "";
   if (canManageProductionRecords()) {
     actions += "<button class='btn-sm-edit' type='button' data-inventory-pending-match='" + index + "'>" + esc(t("core_pallet_edit_match")) + "</button>";
   }
@@ -32513,12 +32582,6 @@ function renderCoreListMgmt() {
     html += "</tbody></table>";
     list.innerHTML = html;
   }
-  list.querySelectorAll("[data-inventory-pending-detail]").forEach(function(button) {
-    button.addEventListener("click", function() {
-      var row = coreListFilteredRows[Number(button.dataset.inventoryPendingDetail)];
-      if (row && row.pending) coreInventoryPendingDetails(row.pending);
-    });
-  });
   list.querySelectorAll("[data-inventory-pending-match]").forEach(function(button) {
     button.addEventListener("click", function() {
       var row = coreListFilteredRows[Number(button.dataset.inventoryPendingMatch)];
@@ -61982,6 +62045,8 @@ var corePalletEntry = window.DcatsCorePallet({
 });
 document.getElementById("btn-add-core-list").addEventListener("click", corePalletEntry.openEntry);
 document.getElementById("btn-add-core-pending").addEventListener("click", corePalletEntry.openEntry);
+document.getElementById("btn-core-pending-print").addEventListener("click", printCorePendingStock);
+document.getElementById("btn-core-pending-excel").addEventListener("click", exportCorePendingExcel);
 document.getElementById("btn-create-core-list-from-ranking").addEventListener("click", createCoreListFromRanking);
 document.getElementById("btn-export-core-collection").addEventListener("click", exportCoreCollectionCsv);
 document.getElementById("btn-core-collection-search").addEventListener("click", searchCoreCollectionWorkspace);
