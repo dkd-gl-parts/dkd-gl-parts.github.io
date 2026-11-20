@@ -3,7 +3,7 @@ const vm = require("node:vm");
 const assert = require("node:assert/strict");
 const acorn = require("acorn");
 const source = fs.readFileSync("app.js", "utf8");
-const names = ["showCoreListDeleteConfirmation", "openCoreListDeleteConfirmation", "deleteCoreListRow", "closeCoreListForm", "coreInventoryPendingProduct", "updateCorePendingOutputs", "renderCoreInventoryPendingRow", "loadCorePendingStock","corePendingStockSearch","moveCorePendingStockPage","renderCorePendingStock"].concat(["coreCollectionVehicleSummaryHtml", "coreCollectionUiLabel", "renderCoreCollectionVehicleHtml", "coreCollectionVehicleClasses", "coreCollectionVehicleText", "fitCoreManagementRows", "renderCoreManagementPager", "coreCollectionVehicleMatches", "esc", "normalizeAsciiWidth", "norm", "normalizedContains", "sumProductionCoreEntryQty", "renderCoreManagementSummary", "beginCoreManagementLoad", "searchCoreCollectionWorkspace", "clearCoreCollectionFilters", "resetCoreCollectionFilters", "bindCoreManagementTabs", "setCoreListMode", "coreCollectionStatusLabel", "coreCollectionRank", "coreCollectionDisplayProduct", "buildCoreCollectionRankingRows", "isCoreReplenishmentRow", "coreCollectionStockQty", "coreCollectionShortageQty", "coreCollectionCategoryKey", "coreCollectionStoredOrder", "compareCoreCollectionStoredOrder", "assignCoreCollectionCategoryRanks", "coreCollectionCategoryRank", "coreCollectionCategoryMatches", "applyCoreCollectionFilters", "getCoreCollectionSearchTerms", "indexCoreCollectionRows", "loadCoreCollectionList", "loadCoreCollectionItems", "loadCoreCollectionProducts", "readCoreCollectionStock", "renderCoreCollectionStockBadge", "renderCoreCollectionList", "renderCoreCollectionClassifyButton", "coreCollectionEditAttributes", "renderCoreCollectionQuantity", "renderCoreCollectionRow", "appendCoreCollectionRows", "loadMoreCoreCollectionRowsOnScroll", "enterCoreListMgmt", "resetCoreCollectionControls", "resetCoreInventoryFilters", "submitCoreInventorySearch", "isKoreanCoreInventoryEntry", "coreInventoryVehicleClasses", "applyCoreInventoryFilters", "loadCoreListMgmt", "loadCoreListProducts", "renderCoreListMgmt"]);
+const names = ["showCoreListDeleteConfirmation", "openCoreListDeleteConfirmation", "deleteCoreListRow", "closeCoreListForm", "coreInventoryPendingProduct", "updateCorePendingOutputs", "renderCoreInventoryPendingRow", "loadCorePendingStock","corePendingStockSearch","moveCorePendingStockPage","renderCorePendingStock"].concat(["coreCollectionVehicleSummaryHtml", "coreCollectionUiLabel", "renderCoreCollectionVehicleHtml", "coreCollectionVehicleClasses", "coreCollectionVehicleText", "fitCoreManagementRows", "renderCoreManagementPager", "coreCollectionVehicleMatches", "esc", "normalizeAsciiWidth", "norm", "normalizedContains", "sumProductionCoreEntryQty", "renderCoreManagementSummary", "beginCoreManagementLoad", "searchCoreCollectionWorkspace", "clearCoreCollectionFilters", "resetCoreCollectionFilters", "bindCoreManagementTabs", "setCoreListMode", "coreCollectionStatusLabel", "coreCollectionRank", "coreCollectionDisplayProduct", "buildCoreCollectionRankingRows", "isCoreReplenishmentRow", "coreCollectionStockQty", "coreCollectionShortageQty", "coreCollectionCategoryKey", "coreCollectionStoredOrder", "compareCoreCollectionStoredOrder", "assignCoreCollectionCategoryRanks", "coreCollectionCategoryRank", "coreCollectionCategoryMatches", "applyCoreCollectionFilters", "getCoreCollectionSearchTerms", "indexCoreCollectionRows", "loadCoreCollectionList", "loadCoreCollectionItems", "loadCoreCollectionProducts", "resolveCoreCollectionRankingCodes", "readCoreCollectionStock", "renderCoreCollectionStockBadge", "renderCoreCollectionList", "renderCoreCollectionClassifyButton", "coreCollectionEditAttributes", "renderCoreCollectionQuantity", "renderCoreCollectionRow", "appendCoreCollectionRows", "loadMoreCoreCollectionRowsOnScroll", "enterCoreListMgmt", "resetCoreCollectionControls", "resetCoreInventoryFilters", "submitCoreInventorySearch", "isKoreanCoreInventoryEntry", "coreInventoryVehicleClasses", "applyCoreInventoryFilters", "loadCoreListMgmt", "loadCoreListProducts", "renderCoreListMgmt"]);
 const ast = acorn.parse(source, { ecmaVersion: "latest" });
 const functions = ast.body.filter(n => n.type === "FunctionDeclaration" && names.includes(n.id.name));
 assert.equal(functions.length, names.length);
@@ -43,7 +43,7 @@ function fixture() {
       if (result.error) return result;
       return { data: { linked: (result.data || []).filter(row => !row.replaced_at), pending: context.inventoryPendingFixture } };
     },
-    from(table) { let columns, bounds, ids; const query = { select(c) { columns = c; return query; }, order() { return query; }, in(key, values) { ids = values; return query; }, limit() { return query; }, range(start, end) { bounds = { start, end }; return query; }, then(resolve, reject) { return Promise.resolve().then(() => context.respond(table, columns, bounds, ids)).then(resolve, reject); } }; return query; } };
+    from(table) { let columns, bounds, ids; const query = { select(c) { columns = c; return query; }, order() { return query; }, eq() { return query; }, in(key, values) { ids = values; return query; }, limit() { return query; }, range(start, end) { bounds = { start, end }; return query; }, then(resolve, reject) { return Promise.resolve().then(() => context.respond(table, columns, bounds, ids)).then(resolve, reject); } }; return query; } };
   vm.createContext(context);
   vm.runInContext(functions.map(n => source.slice(n.start, n.end)).join("\n"), context);
   return { c: context, get, vehicleFilters };
@@ -52,6 +52,22 @@ const rows = [{ id: 1, dkd_shohin_id: 1, target_quantity: 10, priority: "high", 
 const products = [{ dkd_shohin_id: 1, manufacturer_part_number: "TEST-123", category_code: "starter" }, { dkd_shohin_id: 2, manufacturer_part_number: "TEST-456", category_code: "alternator" }];
 function ready(c) { c.respond = (table, columns) => ({ data: table === "core_collection_list_items" ? rows : table === "core_products" ? products : [{ id: 1, dkd_shohin_id: 1, quantity: 3, core_part_number: "CORE-123" }], error: null }); }
 async function main() {
+  {
+    const { c } = fixture();
+    const p = (id, part, oem) => ({ dkd_shohin_id:id, category_code:"alternator", manufacturer_part_number:part, genuine_part_number:oem });
+    const parts={2586:p(2586,"102211-7150","27060-B2160"),77:p(77,"PART77","OEM77"),78:p(78,"PART77","OEM77"),88:p(88,"PART88","OEM88")};
+    const d = (id, code, part, oem) => ({dkd_shohin_id:id,dks_search_parts:{dks_shohin_cd:code,manufacturer_part_number:part,genuine_part_number:oem}});
+    const ranks={28801:{rank:13,maker:"102211-7150",genuine:"27060-B2160"},77:{rank:14,maker:"PART77",genuine:"OEM77"},88:{rank:15,maker:"PART88",genuine:"OEM88"}};
+    c.respond=(table, cols, range, ids)=>{
+      assert.equal(table,"core_product_dks_links");assert.equal(ids.length,4);
+      return {data:[d(2586,28801,"1022117150","27060B2160"),d(77,77,"PART77","OEM77"),d(78,77,"PART77","OEM77"),d(88,88,"PART88","OTHER")],error:null};
+    };
+    await c.resolveCoreCollectionRankingCodes(parts,{forProduct:r=>ranks[r.dks_shohin_cd]},()=>{});
+    assert.equal(parts[2586].dks_shohin_cd,"28801"); checks++;
+    assert.equal(parts[77].dks_shohin_cd,undefined); checks++;
+    assert.equal(parts[78].dks_shohin_cd,undefined); checks++;
+    assert.equal(parts[88].dks_shohin_cd,undefined); checks++;
+  }
   {
     const entry = ast.body.flatMap(node => node.declarations || []).find(node => node.id.name === "corePalletEntry");
     const adapter = entry.init.arguments[0].properties.find(node => node.key.name === "search").value;
