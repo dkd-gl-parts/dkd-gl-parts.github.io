@@ -9116,3 +9116,6 @@ Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {
   "← 受注・出荷管理": "← 订单与发货管理",
   "売上伝票（閲覧のみ）": "销售单据（只读）"
 });
+
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"2025年カテゴリ内順位":"2025 category rank"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"2025年カテゴリ内順位":"2025年分类排名"});
