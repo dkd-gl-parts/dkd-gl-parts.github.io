@@ -90,6 +90,7 @@
   function preferenceKey() { return ownerKey() + ":enabled"; }
   function current() { return !!context && !!verifiedId && context.userId() === verifiedId && context.scope() === verifiedScope; }
   function available() { return current() && (policy().mode === "all" || policy().mode === "pilot" && Array.isArray(policy().pilotUserIds) && policy().pilotUserIds.includes(verifiedId) && Array.isArray(policy().pilotEmails) && policy().pilotEmails.includes(context.email)); }
+  function canShowSettings(id) { return !!id && (policy().mode === "all" || id === verifiedId && available()); }
   function entries() { return context && context.entries ? context.entries() : []; }
   function features() { return entries().map(function (entry) { return entry.id; }); }
   function eligible(id) { return features().includes(id); }
@@ -235,8 +236,6 @@
     });
     revealSelected();
     updateProperties();
-    var entry = root.document.querySelector('[data-action="screen-tab-properties"]');
-    if (entry && !available()) entry.remove();
   }
   function setEnabled(value) {
     if (!available()) return false;
@@ -247,13 +246,13 @@
     else { tabs.slice().forEach(forget); active = null; prepared = null; save(); }
     announce(""); render(); return enabled;
   }
-  function restore() {
+  function restore(openSavedScreen) {
     var saved;
     try { saved = JSON.parse(storageGet(ownerKey()) || "null"); } catch (_) { saved = null; }
     tabs = saved && [1, 2].includes(saved.version) && Array.isArray(saved.tabs) ? Array.from(new Set(saved.tabs.filter(allowed))).slice(-LIMIT) : [];
     active = saved && tabs.includes(saved.active) ? saved.active : tabs[0] || null;
     save(); render();
-    if (active && context.screen() === "menu") activate(active);
+    if (openSavedScreen !== false && active && context.screen() === "menu") activate(active);
   }
   function denied(id) {
     // Authorization changes take precedence over keeping a draft.
@@ -335,7 +334,7 @@
     if (forgetSaved && verifiedId) { try { root.sessionStorage.removeItem(ownerKey()); root.sessionStorage.removeItem(preferenceKey()); } catch (_) {} }
     epoch += 1; enabled = false; context = null; verifiedId = null; verifiedScope = null; tabs = []; active = null; loaded.clear(); states.clear(); edits.clear(); prepared = null; render();
   }
-  async function afterAuthenticated(options) {
+  async function afterAuthenticated(options, openSavedScreen) {
     var wasCurrent = current(), ticket = ++epoch, expected = options.userId(), expectedScope = options.scope();
     if (!expected || options.external) { suspend(false); return; }
     var response;
@@ -349,11 +348,11 @@
     enabled = available() && (preference === null || preference === "on");
     if (wasCurrent) { render(); refreshMenu(); return; }
     tabs = []; loaded.clear(); states.clear(); edits.clear(); active = null; prepared = null;
-    if (enabled) restore(); else render();
+    if (enabled) restore(openSavedScreen); else render();
     refreshMenu();
   }
   root.DcatsNineTabs = Object.freeze({
-    isAvailable: available, openProperties: openProperties, propertiesTitle: propertiesTitle,
+    isAvailable: available, canShowSettings: canShowSettings, openProperties: openProperties, propertiesTitle: propertiesTitle,
     get features() { return features(); }, retainedLimit: LIMIT, afterAuthenticated: afterAuthenticated, beforeEnter: beforeEnter, beforeShow: beforeShow, screenChanged: screenChanged, suspend: suspend,
     authEvent: function (event) { if (["SIGNED_OUT", "USER_UPDATED", "PASSWORD_RECOVERY"].includes(event)) suspend(event === "SIGNED_OUT"); },
     willLeave: function (id) { if (id === "menu") capture(); },

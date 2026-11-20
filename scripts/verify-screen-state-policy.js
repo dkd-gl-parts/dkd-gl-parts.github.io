@@ -500,7 +500,23 @@ async function verifyDynamicScreenTabs() {
   await company.api.afterAuthenticated({...companyOptions, verify: async () => ({error: new Error("expired")})});
   assert.equal(company.api.isAvailable(), false, "Unverified and expired sessions fail closed");
   assert.equal(company.api.openProperties(), false);
-  console.log("dynamic screen tabs passed (FIFO 9, dirty cancel/accept, busy, dynamic menus, reload and pilot isolation)");
+  assert.equal(company.api.canShowSettings("synthetic-company-user"), true, "A logged-in internal menu can offer a retry after verification fails");
+  assert.equal(company.api.canShowSettings(null), false, "No settings card without a signed-in account");
+  const savedScreen = company.ids[0];
+  company.values.set("dcats-nine-tabs.v1:synthetic-company-user", JSON.stringify({version: 2, tabs: [savedScreen], active: savedScreen}));
+  company.show("menu");
+  await company.api.afterAuthenticated(companyOptions, false);
+  assert.equal(company.api.isAvailable(), true);
+  assert.equal(company.screen, "menu", "A settings retry should not navigate to the saved business screen");
+  assert.equal(Array.from(company.api.snapshot().tabs).join("|"), savedScreen, "A settings retry still restores tab metadata");
+  assert.equal(company.api.openProperties(), true, "Successful re-verification opens settings");
+  company.api.authEvent("SIGNED_OUT");
+  assert.equal(company.api.openProperties(), false);
+  company.w.DcatsNineTabsPolicy.mode = "off";
+  assert.equal(company.api.canShowSettings("synthetic-company-user"), false);
+  company.w.DcatsNineTabsPolicy.mode = "pilot";
+  assert.equal(company.api.canShowSettings("synthetic-company-user"), false, "Pilot settings are hidden before verified pilot enrollment");
+  console.log("dynamic screen tabs passed (FIFO 9, dirty cancel/accept, busy, dynamic menus, reload, settings retry and pilot isolation)");
 }
 verifyDynamicScreenTabs().catch(error => { console.error(error); process.exitCode = 1; });
 
