@@ -9101,3 +9101,6 @@ Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {
   "2025年ランキングから": "已从2025年排名",
   "品番を追加しました。": "添加品号。"
 });
+
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"帳票商品コード":"Report product code"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"帳票商品コード":"报表商品代码"});
