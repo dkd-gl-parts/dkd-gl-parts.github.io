@@ -12407,11 +12407,6 @@ html[data-product-3d-paused] :is(
   #screen-core-list-mgmt .core-pending-filters .core-workspace-search { grid-column: auto; }
 }
 
-#screen-core-list-mgmt .core-pending-table th:nth-child(1) { width: 22%; }
-#screen-core-list-mgmt .core-pending-table th:nth-child(2) { width: 31%; }
-#screen-core-list-mgmt .core-pending-table th:nth-child(3) { width: 11%; }
-#screen-core-list-mgmt .core-pending-table th:nth-child(4) { width: 22%; }
-#screen-core-list-mgmt .core-pending-table th:nth-child(5) { width: 14%; }
 #screen-core-list-mgmt .core-pending-table :is(th, td) { text-align: left; }
 #screen-core-list-mgmt:has(#btn-core-list-mode-pending.active) #core-collection-page-status { white-space: nowrap; flex: none; }
 #screen-core-list-mgmt .core-pending-record .core-list-card-head > div { min-width: 0; flex: 1; }
@@ -12539,3 +12534,43 @@ html[data-product-3d-paused] :is(
   #core-list-form-overlay .form-footer { margin-top: 8px; padding-top: 8px; }
 }
 #core-list-form-overlay [hidden] { display: none !important; }
+
+#screen-core-list-mgmt #core-pending-outputs:not([hidden]) { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+#screen-core-list-mgmt #core-pending-outputs[hidden] { display: none; }
+#screen-core-list-mgmt .core-pending-table :is(th, td).core-inventory-quantity { text-align: right; }
+#screen-core-list-mgmt .core-pending-table th:nth-child(1) { width: 22%; }
+#screen-core-list-mgmt .core-pending-table th:nth-child(2) { width: 29%; }
+#screen-core-list-mgmt .core-pending-table th:nth-child(3) { width: 21%; }
+#screen-core-list-mgmt .core-pending-table th:nth-child(4):not(:last-child) { width: 15%; }
+#screen-core-list-mgmt .core-pending-table th:last-child { width: 13%; }
+#screen-core-list-mgmt .core-pending-record > .core-pallet-row-actions { margin-top: 4px; justify-content: flex-end; }
+@media (max-width: 480px) {
+  #screen-core-list-mgmt:has(#btn-core-list-mode-pending.active) .core-workspace-results-heading { gap: 4px; }
+  #screen-core-list-mgmt:has(#btn-core-list-mode-pending.active) .core-workspace-results-heading button {
+    padding-inline: 6px;
+  }
+}
+@page core-pending-list { size: A4 portrait; margin: 13mm 11mm; }
+@media print {
+  html:has(body.core-pending-printing), body.core-pending-printing { height: auto !important; overflow: visible !important; }
+  body.core-pending-printing { display: block; margin: 0; background: white; color: black; }
+  body.core-pending-printing > :not(#core-pending-print-sheet) { display: none !important; }
+  body.core-pending-printing > #core-pending-print-sheet {
+    display: block !important; page: core-pending-list; font: 10pt Arial, "Yu Gothic", sans-serif;
+  }
+  #core-pending-print-sheet h1 { font-size: 16pt; margin: 0 0 4mm; }
+  #core-pending-print-sheet h2 { font-size: 12pt; margin: 5mm 0 2mm; break-after: avoid; }
+  #core-pending-print-sheet p { margin: 2mm 0; }
+  #core-pending-print-sheet table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+  #core-pending-print-sheet thead { display: table-header-group; }
+  #core-pending-print-sheet tr { break-inside: avoid; }
+  #core-pending-print-sheet :is(th, td) { vertical-align: top; padding: 1.4mm; border: .25mm solid #8e99a6; overflow-wrap: anywhere; }
+  #core-pending-print-sheet th { background: #e7f1fa; color: #122c44; print-color-adjust: exact; }
+  #core-pending-print-sheet th:nth-child(1) { width: 8%; }
+  #core-pending-print-sheet th:nth-child(2) { width: 16%; }
+  #core-pending-print-sheet th:nth-child(3) { width: 23%; }
+  #core-pending-print-sheet th:nth-child(4) { width: 12%; }
+  #core-pending-print-sheet th:nth-child(5) { width: 26%; }
+  #core-pending-print-sheet th:nth-child(6) { width: 15%; }
+  #core-pending-print-sheet td:nth-child(4) { text-align: right; font-variant-numeric: tabular-nums; }
+}
