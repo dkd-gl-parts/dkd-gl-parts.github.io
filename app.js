@@ -9092,7 +9092,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1375";
+var APP_VERSION       = "v1.1.1376";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -9215,6 +9215,7 @@ var coreManagementLoadSeq = 0;
 var coreManagementDataReady = false;
 var coreCollectionRows = [];
 var coreCollectionRankingRows = [];
+var coreCollectionCategoryRanks = new Map();
 var coreCollectionFilteredRows = [];
 var coreCollectionProductMap = {};
 var coreCollectionStockMap = {};
@@ -31817,10 +31818,6 @@ function coreCollectionCategoryKey(product) {
   return CORE_COLLECTION_CATEGORY_ORDER.indexOf(code) >= 0 ? code : "other";
 }
 
-function coreCollectionCategoryOrder(product) {
-  return CORE_COLLECTION_CATEGORY_ORDER.indexOf(coreCollectionCategoryKey(product));
-}
-
 function coreCollectionStoredOrder(row) {
   var value = parseInt(row && row.sort_order, 10);
   return isNaN(value) ? Number.MAX_SAFE_INTEGER : value;
@@ -31832,23 +31829,27 @@ function compareCoreCollectionStoredOrder(a, b) {
   return String(a && (a.id || a.dkd_shohin_id) || "").localeCompare(String(b && (b.id || b.dkd_shohin_id) || ""), "ja", { numeric: true });
 }
 
-function assignCoreCollectionCategoryRanks() {
-  var categoryRows = {};
-  coreCollectionRows.forEach(function(row) {
-    var product = coreCollectionProductMap[String(row.dkd_shohin_id)] || {};
-    var category = coreCollectionCategoryKey(product);
-    if (!categoryRows[category]) categoryRows[category] = [];
-    categoryRows[category].push(row);
+function assignCoreCollectionCategoryRanks(rows) {
+  var ranked = rows.map(function(row) {
+    return { row: row, overall: coreCollectionRank(row)?.rank };
+  }).filter(function(entry) { return entry.overall; });
+  ranked.sort(function(a, b) {
+    return a.overall - b.overall || Number(a.row.dkd_shohin_id || 0) - Number(b.row.dkd_shohin_id || 0);
   });
-  Object.keys(categoryRows).forEach(function(category) {
-    categoryRows[category].sort(compareCoreCollectionStoredOrder).forEach(function(row, index) {
-      row._category_rank = index + 1;
-    });
+  var ranks = new Map();
+  var counts = new Map();
+  ranked.forEach(function(entry) {
+    var row = entry.row;
+    var category = coreCollectionCategoryKey(coreCollectionDisplayProduct(row));
+    var next = (counts.get(category) || 0) + 1;
+    counts.set(category, next);
+    ranks.set(row, next);
   });
+  return ranks;
 }
 
 function coreCollectionCategoryRank(row) {
-  return parseInt(row && row._category_rank, 10) || "";
+  return coreCollectionCategoryRanks.get(row) || null;
 }
 
 function coreCollectionCategoryMatches(product, category) {
@@ -31873,7 +31874,6 @@ function applyCoreCollectionFilters(options) {
   var activeCount = [category, state !== "all", vehicles.length > 0, source].filter(Boolean).length;
   if (filterCount) filterCount.textContent = activeCount ? "(" + activeCount + ")" : "";
   if (!options.preserveRenderLimit) { coreCollectionRenderLimit = CORE_COLLECTION_RENDER_PAGE_SIZE; coreCollectionPageStart = 0; coreCollectionPageHistory = []; }
-  assignCoreCollectionCategoryRanks();
   coreCollectionFilteredRows = coreCollectionRows.concat(coreCollectionRankingRows).filter(function(row) {
     var product = coreCollectionDisplayProduct(row);
     var stock = coreCollectionStockMap[String(row.dkd_shohin_id)] || {};
@@ -31904,16 +31904,10 @@ function applyCoreCollectionFilters(options) {
     return true;
   });
   coreCollectionFilteredRows.sort(function(a, b) {
-    var aRank = coreCollectionRank(a);
-    var bRank = coreCollectionRank(b);
-    if (aRank && bRank) return aRank.rank - bRank.rank || Number(a.dkd_shohin_id) - Number(b.dkd_shohin_id);
+    var aRank = coreCollectionCategoryRank(a);
+    var bRank = coreCollectionCategoryRank(b);
+    if (aRank && bRank) return aRank - bRank || coreCollectionRank(a).rank - coreCollectionRank(b).rank;
     if (aRank || bRank) return aRank ? -1 : 1;
-    var ap = coreCollectionProductMap[String(a.dkd_shohin_id)] || {};
-    var bp = coreCollectionProductMap[String(b.dkd_shohin_id)] || {};
-    var rankDiff = (coreCollectionCategoryRank(a) || Number.MAX_SAFE_INTEGER) - (coreCollectionCategoryRank(b) || Number.MAX_SAFE_INTEGER);
-    if (rankDiff) return rankDiff;
-    var categoryDiff = coreCollectionCategoryOrder(ap) - coreCollectionCategoryOrder(bp);
-    if (categoryDiff) return categoryDiff;
     return compareCoreCollectionStoredOrder(a, b);
   });
 }
@@ -31960,6 +31954,7 @@ async function loadCoreCollectionList() {
     var report = productsAndRank[1];
     coreCollectionReportRank = report ? report.forProduct : null;
     coreCollectionRankingRows = buildCoreCollectionRankingRows(report);
+    coreCollectionCategoryRanks = assignCoreCollectionCategoryRanks(coreCollectionRows.concat(coreCollectionRankingRows));
     applyCoreCollectionFilters();
     coreManagementDataReady = true;
     renderCoreCollectionList();
@@ -32065,8 +32060,9 @@ function renderCoreCollectionList() {
       var stock = coreCollectionStockMap[String(row.dkd_shohin_id)] || {};
       var shortage = coreCollectionShortageQty(row);
       var ranking = coreCollectionRank(row);
+      var categoryRank = coreCollectionCategoryRank(row);
       mobileHtml += "<div class='core-collection-card'>";
-      mobileHtml += "<div class='core-collection-card-head'><div class='core-main-pn'>" + esc(product.manufacturer_part_number || product.genuine_part_number || (ranking && ranking.productCode) || ("DKD " + row.dkd_shohin_id)) + "</div>" + (ranking ? "<span class='core-collection-rank-badge' aria-label='2025年順位'>" + esc("#" + ranking.rank) + "</span>" : "") + "</div>";
+      mobileHtml += "<div class='core-collection-card-head'><div class='core-main-pn'>" + esc(product.manufacturer_part_number || product.genuine_part_number || (ranking && ranking.productCode) || ("DKD " + row.dkd_shohin_id)) + "</div>" + (categoryRank ? "<span class='core-collection-rank-badge' aria-label='2025年カテゴリ内順位'>" + esc("#" + categoryRank) + "</span>" : "") + "</div>";
       mobileHtml += "<div class='core-collection-card-badges core-collection-secondary-badges'><span class='core-status-badge " + esc(row.status) + "'>" + esc(coreCollectionStatusLabel(row.status)) + "</span></div>";
       mobileHtml += "<div class='core-collection-qty-grid'><div><span>" + coreCollectionUiLabel("目標", "Target", "目标") + "</span><strong>" + esc(String(row.target_quantity ?? "-")) + "</strong></div><div><span>" + coreCollectionUiLabel("現在庫", "Stock", "库存") + "</span><strong>" + esc(row.dkd_shohin_id == null ? "未照合" : String(coreCollectionStockQty(row))) + "</strong></div><div class='shortage'><span>" + coreCollectionUiLabel("不足", "Short", "缺口") + "</span><strong>" + esc(String(row.target_quantity == null ? "-" : shortage)) + "</strong></div></div>";
       mobileHtml += "<div class='core-vehicle-label' aria-label='車両区分'>" + coreCollectionVehicleSummaryHtml(row) + (row.id ? "" : " <span>未登録</span>") + "</div>";
@@ -32080,14 +32076,15 @@ function renderCoreCollectionList() {
     if (typeof requestAnimationFrame === "function") requestAnimationFrame(fitCoreCollectionPage);
     return;
   }
-  var html = "<table class='mgmt-table core-collection-table' aria-label='収集リスト'><tr><th scope='col'>2025年順位</th><th scope='col'>対象品番</th><th>車両区分・メーカー</th><th>現在庫</th><th>目標</th><th>不足</th><th scope='col'>収集状態・メモ</th><th>操作</th></tr>";
+  var html = "<table class='mgmt-table core-collection-table' aria-label='収集リスト'><tr><th scope='col'>2025年カテゴリ内順位</th><th scope='col'>対象品番</th><th>車両区分・メーカー</th><th>現在庫</th><th>目標</th><th>不足</th><th scope='col'>収集状態・メモ</th><th>操作</th></tr>";
   visibleRows.forEach(function(row) {
     var product = coreCollectionDisplayProduct(row);
     var stock = coreCollectionStockMap[String(row.dkd_shohin_id)] || {};
     var shortage = coreCollectionShortageQty(row);
     var ranking = coreCollectionRank(row);
+    var categoryRank = coreCollectionCategoryRank(row);
     html += "<tr>";
-    html += "<td><div class='core-category-rank'><span>" + esc(productionCategoryLabel(product)) + "</span>" + (ranking ? "<strong>#" + esc(String(ranking.rank)) + "</strong>" : "<span>順位なし</span>") + "</div></td>";
+    html += "<td><div class='core-category-rank'><span>" + esc(productionCategoryLabel(product)) + "</span>" + (categoryRank ? "<strong>#" + esc(String(categoryRank)) + "</strong>" : "<span>順位なし</span>") + "</div></td>";
     html += "<td><div class='core-main-pn'>" + esc(product.manufacturer_part_number || product.genuine_part_number || (ranking && ranking.productCode) || ("DKD " + row.dkd_shohin_id)) + "</div><div class='mgmt-pn'>純正 " + esc(product.genuine_part_number || "-") + "</div><div class='mgmt-sub'>" + (row.dkd_shohin_id == null ? esc(ranking?.productCode || "-") : "DKD " + esc(String(row.dkd_shohin_id))) + "</div></td>";
     html += "<td><div class='core-vehicle-label'>" + renderCoreCollectionVehicleHtml(row) + "</div><div class='mgmt-sub'>" + esc(product.manufacturer || "-") + "</div></td>";
     html += "<td>" + renderCoreCollectionStockBadge(row) + (stock.parts && stock.parts.length ? "<div class='mgmt-sub'>" + esc(stock.parts.join(" / ")) + "</div>" : "") + "</td>";
@@ -32385,7 +32382,7 @@ function exportCoreCollectionCsv(replenishment) {
   applyCoreCollectionFilters({ preserveRenderLimit: true });
   var rows = replenishment ? coreCollectionFilteredRows.filter(isCoreReplenishmentRow) : coreCollectionFilteredRows;
   if (!rows.length) { alert("現在の条件で出力する品番はありません。"); return; }
-  var lines = [["2025年総合順位", "2025出荷数", "リスト分類", "追加元", "登録時の元順位", "状態", "カテゴリ", "車両区分", "メーカー", "メーカー品番", "純正品番", "DKD商品ID", "現在庫", "目標数", "不足数", "メモ", "帳票商品コード"]];
+  var lines = [["2025年総合順位", "2025出荷数", "リスト分類", "追加元", "登録時の元順位", "状態", "カテゴリ", "車両区分", "メーカー", "メーカー品番", "純正品番", "DKD商品ID", "現在庫", "目標数", "不足数", "メモ", "帳票商品コード", "2025年カテゴリ内順位"]];
   rows.forEach(function(row) {
     var product = coreCollectionDisplayProduct(row);
     var ranking = coreCollectionRank(row);
@@ -32406,7 +32403,8 @@ function exportCoreCollectionCsv(replenishment) {
       row.target_quantity ?? "",
       row.target_quantity == null ? "" : coreCollectionShortageQty(row),
       row.note || "",
-      ranking?.productCode || ""
+      ranking?.productCode || "",
+      coreCollectionCategoryRank(row)
     ]);
   });
   var csv = "\uFEFF" + lines.map(function(row) { return row.map(csvCoreCollectionCell).join(","); }).join("\r\n");

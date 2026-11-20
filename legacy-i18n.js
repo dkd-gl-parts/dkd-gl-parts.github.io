@@ -9104,3 +9104,6 @@ Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {
 
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"帳票商品コード":"Report product code"});
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"帳票商品コード":"报表商品代码"});
+
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"2025年カテゴリ内順位":"2025 category rank"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"2025年カテゴリ内順位":"2025年分类排名"});
