@@ -2056,6 +2056,7 @@ var TRANSLATIONS = {
     core_pallet_adjusted: "{count}明細の数量を更新しました。",
     core_pallet_linked: "{count}明細を商品IDに紐づけて現在庫に反映しました。",
     core_pallet_invalid_entry: "{row}行目のパレットNO.、品番、数量を確認してください。",
+    core_pallet_invalid_entry_quantity: "{row}行目の数量は、1〜999,999,999の整数で入力してください。",
     core_pallet_empty_entry: "登録する行を入力してください。",
     core_pallet_invalid_adjust: "0以上の整数と変更理由を入力してください。",
     core_pallet_invalid_bulk: "在庫がある明細を100件以内で選んでください。",
@@ -5043,6 +5044,7 @@ var TRANSLATIONS = {
     core_pallet_adjusted: "Updated quantity for {count} stock rows.",
     core_pallet_linked: "Linked {count} rows and moved them to current stock.",
     core_pallet_invalid_entry: "Check the pallet, part number and quantity in row {row}.",
+    core_pallet_invalid_entry_quantity: "Enter a whole number from 1 to 999,999,999 in row {row}.",
     core_pallet_empty_entry: "Enter a row to save.",
     core_pallet_invalid_adjust: "Enter a non-negative integer and a reason.",
     core_pallet_invalid_bulk: "Select up to 100 rows with stock.",
@@ -8031,6 +8033,7 @@ var TRANSLATIONS = {
     core_pallet_adjusted: "已更新 {count} 行库存的数量。",
     core_pallet_linked: "已关联 {count} 行并转入当前库存。",
     core_pallet_invalid_entry: "请检查第 {row} 行的托盘、品号和数量。",
+    core_pallet_invalid_entry_quantity: "请在第 {row} 行输入 1 至 999,999,999 的整数。",
     core_pallet_empty_entry: "请输入要登记的明细。",
     core_pallet_invalid_adjust: "请输入非负整数及变更原因。",
     core_pallet_invalid_bulk: "请选择不超过100行的有库存明细。",
@@ -9089,7 +9092,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1371";
+var APP_VERSION       = "v1.1.1372";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};

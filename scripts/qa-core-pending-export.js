@@ -11,12 +11,17 @@ async function main() {
   const assets = Object.fromEntries(await Promise.all([
     ["styles.css", "text/css"],
     ["assets/core-pending-export.js", "application/javascript"],
+    ["assets/core-pallet-entry.js", "application/javascript"],
     ["vendor/fflate-0.8.2.js", "application/javascript"]
   ].map(async ([name, type]) => ["/" + name, { body: await fs.readFile(name), contentType: type }])));
   const names = ["corePendingExportSnapshot", "showCorePendingExportError", "printCorePendingStock", "exportCorePendingExcel"];
   const ast = acorn.parse(app, { ecmaVersion: "latest" });
   const funcs = ast.body.filter(node => node.type === "FunctionDeclaration" && names.includes(node.id.name));
   assert.equal(funcs.length, names.length);
+  const dialogs = ["entry", "match"].map(name => {
+    const start = index.indexOf('<dialog id="core-pallet-' + name + '-dialog"');
+    return index.slice(start, index.indexOf("</dialog>", start) + 9);
+  }).join("");
   const buttons = index.match(/<div id="core-pending-outputs">.*?<\/div>/)[0];
   const data = Array.from({ length: 73 }, (_, index) => ({
     source_sheet: index < 70 ? "セルモーター" : index < 72 ? "オルタネーター" : null,
@@ -37,11 +42,19 @@ async function main() {
     'for (const [id, handler] of [["print", printCorePendingStock], ["excel", exportCorePendingExcel]]) {',
     '  const button = document.getElementById("btn-core-pending-" + id);',
     '  button.disabled = false; button.addEventListener("click", handler);',
-    "}"
+    "}",
+    'const palletForm = window.DcatsCorePallet({translate:t, canEdit:() => true, pendingRows:() => [], openLinked:() => {},',
+    '  write: async (params) => {document.body.dataset.quantityWrite = JSON.stringify(params); return {data:{affected:params.p_rows}};},',
+    '  refresh: async () => {}, search: async () => ({data:[]})});',
+    'document.getElementById("qa-pallet-entry").addEventListener("click", palletForm.openEntry);',
+    'document.getElementById("qa-pallet-adjust").addEventListener("click", () => palletForm.openMatch({entry_key:"qa", revision:1,',
+    '  pallet_no:"QA-P-001", source_part_number:"000001", quantity:0}));'
   ].join("\n");
   const html = '<!doctype html><html lang="ja"><meta charset="utf-8"><title>D-CATS</title>' +
     '<link rel="stylesheet" href="/styles.css"><body><main id="screen-core-list-mgmt" class="active">' +
-    buttons + '<p id="core-pallet-save-status" hidden></p></main><section id="core-pending-print-sheet" hidden></section>' +
+    buttons + '<button id="qa-pallet-entry">数量登録の検査</button><button id="qa-pallet-adjust">数量調整の検査</button>' +
+    '<p id="core-pallet-save-status" hidden></p></main><section id="core-pending-print-sheet" hidden></section>' + dialogs +
+    '<script src="/assets/core-pallet-entry.js"></script>' +
     '<script src="/vendor/fflate-0.8.2.js"></script><script src="/assets/core-pending-export.js"></script>' +
     '<script src="/harness.js"></script></body></html>';
   const browser = await chromium.launch({ headless: true });
@@ -96,6 +109,39 @@ async function main() {
     await page.evaluate(() => window.dispatchEvent(new Event("afterprint")));
     assert.equal(await page.title(), "D-CATS");
     assert.equal(await report.locator("tbody tr").count(), 0);
+    await page.emulateMedia({ media: "screen" });
+    await page.getByRole("button", { name: "数量登録の検査", exact: true }).click();
+    const entry = page.locator("#core-pallet-entry-dialog");
+    const qty = entry.locator('[data-field="quantity"]');
+    await entry.locator('[data-field="pallet_no"]').fill("QA-P-001");
+    await entry.locator('[data-field="part_number"]').fill("000001");
+    await qty.pressSequentially("12");
+    assert.equal(await qty.inputValue(), "12");
+    for (const rejected of ["１２３４５６７８９０", "1,23", "1.5", "-1", "０"]) {
+      await qty.fill(rejected);
+      await entry.locator("#core-pallet-entry-save").click();
+      assert.equal(await qty.getAttribute("aria-invalid"), "true");
+      assert.equal(await qty.evaluate(input => input === document.activeElement), true);
+      assert.equal(await page.locator("body").getAttribute("data-quantity-write"), null);
+    }
+    await qty.fill("　１，２３４　");
+    assert.equal(await qty.inputValue(), "　1,234　");
+    assert.equal(await qty.getAttribute("aria-invalid"), null);
+    await entry.locator("#core-pallet-entry-save").click();
+    const registration = JSON.parse(await page.locator("body").getAttribute("data-quantity-write"));
+    assert.equal(registration.p_action, "add");
+    assert.deepEqual(registration.p_rows, [{ pallet_no: "QA-P-001", part_number: "000001", quantity: 1234, note: "" }]);
+
+    await page.getByRole("button", { name: "数量調整の検査", exact: true }).click();
+    const adjustQty = page.locator("#core-pallet-adjust-qty");
+    assert.equal(await adjustQty.getAttribute("type"), "text");
+    await adjustQty.fill("０");
+    assert.equal(await adjustQty.inputValue(), "0");
+    await page.locator("#core-pallet-adjust-reason").fill("QA");
+    await page.locator("#core-pallet-match-save").click();
+    const adjustment = JSON.parse(await page.locator("body").getAttribute("data-quantity-write"));
+    assert.equal(adjustment.p_action, "adjust");
+    assert.equal(adjustment.p_rows[0].quantity, 0);
     assert.deepEqual(errors, []);
     console.log("Core pending export: Excel content and multi-page PDF passed.");
   } finally {
