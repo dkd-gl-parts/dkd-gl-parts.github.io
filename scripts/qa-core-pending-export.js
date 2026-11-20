@@ -22,7 +22,7 @@ async function main() {
     const start = index.indexOf('<dialog id="core-pallet-' + name + '-dialog"');
     return index.slice(start, index.indexOf("</dialog>", start) + 9);
   }).join("");
-  const buttons = index.match(/<div id="core-pending-outputs">.*?<\/div>/)[0];
+  const buttons = '<div id="core-pending-outputs">' + index.match(/<div id="core-pending-outputs" hidden>(.*?)<\/div>/)[1] + '</div>';
   const data = Array.from({ length: 73 }, (_, index) => ({
     source_sheet: index < 70 ? "セルモーター" : index < 72 ? "オルタネーター" : null,
     source_row: index + 5,

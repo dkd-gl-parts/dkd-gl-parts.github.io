@@ -9102,6 +9102,9 @@ Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {
   "品番を追加しました。": "添加品号。"
 });
 
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"帳票商品コード":"Report product code"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"帳票商品コード":"报表商品代码"});
+
 // Read-only sales slip entry labels.
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {
   "売上伝票を確認": "View sales slips",
