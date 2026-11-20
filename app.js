@@ -9065,7 +9065,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1366";
+var APP_VERSION       = "v1.1.1367";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -61912,7 +61912,7 @@ var corePalletEntry = window.DcatsCorePallet({
   pendingRows: function() { return coreListMode === "inventory" ? coreInventoryPendingRows : corePendingStockRows; },
   openLinked: function() { openCoreListForm("add"); },
   search: function(query) {
-    return sb.rpc("search_core_products", { search_text: query, category_filter: null, require_sl: false, max_rows: 20 });
+    return fetchCoreProductMasterMatches(query, null, 20);
   },
   write: function(args) { return sb.rpc("write_core_pending_stock", args); },
   refresh: async function(message) {

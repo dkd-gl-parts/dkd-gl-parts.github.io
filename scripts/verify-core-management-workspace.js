@@ -47,6 +47,20 @@ const products = [{ dkd_shohin_id: 1, manufacturer_part_number: "TEST-123", cate
 function ready(c) { c.respond = (table, columns) => ({ data: table === "core_collection_list_items" ? rows : table === "core_products" ? products : [{ id: 1, dkd_shohin_id: 1, quantity: 3, core_part_number: "CORE-123" }], error: null }); }
 async function main() {
   {
+    const entry = ast.body.flatMap(node => node.declarations || []).find(node => node.id.name === "corePalletEntry");
+    const adapter = entry.init.arguments[0].properties.find(node => node.key.name === "search").value;
+    const lookupCalls = [];
+    const candidate = { dkd_shohin_id: 42, genuine_part_number_2: "TEST-OEM2" };
+    const search = vm.runInNewContext("(" + source.slice(adapter.start, adapter.end) + ")", {
+      fetchCoreProductMasterMatches: async (...args) => {
+        lookupCalls.push(args);
+        return { data: [candidate], error: null };
+      }
+    });
+    assert.deepEqual((await search("TEST-OEM2")).data, [candidate]); checks++;
+    assert.deepEqual(lookupCalls, [["TEST-OEM2", null, 20]]); checks++;
+  }
+  {
     const { c, get } = fixture(); ready(c); c.coreListMode = "inventory";
     c.inventoryPendingFixture = [
       { entry_key: "legacy:1", revision: 0, source_sheet: "セルモーター", source_part_number: "RAW-123", pallet_no: "PALLET-A", quantity: 5 },
