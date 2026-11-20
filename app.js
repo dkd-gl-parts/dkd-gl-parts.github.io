@@ -9077,7 +9077,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1369";
+var APP_VERSION       = "v1.1.1370";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -9202,6 +9202,8 @@ var coreCollectionRows = [];
 var coreCollectionFilteredRows = [];
 var coreCollectionProductMap = {};
 var coreCollectionStockMap = {};
+var coreCollectionReportRank = null;
+var coreCollectionCreating = false;
 var coreCollectionProductCandidates = [];
 var coreCollectionFormMode = "add";
 var CORE_COLLECTION_RENDER_PAGE_SIZE = 100;
@@ -31300,13 +31302,15 @@ function beginCoreManagementLoad() {
   var countEl = document.getElementById("core-list-count");
   if (countEl) countEl.textContent = "";
   coreManagementDataReady = false;
-  var exportBtn = document.getElementById("btn-export-core-collection");
-  if (exportBtn) exportBtn.disabled = true;
+  ["btn-export-core-collection", "btn-export-core-replenishment", "btn-create-core-list-from-ranking"].forEach(function(id) {
+    var button = document.getElementById(id);
+    if (button) button.disabled = true;
+  });
   return coreManagementLoadSeq;
 }
 
 function searchCoreCollectionWorkspace() {
-  if (!coreManagementDataReady) return loadCoreCollectionList();
+  if (!coreManagementDataReady || (canViewManufacturingReport() && !coreCollectionReportRank)) return loadCoreCollectionList();
   applyCoreCollectionFilters();
   renderCoreCollectionList();
 }
@@ -31317,6 +31321,7 @@ function clearCoreCollectionFilters() {
   document.getElementById("core-collection-state").value = "all";
   document.getElementById("core-collection-priority").value = "";
   document.getElementById("core-collection-vehicle").value = "";
+  document.getElementById("core-collection-source").value = "";
   searchCoreCollectionWorkspace();
 }
 
@@ -31344,7 +31349,7 @@ async function enterCoreListMgmt() {
   var createBtn = document.getElementById("btn-create-core-list-from-ranking");
   if (addBtn) setCspStyle(addBtn, "display", canManageProductionRecords() ? "" : "none");
   if (collectionAddBtn) setCspStyle(collectionAddBtn, "display", canManageProductionRecords() ? "" : "none");
-  if (createBtn) setCspStyle(createBtn, "display", canManageProductionRecords() ? "" : "none");
+  if (createBtn) setCspStyle(createBtn, "display", canManageProductionRecords() && canViewManufacturingReport() ? "" : "none");
   resetCoreCollectionControls();
   await setCoreListMode("inventory");
 }
@@ -31360,6 +31365,8 @@ function resetCoreCollectionControls() {
   if (priority) priority.value = "";
   var vehicle = document.getElementById("core-collection-vehicle");
   if (vehicle) vehicle.value = "";
+  var source = document.getElementById("core-collection-source");
+  if (source) source.value = "";
   resetCoreInventoryFilters();
   document.getElementById("core-pending-search").value = "";
 }
@@ -31523,6 +31530,19 @@ function coreCollectionPriorityLabel(value) {
 
 function coreCollectionStatusLabel(value) {
   return value === "completed" ? "完了" : (value === "paused" ? "保留" : "収集中");
+}
+
+function coreCollectionSourceLabel(value) {
+  return { ranking: "2025出荷ランキング", production: "製造リスト", gltek: "GLTEK欲しいコア", manual: "手動登録" }[value] || "";
+}
+
+function coreCollectionRank(row) {
+  var product = coreCollectionProductMap[String(row.dkd_shohin_id)];
+  return coreCollectionReportRank ? coreCollectionReportRank(product) : null;
+}
+
+function isCoreReplenishmentRow(row) {
+  return row.status === "collecting" && coreCollectionShortageQty(row) > 0 && Boolean(coreCollectionRank(row));
 }
 
 function coreCollectionSourceDetail(row) {
@@ -31731,7 +31751,9 @@ function applyCoreCollectionFilters(options) {
   var vehicleEl = document.getElementById("core-collection-vehicle");
   var vehicle = vehicleEl ? vehicleEl.value : "";
   var filterCount = document.getElementById("core-workspace-filter-count");
-  var activeCount = (category ? 1 : 0) + (state !== "all" ? 1 : 0) + (priority ? 1 : 0) + (vehicle ? 1 : 0);
+  var source = document.getElementById("core-collection-source").value;
+  document.getElementById("core-list-results-title").textContent = state === "replenishment" ? "コア補充リスト" : "品番一覧";
+  var activeCount = [category, state !== "all", priority, vehicle, source].filter(Boolean).length;
   if (filterCount) filterCount.textContent = activeCount ? "(" + activeCount + ")" : "";
   if (!options.preserveRenderLimit) { coreCollectionRenderLimit = CORE_COLLECTION_RENDER_PAGE_SIZE; coreCollectionPageStart = 0; coreCollectionPageHistory = []; }
   assignCoreCollectionCategoryRanks();
@@ -31751,6 +31773,8 @@ function applyCoreCollectionFilters(options) {
       (stock.parts || []).join(" "),
       (stock.locations || []).join(" ")
     ].some(function(value) { return normalizedContains(value, q); })) return false;
+    if (source && row.source_type !== source) return false;
+    if (state === "replenishment" && !isCoreReplenishmentRow(row)) return false;
     if (!coreCollectionCategoryMatches(product, category)) return false;
     if (priority && row.priority !== priority) return false;
     if (!coreCollectionVehicleMatches(row, vehicle)) return false;
@@ -31763,6 +31787,10 @@ function applyCoreCollectionFilters(options) {
     return true;
   });
   coreCollectionFilteredRows.sort(function(a, b) {
+    var aRank = coreCollectionRank(a);
+    var bRank = coreCollectionRank(b);
+    if (aRank && bRank) return aRank.rank - bRank.rank || Number(a.dkd_shohin_id) - Number(b.dkd_shohin_id);
+    if (aRank || bRank) return aRank ? -1 : 1;
     var ap = coreCollectionProductMap[String(a.dkd_shohin_id)] || {};
     var bp = coreCollectionProductMap[String(b.dkd_shohin_id)] || {};
     var rankDiff = (coreCollectionCategoryRank(a) || Number.MAX_SAFE_INTEGER) - (coreCollectionCategoryRank(b) || Number.MAX_SAFE_INTEGER);
@@ -31793,14 +31821,26 @@ async function loadCoreCollectionList() {
       if (batch.length < 500) break;
       if (loadedRows.length >= 50000) throw new Error("収集対象が多いため取得を中断しました。管理者へ連絡してください。");
     }
-    coreCollectionRows = loadedRows;
+    function checkCurrent() {
+      if (requestSeq !== coreManagementLoadSeq || coreListMode !== "collection") throw new Error("Collection load superseded");
+    }
+    // Keep the stored collection status available if the report is unavailable or restricted.
+    var rankRequest = canViewManufacturingReport()
+      ? window.DCatsManufacturingRankingReport.loadCoreCollectionRanking2025(checkCurrent).catch(function() { return null; })
+      : null;
     coreCollectionProductMap = {};
     coreCollectionStockMap = {};
-    await Promise.all([
-      loadCoreCollectionProducts(coreCollectionRows, requestSeq),
-      loadCoreCollectionStock(coreCollectionRows, requestSeq)
+    coreCollectionReportRank = null;
+    await loadCoreCollectionStock(requestSeq);
+    checkCurrent();
+    var productsAndRank = await Promise.all([
+      loadCoreCollectionProducts(loadedRows.map(function(row) { return row.dkd_shohin_id; })
+        .concat(Object.keys(coreCollectionStockMap)), requestSeq),
+      rankRequest
     ]);
-    if (requestSeq !== coreManagementLoadSeq || coreListMode !== "collection") return;
+    checkCurrent();
+    coreCollectionRows = loadedRows;
+    coreCollectionReportRank = productsAndRank[1];
     applyCoreCollectionFilters();
     coreManagementDataReady = true;
     renderCoreCollectionList();
@@ -31810,8 +31850,8 @@ async function loadCoreCollectionList() {
   }
 }
 
-async function loadCoreCollectionProducts(rows, requestSeq) {
-  var ids = Array.from(new Set((rows || []).map(function(row) { return parseInt(row.dkd_shohin_id, 10); }).filter(function(id) { return !isNaN(id); })));
+async function loadCoreCollectionProducts(productIds, requestSeq) {
+  var ids = Array.from(new Set(productIds.map(Number).filter(Number.isSafeInteger)));
   var requests = [];
   for (var i = 0; i < ids.length; i += 200) {
     requests.push(sb.from("core_products").select(CORE_PRODUCT_FAST_SELECT).in("dkd_shohin_id", ids.slice(i, i + 200)));
@@ -31826,26 +31866,19 @@ async function loadCoreCollectionProducts(rows, requestSeq) {
   });
 }
 
-async function loadCoreCollectionStock(rows, requestSeq) {
-  var ids = Array.from(new Set((rows || []).map(function(row) { return parseInt(row.dkd_shohin_id, 10); }).filter(function(id) { return !isNaN(id); })));
-  var requests = [];
-  for (var i = 0; i < ids.length; i += 200) {
-    requests.push(sb.from("production_core_list_entries")
-      .select("dkd_shohin_id, quantity, core_part_number, location")
-      .in("dkd_shohin_id", ids.slice(i, i + 200)));
-  }
-  var results = await Promise.all(requests);
-  if (requestSeq != null && requestSeq !== coreManagementLoadSeq) return;
-  results.forEach(function(r) {
-    if (r.error) throw r.error;
-    (r.data || []).forEach(function(stockRow) {
-      var key = String(stockRow.dkd_shohin_id);
-      var stock = coreCollectionStockMap[key] || { quantity: 0, parts: [], locations: [] };
-      stock.quantity += parseInt(stockRow.quantity || 0, 10) || 0;
-      if (stockRow.core_part_number && stock.parts.indexOf(stockRow.core_part_number) < 0) stock.parts.push(stockRow.core_part_number);
-      if (stockRow.location && stock.locations.indexOf(stockRow.location) < 0) stock.locations.push(stockRow.location);
-      coreCollectionStockMap[key] = stock;
-    });
+async function loadCoreCollectionStock(requestSeq) {
+  var result = await sb.rpc("read_core_inventory_snapshot");
+  if (requestSeq !== coreManagementLoadSeq || coreListMode !== "collection") return;
+  if (result.error) throw result.error;
+  if (!Array.isArray(result.data?.linked)) throw new Error(t("core_pending_load_failed"));
+  result.data.linked.forEach(function(row) {
+    if (row.dkd_shohin_id == null || row.replaced_at || isKoreanCoreInventoryEntry(row)) return;
+    var key = String(row.dkd_shohin_id);
+    var stock = coreCollectionStockMap[key] || { quantity: 0, parts: [], locations: [] };
+    stock.quantity += Number(row.quantity) || 0;
+    if (row.core_part_number && !stock.parts.includes(row.core_part_number)) stock.parts.push(row.core_part_number);
+    if (row.location && !stock.locations.includes(row.location)) stock.locations.push(row.location);
+    coreCollectionStockMap[key] = stock;
   });
 }
 
@@ -31871,6 +31904,9 @@ function renderCoreCollectionList() {
   if (!list) return;
   var exportBtn = document.getElementById("btn-export-core-collection");
   if (exportBtn) exportBtn.disabled = false;
+  document.getElementById("btn-export-core-replenishment").disabled = !coreCollectionReportRank;
+  document.getElementById("btn-create-core-list-from-ranking").disabled = !coreCollectionReportRank || coreCollectionCreating;
+  document.getElementById("core-collection-replenishment").disabled = !coreCollectionReportRank;
   var visibleRows = coreCollectionFilteredRows.slice(coreCollectionPageStart, coreCollectionPageStart + coreCollectionRenderLimit);
   var totalTarget = 0;
   var totalStock = 0;
@@ -31885,9 +31921,11 @@ function renderCoreCollectionList() {
     { label: coreCollectionUiLabel("目標数", "Target", "目标"), value: totalTarget, unit: "台" },
     { label: coreCollectionUiLabel("現在庫", "Stock", "库存"), value: totalStock, unit: "台", tone: "stock" },
     { label: coreCollectionUiLabel("不足数", "Short", "缺口"), value: totalShortage, unit: "台", tone: totalShortage > 0 ? "shortage" : "" }
-  ], "取得済みの合計（保留・完了を含む）", null, coreCollectionFilteredRows.length);
+  ], coreCollectionReportRank ? "" : (canViewManufacturingReport()
+    ? "2025年の順位を取得できませんでした。検索ボタンで再読み込みしてください。"
+    : "2025年の順位と補充リストには製造ランキングの閲覧権限が必要です。"), null, coreCollectionFilteredRows.length);
   if (!coreCollectionRows.length) {
-    list.innerHTML = "<div class='empty'>収集対象はまだ登録されていません。<br>「収集対象を追加」または「製造ランキングから追加」で、買い集めるコアを登録してください。</div>";
+    list.innerHTML = "<div class='empty'>収集対象はまだ登録されていません。<br>「収集対象を追加」または「2025年ランキングから追加」で登録できます。</div>";
     updateCoreCollectionLoadMoreButton();
     fitCoreCollectionPage();
     if (typeof requestAnimationFrame === "function") requestAnimationFrame(fitCoreCollectionPage);
@@ -31906,9 +31944,9 @@ function renderCoreCollectionList() {
       var product = coreCollectionProductMap[String(row.dkd_shohin_id)] || {};
       var stock = coreCollectionStockMap[String(row.dkd_shohin_id)] || {};
       var shortage = coreCollectionShortageQty(row);
-      var categoryRank = coreCollectionCategoryRank(row);
+      var ranking = coreCollectionRank(row);
       mobileHtml += "<div class='core-collection-card'>";
-      mobileHtml += "<div class='core-collection-card-head'><div class='core-main-pn'>" + esc(product.manufacturer_part_number || product.genuine_part_number || ("DKD " + row.dkd_shohin_id)) + "</div></div>";
+      mobileHtml += "<div class='core-collection-card-head'><div class='core-main-pn'>" + esc(product.manufacturer_part_number || product.genuine_part_number || ("DKD " + row.dkd_shohin_id)) + "</div>" + (ranking ? "<span class='core-priority-badge' aria-label='2025年順位'>" + esc("#" + ranking.rank) + "</span>" : "") + "</div>";
       mobileHtml += "<div class='core-collection-card-badges core-collection-secondary-badges'><span class='core-priority-badge " + esc(row.priority) + "'>" + esc("優先度: " + coreCollectionPriorityLabel(row.priority)) + "</span><span class='core-status-badge " + esc(row.status) + "'>" + esc(coreCollectionStatusLabel(row.status)) + "</span></div>";
       mobileHtml += "<div class='core-collection-qty-grid'><div><span>" + coreCollectionUiLabel("目標", "Target", "目标") + "</span><strong>" + esc(String(row.target_quantity || 0)) + "</strong></div><div><span>" + coreCollectionUiLabel("現在庫", "Stock", "库存") + "</span><strong>" + esc(String(coreCollectionStockQty(row))) + "</strong></div><div class='shortage'><span>" + coreCollectionUiLabel("不足", "Short", "缺口") + "</span><strong>" + esc(String(shortage)) + "</strong></div></div>";
       mobileHtml += "<div class='core-vehicle-label' aria-label='車両区分'>" + coreCollectionVehicleSummaryHtml(row) + "</div>";
@@ -31922,14 +31960,14 @@ function renderCoreCollectionList() {
     if (typeof requestAnimationFrame === "function") requestAnimationFrame(fitCoreCollectionPage);
     return;
   }
-  var html = "<table class='mgmt-table core-collection-table' aria-label='収集リスト'><tr><th scope='col'>カテゴリ内順位<br>優先度</th><th scope='col'>対象品番</th><th>車両区分・メーカー</th><th>現在庫</th><th>目標</th><th>不足</th><th scope='col'>収集状態・メモ</th><th>操作</th></tr>";
+  var html = "<table class='mgmt-table core-collection-table' aria-label='収集リスト'><tr><th scope='col'>2025年順位<br>優先度</th><th scope='col'>対象品番</th><th>車両区分・メーカー</th><th>現在庫</th><th>目標</th><th>不足</th><th scope='col'>収集状態・メモ</th><th>操作</th></tr>";
   visibleRows.forEach(function(row) {
     var product = coreCollectionProductMap[String(row.dkd_shohin_id)] || {};
     var stock = coreCollectionStockMap[String(row.dkd_shohin_id)] || {};
     var shortage = coreCollectionShortageQty(row);
-    var categoryRank = coreCollectionCategoryRank(row);
+    var ranking = coreCollectionRank(row);
     html += "<tr>";
-    html += "<td><div class='core-category-rank'><span>" + esc(productionCategoryLabel(product)) + "</span>" + (categoryRank ? "<strong>#" + esc(String(categoryRank)) + "</strong>" : "") + "</div><span class='core-priority-badge " + esc(row.priority) + "'>" + esc("優先度: " + coreCollectionPriorityLabel(row.priority)) + "</span></td>";
+    html += "<td><div class='core-category-rank'><span>" + esc(productionCategoryLabel(product)) + "</span>" + (ranking ? "<strong>#" + esc(String(ranking.rank)) + "</strong>" : "<span>順位なし</span>") + "</div><span class='core-priority-badge " + esc(row.priority) + "'>" + esc("優先度: " + coreCollectionPriorityLabel(row.priority)) + "</span></td>";
     html += "<td><div class='core-main-pn'>" + esc(product.manufacturer_part_number || product.genuine_part_number || ("DKD " + row.dkd_shohin_id)) + "</div><div class='mgmt-pn'>純正 " + esc(product.genuine_part_number || "-") + "</div><div class='mgmt-sub'>DKD " + esc(String(row.dkd_shohin_id)) + "</div></td>";
     html += "<td><div class='core-vehicle-label'>" + renderCoreCollectionVehicleHtml(row) + "</div><div class='mgmt-sub'>" + esc(product.manufacturer || "-") + "</div></td>";
     html += "<td>" + renderCoreCollectionStockBadge(row) + (stock.parts && stock.parts.length ? "<div class='mgmt-sub'>" + esc(stock.parts.join(" / ")) + "</div>" : "") + "</td>";
@@ -32218,20 +32256,26 @@ async function deleteCoreCollectionRow(id) {
 }
 
 function csvCoreCollectionCell(value) {
-  return '"' + String(value == null ? "" : value).replace(/"/g, '""') + '"';
+  var text = String(value == null ? "" : value);
+  if (typeof value === "string" && /^\s*[=+@\-]|^[\t\r\n]/.test(text)) text = "'" + text;
+  return '"' + text.replace(/"/g, '""') + '"';
 }
 
-function exportCoreCollectionCsv() {
+function exportCoreCollectionCsv(replenishment) {
+  if (coreListMode !== "collection" || !coreManagementDataReady || (replenishment && !coreCollectionReportRank)) return;
   applyCoreCollectionFilters({ preserveRenderLimit: true });
-  if (!coreCollectionFilteredRows.length) { alert("出力する収集対象がありません。"); return; }
-  var lines = [["カテゴリ順位", "追加元", "元順位", "2025出荷数", "優先度", "状態", "カテゴリ", "車両区分", "メーカー", "メーカー品番", "純正品番", "DKD商品ID", "現在庫", "目標数", "不足数", "入手先候補", "メモ"]];
-  coreCollectionFilteredRows.forEach(function(row) {
+  var rows = replenishment ? coreCollectionFilteredRows.filter(isCoreReplenishmentRow) : coreCollectionFilteredRows;
+  if (!rows.length) { alert("現在の条件で出力する品番はありません。"); return; }
+  var lines = [["2025年総合順位", "2025出荷数", "リスト分類", "追加元", "登録時の元順位", "優先度", "状態", "カテゴリ", "車両区分", "メーカー", "メーカー品番", "純正品番", "DKD商品ID", "現在庫", "目標数", "不足数", "メモ"]];
+  rows.forEach(function(row) {
     var product = coreCollectionProductMap[String(row.dkd_shohin_id)] || {};
+    var ranking = coreCollectionRank(row);
     lines.push([
-      coreCollectionCategoryRank(row),
+      ranking ? ranking.rank : "",
+      ranking ? ranking.shipment : "",
+      coreCollectionSourceLabel(row.source_type),
       row.source_hint || "",
       row.source_rank || "",
-      row.shipment_count == null ? "" : row.shipment_count,
       coreCollectionPriorityLabel(row.priority),
       coreCollectionStatusLabel(row.status),
       productionCategoryLabel(product),
@@ -32243,7 +32287,6 @@ function exportCoreCollectionCsv() {
       coreCollectionStockQty(row),
       row.target_quantity || 0,
       coreCollectionShortageQty(row),
-      row.source_hint || "",
       row.note || ""
     ]);
   });
@@ -32252,7 +32295,9 @@ function exportCoreCollectionCsv() {
   var url = URL.createObjectURL(blob);
   var link = document.createElement("a");
   link.href = url;
-  link.download = "D-CATS_コア収集リスト_" + new Date().toISOString().slice(0, 10) + ".csv";
+  var classification = coreCollectionSourceLabel(document.getElementById("core-collection-source").value);
+  link.download = "D-CATS_コア" + (replenishment ? "補充リスト" : "収集状況") +
+    (classification ? "_" + classification : "") + "_" + new Date().toISOString().slice(0, 10) + ".csv";
   document.body.appendChild(link);
   link.click();
   link.remove();
@@ -32898,65 +32943,65 @@ function closeCoreListForm() {
 }
 
 async function createCoreListFromRanking() {
-  if (!canManageProductionRecords()) { alert(t("err_perm")); return; }
-  var btn = document.getElementById("btn-create-core-list-from-ranking");
-  if (btn) btn.disabled = true;
+  if (!canManageProductionRecords() || !canViewManufacturingReport()) { alert(t("err_perm")); return; }
+  if (coreListMode !== "collection" || !coreManagementDataReady || !coreCollectionReportRank || coreCollectionCreating) return;
+  var targetText = prompt("商品に紐づいた在庫と2025年の順位を使い、目標に届かない未登録品番を探します。1品番あたりの目標台数を入力してください。", "1");
+  if (targetText == null) return;
+  var targetQty = Number(targetText);
+  if (!/^\d+$/.test(targetText.trim()) || !Number.isInteger(targetQty) || targetQty < 1 || targetQty > 2147483647) {
+    alert("目標数は1以上の整数で入力してください。");
+    return;
+  }
+  coreCollectionCreating = true;
+  var button = document.getElementById("btn-create-core-list-from-ranking");
+  button.disabled = true;
+  var owner = currentUser?.id;
+  var expectedLoad = coreManagementLoadSeq + 1;
   try {
-    var targetText = prompt("製造ランキングの商品について、確保したいコア在庫数を入力してください。", "1");
-    if (targetText == null) return;
-    var targetQty = parseInt(targetText, 10);
-    if (isNaN(targetQty) || targetQty < 0) {
-      alert("目標数は0以上の整数で入力してください。");
-      return;
-    }
-    var existing = await sb.from("core_collection_list_items").select("dkd_shohin_id, sort_order").limit(10000);
-    if (existing.error) { alert(t("msg_part_err") + ": " + existing.error.message); return; }
-    var existingIds = {};
-    var nextSortOrder = 1;
-    (existing.data || []).forEach(function(row) {
-      if (row.dkd_shohin_id != null) existingIds[String(row.dkd_shohin_id)] = true;
-      var sortOrder = parseInt(row.sort_order, 10);
-      if (!isNaN(sortOrder)) nextSortOrder = Math.max(nextSortOrder, sortOrder + 1);
-    });
-    var src = await sb.from("production_instruction_candidates")
-      .select("dkd_shohin_id, priority_rank, source_year")
-      .not("dkd_shohin_id", "is", null)
-      .order("priority_rank", { ascending: true })
-      .limit(500);
-    if (src.error) { alert(t("msg_part_err") + ": " + src.error.message); return; }
-    var rows = [];
-    (src.data || []).forEach(function(row) {
-      var key = String(row.dkd_shohin_id);
-      if (existingIds[key]) return;
-      existingIds[key] = true;
-      var rank = parseInt(row.priority_rank || 0, 10) || 0;
-      rows.push({
-        dkd_shohin_id: row.dkd_shohin_id,
-        target_quantity: targetQty,
-        priority: rank > 0 && rank <= 30 ? "high" : (rank > 100 ? "low" : "normal"),
-        status: "collecting",
-        source_hint: "製造ランキング",
-        sort_order: nextSortOrder++,
-        source_type: "production",
-        source_rank: rank || null,
-        shipment_count: null,
-        note: [rank ? "順位 #" + rank : "", row.source_year ? String(row.source_year) + "年度" : ""].filter(Boolean).join(" / ") || null,
-        created_by: currentUser ? currentUser.id : null,
-        updated_by: currentUser ? currentUser.id : null,
-        updated_at: new Date().toISOString()
-      });
-    });
-    if (!rows.length) {
-      alert(t("core_list_no_ranking_source"));
-      return;
-    }
-    var ins = await sb.from("core_collection_list_items").insert(rows).select("id");
-    if (ins.error) { alert(t("msg_part_err") + ": " + ins.error.message); return; }
-    await writeLog("insert", "core_collection_list_items", null, "ranking import", null, { count: rows.length, target_quantity: targetQty });
-    alert("製造ランキングから収集対象を" + rows.length + "件追加しました。現在庫が目標数以上の商品は「目標数あり」で確認できます。");
     await loadCoreCollectionList();
+    if (expectedLoad !== coreManagementLoadSeq || coreListMode !== "collection" || currentUser?.id !== owner ||
+        !coreManagementDataReady || !coreCollectionReportRank) return;
+    var existingIds = new Set(coreCollectionRows.map(function(row) { return String(row.dkd_shohin_id); }));
+    var nextOrder = coreCollectionRows.reduce(function(order, row) {
+      return Math.max(order, (Number(row.sort_order) || 0) + 1);
+    }, 1);
+    var rows = Object.keys(coreCollectionStockMap).filter(function(id) {
+      return !existingIds.has(id) && coreCollectionStockMap[id].quantity < targetQty;
+    }).map(function(id) {
+      return { id: Number(id), ranking: coreCollectionRank({ dkd_shohin_id: id }) };
+    }).filter(function(candidate) { return candidate.ranking; }).sort(function(a, b) {
+      return a.ranking.rank - b.ranking.rank || a.id - b.id;
+    }).map(function(candidate) {
+      var rank = candidate.ranking.rank;
+      return {
+        dkd_shohin_id: candidate.id,
+        target_quantity: targetQty,
+        priority: rank <= 30 ? "high" : (rank > 100 ? "low" : "normal"),
+        status: "collecting",
+        source_hint: "2025出荷ランキング",
+        sort_order: nextOrder++,
+        source_type: "ranking",
+        source_rank: rank,
+        shipment_count: candidate.ranking.shipment,
+        created_by: owner,
+        updated_by: owner
+      };
+    });
+    if (!rows.length) { alert("現在庫と目標数を確認した結果、新たに追加する品番はありません。"); return; }
+    if (!confirm("2025年の順位がある登録済み在庫から、目標 " + targetQty + " 台に満たない " + rows.length + " 品番を収集対象に追加しますか？")) return;
+    var result = await sb.from("core_collection_list_items")
+      .upsert(rows, { onConflict: "dkd_shohin_id", ignoreDuplicates: true }).select("id");
+    if (result.error) throw result.error;
+    var count = (result.data || []).length;
+    if (count) await writeLog("insert", "core_collection_list_items", null, "2025 ranking import", null, { count: count, target_quantity: targetQty });
+    if (expectedLoad !== coreManagementLoadSeq || coreListMode !== "collection" || currentUser?.id !== owner) return;
+    alert("2025年ランキングから " + count + " 品番を追加しました。");
+    await loadCoreCollectionList();
+  } catch (error) {
+    alert(t("msg_part_err") + ": " + (error.message || ""));
   } finally {
-    if (btn) btn.disabled = false;
+    coreCollectionCreating = false;
+    button.disabled = coreListMode !== "collection" || !coreManagementDataReady || !coreCollectionReportRank;
   }
 }
 
@@ -61983,7 +62028,8 @@ var corePalletEntry = window.DcatsCorePallet({
 document.getElementById("btn-add-core-list").addEventListener("click", corePalletEntry.openEntry);
 document.getElementById("btn-add-core-pending").addEventListener("click", corePalletEntry.openEntry);
 document.getElementById("btn-create-core-list-from-ranking").addEventListener("click", createCoreListFromRanking);
-document.getElementById("btn-export-core-collection").addEventListener("click", exportCoreCollectionCsv);
+document.getElementById("btn-export-core-collection").addEventListener("click", function() { exportCoreCollectionCsv(false); });
+document.getElementById("btn-export-core-replenishment").addEventListener("click", function() { exportCoreCollectionCsv(true); });
 document.getElementById("btn-core-collection-search").addEventListener("click", searchCoreCollectionWorkspace);
 document.getElementById("core-collection-search").addEventListener("keydown", function(e){ if(e.key === "Enter") searchCoreCollectionWorkspace(); });
 ["product", "main", "notes", "reference"].forEach(function(name) {
@@ -62015,7 +62061,7 @@ window.addEventListener("resize", function() {
 window.matchMedia("(min-width: 1101px)").addEventListener("change", function() {
   if (coreListMode === "inventory" && document.getElementById("screen-core-list-mgmt").classList.contains("active")) renderCoreListMgmt();
 });
-["core-collection-category", "core-collection-state", "core-collection-priority", "core-collection-vehicle"].forEach(function(id) {
+["core-collection-category", "core-collection-state", "core-collection-priority", "core-collection-vehicle", "core-collection-source"].forEach(function(id) {
   document.getElementById(id).addEventListener("change", function(){ applyCoreCollectionFilters(); renderCoreCollectionList(); });
 });
 document.getElementById("btn-core-list-search").addEventListener("click", submitCoreInventorySearch);
