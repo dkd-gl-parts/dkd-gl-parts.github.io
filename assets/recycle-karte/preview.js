@@ -7,6 +7,16 @@
     vehicle: ["車両", "Vehicle", "车辆"], office: ["事業所", "Office", "营业所"], stock: ["在庫", "Inventory", "库存"],
     condition: ["状態・保証", "Condition & warranty", "状态和保修"],
     notes: ["メモ・追加項目", "Notes & additional fields", "备注和附加项目"],
+    sourceStart: ["Recycle+から最新情報を取得", "Fetch latest from Recycle+", "从 Recycle+ 获取最新信息"],
+    sourceRunning: ["Recycle+から部品詳細を取得中です。", "Fetching part details from Recycle+.", "正在从 Recycle+ 获取零件详情。"],
+    sourceReady: ["取得しました。差分を確認して反映できます。", "Retrieved. Review the changes before applying.", "已获取，请检查差异后应用。"],
+    sourceConfig: ["TinyFishのサーバー接続設定が必要です。", "TinyFish server configuration is required.", "需要配置 TinyFish 服务器。"],
+    sourceLimit: ["取得中の依頼が3件あります。完了後にお試しください。", "Three requests are running. Try again after one finishes.", "已有三个任务正在运行，请稍后重试。"],
+    sourceAuth: ["Recycle+またはTinyFishの認証を確認してください。", "Check Recycle+ or TinyFish authentication.", "请检查 Recycle+ 或 TinyFish 登录。"],
+    sourceFailed: ["照合済みの詳細を取得できませんでした。前回値を表示しています。", "Verified details could not be retrieved. Showing the previous values.", "未能获取已核验详情，已保留原有数据。"],
+    reviewSource: ["取得した差分を確認", "Review retrieved changes", "检查已获取的变更"],
+    sourceBack: ["カルテに戻る", "Return to Karte", "返回卡片"],
+    sourceBatch: ["最大3件を自動取得", "Fetch up to three automatically", "自动获取最多三项"],
     preview: ["販売管理（カルテ検索プレビュー）", "Sales Management (Karte preview)", "销售管理（卡片查询预览）"],
     search: ["カルテ番号検索", "Search Karte number", "查询卡片编号"],
     list: ["Recycle+カルテ", "Recycle+ Karte", "Recycle+ 卡片"],
@@ -307,23 +317,129 @@
     renderDetail(row, body);
   }
 
+
+  async function requestAutomatic(number) {
+    if (!canShow()) throw Object.assign(new Error("Preview closed"), {code:"closed"});
+    const sessionEpoch = epoch;
+    const result = await sb.functions.invoke("dcats-recycle-karte-source", {body:{karte_number:number}});
+    if (sessionEpoch !== epoch || !canShow()) throw Object.assign(new Error("Preview closed"), {code:"closed"});
+    if (result.error || !result.data?.state) throw result.error || new Error("No acquisition status");
+    return result.data.state;
+  }
+
+  function acquisitionStatus(key, reason) {
+    if (key === "failed") return tr(reason === "authentication" ? "sourceAuth" : "sourceFailed");
+    if (["starting","running","start_unknown"].includes(key)) return tr("sourceRunning");
+    if (key === "ready") return tr("sourceReady");
+    if (key === "not_configured") return tr("sourceConfig");
+    if (key === "capacity") return tr("sourceLimit");
+    return "";
+  }
+
+  function renderDiffPage(panel, reviewed) {
+    const changes = reviewed.flatMap(item => {
+      const fields = Object.entries(item.changes);
+      return fields.length ? fields.map(([key,field]) => [item.karte_number,key,field]) :
+        [[item.karte_number,"",null]];
+    });
+    function show(index) {
+      const [number,key,value] = changes[index];
+      panel.replaceChildren(element("strong", {text:number}),
+        element("p", {text:value ? fieldLabel(key) : tr("noDiff")}));
+      if (value) {
+        panel.append(limitedValue(value.before ? codeText(value.before.value) : tr("missing")),
+          limitedValue("→ " + codeText(value.after.value)));
+      }
+      const navigation = pager(index, index < changes.length - 1, show);
+      if (navigation) panel.append(navigation);
+    }
+    if (changes.length) show(0);
+  }
+
+  async function renderSourceReview(row, job, body) {
+    const revision = document.createElement("div");
+    const status = element("p", {role:"status", text:tr("loading")});
+    const back = button("sourceBack", () => renderDetail(row, body));
+    const show = element("div", {className:"recycle-karte-diff"});
+    revision.append(back, status, show);
+    body.replaceChildren(revision);
+    try {
+      const review = await rpc("source_review", {
+        p_karte:row.karte_number, p_job:job.job_id, p_action:"preview"
+      });
+      if (!revision.isConnected) return;
+      status.textContent = tr("reviewSource");
+      renderDiffPage(show, review);
+      const apply = button("apply", async () => {
+        apply.disabled = true;
+        back.disabled = true;
+        try {
+          await rpc("source_review", {p_karte:row.karte_number, p_job:job.job_id, p_action:"apply", p_expected:review});
+          const [updated] = await rpc("read", {p_karte:row.karte_number, p_detail:true});
+          if (updated && revision.isConnected) {
+            renderDetail(updated, body);
+            const saved = body.querySelector("[role='status']");
+            if (saved) saved.textContent = tr("saved");
+          }
+          refreshProductSection(true);
+        } catch (error) {
+          if (error?.code !== "closed") status.textContent = errorText(error);
+        } finally {
+          back.disabled = false;
+        }
+      });
+      revision.prepend(element("div", {className:"recycle-karte-controls"}, back, apply));
+    } catch (error) {
+      if (error?.code !== "closed" && revision.isConnected) status.textContent = errorText(error);
+    }
+  }
+
   function renderDetail(row, body) {
     displayedDetail = row;
     const source = element("div", {className:"recycle-karte-meta"},
       element("span", {text:tr("updated") + " " + time(row.last_observed_at)}),
       element("span", {text:row.link_active ? "D-CATS " + row.dkd_shohin_id + " · " + productKindLabel(row.product_kind) : tr("unknown")}));
     const message = element("p", {role:"status", className:"recycle-karte-status", text:row.refresh_pending ? tr("pending") : ""});
-    const refresh = button("refresh", async () => {
+    const refresh = button("sourceStart", async () => {
       refresh.disabled = true;
+      message.textContent = tr("sourceRunning");
       try {
-        await rpc("request", {p_numbers:[row.karte_number]});
-        message.textContent = tr("pending");
+        const state = await requestAutomatic(row.karte_number);
+        if (!message.isConnected) return;
+        message.textContent = acquisitionStatus(state);
+        if (!["starting","running","start_unknown","ready","failed"].includes(state)) {
+          refresh.disabled = false;
+          return;
+        }
+        await syncAcquisition();
       } catch (error) {
         if (error?.code !== "closed") message.textContent = errorText(error);
         refresh.disabled = false;
       }
-    }, row.refresh_pending ? {disabled:""} : {});
-
+    });
+    const review = button("reviewSource", null, {hidden:""});
+    let statusSequence = 0;
+    function updateAcquisition(job) {
+      const {state, reason} = job;
+      const waiting = ["starting","running","start_unknown"].includes(state);
+      const text = acquisitionStatus(state, reason);
+      if (text) message.textContent = text;
+      refresh.disabled = waiting || state === "ready";
+      review.hidden = state !== "ready";
+      review.onclick = () => void renderSourceReview(row, job, body);
+      return waiting;
+    }
+    async function syncAcquisition() {
+      const token = ++statusSequence;
+      if (!message.isConnected || displayedDetail !== row) return;
+      try {
+        const state = await rpc("source_status", {p_karte:row.karte_number});
+        if (!message.isConnected || displayedDetail !== row || token !== statusSequence) return;
+        if (updateAcquisition(state)) window.setTimeout(() => void syncAcquisition(), 6000);
+      } catch (error) {
+        if (error?.code !== "closed") message.textContent = errorText(error);
+      }
+    }
     const section = element("select", {"aria-label":tr("detail")});
     [...groups.map(([key]) => key), "photos", "link"].forEach(key => {
       section.append(element("option", {value:key, text:tr(key)}));
@@ -387,7 +503,8 @@
       area.append(list, pager(page, fieldKeys.length > (page + 1) * perPage, renderGroup));
     }
     section.addEventListener("change", () => renderGroup());
-    body.replaceChildren(source, element("div", {className:"recycle-karte-controls"}, section, refresh), message, content);
+    body.replaceChildren(source, element("div", {className:"recycle-karte-controls"}, section, refresh, review), message, content);
+    void syncAcquisition();
     renderGroup();
     if (window.matchMedia("(min-width: 920px) and (min-height: 580px)").matches) renderPhotoInto(photo);
   }
@@ -515,7 +632,22 @@
           if (error?.code !== "closed") note.textContent = errorText(error);
         } finally { send.disabled = false; }
       });
-      panel.append(element("label", {text:tr("batchHelp")}, numbers), element("div", {className:"recycle-karte-controls"}, add, send), note);
+      const fetchBatch = button("sourceBatch", async () => {
+        if (!collected.size || collected.size > 3) {
+          note.textContent = tr("sourceBatch");
+          return;
+        }
+        fetchBatch.disabled = true;
+        try {
+          const outcomes = await Promise.allSettled([...collected].map(requestAutomatic));
+          note.textContent = outcomes.map((value,index) => {
+            const state = value.status === 'fulfilled' ? acquisitionStatus(value.value) : errorText(value.reason);
+            return Array.from(collected)[index] + ' · ' + (state || tr("sourceRunning"));
+          }).join("  ");
+        } finally { fetchBatch.disabled = false; }
+      });
+      panel.append(element("label", {text:tr("batchHelp")}, numbers),
+        element("div", {className:"recycle-karte-controls"}, add, send, fetchBatch), note);
     }
 
     function renderImport() {
@@ -553,23 +685,8 @@
           const rows = JSON.parse(await selected.text());
           previewed = await rpc("import", {p_rows:rows, p_apply:false});
           reviewed = rows;
-          const changes = previewed.flatMap(item => {
-            const fields = Object.entries(item.changes);
-            return fields.length ? fields.map(([key, field]) => [item.karte_number, key, field]) :
-              [[item.karte_number, "", null]];
-          });
-          function show(index) {
-            const [number, key, value] = changes[index];
-            diff.replaceChildren(element("strong", {text:number}),
-              element("p", {text:value ? fieldLabel(key) : tr("noDiff")}));
-            if (value) {
-              diff.append(limitedValue(value.before ? codeText(value.before.value) : tr("missing")),
-                limitedValue("→ " + codeText(value.after.value)));
-            }
-            diff.append(pager(index, index < changes.length - 1, show));
-          }
           message.textContent = previewed.length + " · " + tr("details");
-          show(0);
+          renderDiffPage(diff, previewed);
           apply.disabled = false;
         } catch (error) {
           message.textContent = error instanceof SyntaxError ? tr("invalidFile") : errorText(error);
