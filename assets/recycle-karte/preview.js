@@ -245,7 +245,19 @@
         return;
       }
       if (row.link_active && targetPress === searchRequestSeq) {
-        try { await openProductByDkdId(row.dkd_shohin_id); } catch { /* The saved karte remains available. */ }
+        try {
+          await openProductByDkdId(row.dkd_shohin_id);
+          if (lookup === lookups && canShow() && currentId() === row.dkd_shohin_id) {
+            const selection = detailSecondaryRequestSeq;
+            void productSearchDetailReadyPromise.then(() => {
+              if (!canShow() || lookup !== lookups || selection !== detailSecondaryRequestSeq) return;
+              const select = $("product-kind-select");
+              if (!select || !Array.from(select.options).some(option => option.value === row.product_kind)) return;
+              select.value = row.product_kind;
+              select.dispatchEvent(new Event("change"));
+            }).catch(() => {});
+          }
+        } catch { /* The saved karte remains available. */ }
       }
       if (lookup !== lookups || !canShow()) return;
       status.textContent = row.link_active && currentId() === row.dkd_shohin_id ? "" : tr("unknown");
