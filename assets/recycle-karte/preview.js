@@ -318,10 +318,10 @@
   }
 
 
-  async function requestAutomatic(number) {
+  async function requestAutomatic(number, action) {
     if (!canShow()) throw Object.assign(new Error("Preview closed"), {code:"closed"});
     const sessionEpoch = epoch;
-    const result = await sb.functions.invoke("dcats-recycle-karte-source", {body:{karte_number:number}});
+    const result = await sb.functions.invoke("dcats-recycle-karte-source", {body:{karte_number:number, ...(action ? {action} : {})}});
     if (sessionEpoch !== epoch || !canShow()) throw Object.assign(new Error("Preview closed"), {code:"closed"});
     if (result.error || !result.data?.state) throw result.error || new Error("No acquisition status");
     return result.data.state;
@@ -419,6 +419,7 @@
     });
     const review = button("reviewSource", null, {hidden:""});
     let statusSequence = 0;
+    let lastProviderCheck = 0;
     function updateAcquisition(job) {
       const {state, reason} = job;
       const waiting = ["starting","running","start_unknown"].includes(state);
@@ -433,7 +434,16 @@
       const token = ++statusSequence;
       if (!message.isConnected || displayedDetail !== row) return;
       try {
-        const state = await rpc("source_status", {p_karte:row.karte_number});
+        let state = await rpc("source_status", {p_karte:row.karte_number});
+        if (!message.isConnected || displayedDetail !== row || token !== statusSequence) return;
+        const needsCheck = state.state === "running" || (state.state === "failed" && !state.reason);
+        if (state.job_id && needsCheck && Date.now() - lastProviderCheck >= 30000) {
+          lastProviderCheck = Date.now();
+          const provider = await requestAutomatic(row.karte_number, "status").catch(() => null);
+          if (provider === "ready" || provider === "failed") {
+            state = await rpc("source_status", {p_karte:row.karte_number});
+          }
+        }
         if (!message.isConnected || displayedDetail !== row || token !== statusSequence) return;
         if (updateAcquisition(state)) window.setTimeout(() => void syncAcquisition(), 6000);
       } catch (error) {
