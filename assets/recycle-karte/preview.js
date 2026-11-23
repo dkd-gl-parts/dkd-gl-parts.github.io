@@ -17,6 +17,8 @@
     reviewSource: ["取得した差分を確認", "Review retrieved changes", "检查已获取的变更"],
     sourceBack: ["カルテに戻る", "Return to Karte", "返回卡片"],
     sourceBatch: ["最大3件を自動取得", "Fetch up to three automatically", "自动获取最多三项"],
+    partLookupCount: ["Recycle+カルテ {count}件", "Recycle+ Karte · {count} results", "Recycle+ 卡片 · {count} 条"],
+    partLookupList: ["カルテ一覧", "Karte results", "卡片列表"],
     preview: ["販売管理（カルテ検索プレビュー）", "Sales Management (Karte preview)", "销售管理（卡片查询预览）"],
     search: ["カルテ番号検索", "Search Karte number", "查询卡片编号"],
     list: ["Recycle+カルテ", "Recycle+ Karte", "Recycle+ 卡片"],
@@ -147,6 +149,15 @@
     button("manage", () => void openManage()), button("exit", () => reset()));
   const entry = element("section", {className:"recycle-karte-entry", hidden:""}, searchForm, tools);
   head.append(entry);
+  const partSearchInput = $("q");
+  let partLookupRequest = 0;
+  const partLookupStatus = element("p", {className:"recycle-karte-status", role:"status"});
+  const partLookupFirst = button("detail", null, {hidden:""});
+  const partLookupResults = button("partLookupList", null, {hidden:""});
+  const partLookup = element("section", {className:"recycle-karte-product", hidden:""},
+    partLookupStatus, element("div", {className:"recycle-karte-controls"}, partLookupFirst, partLookupResults));
+  entry.append(partLookup);
+
 
   const productSection = element("section", {className:"recycle-karte-product", hidden:""},
     element("h3", {text:tr("list")}));
@@ -160,6 +171,7 @@
     lookups++;
     productRequest++;
     productKey = "";
+    clearPartLookup();
     input.value = "";
     status.replaceChildren();
     productList.replaceChildren();
@@ -234,6 +246,74 @@
       if (run === productRequest && error?.code !== "closed") productList.textContent = errorText(error);
     }
   }
+
+
+  function clearPartLookup() {
+    partLookupRequest++;
+    partLookup.hidden = true;
+    partLookupStatus.textContent = "";
+    partLookupFirst.hidden = true;
+    partLookupResults.hidden = true;
+  }
+
+  function searchPartLookup() {
+    clearPartLookup();
+    if (!canShow()) return;
+    const part = String(partSearchInput?.value || "").normalize("NFKC").trim();
+    if (!/^[A-Z0-9][A-Z0-9 \u002d\u2010\u2011\u2013\u2212]{1,79}$/i.test(part) || !/[0-9]/.test(part)) return;
+    const run = partLookupRequest;
+    partLookup.hidden = false;
+    partLookupStatus.textContent = tr("loading");
+    void rpc("read_part", {p_part:part, p_offset:0}).then(data => {
+      if (run !== partLookupRequest || !canShow()) return;
+      partLookupStatus.textContent = tr("partLookupCount").replace("{count}", String(data.total));
+      if (!data.items.length) return;
+      const [first] = data.items;
+      partLookupFirst.textContent = tr("detail") + " " + first.karte_number;
+      partLookupFirst.onclick = () => void openDetail(first.karte_number, partLookupFirst);
+      partLookupFirst.hidden = false;
+      partLookupResults.onclick = () => openPartResults(part, data);
+      partLookupResults.hidden = false;
+    }).catch(error => {
+      if (run === partLookupRequest && error?.code !== "closed") partLookupStatus.textContent = errorText(error);
+    });
+  }
+
+  function openPartResults(part, firstPage) {
+    if (!canShow()) return;
+    const {body, modal} = dialog(tr("partLookupList") + " · " + part, partLookupResults);
+    let pageRequest = 0;
+    async function showPage(page, initial) {
+      const run = ++pageRequest;
+      body.textContent = tr("loading");
+      try {
+        const data = initial ?? await rpc("read_part", {p_part:part, p_offset:page * pageSize});
+        if (details !== modal || pageRequest !== run) return;
+        body.replaceChildren(element("p", {className:"recycle-karte-status", text:tr("partLookupCount").replace("{count}", String(data.total))}));
+        data.items.forEach(row => {
+          const summary = element("div", {className:"recycle-karte-list-summary"},
+            element("strong", {text:row.karte_number}),
+            element("span", {text:row.part_number || part}),
+            element("small", {text:row.link_active ? productKindLabel(row.product_kind) : tr("unknown")}));
+          body.append(element("div", {className:"recycle-karte-result"}, summary,
+            button("detail", () => void openDetail(row.karte_number, partLookupResults),
+              {"aria-label":tr("detail") + " " + row.karte_number})));
+        });
+        const navigation = pager(page, data.total > (page + 1) * pageSize, next => void showPage(next));
+        if (navigation) body.append(navigation);
+      } catch (error) {
+        if (details === modal && pageRequest === run && error?.code !== "closed") body.textContent = errorText(error);
+      }
+    }
+    void showPage(0, firstPage);
+  }
+
+  $("search-btn")?.addEventListener("click", searchPartLookup);
+  $("clear-btn")?.addEventListener("click", clearPartLookup);
+  partSearchInput?.addEventListener("input", clearPartLookup);
+  partSearchInput?.addEventListener("keydown", event => {
+    if (event.key === "Enter" && !event.isComposing) searchPartLookup();
+  });
 
   searchForm.addEventListener("submit", async event => {
     event.preventDefault();
