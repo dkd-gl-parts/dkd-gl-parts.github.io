@@ -22,6 +22,21 @@
     matchCandidates: ["純正品番とメーカー品番が一致する商品種別", "Product variants matching both numbers", "两个品号同时匹配的商品类别"],
     matchMissing: ["純正品番とメーカー品番がそろうと、紐付け候補を照合できます。", "Both numbers are needed to match product variants.", "需要两个品号才能匹配商品类别。"],
     matchNone: ["純正品番とメーカー品番の両方が一致する商品種別はありません。", "No product variant matches both numbers.", "暂无同时匹配两个品号的商品类别。"],
+    inventoryOpen: ["在庫一覧を全件取得", "Retrieve the full inventory list", "获取完整库存列表"],
+    inventoryStart: ["No.1から取得を開始", "Start at row 1", "从第1行开始"],
+    inventoryResume: ["未取得の行から再開", "Resume from the next row", "从未获取的行继续"],
+    inventoryStartAgain: ["No.1から再取得", "Retrieve again from row 1", "从第1行重新获取"],
+    inventoryDownload: ["全件のCSVをダウンロード", "Download the complete CSV", "下载完整CSV"],
+    inventoryScope: ["Recycle+の本社（000001）の在庫一覧を読み取ります。確認済みの進捗は保存されます。", "Reads the Recycle+ head-office inventory (000001). Verified progress is saved.", "读取 Recycle+ 总部（000001）的库存列表，保存已核验进度。"],
+    inventoryIdle: ["取得を開始すると、No.1から順に確認します。", "After starting, verification begins at row 1.", "启动后从第1行开始核验。"],
+    inventoryCount: ["照合済み {count} / {total} 件", "{count} / {total} rows verified", "已核验 {count} / {total} 条"],
+    inventoryReady: ["全{count}件の取得が完了しました。", "All {count} rows have been retrieved.", "已完成全部 {count} 条的获取。"],
+    inventoryIncomplete: ["次の行を照合できませんでした。", "The next row could not be verified.", "无法核验下一行。"],
+    inventoryChanged: ["取得中に一覧の条件や行が変わりました。", "The source list changed during retrieval.", "获取期间源列表发生变化。"],
+    inventoryPolicy: ["TinyFishの安全チェックで停止しました。", "TinyFish stopped the run at a safety check.", "TinyFish 安全检查停止了运行。"],
+    inventoryUncertain: ["TinyFishの受付結果を確認できません。", "TinyFish submission could not be confirmed.", "无法确认 TinyFish 是否接收了请求。"],
+    inventoryCapacity: ["取得範囲が5,000件を超えています。", "The result exceeds 5,000 rows.", "结果超过 5,000 条。"],
+    inventoryStopped: ["途中で取得が止まりました。", "Retrieval stopped before completing.", "获取在完成前停止。"],
     partLookupCount: ["Recycle+カルテ {count}件", "Recycle+ Karte · {count} results", "Recycle+ 卡片 · {count} 条"],
     partLookupList: ["カルテ一覧", "Karte results", "卡片列表"],
     preview: ["販売管理（カルテ検索プレビュー）", "Sales Management (Karte preview)", "销售管理（卡片查询预览）"],
@@ -150,8 +165,9 @@
     element("label", {for:input.id, text:tr("search")}), input,
     button("search", null, {type:"submit", className:"btn-search"}));
   const searchForm = element("form", {className:"recycle-karte-form"}, searchRow, status);
+  const inventoryButton = button("inventoryOpen", () => openInventory(inventoryButton));
   const tools = element("div", {className:"recycle-karte-controls"},
-    button("manage", () => void openManage()), button("exit", () => reset()));
+    button("manage", () => void openManage()), inventoryButton, button("exit", () => reset()));
   const entry = element("section", {className:"recycle-karte-entry", hidden:""}, searchForm, tools);
   head.append(entry);
   const partSearchInput = $("q");
@@ -681,6 +697,99 @@
     }).catch(error => {
       if (error?.code !== "closed" && matches.isConnected) matching.textContent = errorText(error);
     });
+  }
+
+
+  function inventoryMessage(work) {
+    const count = String(work.checked_count || 0);
+    const total = work.total == null ? "—" : String(work.total);
+    const progress = tr("inventoryCount").replace("{count}", count).replace("{total}", total);
+    if (work.state === "idle") return tr("inventoryIdle");
+    if (work.state === "ready") return tr("inventoryReady").replace("{count}", count);
+    if (work.state === "not_configured") return tr("sourceConfig");
+    if (work.state === "failed") {
+      const reasonKeys = {
+        authentication:"sourceAuth", incomplete:"inventoryIncomplete", source_changed:"inventoryChanged",
+        policy:"inventoryPolicy", submission_unknown:"inventoryUncertain", capacity:"inventoryCapacity"
+      };
+      return progress + " · " + tr(reasonKeys[work.reason] || "inventoryStopped");
+    }
+    return progress;
+  }
+
+  async function listDownload(work) {
+    const records = [];
+    for (let offset = 0; offset < work.total; offset += 100) {
+      const page = await rpc("inventory_rows",{p_scan:work.scan_id,p_offset:offset});
+      if (page.total !== work.total || !page.items.length) throw new Error("Inventory list changed");
+      records.push(...page.items);
+    }
+    if (records.length !== work.total ||
+        records.some((row,index) => Number(row.no) !== index + 1 || !numberPattern.test(row.karte_number))) {
+      throw new Error("Unverified inventory coverage");
+    }
+    const csvCell = (value) => {
+      let text = String(value ?? "");
+      if (/^[=+@\u0009\u000d-]/.test(text)) text = "'" + text;
+      return '"' + text.replaceAll('"','""') + '"';
+    };
+    const lines = [["No.","カルテ番号","品番","確認日時"],...records.map(row =>
+      [row.no,row.karte_number,row.part_number,row.observed_at])];
+    const url = URL.createObjectURL(new Blob(["\uFEFF",lines.map(row => row.map(csvCell).join(",")).join("\r\n"),"\r\n"],
+      {type:"text/csv;charset=utf-8"}));
+    const download = element("a",{href:url,download:"RecyclePlus-在庫一覧-" + work.scan_id.slice(0,8) + ".csv"});
+    document.body.append(download);
+    download.click();
+    download.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url),1000);
+  }
+
+  function openInventory(origin) {
+    if (!canShow()) return;
+    const {body,modal} = dialog(tr("inventoryOpen"),origin);
+    const message = element("p",{role:"status",className:"recycle-karte-help"});
+    const start = button("inventoryStart",() => void refresh(canResume(last) ? "inventory_resume" : "inventory_start"));
+    const download = button("inventoryDownload",async () => {
+      download.disabled = true;
+      try { if (last?.state === "ready") await listDownload(last); }
+      catch (error) { if (error?.code !== "closed") message.textContent = errorText(error); }
+      finally { if (details === modal) download.disabled = false; }
+    },{hidden:""});
+    body.append(element("p",{className:"recycle-karte-help",text:tr("inventoryScope")}),
+      message,element("div",{className:"recycle-karte-controls"},start,download));
+    let busy = false;
+    let last = null;
+    const session = epoch;
+    const canResume = work => work?.state === "failed" && ["incomplete","provider"].includes(work.reason);
+    function draw(work) {
+      last = work;
+      message.textContent = inventoryMessage(work);
+      start.disabled = work.state === "running" || work.reason === "submission_unknown" || work.reason === "policy";
+      download.hidden = work.state !== "ready";
+      start.textContent = tr(canResume(work) ? "inventoryResume" : work.state === "ready" ? "inventoryStartAgain" : "inventoryStart");
+    }
+    async function refresh(action) {
+      if (busy || details !== modal || session !== epoch || !canShow()) return;
+      busy = true;
+      start.disabled = true;
+      try {
+        let work;
+        if (action) {
+          const result = await sb.functions.invoke("dcats-recycle-karte-source",{body:{action}});
+          if (result.error || !result.data?.state) throw result.error || new Error("No inventory status");
+          work = result.data;
+        } else work = await rpc("inventory_latest",{});
+        if (details !== modal || session !== epoch || !canShow()) return;
+        draw(work);
+        if (work.state === "running") window.setTimeout(() => void refresh("inventory_status"),18000);
+      } catch (error) {
+        if (details !== modal || session !== epoch || !canShow()) return;
+        message.textContent = errorText(error);
+        if (last?.state === "running") window.setTimeout(() => void refresh("inventory_status"),30000);
+        else start.disabled = false;
+      } finally { busy = false; }
+    }
+    void refresh();
   }
 
   async function openManage() {
