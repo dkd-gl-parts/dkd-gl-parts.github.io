@@ -17,6 +17,11 @@
     reviewSource: ["取得した差分を確認", "Review retrieved changes", "检查已获取的变更"],
     sourceBack: ["カルテに戻る", "Return to Karte", "返回卡片"],
     sourceBatch: ["最大3件を自動取得", "Fetch up to three automatically", "自动获取最多三项"],
+    sourceOe: ["カーメーカーNo. → 純正品番", "Car maker number → OE part number", "整车厂编号 → 原厂品号"],
+    sourceMaker: ["パーツメーカーNo. → メーカー品番", "Parts maker number → Manufacturer part number", "零件厂编号 → 厂商品号"],
+    matchCandidates: ["純正品番とメーカー品番が一致する商品種別", "Product variants matching both numbers", "两个品号同时匹配的商品类别"],
+    matchMissing: ["純正品番とメーカー品番がそろうと、紐付け候補を照合できます。", "Both numbers are needed to match product variants.", "需要两个品号才能匹配商品类别。"],
+    matchNone: ["純正品番とメーカー品番の両方が一致する商品種別はありません。", "No product variant matches both numbers.", "暂无同时匹配两个品号的商品类别。"],
     partLookupCount: ["Recycle+カルテ {count}件", "Recycle+ Karte · {count} results", "Recycle+ 卡片 · {count} 条"],
     partLookupList: ["カルテ一覧", "Karte results", "卡片列表"],
     preview: ["販売管理（カルテ検索プレビュー）", "Sales Management (Karte preview)", "销售管理（卡片查询预览）"],
@@ -627,8 +632,6 @@
   function renderLink(row, area) {
     const variant = element("input", {type:"text", inputmode:"numeric", maxlength:"19", value:row.product_variant_id || ""});
     const note = element("input", {type:"text", maxlength:"500", value:row.link_note || ""});
-    const product = currentProduct;
-    const productId = currentId();
     const state = element("p", {role:"status"});
     const save = button("save", async () => {
       const id = variant.value.trim();
@@ -653,18 +656,31 @@
       } finally { save.disabled = false; }
     });
     area.append(element("label", {text:tr("variant")}, variant), element("label", {text:tr("linkNote")}, note), save, state);
-    if (productId) {
-      void fetchProductVariantsByDkdId(productId).then(rows => {
-        if (displayedDetail !== row || !area.isConnected) return;
-        const candidates = rows.filter(item => item.is_active !== false && item.product_variant_id);
-        if (!candidates.length) return;
-        const select = element("select", {}, element("option", {value:"", text:"—"}));
-        candidates.forEach(item => select.append(element("option", {value:String(item.product_variant_id),
-          text:productKindLabel(item.product_kind) + " · " + item.product_variant_id})));
-        select.addEventListener("change", () => { if (select.value) variant.value = select.value; });
-        area.prepend(element("label", {text:salesDetailPrimaryPartNumber(product)}, select));
-      }).catch(() => {});
-    }
+
+    const matches = element("section", {className:"recycle-karte-detail-fields"});
+    const matching = element("p", {role:"status", text:tr("loading")});
+    matches.append(
+      element("p", {text:tr("sourceOe") + " · " + (row.fields?.oe_part_number?.value || tr("missing"))}),
+      element("p", {text:tr("sourceMaker") + " · " + (row.fields?.maker_part_number?.value || tr("missing"))}),
+      matching);
+    area.prepend(matches);
+    void rpc("link_candidates", {p_karte:row.karte_number}).then(data => {
+      if (displayedDetail !== row || !matches.isConnected) return;
+      if (data.state !== "matched") {
+        matching.textContent = tr(data.state === "missing_fields" ? "matchMissing" : "matchNone");
+        return;
+      }
+      matching.textContent = "";
+      const select = element("select", {}, element("option", {value:"", text:"—"}));
+      data.items.forEach(item => select.append(element("option", {value:item.product_variant_id,
+        text:"D-CATS " + item.dkd_shohin_id + " · " + productKindLabel(item.product_kind) + " · " + item.product_variant_id})));
+      select.addEventListener("change", () => {
+        if (select.value) variant.value = select.value;
+      });
+      matches.append(element("label", {text:tr("matchCandidates")}, select));
+    }).catch(error => {
+      if (error?.code !== "closed" && matches.isConnected) matching.textContent = errorText(error);
+    });
   }
 
   async function openManage() {
