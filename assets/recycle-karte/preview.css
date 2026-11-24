@@ -79,3 +79,20 @@
 }
 
 .recycle-karte-dialog textarea { resize: none; inline-size: 100%; box-sizing: border-box; font: inherit; }
+
+@media (max-width: 767px) {
+  #screen-search .search-header:has(> .recycle-karte-search-launcher:not([hidden])) {
+    padding-block: 4px 2px;
+  }
+  #screen-search .recycle-karte-search-launcher {
+    margin-block-start: 2px;
+    min-height: 24px;
+  }
+  #screen-search .search-header:has(> .recycle-karte-search-launcher:not([hidden])) + .filter-row {
+    padding-block: 2px;
+  }
+  #screen-search .search-header:has(> .recycle-karte-search-launcher:not([hidden])) + .filter-row + .search-count-row {
+    min-height: 36px;
+    padding-block: 2px;
+  }
+}
