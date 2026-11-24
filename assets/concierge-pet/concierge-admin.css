@@ -1,5 +1,11 @@
 .dcats-concierge-admin { max-width: 1440px; margin: 0 auto; padding: 20px; color: #283448; font-size: 16px; }
-.concierge-admin-menu-badge { display: block; margin: 4px 0; font-size: 12px; color: #892f35; }
+.menu-admin-link[data-action="concierge-admin"] {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  row-gap: 3px;
+}
+.menu-admin-link[data-action="concierge-admin"] strong { white-space: nowrap; }
+.concierge-admin-menu-badge { grid-column: 2; font-size: 12px; color: #892f35; }
 .dcats-concierge-admin [hidden] { display: none !important; }
 .concierge-admin-intro { color: #556276; line-height: 1.6; }
 .concierge-admin-summary { padding: 12px; background: #edf3f9; border-radius: 8px; }
