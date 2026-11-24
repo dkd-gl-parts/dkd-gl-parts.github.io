@@ -54,6 +54,8 @@
     sourceFailedShort: ["取得失敗", "Unavailable", "读取失败"],
     submit: ["検索", "Search", "查询"],
     related: ["関連カルテ", "Related Karte", "关联卡片"],
+    dcatsProductDetail: ["D-CATS商品詳細", "D-CATS product", "D-CATS商品详情"],
+    dcatsProductSearch: ["D-CATS商品検索", "Search D-CATS", "搜索D-CATS商品"],
     list: ["Recycle+カルテ", "Recycle+ Karte", "Recycle+ 卡片"],
     detail: ["詳細", "Details", "详情"], pending: ["部品詳細の取得待ち", "Waiting for part details", "等待获取零件详情"],
     exit: ["通常の販売管理に戻る", "Return to Sales Management", "返回销售管理"],
@@ -606,10 +608,13 @@
         dialog(tr("search"), input).body.textContent = tr("noRows");
         return;
       }
-      if (row.link_active && targetPress === searchRequestSeq) {
+      const productId = await lookupKarteProductId(row);
+      if (!isCurrent()) return;
+      if (productId && targetPress === searchRequestSeq) {
         try {
-          await openProductByDkdId(row.dkd_shohin_id);
-          if (isCurrent() && currentId() === row.dkd_shohin_id) {
+          await openProductByDkdId(productId);
+          if (isCurrent() && currentId() === productId && row.product_kind &&
+              row.link_active && String(row.dkd_shohin_id) === productId) {
             const selection = detailSecondaryRequestSeq;
             void productSearchDetailReadyPromise.then(() => {
               if (!canShow() || lookup !== lookups || selection !== detailSecondaryRequestSeq) return;
@@ -619,16 +624,65 @@
               select.dispatchEvent(new Event("change"));
             }).catch(() => {});
           }
-        } catch { /* The saved karte remains available. */ }
+        } catch { /* Keep the Recycle+ detail available. */ }
       }
       if (!isCurrent()) return;
-      displayDetail(row, input);
+      displayDetail(row, input, productId);
     } catch (error) {
       if (isCurrent() && error?.code !== "closed") dialog(tr("search"), input).body.textContent = errorText(error);
     } finally {
       if (lookup === lookups) searchForm.removeAttribute("aria-busy");
     }
   });
+
+  function linkedKarteProductId(row) {
+    return String(row.master_product_id || (row.link_active ? row.dkd_shohin_id : "") || "");
+  }
+
+  async function lookupKarteProductId(row) {
+    const linked = linkedKarteProductId(row);
+    if (linked) return linked;
+    if (!partNumberQuery(row.fields?.oe_part_number?.value) ||
+        !partNumberQuery(row.fields?.maker_part_number?.value)) return "";
+    try {
+      const result = await rpc("link_candidates", {p_karte:row.karte_number});
+      if (result.state !== "matched" || result.items.length >= 25) return "";
+      const ids = new Set(result.items.map(item => String(item.dkd_shohin_id || "")).filter(Boolean));
+      return ids.size === 1 ? ids.values().next().value : "";
+    } catch {
+      return "";
+    }
+  }
+
+  function karteProductAction(row, productId) {
+    if (productId) {
+      return button("dcatsProductDetail", async event => {
+        const control = event.currentTarget;
+        const modal = details;
+        control.disabled = true;
+        try {
+          if (currentId() !== productId || !panel.classList.contains("show")) await openProductByDkdId(productId);
+          if (modal === details && currentId() === productId && panel.classList.contains("show")) modal.close();
+          else if (control.isConnected) control.textContent = tr("error");
+        } catch {
+          if (control.isConnected) control.textContent = tr("error");
+        } finally {
+          if (control.isConnected) control.disabled = false;
+        }
+      });
+    }
+    const part = [row.fields?.oe_part_number?.value, row.fields?.part_number?.value,
+      row.part_number, row.fields?.maker_part_number?.value].map(partNumberQuery).find(Boolean);
+    if (!part || !partSearchInput) return null;
+    return button("dcatsProductSearch", () => {
+      if (!canShow()) return;
+      details?.close();
+      partSearchInput.value = part;
+      clearPartLookup();
+      partSearchInput.focus({preventScroll:true});
+      void runProductSearch({resetLimit:true, resetFilter:true, logActivity:true, source:"karte"});
+    });
+  }
 
   function dialog(title, origin, isPartDetail = false) {
     const focusTarget = details?.contains(origin) ? dialogOrigin : origin;
@@ -675,9 +729,9 @@
     }
   }
 
-  function displayDetail(row, origin) {
+  function displayDetail(row, origin, productId) {
     const {body} = dialog(tr("partDetail"), origin, true);
-    renderDetail(row, body);
+    renderDetail(row, body, productId);
   }
 
 
@@ -853,16 +907,21 @@
     void syncAcquisition();
   }
 
-  function renderDetail(row, body) {
+  function renderDetail(row, body, productId = linkedKarteProductId(row)) {
     displayedDetail = row;
     lastViewedKarte = row.karte_number;
+    const productAction = karteProductAction(row, productId);
+    if (productAction) {
+      const header = body.parentElement.querySelector(".recycle-karte-dialog-head");
+      header.append(element("div", {className:"recycle-karte-detail-actions"}, productAction, header.lastElementChild));
+    }
     const summary = element("dl", {className:"recycle-karte-part-summary"});
     for (const [keys, name] of partDetailSummary) {
       summary.append(partDetailField(row, keys, name));
     }
 
     const gallery = element("aside", {className:"recycle-karte-gallery", "aria-label":tr("photos")});
-    const record = element("div", {className:"recycle-karte-part-groups"});
+    const record = element("div", {className:"recycle-karte-part-groups"}, summary);
     for (const [group, mapping] of partDetailGroups) {
       const entries = Object.entries(mapping).map(([key, name]) =>
         partDetailField(row, [key], name));
@@ -870,7 +929,7 @@
         element("h3", {text:tr(group)}), element("dl", {className:"recycle-karte-values"}, ...entries)));
     }
 
-    body.replaceChildren(summary, element("div", {className:"recycle-karte-detail-layout"}, gallery, record));
+    body.replaceChildren(element("div", {className:"recycle-karte-detail-layout"}, gallery, record));
     body.parentElement.scrollTop = 0;
     void renderDetailGallery(row, gallery);
   }
@@ -888,8 +947,7 @@
       ["components", "source_information", "source_state"].includes(keys[0]);
     return element("div", {className:wide ? "recycle-karte-field-wide" : undefined},
       element("dt", {text:label}),
-      element("dd", {text:text || (values.every(value => value == null) ? "—" : ""),
-        className:text ? undefined : "recycle-karte-missing"}));
+      element("dd", {text}));
   }
 
   async function renderDetailGallery(row, gallery) {

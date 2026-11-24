@@ -60,7 +60,7 @@
 }
 
 .recycle-karte-part-detail {
-  inline-size: min(75rem, calc(100vw - 2rem));
+  inline-size: min(78rem, calc(100vw - 2rem));
   max-inline-size: calc(100vw - 2rem);
   max-block-size: calc(100dvh - 2rem);
   padding: 0;
@@ -107,7 +107,8 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-.recycle-karte-part-detail .recycle-karte-missing { color: var(--text2, #45586e); font-weight: 400; }
+.recycle-karte-detail-actions { display: flex; align-items: center; gap: .4rem; }
+.recycle-karte-detail-actions button { white-space: nowrap; }
 .recycle-karte-detail-layout {
   display: grid;
   grid-template-columns: minmax(12rem, 1fr) minmax(0, 3.2fr);
@@ -141,23 +142,25 @@
   background: var(--dcats-surface, #f6f8fa);
 }
 .recycle-karte-gallery a { overflow-wrap: anywhere; font-size: .82rem; }
-.recycle-karte-part-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; min-inline-size: 0; align-items: start; }
-.recycle-karte-values { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; }
+.recycle-karte-part-groups { display: grid; gap: .6rem; min-inline-size: 0; align-items: start; }
+.recycle-karte-values { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; }
 .recycle-karte-values > div {
   display: grid;
-  grid-template-columns: minmax(0, 42%) minmax(0, 1fr);
+  grid-template-columns: minmax(max-content, 39%) minmax(0, 1fr);
   align-items: start;
   gap: .35rem;
   padding: .33rem .5rem;
   border-block-end: 1px solid var(--border, #cbd5e1);
 }
-.recycle-karte-values > .recycle-karte-field-wide { grid-column: 1 / -1; grid-template-columns: minmax(4rem, 21%) minmax(0, 1fr); }
-.recycle-karte-values dt { font-size: .79rem; font-weight: 600; overflow-wrap: anywhere; }
+.recycle-karte-values > div:not(:last-child) { border-inline-end: 1px solid var(--border, #cbd5e1); }
+.recycle-karte-values > .recycle-karte-field-wide { grid-column: 1 / -1; grid-template-columns: minmax(max-content, 13%) minmax(0, 1fr); }
+.recycle-karte-values dt { font-size: .79rem; font-weight: 600; white-space: nowrap; }
 .recycle-karte-values dd { font-size: .83rem; }
+.recycle-karte-values dd:empty { min-block-size: 1em; }
 .recycle-karte-part-disclosure > summary { padding: .45rem .6rem; cursor: pointer; font-size: .88rem; font-weight: 650; }
 .recycle-karte-part-disclosure > .recycle-karte-detail-fields { padding: 0 .6rem .6rem; }
 @media (max-width: 1050px) {
-  .recycle-karte-part-groups { grid-template-columns: minmax(0, 1fr); }
+  .recycle-karte-values { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 700px) {
   .recycle-karte-part-detail {
@@ -171,7 +174,9 @@
   .recycle-karte-detail-layout { grid-template-columns: minmax(0, 1fr); }
   .recycle-karte-gallery-photos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .recycle-karte-values { grid-template-columns: minmax(0, 1fr); }
-  .recycle-karte-values > .recycle-karte-field-wide { grid-template-columns: minmax(0, 42%) minmax(0, 1fr); }
+  .recycle-karte-values > .recycle-karte-field-wide { grid-template-columns: minmax(max-content, 39%) minmax(0, 1fr); }
+  .recycle-karte-detail-actions { gap: .25rem; }
+  .recycle-karte-detail-actions button { padding-inline: .35rem; }
 }
 
 .recycle-karte-dialog textarea { resize: none; inline-size: 100%; box-sizing: border-box; font: inherit; }
