@@ -16,7 +16,7 @@ async function main() {
   ].map(async ([name, type]) => ["/" + name, { body: await fs.readFile(name), contentType: type }])));
   const names = ["corePendingExportSnapshot", "showCorePendingExportError", "printCoreSheet", "printCorePendingStock", "exportCorePendingExcel",
     "canPrintCoreCollection", "openCoreCollectionPrint", "buildCoreCollectionPrintContent", "printCoreCollection",
-    "coreCollectionVehicleClasses", "renderCoreCollectionVehicleHtml", "esc"];
+    "coreCollectionVehicleClasses", "renderCoreCollectionVehicleHtml", "coreCollectionPrintFileName", "nextCoreCollectionPrintNumber", "esc"];
   const ast = acorn.parse(app, { ecmaVersion: "latest" });
   const funcs = ast.body.filter(node => node.type === "FunctionDeclaration" && names.includes(node.id.name));
   assert.equal(funcs.length, names.length);
@@ -50,8 +50,9 @@ async function main() {
     "var corePendingStockFiltered = " + JSON.stringify(data) + ";",
     "var canViewCoreManagement = () => true;",
     "var coreCollectionFilteredRows = " + JSON.stringify(collection) + ";",
+    'var coreCollectionAppliedPrintFilters = [], coreCollectionPrintNumber = 0;',
     'var t = (key) => ({core_pending_tab:"照合待ち",core_pallet_manual:"手入力",core_pending_export_filename:"GLTEK_コア照合待ち",',
-    '  core_collection_print_title:"コアリスト",core_collection_rank_label:"カテゴリ内順位",core_pallet_col_part:"品番",',
+    '  core_collection_print_title:"コアリスト",core_collection_print_all:"全件",core_collection_rank_label:"カテゴリ内順位",core_pallet_col_part:"品番",',
     '  core_collection_print_vehicle:"車両区分",core_collection_print_required:"必要数"})[key] || key;',
     'var tf = (key, v) => key === "core_collection_print_count" ? "対象 " + v.count + " 件" : v.date + " " + v.count + "明細・" + v.qty + "台";',
     'var coreCollectionDisplayProduct = row => ({manufacturer_part_number:row.maker,genuine_part_number:row.genuine});',
@@ -142,8 +143,9 @@ async function main() {
     assert.equal(await printDialog.getByRole("combobox").count(), 0);
     assert.match(await printDialog.innerText(), /対象 73 件/);
     await printDialog.getByRole("button", { name: "印刷・PDF", exact: true }).click();
+    await page.waitForFunction(() => document.body.classList.contains("core-collection-printing"));
     assert.equal(await printDialog.isVisible(), false);
-    assert.equal(await page.title(), "コアリスト");
+    assert.equal(await page.title(), "コアリスト_全件_No-001");
     await page.emulateMedia({ media: "print" });
     const collectionReport = page.locator("#core-collection-print-sheet");
     const collectionRows = collectionReport.locator("tbody tr");
@@ -193,10 +195,17 @@ async function main() {
     assert.equal(await collectionRows.count(), 0);
     await page.emulateMedia({ media: "screen" });
 
-    await page.evaluate(() => { coreCollectionFilteredRows[0].target_quantity = 4; });
+    await page.evaluate(() => {
+      coreCollectionFilteredRows[0].target_quantity = 4;
+      coreCollectionAppliedPrintFilters = ["スタータ", "軽四・乗用車", "200位まで", "不足あり", "2025出荷ランキング", "QA/123:ABC"];
+      coreCollectionPrintNumber = 0;
+    });
     await page.locator("#btn-core-collection-print").click();
     await printDialog.getByRole("button", { name: "印刷・PDF", exact: true }).click();
+    await page.waitForFunction(() => document.body.classList.contains("core-collection-printing"));
     assert.equal(await collectionRows.first().locator("td").last().textContent(), "4");
+    assert.equal(await page.title(), "コアリスト_スタータ_軽四・乗用車_200位まで_不足あり_2025出荷ランキング_QA-123-ABC_No-002");
+    assert.equal(await page.evaluate(() => localStorage.getItem("dcats_core_collection_pdf_number")), "2");
     await page.evaluate(() => window.dispatchEvent(new Event("afterprint")));
 
     await page.evaluate(() => {
@@ -206,8 +215,10 @@ async function main() {
     });
     await page.locator("#btn-core-collection-print").click();
     await printDialog.getByRole("button", { name: "印刷・PDF", exact: true }).click();
+    await page.waitForFunction(() => document.body.classList.contains("core-collection-printing"));
     await page.emulateMedia({ media: "print" });
     assert.equal(await collectionReport.locator(".core-collection-print-wide").count(), 1);
+    assert.ok((await page.title()).endsWith("_No-003"));
     await verifyCollectionLayout(281);
     assert.equal(await collectionRows.first().locator("td").nth(1).textContent(), "W".repeat(34) + " / " + "8".repeat(12));
     assert.equal(await collectionReport.locator(".core-collection-print-split").count(), 0);
@@ -224,8 +235,10 @@ async function main() {
     });
     await page.locator("#btn-core-collection-print").click();
     await printDialog.getByRole("button", { name: "印刷・PDF", exact: true }).click();
+    await page.waitForFunction(() => document.body.classList.contains("core-collection-printing"));
     await page.emulateMedia({ media: "print" });
     assert.equal(await collectionReport.locator(".core-collection-print-split").count(), 1);
+    assert.ok((await page.title()).endsWith("_No-004"));
     await verifyCollectionLayout(281, 35);
     const values = collectionRows.first().locator("td:nth-child(2) :is(strong, span), td:nth-child(3) span");
     assert.equal(await values.count(), 9);
@@ -286,7 +299,7 @@ async function main() {
     assert.equal(adjustment.p_action, "adjust");
     assert.equal(adjustment.p_rows[0].quantity, 0);
     assert.deepEqual(errors, []);
-    console.log("Core export: compact 73-row PDF (2 portrait pages), landscape and wide-content safety, pending PDF, Excel and quantity entry passed.");
+    console.log("Core export: compact 73-row PDF (2 portrait pages), numbered save names, landscape and wide-content safety, pending PDF, Excel and quantity entry passed.");
   } finally {
     await browser.close();
   }
