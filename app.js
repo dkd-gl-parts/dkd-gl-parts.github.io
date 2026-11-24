@@ -9092,7 +9092,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1383";
+var APP_VERSION       = "v1.1.1384";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -9205,7 +9205,7 @@ var coreListFormMode = "add";
 var coreListDeleteTarget = null;
 var corePhotoChoiceRowId = null;
 var coreListVehicleMap = {};
-var coreInventoryFilters = { keyword: "", vehicle: "", category: "", memo: "", korea: "exclude", matchState: "all" };
+var coreInventoryFilters = { keyword: "", vehicles: [], category: "", memo: "", korea: "exclude", matchState: "all" };
 var coreListFilteredRows = [];
 var coreInventoryRenderedCount = 0;
 var coreInventoryNotePages = [];
@@ -31426,6 +31426,11 @@ function beginCoreManagementLoad() {
 }
 
 function searchCoreCollectionWorkspace() {
+  document.getElementById("core-workspace-filter-options").open = false;
+  document.getElementById("btn-core-collection-search").focus({ preventScroll: true });
+  var vehicles = readCoreVehicleFilterSelection("core-collection-vehicle-filters");
+  coreInventoryFilters.vehicles = vehicles;
+  setCoreVehicleFilterSelection("core-inventory-vehicle-filters", vehicles);
   if (!coreManagementDataReady || (canViewManufacturingReport() && !coreCollectionReportRank)) return loadCoreCollectionList();
   applyCoreCollectionFilters();
   renderCoreCollectionList();
@@ -31441,8 +31446,18 @@ function resetCoreCollectionFilters() {
   document.getElementById("core-collection-category").value = "";
   document.getElementById("core-collection-state").value = "all";
   document.getElementById("core-collection-source").value = "";
-  document.querySelectorAll("[data-core-vehicle-filter]:checked").forEach(function(input) {
-    input.checked = false;
+  setCoreVehicleFilterSelection("core-collection-vehicle-filters", []);
+}
+
+function readCoreVehicleFilterSelection(id) {
+  return Array.from(document.querySelectorAll("#" + id + " [data-core-vehicle-filter]:checked"), function(input) {
+    return input.value;
+  });
+}
+
+function setCoreVehicleFilterSelection(id, values) {
+  document.querySelectorAll("#" + id + " [data-core-vehicle-filter]").forEach(function(input) {
+    input.checked = values.includes(input.value);
   });
 }
 
@@ -31838,10 +31853,12 @@ function coreCollectionVehicleClasses(row) {
   }).map(function(item) { return item[0]; });
 }
 
-function coreCollectionVehicleMatches(row, filter) {
-  if (!filter) return true;
+function coreCollectionVehicleMatches(row, filters) {
+  if (!filters.length) return true;
   var classes = coreCollectionVehicleClasses(row);
-  return filter === "unclassified" ? classes.length === 0 : classes.indexOf(filter) >= 0;
+  return filters.some(function(filter) {
+    return filter === "unclassified" ? !classes.length : classes.includes(filter);
+  });
 }
 
 function coreCollectionVehicleText(row) {
@@ -31927,9 +31944,7 @@ function applyCoreCollectionFilters() {
   var q = qEl ? norm(qEl.value.trim()) : "";
   var category = categoryEl ? categoryEl.value : "";
   var state = stateEl ? stateEl.value : "all";
-  var vehicles = Array.from(document.querySelectorAll("[data-core-vehicle-filter]:checked"), function(input) {
-    return input.value;
-  });
+  var vehicles = readCoreVehicleFilterSelection("core-collection-vehicle-filters");
   var filterCount = document.getElementById("core-workspace-filter-count");
   var source = document.getElementById("core-collection-source").value;
   document.getElementById("core-list-results-title").textContent = state === "replenishment" ? "コア補充リスト" : "品番一覧";
@@ -31938,7 +31953,7 @@ function applyCoreCollectionFilters() {
   coreCollectionFilteredRows = coreCollectionOrderedRows.filter(function(row) {
     if (source && row.source_type !== source) return false;
     if (category && !coreCollectionCategoryMatches(coreCollectionDisplayProduct(row), category)) return false;
-    if (vehicles.length && !vehicles.some(function(vehicle) { return coreCollectionVehicleMatches(row, vehicle); })) return false;
+    if (!coreCollectionVehicleMatches(row, vehicles)) return false;
     if (state === "replenishment" && !isCoreReplenishmentRow(row)) return false;
     if (state === "needed" && coreCollectionShortageQty(row) <= 0) return false;
     if (state === "in_stock" && coreCollectionStockQty(row) <= 0) return false;
@@ -32618,12 +32633,13 @@ function coreInventoryVehicleClasses(product) {
 }
 
 function resetCoreInventoryFilters() {
-  ["core-list-search", "core-inventory-vehicle", "core-inventory-category", "core-inventory-memo"].forEach(function(id) {
+  setCoreVehicleFilterSelection("core-inventory-vehicle-filters", []);
+  ["core-list-search", "core-inventory-category", "core-inventory-memo"].forEach(function(id) {
     document.getElementById(id).value = "";
   });
   document.getElementById("core-inventory-korea").value = "exclude";
   document.getElementById("core-inventory-match-state").value = "all";
-  coreInventoryFilters = { keyword: "", vehicle: "", category: "", memo: "", korea: "exclude", matchState: "all" };
+  coreInventoryFilters = { keyword: "", vehicles: [], category: "", memo: "", korea: "exclude", matchState: "all" };
 }
 
 function isKoreanCoreInventoryEntry(row) {
@@ -32634,7 +32650,7 @@ function isKoreanCoreInventoryEntry(row) {
 function submitCoreInventorySearch() {
   coreInventoryFilters = {
     keyword: norm(document.getElementById("core-list-search").value.trim()),
-    vehicle: document.getElementById("core-inventory-vehicle").value,
+    vehicles: readCoreVehicleFilterSelection("core-inventory-vehicle-filters"),
     category: document.getElementById("core-inventory-category").value,
     memo: norm(document.getElementById("core-inventory-memo").value.trim()),
     korea: document.getElementById("core-inventory-korea").value || "exclude",
@@ -32657,18 +32673,20 @@ function renderCoreInventoryPendingRow(row, index, cardMode) {
   var badge = "<span class='core-inventory-match-badge'>" + esc(t("core_pending_tab")) + "</span>";
   var quantity = "<span class='core-qty-pill'>" + esc(String(row.quantity)) + "</span>";
   var location = esc(row.pallet_no);
+  var classification = "<div class='core-vehicle-label'>" + renderCoreCollectionVehicleHtml(null) + "</div>";
   var actions = "";
   if (canManageProductionRecords()) {
     actions += "<button class='btn-sm-edit' type='button' data-inventory-pending-match='" + index + "'>" + esc(t("core_pallet_edit_match")) + "</button>";
   }
   if (cardMode) {
-    return "<div class='core-list-card'><div class='core-list-card-head'><div>" + part + badge +
+    return "<div class='core-list-card'><div class='core-list-card-head'><div>" + part + badge + classification +
       "</div>" + quantity + "</div><div class='core-list-card-field'><span class='core-list-card-label'>" +
       esc(t("core_list_pallet_location")) + "</span><span class='core-list-card-value'>" +
       location + "</span></div><div class='core-pallet-row-actions'>" + actions + "</div></div>";
   }
   var p = coreInventoryPendingProduct(row);
-  return "<tr><td>" + part + badge + "</td><td>" + esc(p.category_code ? productionCategoryLabel(p) : "-") +
+  return "<tr><td>" + part + badge + "</td><td>" + classification + "<div class='mgmt-sub'>" +
+    esc(p.category_code ? productionCategoryLabel(p) : "-") + "</div>" +
     "</td><td>–</td><td>" + location +
     "</td><td><div class='core-note'>" + esc(row.source_remarks || "-") +
     "</div></td><td><div class='core-pallet-row-actions'>" + actions + "</div></td><td class='core-inventory-quantity'>" + quantity + "</td></tr>";
@@ -32676,12 +32694,12 @@ function renderCoreInventoryPendingRow(row, index, cardMode) {
 
 function applyCoreInventoryFilters() {
   var keyword = coreInventoryFilters.keyword;
-  var vehicle = coreInventoryFilters.vehicle;
+  var vehicles = coreInventoryFilters.vehicles;
   var category = coreInventoryFilters.category;
   var memo = coreInventoryFilters.memo;
   var korea = coreInventoryFilters.korea;
   var matchState = coreInventoryFilters.matchState || "all";
-  var count = Number(!!vehicle) + Number(!!category) + Number(!!memo) + Number(korea !== "exclude") + Number(matchState !== "all");
+  var count = Number(vehicles.length > 0) + Number(!!category) + Number(!!memo) + Number(korea !== "exclude") + Number(matchState !== "all");
   document.getElementById("core-inventory-filter-count").textContent = count ? "(" + count + ")" : "";
   var pending = coreInventoryPendingRows.map(function(row) {
     return { pending: row, quantity: row.quantity, location: row.pallet_no, core_part_number: row.source_part_number, note: row.source_remarks };
@@ -32694,7 +32712,7 @@ function applyCoreInventoryFilters() {
     var product = row.pending ? coreInventoryPendingProduct(row.pending) : (coreListProductMap[id] || {});
     var classification = coreListVehicleMap[id];
     if (row.pending && category && !product.category_code) return false;
-    if (!coreCollectionVehicleMatches(classification, vehicle) || !coreCollectionCategoryMatches(product, category)) return false;
+    if (!coreCollectionVehicleMatches(classification, vehicles) || !coreCollectionCategoryMatches(product, category)) return false;
     if (memo && !normalizedContains(row.note, memo)) return false;
     return !keyword || [
       row.dkd_shohin_id, row.core_part_number, row.location, row.note,
@@ -62268,7 +62286,11 @@ document.getElementById("btn-core-pending-excel").addEventListener("click", expo
 document.getElementById("btn-export-core-collection").addEventListener("click", function() { exportCoreCollectionCsv(false); });
 document.getElementById("btn-export-core-replenishment").addEventListener("click", function() { exportCoreCollectionCsv(true); });
 document.getElementById("btn-core-collection-search").addEventListener("click", searchCoreCollectionWorkspace);
-document.getElementById("core-collection-search").addEventListener("keydown", function(e){ if(e.key === "Enter") searchCoreCollectionWorkspace(); });
+document.getElementById("core-collection-search").addEventListener("keydown", function(event) {
+  if (event.key !== "Enter" || event.isComposing) return;
+  event.preventDefault();
+  searchCoreCollectionWorkspace();
+});
 document.getElementById("core-list-list").addEventListener("scroll", loadMoreCoreCollectionRowsOnScroll, { passive: true });
 document.getElementById("core-list-list").addEventListener("click", handleCoreCollectionAction);
 document.getElementById("core-list-list").addEventListener("scroll", loadMoreCoreInventoryRowsOnScroll, { passive: true });
