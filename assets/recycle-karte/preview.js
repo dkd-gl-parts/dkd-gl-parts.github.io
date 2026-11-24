@@ -68,7 +68,9 @@
     refresh: ["部品詳細の更新を依頼", "Request a part detail refresh", "申请更新零件详情"],
     manage: ["取得依頼・確認データ取込", "Refresh requests & verified import", "更新申请和已核验导入"],
     sourceList: ["在庫一覧", "Stock list", "库存一览"], sourceDetail: ["在庫入出庫 → 部品詳細", "Stock movements → Part details", "库存出入库 → 零件详情"],
-    photos: ["D-CATSの商品画像", "D-CATS product image", "D-CATS 商品图片"],
+    partDetail: ["部品詳細", "Part details", "零件详情"],
+    fieldSources: ["項目ごとの確認元", "Field sources", "字段来源"],
+    photos: ["D-CATSの商品画像", "D-CATS product images", "D-CATS 商品图片"],
     noPhoto: ["表示できるD-CATSの商品画像がありません。", "No D-CATS product image is available.", "暂无可显示的 D-CATS 商品图片。"],
     photoFull: ["画像を拡大", "Open full-size image", "放大图片"],
     link: ["商品との紐付け", "Product link", "关联商品"], variant: ["商品種別ID", "Product variant ID", "商品类别 ID"],
@@ -86,10 +88,10 @@
 
   const groups = [
     ["part", {part_number:"品番", alternate_karte_number:"任意カルテ番号", part_category:"部品区分", part_name:"部品名", oe_part_number:"純正品番", maker_part_number:"メーカー品番", brand:"メーカー", specification:"仕様", auxiliary_part_number:"補足品番", ps_number:"PS番号", same_day_shipping:"当日出荷可", part_frame_number:"フレームNo.", part_mileage:"キロ数[Km]", source_updated_at:"更新日"}],
-    ["pricing", {sale_price:"販売価格", wholesale_price:"卸価格", shipping_fee:"送料", shipping_size:"送料サイズ", tax:"税区分", price_note:"価格備考", inventory_sale_price:"販売金額"}],
     ["vehicle", {donor_number:"車両カルテ番号", vehicle_name:"車名", vehicle_model:"型式", chassis_number:"車台番号", vehicle_grade:"グレード", first_registration:"初度登録", mileage:"走行距離", engine:"エンジン型式", transmission:"ミッション", drive:"駆動", color:"カラー", model_designation:"型式指定", classification:"類別区分", vehicle_body:"形状", fuel:"燃料", year:"年式", displacement:"排気量", generation:"期別"}],
-    ["stock", {stock_quantity:"在庫数", shelf:"棚番", location:"拠点", listing_status:"出品状況", available_quantity:"有効在庫", first_listed_at:"出品日", stock_status:"在庫状況", recovered_at:"入庫日", inventory_note:"在庫備考", shipped_quantity:"出庫", received_quantity:"入庫", allocated_quantity:"引当", temporarily_held_quantity:"仮押", proposed_quantity:"提案中", inventory_vehicle_name:"車名（在庫）", inventory_vehicle_model:"型式（在庫）", warehouse:"倉庫"}],
     ["condition", {part_condition:"部品状態", quality:"品質", test_result:"動作確認", warranty:"保証", defects:"損傷・注意点", inspection:"検品", quality_kind:"種別", inventory_quality:"品質（在庫）", source_state:"状態", source_information:"情報"}],
+    ["pricing", {sale_price:"販売価格", wholesale_price:"卸価格", shipping_fee:"送料", shipping_size:"送料サイズ", tax:"税区分", price_note:"価格備考", inventory_sale_price:"販売金額"}],
+    ["stock", {stock_quantity:"在庫数", shelf:"棚番", location:"拠点", listing_status:"出品状況", available_quantity:"有効在庫", first_listed_at:"出品日", stock_status:"在庫状況", recovered_at:"入庫日", inventory_note:"在庫備考", shipped_quantity:"出庫", received_quantity:"入庫", allocated_quantity:"引当", temporarily_held_quantity:"仮押", proposed_quantity:"提案中", inventory_vehicle_name:"車名（在庫）", inventory_vehicle_model:"型式（在庫）", warehouse:"倉庫"}],
     ["office", {office_name:"事業所名", office_code:"事業所コード", office_postal_code:"郵便番号", office_address:"住所", office_phone:"電話番号", office_fax:"FAX番号", office_email:"Email", office_site:"URL", office_group:"グループ", office_system:"システム", office_psf:"PSF利用", office_quality_rule:"品質規定", producer:"生産担当者", temporary_hold_at:"仮押日", temporary_hold_by:"仮押担当者"}],
     ["notes", {components:"構成部品", source_photo:"Recycle+の写真", memo:"メモ", remarks:"備考", listing_note:"出品備考", internal_note:"社内備考"}]
   ];
@@ -595,12 +597,15 @@
     }
   });
 
-  function dialog(title, origin) {
+  function dialog(title, origin, isPartDetail = false) {
     const focusTarget = details?.contains(origin) ? dialogOrigin : origin;
     details?.close();
     details?.remove();
     const heading = element("h2", {id:"recycle-karte-dialog-title", text:title});
-    const modal = element("dialog", {className:"recycle-karte-dialog", "aria-labelledby":heading.id});
+    const modal = element("dialog", {
+      className:isPartDetail ? "recycle-karte-dialog recycle-karte-part-detail" : "recycle-karte-dialog",
+      "aria-labelledby":heading.id
+    });
     const body = element("div", {className:"recycle-karte-dialog-body"});
     modal.append(element("header", {className:"recycle-karte-dialog-head"}, heading,
       button("close", () => modal.close())), body);
@@ -625,7 +630,7 @@
 
   async function openDetail(number, origin) {
     if (!canShow()) return;
-    const {body, modal} = dialog(number, origin);
+    const {body, modal} = dialog(tr("partDetail") + " · " + number, origin, true);
     body.textContent = tr("loading");
     try {
       const [row] = await rpc("read", {p_karte:number, p_detail:true});
@@ -638,7 +643,7 @@
   }
 
   function displayDetail(row, origin) {
-    const {body} = dialog(row.karte_number, origin);
+    const {body} = dialog(tr("partDetail") + " · " + row.karte_number, origin, true);
     renderDetail(row, body);
   }
 
@@ -661,20 +666,30 @@
     return "";
   }
 
-  function renderDiffPage(panel, reviewed) {
+  function renderDiffPage(panel, reviewed, paginate = true) {
     const changes = reviewed.flatMap(item => {
       const fields = Object.entries(item.changes);
       return fields.length ? fields.map(([key,field]) => [item.karte_number,key,field]) :
         [[item.karte_number,"",null]];
     });
-    function show(index) {
-      const [number,key,value] = changes[index];
-      panel.replaceChildren(element("strong", {text:number}),
-        element("p", {text:value ? fieldLabel(key) : tr("noDiff")}));
+    function changeBlock([number,key,value]) {
+      const block = element("div", {className:"recycle-karte-change"},
+        element("strong", {text:number}), element("p", {text:value ? fieldLabel(key) : tr("noDiff")}));
       if (value) {
-        panel.append(limitedValue(value.before ? codeText(value.before.value) : tr("missing")),
-          limitedValue("→ " + codeText(value.after.value)));
+        const before = value.before ? codeText(value.before.value) : tr("missing");
+        const after = "→ " + codeText(value.after.value);
+        for (const text of [before, after]) {
+          block.append(paginate ? limitedValue(text) : element("div", {className:"recycle-karte-value", text}));
+        }
       }
+      return block;
+    }
+    if (!paginate) {
+      panel.replaceChildren(...changes.map(changeBlock));
+      return;
+    }
+    function show(index) {
+      panel.replaceChildren(changeBlock(changes[index]));
       const navigation = pager(index, index < changes.length - 1, show);
       if (navigation) panel.append(navigation);
     }
@@ -688,13 +703,14 @@
     const show = element("div", {className:"recycle-karte-diff"});
     revision.append(back, status, show);
     body.replaceChildren(revision);
+    body.parentElement.scrollTop = 0;
     try {
       const review = await rpc("source_review", {
         p_karte:row.karte_number, p_job:job.job_id, p_action:"preview"
       });
       if (!revision.isConnected) return;
       status.textContent = tr("reviewSource");
-      renderDiffPage(show, review);
+      renderDiffPage(show, review, false);
       const apply = button("apply", async () => {
         apply.disabled = true;
         back.disabled = true;
@@ -774,77 +790,96 @@
         if (error?.code !== "closed") message.textContent = errorText(error);
       }
     }
-    const section = element("select", {"aria-label":tr("detail")});
-    [...groups.map(([key]) => key), "photos", "link"].forEach(key => {
-      section.append(element("option", {value:key, text:tr(key)}));
-    });
-    const area = element("section", {className:"recycle-karte-detail-fields", "aria-live":"polite"});
-    const photo = element("aside", {className:"recycle-karte-desktop-photo"});
-    const content = element("div", {className:"recycle-karte-detail-layout"}, area, photo);
-    let lastPhoto = null;
-    let photoPromise = null;
-    function renderPhotoInto(target) {
-      target.replaceChildren(element("strong", {text:tr("photos")}));
-      if (lastPhoto) {
-        const img = element("img", {src:lastPhoto.thumb, loading:"lazy", alt:tr("photos")});
-        img.addEventListener("error", () => target.replaceChildren(element("p", {text:tr("noPhoto")})));
-        const openImage = button("photoFull", async () => {
-          const url = await lastPhoto.full().catch(() => "");
-          if (!url || displayedDetail !== row) return;
-          target.replaceChildren(element("strong", {text:tr("photos")}),
-            element("img", {src:url, alt:tr("photos")}),
-            element("a", {href:url, target:"_blank", rel:"noopener", text:tr("photoFull")}));
-        });
-        target.append(img, openImage);
-        return;
-      }
-      const message = element("p", {text:row.link_active ? tr("loading") : tr("noPhoto")});
-      target.append(message);
-      if (!row.link_active) return;
-      photoPromise ||= loadPhoto(row).catch(() => null);
-      void photoPromise.then(result => {
-        if (!target.isConnected || displayedDetail !== row) return;
-        if (result) {
-          lastPhoto = result;
-          renderPhotoInto(target);
-        } else message.textContent = tr("noPhoto");
-      });
-    }
-    function renderGroup(page = 0) {
-      area.replaceChildren();
-      content.classList.toggle("recycle-karte-photo-selected", section.value === "photos");
-      if (section.value === "link") {
-        renderLink(row, area);
-        return;
-      }
-      if (section.value === "photos") {
-        renderPhotoInto(area);
-        return;
-      }
-      const fieldKeys = Object.keys(groups.find(([key]) => key === section.value)[1]);
-      if (section.value === "notes") {
-        fieldKeys.push(...Object.keys(row.fields || {}).filter(key => !Object.hasOwn(allFields, key)).sort());
-      }
-      const list = element("dl", {className:"recycle-karte-values"});
-      const perPage = 3;
-      fieldKeys.slice(page * perPage, (page + 1) * perPage).forEach(key => {
-        const field = row.fields?.[key];
-        const value = element("dd", {},
-          limitedValue(field ? codeText(field.value) : tr("missing")));
-        if (field) value.append(element("small", {text:tr(field.source_page === "stock-list" ? "sourceList" : "sourceDetail") + " · " + time(field.observed_at)}));
-        list.append(element("div", {}, element("dt", {text:fieldLabel(key)}), value));
-      });
-      area.append(list, pager(page, fieldKeys.length > (page + 1) * perPage, renderGroup));
-    }
-    section.addEventListener("change", () => renderGroup());
-    const controls = element("div", {className:"recycle-karte-controls"}, section, refresh, review);
+    const controls = element("div", {className:"recycle-karte-controls"}, refresh, review);
     if (row.link_active && row.dkd_shohin_id) {
       controls.append(button("related", event => openProductList(event.currentTarget, row.dkd_shohin_id)));
     }
-    body.replaceChildren(source, controls, message, content);
+    const summary = element("dl", {className:"recycle-karte-part-summary"});
+    const summaryKeys = ["part_category", "part_name", "sale_price", "shipping_fee", "quality", "quality_kind"];
+    for (const key of summaryKeys) {
+      summary.append(partDetailField(row, key));
+    }
+
+    const gallery = element("aside", {className:"recycle-karte-gallery", "aria-label":tr("photos")});
+    const fields = element("div", {className:"recycle-karte-part-groups"});
+    for (const [group, mapped] of groups) {
+      const keys = Object.keys(mapped).filter(key => !summaryKeys.includes(key));
+      if (group === "notes") {
+        keys.push(...Object.keys(row.fields || {}).filter(key => !Object.hasOwn(allFields, key)).sort());
+      }
+      const values = element("dl", {className:"recycle-karte-values"}, ...keys.map(key => partDetailField(row, key)));
+      fields.append(element("section", {className:"recycle-karte-part-group"},
+        element("h3", {text:tr(group)}), values));
+    }
+
+    const sources = Object.entries(row.fields || {}).filter(([, field]) => field?.source_page || field?.observed_at);
+    const record = element("div", {className:"recycle-karte-part-record"}, fields);
+    if (sources.length) {
+      const descriptions = sources.map(([key, field]) => element("div", {},
+        element("dt", {text:fieldLabel(key)}), element("dd", {}, element("span", {text:detailFieldSource(field)}))));
+      record.append(element("details", {className:"recycle-karte-part-disclosure"},
+        element("summary", {text:tr("fieldSources")}),
+        element("dl", {className:"recycle-karte-values"}, ...descriptions)));
+    }
+    const linkFields = element("div", {className:"recycle-karte-detail-fields"});
+    const link = element("details", {className:"recycle-karte-part-disclosure"},
+      element("summary", {text:tr("link")}), linkFields);
+    link.addEventListener("toggle", () => {
+      if (link.open && !linkFields.childElementCount && displayedDetail === row) renderLink(row, linkFields);
+    });
+    record.append(link);
+
+    const layout = element("div", {className:"recycle-karte-detail-layout"}, gallery, record);
+    const toolbar = element("div", {className:"recycle-karte-part-toolbar"}, source, controls);
+    body.replaceChildren(toolbar, message, summary, layout);
+    body.parentElement.scrollTop = 0;
+    void renderDetailGallery(row, gallery);
     void syncAcquisition();
-    renderGroup();
-    if (window.matchMedia("(min-width: 920px) and (min-height: 580px)").matches) renderPhotoInto(photo);
+  }
+
+  function detailFieldSource(field) {
+    const source = tr(field.source_page === "stock-list" ? "sourceList" : "sourceDetail");
+    return field.observed_at ? source + " · " + time(field.observed_at) : source;
+  }
+
+  function partDetailField(row, key) {
+    const field = row.fields?.[key];
+    const text = field ? codeText(field.value ?? "") : tr("missing");
+    const wide = String(text).length > 60 || String(text).includes("\n");
+    return element("div", {className:wide ? "recycle-karte-field-wide" : undefined},
+      element("dt", {text:fieldLabel(key)}),
+      element("dd", field ? {text, title:detailFieldSource(field)} : {text, className:"recycle-karte-missing"}));
+  }
+
+  async function renderDetailGallery(row, gallery) {
+    const photos = element("div", {className:"recycle-karte-gallery-photos"});
+    const status = element("p", {role:"status", text:tr(row.link_active ? "loading" : "noPhoto")});
+    gallery.append(element("h3", {text:tr("photos")}), photos, status);
+    if (!row.link_active) return;
+    const images = await loadDetailPhotos(row).catch(() => []);
+    if (!gallery.isConnected || displayedDetail !== row) return;
+    for (const [index, {thumb, full}] of images.entries()) {
+      const image = element("img", {src:thumb, loading:"lazy", decoding:"async",
+        alt:tr("photos") + " " + (index + 1)});
+      const expand = button("photoFull", async () => {
+        expand.disabled = true;
+        const url = await full().catch(() => "");
+        if (!expand.isConnected || displayedDetail !== row) return;
+        if (url) {
+          image.src = url;
+          expand.replaceWith(element("a", {href:url, target:"_blank", rel:"noopener", text:tr("photoFull")}));
+        } else {
+          expand.disabled = false;
+        }
+      });
+      const figure = element("figure", {}, image, expand);
+      image.addEventListener("error", () => {
+        figure.remove();
+        if (!photos.childElementCount) status.textContent = tr("noPhoto");
+      });
+      photos.append(figure);
+    }
+    status.textContent = images.length ? "" : tr("noPhoto");
   }
 
   function limitedValue(value) {
@@ -859,17 +894,18 @@
     return container;
   }
 
-  async function loadPhoto(row) {
+  async function loadDetailPhotos(row) {
     const result = await fetchAllCoreProductImagesForContext(row.dkd_shohin_id, "sales");
-    if (result.error) return null;
-    const match = (result.data || []).find(img => normalizeProductKind(img.product_kind || "rebuilt") === row.product_kind);
-    if (!match) return null;
-    const options = {width:240, height:240, resize:"contain"};
-    const path = productImageStoragePath(match);
-    const thumb = (path && await signProductImageUrl(path, options)) || productImageFallbackUrl(match, options);
-    if (!thumb) return null;
-    const full = () => path ? signProductImageUrl(path, {}) : Promise.resolve(safeSupabaseImageUrl(match.image_url));
-    return {thumb, full};
+    if (result.error) return [];
+    const options = {width:360, height:360, resize:"contain"};
+    const matches = (result.data || []).filter(img => normalizeProductKind(img.product_kind || "rebuilt") === row.product_kind);
+    const photos = await Promise.all(matches.map(async img => {
+      const path = productImageStoragePath(img);
+      const thumb = (path && await signProductImageUrl(path, options)) || productImageFallbackUrl(img, options);
+      const full = () => path ? signProductImageUrl(path, {}) : Promise.resolve(safeSupabaseImageUrl(img.image_url));
+      return thumb ? {thumb, full} : null;
+    }));
+    return photos.filter(Boolean);
   }
 
   function renderLink(row, area) {
