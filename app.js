@@ -32654,7 +32654,7 @@ function buildCoreCollectionPrintContent(rows) {
       (row.dkd_shohin_id == null ? "-" : "DKD " + row.dkd_shohin_id);
     var genuine = product.genuine_part_number && product.genuine_part_number !== maker ? product.genuine_part_number : "";
     return "<tr><td>" + esc(productionCategoryLabel(product)) + " " + esc(categoryRank == null ? "-" : "#" + categoryRank) + "</td><td><strong>" +
-      esc(maker) + "</strong>" + (genuine ? " / " + esc(genuine) : "") + "</td><td>" +
+      esc(maker) + "</strong>" + (genuine ? " / <span>" + esc(genuine) + "</span>" : "") + "</td><td>" +
       renderCoreCollectionVehicleHtml(row) + "</td><td>" + esc(row.target_quantity ?? "-") + "</td></tr>";
   }).join("");
   content.innerHTML = "<h1>" + esc(t("core_collection_print_title")) + "</h1><p>" +
@@ -32667,7 +32667,12 @@ function buildCoreCollectionPrintContent(rows) {
   try {
     var width = content.getBoundingClientRect().width;
     var tableWidth = content.querySelector("table").getBoundingClientRect().width;
-    if (tableWidth > width + 0.5) content.classList.add("core-collection-print-wide");
+    if (tableWidth > width + 0.5) {
+      content.classList.add("core-collection-print-wide");
+      if (tableWidth > content.getBoundingClientRect().width + 0.5) {
+        content.classList.add("core-collection-print-split");
+      }
+    }
   } finally {
     content.remove();
     content.classList.remove("core-collection-print-measuring");

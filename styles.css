@@ -12620,10 +12620,11 @@ html[data-product-3d-paused] :is(
 #core-collection-print-dialog label { display: grid; gap: 4px; }
 #core-collection-print-dialog .core-pallet-footer { margin-top: 12px; }
 
-/* Match the measuring width to A4 minus the horizontal page margins below. */
+/* Match the measuring widths to A4 minus the horizontal page margins below. */
 .core-collection-print-measuring {
   position: fixed; inset: 0 auto auto 0; visibility: hidden; pointer-events: none; width: 194mm;
 }
+.core-collection-print-wide.core-collection-print-measuring { width: 281mm; }
 .core-collection-print-content { color: black; font: 9pt/1.2 Arial, "Yu Gothic", "Meiryo", sans-serif; }
 .core-collection-print-content h1 { font-size: 15pt; margin: 0 0 1.5mm; }
 .core-collection-print-content p { margin: 0 0 2mm; }
@@ -12638,6 +12639,9 @@ html[data-product-3d-paused] :is(
 }
 .core-collection-print-content th { background: #e7f1fa; color: #122c44; print-color-adjust: exact; }
 .core-collection-print-content td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+/* Keep each part number and vehicle label intact, even on the widest sheets. */
+.core-collection-print-split td:is(:nth-child(2), :nth-child(3)) { white-space: normal; }
+.core-collection-print-split td:is(:nth-child(2), :nth-child(3)) :is(strong, span) { white-space: nowrap; }
 @page core-collection-list { size: A4 portrait; margin: 9mm 8mm; }
 @page core-collection-wide-list { size: A4 landscape; margin: 9mm 8mm; }
 @media print {
