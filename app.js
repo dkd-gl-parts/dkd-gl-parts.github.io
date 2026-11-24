@@ -2020,7 +2020,6 @@ var TRANSLATIONS = {
     core_collection_print_saved_mode: "登録済みの必要数を使う",
     core_collection_print_count: "対象 {count} 件",
     core_collection_print_required: "必要数",
-    core_collection_print_shipments: "出荷数",
     core_collection_print_vehicle: "車両区分",
     core_collection_print_error: "コアリストを印刷できませんでした。",
     core_collection_rank_example: "例 200",
@@ -5020,7 +5019,6 @@ var TRANSLATIONS = {
     core_collection_print_saved_mode: "Use saved required quantities",
     core_collection_print_count: "{count} results",
     core_collection_print_required: "Required",
-    core_collection_print_shipments: "Shipments",
     core_collection_print_vehicle: "Vehicle class",
     core_collection_print_error: "Could not print the core list.",
     core_collection_rank_example: "e.g. 200",
@@ -8021,7 +8019,6 @@ var TRANSLATIONS = {
     core_collection_print_saved_mode: "使用已登记的需求量",
     core_collection_print_count: "共 {count} 条",
     core_collection_print_required: "需求量",
-    core_collection_print_shipments: "出货量",
     core_collection_print_vehicle: "车辆类别",
     core_collection_print_error: "无法打印旧件清单。",
     core_collection_rank_example: "如 200",
@@ -9128,7 +9125,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1390";
+var APP_VERSION       = "v1.1.1391";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -32684,7 +32681,7 @@ function coreCollectionPrintQuantity(row, shipment, useSaved) {
 function buildCoreCollectionPrintContent(rows, useSaved) {
   var content = document.createElement("article");
   var headings = ["core_collection_rank_label", "core_pallet_col_part", "core_collection_print_vehicle",
-    "core_collection_print_shipments", "core_collection_print_required"];
+    "core_collection_print_required"];
   var rowsHtml = rows.map(function(row) {
     var product = coreCollectionDisplayProduct(row);
     var ranking = coreCollectionRank(row);
@@ -32692,11 +32689,10 @@ function buildCoreCollectionPrintContent(rows, useSaved) {
     var maker = product.manufacturer_part_number || product.genuine_part_number || ranking?.productCode ||
       (row.dkd_shohin_id == null ? "-" : "DKD " + row.dkd_shohin_id);
     var genuine = product.genuine_part_number && product.genuine_part_number !== maker ? product.genuine_part_number : "";
-    var shipment = ranking?.shipment;
-    var quantity = coreCollectionPrintQuantity(row, shipment, useSaved);
+    var quantity = coreCollectionPrintQuantity(row, ranking?.shipment, useSaved);
     return "<tr><td>" + esc(productionCategoryLabel(product)) + "<br>" + esc(categoryRank ?? "-") + "</td><td><strong>" +
       esc(maker) + "</strong>" + (genuine ? "<br>" + esc(genuine) : "") + "</td><td>" +
-      renderCoreCollectionVehicleHtml(row) + "</td><td>" + esc(shipment ?? "-") + "</td><td>" + esc(quantity ?? "-") + "</td></tr>";
+      renderCoreCollectionVehicleHtml(row) + "</td><td>" + esc(quantity ?? "-") + "</td></tr>";
   }).join("");
   content.innerHTML = "<h1>" + esc(t("core_collection_print_title")) + "</h1><p>" +
     esc(tf("core_collection_print_count", { count: rows.length.toLocaleString() })) + " / " +

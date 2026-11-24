@@ -51,7 +51,7 @@ async function main() {
     "var coreCollectionFilteredRows = " + JSON.stringify(collection) + ";",
     'var t = (key) => ({core_pending_tab:"照合待ち",core_pallet_manual:"手入力",core_pending_export_filename:"GLTEK_コア照合待ち",',
     '  core_collection_print_title:"コアリスト",core_collection_rank_label:"カテゴリ内順位",core_pallet_col_part:"品番",',
-    '  core_collection_print_vehicle:"車両区分",core_collection_print_shipments:"出荷数",core_collection_print_required:"必要数",',
+    '  core_collection_print_vehicle:"車両区分",core_collection_print_required:"必要数",',
     '  core_collection_print_shipment_mode:"出荷数を上位1桁に切り捨て",core_collection_print_saved_mode:"登録済みの必要数を使う"})[key] || key;',
     'var tf = (key, v) => key === "core_collection_print_count" ? "対象 " + v.count + " 件" : v.date + " " + v.count + "明細・" + v.qty + "台";',
     'var coreCollectionDisplayProduct = row => ({manufacturer_part_number:row.maker,genuine_part_number:row.genuine});',
@@ -150,11 +150,11 @@ async function main() {
     assert.equal(await page.locator("#screen-core-list-mgmt").isVisible(), false);
     assert.equal(await collectionReport.getByRole("heading", { name: "コアリスト", exact: true }).count(), 1);
     assert.deepEqual(await collectionReport.getByRole("columnheader").allTextContents(),
-      ["カテゴリ内順位", "品番", "車両区分", "出荷数", "必要数"]);
+      ["カテゴリ内順位", "品番", "車両区分", "必要数"]);
     assert.equal(await collectionRows.count(), 73);
     assert.match(await collectionRows.first().locator("td").nth(1).innerText(), /QA-000001-VERY-LONG-PART<&>/);
     assert.deepEqual(await collectionRows.first().locator("td").allTextContents().then(cells => cells.slice(2)),
-      ["軽四・乗用車・トラック", "354", "300"]);
+      ["軽四・乗用車・トラック", "300"]);
     assert.equal(await collectionRows.nth(1).locator("td").last().textContent(), "100");
     assert.equal(await collectionRows.last().locator("td").last().textContent(), "72");
     const collectionPdf = await page.pdf({ preferCSSPageSize: true, printBackground: true });
