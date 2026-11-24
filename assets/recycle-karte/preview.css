@@ -1,6 +1,24 @@
 .recycle-karte-menu { text-align: start; font: inherit; }
-.recycle-karte-entry[hidden], .recycle-karte-product[hidden] { display: none; }
-.recycle-karte-entry { display: grid; gap: .35rem; padding-block-start: .5rem; }
+.recycle-karte-launcher[hidden], .recycle-karte-related[hidden], .recycle-karte-product[hidden] { display: none; }
+#filter-row:has(> .recycle-karte-launcher:not([hidden])) {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 6px;
+  padding-inline: 12px;
+}
+#filter-row:has(> .recycle-karte-launcher:not([hidden])) > .form-select {
+  padding-inline: 6px 4px;
+}
+#screen-search .recycle-karte-launcher { padding-inline: 8px; }
+#screen-search .recycle-karte-related {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  align-self: center;
+  justify-self: end;
+  min-height: 0;
+  padding: 2px 8px;
+  font-size: .8rem;
+  line-height: 1.15;
+}
 .recycle-karte-form, .recycle-karte-status, .recycle-karte-help { margin: 0; }
 .recycle-karte-search-row, .recycle-karte-controls, .recycle-karte-pager, .recycle-karte-meta {
   display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .55rem; min-width: 0;
@@ -9,17 +27,16 @@
 .recycle-karte-search-row label { flex: 1 0 100%; font-size: .8rem; font-weight: 650; }
 .recycle-karte-status:empty { display: none; }
 .recycle-karte-status { color: inherit; font-size: .84rem; }
-.recycle-karte-entry button[type="button"], .recycle-karte-product button, .recycle-karte-dialog button {
+.recycle-karte-dialog button:not(.btn-search) {
   appearance: none; padding: .3rem .55rem; border: 1px solid var(--border, #cbd5e1);
   border-radius: .4rem; background: var(--surface, #fff); color: var(--text, #17283c);
   font: inherit; font-size: .82rem; cursor: pointer;
 }
-.recycle-karte-dialog button:disabled, .recycle-karte-product button:disabled { opacity: .5; cursor: default; }
-.recycle-karte-product { margin-block-end: .55rem; padding: .45rem .6rem; border: 1px solid var(--border, #cbd5e1); border-radius: .5rem; }
-.recycle-karte-product h3 { margin: 0 0 .3rem; font-size: .92rem; }
+.recycle-karte-dialog button:disabled { opacity: .5; cursor: default; }
+.recycle-karte-product { padding: .45rem .6rem; border: 1px solid var(--border, #cbd5e1); border-radius: .5rem; }
 .recycle-karte-result { display: flex; justify-content: space-between; align-items: center; gap: .4rem; padding-block: .2rem; }
-.recycle-karte-list-summary { display: flex; gap: .3rem .55rem; flex-wrap: wrap; align-items: baseline; overflow-wrap: anywhere; }
-.recycle-karte-list-summary span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 30ch; }
+.recycle-karte-list-summary { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 .55rem; align-items: baseline; min-inline-size: 0; overflow-wrap: anywhere; }
+.recycle-karte-list-summary span { grid-column: 1 / -1; grid-row: 2; min-inline-size: 0; }
 .recycle-karte-result button { flex-shrink: 0; }
 .recycle-karte-dialog {
   box-sizing: border-box; inline-size: min(48rem, calc(100vw - 1rem)); max-inline-size: calc(100vw - 1rem);
@@ -29,9 +46,11 @@
 }
 .recycle-karte-dialog::backdrop { background: rgb(14 27 43 / 55%); }
 .recycle-karte-dialog-head { display: flex; align-items: center; justify-content: space-between; gap: .45rem; border-bottom: 1px solid var(--border, #cbd5e1); padding-block-end: .45rem; }
+.recycle-karte-dialog-head > button { flex-shrink: 0; }
 .recycle-karte-dialog h2 { font-size: 1rem; margin: 0; overflow-wrap: anywhere; }
 .recycle-karte-dialog-body, .recycle-karte-detail-fields { display: grid; gap: .4rem; padding-block: .4rem; min-inline-size: 0; }
 .recycle-karte-dialog label { display: grid; gap: .2rem; }
+.recycle-karte-search-row input.search-input { padding-inline: 10px; box-sizing: border-box; }
 .recycle-karte-dialog select, .recycle-karte-dialog input { min-inline-size: 0; max-inline-size: 100%; font: inherit; padding: .25rem; }
 .recycle-karte-dialog select { justify-self: start; }
 .recycle-karte-dialog-body > .recycle-karte-status, .recycle-karte-meta, .recycle-karte-help { font-size: .8rem; }
