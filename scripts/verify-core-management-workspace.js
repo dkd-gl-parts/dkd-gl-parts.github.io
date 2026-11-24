@@ -35,7 +35,7 @@ function fixture() {
     corePendingStockRows: [], corePendingStockFiltered: [], corePendingStockPage: 0, corePendingStockSize: 0, corePendingStockHistory: [],
     coreCollectionRows: [], coreCollectionRankingRows: [], coreCollectionCategoryRanks: new Map(), coreCollectionFilteredRows: [], coreCollectionProductMap: {}, coreCollectionStockMap: {}, coreCollectionRenderedCount: 0, coreCollectionOrderedRows: [], coreCollectionSearchTerms: new WeakMap(),
     CORE_COLLECTION_VEHICLE_CLASSES: [["kei","軽四"],["passenger","乗用車"],["truck","トラック"],["van","商用バン"],["bus","バス"],["machine","建機・農機"],["other","その他"]],
-    CORE_MANAGEMENT_RENDER_BATCH_SIZE: 50, CORE_COLLECTION_CATEGORY_ORDER: ["starter", "alternator", "ac_compressor", "distributor", "other"], CORE_PRODUCT_FAST_SELECT: "*",
+    CORE_MANAGEMENT_RENDER_BATCH_SIZE: 50, CORE_COLLECTION_PRODUCT_SELECT: "dkd_shohin_id,category_code,category,dks_shohin_cd,manufacturer,manufacturer_part_number,genuine_part_number,genuine_part_number_2,daiko_part_number", CORE_COLLECTION_CATEGORY_ORDER: ["starter", "alternator", "ac_compressor", "distributor", "other"], CORE_PRODUCT_FAST_SELECT: "*",
     coreInventoryFilters: { keyword: "", vehicles: [], category: "", memo: "", korea: "exclude" },
     coreListMgmtRows: [], coreInventoryPendingRows: [], inventoryPendingFixture: [],
     coreListProductMap: {}, coreListVehicleMap: {}, coreListFilteredRows: [], CORE_LIST_PAGE_SIZE: 50,
@@ -58,6 +58,45 @@ const rows = [{ id: 1, dkd_shohin_id: 1, target_quantity: 10, priority: "high", 
 const products = [{ dkd_shohin_id: 1, manufacturer_part_number: "TEST-123", category_code: "starter" }, { dkd_shohin_id: 2, manufacturer_part_number: "TEST-456", category_code: "alternator" }];
 function ready(c) { c.respond = (table, columns) => ({ data: table === "core_collection_list_items" ? rows : table === "core_products" ? products : [{ id: 1, dkd_shohin_id: 1, quantity: 3, core_part_number: "CORE-123" }], error: null }); }
 async function main() {
+  {
+    const { c, get } = fixture();
+    const stock = [{ dkd_shohin_id: 3, quantity: 2 }];
+    const calls = [];
+    c.respond = (table, columns, range, ids) => {
+      calls.push({ table, columns, ids });
+      if (table === "core_collection_list_items") return { data: [
+        { ...rows[0], product: products[0] },
+        { ...rows[1], product: products[1] },
+        { id: 3, dkd_shohin_id: 4, product: null }
+      ], count: 3 };
+      if (table === "core_products") return { data: [{ dkd_shohin_id: 3, manufacturer_part_number: "STOCK-ONLY" }] };
+      return { data: stock };
+    };
+    await c.loadCoreCollectionList();
+    assert.equal(c.coreCollectionRows.length, 3); checks++;
+    assert.ok(c.coreCollectionRows.every(row => !Object.hasOwn(row, "product"))); checks++;
+    assert.equal(c.coreCollectionProductMap[1].manufacturer_part_number, "TEST-123"); checks++;
+    assert.equal(c.coreCollectionProductMap[3].manufacturer_part_number, "STOCK-ONLY"); checks++;
+    assert.equal(c.coreCollectionProductMap[4], undefined); checks++;
+    assert.match(calls.find(call => call.table === "core_collection_list_items").columns, /product:core_products!core_collection_list_items_product_fk\(/); checks++;
+    assert.deepEqual(calls.filter(call => call.table === "core_products").map(call => Array.from(call.ids)), [[3]]); checks++;
+    assert.match(get("core-list-list").innerHTML, /TEST-123/); checks++;
+  }
+  {
+    const { c } = fixture();
+    const selections = [];
+    c.respond = (table, columns) => {
+      if (table === "core_collection_list_items") {
+        selections.push(columns);
+        return selections.length === 1 ? { error: { code: "PGRST200" } } : { data: rows, count: 2 };
+      }
+      return { data: table === "core_products" ? products : [] };
+    };
+    await c.loadCoreCollectionList();
+    assert.equal(selections.length, 2); checks++;
+    assert.equal(selections[1], "*"); checks++;
+    assert.equal(c.coreCollectionProductMap[2].manufacturer_part_number, "TEST-456"); checks++;
+  }
   {
     const { c, get, vehicleFilters, inventoryVehicleFilters } = fixture();
     const settings = [
