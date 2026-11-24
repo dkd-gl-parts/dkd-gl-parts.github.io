@@ -49,7 +49,7 @@ function fixture() {
       if (result.error) return result;
       return { data: { linked: (result.data || []).filter(row => !row.replaced_at), pending: context.inventoryPendingFixture } };
     },
-    from(table) { let columns, bounds, ids; const query = { select(c) { columns = c; return query; }, order() { return query; }, eq() { return query; }, in(key, values) { ids = values; return query; }, limit() { return query; }, range(start, end) { bounds = { start, end }; return query; }, then(resolve, reject) { return Promise.resolve().then(() => context.respond(table, columns, bounds, ids)).then(resolve, reject); } }; return query; } };
+    from(table) { let columns, bounds, ids, after, options; const query = { select(c, o) { columns = c; options = o; return query; }, order() { return query; }, eq() { return query; }, gt(key, value) { assert.equal(key, "id"); after = value; return query; }, in(key, values) { ids = values; return query; }, limit() { return query; }, range(start, end) { bounds = { start, end }; return query; }, then(resolve, reject) { return Promise.resolve().then(() => context.respond(table, columns, bounds, ids, after, options)).then(resolve, reject); } }; return query; } };
   vm.createContext(context);
   vm.runInContext(functions.map(n => source.slice(n.start, n.end)).join("\n"), context);
   return { c: context, get, vehicleFilters, inventoryVehicleFilters };
@@ -130,14 +130,14 @@ async function main() {
       return { data: [] };
     };
     await c.setCoreListMode("inventory");
-    assert.equal(settingsStarted, 4); checks++;
+    assert.equal(settingsStarted, 1); checks++;
     const prefetched = c.getCoreManagementCache().collectionRead;
     const needed = c.setCoreListMode("collection");
     assert.equal(c.getCoreManagementCache().collectionRead, prefetched); checks++;
     assert.match(get("core-list-list").innerHTML, /loading/); checks++;
     resolveSettings({ data: [{ ...rows[0], product: products[0] }], count: 1 });
     await needed;
-    assert.equal(settingsStarted, 4); checks++;
+    assert.equal(settingsStarted, 1); checks++;
     assert.match(get("core-list-list").innerHTML, /TEST-123/); checks++;
     assert.equal(c.getCoreManagementCache().collection, prefetched.expiresAt); checks++;
   }
@@ -189,7 +189,7 @@ async function main() {
       return { data: table === "core_products" ? products : [] };
     };
     await c.loadCoreCollectionList();
-    assert.equal(selections.length, 5); checks++;
+    assert.equal(selections.length, 2); checks++;
     assert.equal(selections.filter(columns => columns === "*").length, 1); checks++;
     assert.equal(c.coreCollectionProductMap[2].manufacturer_part_number, "TEST-456"); checks++;
   }
@@ -573,22 +573,27 @@ async function main() {
 
   {
     const { c, get } = fixture();
-    const all = Array.from({length:1078}, (_,i)=>({id:i+1,dkd_shohin_id:i+1,target_quantity:1,priority:"normal",status:"collecting"}));
-    const ranges = [];
-    c.respond = (table, columns, range) => {
+    const all = Array.from({length:5734}, (_,i)=>({id:(i+1)*3,dkd_shohin_id:i+1,target_quantity:1,priority:"normal",status:"collecting"}));
+    const pages = [];
+    c.respond = (table, columns, range, ids, after, options) => {
       if (table !== "core_collection_list_items") return {data:[],error:null};
-      ranges.push(range); return {data:all.slice(range.start,range.end+1),count:all.length,error:null};
+      assert.equal(options, undefined);
+      assert.equal(range.start, 0);
+      pages.push({after, size: range.end + 1});
+      if (after === 2400 && range.end === 799) return {error:{code:"57014",message:"canceling statement due to statement timeout"}};
+      return {data:all.filter(row=>after == null || row.id > after).slice(0,range.end+1),error:null};
     };
     await c.loadCoreCollectionList();
-    assert.equal(c.coreCollectionRows.length,1078);checks++;
-    assert.equal(c.coreCollectionFilteredRows.length,1078);checks++;
-    assert.deepEqual(ranges.map(r=>r.start).sort((a,b)=>a-b),[0,1000,2000,3000]);checks++;
-    assert.ok(ranges.every(r=>r.end-r.start===999));checks++;
-    assert.match(get("core-list-count").innerHTML,/1078/);checks++;
+    assert.equal(c.coreCollectionRows.length,5734);checks++;
+    assert.equal(c.coreCollectionFilteredRows.length,5734);checks++;
+    assert.deepEqual(Array.from(c.coreCollectionRows, row=>row.id),all.map(row=>row.id));checks++;
+    assert.deepEqual(pages.slice(0,3),[{after:undefined,size:800},{after:2400,size:800},{after:2400,size:200}]);checks++;
+    assert.ok(pages.slice(2).every(page=>page.size===200));checks++;
+    assert.match(get("core-list-count").innerHTML,/5734/);checks++;
   }
   {
     const { c, get } = fixture(); const original=[{id:99,dkd_shohin_id:99}]; c.coreCollectionRows=original;
-    c.respond=(table, columns, range)=>table!=="core_collection_list_items"?{data:[],error:null}:range.start===0?{data:Array.from({length:1000},(_,i)=>({id:i+1})),count:1200,error:null}:{data:null,error:{message:"second page unavailable"}};
+    c.respond=(table, columns, range, ids, after)=>table!=="core_collection_list_items"?{data:[],error:null}:after==null?{data:Array.from({length:800},(_,i)=>({id:i+1})),error:null}:{data:null,error:{message:"second page unavailable"}};
     await c.loadCoreCollectionList();
     assert.equal(c.coreManagementDataReady,false);checks++;
     assert.equal(c.coreCollectionRows,original);checks++;

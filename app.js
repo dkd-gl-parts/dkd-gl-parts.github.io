@@ -9116,7 +9116,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1392";
+var APP_VERSION       = "v1.1.1393";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -32128,57 +32128,36 @@ async function loadCoreCollectionList() {
 }
 
 async function loadCoreCollectionItems(checkCurrent) {
-  var pageSize = 1000;
+  var pageSize = 800;
   var maxRows = 50000;
   var columns = "*,product:core_products!core_collection_list_items_product_fk(" + CORE_COLLECTION_PRODUCT_SELECT + ")";
-  function fetchPage(offset, size, options) {
-    return sb.from("core_collection_list_items").select(columns, options)
-      .order("id", { ascending: true }).range(offset, offset + size - 1);
-  }
-  var firstRequest = Promise.resolve(fetchPage(0, pageSize, { count: "exact" }));
-  // Start the next ranges while the first response determines the exact count.
-  var initialPages = new Map([1, 2, 3].map(function(page) {
-    var offset = page * pageSize;
-    return [offset, Promise.resolve(fetchPage(offset, pageSize)).catch(function(error) { return { error: error }; })];
-  }));
-  var first = await firstRequest;
-  checkCurrent();
-  if (first.error?.code === "PGRST200") {
-    columns = "*";
-    initialPages.clear();
-    first = await fetchPage(0, pageSize, { count: "exact" });
+  var rows = [];
+  var lastId = null;
+  for (;;) {
     checkCurrent();
-  }
-  if (first.error) throw first.error;
-  var rows = first.data || [];
-  if (first.count >= maxRows) throw new Error("収集対象が多いため取得を中断しました。管理者へ連絡してください。");
-  if (Number.isInteger(first.count)) {
-    if (rows.length === 0 && first.count !== 0) throw new Error("Incomplete core collection records");
-    var step = rows.length || pageSize;
-    for (var start = step; start < first.count; start += step * 4) {
-      var group = [];
-      for (var offset = start; offset < Math.min(first.count, start + step * 4); offset += step) {
-        group.push((step === pageSize && initialPages.get(offset)) || fetchPage(offset, step));
-      }
-      var pages = await Promise.all(group);
-      checkCurrent();
-      pages.forEach(function(page) {
-        if (page.error) throw page.error;
-        rows = rows.concat(page.data || []);
-      });
+    var query = sb.from("core_collection_list_items").select(columns).order("id", { ascending: true });
+    if (lastId !== null) query = query.gt("id", lastId);
+    var result = await query.range(0, pageSize - 1);
+    checkCurrent();
+    if (result.error?.code === "PGRST200" && columns !== "*") {
+      columns = "*";
+      continue;
     }
-    if (rows.length !== first.count) throw new Error("Incomplete core collection records");
-  } else {
-    var previousCount = rows.length;
-    while (previousCount === pageSize) {
-      if (rows.length >= maxRows) throw new Error("収集対象が多いため取得を中断しました。管理者へ連絡してください。");
-      var page = await (initialPages.get(rows.length) || fetchPage(rows.length, pageSize));
-      checkCurrent();
-      if (page.error) throw page.error;
-      var batch = page.data || [];
-      previousCount = batch.length;
-      rows = rows.concat(batch);
+    if (result.error?.code === "57014" && pageSize > 200) {
+      pageSize = 200;
+      continue;
     }
+    if (result.error) throw result.error;
+    var page = result.data || [];
+    if (!page.length) break;
+    var nextId = page[page.length - 1].id;
+    if (nextId == null || (lastId !== null && Number(nextId) <= Number(lastId))) {
+      throw new Error("Incomplete core collection records");
+    }
+    rows = rows.concat(page);
+    if (rows.length >= maxRows) throw new Error("収集対象が多いため取得を中断しました。管理者へ連絡してください。");
+    if (page.length < pageSize) break;
+    lastId = nextId;
   }
   if (new Set(rows.map(function(row) { return row.id; })).size !== rows.length) throw new Error("Incomplete core collection records");
   return rows;
