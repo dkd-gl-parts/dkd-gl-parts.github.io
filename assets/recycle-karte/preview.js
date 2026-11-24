@@ -661,8 +661,9 @@
         const modal = details;
         control.disabled = true;
         try {
-          if (currentId() !== productId || !panel.classList.contains("show")) await openProductByDkdId(productId);
-          if (modal === details && currentId() === productId && panel.classList.contains("show")) modal.close();
+          const productIsVisible = () => currentId() === productId && (isPC() || panel.classList.contains("show"));
+          if (!productIsVisible()) await openProductByDkdId(productId);
+          if (modal === details && productIsVisible()) modal.close();
           else if (control.isConnected) control.textContent = tr("error");
         } catch {
           if (control.isConnected) control.textContent = tr("error");
