@@ -43,7 +43,11 @@
     preview: ["販売管理（カルテ検索プレビュー）", "Sales Management (Karte preview)", "销售管理（卡片查询预览）"],
     search: ["カルテ番号検索", "Search Karte number", "查询卡片编号"],
     searchOpen: ["カルテ検索", "Karte search", "卡片查询"],
-    numberExample: ["例 22", "e.g. 22", "例如 22"],
+    numberExample: ["カルテ番号（例 22）", "Karte number (e.g. 22)", "卡片编号（例如 22）"],
+    workspaceTools: ["カルテ操作", "Karte actions", "卡片操作"],
+    productListTitle: ["Recycle+カルテ一覧", "Recycle+ Karte results", "Recycle+ 卡片列表"],
+    partMatch: ["品番一致", "Part number match", "品号匹配"],
+    countShort: ["{count}件", "{count} results", "{count} 条"],
     submit: ["検索", "Search", "查询"],
     related: ["関連カルテ", "Related Karte", "关联卡片"],
     list: ["Recycle+カルテ", "Recycle+ Karte", "Recycle+ 卡片"],
@@ -92,7 +96,9 @@
   const panel = $("panel");
   const panelTitle = $("panel-topbar-title");
   const searchHeader = screen?.querySelector(".search-header");
-  if (!searchHeader || !panel || !panelTitle || !menu) return;
+  const productIdentity = $("sales-product-identity");
+  const conditions = $("panel-right");
+  if (!searchHeader || !panel || !panelTitle || !productIdentity || !conditions || !menu) return;
 
   let active = false;
   let epoch = 0;
@@ -167,12 +173,14 @@
   }
 
   const input = element("input", {id:"recycle-karte-number", type:"search", className:"search-input",
-    inputmode:"search", placeholder:tr("numberExample"), maxlength:"22", autocomplete:"off"});
-  const status = element("p", {role:"status", className:"recycle-karte-status"});
-  const searchRow = element("div", {className:"recycle-karte-search-row"},
-    element("label", {for:input.id, text:tr("search")}), input,
-    button("submit", null, {type:"submit", className:"btn-search"}));
-  const searchForm = element("form", {className:"recycle-karte-form"}, searchRow, status);
+    inputmode:"search", placeholder:tr("numberExample"), "aria-label":tr("search"), maxlength:"22", autocomplete:"off"});
+  const submit = button("submit", null, {type:"submit", className:"btn-search", "aria-label":tr("searchOpen")});
+  const options = button("workspaceTools", event => openTools(event.currentTarget), {
+    className:"search-clear-btn recycle-karte-options", text:"…", "aria-label":tr("workspaceTools"),
+    title:tr("workspaceTools"), "aria-haspopup":"dialog"
+  });
+  const searchForm = element("form", {className:"search-row recycle-karte-form", hidden:""}, input, submit, options);
+  searchHeader.append(searchForm);
   const inventoryButton = button("inventoryOpen", () => openInventory(inventoryButton));
   const tools = element("div", {className:"recycle-karte-controls"},
     button("manage", event => void openManage(event.currentTarget)), inventoryButton,
@@ -180,16 +188,25 @@
       reset();
       partSearchInput?.focus({preventScroll:true});
     }));
-  const searchLauncher = button("searchOpen", event => openSearch(event.currentTarget), {
-    className:"search-clear-btn recycle-karte-search-launcher", "aria-haspopup":"dialog", hidden:""
-  });
-  searchHeader.append(searchLauncher);
   const relatedLauncher = button("related", event => openProductList(event.currentTarget), {
-    className:"search-clear-btn recycle-karte-detail-launcher", "aria-haspopup":"dialog", hidden:""
+    className:"search-clear-btn recycle-karte-detail-launcher", "aria-haspopup":"dialog"
   });
   const relatedSlot = element("span", {className:"recycle-karte-launcher-slot", hidden:""}, relatedLauncher);
   panelTitle.after(relatedSlot);
-  const mobileDetail = window.matchMedia("(max-width: 767px)");
+
+  const sidebarOpen = button("productListTitle", event => openProductList(event.currentTarget), {className:"recycle-karte-sidebar-open", "aria-haspopup":"dialog"});
+  const sidebarTitle = element("h3", {id:"recycle-karte-sidebar-title"}, sidebarOpen);
+  const sidebarMatch = element("small", {className:"recycle-karte-match", hidden:""});
+  const sidebarPager = element("div", {className:"recycle-karte-sidebar-paging"});
+  const sidebarList = element("div", {className:"recycle-karte-sidebar-list", "aria-live":"polite"});
+  const sidebar = element("aside", {className:"recycle-karte-sidebar", "aria-labelledby":sidebarTitle.id, hidden:""},
+    element("div", {className:"recycle-karte-sidebar-head"}, sidebarTitle, sidebarMatch, sidebarPager), sidebarList);
+  conditions.append(sidebar);
+  const rightColumn = window.matchMedia("(min-width: 981px)");
+  const occupiedRight = ["sales-shipping-estimate-section", "detail-customer-section", "sales-conditions-market"]
+    .map($).concat(conditions.querySelector(".sales-conditions-terms")).filter(Boolean);
+  let sidebarKey = "";
+  let sidebarVersion = 0;
   const partSearchInput = $("q");
   let partLookupRequest = 0;
   const partLookupStatus = element("p", {className:"recycle-karte-status", role:"status"});
@@ -198,33 +215,56 @@
   const partLookup = element("section", {className:"recycle-karte-product", hidden:""},
     partLookupStatus, element("div", {className:"recycle-karte-controls"}, partLookupFirst, partLookupResults));
 
-  function syncLaunchers() {
-    const enabled = canShow();
-    searchLauncher.hidden = !enabled;
-    if (enabled) searchLauncher.textContent = tr("searchOpen");
-
-    relatedSlot.hidden = !enabled || !mobileDetail.matches || !panel.classList.contains("show");
-    if (relatedSlot.hidden) return;
-    relatedLauncher.textContent = tr("related");
-    relatedLauncher.hidden = false;
-
-    const title = document.createRange();
-    title.selectNodeContents(panelTitle);
-    relatedLauncher.hidden = relatedLauncher.getBoundingClientRect().left < title.getBoundingClientRect().right + 4;
+  function positionRelated() {
+    const id = canShow() ? currentId() : "";
+    sidebar.hidden = !id || !rightColumn.matches;
+    if (!sidebar.hidden) {
+      const b = sidebar.getBoundingClientRect();
+      const clip = panel.getBoundingClientRect();
+      sidebar.hidden = !b.width || b.bottom > clip.bottom || occupiedRight.some(node => {
+        const a = node.getBoundingClientRect();
+        return a.width && a.height && a.left < b.right && b.left < a.right &&
+          a.top < b.bottom + 4 && b.top < a.bottom + 4;
+      });
+    }
+    relatedSlot.hidden = !id || !sidebar.hidden;
+    if (!relatedSlot.hidden) {
+      const title = document.createRange();
+      title.selectNodeContents(panelTitle);
+      relatedLauncher.textContent = tr("related");
+      relatedLauncher.hidden = false;
+      relatedLauncher.hidden = relatedLauncher.getBoundingClientRect().left < title.getBoundingClientRect().right + 4;
+    }
   }
 
-  function openSearch(origin) {
-    if (!canShow()) return;
-    if (status.textContent === tr("loading")) status.textContent = "";
-    input.placeholder = tr("numberExample");
-    const {body} = dialog(tr("search"), origin);
-    body.append(searchForm, partLookup);
-    if (currentId()) {
-      body.append(element("div", {className:"recycle-karte-controls"},
-        button("related", event => openProductList(event.currentTarget))));
+  function syncWorkspace(refresh = false) {
+    const enabled = canShow();
+    searchForm.hidden = !enabled;
+    if (enabled) {
+      input.placeholder = tr("numberExample");
+      input.setAttribute("aria-label", tr("search"));
+      submit.textContent = tr("submit");
+      submit.setAttribute("aria-label", tr("searchOpen"));
+      options.setAttribute("aria-label", tr("workspaceTools"));
+      options.title = tr("workspaceTools");
+      sidebarOpen.textContent = tr("productListTitle");
     }
-    body.append(tools);
-    input.focus();
+    const id = enabled && rightColumn.matches ? currentId() : "";
+    const part = id ? selectedPartNumber() : "";
+    const key = id && id + "|" + part;
+    if (refresh === true || key !== sidebarKey) {
+      sidebarKey = key;
+      const version = ++sidebarVersion;
+      sidebarList.replaceChildren();
+      if (key) populateRelatedList(sidebarList, id, part, 2, () => canShow() && version === sidebarVersion, true);
+    }
+    positionRelated();
+  }
+
+  function openTools(origin) {
+    if (!canShow()) return;
+    const {body} = dialog(tr("workspaceTools"), origin);
+    body.append(partLookup, tools);
   }
 
   function reset() {
@@ -233,8 +273,8 @@
     lookups++;
     clearPartLookup();
     input.value = "";
-    status.replaceChildren();
-    syncLaunchers();
+    searchForm.removeAttribute("aria-busy");
+    syncWorkspace();
     details?.close();
     displayedDetail = null;
   }
@@ -252,8 +292,7 @@
       try {
         await enterSearch();
         if (run !== epoch || !canShow()) return;
-        syncLaunchers();
-        searchLauncher.focus({preventScroll:true});
+        syncWorkspace();
       } catch {
         if (run === epoch) reset();
       }
@@ -274,38 +313,89 @@
     return window.matchMedia("(max-width: 480px), (max-height: 620px)").matches ? 3 : pageSize;
   }
 
+  function partNumberQuery(value) {
+    const part = String(value || "").normalize("NFKC").trim();
+    return /^[A-Z0-9][A-Z0-9 \u002d\u2010\u2011\u2013\u2212]{1,79}$/i.test(part) && /[0-9]/.test(part) ? part : "";
+  }
+
+  function selectedPartNumber() {
+    const primary = partNumberQuery(salesDetailPrimaryPartNumber(currentProduct));
+    const typed = partNumberQuery(partSearchInput?.value);
+    const standardize = value => value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    const numbers = [primary, currentProduct.genuine_part_number, currentProduct.genuine_part_number_2,
+      currentProduct.manufacturer_part_number].map(partNumberQuery);
+    return typed && numbers.some(number => number && standardize(number) === standardize(typed)) ? typed : primary;
+  }
+
   function openProductList(origin, id = currentId()) {
-    if (!canShow()) return;
-    if (!id) return;
-    const {body, modal} = dialog(tr("related"), origin);
-    const productList = element("div", {className:"recycle-karte-list", "aria-live":"polite"});
-    body.append(productList);
-    const perPage = resultPageSize();
+    if (!canShow() || !id) return;
+    const {body, modal} = dialog(tr("productListTitle"), origin);
+    const list = element("div", {className:"recycle-karte-list", "aria-live":"polite"});
+    body.append(list);
+    const part = String(id) === currentId() ? selectedPartNumber() : "";
+    populateRelatedList(list, id, part, resultPageSize(), () => details === modal && canShow(), false);
+  }
+
+  function populateRelatedList(list, id, part, perPage, isCurrent, compact) {
     let pageRequest = 0;
+    let usePart = false;
 
     async function showPage(page) {
       const run = ++pageRequest;
-      productList.textContent = tr("loading");
+      const offset = page * perPage;
+      list.textContent = tr("loading");
+      if (compact) {
+        sidebarMatch.hidden = true;
+        sidebarPager.replaceChildren();
+        positionRelated();
+      }
       try {
-        const rows = await rpc("read", {p_product:id, p_offset:page * perPage});
-        if (details !== modal || run !== pageRequest) return;
-        productList.replaceChildren();
-        if (!rows.length) productList.textContent = tr("noRows");
-        else if (rows[0].related_count != null) productList.append(element("p", {className:"recycle-karte-status",
-          text:tr("partLookupCount").replace("{count}", String(rows[0].related_count))}));
+        let rows = usePart ? [] : await rpc("read", {p_product:id, p_offset:offset});
+        if (!isCurrent() || run !== pageRequest) return;
+        if (page === 0 && !rows.length && part) usePart = true;
+        let more = rows.length > perPage;
+        let count = rows[0]?.related_count;
+        if (usePart) {
+          const result = await rpc("read_part", {p_part:part, p_offset:offset});
+          if (!isCurrent() || run !== pageRequest) return;
+          rows = result.items;
+          count = result.total;
+          more = count > offset + perPage;
+        }
+        list.replaceChildren();
+        if (!rows.length) list.textContent = tr("noRows");
+        const countText = count == null ? "" : tr("partLookupCount").replace("{count}", String(count));
+        if (compact) {
+          const amount = count == null ? "" : tr("countShort").replace("{count}", String(count));
+          sidebarMatch.textContent = [usePart ? tr("partMatch") : "", amount].filter(Boolean).join(" · ");
+          if (count != null) sidebarMatch.setAttribute("aria-label", countText);
+          else sidebarMatch.removeAttribute("aria-label");
+          sidebarMatch.hidden = !rows.length || !sidebarMatch.textContent;
+        } else if (rows.length) {
+          if (countText) list.append(element("p", {className:"recycle-karte-status", text:countText}));
+          if (usePart) list.append(element("small", {className:"recycle-karte-match", text:tr("partMatch")}));
+        }
         rows.slice(0, perPage).forEach(row => {
+          const open = event => void openDetail(row.karte_number, event.currentTarget);
+          if (compact) {
+            list.append(button("detail", open, {text:row.karte_number, className:"recycle-karte-sidebar-number",
+              "aria-label":tr("detail") + " " + row.karte_number}));
+            return;
+          }
           const summary = element("div", {className:"recycle-karte-list-summary"},
             element("strong", {text:row.karte_number}),
             element("span", {text:[row.part_name || row.part_number || tr("missing"), row.vehicle_model].filter(Boolean).join(" · ")}),
-            element("small", {text:row.master_product_id ? tr("masterOnly") : productKindLabel(row.product_kind)}));
-          productList.append(element("div", {className:"recycle-karte-result"}, summary,
-            button("detail", event => void openDetail(row.karte_number, event.currentTarget),
-              {"aria-label":tr("detail") + " " + row.karte_number})));
+            element("small", {text:row.master_product_id ? tr("masterOnly") :
+              usePart && !row.link_active ? tr("unknown") : productKindLabel(row.product_kind)}));
+          list.append(element("div", {className:"recycle-karte-result"}, summary,
+            button("detail", open, {"aria-label":tr("detail") + " " + row.karte_number})));
         });
-        const navigation = pager(page, rows.length > perPage, showPage);
-        if (navigation) productList.append(navigation);
+        const navigation = pager(page, more, showPage);
+        if (navigation) (compact ? sidebarPager : list).append(navigation);
       } catch (error) {
-        if (details === modal && run === pageRequest && error?.code !== "closed") productList.textContent = errorText(error);
+        if (isCurrent() && run === pageRequest && error?.code !== "closed") list.textContent = errorText(error);
+      } finally {
+        if (compact && isCurrent() && run === pageRequest) positionRelated();
       }
     }
     void showPage(0);
@@ -322,8 +412,8 @@
   function searchPartLookup() {
     clearPartLookup();
     if (!canShow()) return;
-    const part = String(partSearchInput?.value || "").normalize("NFKC").trim();
-    if (!/^[A-Z0-9][A-Z0-9 \u002d\u2010\u2011\u2013\u2212]{1,79}$/i.test(part) || !/[0-9]/.test(part)) return;
+    const part = partNumberQuery(partSearchInput?.value);
+    if (!part) return;
     const run = partLookupRequest;
     partLookup.hidden = false;
     partLookupStatus.textContent = tr("loading");
@@ -383,22 +473,22 @@
   searchForm.addEventListener("submit", async event => {
     event.preventDefault();
     if (!canShow()) return;
+    const lookup = ++lookups;
     const requested = normalizeLookupNumber(input.value);
     if (!numberPattern.test(requested)) {
-      status.textContent = tr("valid");
-      input.focus();
+      searchForm.removeAttribute("aria-busy");
+      dialog(tr("search"), input).body.textContent = tr("valid");
       return;
     }
-    const lookup = ++lookups;
     const searchDialog = details;
-    const isCurrent = () => lookup === lookups && details === searchDialog && searchDialog?.open && canShow();
+    const isCurrent = () => lookup === lookups && details === searchDialog && canShow();
     const targetPress = searchRequestSeq;
-    status.textContent = tr("loading");
+    searchForm.setAttribute("aria-busy", "true");
     try {
       const [row] = await rpc("read", {p_karte:requested, p_detail:true});
       if (!isCurrent()) return;
       if (!row) {
-        status.textContent = tr("noRows");
+        dialog(tr("search"), input).body.textContent = tr("noRows");
         return;
       }
       if (row.link_active && targetPress === searchRequestSeq) {
@@ -417,10 +507,11 @@
         } catch { /* The saved karte remains available. */ }
       }
       if (!isCurrent()) return;
-      status.textContent = row.link_active && currentId() === row.dkd_shohin_id ? "" : tr("unknown");
       displayDetail(row, input);
     } catch (error) {
-      if (isCurrent() && error?.code !== "closed") status.textContent = errorText(error);
+      if (isCurrent() && error?.code !== "closed") dialog(tr("search"), input).body.textContent = errorText(error);
+    } finally {
+      if (lookup === lookups) searchForm.removeAttribute("aria-busy");
     }
   });
 
@@ -440,7 +531,10 @@
         details = null;
         displayedDetail = null;
         dialogOrigin = null;
-        if (canShow() && focusTarget?.isConnected) focusTarget.focus({preventScroll:true});
+        if (canShow() && focusTarget?.isConnected) {
+          const covered = focusTarget === input && panel.classList.contains("show") && !relatedSlot.hidden;
+          (covered ? relatedLauncher : focusTarget).focus({preventScroll:true});
+        }
       }
     });
     details = modal;
@@ -712,6 +806,7 @@
       save.disabled = true;
       try {
         await rpc("link", {p_karte:row.karte_number, p_variant:id || null, p_note:note.value});
+        syncWorkspace(true);
         state.textContent = tr("saved");
         const [updated] = await rpc("read", {p_karte:row.karte_number, p_detail:true});
         if (displayedDetail === row && updated) {
@@ -931,6 +1026,7 @@
         file.disabled = true;
         try {
           await rpc("import", {p_rows:reviewed, p_apply:true, p_expected:previewed});
+          syncWorkspace(true);
           reviewed = previewed = null;
           message.textContent = tr("saved");
           diff.replaceChildren();
@@ -979,12 +1075,13 @@
     void pendingPage(0);
   }
 
-  const launcherResize = new ResizeObserver(syncLaunchers);
-  launcherResize.observe(panelTitle);
-  const launcherChanges = new MutationObserver(syncLaunchers);
-  launcherChanges.observe(panelTitle, {childList:true, characterData:true, subtree:true});
-  launcherChanges.observe(panel, {attributes:true, attributeFilter:["class"]});
-  mobileDetail.addEventListener("change", syncLaunchers);
+  const relatedResize = new ResizeObserver(positionRelated);
+  [panelTitle, conditions, panel, ...occupiedRight].forEach(node => relatedResize.observe(node));
+  const selectionChanges = new MutationObserver(syncWorkspace);
+  [panelTitle, productIdentity].forEach(node => selectionChanges.observe(node,
+    {childList:true, characterData:true, subtree:true}));
+  selectionChanges.observe(panel, {attributes:true, attributeFilter:["class"]});
+  rightColumn.addEventListener("change", syncWorkspace);
   new MutationObserver(syncMenu).observe(menu, {childList:true, subtree:true});
   new MutationObserver(() => {
     if (active && !canShow()) reset();

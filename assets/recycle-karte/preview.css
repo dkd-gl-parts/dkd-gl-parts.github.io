@@ -1,11 +1,9 @@
 .recycle-karte-menu { text-align: start; font: inherit; }
-.recycle-karte-launcher-slot[hidden], .recycle-karte-search-launcher[hidden],
-.recycle-karte-detail-launcher[hidden], .recycle-karte-product[hidden] { display: none; }
-#screen-search .recycle-karte-search-launcher {
-  margin-block-start: 6px;
-  min-height: 26px;
-  padding-block: 1px;
-}
+.recycle-karte-launcher-slot[hidden], .recycle-karte-detail-launcher[hidden],
+.recycle-karte-product[hidden], #screen-search .recycle-karte-form[hidden],
+#screen-search .recycle-karte-sidebar[hidden] { display: none; }
+#screen-search .recycle-karte-form { margin-block: 6px 0; }
+#screen-search .recycle-karte-options { min-inline-size: 30px; padding-inline: 4px; font-size: 15px; }
 #screen-search .recycle-karte-launcher-slot {
   position: relative;
   flex: 0 0 0;
@@ -21,12 +19,10 @@
   padding: 0 6px;
   font-size: 12px;
 }
-.recycle-karte-form, .recycle-karte-status, .recycle-karte-help { margin: 0; }
-.recycle-karte-search-row, .recycle-karte-controls, .recycle-karte-pager, .recycle-karte-meta {
+.recycle-karte-status, .recycle-karte-help { margin: 0; }
+.recycle-karte-controls, .recycle-karte-pager, .recycle-karte-meta {
   display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .55rem; min-width: 0;
 }
-.recycle-karte-search-row input { flex: 1 1 8rem; min-width: 0; }
-.recycle-karte-search-row label { flex: 1 0 100%; font-size: .8rem; font-weight: 650; }
 .recycle-karte-status:empty { display: none; }
 .recycle-karte-status { color: inherit; font-size: .84rem; }
 .recycle-karte-dialog button:not(.btn-search) {
@@ -52,7 +48,6 @@
 .recycle-karte-dialog h2 { font-size: 1rem; margin: 0; overflow-wrap: anywhere; }
 .recycle-karte-dialog-body, .recycle-karte-detail-fields { display: grid; gap: .4rem; padding-block: .4rem; min-inline-size: 0; }
 .recycle-karte-dialog label { display: grid; gap: .2rem; }
-.recycle-karte-search-row input.search-input { padding-inline: 10px; box-sizing: border-box; }
 .recycle-karte-dialog select, .recycle-karte-dialog input { min-inline-size: 0; max-inline-size: 100%; font: inherit; padding: .25rem; }
 .recycle-karte-dialog select { justify-self: start; }
 .recycle-karte-dialog-body > .recycle-karte-status, .recycle-karte-meta, .recycle-karte-help { font-size: .8rem; }
@@ -80,19 +75,72 @@
 
 .recycle-karte-dialog textarea { resize: none; inline-size: 100%; box-sizing: border-box; font: inherit; }
 
+#screen-search #panel-right:has(> .recycle-karte-sidebar:not([hidden])) { position: relative; }
+#screen-search .recycle-karte-sidebar {
+  position: absolute;
+  grid-column: 2;
+  grid-row: 2 / 4;
+  inset-inline: 0 16px;
+  inset-block-end: 2px;
+  padding: 3px 8px;
+  border: 1px solid var(--dcats-border, #cbd8e8);
+  border-radius: 6px;
+  background: #fff;
+  line-height: 1.4;
+  font-size: 12px;
+}
+.recycle-karte-sidebar-head { display: flex; gap: 6px; align-items: center; margin-block-end: 2px; }
+.recycle-karte-sidebar h3 { margin: 0; font-size: 13px; color: var(--dcats-ink); line-height: 18px; }
+.recycle-karte-sidebar-paging { margin-inline-start: auto; }
+.recycle-karte-sidebar-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 8px; min-inline-size: 0; }
+.recycle-karte-sidebar-list:not(:has(.recycle-karte-sidebar-number)) { grid-template-columns: minmax(0, 1fr); }
+.recycle-karte-sidebar-number {
+  justify-self: start;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: var(--dcats-link, #315f9f);
+  cursor: pointer;
+  text-decoration: underline;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  line-height: 16px;
+}
+.recycle-karte-sidebar .recycle-karte-pager { gap: 4px; }
+.recycle-karte-sidebar .recycle-karte-pager button {
+  padding: 1px 5px;
+  border: 1px solid var(--dcats-border, #cbd8e8);
+  border-radius: 4px;
+  background: #fff;
+  font: inherit;
+  line-height: 14px;
+  cursor: pointer;
+}
+.recycle-karte-sidebar .recycle-karte-pager button:disabled { cursor: default; opacity: .5; }
+.recycle-karte-match { color: var(--dcats-muted, #667085); font-size: 11px; }
+
+@media (max-width: 1120px) {
+  #screen-search .recycle-karte-sidebar { inset-inline-end: 12px; }
+}
+
 @media (max-width: 767px) {
-  #screen-search .search-header:has(> .recycle-karte-search-launcher:not([hidden])) {
+  #screen-search .search-header:has(> .recycle-karte-form:not([hidden])) {
     padding-block: 4px 2px;
   }
-  #screen-search .recycle-karte-search-launcher {
-    margin-block-start: 2px;
-    min-height: 24px;
+  #screen-search .search-header:has(> .recycle-karte-form:not([hidden])) .search-input,
+  #screen-search .search-header:has(> .recycle-karte-form:not([hidden])) .btn-search,
+  #screen-search .recycle-karte-options {
+    height: 30px;
+    min-height: 30px;
   }
-  #screen-search .search-header:has(> .recycle-karte-search-launcher:not([hidden])) + .filter-row {
+  #screen-search .recycle-karte-form { margin-block-start: 0; }
+  #screen-search .search-header:has(> .recycle-karte-form:not([hidden])) + .filter-row {
     padding-block: 2px;
   }
-  #screen-search .search-header:has(> .recycle-karte-search-launcher:not([hidden])) + .filter-row + .search-count-row {
+  #screen-search .search-header:has(> .recycle-karte-form:not([hidden])) + .filter-row + .search-count-row {
     min-height: 36px;
     padding-block: 2px;
   }
 }
+
+.recycle-karte-sidebar-open { padding: 0; border: 0; background: none; color: var(--dcats-link, #315f9f); font: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
