@@ -75,53 +75,82 @@
 
 .recycle-karte-dialog textarea { resize: none; inline-size: 100%; box-sizing: border-box; font: inherit; }
 
-#screen-search #panel-right:has(> .recycle-karte-sidebar:not([hidden])) { position: relative; }
-#screen-search .recycle-karte-sidebar {
-  position: absolute;
+#screen-search .recycle-karte-shipping-column { display: contents; }
+#screen-search .recycle-karte-shipping-column-active {
   grid-column: 2;
-  grid-row: 2 / 4;
-  inset-inline: 0 16px;
-  inset-block-end: 2px;
-  padding: 3px 8px;
+  grid-row: 2 / 5;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+#screen-search .recycle-karte-shipping-column-active > .sales-shipping-estimate {
+  align-self: stretch;
+  flex: 0 0 auto;
+}
+#screen-search #panel-right:has(> .recycle-karte-shipping-column-active) .sales-conditions-market {
+  grid-column: 1;
+}
+#screen-search #panel-right:has(> .recycle-karte-shipping-column-active) .sales-conditions-terms {
+  grid-column: 1;
+  grid-row: 3;
+}
+#screen-search .recycle-karte-sidebar {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  contain: size;
+  padding: 3px 0 0;
   border: 1px solid var(--dcats-border, #cbd8e8);
   border-radius: 6px;
   background: #fff;
-  line-height: 1.4;
   font-size: 12px;
+  line-height: 1.35;
 }
-.recycle-karte-sidebar-head { display: flex; gap: 6px; align-items: center; margin-block-end: 2px; }
+#screen-search .sales-shipping-estimate:not([data-dcats-display="none"]) + .recycle-karte-sidebar { margin-top: 6px; }
+.recycle-karte-sidebar-head { display: flex; flex-wrap: wrap; gap: 2px 6px; align-items: center; padding: 0 7px 3px; }
 .recycle-karte-sidebar h3 { margin: 0; font-size: 13px; color: var(--dcats-ink); line-height: 18px; }
-.recycle-karte-sidebar-paging { margin-inline-start: auto; }
-.recycle-karte-sidebar-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 8px; min-inline-size: 0; }
-.recycle-karte-sidebar-list:not(:has(.recycle-karte-sidebar-number)) { grid-template-columns: minmax(0, 1fr); }
-.recycle-karte-sidebar-number {
-  justify-self: start;
-  padding: 2px 0;
-  border: 0;
-  background: none;
-  color: var(--dcats-link, #315f9f);
-  cursor: pointer;
-  text-decoration: underline;
-  font: inherit;
-  font-variant-numeric: tabular-nums;
-  line-height: 16px;
+.recycle-karte-match { color: var(--dcats-muted, #667085); font-size: 11px; }
+.recycle-karte-sidebar-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
-.recycle-karte-sidebar .recycle-karte-pager { gap: 4px; }
-.recycle-karte-sidebar .recycle-karte-pager button {
-  padding: 1px 5px;
+.recycle-karte-sidebar-scroll:focus-visible { outline: 2px solid var(--dcats-focus, #315f9f); outline-offset: -2px; }
+.recycle-karte-sidebar-table { width: 100%; table-layout: fixed; border-spacing: 0; }
+.recycle-karte-sidebar-table th, .recycle-karte-sidebar-table td {
+  padding: 2px 5px;
+  text-align: start;
+  border-bottom: 1px solid var(--dcats-border, #cbd8e8);
+  overflow-wrap: anywhere;
+}
+.recycle-karte-sidebar-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #edf3f9;
+  font-weight: 700;
+}
+.recycle-karte-sidebar-table thead th:nth-child(1) { width: 35%; }
+.recycle-karte-sidebar-table thead th:nth-child(2) { width: 24%; }
+.recycle-karte-sidebar-table thead th:nth-child(4) { width: 49px; }
+.recycle-karte-sidebar-table tbody th { font-weight: 500; font-variant-numeric: tabular-nums; }
+.recycle-karte-table-detail, .recycle-karte-sidebar-status button {
   border: 1px solid var(--dcats-border, #cbd8e8);
   border-radius: 4px;
   background: #fff;
+  color: var(--dcats-link, #315f9f);
   font: inherit;
-  line-height: 14px;
   cursor: pointer;
 }
-.recycle-karte-sidebar .recycle-karte-pager button:disabled { cursor: default; opacity: .5; }
-.recycle-karte-match { color: var(--dcats-muted, #667085); font-size: 11px; }
-
-@media (max-width: 1120px) {
-  #screen-search .recycle-karte-sidebar { inset-inline-end: 12px; }
-}
+.recycle-karte-table-detail { min-height: 22px; padding: 1px 4px; max-width: 100%; overflow-wrap: anywhere; }
+.recycle-karte-sidebar-status:not(:empty) { padding: 3px 6px; }
+.recycle-karte-sidebar-status button { margin-inline-start: 5px; }
+.recycle-karte-scroll-marker { block-size: 1px; }
 
 @media (max-width: 767px) {
   #screen-search .search-header:has(> .recycle-karte-form:not([hidden])) {

@@ -48,6 +48,11 @@
     productListTitle: ["Recycle+カルテ一覧", "Recycle+ Karte results", "Recycle+ 卡片列表"],
     partMatch: ["品番一致", "Part number match", "品号匹配"],
     countShort: ["{count}件", "{count} results", "{count} 条"],
+    karteNo: ["カルテNo", "Karte No.", "卡片编号"],
+    oeNumber: ["純正品番", "OE part no.", "原厂品号"],
+    makerNumber: ["メーカー品番", "Manufacturer part no.", "厂商品号"],
+    retry: ["再試行", "Retry", "重试"],
+    sourceFailedShort: ["取得失敗", "Unavailable", "读取失败"],
     submit: ["検索", "Search", "查询"],
     related: ["関連カルテ", "Related Karte", "关联卡片"],
     list: ["Recycle+カルテ", "Recycle+ Karte", "Recycle+ 卡片"],
@@ -98,7 +103,9 @@
   const searchHeader = screen?.querySelector(".search-header");
   const productIdentity = $("sales-product-identity");
   const conditions = $("panel-right");
-  if (!searchHeader || !panel || !panelTitle || !productIdentity || !conditions || !menu) return;
+  const shippingEstimate = $("sales-shipping-estimate-section");
+  const market = $("sales-conditions-market");
+  if (!searchHeader || !panel || !panelTitle || !productIdentity || !conditions || !shippingEstimate || !market || !menu) return;
 
   let active = false;
   let epoch = 0;
@@ -197,16 +204,39 @@
   const sidebarOpen = button("productListTitle", event => openProductList(event.currentTarget), {className:"recycle-karte-sidebar-open", "aria-haspopup":"dialog"});
   const sidebarTitle = element("h3", {id:"recycle-karte-sidebar-title"}, sidebarOpen);
   const sidebarMatch = element("small", {className:"recycle-karte-match", hidden:""});
-  const sidebarPager = element("div", {className:"recycle-karte-sidebar-paging"});
-  const sidebarList = element("div", {className:"recycle-karte-sidebar-list", "aria-live":"polite"});
+  const sidebarHeaders = ["karteNo", "oeNumber", "makerNumber", "detail"].map(key =>
+    element("th", {scope:"col", text:tr(key)}));
+  const sidebarRows = element("tbody");
+  const sidebarStatus = element("div", {className:"recycle-karte-sidebar-status", role:"status"});
+  const sidebarMarker = element("div", {className:"recycle-karte-scroll-marker", "aria-hidden":"true", hidden:""});
+  const sidebarScroll = element("div", {className:"recycle-karte-sidebar-scroll", tabindex:"0", role:"region",
+    "aria-labelledby":sidebarTitle.id},
+    element("table", {className:"recycle-karte-sidebar-table"},
+      element("thead", {}, element("tr", {}, ...sidebarHeaders)), sidebarRows),
+    sidebarStatus, sidebarMarker);
   const sidebar = element("aside", {className:"recycle-karte-sidebar", "aria-labelledby":sidebarTitle.id, hidden:""},
-    element("div", {className:"recycle-karte-sidebar-head"}, sidebarTitle, sidebarMatch, sidebarPager), sidebarList);
-  conditions.append(sidebar);
+    element("div", {className:"recycle-karte-sidebar-head"}, sidebarTitle, sidebarMatch), sidebarScroll);
+  const shippingColumn = element("div", {className:"recycle-karte-shipping-column"});
+  shippingEstimate.before(shippingColumn);
+  shippingColumn.append(shippingEstimate, sidebar);
   const rightColumn = window.matchMedia("(min-width: 981px)");
-  const occupiedRight = ["sales-shipping-estimate-section", "detail-customer-section", "sales-conditions-market"]
-    .map($).concat(conditions.querySelector(".sales-conditions-terms")).filter(Boolean);
   let sidebarKey = "";
-  let sidebarVersion = 0;
+  let sidebarState = null;
+  const sidebarVisibility = new IntersectionObserver(entries => {
+    const state = sidebarState;
+    if (!state || sidebar.hidden) return;
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      if (entry.target === sidebarMarker) {
+        void readSidebarPage(state);
+      } else {
+        sidebarVisibility.unobserve(entry.target);
+        const row = state.pending.get(entry.target);
+        state.pending.delete(entry.target);
+        if (row) void readSidebarNumbers(state, row);
+      }
+    }
+  }, {root:sidebarScroll, rootMargin:"0px 0px 12px 0px"});
   const partSearchInput = $("q");
   let partLookupRequest = 0;
   const partLookupStatus = element("p", {className:"recycle-karte-status", role:"status"});
@@ -217,15 +247,12 @@
 
   function positionRelated() {
     const id = canShow() ? currentId() : "";
-    sidebar.hidden = !id || !rightColumn.matches;
-    if (!sidebar.hidden) {
+    const wide = Boolean(id && rightColumn.matches && !conditions.classList.contains("sales-conditions-without-price"));
+    shippingColumn.classList.toggle("recycle-karte-shipping-column-active", wide);
+    sidebar.hidden = !wide;
+    if (wide) {
       const b = sidebar.getBoundingClientRect();
-      const clip = panel.getBoundingClientRect();
-      sidebar.hidden = !b.width || b.bottom > clip.bottom || occupiedRight.some(node => {
-        const a = node.getBoundingClientRect();
-        return a.width && a.height && a.left < b.right && b.left < a.right &&
-          a.top < b.bottom + 4 && b.top < a.bottom + 4;
-      });
+      sidebar.hidden = !b.width || b.bottom > panel.getBoundingClientRect().bottom || sidebarScroll.clientHeight < 34;
     }
     relatedSlot.hidden = !id || !sidebar.hidden;
     if (!relatedSlot.hidden) {
@@ -248,15 +275,14 @@
       options.setAttribute("aria-label", tr("workspaceTools"));
       options.title = tr("workspaceTools");
       sidebarOpen.textContent = tr("productListTitle");
+      ["karteNo", "oeNumber", "makerNumber", "detail"].forEach((key, i) => { sidebarHeaders[i].textContent = tr(key); });
     }
     const id = enabled && rightColumn.matches ? currentId() : "";
     const part = id ? selectedPartNumber() : "";
     const key = id && id + "|" + part;
     if (refresh === true || key !== sidebarKey) {
       sidebarKey = key;
-      const version = ++sidebarVersion;
-      sidebarList.replaceChildren();
-      if (key) populateRelatedList(sidebarList, id, part, 2, () => canShow() && version === sidebarVersion, true);
+      resetSidebar(id, part);
     }
     positionRelated();
   }
@@ -333,69 +359,123 @@
     const list = element("div", {className:"recycle-karte-list", "aria-live":"polite"});
     body.append(list);
     const part = String(id) === currentId() ? selectedPartNumber() : "";
-    populateRelatedList(list, id, part, resultPageSize(), () => details === modal && canShow(), false);
+    populateRelatedList(list, id, part, resultPageSize(), () => details === modal && canShow());
   }
 
-  function populateRelatedList(list, id, part, perPage, isCurrent, compact) {
+  async function relatedPage(id, part, offset, limit, usePart, current) {
+    const rows = usePart ? [] : await rpc("read", {p_product:id, p_offset:offset});
+    if (!current()) return null;
+    if (usePart || (!offset && !rows.length && part)) {
+      const result = await rpc("read_part", {p_part:part, p_offset:offset});
+      return current() ? {rows:result.items.slice(0, limit), count:result.total,
+        more:result.total > offset + limit, usePart:true} : null;
+    }
+    const count = rows[0]?.related_count;
+    return {rows:rows.slice(0, limit), count,
+      more:count == null ? rows.length > limit : Number(count) > offset + limit, usePart:false};
+  }
+
+  function resetSidebar(id, part) {
+    sidebarVisibility.disconnect();
+    sidebarRows.replaceChildren();
+    sidebarStatus.replaceChildren();
+    sidebarMatch.hidden = true;
+    sidebarMarker.hidden = !id;
+    sidebarScroll.scrollTop = 0;
+    sidebarState = id ? {id, part, offset:0, more:true, usePart:false, busy:false, pending:new Map(), seen:new Set()} : null;
+    if (sidebarState) sidebarVisibility.observe(sidebarMarker);
+  }
+
+  function renderSidebarRow(state, row) {
+    const cells = ["oe_part_number", "maker_part_number"].map(key =>
+      element("td", {text:Object.hasOwn(row, key) ? row[key] || "—" : "…"}));
+    const line = element("tr", {},
+      element("th", {scope:"row", text:row.karte_number}), ...cells,
+      element("td", {}, button("detail", e => void openDetail(row.karte_number, e.currentTarget), {
+        className:"recycle-karte-table-detail", "aria-label":tr("detail") + " " + row.karte_number
+      })));
+    sidebarRows.append(line);
+    if (Object.hasOwn(row, "oe_part_number") && Object.hasOwn(row, "maker_part_number")) return;
+    state.pending.set(line, {number:row.karte_number, cells});
+    sidebarVisibility.observe(line);
+  }
+
+  async function readSidebarNumbers(state, row) {
+    try {
+      const [detail] = await rpc("read", {p_karte:row.number, p_detail:true});
+      if (sidebarState !== state) return;
+      [row.cells[0].textContent, row.cells[1].textContent] =
+        ["oe_part_number", "maker_part_number"].map(key => detail?.fields?.[key]?.value || "—");
+    } catch (error) {
+      if (sidebarState === state && error?.code !== "closed") {
+        for (const cell of row.cells) cell.textContent = tr("sourceFailedShort");
+      }
+    }
+  }
+
+  async function readSidebarPage(state) {
+    if (sidebar.hidden || state.busy || !state.more) return;
+    state.busy = true;
+    sidebarVisibility.unobserve(sidebarMarker);
+    sidebarStatus.textContent = tr("loading");
+    try {
+      const page = await relatedPage(state.id, state.part, state.offset, pageSize, state.usePart, () => sidebarState === state);
+      if (!page) return;
+      state.usePart = page.usePart;
+      state.more = page.more && page.rows.length > 0;
+      state.offset += page.rows.length;
+      const amount = page.count == null ? "" : tr("countShort").replace("{count}", String(page.count));
+      sidebarMatch.textContent = [page.usePart ? tr("partMatch") : "", amount].filter(Boolean).join(" · ");
+      sidebarMatch.hidden = !sidebarMatch.textContent;
+      for (const row of page.rows) {
+        if (state.seen.has(row.karte_number)) continue;
+        state.seen.add(row.karte_number);
+        renderSidebarRow(state, row);
+      }
+      sidebarStatus.textContent = state.seen.size ? "" : tr("noRows");
+      sidebarMarker.hidden = !state.more;
+      if (state.more) sidebarVisibility.observe(sidebarMarker);
+    } catch (error) {
+      if (sidebarState === state && error?.code !== "closed") {
+        sidebarStatus.replaceChildren(errorText(error), button("retry", () => void readSidebarPage(state)));
+      }
+    } finally {
+      state.busy = false;
+    }
+  }
+
+  function populateRelatedList(list, id, part, perPage, isCurrent) {
     let pageRequest = 0;
     let usePart = false;
-
-    async function showPage(page) {
+    async function showPage(pageNumber) {
       const run = ++pageRequest;
-      const offset = page * perPage;
+      const current = () => isCurrent() && run === pageRequest;
       list.textContent = tr("loading");
-      if (compact) {
-        sidebarMatch.hidden = true;
-        sidebarPager.replaceChildren();
-        positionRelated();
-      }
       try {
-        let rows = usePart ? [] : await rpc("read", {p_product:id, p_offset:offset});
-        if (!isCurrent() || run !== pageRequest) return;
-        if (page === 0 && !rows.length && part) usePart = true;
-        let more = rows.length > perPage;
-        let count = rows[0]?.related_count;
-        if (usePart) {
-          const result = await rpc("read_part", {p_part:part, p_offset:offset});
-          if (!isCurrent() || run !== pageRequest) return;
-          rows = result.items;
-          count = result.total;
-          more = count > offset + perPage;
-        }
+        const page = await relatedPage(id, part, pageNumber * perPage, perPage, usePart, current);
+        if (!page) return;
+        usePart = page.usePart;
         list.replaceChildren();
-        if (!rows.length) list.textContent = tr("noRows");
-        const countText = count == null ? "" : tr("partLookupCount").replace("{count}", String(count));
-        if (compact) {
-          const amount = count == null ? "" : tr("countShort").replace("{count}", String(count));
-          sidebarMatch.textContent = [usePart ? tr("partMatch") : "", amount].filter(Boolean).join(" · ");
-          if (count != null) sidebarMatch.setAttribute("aria-label", countText);
-          else sidebarMatch.removeAttribute("aria-label");
-          sidebarMatch.hidden = !rows.length || !sidebarMatch.textContent;
-        } else if (rows.length) {
-          if (countText) list.append(element("p", {className:"recycle-karte-status", text:countText}));
-          if (usePart) list.append(element("small", {className:"recycle-karte-match", text:tr("partMatch")}));
+        if (!page.rows.length) list.textContent = tr("noRows");
+        else if (page.count != null) list.append(element("p", {className:"recycle-karte-status",
+          text:tr("partLookupCount").replace("{count}", String(page.count))}));
+        if (usePart && page.rows.length) {
+          list.append(element("small", {className:"recycle-karte-match", text:tr("partMatch")}));
         }
-        rows.slice(0, perPage).forEach(row => {
-          const open = event => void openDetail(row.karte_number, event.currentTarget);
-          if (compact) {
-            list.append(button("detail", open, {text:row.karte_number, className:"recycle-karte-sidebar-number",
-              "aria-label":tr("detail") + " " + row.karte_number}));
-            return;
-          }
+        for (const row of page.rows) {
           const summary = element("div", {className:"recycle-karte-list-summary"},
             element("strong", {text:row.karte_number}),
             element("span", {text:[row.part_name || row.part_number || tr("missing"), row.vehicle_model].filter(Boolean).join(" · ")}),
             element("small", {text:row.master_product_id ? tr("masterOnly") :
               usePart && !row.link_active ? tr("unknown") : productKindLabel(row.product_kind)}));
           list.append(element("div", {className:"recycle-karte-result"}, summary,
-            button("detail", open, {"aria-label":tr("detail") + " " + row.karte_number})));
-        });
-        const navigation = pager(page, more, showPage);
-        if (navigation) (compact ? sidebarPager : list).append(navigation);
+            button("detail", event => void openDetail(row.karte_number, event.currentTarget),
+              {"aria-label":tr("detail") + " " + row.karte_number})));
+        }
+        const navigation = pager(pageNumber, page.more, showPage);
+        if (navigation) list.append(navigation);
       } catch (error) {
-        if (isCurrent() && run === pageRequest && error?.code !== "closed") list.textContent = errorText(error);
-      } finally {
-        if (compact && isCurrent() && run === pageRequest) positionRelated();
+        if (current() && error?.code !== "closed") list.textContent = errorText(error);
       }
     }
     void showPage(0);
@@ -1076,7 +1156,7 @@
   }
 
   const relatedResize = new ResizeObserver(positionRelated);
-  [panelTitle, conditions, panel, ...occupiedRight].forEach(node => relatedResize.observe(node));
+  [panelTitle, conditions, panel, shippingEstimate, market].forEach(node => relatedResize.observe(node));
   const selectionChanges = new MutationObserver(syncWorkspace);
   [panelTitle, productIdentity].forEach(node => selectionChanges.observe(node,
     {childList:true, characterData:true, subtree:true}));
