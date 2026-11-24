@@ -12620,26 +12620,37 @@ html[data-product-3d-paused] :is(
 #core-collection-print-dialog label { display: grid; gap: 4px; }
 #core-collection-print-dialog .core-pallet-footer { margin-top: 12px; }
 
-@page core-collection-list { size: A4 portrait; margin: 13mm 11mm; }
+/* Match the measuring widths to A4 minus the horizontal page margins below. */
+.core-collection-print-measuring {
+  position: fixed; inset: 0 auto auto 0; visibility: hidden; pointer-events: none; width: 194mm;
+}
+.core-collection-print-wide.core-collection-print-measuring { width: 281mm; }
+.core-collection-print-content { color: black; font: 9pt/1.2 Arial, "Yu Gothic", "Meiryo", sans-serif; }
+.core-collection-print-content h1 { font-size: 15pt; margin: 0 0 1.5mm; }
+.core-collection-print-content p { margin: 0 0 2mm; }
+.core-collection-print-content table { width: 100%; table-layout: auto; border-collapse: collapse; }
+.core-collection-print-content thead { display: table-header-group; }
+.core-collection-print-content tr { break-inside: avoid; }
+.core-collection-print-content :is(th, td) {
+  vertical-align: middle;
+  padding: .45mm .8mm;
+  border: .2mm solid #8e99a6;
+  white-space: nowrap;
+}
+.core-collection-print-content th { background: #e7f1fa; color: #122c44; print-color-adjust: exact; }
+.core-collection-print-content td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+/* Keep each part number and vehicle label intact, even on the widest sheets. */
+.core-collection-print-split td:is(:nth-child(2), :nth-child(3)) { white-space: normal; }
+.core-collection-print-split td:is(:nth-child(2), :nth-child(3)) :is(strong, span) { white-space: nowrap; }
+@page core-collection-list { size: A4 portrait; margin: 9mm 8mm; }
+@page core-collection-wide-list { size: A4 landscape; margin: 9mm 8mm; }
 @media print {
   html:has(body.core-collection-printing), body.core-collection-printing { height: auto !important; overflow: visible !important; }
   body.core-collection-printing { display: block; margin: 0; background: white; color: black; }
   body.core-collection-printing > :not(#core-collection-print-sheet) { display: none !important; }
-  body.core-collection-printing > #core-collection-print-sheet {
-    display: block !important; page: core-collection-list; font: 10pt Arial, "Yu Gothic", "Meiryo", sans-serif;
-  }
-  #core-collection-print-sheet h1 { font-size: 16pt; margin: 0 0 3mm; }
-  #core-collection-print-sheet p { margin: 0 0 3mm; }
-  #core-collection-print-sheet table { width: 100%; table-layout: fixed; border-collapse: collapse; }
-  #core-collection-print-sheet thead { display: table-header-group; }
-  #core-collection-print-sheet tr { break-inside: avoid; }
-  #core-collection-print-sheet :is(th, td) { vertical-align: top; padding: 1.4mm; border: .25mm solid #8e99a6; overflow-wrap: anywhere; }
-  #core-collection-print-sheet th { background: #e7f1fa; color: #122c44; print-color-adjust: exact; }
-  #core-collection-print-sheet th:nth-child(1) { width: 17%; }
-  #core-collection-print-sheet th:nth-child(2) { width: 40%; }
-  #core-collection-print-sheet th:nth-child(3) { width: 31%; }
-  #core-collection-print-sheet th:last-child { width: 12%; }
-  #core-collection-print-sheet td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+  body.core-collection-printing > #core-collection-print-sheet { display: block !important; }
+  #core-collection-print-sheet > .core-collection-print-content { page: core-collection-list; }
+  #core-collection-print-sheet > .core-collection-print-wide { page: core-collection-wide-list; }
 }
 
 @page core-pending-list { size: A4 portrait; margin: 13mm 11mm; }
