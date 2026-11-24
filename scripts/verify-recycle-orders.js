@@ -12,6 +12,7 @@ const create = document.createElement.bind(document);
 document.createElement = function(tag) { const node=create(tag);if(tag==='dialog'){node.showModal=()=>{node.open=true;};node.close=()=>{node.open=false;};}if(tag==='a')node.click=()=>{downloadName=node.download;};return node;};
 let permission=true, calls=0, listCalls=0, settingsCalls=0, configured=true, configurable=true, previewPayload=null, placeCalls=0, resultFound=false, failPlace=false, failSettings=false, failProducts=false, failList=false, failPostal=false, postalLocal=[], postalDeferred=null, detailId=null, allowConfirm=true;
 let configuredId=1, bindingPreviewCalls=0, bindingWarningCount=0, bindingGuard=1, lastSettings=null, failSave=false, failBinding=false;
+let productSearchPayload=null;
 let feeGuard=2,wrongQuote=false,confirmation='',listData=null,listDeferred=null,lastListQuery=null,csvBlob=null,downloadName='';
 const feeConditions={policy_version:2,factoring_rate_percent:6,sales_fee_rate_percent:10,note:'決済は取引税抜額、MPは商品税込額から算定した見込。'};
 let candidateRows=[{id:1,code:'5855',name:'ブロードリーフ Recycle＋',billing_customer_code:'5855',closing_code:'31'},{id:2,code:'5856',name:'株式会社ブロードリーフ',billing_customer_code:'5856',closing_code:'20'}];
@@ -24,7 +25,7 @@ const ctx = { document, console, Date, Number, String, Object, Array, Blob, URL:
   if(args.target_action==='settings'){if(failSettings)throw new Error('設定読込失敗');const c=candidateRows.find(c=>c.id===configuredId);return {data:{sales_customer_id:configured?configuredId:null,fee_rate_percent:10,provisional:true,fee_basis:'product_net',rounding:'floor',revision:1,can_configure:configurable,note:'合成暫定条件',customer_name:configured?c?.name:null,customer_code:configured?c?.code:null,customer_candidates:candidateRows,customer_binding_guard_version:bindingGuard,fee_policy_version:feeGuard,fee_conditions:feeConditions}};}
   if(args.target_action==='binding_preview'){bindingPreviewCalls++;if(failBinding)throw new Error('受注確認失敗');return {data:{token:'fixture-token-'+args.target_payload.sales_customer_id,changed:true,previous_customer:configured?candidateRows.find(c=>c.id===configuredId):null,next_customer:candidateRows.find(c=>String(c.id)===args.target_payload.sales_customer_id),affected_order_count:bindingWarningCount,warnings:bindingWarningCount?[{customer_code:'5855',customer_name:'ブロードリーフ <img src=x>',closing_date:'2026-10-31',order_count:bindingWarningCount,first_order_date:'2026-10-31',last_order_date:'2026-11-02'}]:[]}};}
   if(args.target_action==='list'){listCalls++;lastListQuery=args.target_payload;if(failList)throw new Error('一覧読込失敗');if(listDeferred)return await listDeferred;return {data:typeof listData==='function'?listData(args.target_payload):listData||{count:0,rows:[],gross_jpy:0,estimated_fee_jpy:0,estimated_factoring_fee_jpy:0,estimated_marketplace_fee_jpy:0,estimated_legacy_fee_jpy:0,actual_fee_jpy:null,unconfirmed_fee_count:0}};}
-  if(args.target_action==='products'){if(failProducts)throw new Error('商品読込失敗');return {data:{rows:[product]}};}
+  if(args.target_action==='products'){productSearchPayload=args.target_payload;if(failProducts)throw new Error('商品読込失敗');return {data:{rows:args.target_payload.karte_number==='00000-000000000023'?[]:[product]}};}
   if(args.target_action==='preview'){previewPayload=args.target_payload;const mp=args.target_payload.is_marketplace;return {data:{subtotal_jpy:20000,shipping_fee_jpy:1000,tax_jpy:2100,total_jpy:23100,preview_token:'synthetic-preview',recycle_policy:{policy_version:2},fee_breakdown:{order_route:mp?'marketplace':'normal',is_marketplace:wrongQuote?!mp:mp,estimated_factoring_fee_jpy:1260,estimated_marketplace_fee_jpy:mp?2200:0,estimated_fee_jpy:mp?3460:1260}}};}
   if(args.target_action==='place'){placeCalls++;if(failPlace)throw new Error('応答不明');return {data:{id:7}};}
   if(args.target_action==='result')return {data:{found:resultFound,response:{id:7}}};
@@ -55,6 +56,7 @@ ctx.window=ctx;vm.createContext(ctx);vm.runInContext(source,ctx);
  eq(listCalls,0);
  eq(document.getElementById('recycle-rate'),null);eq(document.querySelector('.recycle-fee-rates').textContent.includes('6％'),true);
  eq(!!document.getElementById('recycle-marketplace').checked,false);eq(document.getElementById('recycle-route-summary').textContent.includes('MP手数料なし'),true);
+ eq(document.getElementById('recycle-external').hasAttribute('required'),false);
  value('external','QA-ORDER-1');
  value('company','合成直送先');
  await click('settings');eq(document.getElementById('recycle-entry').hidden,true);
@@ -67,9 +69,17 @@ ctx.window=ctx;vm.createContext(ctx);vm.runInContext(source,ctx);
  eq(document.getElementById('recycle-title').textContent,'Recycle+精算一覧');
  eq(document.getElementById('recycle-totals').textContent.includes('0件'),true);
  await click('entry');eq(document.getElementById('recycle-company').value,'合成直送先');
- failProducts=true;await click('products');eq(document.getElementById('recycle-message').textContent,'商品読込失敗');failProducts=false;
+ value('product-query','invalid');
+ await click('products');eq(productSearchPayload,null);
+ eq(document.getElementById('recycle-product-status').textContent.includes('形式'),true);
+ value('product-query','23');await click('products');
+ eq(productSearchPayload.karte_number,'00000-000000000023');eq(document.getElementById('recycle-product-status').textContent.includes('見つかりません'),true);
+ value('query-type','part');value('product-query','QA-123');
+ failProducts=true;await click('products');eq(document.getElementById('recycle-product-status').textContent,'商品読込失敗');failProducts=false;
+ eq(productSearchPayload.query,'QA-123');
+ value('query-type','karte');value('product-query','２２');
  ctx.DcatsFactoringPricing={prices:async()=>({'123|rebuilt':7100})};
- await click('products');eq(document.getElementById('recycle-products').textContent.includes('7,100'),true);await click('add');eq(document.getElementById('recycle-price-0').value,'7100');value('price-0','10000');value('quantity-0','2');
+ await click('products');eq(document.getElementById('recycle-products').textContent.includes('7,100'),true);eq(productSearchPayload.karte_number,'00000-000000000022');await click('add');eq(document.getElementById('recycle-price-0').value,'7100');eq(document.getElementById('recycle-cart').textContent.includes('00000-000000000022'),true);value('price-0','10000');value('quantity-0','2');
  ctx.DcatsFactoringPricing={prices:async()=>({'123|rebuilt':7200})};await click('products');eq(document.getElementById('recycle-price-0').value,'10000');
  await click('settings');await click('entry');eq(document.getElementById('recycle-price-0').value,'10000');eq(document.getElementById('recycle-quantity-0').value,'2');
  eq(document.getElementById('recycle-return-field').hidden,false);
@@ -79,10 +89,10 @@ ctx.window=ctx;vm.createContext(ctx);vm.runInContext(source,ctx);
  let resolvePostal;postalDeferred=new Promise(r=>{resolvePostal=r;});await click('postal');value('address1','本人が編集中の住所');resolvePostal([{postal_code:'100-0001',prefecture_code:'13',address_line_1:'上書きしない'}]);await tick();eq(document.getElementById('recycle-address1').value,'本人が編集中の住所');postalDeferred=null;
  failPostal=true;await click('postal');eq(document.getElementById('recycle-postal-status').textContent.includes('取得できません'),true);failPostal=false;
  value('phone','0312345678');value('shipping','1000');value('delivery-date','2026-11-01');value('delivery-time','1416');value('return-carrier','佐川急便|飛脚宅配便');
- allowConfirm=false;await click('place');eq(previewPayload.is_marketplace,false);eq(confirmation.includes('通常受注'),true);eq(confirmation.includes('MP 0円'),true);eq(placeCalls,0);
+ value('external','');allowConfirm=false;await click('place');eq(previewPayload.external_order_number,null);eq(previewPayload.items[0].karte_number,'00000-000000000022');eq(previewPayload.is_marketplace,false);eq(confirmation.includes('通常受注'),true);eq(confirmation.includes('MP 0円'),true);eq(placeCalls,0);
  document.getElementById('recycle-marketplace').checked=true;document.getElementById('recycle-marketplace').dispatchEvent(new domWindow.Event('change',{bubbles:true}));await click('place');eq(previewPayload.is_marketplace,true);eq(confirmation.includes('MP経由'),true);eq(confirmation.includes('2,200円'),true);eq(document.getElementById('recycle-price-0').value,'10000');
  wrongQuote=true;await click('place');eq(placeCalls,0);eq(document.getElementById('recycle-message').textContent.includes('一致しません'),true);wrongQuote=false;
- document.getElementById('recycle-marketplace').checked=false;allowConfirm=true;
+ value('external','QA-ORDER-1');document.getElementById('recycle-marketplace').checked=false;allowConfirm=true;
  failPlace=true;await click('place');eq(placeCalls,1);
  eq(previewPayload.external_order_number,'QA-ORDER-1');eq(previewPayload.items[0].unit_price_jpy,10000);eq(previewPayload.items[0].quantity,2);
  eq(previewPayload.requested_delivery_date,'2026-11-01');eq(previewPayload.delivery_time,'1416');eq(previewPayload.core_return_shipping_method.carrier_name,'佐川急便');
