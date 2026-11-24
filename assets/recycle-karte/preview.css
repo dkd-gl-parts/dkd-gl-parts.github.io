@@ -1,12 +1,18 @@
 .recycle-karte-menu { text-align: start; font: inherit; }
-.recycle-karte-launcher-slot[hidden], .recycle-karte-launcher[hidden], .recycle-karte-product[hidden] { display: none; }
+.recycle-karte-launcher-slot[hidden], .recycle-karte-search-launcher[hidden],
+.recycle-karte-detail-launcher[hidden], .recycle-karte-product[hidden] { display: none; }
+#screen-search .recycle-karte-search-launcher {
+  margin-block-start: 6px;
+  min-height: 26px;
+  padding-block: 1px;
+}
 #screen-search .recycle-karte-launcher-slot {
   position: relative;
   flex: 0 0 0;
   align-self: center;
   margin-inline-start: -8px;
 }
-#screen-search .recycle-karte-launcher {
+#screen-search .recycle-karte-detail-launcher {
   position: absolute;
   inset-inline-end: 4px;
   inset-block-start: 0;
