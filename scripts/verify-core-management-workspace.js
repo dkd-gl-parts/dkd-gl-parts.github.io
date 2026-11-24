@@ -3,7 +3,7 @@ const vm = require("node:vm");
 const assert = require("node:assert/strict");
 const acorn = require("acorn");
 const source = fs.readFileSync("app.js", "utf8");
-const names = ["showCoreListDeleteConfirmation", "openCoreListDeleteConfirmation", "deleteCoreListRow", "closeCoreListForm", "coreInventoryPendingProduct", "updateCorePendingOutputs", "renderCoreInventoryPendingRow", "loadCorePendingStock","corePendingStockSearch","moveCorePendingStockPage","renderCorePendingStock"].concat(["coreCollectionVehicleSummaryHtml", "coreCollectionUiLabel", "renderCoreCollectionVehicleHtml", "coreCollectionVehicleClasses", "coreCollectionVehicleText", "fitCoreManagementRows", "renderCoreManagementPager", "coreCollectionVehicleMatches", "esc", "normalizeAsciiWidth", "norm", "normalizedContains", "sumProductionCoreEntryQty", "renderCoreManagementSummary", "clearCoreManagementCache", "getCoreManagementCache", "readCoreInventorySnapshot", "beginCoreManagementLoad", "searchCoreCollectionWorkspace", "clearCoreCollectionFilters", "resetCoreCollectionFilters", "bindCoreManagementTabs", "setCoreListMode", "coreCollectionStatusLabel", "coreCollectionRank", "coreCollectionDisplayProduct", "buildCoreCollectionRankingRows", "isCoreReplenishmentRow", "coreCollectionStockQty", "coreCollectionShortageQty", "coreCollectionCategoryKey", "coreCollectionStoredOrder", "compareCoreCollectionStoredOrder", "assignCoreCollectionCategoryRanks", "coreCollectionCategoryRank", "coreCollectionCategoryMatches", "applyCoreCollectionFilters", "getCoreCollectionSearchTerms", "indexCoreCollectionRows", "loadCoreCollectionList", "loadCoreCollectionItems", "loadCoreCollectionProducts", "resolveCoreCollectionRankingCodes", "readCoreCollectionStock", "renderCoreCollectionStockBadge", "renderCoreCollectionList", "renderCoreCollectionClassifyButton", "coreCollectionEditAttributes", "renderCoreCollectionQuantity", "renderCoreCollectionRow", "appendCoreCollectionRows", "loadMoreCoreCollectionRowsOnScroll", "enterCoreListMgmt", "resetCoreCollectionControls", "resetCoreInventoryFilters", "submitCoreInventorySearch", "isKoreanCoreInventoryEntry", "coreInventoryVehicleClasses", "applyCoreInventoryFilters", "loadCoreListMgmt", "loadCoreListProducts", "renderCoreListMgmt", "renderCoreInventoryRow", "appendCoreInventoryRows", "loadMoreCoreInventoryRowsOnScroll"]);
+const names = ["readCoreVehicleFilterSelection", "setCoreVehicleFilterSelection", "showCoreListDeleteConfirmation", "openCoreListDeleteConfirmation", "deleteCoreListRow", "closeCoreListForm", "coreInventoryPendingProduct", "updateCorePendingOutputs", "renderCoreInventoryPendingRow", "loadCorePendingStock","corePendingStockSearch","moveCorePendingStockPage","renderCorePendingStock"].concat(["coreCollectionVehicleSummaryHtml", "coreCollectionUiLabel", "renderCoreCollectionVehicleHtml", "coreCollectionVehicleClasses", "coreCollectionVehicleText", "fitCoreManagementRows", "renderCoreManagementPager", "coreCollectionVehicleMatches", "esc", "normalizeAsciiWidth", "norm", "normalizedContains", "sumProductionCoreEntryQty", "renderCoreManagementSummary", "clearCoreManagementCache", "getCoreManagementCache", "readCoreInventorySnapshot", "beginCoreManagementLoad", "searchCoreCollectionWorkspace", "clearCoreCollectionFilters", "resetCoreCollectionFilters", "bindCoreManagementTabs", "setCoreListMode", "coreCollectionStatusLabel", "coreCollectionRank", "coreCollectionDisplayProduct", "buildCoreCollectionRankingRows", "isCoreReplenishmentRow", "coreCollectionStockQty", "coreCollectionShortageQty", "coreCollectionCategoryKey", "coreCollectionStoredOrder", "compareCoreCollectionStoredOrder", "assignCoreCollectionCategoryRanks", "coreCollectionCategoryRank", "coreCollectionCategoryMatches", "applyCoreCollectionFilters", "getCoreCollectionSearchTerms", "indexCoreCollectionRows", "loadCoreCollectionList", "loadCoreCollectionItems", "loadCoreCollectionProducts", "resolveCoreCollectionRankingCodes", "readCoreCollectionStock", "renderCoreCollectionStockBadge", "renderCoreCollectionList", "renderCoreCollectionClassifyButton", "coreCollectionEditAttributes", "renderCoreCollectionQuantity", "renderCoreCollectionRow", "appendCoreCollectionRows", "loadMoreCoreCollectionRowsOnScroll", "enterCoreListMgmt", "resetCoreCollectionControls", "resetCoreInventoryFilters", "submitCoreInventorySearch", "isKoreanCoreInventoryEntry", "coreInventoryVehicleClasses", "applyCoreInventoryFilters", "loadCoreListMgmt", "loadCoreListProducts", "renderCoreListMgmt", "renderCoreInventoryRow", "appendCoreInventoryRows", "loadMoreCoreInventoryRowsOnScroll"]);
 const ast = acorn.parse(source, { ecmaVersion: "latest" });
 const functions = ast.body.filter(n => n.type === "FunctionDeclaration" && names.includes(n.id.name));
 assert.equal(functions.length, names.length);
@@ -11,6 +11,7 @@ let checks = 0;
 function fixture() {
   const elements = new Map();
   const vehicleFilters = ["kei", "truck", "unclassified"].map(value => ({value, checked: false}));
+  const inventoryVehicleFilters = ["kei", "truck", "unclassified", "passenger"].map(value => ({value, checked: false}));
   const get = id => {
     if (!elements.has(id)) elements.set(id, { scrollTop: 0, scrollHeight: 900, clientHeight: 300, value: id === "core-collection-state" ? "all" : "", innerHTML: "", textContent: "", disabled: false, attributes: {}, listeners: {}, style: {}, classList: { toggle() {}, remove() {} }, setAttribute(k, v) { this.attributes[k] = v; }, addEventListener(k, v) { this.listeners[k] = v; }, focus() { context.focused = id; }, querySelectorAll() { return []; }, querySelector(selector) {
       const rowAttribute = selector.slice(1, -1);
@@ -21,7 +22,10 @@ function fixture() {
     return elements.get(id);
   };
   const context = {
-    document: { getElementById: get, querySelector: () => null, querySelectorAll: () => vehicleFilters.filter(input => input.checked) }, window: { innerHeight: 900, innerWidth: 1440, matchMedia: () => ({ matches: true, addEventListener() {} }) }, console,
+    document: { getElementById: get, querySelector: () => null, querySelectorAll(selector) {
+      const group = selector.startsWith("#core-inventory-vehicle-filters ") ? inventoryVehicleFilters : vehicleFilters;
+      return selector.endsWith(":checked") ? group.filter(input => input.checked) : group;
+    } }, window: { innerHeight: 900, innerWidth: 1440, matchMedia: () => ({ matches: true, addEventListener() {} }) }, console,
     t: key => key, productionCategoryLabel: p => p.category_code || "-", normalizeCoreProductFastRows: rows => rows,
     setCspStyle: (el, k, v) => { el.style[k] = v; }, canManageProductionRecords: () => true, canUploadCoreImages: () => true, isPC: () => true,
     canViewCoreManagement: () => true, canViewManufacturingReport: () => false, showScreen: () => {},
@@ -32,7 +36,7 @@ function fixture() {
     coreCollectionRows: [], coreCollectionRankingRows: [], coreCollectionCategoryRanks: new Map(), coreCollectionFilteredRows: [], coreCollectionProductMap: {}, coreCollectionStockMap: {}, coreCollectionRenderedCount: 0, coreCollectionOrderedRows: [], coreCollectionSearchTerms: new WeakMap(),
     CORE_COLLECTION_VEHICLE_CLASSES: [["kei","軽四"],["passenger","乗用車"],["truck","トラック"],["van","商用バン"],["bus","バス"],["machine","建機・農機"],["other","その他"]],
     CORE_MANAGEMENT_RENDER_BATCH_SIZE: 50, CORE_COLLECTION_CATEGORY_ORDER: ["starter", "alternator", "ac_compressor", "distributor", "other"], CORE_PRODUCT_FAST_SELECT: "*",
-    coreInventoryFilters: { keyword: "", vehicle: "", category: "", memo: "", korea: "exclude" },
+    coreInventoryFilters: { keyword: "", vehicles: [], category: "", memo: "", korea: "exclude" },
     coreListMgmtRows: [], coreInventoryPendingRows: [], inventoryPendingFixture: [],
     coreListProductMap: {}, coreListVehicleMap: {}, coreListFilteredRows: [], CORE_LIST_PAGE_SIZE: 50,
     formatDateTime: value => value || "-"
@@ -48,12 +52,53 @@ function fixture() {
     from(table) { let columns, bounds, ids; const query = { select(c) { columns = c; return query; }, order() { return query; }, eq() { return query; }, in(key, values) { ids = values; return query; }, limit() { return query; }, range(start, end) { bounds = { start, end }; return query; }, then(resolve, reject) { return Promise.resolve().then(() => context.respond(table, columns, bounds, ids)).then(resolve, reject); } }; return query; } };
   vm.createContext(context);
   vm.runInContext(functions.map(n => source.slice(n.start, n.end)).join("\n"), context);
-  return { c: context, get, vehicleFilters };
+  return { c: context, get, vehicleFilters, inventoryVehicleFilters };
 }
 const rows = [{ id: 1, dkd_shohin_id: 1, target_quantity: 10, priority: "high", status: "collecting" }, { id: 2, dkd_shohin_id: 2, target_quantity: 4, priority: "normal", status: "completed" }];
 const products = [{ dkd_shohin_id: 1, manufacturer_part_number: "TEST-123", category_code: "starter" }, { dkd_shohin_id: 2, manufacturer_part_number: "TEST-456", category_code: "alternator" }];
 function ready(c) { c.respond = (table, columns) => ({ data: table === "core_collection_list_items" ? rows : table === "core_products" ? products : [{ id: 1, dkd_shohin_id: 1, quantity: 3, core_part_number: "CORE-123" }], error: null }); }
 async function main() {
+  {
+    const { c, get, vehicleFilters, inventoryVehicleFilters } = fixture();
+    const settings = [
+      { id: 1, dkd_shohin_id: 1, vehicle_classes: ["kei", "passenger"] },
+      { id: 2, dkd_shohin_id: 2, vehicle_classes: ["truck"] }
+    ];
+    c.respond = table => ({
+      data: table === "core_collection_list_items" ? settings : table === "core_products" ? products : [
+        { id: 41, dkd_shohin_id: 1, quantity: 1 },
+        { id: 42, dkd_shohin_id: 2, quantity: 2 },
+        { id: 43, dkd_shohin_id: 3, quantity: 3 }
+      ]
+    });
+    await c.setCoreListMode("collection");
+    vehicleFilters[0].checked = true;
+    vehicleFilters[1].checked = true;
+    get("core-workspace-filter-options").open = true;
+    await c.searchCoreCollectionWorkspace();
+    assert.equal(get("core-workspace-filter-options").open, false); checks++;
+    assert.equal(c.focused, "btn-core-collection-search"); checks++;
+    assert.deepEqual(inventoryVehicleFilters.filter(input => input.checked).map(input => input.value), ["kei", "truck"]); checks++;
+    await c.setCoreListMode("inventory");
+    assert.deepEqual(Array.from(c.coreListFilteredRows, row => row.id), [41, 42]); checks++;
+    assert.match(get("core-list-list").innerHTML, /軽四.*乗用車/); checks++;
+    assert.match(get("core-list-list").innerHTML, /トラック/); checks++;
+    c.resetCoreInventoryFilters();
+    await c.submitCoreInventorySearch();
+    assert.deepEqual(Array.from(c.coreListFilteredRows, row => row.id), [41, 42, 43]); checks++;
+  }
+  {
+    const { c, get } = fixture();
+    get("core-workspace-filter-options").open = true;
+    let reloaded = false;
+    c.loadCoreCollectionList = () => {
+      reloaded = true;
+      assert.equal(get("core-workspace-filter-options").open, false); checks++;
+    };
+    c.searchCoreCollectionWorkspace();
+    assert.equal(reloaded, true); checks++;
+  }
+
   {
     const { c, get } = fixture();
     const sources = [];
@@ -448,7 +493,7 @@ async function main() {
     assert.deepEqual(lookups, [[1, 2, 3, 4]]); checks++;
     assert.match(get("core-list-list").innerHTML, /軽四.*乗用車/); checks++;
     get("core-inventory-filter-options").open = true;
-    get("core-inventory-vehicle").value = "passenger";
+    c.setCoreVehicleFilterSelection("core-inventory-vehicle-filters", ["passenger"]);
     assert.equal(c.coreListFilteredRows.length, 53); checks++;
     await c.submitCoreInventorySearch();
     assert.equal(get("core-inventory-filter-options").open, false); checks++;
@@ -456,13 +501,13 @@ async function main() {
     assert.equal(c.coreListFilteredRows.length, 50); checks++;
     assert.equal(get("core-list-list").scrollTop, 0); checks++;
     get("core-inventory-memo").value = "abc123";
-    get("core-inventory-vehicle").value = "";
+    c.setCoreVehicleFilterSelection("core-inventory-vehicle-filters", []);
     await c.submitCoreInventorySearch();
     assert.deepEqual(Array.from(c.coreListFilteredRows, row => row.id), [2]); checks++;
     assert.equal(get("core-inventory-filter-count").textContent, "(1)"); checks++;
     c.resetCoreInventoryFilters();
     assert.equal(get("core-inventory-memo").value, ""); checks++;
-    get("core-inventory-vehicle").value = "truck";
+    c.setCoreVehicleFilterSelection("core-inventory-vehicle-filters", ["truck"]);
     get("core-list-search").value = "ＴＲＵＣＫ２００";
     get("core-inventory-category").value = "alternator";
     await c.submitCoreInventorySearch();
@@ -473,7 +518,7 @@ async function main() {
     await c.submitCoreInventorySearch();
     assert.match(get("core-list-list").innerHTML, /no_results/); checks++;
     c.resetCoreInventoryFilters();
-    get("core-inventory-vehicle").value = "unclassified";
+    c.setCoreVehicleFilterSelection("core-inventory-vehicle-filters", ["unclassified"]);
     await c.submitCoreInventorySearch();
     assert.deepEqual(Array.from(c.coreListFilteredRows, row => row.id), [1, 0]); checks++;
     assert.match(get("core-list-count").innerHTML, /9<small/); checks++;
@@ -492,7 +537,7 @@ async function main() {
     c.respond = table => table === "core_collection_list_items"
       ? { error: { message: "classification unavailable" } }
       : { data: [{ id: 1, dkd_shohin_id: 1, quantity: 3 }] };
-    get("core-inventory-vehicle").value = "unclassified";
+    c.setCoreVehicleFilterSelection("core-inventory-vehicle-filters", ["unclassified"]);
     await c.loadCoreListMgmt();
     assert.equal(c.coreManagementDataReady, false); checks++;
     assert.match(get("core-list-list").innerHTML, /classification unavailable/); checks++;
