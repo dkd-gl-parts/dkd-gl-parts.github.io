@@ -12264,6 +12264,11 @@ html[data-product-3d-paused] :is(
     inset: auto 10px 12px;
     width: auto;
   }
+  #screen-core-list-mgmt #core-inventory-filter-options .core-workspace-filter-fields > label {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(78px, 1fr) minmax(0, 2fr);
+    align-items: center;
+  }
   #screen-core-list-mgmt #core-inventory-filter-options .core-workspace-filter-fields :is(.form-select, .mgmt-search, .core-workspace-clear) {
     height: 36px;
     min-height: 36px;
