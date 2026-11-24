@@ -41,6 +41,9 @@
     partLookupList: ["カルテ一覧", "Karte results", "卡片列表"],
     preview: ["販売管理（カルテ検索プレビュー）", "Sales Management (Karte preview)", "销售管理（卡片查询预览）"],
     search: ["カルテ番号検索", "Search Karte number", "查询卡片编号"],
+    searchOpen: ["カルテ検索", "Karte search", "卡片查询"],
+    submit: ["検索", "Search", "查询"],
+    related: ["関連カルテ", "Related Karte", "关联卡片"],
     list: ["Recycle+カルテ", "Recycle+ Karte", "Recycle+ 卡片"],
     detail: ["詳細", "Details", "详情"], pending: ["部品詳細の取得待ち", "Waiting for part details", "等待获取零件详情"],
     exit: ["通常の販売管理に戻る", "Return to Sales Management", "返回销售管理"],
@@ -84,19 +87,16 @@
   const $ = (id) => document.getElementById(id);
   const screen = $("screen-search");
   const menu = $("menu-grid");
-  const head = screen?.querySelector(".search-header");
-  const productPanel = $("sales-detail-basic");
-  const identity = $("sales-product-identity");
-  if (!head || !productPanel || !identity || !menu) return;
+  const filterRow = $("filter-row");
+  const conditionsTitle = $("sales-conditions-title");
+  if (!screen || !filterRow || !conditionsTitle || !menu) return;
 
   let active = false;
   let epoch = 0;
   let lookups = 0;
-  let productRequest = 0;
-  let productKey = "";
-  let productPage = 0;
   let displayedDetail = null;
   let details = null;
+  let dialogOrigin = null;
 
   function tr(key) {
     const lang = document.documentElement.lang;
@@ -163,13 +163,19 @@
   const status = element("p", {role:"status", className:"recycle-karte-status"});
   const searchRow = element("div", {className:"recycle-karte-search-row"},
     element("label", {for:input.id, text:tr("search")}), input,
-    button("search", null, {type:"submit", className:"btn-search"}));
+    button("submit", null, {type:"submit", className:"btn-search"}));
   const searchForm = element("form", {className:"recycle-karte-form"}, searchRow, status);
   const inventoryButton = button("inventoryOpen", () => openInventory(inventoryButton));
   const tools = element("div", {className:"recycle-karte-controls"},
-    button("manage", () => void openManage()), inventoryButton, button("exit", () => reset()));
-  const entry = element("section", {className:"recycle-karte-entry", hidden:""}, searchForm, tools);
-  head.append(entry);
+    button("manage", event => void openManage(event.currentTarget)), inventoryButton,
+    button("exit", () => {
+      reset();
+      partSearchInput?.focus({preventScroll:true});
+    }));
+  const entryButton = button("searchOpen", openSearch, {className:"search-clear-btn recycle-karte-launcher", "aria-haspopup":"dialog", hidden:""});
+  const relatedButton = button("related", openProductList, {className:"search-clear-btn recycle-karte-related", "aria-haspopup":"dialog", hidden:""});
+  filterRow.append(entryButton);
+  conditionsTitle.after(relatedButton);
   const partSearchInput = $("q");
   let partLookupRequest = 0;
   const partLookupStatus = element("p", {className:"recycle-karte-status", role:"status"});
@@ -177,27 +183,24 @@
   const partLookupResults = button("partLookupList", null, {hidden:""});
   const partLookup = element("section", {className:"recycle-karte-product", hidden:""},
     partLookupStatus, element("div", {className:"recycle-karte-controls"}, partLookupFirst, partLookupResults));
-  entry.append(partLookup);
 
-
-  const productSection = element("section", {className:"recycle-karte-product", hidden:""},
-    element("h3", {text:tr("list")}));
-  const productList = element("div", {className:"recycle-karte-list", "aria-live":"polite"});
-  productSection.append(productList);
-  productPanel.prepend(productSection);
+  function openSearch() {
+    if (!canShow()) return;
+    if (status.textContent === tr("loading")) status.textContent = "";
+    const {body} = dialog(tr("search"), entryButton);
+    body.append(searchForm, partLookup, tools);
+    input.focus();
+  }
 
   function reset() {
     active = false;
     epoch++;
     lookups++;
-    productRequest++;
-    productKey = "";
     clearPartLookup();
     input.value = "";
     status.replaceChildren();
-    productList.replaceChildren();
-    entry.hidden = true;
-    productSection.hidden = true;
+    entryButton.hidden = true;
+    relatedButton.hidden = true;
     details?.close();
     displayedDetail = null;
   }
@@ -215,9 +218,11 @@
       try {
         await enterSearch();
         if (run !== epoch || !canShow()) return;
-        entry.hidden = false;
-        input.focus();
-        refreshProductSection();
+        entryButton.textContent = tr("searchOpen");
+        relatedButton.textContent = tr("related");
+        entryButton.hidden = false;
+        relatedButton.hidden = false;
+        entryButton.focus({preventScroll:true});
       } catch {
         if (run === epoch) reset();
       }
@@ -234,40 +239,44 @@
       button("next", () => select(page + 1), !more ? {disabled:""} : {}));
   }
 
-  function refreshProductSection(force = false) {
+  function resultPageSize() {
+    return window.matchMedia("(max-width: 480px), (max-height: 620px)").matches ? 3 : pageSize;
+  }
+
+  function openProductList() {
     if (!canShow()) return;
     const id = currentId();
-    if (!force && id === productKey) return;
-    if (id !== productKey) productPage = 0;
-    productKey = id;
-    productSection.hidden = !id;
-    if (id) void renderProductList(id, productPage);
-  }
+    if (!id) return;
+    const {body, modal} = dialog(tr("related"), relatedButton);
+    const productList = element("div", {className:"recycle-karte-list", "aria-live":"polite"});
+    body.append(productList);
+    const perPage = resultPageSize();
+    let pageRequest = 0;
 
-  async function renderProductList(id, page) {
-    const run = ++productRequest;
-    productList.textContent = tr("loading");
-    try {
-      const rows = await rpc("read", {p_product:id, p_offset:page * pageSize});
-      if (run !== productRequest || id !== currentId()) return;
-      productPage = page;
-      productList.replaceChildren();
-      if (!rows.length) productList.textContent = tr("noRows");
-      rows.slice(0, pageSize).forEach(row => {
-        const summary = element("div", {className:"recycle-karte-list-summary"},
-          element("strong", {text:row.karte_number}), element("span", {text:row.part_name || row.part_number || tr("missing")}),
-          element("small", {text:productKindLabel(row.product_kind)}));
-        productList.append(element("div", {className:"recycle-karte-result"}, summary,
-          button("detail", event => void openDetail(row.karte_number, event.currentTarget),
-            {"aria-label":tr("detail") + " " + row.karte_number})));
-      });
-      const navigation = pager(page, rows.length > pageSize, value => void renderProductList(id, value));
-      if (navigation) productList.append(navigation);
-    } catch (error) {
-      if (run === productRequest && error?.code !== "closed") productList.textContent = errorText(error);
+    async function showPage(page) {
+      const run = ++pageRequest;
+      productList.textContent = tr("loading");
+      try {
+        const rows = await rpc("read", {p_product:id, p_offset:page * perPage});
+        if (details !== modal || run !== pageRequest || id !== currentId()) return;
+        productList.replaceChildren();
+        if (!rows.length) productList.textContent = tr("noRows");
+        rows.slice(0, perPage).forEach(row => {
+          const summary = element("div", {className:"recycle-karte-list-summary"},
+            element("strong", {text:row.karte_number}), element("span", {text:row.part_name || row.part_number || tr("missing")}),
+            element("small", {text:productKindLabel(row.product_kind)}));
+          productList.append(element("div", {className:"recycle-karte-result"}, summary,
+            button("detail", event => void openDetail(row.karte_number, event.currentTarget),
+              {"aria-label":tr("detail") + " " + row.karte_number})));
+        });
+        const navigation = pager(page, rows.length > perPage, showPage);
+        if (navigation) productList.append(navigation);
+      } catch (error) {
+        if (details === modal && run === pageRequest && error?.code !== "closed") productList.textContent = errorText(error);
+      }
     }
+    void showPage(0);
   }
-
 
   function clearPartLookup() {
     partLookupRequest++;
@@ -303,15 +312,16 @@
   function openPartResults(part, firstPage) {
     if (!canShow()) return;
     const {body, modal} = dialog(tr("partLookupList") + " · " + part, partLookupResults);
+    const perPage = resultPageSize();
     let pageRequest = 0;
     async function showPage(page, initial) {
       const run = ++pageRequest;
       body.textContent = tr("loading");
       try {
-        const data = initial ?? await rpc("read_part", {p_part:part, p_offset:page * pageSize});
+        const data = initial ?? await rpc("read_part", {p_part:part, p_offset:page * perPage});
         if (details !== modal || pageRequest !== run) return;
         body.replaceChildren(element("p", {className:"recycle-karte-status", text:tr("partLookupCount").replace("{count}", String(data.total))}));
-        data.items.forEach(row => {
+        data.items.slice(0, perPage).forEach(row => {
           const summary = element("div", {className:"recycle-karte-list-summary"},
             element("strong", {text:row.karte_number}),
             element("span", {text:row.part_number || part}),
@@ -320,7 +330,7 @@
             button("detail", () => void openDetail(row.karte_number, partLookupResults),
               {"aria-label":tr("detail") + " " + row.karte_number})));
         });
-        const navigation = pager(page, data.total > (page + 1) * pageSize, next => void showPage(next));
+        const navigation = pager(page, data.total > (page + 1) * perPage, next => void showPage(next));
         if (navigation) body.append(navigation);
       } catch (error) {
         if (details === modal && pageRequest === run && error?.code !== "closed") body.textContent = errorText(error);
@@ -346,11 +356,13 @@
       return;
     }
     const lookup = ++lookups;
+    const searchDialog = details;
+    const isCurrent = () => lookup === lookups && details === searchDialog && searchDialog?.open && canShow();
     const targetPress = searchRequestSeq;
     status.textContent = tr("loading");
     try {
       const [row] = await rpc("read", {p_karte:requested, p_detail:true});
-      if (lookup !== lookups || !canShow()) return;
+      if (!isCurrent()) return;
       if (!row) {
         status.textContent = tr("noRows");
         return;
@@ -358,7 +370,7 @@
       if (row.link_active && targetPress === searchRequestSeq) {
         try {
           await openProductByDkdId(row.dkd_shohin_id);
-          if (lookup === lookups && canShow() && currentId() === row.dkd_shohin_id) {
+          if (isCurrent() && currentId() === row.dkd_shohin_id) {
             const selection = detailSecondaryRequestSeq;
             void productSearchDetailReadyPromise.then(() => {
               if (!canShow() || lookup !== lookups || selection !== detailSecondaryRequestSeq) return;
@@ -370,16 +382,18 @@
           }
         } catch { /* The saved karte remains available. */ }
       }
-      if (lookup !== lookups || !canShow()) return;
+      if (!isCurrent()) return;
       status.textContent = row.link_active && currentId() === row.dkd_shohin_id ? "" : tr("unknown");
       displayDetail(row, input);
     } catch (error) {
-      if (lookup === lookups && error?.code !== "closed") status.textContent = errorText(error);
+      if (isCurrent() && error?.code !== "closed") status.textContent = errorText(error);
     }
   });
 
   function dialog(title, origin) {
+    const focusTarget = details?.contains(origin) ? dialogOrigin : origin;
     details?.close();
+    details?.remove();
     const heading = element("h2", {id:"recycle-karte-dialog-title", text:title});
     const modal = element("dialog", {className:"recycle-karte-dialog", "aria-labelledby":heading.id});
     const body = element("div", {className:"recycle-karte-dialog-body"});
@@ -391,10 +405,12 @@
       if (details === modal) {
         details = null;
         displayedDetail = null;
-            if (canShow() && origin?.isConnected) origin.focus();
+        dialogOrigin = null;
+        if (canShow() && focusTarget?.isConnected) focusTarget.focus({preventScroll:true});
       }
     });
     details = modal;
+    dialogOrigin = focusTarget;
     modal.showModal();
     return {body, modal};
   }
@@ -482,7 +498,6 @@
             const saved = body.querySelector("[role='status']");
             if (saved) saved.textContent = tr("saved");
           }
-          refreshProductSection(true);
         } catch (error) {
           if (error?.code !== "closed") status.textContent = errorText(error);
         } finally {
@@ -660,7 +675,6 @@
       try {
         await rpc("link", {p_karte:row.karte_number, p_variant:id || null, p_note:note.value});
         state.textContent = tr("saved");
-        refreshProductSection(true);
         const [updated] = await rpc("read", {p_karte:row.karte_number, p_detail:true});
         if (displayedDetail === row && updated) {
           const parent = area.closest(".recycle-karte-dialog-body");
@@ -792,8 +806,8 @@
     void refresh();
   }
 
-  async function openManage() {
-    const {body, modal} = dialog(tr("manage"), entry.querySelector("button[type='button']"));
+  async function openManage(origin) {
+    const {body, modal} = dialog(tr("manage"), origin);
     const section = element("select", {"aria-label":tr("manage")},
       element("option", {value:"pending", text:tr("pending")}),
       element("option", {value:"batch", text:tr("batch")}),
@@ -882,7 +896,6 @@
           message.textContent = tr("saved");
           diff.replaceChildren();
           file.value = "";
-          refreshProductSection(true);
         } catch (error) {
           if (error?.code !== "closed") message.textContent = errorText(error);
           reviewed = previewed = null;
@@ -931,7 +944,6 @@
   new MutationObserver(() => {
     if (active && !canShow()) reset();
   }).observe(screen, {attributes:true, attributeFilter:["class"]});
-  new MutationObserver(() => refreshProductSection()).observe(identity, {childList:true});
   sb.auth.onAuthStateChange(event => {
     if (event === "SIGNED_OUT") {
       reset();
