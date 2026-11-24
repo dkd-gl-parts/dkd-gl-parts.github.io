@@ -15,7 +15,6 @@
     sourceAuth: ["Recycle+またはTinyFishの認証を確認してください。", "Check Recycle+ or TinyFish authentication.", "请检查 Recycle+ 或 TinyFish 登录。"],
     sourceFailed: ["照合済みの詳細を取得できませんでした。前回値を表示しています。", "Verified details could not be retrieved. Showing the previous values.", "未能获取已核验详情，已保留原有数据。"],
     reviewSource: ["取得した差分を確認", "Review retrieved changes", "检查已获取的变更"],
-    sourceBack: ["カルテに戻る", "Return to Karte", "返回卡片"],
     sourceBatch: ["最大3件を自動取得", "Fetch up to three automatically", "自动获取最多三项"],
     sourceOe: ["カーメーカーNo. → 純正品番", "Car maker number → OE part number", "整车厂编号 → 原厂品号"],
     sourceMaker: ["パーツメーカーNo. → メーカー品番", "Parts maker number → Manufacturer part number", "零件厂编号 → 厂商品号"],
@@ -67,11 +66,12 @@
     close: ["閉じる", "Close", "关闭"], previous: ["前へ", "Previous", "上一页"], next: ["次へ", "Next", "下一页"],
     refresh: ["部品詳細の更新を依頼", "Request a part detail refresh", "申请更新零件详情"],
     manage: ["取得依頼・確認データ取込", "Refresh requests & verified import", "更新申请和已核验导入"],
-    sourceList: ["在庫一覧", "Stock list", "库存一览"], sourceDetail: ["在庫入出庫 → 部品詳細", "Stock movements → Part details", "库存出入库 → 零件详情"],
     partDetail: ["部品詳細", "Part details", "零件详情"],
-    fieldSources: ["項目ごとの確認元", "Field sources", "字段来源"],
-    photos: ["D-CATSの商品画像", "D-CATS product images", "D-CATS 商品图片"],
-    noPhoto: ["表示できるD-CATSの商品画像がありません。", "No D-CATS product image is available.", "暂无可显示的 D-CATS 商品图片。"],
+    recordTools: ["カルテの取得・紐付け", "Karte retrieval and linking", "获取与关联卡片"],
+    sourceStateGroup: ["情報・状態", "Information and status", "信息和状态"],
+    sourceIdentifiers: ["品番・日付", "Part numbers and dates", "品号和日期"],
+    photos: ["写真", "Photos", "照片"],
+    noPhoto: ["表示できる写真がありません。", "No photos are available.", "暂无可显示的照片。"],
     photoFull: ["画像を拡大", "Open full-size image", "放大图片"],
     link: ["商品との紐付け", "Product link", "关联商品"], variant: ["商品種別ID", "Product variant ID", "商品类别 ID"],
     linkNote: ["D-CATS側の紐付けメモ", "D-CATS link note", "D-CATS 关联备注"], save: ["紐付けを保存", "Save link", "保存关联"],
@@ -97,6 +97,31 @@
   ];
 
   const allFields = Object.assign({}, ...groups.map(([, fields]) => fields));
+  const partDetailSummary = [
+    [["part_category", "part_name"], "部品"],
+    [["sale_price"], "価格"],
+    [["shipping_fee"], "送料"],
+    [["quality"], "品質"],
+    [["quality_kind"], "種別"]
+  ];
+  const partDetailGroups = [
+    ["part", {
+      karte_number:"カルテ番号", alternate_karte_number:"任意カルテ番号", ps_number:"PS番号",
+      warehouse:"倉庫", shelf:"棚番", part_number:"品番"
+    }],
+    ["vehicle", {
+      classification:"類別型式", vehicle_model:"型式", vehicle_name:"車種名",
+      vehicle_body:"形状", engine:"エンジン", transmission:"ミッション", vehicle_grade:"グレード",
+      fuel:"燃料", drive:"駆動方式", year:"年式", displacement:"排気量", generation:"期別", mileage:"走行距離[km]"
+    }],
+    ["sourceStateGroup", {components:"構成部品", source_information:"情報", source_state:"状態"}],
+    ["sourceIdentifiers", {
+      oe_part_number:"カーメーカーNo.", brand:"パーツメーカー名", same_day_shipping:"当日出荷可",
+      maker_part_number:"パーツメーカーNo.", part_frame_number:"フレームNo.", first_listed_at:"公開日",
+      "追加・摘要5":"摘要5", part_mileage:"キロ数[Km]", recovered_at:"入庫日",
+      "追加・摘要7":"摘要7", "追加・摘要8":"摘要8", source_updated_at:"更新日"
+    }]
+  ];
   const $ = (id) => document.getElementById(id);
   const screen = $("screen-search");
   const menu = $("menu-grid");
@@ -113,6 +138,7 @@
   let epoch = 0;
   let lookups = 0;
   let displayedDetail = null;
+  let lastViewedKarte = "";
   let details = null;
   let dialogOrigin = null;
 
@@ -293,6 +319,12 @@
     if (!canShow()) return;
     const {body} = dialog(tr("workspaceTools"), origin);
     body.append(partLookup, tools);
+    const number = lastViewedKarte || normalizeLookupNumber(input.value);
+    if (numberPattern.test(number)) {
+      const recordTools = button("recordTools", event => void openRecordTools(number, event.currentTarget),
+        {text:tr("recordTools") + " · " + number});
+      body.append(element("div", {className:"recycle-karte-controls"}, recordTools));
+    }
   }
 
   function reset() {
@@ -301,6 +333,7 @@
     lookups++;
     clearPartLookup();
     input.value = "";
+    lastViewedKarte = "";
     searchForm.removeAttribute("aria-busy");
     syncWorkspace();
     details?.close();
@@ -630,7 +663,7 @@
 
   async function openDetail(number, origin) {
     if (!canShow()) return;
-    const {body, modal} = dialog(tr("partDetail") + " · " + number, origin, true);
+    const {body, modal} = dialog(tr("partDetail"), origin, true);
     body.textContent = tr("loading");
     try {
       const [row] = await rpc("read", {p_karte:number, p_detail:true});
@@ -643,10 +676,24 @@
   }
 
   function displayDetail(row, origin) {
-    const {body} = dialog(tr("partDetail") + " · " + row.karte_number, origin, true);
+    const {body} = dialog(tr("partDetail"), origin, true);
     renderDetail(row, body);
   }
 
+
+  async function openRecordTools(number, origin) {
+    if (!canShow()) return;
+    const {body, modal} = dialog(tr("recordTools") + " · " + number, origin, true);
+    body.textContent = tr("loading");
+    try {
+      const [row] = await rpc("read", {p_karte:number, p_detail:true});
+      if (details !== modal) return;
+      if (row) renderRecordTools(row, body);
+      else body.textContent = tr("noRows");
+    } catch (error) {
+      if (details === modal && error?.code !== "closed") body.textContent = errorText(error);
+    }
+  }
 
   async function requestAutomatic(number, action) {
     if (!canShow()) throw Object.assign(new Error("Preview closed"), {code:"closed"});
@@ -699,7 +746,7 @@
   async function renderSourceReview(row, job, body) {
     const revision = document.createElement("div");
     const status = element("p", {role:"status", text:tr("loading")});
-    const back = button("sourceBack", () => renderDetail(row, body));
+    const back = button("recordTools", () => renderRecordTools(row, body));
     const show = element("div", {className:"recycle-karte-diff"});
     revision.append(back, status, show);
     body.replaceChildren(revision);
@@ -718,7 +765,7 @@
           await rpc("source_review", {p_karte:row.karte_number, p_job:job.job_id, p_action:"apply", p_expected:review});
           const [updated] = await rpc("read", {p_karte:row.karte_number, p_detail:true});
           if (updated && revision.isConnected) {
-            renderDetail(updated, body);
+            renderRecordTools(updated, body);
             const saved = body.querySelector("[role='status']");
             if (saved) saved.textContent = tr("saved");
           }
@@ -734,7 +781,7 @@
     }
   }
 
-  function renderDetail(row, body) {
+  function renderRecordTools(row, body) {
     displayedDetail = row;
     const source = element("div", {className:"recycle-karte-meta"},
       element("span", {text:tr("updated") + " " + time(row.last_observed_at)}),
@@ -794,61 +841,55 @@
     if (row.link_active && row.dkd_shohin_id) {
       controls.append(button("related", event => openProductList(event.currentTarget, row.dkd_shohin_id)));
     }
-    const summary = element("dl", {className:"recycle-karte-part-summary"});
-    const summaryKeys = ["part_category", "part_name", "sale_price", "shipping_fee", "quality", "quality_kind"];
-    for (const key of summaryKeys) {
-      summary.append(partDetailField(row, key));
-    }
-
-    const gallery = element("aside", {className:"recycle-karte-gallery", "aria-label":tr("photos")});
-    const fields = element("div", {className:"recycle-karte-part-groups"});
-    for (const [group, mapped] of groups) {
-      const keys = Object.keys(mapped).filter(key => !summaryKeys.includes(key));
-      if (group === "notes") {
-        keys.push(...Object.keys(row.fields || {}).filter(key => !Object.hasOwn(allFields, key)).sort());
-      }
-      const values = element("dl", {className:"recycle-karte-values"}, ...keys.map(key => partDetailField(row, key)));
-      fields.append(element("section", {className:"recycle-karte-part-group"},
-        element("h3", {text:tr(group)}), values));
-    }
-
-    const sources = Object.entries(row.fields || {}).filter(([, field]) => field?.source_page || field?.observed_at);
-    const record = element("div", {className:"recycle-karte-part-record"}, fields);
-    if (sources.length) {
-      const descriptions = sources.map(([key, field]) => element("div", {},
-        element("dt", {text:fieldLabel(key)}), element("dd", {}, element("span", {text:detailFieldSource(field)}))));
-      record.append(element("details", {className:"recycle-karte-part-disclosure"},
-        element("summary", {text:tr("fieldSources")}),
-        element("dl", {className:"recycle-karte-values"}, ...descriptions)));
-    }
     const linkFields = element("div", {className:"recycle-karte-detail-fields"});
     const link = element("details", {className:"recycle-karte-part-disclosure"},
       element("summary", {text:tr("link")}), linkFields);
     link.addEventListener("toggle", () => {
       if (link.open && !linkFields.childElementCount && displayedDetail === row) renderLink(row, linkFields);
     });
-    record.append(link);
-
-    const layout = element("div", {className:"recycle-karte-detail-layout"}, gallery, record);
     const toolbar = element("div", {className:"recycle-karte-part-toolbar"}, source, controls);
-    body.replaceChildren(toolbar, message, summary, layout);
+    body.replaceChildren(toolbar, message, link);
     body.parentElement.scrollTop = 0;
-    void renderDetailGallery(row, gallery);
     void syncAcquisition();
   }
 
-  function detailFieldSource(field) {
-    const source = tr(field.source_page === "stock-list" ? "sourceList" : "sourceDetail");
-    return field.observed_at ? source + " · " + time(field.observed_at) : source;
+  function renderDetail(row, body) {
+    displayedDetail = row;
+    lastViewedKarte = row.karte_number;
+    const summary = element("dl", {className:"recycle-karte-part-summary"});
+    for (const [keys, name] of partDetailSummary) {
+      summary.append(partDetailField(row, keys, name));
+    }
+
+    const gallery = element("aside", {className:"recycle-karte-gallery", "aria-label":tr("photos")});
+    const record = element("div", {className:"recycle-karte-part-groups"});
+    for (const [group, mapping] of partDetailGroups) {
+      const entries = Object.entries(mapping).map(([key, name]) =>
+        partDetailField(row, [key], name));
+      record.append(element("section", {className:"recycle-karte-part-group"},
+        element("h3", {text:tr(group)}), element("dl", {className:"recycle-karte-values"}, ...entries)));
+    }
+
+    body.replaceChildren(summary, element("div", {className:"recycle-karte-detail-layout"}, gallery, record));
+    body.parentElement.scrollTop = 0;
+    void renderDetailGallery(row, gallery);
   }
 
-  function partDetailField(row, key) {
-    const field = row.fields?.[key];
-    const text = field ? codeText(field.value ?? "") : tr("missing");
-    const wide = String(text).length > 60 || String(text).includes("\n");
+  function partDetailField(row, keys, name) {
+    const values = keys.map(key => {
+      if (key === "karte_number") return row.karte_number;
+      const field = row.fields?.[key] ?? row.fields?.[key.replace(/^追加・/, "追加．")];
+      return field?.value;
+    });
+    const text = values.filter(value => value != null && value !== "").join(" ");
+    const label = document.documentElement.lang === "ja" ? name :
+      keys[0] === "karte_number" ? tr("karteNo") : fieldLabel(keys[0]);
+    const wide = text.length > 60 || text.includes("\n") ||
+      ["components", "source_information", "source_state"].includes(keys[0]);
     return element("div", {className:wide ? "recycle-karte-field-wide" : undefined},
-      element("dt", {text:fieldLabel(key)}),
-      element("dd", field ? {text, title:detailFieldSource(field)} : {text, className:"recycle-karte-missing"}));
+      element("dt", {text:label}),
+      element("dd", {text:text || (values.every(value => value == null) ? "—" : ""),
+        className:text ? undefined : "recycle-karte-missing"}));
   }
 
   async function renderDetailGallery(row, gallery) {
@@ -927,7 +968,7 @@
         const [updated] = await rpc("read", {p_karte:row.karte_number, p_detail:true});
         if (displayedDetail === row && updated) {
           const parent = area.closest(".recycle-karte-dialog-body");
-          renderDetail(updated, parent);
+          renderRecordTools(updated, parent);
           parent.querySelector("[role=status]").textContent = tr("saved");
         }
       } catch (error) {
