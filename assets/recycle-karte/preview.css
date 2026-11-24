@@ -2,6 +2,11 @@
 .recycle-karte-launcher[hidden], .recycle-karte-related[hidden], .recycle-karte-product[hidden] { display: none; }
 #filter-row:has(> .recycle-karte-launcher:not([hidden])) {
   grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 6px;
+  padding-inline: 12px;
+}
+#filter-row:has(> .recycle-karte-launcher:not([hidden])) > .form-select {
+  padding-inline: 6px 4px;
 }
 #screen-search .recycle-karte-launcher { padding-inline: 8px; }
 #screen-search .recycle-karte-related {
