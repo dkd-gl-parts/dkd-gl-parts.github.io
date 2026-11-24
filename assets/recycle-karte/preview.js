@@ -22,13 +22,11 @@
     masterOnly: ["商品種別未登録", "Product variant not registered", "商品类别未登记"],
     matchMissing: ["純正品番とメーカー品番がそろうと、紐付け候補を照合できます。", "Both numbers are needed to match product variants.", "需要两个品号才能匹配商品类别。"],
     matchNone: ["純正品番とメーカー品番の両方が一致する商品種別はありません。", "No product variant matches both numbers.", "暂无同时匹配两个品号的商品类别。"],
-    inventoryOpen: ["在庫一覧を全件取得", "Retrieve the full inventory list", "获取完整库存列表"],
-    inventoryStart: ["No.1から取得を開始", "Start at row 1", "从第1行开始"],
-    inventoryResume: ["未取得の行から再開", "Resume from the next row", "从未获取的行继续"],
-    inventoryStartAgain: ["No.1から再取得", "Retrieve again from row 1", "从第1行重新获取"],
+    inventoryOpen: ["夜間の全件取得結果", "Nightly inventory results", "夜间库存获取结果"],
+    inventoryRefresh: ["状況を更新", "Refresh status", "刷新进度"],
     inventoryDownload: ["全件のCSVをダウンロード", "Download the complete CSV", "下载完整CSV"],
-    inventoryScope: ["Recycle+の本社（000001）の在庫一覧を読み取ります。確認済みの進捗は保存されます。", "Reads the Recycle+ head-office inventory (000001). Verified progress is saved.", "读取 Recycle+ 总部（000001）的库存列表，保存已核验进度。"],
-    inventoryIdle: ["取得を開始すると、No.1から順に確認します。", "After starting, verification begins at row 1.", "启动后从第1行开始核验。"],
+    inventoryScope: ["本社（000001）の全件取得は、毎日午前1時からサーバーで行います。", "The server starts the head-office inventory scan at 1:00 a.m. JST each day.", "服务器每天日本时间凌晨1点开始获取总部库存。"],
+    inventoryIdle: ["全件取得の結果はまだありません。", "No full inventory scan has completed yet.", "尚无全量库存获取结果。"],
     inventoryCount: ["照合済み {count} / {total} 件", "{count} / {total} rows verified", "已核验 {count} / {total} 条"],
     inventoryReady: ["全{count}件の取得が完了しました。", "All {count} rows have been retrieved.", "已完成全部 {count} 条的获取。"],
     inventoryIncomplete: ["次の行を照合できませんでした。", "The next row could not be verified.", "无法核验下一行。"],
@@ -79,7 +77,11 @@
     linkNote: ["D-CATS側の紐付けメモ", "D-CATS link note", "D-CATS 关联备注"], save: ["紐付けを保存", "Save link", "保存关联"],
     invalidVariant: ["商品種別IDを半角数字で入力してください。", "Enter a numeric product variant ID.", "请输入数字商品类别 ID。"],
     saved: ["保存しました。", "Saved.", "已保存。"], batch: ["取得依頼を登録", "Queue refresh requests", "登记更新申请"],
-    batchHelp: ["登録済みのカルテ番号を1行に1件、最大100件入力してください。", "Enter up to 100 registered Karte numbers, one per line.", "请输入最多 100 个已登记的卡片编号，每行一个。"],
+    batchHelp: ["登録済みカルテを番号または100件以内の範囲で指定します。", "Enter a registered Karte number or a range of up to 100.", "请输入已登记的卡片编号或不超过100条的范围。"],
+    rangeFrom: ["開始カルテ番号", "Start Karte number", "起始卡片编号"],
+    rangeTo: ["終了カルテ番号（範囲指定時）", "End Karte number (for a range)", "结束卡片编号（范围时）"],
+    rangeInvalid: ["同じ接頭番号の範囲を、開始番号から100件以内で指定してください。", "Use the same prefix and a range of up to 100 numbers.", "请指定相同前缀且不超过100条的号码范围。"],
+    rangeRegistered: ["{count}件の取得依頼を登録しました。", "Queued {count} retrieval requests.", "已登记 {count} 条获取请求。"],
     importTitle: ["Recycle+で確認したデータ", "Data verified in Recycle+", "在 Recycle+ 核验的数据"],
     importHelp: ["取得依頼は、Recycle+の部品詳細を確認し、その結果を取り込むと完了します。取り込む前に差分を確認できます。", "A request completes when verified Recycle+ part details are imported. Review changes before applying.", "导入经过核验的 Recycle+ 零件详情后，更新申请完成。导入前可以检查差异。"],
     review: ["差分を確認", "Review changes", "预览差异"], apply: ["確認した差分を反映", "Apply reviewed changes", "应用已核验差异"],
@@ -190,6 +192,18 @@
     const normalized = normalizeNumber(value);
     return /^[0-9]{1,12}$/.test(normalized) ? "00000-" + normalized.padStart(12, "0") : normalized;
   }
+  function selectedKarteNumbers(first, last) {
+    const start = normalizeLookupNumber(first);
+    const end = last.trim() ? normalizeLookupNumber(last) : start;
+    if (!numberPattern.test(start) || !numberPattern.test(end)) return [];
+    const prefix = start.slice(0, 6);
+    const from = Number(start.slice(6));
+    const through = Number(end.slice(6));
+    const size = through - from + 1;
+    if (!end.startsWith(prefix) || size < 1 || size > 100) return [];
+    return Array.from({length:size}, (_, index) => prefix + String(from + index).padStart(12, "0"));
+  }
+
   const time = value => value ? new Date(value).toLocaleString(document.documentElement.lang) : tr("missing");
   const codeText = value => value === "" ? tr("blank") : value;
   const fieldLabel = key => document.documentElement.lang === "ja" ? allFields[key] || key.replace(/^追加[．・]/, "") : key.replace(/^追加[．・]/, "").replace(/_/g, " ");
@@ -1112,7 +1126,7 @@
     if (!canShow()) return;
     const {body,modal} = dialog(tr("inventoryOpen"),origin);
     const message = element("p",{role:"status",className:"recycle-karte-help"});
-    const start = button("inventoryStart",() => void refresh(canResume(last) ? "inventory_resume" : "inventory_start"));
+    const reload = button("inventoryRefresh",() => void refresh());
     const download = button("inventoryDownload",async () => {
       download.disabled = true;
       try { if (last?.state === "ready") await listDownload(last); }
@@ -1120,38 +1134,26 @@
       finally { if (details === modal) download.disabled = false; }
     },{hidden:""});
     body.append(element("p",{className:"recycle-karte-help",text:tr("inventoryScope")}),
-      message,element("div",{className:"recycle-karte-controls"},start,download));
-    let busy = false;
+      message,element("div",{className:"recycle-karte-controls"},reload,download));
     let last = null;
-    const session = epoch;
-    const canResume = work => work?.state === "failed" && ["incomplete","provider"].includes(work.reason);
-    function draw(work) {
-      last = work;
-      message.textContent = inventoryMessage(work);
-      start.disabled = work.state === "running" || work.reason === "submission_unknown" || work.reason === "policy";
-      download.hidden = work.state !== "ready";
-      start.textContent = tr(canResume(work) ? "inventoryResume" : work.state === "ready" ? "inventoryStartAgain" : "inventoryStart");
-    }
-    async function refresh(action) {
-      if (busy || details !== modal || session !== epoch || !canShow()) return;
-      busy = true;
-      start.disabled = true;
+    let timer = 0;
+    modal.addEventListener("close", () => window.clearTimeout(timer));
+    async function refresh() {
+      if (reload.disabled || details !== modal || !canShow()) return;
+      window.clearTimeout(timer);
+      reload.disabled = true;
       try {
-        let work;
-        if (action) {
-          const result = await sb.functions.invoke("dcats-recycle-karte-source",{body:{action}});
-          if (result.error || !result.data?.state) throw result.error || new Error("No inventory status");
-          work = result.data;
-        } else work = await rpc("inventory_latest",{});
-        if (details !== modal || session !== epoch || !canShow()) return;
-        draw(work);
-        if (work.state === "running") window.setTimeout(() => void refresh("inventory_status"),18000);
+        const work = await rpc("inventory_latest",{});
+        if (details !== modal) return;
+        last = work;
+        message.textContent = inventoryMessage(work);
+        download.hidden = work.state !== "ready";
+        if (work.state === "running") timer = window.setTimeout(() => void refresh(),18000);
       } catch (error) {
-        if (details !== modal || session !== epoch || !canShow()) return;
+        if (details !== modal || error?.code === "closed") return;
         message.textContent = errorText(error);
-        if (last?.state === "running") window.setTimeout(() => void refresh("inventory_status"),30000);
-        else start.disabled = false;
-      } finally { busy = false; }
+        if (last?.state === "running") timer = window.setTimeout(() => void refresh(),30000);
+      } finally { reload.disabled = false; }
     }
     void refresh();
   }
@@ -1184,49 +1186,49 @@
     }
 
     function renderBatch() {
-      const numbers = element("textarea", {rows:"2", placeholder:"00000-000000000000"});
-      const collected = new Set();
-      const note = element("p", {role:"status", text:"0 / 100"});
-      const add = button("search", () => {
-        const entries = numbers.value.split(/\s+/).filter(Boolean).map(normalizeNumber);
-        if (!entries.length || entries.some(next => !numberPattern.test(next))) {
-          note.textContent = tr("valid");
-          return;
+      const attrs = {type:"search",inputmode:"numeric",maxlength:"22",placeholder:"22",autocomplete:"off"};
+      const from = element("input",attrs);
+      const through = element("input",{...attrs,placeholder:""});
+      const note = element("p",{role:"status"});
+      const range = element("div",{className:"recycle-karte-range"},
+        element("label",{text:tr("rangeFrom")},from),element("label",{text:tr("rangeTo")},through));
+      function numbers() {
+        const selected = selectedKarteNumbers(from.value,through.value);
+        if (!selected.length) {
+          note.textContent = tr("rangeInvalid");
+          from.focus();
         }
-        const next = new Set([...collected, ...entries]);
-        if (next.size > 100) { note.textContent = tr("batchHelp"); return; }
-        next.forEach(number => collected.add(number));
-        numbers.value = "";
-        note.textContent = collected.size + " / 100";
-        numbers.focus();
-      }, {text:document.documentElement.lang === "ja" ? "番号を追加" : "Add number"});
-      const send = button("batch", async () => {
-        if (!collected.size) return;
-        send.disabled = true;
-        try {
-          await rpc("request", {p_numbers:[...collected]});
-          section.value = "pending";
-          void pendingPage(0);
-        } catch (error) {
-          if (error?.code !== "closed") note.textContent = errorText(error);
-        } finally { send.disabled = false; }
-      });
-      const fetchBatch = button("sourceBatch", async () => {
-        if (!collected.size || collected.size > 3) {
+        return selected;
+      }
+      async function process(automatic) {
+        const selected = numbers();
+        if (!selected.length) return;
+        if (automatic && selected.length > 3) {
           note.textContent = tr("sourceBatch");
           return;
         }
-        fetchBatch.disabled = true;
+        send.disabled = fetchBatch.disabled = true;
         try {
-          const outcomes = await Promise.allSettled([...collected].map(requestAutomatic));
-          note.textContent = outcomes.map((value,index) => {
-            const state = value.status === 'fulfilled' ? acquisitionStatus(value.value) : errorText(value.reason);
-            return Array.from(collected)[index] + ' · ' + (state || tr("sourceRunning"));
+          const count = await rpc("request",{p_numbers:selected});
+          if (!note.isConnected) return;
+          if (!automatic) {
+            note.textContent = tr("rangeRegistered").replace("{count}",String(count));
+            return;
+          }
+          const outcomes = await Promise.allSettled(selected.map(number => requestAutomatic(number)));
+          if (!note.isConnected) return;
+          note.textContent = outcomes.map((result,index) => {
+            const state = result.status === "fulfilled" ? acquisitionStatus(result.value) : errorText(result.reason);
+            return selected[index] + " · " + (state || tr("sourceRunning"));
           }).join("  ");
-        } finally { fetchBatch.disabled = false; }
-      });
-      panel.append(element("label", {text:tr("batchHelp")}, numbers),
-        element("div", {className:"recycle-karte-controls"}, add, send, fetchBatch), note);
+        } catch (error) {
+          if (error?.code !== "closed" && note.isConnected) note.textContent = errorText(error);
+        } finally { send.disabled = fetchBatch.disabled = false; }
+      }
+      const send = button("batch",() => void process(false));
+      const fetchBatch = button("sourceBatch",() => void process(true));
+      panel.append(element("p",{className:"recycle-karte-help",text:tr("batchHelp")}),range,
+        element("div",{className:"recycle-karte-controls"},send,fetchBatch),note);
     }
 
     function renderImport() {

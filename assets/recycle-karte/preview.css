@@ -184,6 +184,8 @@
   .recycle-karte-detail-actions button { padding-inline: .35rem; }
 }
 
+.recycle-karte-range { display: flex; flex-wrap: wrap; gap: .4rem .65rem; }
+.recycle-karte-range > label { flex: 1 1 9rem; min-inline-size: 0; }
 .recycle-karte-dialog textarea { resize: none; inline-size: 100%; box-sizing: border-box; font: inherit; }
 
 #screen-search .recycle-karte-shipping-column { display: contents; }
