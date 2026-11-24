@@ -32,7 +32,7 @@ async function main() {
     target_quantity: index === 0 ? 300 : index === 1 ? 0 : index,
     maker: index === 0 ? "QA-000001-VERY-LONG-PART<&>" : "QA-COLLECTION-" + index,
     genuine: "OEM-" + index,
-    vehicle: index === 0 ? "軽四・乗用車・トラック・商用バン・バス・建機・農機・その他" : "未分類",
+    vehicle: index === 0 ? "軽四・乗用車・トラック・商用バン・バス・建機・農機" : "未分類",
     ranking: index === 72 ? null : { shipment: index === 0 ? 354 : index === 1 ? 158 : index },
     categoryRank: index === 72 ? null : index + 1
   }));
@@ -152,7 +152,7 @@ async function main() {
     assert.equal(await collectionRows.count(), 73);
     assert.match(await collectionRows.first().locator("td").nth(1).innerText(), /QA-000001-VERY-LONG-PART<&>/);
     assert.deepEqual(await collectionRows.first().locator("td").allTextContents().then(cells => cells.slice(2)),
-      ["軽四・乗用車・トラック・商用バン・バス・建機・農機・その他", "300"]);
+      ["軽四・乗用車・トラック・商用バン・バス・建機・農機", "300"]);
     assert.equal(await collectionRows.nth(1).locator("td").last().textContent(), "0");
     assert.equal(await collectionRows.last().locator("td").last().textContent(), "72");
     async function verifyCollectionLayout(paperWidthMm) {
@@ -198,7 +198,8 @@ async function main() {
 
     await page.evaluate(() => {
       const row = coreCollectionFilteredRows[0];
-      coreCollectionFilteredRows = [{ ...row, maker: "W".repeat(46), genuine: "8".repeat(23) }];
+      coreCollectionFilteredRows = [{ ...row, maker: "W".repeat(46), genuine: "8".repeat(23),
+        vehicle: "軽四・乗用車・トラック・商用バン・バス・建機・農機・その他" }];
     });
     await page.locator("#btn-core-collection-print").click();
     await printDialog.getByRole("button", { name: "印刷・PDF", exact: true }).click();
