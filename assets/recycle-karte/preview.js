@@ -20,6 +20,7 @@
     sourceOe: ["カーメーカーNo. → 純正品番", "Car maker number → OE part number", "整车厂编号 → 原厂品号"],
     sourceMaker: ["パーツメーカーNo. → メーカー品番", "Parts maker number → Manufacturer part number", "零件厂编号 → 厂商品号"],
     matchCandidates: ["純正品番とメーカー品番が一致する商品種別", "Product variants matching both numbers", "两个品号同时匹配的商品类别"],
+    masterOnly: ["商品種別未登録", "Product variant not registered", "商品类别未登记"],
     matchMissing: ["純正品番とメーカー品番がそろうと、紐付け候補を照合できます。", "Both numbers are needed to match product variants.", "需要两个品号才能匹配商品类别。"],
     matchNone: ["純正品番とメーカー品番の両方が一致する商品種別はありません。", "No product variant matches both numbers.", "暂无同时匹配两个品号的商品类别。"],
     inventoryOpen: ["在庫一覧を全件取得", "Retrieve the full inventory list", "获取完整库存列表"],
@@ -273,9 +274,8 @@
     return window.matchMedia("(max-width: 480px), (max-height: 620px)").matches ? 3 : pageSize;
   }
 
-  function openProductList(origin) {
+  function openProductList(origin, id = currentId()) {
     if (!canShow()) return;
-    const id = currentId();
     if (!id) return;
     const {body, modal} = dialog(tr("related"), origin);
     const productList = element("div", {className:"recycle-karte-list", "aria-live":"polite"});
@@ -288,13 +288,16 @@
       productList.textContent = tr("loading");
       try {
         const rows = await rpc("read", {p_product:id, p_offset:page * perPage});
-        if (details !== modal || run !== pageRequest || id !== currentId()) return;
+        if (details !== modal || run !== pageRequest) return;
         productList.replaceChildren();
         if (!rows.length) productList.textContent = tr("noRows");
+        else if (rows[0].related_count != null) productList.append(element("p", {className:"recycle-karte-status",
+          text:tr("partLookupCount").replace("{count}", String(rows[0].related_count))}));
         rows.slice(0, perPage).forEach(row => {
           const summary = element("div", {className:"recycle-karte-list-summary"},
-            element("strong", {text:row.karte_number}), element("span", {text:row.part_name || row.part_number || tr("missing")}),
-            element("small", {text:productKindLabel(row.product_kind)}));
+            element("strong", {text:row.karte_number}),
+            element("span", {text:[row.part_name || row.part_number || tr("missing"), row.vehicle_model].filter(Boolean).join(" · ")}),
+            element("small", {text:row.master_product_id ? tr("masterOnly") : productKindLabel(row.product_kind)}));
           productList.append(element("div", {className:"recycle-karte-result"}, summary,
             button("detail", event => void openDetail(row.karte_number, event.currentTarget),
               {"aria-label":tr("detail") + " " + row.karte_number})));
@@ -354,8 +357,9 @@
         data.items.slice(0, perPage).forEach(row => {
           const summary = element("div", {className:"recycle-karte-list-summary"},
             element("strong", {text:row.karte_number}),
-            element("span", {text:row.part_number || part}),
-            element("small", {text:row.link_active ? productKindLabel(row.product_kind) : tr("unknown")}));
+            element("span", {text:[row.part_number || part, row.vehicle_model].filter(Boolean).join(" · ")}),
+            element("small", {text:row.master_product_id ? tr("masterOnly") :
+              row.link_active ? productKindLabel(row.product_kind) : tr("unknown")}));
           body.append(element("div", {className:"recycle-karte-result"}, summary,
             button("detail", () => void openDetail(row.karte_number, partLookupResults),
               {"aria-label":tr("detail") + " " + row.karte_number})));
@@ -659,7 +663,11 @@
       area.append(list, pager(page, fieldKeys.length > (page + 1) * perPage, renderGroup));
     }
     section.addEventListener("change", () => renderGroup());
-    body.replaceChildren(source, element("div", {className:"recycle-karte-controls"}, section, refresh, review), message, content);
+    const controls = element("div", {className:"recycle-karte-controls"}, section, refresh, review);
+    if (row.link_active && row.dkd_shohin_id) {
+      controls.append(button("related", event => openProductList(event.currentTarget, row.dkd_shohin_id)));
+    }
+    body.replaceChildren(source, controls, message, content);
     void syncAcquisition();
     renderGroup();
     if (window.matchMedia("(min-width: 920px) and (min-height: 580px)").matches) renderPhotoInto(photo);
@@ -723,11 +731,12 @@
       element("p", {text:tr("sourceOe") + " · " + (row.fields?.oe_part_number?.value || tr("missing"))}),
       element("p", {text:tr("sourceMaker") + " · " + (row.fields?.maker_part_number?.value || tr("missing"))}),
       matching);
+    if (row.master_product_id) matches.append(element("p", {text:"D-CATS " + row.master_product_id + " · " + tr("masterOnly")}));
     area.prepend(matches);
     void rpc("link_candidates", {p_karte:row.karte_number}).then(data => {
       if (displayedDetail !== row || !matches.isConnected) return;
       if (data.state !== "matched") {
-        matching.textContent = tr(data.state === "missing_fields" ? "matchMissing" : "matchNone");
+        matching.textContent = row.master_product_id ? "" : tr(data.state === "missing_fields" ? "matchMissing" : "matchNone");
         return;
       }
       matching.textContent = "";
