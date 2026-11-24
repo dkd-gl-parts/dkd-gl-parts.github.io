@@ -9092,7 +9092,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1385";
+var APP_VERSION       = "v1.1.1386";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -9215,6 +9215,7 @@ var coreListMode = "inventory";
 var coreManagementLoadSeq = 0;
 var coreManagementDataReady = false;
 var CORE_MANAGEMENT_CACHE_MS = 30000;
+var CORE_COLLECTION_PRODUCT_SELECT = "dkd_shohin_id,category_code,category,dks_shohin_cd,manufacturer,manufacturer_part_number,genuine_part_number,genuine_part_number_2,daiko_part_number";
 var coreManagementCache = null;
 var coreCollectionRows = [];
 var coreCollectionRankingRows = [];
@@ -32020,13 +32021,23 @@ async function loadCoreCollectionList() {
     var rankRequest = canViewManufacturingReport()
       ? window.DCatsManufacturingRankingReport.loadCoreCollectionRanking2025(checkCurrent).catch(function() { return null; })
       : null;
-    var [loadedRows, stock] = await Promise.all([loadCoreCollectionItems(checkCurrent), readCoreCollectionStock(cache, checkCurrent)]);
+    var stockRequest = readCoreCollectionStock(cache, checkCurrent).then(async function(stock) {
+      return [stock, await loadCoreCollectionProducts(Object.keys(stock), checkCurrent)];
+    });
+    var [items, [stock, products], report] = await Promise.all([loadCoreCollectionItems(checkCurrent), stockRequest, rankRequest]);
     checkCurrent();
-    var [products, report] = await Promise.all([
-      loadCoreCollectionProducts(loadedRows.map(function(row) { return row.dkd_shohin_id; }).concat(Object.keys(stock)), checkCurrent),
-      rankRequest
-    ]);
-    checkCurrent();
+    var embeddedProducts = [];
+    var missingProductIds = [];
+    var loadedRows = items.map(function(item) {
+      var { product, ...row } = item;
+      if (product) embeddedProducts.push(product);
+      else if (product === undefined && !products[row.dkd_shohin_id]) missingProductIds.push(row.dkd_shohin_id);
+      return row;
+    });
+    if (missingProductIds.length) Object.assign(products, await loadCoreCollectionProducts(missingProductIds, checkCurrent));
+    normalizeCoreProductFastRows(embeddedProducts).forEach(function(product) {
+      products[String(product.dkd_shohin_id)] = product;
+    });
     if (report) await resolveCoreCollectionRankingCodes(products, report, checkCurrent);
     checkCurrent();
     coreCollectionRows = loadedRows;
@@ -32048,12 +32059,18 @@ async function loadCoreCollectionList() {
 async function loadCoreCollectionItems(checkCurrent) {
   var pageSize = 1000;
   var maxRows = 50000;
+  var columns = "*,product:core_products!core_collection_list_items_product_fk(" + CORE_COLLECTION_PRODUCT_SELECT + ")";
   function fetchPage(offset, size, options) {
-    return sb.from("core_collection_list_items").select("*", options)
+    return sb.from("core_collection_list_items").select(columns, options)
       .order("id", { ascending: true }).range(offset, offset + size - 1);
   }
   var first = await fetchPage(0, pageSize, { count: "exact" });
   checkCurrent();
+  if (first.error?.code === "PGRST200") {
+    columns = "*";
+    first = await fetchPage(0, pageSize, { count: "exact" });
+    checkCurrent();
+  }
   if (first.error) throw first.error;
   var rows = first.data || [];
   if (first.count >= maxRows) throw new Error("収集対象が多いため取得を中断しました。管理者へ連絡してください。");
@@ -32089,7 +32106,7 @@ async function loadCoreCollectionItems(checkCurrent) {
 
 async function loadCoreCollectionProducts(productIds, checkCurrent) {
   var ids = Array.from(new Set(productIds.map(Number).filter(Number.isSafeInteger)));
-  var columns = "dkd_shohin_id,category_code,category,dks_shohin_cd,manufacturer,manufacturer_part_number,genuine_part_number,genuine_part_number_2,daiko_part_number";
+  var columns = CORE_COLLECTION_PRODUCT_SELECT;
   var products = {};
   var chunkSize = 300;
   var concurrency = 6;
