@@ -274,9 +274,8 @@
     return window.matchMedia("(max-width: 480px), (max-height: 620px)").matches ? 3 : pageSize;
   }
 
-  function openProductList(origin) {
+  function openProductList(origin, id = currentId()) {
     if (!canShow()) return;
-    const id = currentId();
     if (!id) return;
     const {body, modal} = dialog(tr("related"), origin);
     const productList = element("div", {className:"recycle-karte-list", "aria-live":"polite"});
@@ -289,7 +288,7 @@
       productList.textContent = tr("loading");
       try {
         const rows = await rpc("read", {p_product:id, p_offset:page * perPage});
-        if (details !== modal || run !== pageRequest || id !== currentId()) return;
+        if (details !== modal || run !== pageRequest) return;
         productList.replaceChildren();
         if (!rows.length) productList.textContent = tr("noRows");
         else if (rows[0].related_count != null) productList.append(element("p", {className:"recycle-karte-status",
@@ -664,7 +663,11 @@
       area.append(list, pager(page, fieldKeys.length > (page + 1) * perPage, renderGroup));
     }
     section.addEventListener("change", () => renderGroup());
-    body.replaceChildren(source, element("div", {className:"recycle-karte-controls"}, section, refresh, review), message, content);
+    const controls = element("div", {className:"recycle-karte-controls"}, section, refresh, review);
+    if (row.link_active && row.dkd_shohin_id) {
+      controls.append(button("related", event => openProductList(event.currentTarget, row.dkd_shohin_id)));
+    }
+    body.replaceChildren(source, controls, message, content);
     void syncAcquisition();
     renderGroup();
     if (window.matchMedia("(min-width: 920px) and (min-height: 580px)").matches) renderPhotoInto(photo);
