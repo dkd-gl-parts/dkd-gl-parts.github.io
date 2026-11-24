@@ -3,7 +3,7 @@ const vm = require("node:vm");
 const assert = require("node:assert/strict");
 const acorn = require("acorn");
 const source = fs.readFileSync("app.js", "utf8");
-const names = ["readCoreCollectionData", "fetchCoreCollectionData", "readCoreVehicleFilterSelection", "setCoreVehicleFilterSelection", "showCoreListDeleteConfirmation", "openCoreListDeleteConfirmation", "deleteCoreListRow", "closeCoreListForm", "coreInventoryPendingProduct", "updateCorePendingOutputs", "renderCoreInventoryPendingRow", "loadCorePendingStock","corePendingStockSearch","moveCorePendingStockPage","renderCorePendingStock"].concat(["coreCollectionVehicleSummaryHtml", "coreCollectionUiLabel", "renderCoreCollectionVehicleHtml", "coreCollectionVehicleClasses", "coreCollectionVehicleText", "fitCoreManagementRows", "renderCoreManagementPager", "coreCollectionVehicleMatches", "esc", "normalizeAsciiWidth", "norm", "normalizedContains", "sumProductionCoreEntryQty", "renderCoreManagementSummary", "clearCoreManagementCache", "getCoreManagementCache", "readCoreInventorySnapshot", "beginCoreManagementLoad", "searchCoreCollectionWorkspace", "clearCoreCollectionFilters", "resetCoreCollectionFilters", "bindCoreManagementTabs", "setCoreListMode", "coreCollectionStatusLabel", "coreCollectionRank", "coreCollectionDisplayProduct", "buildCoreCollectionRankingRows", "isCoreReplenishmentRow", "coreCollectionStockQty", "coreCollectionShortageQty", "coreCollectionCategoryKey", "coreCollectionStoredOrder", "compareCoreCollectionStoredOrder", "assignCoreCollectionCategoryRanks", "coreCollectionCategoryRank", "coreCollectionCategoryMatches", "applyCoreCollectionFilters", "getCoreCollectionSearchTerms", "indexCoreCollectionRows", "loadCoreCollectionList", "loadCoreCollectionItems", "loadCoreCollectionProducts", "resolveCoreCollectionRankingCodes", "readCoreCollectionStock", "renderCoreCollectionStockBadge", "renderCoreCollectionList", "renderCoreCollectionClassifyButton", "coreCollectionEditAttributes", "renderCoreCollectionQuantity", "renderCoreCollectionRow", "appendCoreCollectionRows", "loadMoreCoreCollectionRowsOnScroll", "enterCoreListMgmt", "resetCoreCollectionControls", "resetCoreInventoryFilters", "submitCoreInventorySearch", "isKoreanCoreInventoryEntry", "coreInventoryVehicleClasses", "applyCoreInventoryFilters", "loadCoreListMgmt", "loadCoreListProducts", "renderCoreListMgmt", "renderCoreInventoryRow", "appendCoreInventoryRows", "loadMoreCoreInventoryRowsOnScroll"]);
+const names = ["coreCollectionPrintFileName", "readCoreCollectionData", "fetchCoreCollectionData", "readCoreVehicleFilterSelection", "setCoreVehicleFilterSelection", "showCoreListDeleteConfirmation", "openCoreListDeleteConfirmation", "deleteCoreListRow", "closeCoreListForm", "coreInventoryPendingProduct", "updateCorePendingOutputs", "renderCoreInventoryPendingRow", "loadCorePendingStock","corePendingStockSearch","moveCorePendingStockPage","renderCorePendingStock"].concat(["coreCollectionVehicleSummaryHtml", "coreCollectionUiLabel", "renderCoreCollectionVehicleHtml", "coreCollectionVehicleClasses", "coreCollectionVehicleText", "fitCoreManagementRows", "renderCoreManagementPager", "coreCollectionVehicleMatches", "esc", "normalizeAsciiWidth", "norm", "normalizedContains", "sumProductionCoreEntryQty", "renderCoreManagementSummary", "clearCoreManagementCache", "getCoreManagementCache", "readCoreInventorySnapshot", "beginCoreManagementLoad", "searchCoreCollectionWorkspace", "clearCoreCollectionFilters", "resetCoreCollectionFilters", "bindCoreManagementTabs", "setCoreListMode", "coreCollectionStatusLabel", "coreCollectionRank", "coreCollectionDisplayProduct", "buildCoreCollectionRankingRows", "isCoreReplenishmentRow", "coreCollectionStockQty", "coreCollectionShortageQty", "coreCollectionCategoryKey", "coreCollectionStoredOrder", "compareCoreCollectionStoredOrder", "assignCoreCollectionCategoryRanks", "coreCollectionCategoryRank", "coreCollectionCategoryMatches", "applyCoreCollectionFilters", "getCoreCollectionSearchTerms", "indexCoreCollectionRows", "loadCoreCollectionList", "loadCoreCollectionItems", "loadCoreCollectionProducts", "resolveCoreCollectionRankingCodes", "readCoreCollectionStock", "renderCoreCollectionStockBadge", "renderCoreCollectionList", "renderCoreCollectionClassifyButton", "coreCollectionEditAttributes", "renderCoreCollectionQuantity", "renderCoreCollectionRow", "appendCoreCollectionRows", "loadMoreCoreCollectionRowsOnScroll", "enterCoreListMgmt", "resetCoreCollectionControls", "resetCoreInventoryFilters", "submitCoreInventorySearch", "isKoreanCoreInventoryEntry", "coreInventoryVehicleClasses", "applyCoreInventoryFilters", "loadCoreListMgmt", "loadCoreListProducts", "renderCoreListMgmt", "renderCoreInventoryRow", "appendCoreInventoryRows", "loadMoreCoreInventoryRowsOnScroll"]);
 const ast = acorn.parse(source, { ecmaVersion: "latest" });
 const functions = ast.body.filter(n => n.type === "FunctionDeclaration" && names.includes(n.id.name));
 assert.equal(functions.length, names.length);
@@ -58,6 +58,29 @@ const rows = [{ id: 1, dkd_shohin_id: 1, target_quantity: 10, priority: "high", 
 const products = [{ dkd_shohin_id: 1, manufacturer_part_number: "TEST-123", category_code: "starter" }, { dkd_shohin_id: 2, manufacturer_part_number: "TEST-456", category_code: "alternator" }];
 function ready(c) { c.respond = (table, columns) => ({ data: table === "core_collection_list_items" ? rows : table === "core_products" ? products : [{ id: 1, dkd_shohin_id: 1, quantity: 3, core_part_number: "CORE-123" }], error: null }); }
 async function main() {
+  {
+    const { c, get, vehicleFilters } = fixture();
+    c.t = key => ({ core_collection_print_title:"コアリスト", core_collection_print_all:"全件", core_collection_rank_unit:"位まで" })[key] || key;
+    get("core-collection-search").value = "428000/5810";
+    get("core-collection-category").value = "starter";
+    get("core-collection-category").selectedOptions = [{ textContent: "スタータ" }];
+    get("core-collection-state").value = "needed";
+    get("core-collection-state").selectedOptions = [{ textContent: "不足あり" }];
+    get("core-collection-source").value = "ranking";
+    get("core-collection-source").selectedOptions = [{ textContent: "2025出荷ランキング" }];
+    get("core-collection-rank-limit").value = "200";
+    vehicleFilters[0].checked = true;
+    vehicleFilters[2].checked = true;
+    c.applyCoreCollectionFilters();
+    get("core-collection-search").value = "入力だけ変更";
+    get("core-collection-rank-limit").value = "20";
+    assert.equal(c.coreCollectionPrintFileName(c.coreCollectionAppliedPrintFilters, "013"),
+      "コアリスト_スタータ_軽四・未分類_200位まで_不足あり_2025出荷ランキング_428000-5810_No-013"); checks++;
+    c.resetCoreCollectionFilters();
+    c.applyCoreCollectionFilters();
+    assert.equal(c.coreCollectionPrintFileName(c.coreCollectionAppliedPrintFilters, "014"), "コアリスト_全件_No-014"); checks++;
+  }
+
   {
     const { c } = fixture();
     const ranking = { rank: 1, shipment: 354, productName: "スタータ" };

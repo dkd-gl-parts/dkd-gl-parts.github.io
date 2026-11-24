@@ -2015,6 +2015,7 @@ var TRANSLATIONS = {
     core_collection_rank_label: "カテゴリ内順位",
     core_collection_rank_unit: "位まで",
     core_collection_print_title: "コアリスト",
+    core_collection_print_all: "全件",
     core_collection_print_count: "対象 {count} 件",
     core_collection_print_required: "必要数",
     core_collection_print_vehicle: "車両区分",
@@ -5011,6 +5012,7 @@ var TRANSLATIONS = {
     core_collection_rank_label: "Category rank",
     core_collection_rank_unit: "or better",
     core_collection_print_title: "Core list",
+    core_collection_print_all: "All results",
     core_collection_print_count: "{count} results",
     core_collection_print_required: "Required",
     core_collection_print_vehicle: "Vehicle class",
@@ -8008,6 +8010,7 @@ var TRANSLATIONS = {
     core_collection_rank_label: "类别排名",
     core_collection_rank_unit: "名以内",
     core_collection_print_title: "旧件清单",
+    core_collection_print_all: "全部",
     core_collection_print_count: "共 {count} 条",
     core_collection_print_required: "需求量",
     core_collection_print_vehicle: "车辆类别",
@@ -9116,7 +9119,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1394";
+var APP_VERSION       = "v1.1.1395";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -9245,6 +9248,8 @@ var coreCollectionRows = [];
 var coreCollectionRankingRows = [];
 var coreCollectionCategoryRanks = new Map();
 var coreCollectionFilteredRows = [];
+var coreCollectionAppliedPrintFilters = [];
+var coreCollectionPrintNumber = 0;
 var coreCollectionProductMap = {};
 var coreCollectionStockMap = {};
 var coreCollectionReportRank = null;
@@ -31985,15 +31990,29 @@ function applyCoreCollectionFilters() {
   var qEl = document.getElementById("core-collection-search");
   var categoryEl = document.getElementById("core-collection-category");
   var stateEl = document.getElementById("core-collection-state");
-  var q = qEl ? norm(qEl.value.trim()) : "";
+  var keyword = qEl ? qEl.value.trim() : "";
+  var q = norm(keyword);
   var category = categoryEl ? categoryEl.value : "";
   var state = stateEl ? stateEl.value : "all";
   var vehicles = readCoreVehicleFilterSelection("core-collection-vehicle-filters");
   var filterCount = document.getElementById("core-workspace-filter-count");
-  var source = document.getElementById("core-collection-source").value;
+  var sourceEl = document.getElementById("core-collection-source");
+  var source = sourceEl.value;
   var rankLimit = document.getElementById("core-collection-rank-limit").valueAsNumber;
   var hasRankLimit = Number.isInteger(rankLimit) && rankLimit > 0;
   document.getElementById("core-list-results-title").textContent = state === "replenishment" ? "コア補充リスト" : "品番一覧";
+  var vehicleLabels = CORE_COLLECTION_VEHICLE_CLASSES.filter(function(item) {
+    return vehicles.includes(item[0]);
+  }).map(function(item) { return item[1]; });
+  if (vehicles.includes("unclassified")) vehicleLabels.push("未分類");
+  coreCollectionAppliedPrintFilters = [
+    category && categoryEl.selectedOptions?.[0]?.textContent,
+    vehicleLabels.join("・"),
+    hasRankLimit && rankLimit + t("core_collection_rank_unit"),
+    state !== "all" && stateEl.selectedOptions?.[0]?.textContent,
+    source && sourceEl.selectedOptions?.[0]?.textContent,
+    q && Array.from(keyword).slice(0, 40).join("")
+  ].filter(Boolean);
   var activeCount = [category, state !== "all", vehicles.length > 0, source, hasRankLimit].filter(Boolean).length;
   if (filterCount) filterCount.textContent = activeCount ? "(" + activeCount + ")" : "";
   coreCollectionFilteredRows = coreCollectionOrderedRows.filter(function(row) {
@@ -32680,16 +32699,49 @@ function buildCoreCollectionPrintContent(rows) {
   return content;
 }
 
-function printCoreCollection() {
+function nextCoreCollectionPrintNumber() {
+  var key = "dcats_core_collection_pdf_number";
+  function allocate() {
+    try {
+      var stored = Number(localStorage.getItem(key));
+      if (Number.isSafeInteger(stored) && stored > coreCollectionPrintNumber) {
+        coreCollectionPrintNumber = stored;
+      }
+      coreCollectionPrintNumber += 1;
+      localStorage.setItem(key, String(coreCollectionPrintNumber));
+    } catch (_) {
+      coreCollectionPrintNumber = Math.max(coreCollectionPrintNumber + 1, Date.now());
+    }
+    return String(coreCollectionPrintNumber).padStart(3, "0");
+  }
+  return navigator.locks ? navigator.locks.request(key, allocate).catch(allocate) : allocate();
+}
+
+function coreCollectionPrintFileName(filters, number) {
+  var safeFilters = filters.map(function(label) {
+    return label.trim().replace(/[<>:"/\\|?*\u0000-\u001f\u007f]/g, "-").replace(/[. ]+$/g, "");
+  }).filter(Boolean);
+  var conditions = safeFilters.length ? safeFilters.join("_") : t("core_collection_print_all");
+  return t("core_collection_print_title") + "_" + conditions + "_No-" + number;
+}
+
+async function printCoreCollection() {
   var dialog = document.getElementById("core-collection-print-dialog");
-  if (!dialog.open || !canPrintCoreCollection() || document.body.classList.contains("core-collection-printing")) return;
+  var button = document.getElementById("btn-confirm-core-collection-print");
+  if (!dialog.open || button.disabled || !canPrintCoreCollection() || document.body.classList.contains("core-collection-printing")) return;
+  button.disabled = true;
   try {
     var content = buildCoreCollectionPrintContent(coreCollectionFilteredRows);
+    var number = await nextCoreCollectionPrintNumber();
+    if (!dialog.open || !canPrintCoreCollection()) return;
+    var fileName = coreCollectionPrintFileName(coreCollectionAppliedPrintFilters, number);
     dialog.close();
-    printCoreSheet("core-collection-print-sheet", "core-collection-printing", t("core_collection_print_title"), content);
+    printCoreSheet("core-collection-print-sheet", "core-collection-printing", fileName, content);
   } catch (error) {
     if (!dialog.open) dialog.showModal();
     document.getElementById("core-collection-print-error").textContent = t("core_collection_print_error");
+  } finally {
+    button.disabled = false;
   }
 }
 
