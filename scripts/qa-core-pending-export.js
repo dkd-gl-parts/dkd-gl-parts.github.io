@@ -15,7 +15,7 @@ async function main() {
     ["vendor/fflate-0.8.2.js", "application/javascript"]
   ].map(async ([name, type]) => ["/" + name, { body: await fs.readFile(name), contentType: type }])));
   const names = ["corePendingExportSnapshot", "showCorePendingExportError", "printCoreSheet", "printCorePendingStock", "exportCorePendingExcel",
-    "canPrintCoreCollection", "openCoreCollectionPrint", "coreCollectionPrintQuantity", "buildCoreCollectionPrintContent", "printCoreCollection", "esc"];
+    "canPrintCoreCollection", "openCoreCollectionPrint", "buildCoreCollectionPrintContent", "printCoreCollection", "esc"];
   const ast = acorn.parse(app, { ecmaVersion: "latest" });
   const funcs = ast.body.filter(node => node.type === "FunctionDeclaration" && names.includes(node.id.name));
   assert.equal(funcs.length, names.length);
@@ -29,7 +29,7 @@ async function main() {
   const collectionDialog = index.slice(collectionDialogStart, index.indexOf("</dialog>", collectionDialogStart) + 9);
   const collection = Array.from({ length: 73 }, (_, index) => ({
     dkd_shohin_id: index + 1,
-    target_quantity: index === 0 ? 4 : index,
+    target_quantity: index === 0 ? 300 : index === 1 ? 0 : index,
     maker: index === 0 ? "QA-000001-VERY-LONG-PART<&>" : "QA-COLLECTION-" + index,
     genuine: "OEM-" + index,
     vehicle: index === 0 ? "軽四・乗用車・トラック" : "未分類",
@@ -51,8 +51,7 @@ async function main() {
     "var coreCollectionFilteredRows = " + JSON.stringify(collection) + ";",
     'var t = (key) => ({core_pending_tab:"照合待ち",core_pallet_manual:"手入力",core_pending_export_filename:"GLTEK_コア照合待ち",',
     '  core_collection_print_title:"コアリスト",core_collection_rank_label:"カテゴリ内順位",core_pallet_col_part:"品番",',
-    '  core_collection_print_vehicle:"車両区分",core_collection_print_required:"必要数",',
-    '  core_collection_print_shipment_mode:"出荷数を上位1桁に切り捨て",core_collection_print_saved_mode:"登録済みの必要数を使う"})[key] || key;',
+    '  core_collection_print_vehicle:"車両区分",core_collection_print_required:"必要数"})[key] || key;',
     'var tf = (key, v) => key === "core_collection_print_count" ? "対象 " + v.count + " 件" : v.date + " " + v.count + "明細・" + v.qty + "台";',
     'var coreCollectionDisplayProduct = row => ({manufacturer_part_number:row.maker,genuine_part_number:row.genuine});',
     'var coreCollectionRank = row => row.ranking, coreCollectionCategoryRank = row => row.categoryRank;',
@@ -137,8 +136,7 @@ async function main() {
     await page.evaluate(() => { coreListMode = "collection"; });
     await page.locator("#btn-core-collection-print").click();
     const printDialog = page.getByRole("dialog", { name: "コアリスト", exact: true });
-    const basis = printDialog.locator("#core-collection-print-basis");
-    assert.equal(await basis.inputValue(), "shipment");
+    assert.equal(await printDialog.getByRole("combobox").count(), 0);
     assert.match(await printDialog.innerText(), /対象 73 件/);
     await printDialog.getByRole("button", { name: "印刷・PDF", exact: true }).click();
     assert.equal(await printDialog.isVisible(), false);
@@ -155,7 +153,7 @@ async function main() {
     assert.match(await collectionRows.first().locator("td").nth(1).innerText(), /QA-000001-VERY-LONG-PART<&>/);
     assert.deepEqual(await collectionRows.first().locator("td").allTextContents().then(cells => cells.slice(2)),
       ["軽四・乗用車・トラック", "300"]);
-    assert.equal(await collectionRows.nth(1).locator("td").last().textContent(), "100");
+    assert.equal(await collectionRows.nth(1).locator("td").last().textContent(), "0");
     assert.equal(await collectionRows.last().locator("td").last().textContent(), "72");
     const collectionPdf = await page.pdf({ preferCSSPageSize: true, printBackground: true });
     assert.match(collectionPdf.subarray(0, 8).toString(), /^%PDF-/);
@@ -166,8 +164,8 @@ async function main() {
     assert.equal(await collectionRows.count(), 0);
     await page.emulateMedia({ media: "screen" });
 
+    await page.evaluate(() => { coreCollectionFilteredRows[0].target_quantity = 4; });
     await page.locator("#btn-core-collection-print").click();
-    await basis.selectOption("saved");
     await printDialog.getByRole("button", { name: "印刷・PDF", exact: true }).click();
     assert.equal(await collectionRows.first().locator("td").last().textContent(), "4");
     await page.evaluate(() => window.dispatchEvent(new Event("afterprint")));
