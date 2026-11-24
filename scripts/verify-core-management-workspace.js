@@ -61,7 +61,7 @@ async function main() {
   {
     const { c } = fixture();
     const saved = { target_quantity: 4 };
-    for (const [shipment, expected] of [[0, 0], [7, 7], [24, 20], [25, 30], [147, 100], [158, 200], [999, 1000], [1480, 1000]]) {
+    for (const [shipment, expected] of [[0, 0], [7, 7], [10, 10], [25, 20], [99, 90], [100, 100], [158, 100], [354, 300], [999, 900], [1000, 1000], [1580, 1000]]) {
       assert.equal(c.coreCollectionPrintQuantity(saved, shipment, false), expected); checks++;
     }
     assert.equal(c.coreCollectionPrintQuantity(saved, 158, true), 4); checks++;

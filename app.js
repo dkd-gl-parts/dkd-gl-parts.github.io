@@ -2016,7 +2016,7 @@ var TRANSLATIONS = {
     core_collection_rank_unit: "位まで",
     core_collection_print_title: "コアリスト",
     core_collection_print_basis: "必要数の基準",
-    core_collection_print_shipment_mode: "出荷数を上位1桁に丸める",
+    core_collection_print_shipment_mode: "出荷数を上位1桁に切り捨て",
     core_collection_print_saved_mode: "登録済みの必要数を使う",
     core_collection_print_count: "対象 {count} 件",
     core_collection_print_required: "必要数",
@@ -5016,7 +5016,7 @@ var TRANSLATIONS = {
     core_collection_rank_unit: "or better",
     core_collection_print_title: "Core list",
     core_collection_print_basis: "Required quantity basis",
-    core_collection_print_shipment_mode: "Round shipments to one significant digit",
+    core_collection_print_shipment_mode: "Round down to 1 significant digit",
     core_collection_print_saved_mode: "Use saved required quantities",
     core_collection_print_count: "{count} results",
     core_collection_print_required: "Required",
@@ -8017,7 +8017,7 @@ var TRANSLATIONS = {
     core_collection_rank_unit: "名以内",
     core_collection_print_title: "旧件清单",
     core_collection_print_basis: "需求量依据",
-    core_collection_print_shipment_mode: "将出货量四舍五入到首位",
+    core_collection_print_shipment_mode: "出货量保留首位（向下取整）",
     core_collection_print_saved_mode: "使用已登记的需求量",
     core_collection_print_count: "共 {count} 条",
     core_collection_print_required: "需求量",
@@ -9128,7 +9128,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1389";
+var APP_VERSION       = "v1.1.1390";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -32676,9 +32676,9 @@ function openCoreCollectionPrint() {
 
 function coreCollectionPrintQuantity(row, shipment, useSaved) {
   if (useSaved || !Number.isFinite(shipment) || shipment < 0) return row.target_quantity ?? null;
-  if (shipment < 10) return Math.round(shipment);
+  if (shipment < 10) return Math.floor(shipment);
   var place = 10 ** Math.floor(Math.log10(shipment));
-  return Math.round(shipment / place) * place;
+  return Math.floor(shipment / place) * place;
 }
 
 function buildCoreCollectionPrintContent(rows, useSaved) {
