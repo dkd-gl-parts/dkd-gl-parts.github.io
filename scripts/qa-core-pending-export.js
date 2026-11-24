@@ -14,7 +14,8 @@ async function main() {
     ["assets/core-pallet-entry.js", "application/javascript"],
     ["vendor/fflate-0.8.2.js", "application/javascript"]
   ].map(async ([name, type]) => ["/" + name, { body: await fs.readFile(name), contentType: type }])));
-  const names = ["corePendingExportSnapshot", "showCorePendingExportError", "printCorePendingStock", "exportCorePendingExcel"];
+  const names = ["corePendingExportSnapshot", "showCorePendingExportError", "printCoreSheet", "printCorePendingStock", "exportCorePendingExcel",
+    "canPrintCoreCollection", "openCoreCollectionPrint", "coreCollectionPrintQuantity", "buildCoreCollectionPrintContent", "printCoreCollection", "esc"];
   const ast = acorn.parse(app, { ecmaVersion: "latest" });
   const funcs = ast.body.filter(node => node.type === "FunctionDeclaration" && names.includes(node.id.name));
   assert.equal(funcs.length, names.length);
@@ -23,6 +24,18 @@ async function main() {
     return index.slice(start, index.indexOf("</dialog>", start) + 9);
   }).join("");
   const buttons = '<div id="core-pending-outputs">' + index.match(/<div id="core-pending-outputs" hidden>(.*?)<\/div>/)[1] + '</div>';
+  const collectionButton = index.match(/<button[^<>]*id="btn-core-collection-print"[^<>]*>[^<>]*<\/button>/)[0];
+  const collectionDialogStart = index.indexOf('<dialog id="core-collection-print-dialog"');
+  const collectionDialog = index.slice(collectionDialogStart, index.indexOf("</dialog>", collectionDialogStart) + 9);
+  const collection = Array.from({ length: 73 }, (_, index) => ({
+    dkd_shohin_id: index + 1,
+    target_quantity: index === 0 ? 4 : index,
+    maker: index === 0 ? "QA-000001-VERY-LONG-PART<&>" : "QA-COLLECTION-" + index,
+    genuine: "OEM-" + index,
+    vehicle: index === 0 ? "軽四・乗用車・トラック" : "未分類",
+    ranking: index === 72 ? null : { shipment: index < 2 ? 147 + index * 11 : index },
+    categoryRank: index === 72 ? null : index + 1
+  }));
   const data = Array.from({ length: 73 }, (_, index) => ({
     source_sheet: index < 70 ? "セルモーター" : index < 72 ? "オルタネーター" : null,
     source_row: index + 5,
@@ -35,14 +48,24 @@ async function main() {
     'var coreListMode = "pending", coreManagementDataReady = true;',
     "var corePendingStockFiltered = " + JSON.stringify(data) + ";",
     "var canViewCoreManagement = () => true;",
-    'var t = (key) => ({core_pending_tab:"照合待ち",core_pallet_manual:"手入力",core_pending_export_filename:"GLTEK_コア照合待ち"})[key] || key;',
-    'var tf = (key, v) => v.date + " " + v.count + "明細・" + v.qty + "台";',
+    "var coreCollectionFilteredRows = " + JSON.stringify(collection) + ";",
+    'var t = (key) => ({core_pending_tab:"照合待ち",core_pallet_manual:"手入力",core_pending_export_filename:"GLTEK_コア照合待ち",',
+    '  core_collection_print_title:"コアリスト",core_collection_rank_label:"カテゴリ内順位",core_pallet_col_part:"品番",',
+    '  core_collection_print_vehicle:"車両区分",core_collection_print_shipments:"出荷数",core_collection_print_required:"必要数",',
+    '  core_collection_print_shipment_mode:"出荷数を上位1桁に丸める",core_collection_print_saved_mode:"登録済みの必要数を使う"})[key] || key;',
+    'var tf = (key, v) => key === "core_collection_print_count" ? "対象 " + v.count + " 件" : v.date + " " + v.count + "明細・" + v.qty + "台";',
+    'var coreCollectionDisplayProduct = row => ({manufacturer_part_number:row.maker,genuine_part_number:row.genuine});',
+    'var coreCollectionRank = row => row.ranking, coreCollectionCategoryRank = row => row.categoryRank;',
+    'var productionCategoryLabel = () => "スタータ", renderCoreCollectionVehicleHtml = row => esc(row.vehicle);',
     'window.print = () => { document.body.dataset.printOpened = "true"; };',
     ...funcs.map(node => app.slice(node.start, node.end)),
     'for (const [id, handler] of [["print", printCorePendingStock], ["excel", exportCorePendingExcel]]) {',
     '  const button = document.getElementById("btn-core-pending-" + id);',
     '  button.disabled = false; button.addEventListener("click", handler);',
     "}",
+    'const collectionPrint = document.getElementById("btn-core-collection-print");',
+    'collectionPrint.disabled = false; collectionPrint.addEventListener("click", openCoreCollectionPrint);',
+    'document.getElementById("btn-confirm-core-collection-print").addEventListener("click", printCoreCollection);',
     'const palletForm = window.DcatsCorePallet({translate:t, canEdit:() => true, pendingRows:() => [], openLinked:() => {},',
     '  write: async (params) => {document.body.dataset.quantityWrite = JSON.stringify(params); return {data:{affected:params.p_rows}};},',
     '  refresh: async () => {}, search: async (q) => {document.body.dataset.quantityLookup = q; return {data:[]};}});',
@@ -52,8 +75,9 @@ async function main() {
   ].join("\n");
   const html = '<!doctype html><html lang="ja"><meta charset="utf-8"><title>D-CATS</title>' +
     '<link rel="stylesheet" href="/styles.css"><body><main id="screen-core-list-mgmt" class="active">' +
-    buttons + '<button id="qa-pallet-entry">数量登録の検査</button><button id="qa-pallet-adjust">数量調整の検査</button>' +
-    '<p id="core-pallet-save-status" hidden></p></main><section id="core-pending-print-sheet" hidden></section>' + dialogs +
+    buttons + collectionButton + '<button id="qa-pallet-entry">数量登録の検査</button><button id="qa-pallet-adjust">数量調整の検査</button>' +
+    '<p id="core-pallet-save-status" hidden></p></main><section id="core-pending-print-sheet" hidden></section>' +
+    '<section id="core-collection-print-sheet" hidden></section>' + dialogs + collectionDialog +
     '<script src="/assets/core-pallet-entry.js"></script>' +
     '<script src="/vendor/fflate-0.8.2.js"></script><script src="/assets/core-pending-export.js"></script>' +
     '<script src="/harness.js"></script></body></html>';
@@ -89,7 +113,7 @@ async function main() {
     assert.equal(workbook.Sheets["オルタネーター"].D8.v, 4);
     assert.equal(workbook.Sheets["区分未設定"].D5.v, 0);
 
-    await page.getByRole("button", { name: "印刷・PDF", exact: true }).click();
+    await page.locator("#btn-core-pending-print").click();
     assert.equal(await page.locator("body").getAttribute("data-print-opened"), "true");
     await page.emulateMedia({ media: "print" });
     const report = page.locator("#core-pending-print-sheet");
@@ -110,6 +134,44 @@ async function main() {
     assert.equal(await page.title(), "D-CATS");
     assert.equal(await report.locator("tbody tr").count(), 0);
     await page.emulateMedia({ media: "screen" });
+    await page.evaluate(() => { coreListMode = "collection"; });
+    await page.locator("#btn-core-collection-print").click();
+    const printDialog = page.getByRole("dialog", { name: "コアリスト", exact: true });
+    const basis = printDialog.locator("#core-collection-print-basis");
+    assert.equal(await basis.inputValue(), "shipment");
+    assert.match(await printDialog.innerText(), /対象 73 件/);
+    await printDialog.getByRole("button", { name: "印刷・PDF", exact: true }).click();
+    assert.equal(await printDialog.isVisible(), false);
+    assert.equal(await page.title(), "コアリスト");
+    await page.emulateMedia({ media: "print" });
+    const collectionReport = page.locator("#core-collection-print-sheet");
+    const collectionRows = collectionReport.locator("tbody tr");
+    assert.equal(await collectionReport.isVisible(), true);
+    assert.equal(await page.locator("#screen-core-list-mgmt").isVisible(), false);
+    assert.equal(await collectionReport.getByRole("heading", { name: "コアリスト", exact: true }).count(), 1);
+    assert.deepEqual(await collectionReport.getByRole("columnheader").allTextContents(),
+      ["カテゴリ内順位", "品番", "車両区分", "出荷数", "必要数"]);
+    assert.equal(await collectionRows.count(), 73);
+    assert.match(await collectionRows.first().locator("td").nth(1).innerText(), /QA-000001-VERY-LONG-PART<&>/);
+    assert.deepEqual(await collectionRows.first().locator("td").allTextContents().then(cells => cells.slice(2)),
+      ["軽四・乗用車・トラック", "147", "100"]);
+    assert.equal(await collectionRows.nth(1).locator("td").last().textContent(), "200");
+    assert.equal(await collectionRows.last().locator("td").last().textContent(), "72");
+    const collectionPdf = await page.pdf({ preferCSSPageSize: true, printBackground: true });
+    assert.match(collectionPdf.subarray(0, 8).toString(), /^%PDF-/);
+    assert.ok((collectionPdf.toString("latin1").match(/\/Type\s*\/Page\b/g) || []).length > 1);
+    if (dir) await fs.writeFile(path.join(dir, "core-collection.pdf"), collectionPdf);
+    await page.evaluate(() => window.dispatchEvent(new Event("afterprint")));
+    assert.equal(await page.title(), "D-CATS");
+    assert.equal(await collectionRows.count(), 0);
+    await page.emulateMedia({ media: "screen" });
+
+    await page.locator("#btn-core-collection-print").click();
+    await basis.selectOption("saved");
+    await printDialog.getByRole("button", { name: "印刷・PDF", exact: true }).click();
+    assert.equal(await collectionRows.first().locator("td").last().textContent(), "4");
+    await page.evaluate(() => window.dispatchEvent(new Event("afterprint")));
+
     await page.getByRole("button", { name: "数量登録の検査", exact: true }).click();
     const entry = page.locator("#core-pallet-entry-dialog");
     const qty = entry.locator('[data-field="quantity"]');
@@ -156,7 +218,7 @@ async function main() {
     assert.equal(adjustment.p_action, "adjust");
     assert.equal(adjustment.p_rows[0].quantity, 0);
     assert.deepEqual(errors, []);
-    console.log("Core pending export: Excel content and multi-page PDF passed.");
+    console.log("Core export: collection and pending multi-page PDFs, Excel content and quantity entry passed.");
   } finally {
     await browser.close();
   }

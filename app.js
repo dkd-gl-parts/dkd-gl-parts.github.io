@@ -2014,6 +2014,15 @@ var TRANSLATIONS = {
     core_inventory_linked: "紐づけ済み",
     core_collection_rank_label: "カテゴリ内順位",
     core_collection_rank_unit: "位まで",
+    core_collection_print_title: "コアリスト",
+    core_collection_print_basis: "必要数の基準",
+    core_collection_print_shipment_mode: "出荷数を上位1桁に丸める",
+    core_collection_print_saved_mode: "登録済みの必要数を使う",
+    core_collection_print_count: "対象 {count} 件",
+    core_collection_print_required: "必要数",
+    core_collection_print_shipments: "出荷数",
+    core_collection_print_vehicle: "車両区分",
+    core_collection_print_error: "コアリストを印刷できませんでした。",
     core_collection_rank_example: "例 200",
     core_inventory_match_state: "紐づけ状態",
     core_inventory_match_all: "すべての紐づけ状態",
@@ -5005,6 +5014,15 @@ var TRANSLATIONS = {
     core_inventory_linked: "Linked",
     core_collection_rank_label: "Category rank",
     core_collection_rank_unit: "or better",
+    core_collection_print_title: "Core list",
+    core_collection_print_basis: "Required quantity basis",
+    core_collection_print_shipment_mode: "Round shipments to one significant digit",
+    core_collection_print_saved_mode: "Use saved required quantities",
+    core_collection_print_count: "{count} results",
+    core_collection_print_required: "Required",
+    core_collection_print_shipments: "Shipments",
+    core_collection_print_vehicle: "Vehicle class",
+    core_collection_print_error: "Could not print the core list.",
     core_collection_rank_example: "e.g. 200",
     core_inventory_match_state: "Match status",
     core_inventory_match_all: "All match statuses",
@@ -7997,6 +8015,15 @@ var TRANSLATIONS = {
     core_inventory_linked: "已关联",
     core_collection_rank_label: "类别排名",
     core_collection_rank_unit: "名以内",
+    core_collection_print_title: "旧件清单",
+    core_collection_print_basis: "需求量依据",
+    core_collection_print_shipment_mode: "将出货量四舍五入到首位",
+    core_collection_print_saved_mode: "使用已登记的需求量",
+    core_collection_print_count: "共 {count} 条",
+    core_collection_print_required: "需求量",
+    core_collection_print_shipments: "出货量",
+    core_collection_print_vehicle: "车辆类别",
+    core_collection_print_error: "无法打印旧件清单。",
     core_collection_rank_example: "如 200",
     core_inventory_match_state: "关联状态",
     core_inventory_match_all: "全部关联状态",
@@ -9101,7 +9128,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1388";
+var APP_VERSION       = "v1.1.1389";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -31427,7 +31454,7 @@ function beginCoreManagementLoad() {
   var countEl = document.getElementById("core-list-count");
   if (countEl) countEl.textContent = "";
   coreManagementDataReady = false;
-  ["btn-export-core-collection", "btn-export-core-replenishment"].forEach(function(id) {
+  ["btn-export-core-collection", "btn-export-core-replenishment", "btn-core-collection-print"].forEach(function(id) {
     var button = document.getElementById(id);
     if (button) button.disabled = true;
   });
@@ -31638,26 +31665,34 @@ function showCorePendingExportError() {
   status.hidden = false;
 }
 
-function printCorePendingStock() {
-  var cleanup;
+function printCoreSheet(areaId, printClass, title, content) {
+  var area = document.getElementById(areaId);
+  var previousTitle = document.title;
+  function cleanup() {
+    document.body.classList.remove(printClass);
+    document.title = previousTitle;
+    area.replaceChildren();
+    window.removeEventListener("afterprint", cleanup);
+  }
   try {
-    var snapshot = corePendingExportSnapshot();
-    if (!snapshot || document.body.classList.contains("core-pending-printing")) return;
-    var area = document.getElementById("core-pending-print-sheet");
-    var title = document.title;
-    cleanup = function() {
-      document.body.classList.remove("core-pending-printing");
-      document.title = title;
-      area.replaceChildren();
-      window.removeEventListener("afterprint", cleanup);
-    };
-    area.replaceChildren(window.DcatsCorePendingExport.printContent(snapshot.report, snapshot.title, snapshot.subtitle, document));
-    document.title = snapshot.fileName;
-    document.body.classList.add("core-pending-printing");
+    area.replaceChildren(content);
+    document.title = title;
+    document.body.classList.add(printClass);
     window.addEventListener("afterprint", cleanup, { once: true });
     window.print();
   } catch (error) {
-    if (cleanup) cleanup();
+    cleanup();
+    throw error;
+  }
+}
+
+function printCorePendingStock() {
+  try {
+    var snapshot = corePendingExportSnapshot();
+    if (!snapshot || document.body.classList.contains("core-pending-printing")) return;
+    printCoreSheet("core-pending-print-sheet", "core-pending-printing", snapshot.fileName,
+      window.DcatsCorePendingExport.printContent(snapshot.report, snapshot.title, snapshot.subtitle, document));
+  } catch (error) {
     showCorePendingExportError();
   }
 }
@@ -32260,6 +32295,7 @@ function renderCoreCollectionList() {
   if (!list) return;
   var exportBtn = document.getElementById("btn-export-core-collection");
   if (exportBtn) exportBtn.disabled = false;
+  document.getElementById("btn-core-collection-print").disabled = !coreCollectionFilteredRows.length;
   document.getElementById("btn-export-core-replenishment").disabled = !coreCollectionReportRank;
   document.getElementById("core-collection-replenishment").disabled = !coreCollectionReportRank;
   coreCollectionRenderedCount = 0;
@@ -32622,6 +32658,69 @@ async function saveCoreCollectionForm() {
     if (saveButton) saveButton.disabled = coreCollectionFormSaveUnknown;
   }
 }
+function canPrintCoreCollection() {
+  return coreListMode === "collection" && canViewCoreManagement() && coreManagementDataReady &&
+    coreCollectionFilteredRows.length > 0 && document.getElementById("screen-core-list-mgmt").classList.contains("active");
+}
+
+function openCoreCollectionPrint() {
+  if (!canPrintCoreCollection()) return;
+  var dialog = document.getElementById("core-collection-print-dialog");
+  if (dialog.open) return;
+  document.getElementById("core-collection-print-basis").value = "shipment";
+  document.getElementById("core-collection-print-count").textContent =
+    tf("core_collection_print_count", { count: coreCollectionFilteredRows.length.toLocaleString() });
+  document.getElementById("core-collection-print-error").textContent = "";
+  dialog.showModal();
+}
+
+function coreCollectionPrintQuantity(row, shipment, useSaved) {
+  if (useSaved || !Number.isFinite(shipment) || shipment < 0) return row.target_quantity ?? null;
+  if (shipment < 10) return Math.round(shipment);
+  var place = 10 ** Math.floor(Math.log10(shipment));
+  return Math.round(shipment / place) * place;
+}
+
+function buildCoreCollectionPrintContent(rows, useSaved) {
+  var content = document.createElement("article");
+  var headings = ["core_collection_rank_label", "core_pallet_col_part", "core_collection_print_vehicle",
+    "core_collection_print_shipments", "core_collection_print_required"];
+  var rowsHtml = rows.map(function(row) {
+    var product = coreCollectionDisplayProduct(row);
+    var ranking = coreCollectionRank(row);
+    var categoryRank = coreCollectionCategoryRank(row);
+    var maker = product.manufacturer_part_number || product.genuine_part_number || ranking?.productCode ||
+      (row.dkd_shohin_id == null ? "-" : "DKD " + row.dkd_shohin_id);
+    var genuine = product.genuine_part_number && product.genuine_part_number !== maker ? product.genuine_part_number : "";
+    var shipment = ranking?.shipment;
+    var quantity = coreCollectionPrintQuantity(row, shipment, useSaved);
+    return "<tr><td>" + esc(productionCategoryLabel(product)) + "<br>" + esc(categoryRank ?? "-") + "</td><td><strong>" +
+      esc(maker) + "</strong>" + (genuine ? "<br>" + esc(genuine) : "") + "</td><td>" +
+      renderCoreCollectionVehicleHtml(row) + "</td><td>" + esc(shipment ?? "-") + "</td><td>" + esc(quantity ?? "-") + "</td></tr>";
+  }).join("");
+  content.innerHTML = "<h1>" + esc(t("core_collection_print_title")) + "</h1><p>" +
+    esc(tf("core_collection_print_count", { count: rows.length.toLocaleString() })) + " / " +
+    esc(t(useSaved ? "core_collection_print_saved_mode" : "core_collection_print_shipment_mode")) +
+    "</p><table><thead><tr>" + headings.map(function(key) {
+      return "<th scope='col'>" + esc(t(key)) + "</th>";
+    }).join("") + "</tr></thead><tbody>" + rowsHtml + "</tbody></table>";
+  return content;
+}
+
+function printCoreCollection() {
+  var dialog = document.getElementById("core-collection-print-dialog");
+  if (!dialog.open || !canPrintCoreCollection() || document.body.classList.contains("core-collection-printing")) return;
+  try {
+    var useSaved = document.getElementById("core-collection-print-basis").value === "saved";
+    var content = buildCoreCollectionPrintContent(coreCollectionFilteredRows, useSaved);
+    dialog.close();
+    printCoreSheet("core-collection-print-sheet", "core-collection-printing", t("core_collection_print_title"), content);
+  } catch (error) {
+    if (!dialog.open) dialog.showModal();
+    document.getElementById("core-collection-print-error").textContent = t("core_collection_print_error");
+  }
+}
+
 function csvCoreCollectionCell(value) {
   var text = String(value == null ? "" : value);
   if (typeof value === "string" && /^\s*[=+@\-]|^[\t\r\n]/.test(text)) text = "'" + text;
@@ -62356,6 +62455,8 @@ document.getElementById("btn-add-core-list").addEventListener("click", corePalle
 document.getElementById("btn-add-core-pending").addEventListener("click", corePalletEntry.openEntry);
 document.getElementById("btn-core-pending-print").addEventListener("click", printCorePendingStock);
 document.getElementById("btn-core-pending-excel").addEventListener("click", exportCorePendingExcel);
+document.getElementById("btn-core-collection-print").addEventListener("click", openCoreCollectionPrint);
+document.getElementById("btn-confirm-core-collection-print").addEventListener("click", printCoreCollection);
 document.getElementById("btn-export-core-collection").addEventListener("click", function() { exportCoreCollectionCsv(false); });
 document.getElementById("btn-export-core-replenishment").addEventListener("click", function() { exportCoreCollectionCsv(true); });
 document.getElementById("btn-core-collection-search").addEventListener("click", searchCoreCollectionWorkspace);
