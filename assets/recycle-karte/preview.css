@@ -1,23 +1,19 @@
 .recycle-karte-menu { text-align: start; font: inherit; }
-.recycle-karte-launcher[hidden], .recycle-karte-related[hidden], .recycle-karte-product[hidden] { display: none; }
-#filter-row:has(> .recycle-karte-launcher:not([hidden])) {
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 6px;
-  padding-inline: 12px;
-}
-#filter-row:has(> .recycle-karte-launcher:not([hidden])) > .form-select {
-  padding-inline: 6px 4px;
-}
-#screen-search .recycle-karte-launcher { padding-inline: 8px; }
-#screen-search .recycle-karte-related {
-  grid-column: 1 / -1;
-  grid-row: 1;
+.recycle-karte-launcher-slot[hidden], .recycle-karte-launcher[hidden], .recycle-karte-product[hidden] { display: none; }
+#screen-search .recycle-karte-launcher-slot {
+  position: relative;
+  flex: 0 0 0;
   align-self: center;
-  justify-self: end;
-  min-height: 0;
-  padding: 2px 8px;
-  font-size: .8rem;
-  line-height: 1.15;
+  margin-inline-start: -8px;
+}
+#screen-search .recycle-karte-launcher {
+  position: absolute;
+  inset-inline-end: 4px;
+  inset-block-start: 0;
+  transform: translateY(-50%);
+  min-height: 24px;
+  padding: 0 6px;
+  font-size: 12px;
 }
 .recycle-karte-form, .recycle-karte-status, .recycle-karte-help { margin: 0; }
 .recycle-karte-search-row, .recycle-karte-controls, .recycle-karte-pager, .recycle-karte-meta {
