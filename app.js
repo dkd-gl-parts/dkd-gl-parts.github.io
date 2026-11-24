@@ -9116,7 +9116,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1393";
+var APP_VERSION       = "v1.1.1394";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -32643,6 +32643,7 @@ function openCoreCollectionPrint() {
 
 function buildCoreCollectionPrintContent(rows) {
   var content = document.createElement("article");
+  content.className = "core-collection-print-content";
   var headings = ["core_collection_rank_label", "core_pallet_col_part", "core_collection_print_vehicle",
     "core_collection_print_required"];
   var rowsHtml = rows.map(function(row) {
@@ -32652,8 +32653,8 @@ function buildCoreCollectionPrintContent(rows) {
     var maker = product.manufacturer_part_number || product.genuine_part_number || ranking?.productCode ||
       (row.dkd_shohin_id == null ? "-" : "DKD " + row.dkd_shohin_id);
     var genuine = product.genuine_part_number && product.genuine_part_number !== maker ? product.genuine_part_number : "";
-    return "<tr><td>" + esc(productionCategoryLabel(product)) + "<br>" + esc(categoryRank ?? "-") + "</td><td><strong>" +
-      esc(maker) + "</strong>" + (genuine ? "<br>" + esc(genuine) : "") + "</td><td>" +
+    return "<tr><td>" + esc(productionCategoryLabel(product)) + " " + esc(categoryRank == null ? "-" : "#" + categoryRank) + "</td><td><strong>" +
+      esc(maker) + "</strong>" + (genuine ? " / " + esc(genuine) : "") + "</td><td>" +
       renderCoreCollectionVehicleHtml(row) + "</td><td>" + esc(row.target_quantity ?? "-") + "</td></tr>";
   }).join("");
   content.innerHTML = "<h1>" + esc(t("core_collection_print_title")) + "</h1><p>" +
@@ -32661,6 +32662,16 @@ function buildCoreCollectionPrintContent(rows) {
     "</p><table><thead><tr>" + headings.map(function(key) {
       return "<th scope='col'>" + esc(t(key)) + "</th>";
     }).join("") + "</tr></thead><tbody>" + rowsHtml + "</tbody></table>";
+  content.classList.add("core-collection-print-measuring");
+  document.body.appendChild(content);
+  try {
+    var width = content.getBoundingClientRect().width;
+    var tableWidth = content.querySelector("table").getBoundingClientRect().width;
+    if (tableWidth > width + 0.5) content.classList.add("core-collection-print-wide");
+  } finally {
+    content.remove();
+    content.classList.remove("core-collection-print-measuring");
+  }
   return content;
 }
 

@@ -32,7 +32,7 @@ async function main() {
     target_quantity: index === 0 ? 300 : index === 1 ? 0 : index,
     maker: index === 0 ? "QA-000001-VERY-LONG-PART<&>" : "QA-COLLECTION-" + index,
     genuine: "OEM-" + index,
-    vehicle: index === 0 ? "軽四・乗用車・トラック" : "未分類",
+    vehicle: index === 0 ? "軽四・乗用車・トラック・商用バン・バス・建機・農機・その他" : "未分類",
     ranking: index === 72 ? null : { shipment: index === 0 ? 354 : index === 1 ? 158 : index },
     categoryRank: index === 72 ? null : index + 1
   }));
@@ -152,12 +152,38 @@ async function main() {
     assert.equal(await collectionRows.count(), 73);
     assert.match(await collectionRows.first().locator("td").nth(1).innerText(), /QA-000001-VERY-LONG-PART<&>/);
     assert.deepEqual(await collectionRows.first().locator("td").allTextContents().then(cells => cells.slice(2)),
-      ["軽四・乗用車・トラック", "300"]);
+      ["軽四・乗用車・トラック・商用バン・バス・建機・農機・その他", "300"]);
     assert.equal(await collectionRows.nth(1).locator("td").last().textContent(), "0");
     assert.equal(await collectionRows.last().locator("td").last().textContent(), "72");
+    async function verifyCollectionLayout(paperWidthMm) {
+      await page.setViewportSize({ width: Math.floor(paperWidthMm * 96 / 25.4), height: 1100 });
+      const layout = await collectionReport.evaluate(report => {
+        const table = report.querySelector("table");
+        const rows = [...table.rows];
+        const overflow = rows.some(row => [...row.cells].some(cell => {
+          const box = cell.getBoundingClientRect();
+          const text = document.createRange();
+          text.selectNodeContents(cell);
+          return [...text.getClientRects()].some(rect => rect.left < box.left - 0.5 || rect.right > box.right + 0.5);
+        }));
+        return {
+          width: table.getBoundingClientRect().width,
+          availableWidth: report.getBoundingClientRect().width,
+          highestRow: Math.max(...rows.map(row => row.getBoundingClientRect().height)),
+          repeatedHeader: getComputedStyle(table.tHead).display,
+          overflow
+        };
+      });
+      assert.ok(layout.width <= layout.availableWidth + 1, JSON.stringify(layout));
+      assert.ok(layout.highestRow <= 20, JSON.stringify(layout));
+      assert.equal(layout.repeatedHeader, "table-header-group");
+      assert.equal(layout.overflow, false);
+    }
+    await verifyCollectionLayout(194);
+    assert.equal(await collectionReport.locator(".core-collection-print-wide").count(), 0);
     const collectionPdf = await page.pdf({ preferCSSPageSize: true, printBackground: true });
     assert.match(collectionPdf.subarray(0, 8).toString(), /^%PDF-/);
-    assert.ok((collectionPdf.toString("latin1").match(/\/Type\s*\/Page\b/g) || []).length > 1);
+    assert.equal((collectionPdf.toString("latin1").match(/\/Type\s*\/Page\b/g) || []).length, 2);
     if (dir) await fs.writeFile(path.join(dir, "core-collection.pdf"), collectionPdf);
     await page.evaluate(() => window.dispatchEvent(new Event("afterprint")));
     assert.equal(await page.title(), "D-CATS");
@@ -169,6 +195,23 @@ async function main() {
     await printDialog.getByRole("button", { name: "印刷・PDF", exact: true }).click();
     assert.equal(await collectionRows.first().locator("td").last().textContent(), "4");
     await page.evaluate(() => window.dispatchEvent(new Event("afterprint")));
+
+    await page.evaluate(() => {
+      const row = coreCollectionFilteredRows[0];
+      coreCollectionFilteredRows = [{ ...row, maker: "W".repeat(46), genuine: "8".repeat(23) }];
+    });
+    await page.locator("#btn-core-collection-print").click();
+    await printDialog.getByRole("button", { name: "印刷・PDF", exact: true }).click();
+    await page.emulateMedia({ media: "print" });
+    assert.equal(await collectionReport.locator(".core-collection-print-wide").count(), 1);
+    await verifyCollectionLayout(281);
+    assert.equal(await collectionRows.first().locator("td").nth(1).textContent(), "W".repeat(46) + " / " + "8".repeat(23));
+    const widePdf = await page.pdf({ preferCSSPageSize: true, printBackground: true });
+    const [, width, height] = widePdf.toString("latin1").match(/\/MediaBox\s*\[0 0 ([\d.]+) ([\d.]+)\]/) || [];
+    assert.ok(Number(width) > Number(height), "Wide content must use a landscape page");
+    if (dir) await fs.writeFile(path.join(dir, "core-collection-wide.pdf"), widePdf);
+    await page.evaluate(() => window.dispatchEvent(new Event("afterprint")));
+    await page.emulateMedia({ media: "screen" });
 
     await page.getByRole("button", { name: "数量登録の検査", exact: true }).click();
     const entry = page.locator("#core-pallet-entry-dialog");
@@ -216,7 +259,7 @@ async function main() {
     assert.equal(adjustment.p_action, "adjust");
     assert.equal(adjustment.p_rows[0].quantity, 0);
     assert.deepEqual(errors, []);
-    console.log("Core export: collection and pending multi-page PDFs, Excel content and quantity entry passed.");
+    console.log("Core export: compact 73-row PDF (2 portrait pages), landscape fallback, pending PDF, Excel and quantity entry passed.");
   } finally {
     await browser.close();
   }
