@@ -9092,7 +9092,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1386";
+var APP_VERSION       = "v1.1.1387";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -31547,7 +31547,9 @@ async function setCoreListMode(mode) {
     return renderCoreListMgmt();
   }
   if (coreListMode === "collection") return loadCoreCollectionList();
-  return loadCoreListMgmt();
+  var inventoryLoad = loadCoreListMgmt();
+  if (cache?.canViewRank) readCoreCollectionData(cache);
+  return inventoryLoad;
 }
 
 var corePendingStockRows = [];
@@ -32001,52 +32003,74 @@ function indexCoreCollectionRows() {
   coreCollectionSearchTerms = new WeakMap();
 }
 
+function readCoreCollectionData(cache) {
+  if (cache.collectionRead?.expiresAt > Date.now()) return cache.collectionRead;
+  var entry = { expiresAt: Date.now() + CORE_MANAGEMENT_CACHE_MS };
+  cache.collectionRead = entry;
+  function checkCurrent() {
+    if (cache !== getCoreManagementCache() || entry !== cache.collectionRead) throw new Error("Collection load superseded");
+  }
+  function discard() {
+    if (cache.collectionRead === entry) delete cache.collectionRead;
+  }
+  entry.request = fetchCoreCollectionData(cache, checkCurrent);
+  entry.request.then(function(data) {
+    entry.expiresAt = Math.min(entry.expiresAt, cache.stock?.expiresAt || entry.expiresAt);
+    if (cache.canViewRank && !data.report) discard();
+  }, discard);
+  return entry;
+}
+
+async function fetchCoreCollectionData(cache, checkCurrent) {
+  // Start independent reads together. The list stays available when the report alone fails.
+  var rankRequest = canViewManufacturingReport()
+    ? window.DCatsManufacturingRankingReport.loadCoreCollectionRanking2025(checkCurrent).catch(function() { return null; })
+    : null;
+  var stockRequest = readCoreCollectionStock(cache, checkCurrent).then(async function(stock) {
+    return [stock, await loadCoreCollectionProducts(Object.keys(stock), checkCurrent)];
+  });
+  var [items, [stock, products], report] = await Promise.all([loadCoreCollectionItems(checkCurrent), stockRequest, rankRequest]);
+  checkCurrent();
+  var embeddedProducts = [];
+  var missingProductIds = [];
+  var loadedRows = items.map(function(item) {
+    var { product, ...row } = item;
+    if (product) embeddedProducts.push(product);
+    else if (product === undefined && !products[row.dkd_shohin_id]) missingProductIds.push(row.dkd_shohin_id);
+    return row;
+  });
+  if (missingProductIds.length) Object.assign(products, await loadCoreCollectionProducts(missingProductIds, checkCurrent));
+  normalizeCoreProductFastRows(embeddedProducts).forEach(function(product) {
+    products[String(product.dkd_shohin_id)] = product;
+  });
+  if (report) await resolveCoreCollectionRankingCodes(products, report, checkCurrent);
+  checkCurrent();
+  return { rows: loadedRows, products: products, stock: stock, report: report };
+}
+
 async function loadCoreCollectionList() {
   if (coreListMode !== "collection") return;
   var cache = getCoreManagementCache();
   if (!cache) return;
   delete cache.collection;
-  var expiresAt = Date.now() + CORE_MANAGEMENT_CACHE_MS;
   var requestSeq = beginCoreManagementLoad();
   var list = document.getElementById("core-list-list");
   if (list) list.innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
   function isCurrent() {
     return requestSeq === coreManagementLoadSeq && coreListMode === "collection" && cache === getCoreManagementCache();
   }
-  function checkCurrent() {
-    if (!isCurrent()) throw new Error("Collection load superseded");
-  }
   try {
-    // Start independent reads together. The list stays available when the report alone fails.
-    var rankRequest = canViewManufacturingReport()
-      ? window.DCatsManufacturingRankingReport.loadCoreCollectionRanking2025(checkCurrent).catch(function() { return null; })
-      : null;
-    var stockRequest = readCoreCollectionStock(cache, checkCurrent).then(async function(stock) {
-      return [stock, await loadCoreCollectionProducts(Object.keys(stock), checkCurrent)];
-    });
-    var [items, [stock, products], report] = await Promise.all([loadCoreCollectionItems(checkCurrent), stockRequest, rankRequest]);
-    checkCurrent();
-    var embeddedProducts = [];
-    var missingProductIds = [];
-    var loadedRows = items.map(function(item) {
-      var { product, ...row } = item;
-      if (product) embeddedProducts.push(product);
-      else if (product === undefined && !products[row.dkd_shohin_id]) missingProductIds.push(row.dkd_shohin_id);
-      return row;
-    });
-    if (missingProductIds.length) Object.assign(products, await loadCoreCollectionProducts(missingProductIds, checkCurrent));
-    normalizeCoreProductFastRows(embeddedProducts).forEach(function(product) {
-      products[String(product.dkd_shohin_id)] = product;
-    });
-    if (report) await resolveCoreCollectionRankingCodes(products, report, checkCurrent);
-    checkCurrent();
+    var entry = readCoreCollectionData(cache);
+    var { rows: loadedRows, products, stock, report } = await entry.request;
+    if (!isCurrent()) return;
+    if (cache.collectionRead === entry) delete cache.collectionRead;
     coreCollectionRows = loadedRows;
     coreCollectionProductMap = products;
     coreCollectionStockMap = stock;
     coreCollectionReportRank = report ? report.forProduct : null;
     coreCollectionRankingRows = buildCoreCollectionRankingRows(report);
     indexCoreCollectionRows();
-    if (report || !cache.canViewRank) cache.collection = Math.min(expiresAt, cache.stock?.expiresAt || expiresAt);
+    if (report || !cache.canViewRank) cache.collection = entry.expiresAt;
     applyCoreCollectionFilters();
     coreManagementDataReady = true;
     renderCoreCollectionList();
@@ -32064,10 +32088,17 @@ async function loadCoreCollectionItems(checkCurrent) {
     return sb.from("core_collection_list_items").select(columns, options)
       .order("id", { ascending: true }).range(offset, offset + size - 1);
   }
-  var first = await fetchPage(0, pageSize, { count: "exact" });
+  var firstRequest = Promise.resolve(fetchPage(0, pageSize, { count: "exact" }));
+  // Start the next ranges while the first response determines the exact count.
+  var initialPages = new Map([1, 2, 3].map(function(page) {
+    var offset = page * pageSize;
+    return [offset, Promise.resolve(fetchPage(offset, pageSize)).catch(function(error) { return { error: error }; })];
+  }));
+  var first = await firstRequest;
   checkCurrent();
   if (first.error?.code === "PGRST200") {
     columns = "*";
+    initialPages.clear();
     first = await fetchPage(0, pageSize, { count: "exact" });
     checkCurrent();
   }
@@ -32079,7 +32110,9 @@ async function loadCoreCollectionItems(checkCurrent) {
     var step = rows.length || pageSize;
     for (var start = step; start < first.count; start += step * 4) {
       var group = [];
-      for (var offset = start; offset < Math.min(first.count, start + step * 4); offset += step) group.push(fetchPage(offset, step));
+      for (var offset = start; offset < Math.min(first.count, start + step * 4); offset += step) {
+        group.push((step === pageSize && initialPages.get(offset)) || fetchPage(offset, step));
+      }
       var pages = await Promise.all(group);
       checkCurrent();
       pages.forEach(function(page) {
@@ -32092,7 +32125,7 @@ async function loadCoreCollectionItems(checkCurrent) {
     var previousCount = rows.length;
     while (previousCount === pageSize) {
       if (rows.length >= maxRows) throw new Error("収集対象が多いため取得を中断しました。管理者へ連絡してください。");
-      var page = await fetchPage(rows.length, pageSize);
+      var page = await (initialPages.get(rows.length) || fetchPage(rows.length, pageSize));
       checkCurrent();
       if (page.error) throw page.error;
       var batch = page.data || [];
