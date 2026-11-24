@@ -13,7 +13,7 @@ function fixture() {
   const vehicleFilters = ["kei", "truck", "unclassified"].map(value => ({value, checked: false}));
   const inventoryVehicleFilters = ["kei", "truck", "unclassified", "passenger"].map(value => ({value, checked: false}));
   const get = id => {
-    if (!elements.has(id)) elements.set(id, { scrollTop: 0, scrollHeight: 900, clientHeight: 300, value: id === "core-collection-state" ? "all" : "", innerHTML: "", textContent: "", disabled: false, attributes: {}, listeners: {}, style: {}, classList: { toggle() {}, remove() {} }, setAttribute(k, v) { this.attributes[k] = v; }, addEventListener(k, v) { this.listeners[k] = v; }, focus() { context.focused = id; }, querySelectorAll() { return []; }, querySelector(selector) {
+    if (!elements.has(id)) elements.set(id, { scrollTop: 0, scrollHeight: 900, clientHeight: 300, value: id === "core-collection-state" ? "all" : "", innerHTML: "", textContent: "", disabled: false, get valueAsNumber() { return this.value === "" ? NaN : Number(this.value); }, validity: { valid: true }, reportValidity() { this.validationReported = true; }, attributes: {}, listeners: {}, style: {}, classList: { toggle() {}, remove() {} }, setAttribute(k, v) { this.attributes[k] = v; }, addEventListener(k, v) { this.listeners[k] = v; }, focus() { context.focused = id; }, querySelectorAll() { return []; }, querySelector(selector) {
       const rowAttribute = selector.slice(1, -1);
       if (!["data-core-collection-rows", "data-core-inventory-rows"].includes(rowAttribute) || !this.innerHTML.includes(rowAttribute)) return null;
       return { tagName: this.innerHTML.includes("<tbody " + rowAttribute + ">") ? "TBODY" : "DIV",
@@ -58,6 +58,54 @@ const rows = [{ id: 1, dkd_shohin_id: 1, target_quantity: 10, priority: "high", 
 const products = [{ dkd_shohin_id: 1, manufacturer_part_number: "TEST-123", category_code: "starter" }, { dkd_shohin_id: 2, manufacturer_part_number: "TEST-456", category_code: "alternator" }];
 function ready(c) { c.respond = (table, columns) => ({ data: table === "core_collection_list_items" ? rows : table === "core_products" ? products : [{ id: 1, dkd_shohin_id: 1, quantity: 3, core_part_number: "CORE-123" }], error: null }); }
 async function main() {
+  {
+    const { c, get, vehicleFilters } = fixture();
+    const inventory = Array.from({ length: 402 }, (_, index) => ({
+      id: index + 1, dkd_shohin_id: index + 1, target_quantity: 1,
+      vehicle_classes: index % 4 === 0 ? ["kei"] : ["truck"]
+    }));
+    const rankless = { id: 403, dkd_shohin_id: 403 };
+    c.coreCollectionRows = inventory.concat(rankless);
+    c.coreCollectionRows.forEach((row, index) => {
+      c.coreCollectionProductMap[row.dkd_shohin_id] = {
+        dkd_shohin_id: row.dkd_shohin_id,
+        category_code: index % 2 ? "starter" : "alternator",
+        manufacturer_part_number: "QA-" + (index + 1)
+      };
+    });
+    c.coreCollectionReportRank = p => p.dkd_shohin_id < 403 ? { rank: p.dkd_shohin_id, shipment: 1 } : null;
+    c.coreManagementDataReady = true;
+    c.indexCoreCollectionRows();
+
+    const input = get("core-collection-rank-limit");
+    input.value = "200";
+    c.applyCoreCollectionFilters();
+    assert.equal(c.coreCollectionFilteredRows.length, 400); checks++;
+    assert.equal(c.coreCollectionFilteredRows[399].dkd_shohin_id, 400); checks++;
+    assert.equal(c.coreCollectionCategoryRank(c.coreCollectionFilteredRows[399]), 200); checks++;
+    assert.equal(get("core-workspace-filter-count").textContent, "(1)"); checks++;
+
+    get("core-collection-category").value = "alternator";
+    c.applyCoreCollectionFilters();
+    assert.equal(c.coreCollectionFilteredRows.length, 200); checks++;
+    vehicleFilters[0].checked = true;
+    c.applyCoreCollectionFilters();
+    assert.equal(c.coreCollectionFilteredRows.length, 100); checks++;
+    assert.equal(c.coreCollectionCategoryRank(c.coreCollectionFilteredRows[99]), 199); checks++;
+
+    get("core-collection-search").value = "QA-401";
+    c.applyCoreCollectionFilters();
+    assert.equal(c.coreCollectionFilteredRows.length, 0); checks++;
+    c.clearCoreCollectionFilters();
+    assert.equal(input.value, ""); checks++;
+    assert.equal(c.coreCollectionFilteredRows.length, 403); checks++;
+
+    input.value = "0";
+    input.validity.valid = false;
+    c.searchCoreCollectionWorkspace();
+    assert.equal(get("core-workspace-filter-options").open, true); checks++;
+    assert.equal(input.validationReported, true); checks++;
+  }
   {
     const { c, get } = fixture();
     c.canViewManufacturingReport = () => true;
