@@ -48,6 +48,11 @@ ctx.window=ctx;vm.createContext(ctx);vm.runInContext(source,ctx);
  eq(document.querySelectorAll('#recycle-entry').length,1);
  eq(document.getElementById('recycle-entry').tagName,'SECTION');
  eq(document.getElementById('recycle-entry').hidden,false);
+ eq(document.querySelector('#recycle-entry [data-step]'),null);
+ for(const id of ['product-query','cart','external','company','carrier']){
+  const field=document.getElementById('recycle-'+id);eq(!!field,true);eq(!!field.closest('[hidden]'),false);
+ }
+ eq(!!document.querySelector('#recycle-entry [data-recycle-action=place]').closest('[hidden]'),false);
  eq(document.getElementById('recycle-settings-view').hidden,true);
  eq(document.getElementById('recycle-settlements-view').hidden,true);
  eq(document.querySelector('#recycle-customer-summary strong').textContent,'ブロードリーフ Recycle＋');
