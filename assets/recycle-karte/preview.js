@@ -42,7 +42,7 @@
     preview: ["販売管理（カルテ検索プレビュー）", "Sales Management (Karte preview)", "销售管理（卡片查询预览）"],
     search: ["カルテ番号検索", "Search Karte number", "查询卡片编号"],
     searchOpen: ["カルテ検索", "Karte search", "卡片查询"],
-    compactSearch: ["カルテ", "Karte", "卡片"],
+    numberExample: ["例 22", "e.g. 22", "例如 22"],
     submit: ["検索", "Search", "查询"],
     related: ["関連カルテ", "Related Karte", "关联卡片"],
     list: ["Recycle+カルテ", "Recycle+ Karte", "Recycle+ 卡片"],
@@ -51,7 +51,7 @@
     loading: ["読み込み中…", "Loading…", "正在加载…"], error: ["処理できませんでした。もう一度お試しください。", "The request failed. Try again.", "处理失败，请重试。"],
     denied: ["システム管理者の権限が必要です。", "System administrator access is required.", "需要系统管理员权限。"],
     missing: ["未取得", "Not retrieved", "未获取"], blank: ["空欄", "Blank", "空白"],
-    valid: ["カルテ番号を 00000-000000000000 の形式で入力してください。", "Enter a Karte number in 00000-000000000000 format.", "请输入 00000-000000000000 格式的卡片编号。"],
+    valid: ["カルテ番号の下12桁以内の数字（例 22）か、ハイフン付きの全番号を入力してください。", "Enter up to 12 digits (e.g. 22) or the full Karte number with its hyphen.", "请输入最多 12 位数字（例如 22），或含连字符的完整卡片编号。"],
     noRows: ["登録済みのカルテはありません。", "No registered Karte records.", "暂无已登记的卡片。"],
     unknown: ["商品未確定", "Product unconfirmed", "商品未确认"], updated: ["最終確認", "Last observed", "最后核对"],
     close: ["閉じる", "Close", "关闭"], previous: ["前へ", "Previous", "上一页"], next: ["次へ", "Next", "下一页"],
@@ -90,8 +90,8 @@
   const menu = $("menu-grid");
   const panel = $("panel");
   const panelTitle = $("panel-topbar-title");
-  const count = $("count-bar");
-  if (!screen || !panel || !panelTitle || !count || !menu) return;
+  const searchHeader = screen?.querySelector(".search-header");
+  if (!searchHeader || !panel || !panelTitle || !menu) return;
 
   let active = false;
   let epoch = 0;
@@ -141,6 +141,11 @@
   }
 
   const numberPattern = /^[0-9]{5}-[0-9]{12}$/;
+
+  function normalizeLookupNumber(value) {
+    const normalized = normalizeNumber(value);
+    return /^[0-9]{1,12}$/.test(normalized) ? "00000-" + normalized.padStart(12, "0") : normalized;
+  }
   const time = value => value ? new Date(value).toLocaleString(document.documentElement.lang) : tr("missing");
   const codeText = value => value === "" ? tr("blank") : value;
   const fieldLabel = key => document.documentElement.lang === "ja" ? allFields[key] || key.replace(/^追加[．・]/, "") : key.replace(/^追加[．・]/, "").replace(/_/g, " ");
@@ -161,7 +166,7 @@
   }
 
   const input = element("input", {id:"recycle-karte-number", type:"search", className:"search-input",
-    inputmode:"search", placeholder:"00000-000000000000", maxlength:"22", autocomplete:"off"});
+    inputmode:"search", placeholder:tr("numberExample"), maxlength:"22", autocomplete:"off"});
   const status = element("p", {role:"status", className:"recycle-karte-status"});
   const searchRow = element("div", {className:"recycle-karte-search-row"},
     element("label", {for:input.id, text:tr("search")}), input,
@@ -174,8 +179,16 @@
       reset();
       partSearchInput?.focus({preventScroll:true});
     }));
-  const detailLauncher = mountLauncher(panelTitle, "searchOpen");
-  const listLauncher = mountLauncher(count, "compactSearch");
+  const searchLauncher = button("searchOpen", event => openSearch(event.currentTarget), {
+    className:"search-clear-btn recycle-karte-search-launcher", "aria-haspopup":"dialog", hidden:""
+  });
+  searchHeader.append(searchLauncher);
+  const relatedLauncher = button("related", event => openProductList(event.currentTarget), {
+    className:"search-clear-btn recycle-karte-detail-launcher", "aria-haspopup":"dialog", hidden:""
+  });
+  const relatedSlot = element("span", {className:"recycle-karte-launcher-slot", hidden:""}, relatedLauncher);
+  panelTitle.after(relatedSlot);
+  const mobileDetail = window.matchMedia("(max-width: 767px)");
   const partSearchInput = $("q");
   let partLookupRequest = 0;
   const partLookupStatus = element("p", {className:"recycle-karte-status", role:"status"});
@@ -184,41 +197,25 @@
   const partLookup = element("section", {className:"recycle-karte-product", hidden:""},
     partLookupStatus, element("div", {className:"recycle-karte-controls"}, partLookupFirst, partLookupResults));
 
-  function mountLauncher(label, caption) {
-    const launch = button(caption, event => openSearch(event.currentTarget), {
-      className:"search-clear-btn recycle-karte-launcher",
-      "aria-label":tr("searchOpen"), "aria-haspopup":"dialog", hidden:""
-    });
-    const slot = element("span", {className:"recycle-karte-launcher-slot", hidden:""}, launch);
-    label.after(slot);
-    return {label, caption, launch, slot};
-  }
-
-  function showLauncher(control, enabled) {
-    const {label, caption, launch, slot} = control;
-    slot.hidden = !enabled;
-    if (!enabled) return;
-    launch.textContent = tr(caption);
-    launch.setAttribute("aria-label", tr("searchOpen"));
-    launch.hidden = false;
-    const text = document.createRange();
-    text.selectNodeContents(label);
-    const buttonBox = launch.getBoundingClientRect();
-    const labelBox = text.getBoundingClientRect();
-    launch.hidden = buttonBox.left < labelBox.right + 4;
-  }
-
   function syncLaunchers() {
     const enabled = canShow();
-    const mobile = window.matchMedia("(max-width: 767px)").matches;
-    const detailVisible = !mobile || panel.classList.contains("show");
-    showLauncher(detailLauncher, enabled && detailVisible);
-    showLauncher(listLauncher, enabled && mobile && !detailVisible);
+    searchLauncher.hidden = !enabled;
+    if (enabled) searchLauncher.textContent = tr("searchOpen");
+
+    relatedSlot.hidden = !enabled || !mobileDetail.matches || !panel.classList.contains("show");
+    if (relatedSlot.hidden) return;
+    relatedLauncher.textContent = tr("related");
+    relatedLauncher.hidden = false;
+
+    const title = document.createRange();
+    title.selectNodeContents(panelTitle);
+    relatedLauncher.hidden = relatedLauncher.getBoundingClientRect().left < title.getBoundingClientRect().right + 4;
   }
 
   function openSearch(origin) {
     if (!canShow()) return;
     if (status.textContent === tr("loading")) status.textContent = "";
+    input.placeholder = tr("numberExample");
     const {body} = dialog(tr("search"), origin);
     body.append(searchForm, partLookup);
     if (currentId()) {
@@ -255,9 +252,7 @@
         await enterSearch();
         if (run !== epoch || !canShow()) return;
         syncLaunchers();
-        const available = [detailLauncher, listLauncher].find(({slot, launch}) => !slot.hidden && !launch.hidden);
-        if (available) available.launch.focus({preventScroll:true});
-        else openSearch(partSearchInput);
+        searchLauncher.focus({preventScroll:true});
       } catch {
         if (run === epoch) reset();
       }
@@ -384,7 +379,7 @@
   searchForm.addEventListener("submit", async event => {
     event.preventDefault();
     if (!canShow()) return;
-    const requested = normalizeNumber(input.value);
+    const requested = normalizeLookupNumber(input.value);
     if (!numberPattern.test(requested)) {
       status.textContent = tr("valid");
       input.focus();
@@ -976,11 +971,11 @@
   }
 
   const launcherResize = new ResizeObserver(syncLaunchers);
-  [panelTitle, count].forEach(label => launcherResize.observe(label));
+  launcherResize.observe(panelTitle);
   const launcherChanges = new MutationObserver(syncLaunchers);
-  [panelTitle, count].forEach(label => launcherChanges.observe(label, {childList:true, characterData:true, subtree:true}));
+  launcherChanges.observe(panelTitle, {childList:true, characterData:true, subtree:true});
   launcherChanges.observe(panel, {attributes:true, attributeFilter:["class"]});
-  window.matchMedia("(max-width: 767px)").addEventListener("change", syncLaunchers);
+  mobileDetail.addEventListener("change", syncLaunchers);
   new MutationObserver(syncMenu).observe(menu, {childList:true, subtree:true});
   new MutationObserver(() => {
     if (active && !canShow()) reset();
