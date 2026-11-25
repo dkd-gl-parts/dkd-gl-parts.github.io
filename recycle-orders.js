@@ -1,8 +1,9 @@
 (function () {
   "use strict";
-  var state = { dialog: null, settings: null, cart: [], dirty: false, detailDirty: false, busy: false, pending: null, bindingReview: null, settingsSeq: 0, epoch: 0, search: 0, postal: 0, list: 0, productIndex: 0, cartIndex: 0, postalIndex: 0, view: "entry", actor: "", rows: [], listQuery: null, offset: 0 };
+  var state = { dialog: null, settings: null, cart: [], dirty: false, detailDirty: false, busy: false, pending: null, bindingReview: null, settingsSeq: 0, shippingSeq: 0, shippingCustomerId: "", shippingReady: false, epoch: 0, search: 0, postal: 0, list: 0, productIndex: 0, cartIndex: 0, postalIndex: 0, view: "entry", actor: "", rows: [], listQuery: null, offset: 0 };
   function actor() { return typeof currentUser !== "undefined" && currentUser ? String(currentUser.id || currentUser.email || "") : ""; }
   function allowed() { return typeof canManageSalesOrders === "function" && canManageSalesOrders(); }
+  function regularEntryAllowed() { return typeof canStartInternalCustomerOrderEntry === "function" && canStartInternalCustomerOrderEntry(); }
   function e(value) { return String(value == null ? "" : value).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function yen(value) { return value == null ? "未確定" : Number(value).toLocaleString("ja-JP") + "円"; }
   function kind(value) { return typeof productKindLabel === "function" ? productKindLabel(value) : ({ rebuilt: "リビルト品", aftermarket_new: "社外新品", used_core: "中古コア" }[value] || value); }
@@ -31,7 +32,7 @@
   }
   function input(label, id, type, value, extra) { return "<label><span>" + e(label) + "</span><input id='recycle-" + id + "' type='" + (type || "text") + "' value='" + e(value == null ? "" : value) + "' " + (extra || "") + "></label>"; }
   function button(text, action, extra) { return "<button type='button' data-recycle-action='" + action + "' " + (extra || "") + ">" + e(text) + "</button>"; }
-  function option(value, label, selected) { return "<option value='" + e(value) + "'" + (value === selected ? " selected" : "") + ">" + e(label) + "</option>"; }
+  function option(value, label, selected, disabled) { return "<option value='" + e(value) + "'" + (value === selected ? " selected" : "") + (disabled ? " disabled" : "") + ">" + e(label) + "</option>"; }
   function money(raw, label) { if (!/^\d{1,8}$/.test(String(raw))) throw new Error(label + "を0以上の整数で入力してください。"); return Number(raw); }
   function ownerCurrent() { return state.actor === actor() && allowed(); }
   async function rpc(action, payload, requestId) {
@@ -58,7 +59,7 @@
     } finally { state.busy = false; setButtons(); }
   }
   function setButtons() {
-    if (state.dialog) state.dialog.querySelectorAll("[data-recycle-write]").forEach(function (b) { b.disabled = state.busy || !!state.pending || (b.dataset.recycleAction === "place" && !state.cart.length); });
+    if (state.dialog) state.dialog.querySelectorAll("[data-recycle-write]").forEach(function (b) { b.disabled = state.busy || !!state.pending || (b.dataset.recycleAction === "place" && (!state.cart.length || !state.shippingReady)); });
     var entry = document.getElementById("recycle-entry-fields"); if (entry) entry.disabled = !state.settings || !state.settings.sales_customer_id || !feeReady() || state.busy || !!state.pending;
     ["recycle-back", "recycle-list-open", "recycle-settings-open"].forEach(function (id) { var b = document.getElementById(id); if (b) b.disabled = !entry || state.busy || !!state.pending; });
     document.querySelectorAll("[data-recycle-detail-write]").forEach(function (b) { b.disabled = state.busy || !!state.pending; });
@@ -95,7 +96,7 @@
     if (!allowed()) return;
     if(state.dialog && state.dialog.open) return;
     if (state.actor && state.actor !== actor()) { state.cart = []; state.pending = null; state.dirty = false; }
-    clearBindingReview(); state.actor = actor(); state.epoch++; state.settingsSeq++; state.view = "entry";
+    clearBindingReview(); state.actor = actor(); state.epoch++; state.settingsSeq++; state.shippingCustomerId = ""; state.shippingReady = false; state.view = "entry";
     if (!state.dialog) {
       state.dialog = document.createElement("dialog"); state.dialog.className = "recycle-dialog"; state.dialog.setAttribute("aria-labelledby", "recycle-title"); document.body.appendChild(state.dialog);
       state.compactEntry = typeof window.matchMedia === "function" ? window.matchMedia("(max-width: 800px), (max-width: 1049px) and (max-height: 680px)") : null;
@@ -131,6 +132,55 @@
     document.getElementById("recycle-entry-fields").disabled = !cfg.sales_customer_id;
     document.getElementById("recycle-entry-fees").textContent = "共通単価 ／ " + feeConditions(cfg) + (cfg.provisional ? "（見込）" : "");
     updateCustomerInfo(); updateRouteSummary(); setButtons();
+    void loadShippingOptions();
+  }
+  async function loadShippingOptions() {
+    var outbound = document.getElementById("recycle-carrier"), core = document.getElementById("recycle-return-carrier");
+    var retry = document.getElementById("recycle-shipping-retry");
+    var id = String(state.settings.sales_customer_id || ""), epoch = state.epoch, seq = ++state.shippingSeq;
+    var preserve = state.shippingCustomerId === id;
+    var previous = [preserve ? outbound.value : "", preserve ? core.value : ""];
+    state.shippingReady = false;
+    outbound.disabled = true; core.disabled = true; retry.hidden = true;
+    setButtons();
+    if (!id) { outbound.innerHTML = ""; core.innerHTML = ""; return; }
+    function current() { return seq === state.shippingSeq && epoch === state.epoch && ownerCurrent() && state.dialog.open; }
+    try {
+      var reads = await Promise.all([
+        sb.from("customer_display_settings").select("default_outbound_carrier_name,default_outbound_service_name,default_core_return_carrier_name,default_core_return_service_name").eq("sales_customer_id", id).maybeSingle(),
+        ensureCustomerAccessShippingServices()
+      ]);
+      if (!current()) return;
+      if (reads[0].error) throw reads[0].error;
+      var saved = reads[0].data || {}, defaults = defaultCustomerDisplaySettings();
+      var available = customerAccessShippingServices;
+      var returnServices = customerOrderCoreReturnDeliveryServices(available);
+      function renderCarrier(select, services, priorKey, prefix) {
+        var keys = services.map(customerOrderDeliveryServiceKey);
+        var configured = customerOrderDeliveryServiceKey({
+          carrier_name: saved[prefix + "carrier_name"] || defaults[prefix + "carrier_name"],
+          service_name: saved[prefix + "service_name"] || defaults[prefix + "service_name"]
+        });
+        var selected = keys.indexOf(priorKey) >= 0 ? priorKey : configured;
+        select.innerHTML = services.map(function (row) {
+          var duplicateName = services.some(function (other) { return other.carrier_name !== row.carrier_name && other.service_name === row.service_name; });
+          var label = duplicateName ? row.service_name + "（" + row.carrier_name + "）" : row.service_name;
+          return option(customerOrderDeliveryServiceKey(row), label, selected);
+        }).join("");
+        if (keys.indexOf(selected) < 0) select.selectedIndex = -1;
+        select.disabled = false;
+      }
+      renderCarrier(outbound, available, previous[0], "default_outbound_");
+      renderCarrier(core, returnServices, previous[1], "default_core_return_");
+      state.shippingCustomerId = id; state.shippingReady = true;
+    } catch (error) {
+      if (!current()) return;
+      outbound.innerHTML = ""; core.innerHTML = "";
+      retry.hidden = false;
+      if (state.view === "entry") status("得意先情報の運送便を読み込めませんでした。配送設定を再読込してください。", true);
+    } finally {
+      if (current()) setButtons();
+    }
   }
   function showView(view, focus) {
     clearBindingReview();
@@ -248,11 +298,11 @@
       input("Recycle+注文番号（任意）", "external", "text", "", "maxlength='120'") + input("元の発注会社（参考）", "buyer", "text", "", "maxlength='200'") +
       input("成立した送料", "shipping", "number", 0, "min='0' max='9999999' step='1'") +
       "<label><span>送料の税</span><select id='recycle-shipping-tax'><option value='excluded'>税別</option><option value='included'>税込</option></select></label></div><div class='recycle-route'><label><input id='recycle-marketplace' type='checkbox'>マーケットプレイス経由</label><span id='recycle-route-summary' aria-live='polite'></span></div><p id='recycle-entry-fees' class='recycle-compact-only recycle-fee-subtotals'></p></section>" +
-      "<section class='recycle-entry-panel recycle-entry-delivery' aria-labelledby='recycle-delivery-heading'><h3 id='recycle-delivery-heading'>配送・メモ</h3><div class='recycle-grid'>" +
+      "<section class='recycle-entry-panel recycle-entry-delivery' aria-labelledby='recycle-delivery-heading'><div class='recycle-delivery-head'><h3 id='recycle-delivery-heading'>配送・メモ</h3>" + button("配送設定を再読込", "retry_shipping", "id='recycle-shipping-retry' hidden") + "</div><div class='recycle-grid'>" +
       input("建物名・部門", "address2", "text", "", "maxlength='120' autocomplete='address-line2'") +
-      "<label><span>商品発送時の運送便</span><select id='recycle-carrier'><option value='ヤマト運輸|宅急便'>ヤマト運輸・宅急便</option><option value='佐川急便|飛脚宅配便'>佐川急便・飛脚宅配便</option></select></label>" +
+      "<label><span>商品発送時の運送便</span><select id='recycle-carrier' disabled></select></label>" +
       input("お届け希望日", "delivery-date", "date", "") + "<label><span>時間帯</span><select id='recycle-delivery-time'><option value=''>指定なし</option><option value='0812'>午前中</option><option value='1416'>14～16時</option><option value='1618'>16～18時</option><option value='1820'>18～20時</option><option value='1921'>19～21時</option></select></label>" +
-      "<label id='recycle-return-field' hidden><span>コア返却時の運送便</span><select id='recycle-return-carrier'><option value=''>商品発送と同じ便</option><option value='ヤマト運輸|宅急便'>ヤマト運輸・宅急便</option><option value='佐川急便|飛脚宅配便'>佐川急便・飛脚宅配便</option></select></label>" +
+      "<label id='recycle-return-field' hidden><span>コア返却時の運送便</span><select id='recycle-return-carrier' disabled></select></label>" +
       "<label><span>注文メモ</span><textarea id='recycle-note' maxlength='500' rows='1'></textarea></label></div></section></div></div>" +
       "<div class='recycle-entry-footer'><button type='button' class='recycle-compact-only' popovertarget='recycle-entry-extra'>受注・配送の補足</button>" + button("内容を確認して受注登録", "place", "class='customer-order-submit-button' data-recycle-write") + "</div></fieldset>";
   }
@@ -296,6 +346,16 @@
     var focus = host && (host.querySelector("[data-direction='" + step + "']:enabled") || host.querySelector(".recycle-pages button:enabled"));
     if (focus) focus.focus({preventScroll:true});
   }
+  function coreHandlingOptions(product) {
+    var charge = Number(product.core_charge_jpy);
+    var handling = product.handling || "standard";
+    var configured = Number.isFinite(charge) && charge > 0;
+    var amount = configured ? yen(charge) : "";
+    var missing = typeof t === "function" ? t("customer_order_core_charge_unset") : "コア代金未設定";
+    return option("standard", typeof t === "function" ? t("customer_order_core_return_standard") : "返却要", handling) +
+      option("charge_with_return", configured ? (typeof tf === "function" ? tf("customer_order_core_charge_with_return_option", { amount: amount }) : "コア代金を請求（返却後返金・" + amount + "）") : missing, handling, !configured) +
+      option("charge_no_return", configured ? (typeof tf === "function" ? tf("customer_order_core_charge_no_return_option", { amount: amount }) : "コア代金を請求（返却不要・" + amount + "）") : missing, handling, !configured);
+  }
   function renderCart() {
     var host = document.getElementById("recycle-cart"); if (!host) return;
     var i = state.cartIndex, p = state.cart[i];
@@ -306,7 +366,7 @@
       input("数量", "quantity-" + i, "number", p.quantity, "min='1' max='99' step='1'") + input("単価（税抜・コア別）", "price-" + i, "number", p.price, "aria-label='成立単価（税抜・コア代別）' min='0' max='99999999' step='1'") +
       "<div id='recycle-cart-extra' class='recycle-line-extra recycle-entry-popup' aria-label='商品情報・コア対応' role='region'><div class='recycle-popup-head recycle-compact-only'><strong>商品情報</strong><button type='button' popovertarget='recycle-cart-extra' popovertargetaction='hide'>閉じる</button></div>" +
       "<p>" + e(p.manufacturer + " / " + p.manufacturer_part_number + " / " + kind(p.product_kind)) + "</p>" +
-      (p.core_return_required ? "<label><span>コア対応</span><select id='recycle-core-" + i + "'>" + option("standard","返却あり・コア代請求なし",p.handling||"standard") + (p.core_charge_jpy > 0 ? option("charge_with_return","コア代請求・後日返却",p.handling)+option("charge_no_return","コア代請求・返却なし",p.handling) : "") + "</select></label>" : "<small>コア返却不要</small>") + "</div>" +
+      (p.core_return_required ? "<label><span>コア対応</span><select id='recycle-core-" + i + "'>" + coreHandlingOptions(p) + "</select></label>" : "<small>コア返却不要</small>") + "</div>" +
       "<button type='button' class='recycle-compact-only' popovertarget='recycle-cart-extra'>商品情報</button>" + button("削除", "remove", "data-index='" + i + "'") + "</div>" :
       "<p>カルテ番号や品番から商品を追加してください。</p>";
     syncEntryLayout();
@@ -338,10 +398,15 @@
         throw error;
       }
     });
-    var carrier = field("carrier").split("|"), returnCarrier = field("return-carrier").split("|");
+    var carrier = customerOrderDeliveryServiceFromKey(field("carrier"));
+    var returnCarrier = hasCoreReturn() ? customerOrderDeliveryServiceFromKey(field("return-carrier")) : null;
+    if (!state.shippingReady || !carrier || (hasCoreReturn() && !returnCarrier)) {
+      if (state.shippingReady) { setEntryPopup("entry-extra", true); focusEntry(carrier ? "return-carrier" : "carrier"); }
+      throw new Error("得意先情報の運送便を確認し、配送サービスを選択してください。");
+    }
     return { external_order_number: field("external") || null, buyer_reference: field("buyer"), is_marketplace: checked("marketplace"), items: items,
       shipping_address: { destination_type: "address", company_name: field("company"), recipient_name: field("recipient"), phone_number: field("phone"), postal_code: field("postal"), prefecture_code: field("prefecture"), prefecture_name: document.getElementById("recycle-prefecture").selectedOptions[0].text, address_line_1: field("address1"), address_line_2: field("address2") },
-      shipping_method: { carrier_name: carrier[0], service_name: carrier[1] }, core_return_shipping_method: hasCoreReturn() && returnCarrier[0] ? { carrier_name: returnCarrier[0], service_name: returnCarrier[1] } : null, shipping_fee_jpy: money(field("shipping"), "送料"), shipping_tax_type: field("shipping-tax"), requested_delivery_date: field("delivery-date") || null, delivery_time: field("delivery-time"), note: field("note") };
+      shipping_method: carrier, core_return_shipping_method: returnCarrier, shipping_fee_jpy: money(field("shipping"), "送料"), shipping_tax_type: field("shipping-tax"), requested_delivery_date: field("delivery-date") || null, delivery_time: field("delivery-time"), note: field("note") };
   }
   function renderPostal() {
     var i = state.postalIndex, row = state.postalRows[i];
@@ -497,6 +562,7 @@
       else if (action === "binding_confirm") await confirmBinding();
       else if (action === "binding_cancel") { clearBindingReview(); setButtons(); }
       else if (action === "reload_settings") await reloadSettings();
+      else if (action === "retry_shipping") { status(""); await loadShippingOptions(); }
       else if (action === "products") await searchProducts();
       else if (action === "page") changePage(b);
       else if (action === "postal") await lookupPostal();
@@ -551,6 +617,40 @@
     if (r.payment_status !== "confirmed") host.querySelectorAll("#sales-order-issue-dispatch,#sales-order-print-dispatch,#sales-order-open-shipping-documents,[data-sales-order-action='prepare_shipping']").forEach(function (b) { b.disabled = true; b.title = "Recycle+の決済完了確認が必要です。"; });
     setButtons();
   }
-  function configureEntryButton() { var b = document.getElementById("sales-order-recycle-open"); if (b) { b.hidden = !allowed(); b.onclick = open; } }
+  function orderEntryLabels() {
+    var language = typeof currentLang === "undefined" ? "ja" : currentLang;
+    return (language === "en" ? ["Internal Order Entry", "FAX / Email", "Close"] :
+      language === "zh" ? ["内部订单录入", "传真・邮件", "关闭"] : ["社内受注入力", "通常（FAX・メール）", "閉じる"]);
+  }
+  function chooseInternalOrderType() {
+    if (!allowed()) return;
+    if (!regularEntryAllowed()) { void open(); return; }
+    var labels = orderEntryLabels(), dialog = document.createElement("dialog");
+    dialog.className = "recycle-intake-dialog";
+    dialog.setAttribute("aria-labelledby", "recycle-intake-title");
+    dialog.innerHTML = "<header><h2 id='recycle-intake-title'>" + e(labels[0]) + "</h2>" + button(labels[2], "intake-close") +
+      "</header><div class='recycle-intake-options'>" + button(labels[1], "intake-regular") + button("Recycle+", "intake-recycle") + "</div>";
+    dialog.addEventListener("close", function () { dialog.remove(); });
+    dialog.addEventListener("click", function (event) {
+      var choice = event.target.closest("[data-recycle-action]");
+      if (!choice) return;
+      dialog.close();
+      if (choice.dataset.recycleAction === "intake-regular" && regularEntryAllowed()) void enterInternalCustomerOrderEntry();
+      if (choice.dataset.recycleAction === "intake-recycle" && allowed()) void open();
+    });
+    document.body.append(dialog);
+    dialog.showModal();
+  }
+  function configureEntryButton() {
+    var b = document.getElementById("sales-order-recycle-open"), regular = document.getElementById("sales-order-new-internal-order");
+    if (!b) return;
+    var recycleAllowed = allowed(), regularAllowed = regularEntryAllowed();
+    if (regular) regular.hidden = !regularAllowed || recycleAllowed;
+    b.hidden = !recycleAllowed;
+    b.removeAttribute("data-i18n");
+    b.textContent = regularAllowed && recycleAllowed ? orderEntryLabels()[0] :
+      typeof t === "function" ? t("sales_order_recycle_entry") : "Recycle+受注入力";
+    b.onclick = chooseInternalOrderType;
+  }
   window.DcatsRecycleOrders = Object.freeze({ open: open, mountDetail: mountDetail, configureEntryButton: configureEntryButton, isBusy: function () { return ownerCurrent() && (state.busy || !!state.pending || state.dirty || state.detailDirty); }, csvCell: csvCell });
 }());

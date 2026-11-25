@@ -226,3 +226,23 @@
 .recycle-entry-dialog .recycle-actions:has(#recycle-check-result:not([hidden])) #recycle-settings-open { display: none; }
 
 .recycle-entry-dialog #recycle-entry-fees { margin: 4px 0 0; font-size: 12px; line-height: 1.3; }
+
+.recycle-intake-dialog { width: min(420px, calc(100vw - 24px)); max-width: none; box-sizing: border-box; margin: auto; padding: 14px; border: 1px solid #d8e0dd; border-radius: 9px; background: #f5f7f6; color: #25362e; }
+.recycle-intake-dialog::backdrop { background: rgb(10 30 40 / 45%); }
+.recycle-intake-dialog header,.recycle-delivery-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.recycle-intake-dialog h2 { margin: 0; font-size: 18px; }
+.recycle-intake-options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; margin-top: 10px; }
+.recycle-intake-dialog button { min-height: 40px; padding: 5px 8px; border: 1px solid #9fafaa; border-radius: 6px; background: #fff; font: inherit; font-weight: 700; color: #31433b; cursor: pointer; overflow-wrap: anywhere; }
+.recycle-intake-dialog button:focus-visible { outline: 2px solid #1d6544; outline-offset: 2px; }
+.recycle-intake-options button { background: #edf7f1; border-color: #7b9f8a; }
+.recycle-delivery-head { margin-bottom: 4px; }
+.recycle-entry-panel .recycle-delivery-head h3 { margin: 0; }
+.recycle-entry-panel #recycle-shipping-retry { min-height: 26px; padding: 2px 6px; font-size: 12px; }
+@media(min-width: 1050px) {
+  .recycle-entry-grid { grid-template-columns: minmax(0,1.24fr) minmax(0,1fr); }
+  .recycle-entry-panel .recycle-search { grid-template-columns: auto minmax(0,17rem) auto; justify-content: start; }
+  .recycle-entry-panel .recycle-line { grid-template-columns: 64px minmax(112px,.9fr) minmax(180px,1.35fr) auto; }
+  .recycle-entry-panel .recycle-line-title strong { font-size: 16px; }
+  .recycle-entry-panel .recycle-line-title small { font-size: 13px; }
+  .recycle-entry-panel .recycle-line>label input,.recycle-entry-panel .recycle-line-extra select { min-height: 38px; }
+}
