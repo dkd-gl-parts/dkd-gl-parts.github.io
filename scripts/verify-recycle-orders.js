@@ -37,7 +37,7 @@ const ctx = { document, console, Date, Number, String, Object, Array, Blob, URL:
   if(args.target_action==='binding_preview'){bindingPreviewCalls++;if(failBinding)throw new Error('受注確認失敗');return {data:{token:'fixture-token-'+args.target_payload.sales_customer_id,changed:true,previous_customer:configured?candidateRows.find(c=>c.id===configuredId):null,next_customer:candidateRows.find(c=>String(c.id)===args.target_payload.sales_customer_id),affected_order_count:bindingWarningCount,warnings:bindingWarningCount?[{customer_code:'5855',customer_name:'ブロードリーフ <img src=x>',closing_date:'2026-10-31',order_count:bindingWarningCount,first_order_date:'2026-10-31',last_order_date:'2026-11-02'}]:[]}};}
   if(args.target_action==='list'){listCalls++;lastListQuery=args.target_payload;if(failList)throw new Error('一覧読込失敗');if(listDeferred)return await listDeferred;return {data:typeof listData==='function'?listData(args.target_payload):listData||{count:0,rows:[],gross_jpy:0,estimated_fee_jpy:0,estimated_factoring_fee_jpy:0,estimated_marketplace_fee_jpy:0,estimated_legacy_fee_jpy:0,actual_fee_jpy:null,unconfirmed_fee_count:0}};}
   if(args.target_action==='products'){productSearchPayload=args.target_payload;if(failProducts)throw new Error('商品読込失敗');return {data:{rows:args.target_payload.karte_number==='00000-000000000023'?[]:[product]}};}
-  if(args.target_action==='preview'){previewPayload=args.target_payload;const mp=args.target_payload.is_marketplace;return {data:{subtotal_jpy:20000,shipping_fee_jpy:1000,tax_jpy:2100,total_jpy:23100,preview_token:'synthetic-preview',recycle_policy:{policy_version:2},fee_breakdown:{order_route:mp?'marketplace':'normal',is_marketplace:wrongQuote?!mp:mp,estimated_factoring_fee_jpy:1260,estimated_marketplace_fee_jpy:mp?2200:0,estimated_fee_jpy:mp?3460:1260}}};}
+  if(args.target_action==='preview'){previewPayload=args.target_payload;const mp=args.target_payload.is_marketplace;return {data:{subtotal_jpy:20000,shipping_fee_jpy:1000,tax_jpy:2100,total_jpy:23100,core_charge_total_jpy:args.target_payload.items.reduce((total,line)=>total+(line.manual_core_charge_jpy||0)*line.quantity,0),preview_token:'synthetic-preview',recycle_policy:{policy_version:2},fee_breakdown:{order_route:mp?'marketplace':'normal',is_marketplace:wrongQuote?!mp:mp,estimated_factoring_fee_jpy:1260,estimated_marketplace_fee_jpy:mp?2200:0,estimated_fee_jpy:mp?3460:1260}}};}
   if(args.target_action==='place'){placeCalls++;if(failPlace)throw new Error('応答不明');return {data:{id:7}};}
   if(args.target_action==='result')return {data:{found:resultFound,response:{id:7}}};
   if(args.target_action==='save_settings'){settingsCalls++;lastSettings=args.target_payload;configured=true;configuredId=Number(args.target_payload.sales_customer_id);if(failSave)throw new Error('保存結果不明');return {data:{}};}
@@ -126,9 +126,36 @@ ctx.window=ctx;vm.createContext(ctx);vm.runInContext(source,ctx);
  eq(previewPayload.external_order_number,'QA-ORDER-1');eq(previewPayload.items[0].unit_price_jpy,10000);eq(previewPayload.items[0].quantity,2);
  eq(previewPayload.requested_delivery_date,'2026-11-01');eq(previewPayload.delivery_time,'1416');eq(previewPayload.core_return_shipping_method.carrier_name,'佐川急便');
  eq(previewPayload.sales_customer_id,undefined);
+ eq(previewPayload.items[0].manual_core_charge_jpy,undefined);
  await click('place');eq(placeCalls,1);await click('settings');eq(document.getElementById('recycle-entry').hidden,false);
  await click('result');eq(placeCalls,1);eq(document.getElementById('recycle-message').textContent.includes('再送せず'),true);
  resultFound=true;await click('result');eq(detailId,7);eq(document.querySelector('.recycle-dialog').open,false);failPlace=false;
+ await ctx.DcatsRecycleOrders.open();
+ value('product-query','22');product.core_charge_jpy=null;
+ await click('products');await click('add');
+ eq(document.getElementById('recycle-manual-core-field').hidden,true);
+ value('company','合成');value('phone','0312345678');value('postal','1000001');value('prefecture','13');value('address1','合成住所');value('price-0','10000');value('quantity-0','2');
+ const changeCore=(id,mode)=>{value('core-'+id,mode);document.getElementById('recycle-core-'+id).dispatchEvent(new domWindow.Event('change',{bubbles:true}));};
+ changeCore(0,'charge_no_return');
+ eq(document.getElementById('recycle-manual-core-field').hidden,false);
+ eq(document.getElementById('recycle-return-field').hidden,true);
+ allowConfirm=false;const previousPreview=previewPayload;
+ await click('place');eq(previewPayload,previousPreview);eq(document.getElementById('recycle-message').textContent.includes('コア代金'),true);
+ value('manual-core-0','0');await click('place');eq(previewPayload,previousPreview);
+ value('manual-core-0','4.5');await click('place');eq(previewPayload,previousPreview);
+ value('manual-core-0','4500');await click('place');
+ eq(previewPayload.items[0].manual_core_charge_jpy,4500);
+ eq(previewPayload.core_return_shipping_method,null);
+ eq(confirmation.includes('コア代金（税抜） 9,000円'),true);
+ changeCore(0,'charge_with_return');
+ eq(document.getElementById('recycle-return-field').hidden,false);
+ value('return-carrier',keyFor(returnServices[2]));
+ await click('place');eq(previewPayload.items[0].manual_core_charge_jpy,4500);
+ eq(previewPayload.core_return_shipping_method.carrier_name,'佐川急便');
+ changeCore(0,'standard');
+ eq(document.getElementById('recycle-manual-core-field').hidden,true);
+ await click('place');eq(previewPayload.items[0].manual_core_charge_jpy,undefined);
+ await click('remove');product.core_charge_jpy=5000;allowConfirm=true;await click('close');
  const order={id:1,status:'accepted',total_jpy:11000,recycle:{external_order_number:'<img src=x onerror=alert(1)>',policy_snapshot:{fee_rate_percent:10,provisional:true,note:'合成'},estimated_fee_jpy:1000,estimated_receipt_jpy:10000,payment_status:'unconfirmed',accounting_note:'確認待ち'}};
  ctx.DcatsRecycleOrders.mountDetail(order,document.getElementById('detail'));
  eq(document.querySelector('#detail img'),null);

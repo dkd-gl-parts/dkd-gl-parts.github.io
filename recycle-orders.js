@@ -103,7 +103,7 @@
       if (state.compactEntry) state.compactEntry.addEventListener("change", syncEntryLayout);
       state.dialog.addEventListener("cancel", function (event) { event.preventDefault(); if (state.view !== "entry" && !state.busy && !state.pending) showView("entry"); else close(); });
       state.dialog.addEventListener("input", function (event) { if (event.target.closest("#recycle-entry")) state.dirty = true; if (["recycle-product-query","recycle-query-type"].includes(event.target.id)) resetProductSearch(); if (event.target.closest("#recycle-settings-view")) settingsEdited(event); if (["recycle-from","recycle-to"].includes(event.target.id)) clearList(); });
-      state.dialog.addEventListener("change", function (event) { if (event.target.id.indexOf("recycle-core-") === 0) { rememberCart(); updateReturnField(); } if (event.target.id === "recycle-marketplace") { state.dirty = true; updateRouteSummary(); } if (event.target.id === "recycle-list-route") { state.offset = 0; loadList(); } if (event.target.closest("#recycle-settings-view")) settingsEdited(event); });
+      state.dialog.addEventListener("change", function (event) { if (event.target.id === "recycle-core-" + state.cartIndex) { rememberCart(); updateCoreChargeField(); updateReturnField(); } if (event.target.id === "recycle-marketplace") { state.dirty = true; updateRouteSummary(); } if (event.target.id === "recycle-list-route") { state.offset = 0; loadList(); } if (event.target.closest("#recycle-settings-view")) settingsEdited(event); });
       state.dialog.addEventListener("keydown", function (event) { if (event.key === "Enter" && !event.isComposing && event.target.id === "recycle-product-query") { event.preventDefault(); runAction("products"); } });
       state.dialog.addEventListener("click", function (event) { var b = event.target.closest("[data-recycle-action]"); if (b) runAction(b.dataset.recycleAction, b); });
     }
@@ -346,15 +346,18 @@
     var focus = host && (host.querySelector("[data-direction='" + step + "']:enabled") || host.querySelector(".recycle-pages button:enabled"));
     if (focus) focus.focus({preventScroll:true});
   }
+  function needsManualCoreCharge(product) {
+    return product.core_return_required && !(Number(product.core_charge_jpy) > 0) &&
+      (product.handling === "charge_with_return" || product.handling === "charge_no_return");
+  }
   function coreHandlingOptions(product) {
     var charge = Number(product.core_charge_jpy);
     var handling = product.handling || "standard";
-    var configured = Number.isFinite(charge) && charge > 0;
+    var configured = charge > 0;
     var amount = configured ? yen(charge) : "";
-    var missing = typeof t === "function" ? t("customer_order_core_charge_unset") : "コア代金未設定";
     return option("standard", typeof t === "function" ? t("customer_order_core_return_standard") : "返却要", handling) +
-      option("charge_with_return", configured ? (typeof tf === "function" ? tf("customer_order_core_charge_with_return_option", { amount: amount }) : "コア代金を請求（返却後返金・" + amount + "）") : missing, handling, !configured) +
-      option("charge_no_return", configured ? (typeof tf === "function" ? tf("customer_order_core_charge_no_return_option", { amount: amount }) : "コア代金を請求（返却不要・" + amount + "）") : missing, handling, !configured);
+      option("charge_with_return", configured ? (typeof tf === "function" ? tf("customer_order_core_charge_with_return_option", { amount: amount }) : "コア代金を請求（返却後返金・" + amount + "）") : "請求・返却後返金", handling) +
+      option("charge_no_return", configured ? (typeof tf === "function" ? tf("customer_order_core_charge_no_return_option", { amount: amount }) : "コア代金を請求（返却不要・" + amount + "）") : "請求・返却不要", handling);
   }
   function renderCart() {
     var host = document.getElementById("recycle-cart"); if (!host) return;
@@ -366,12 +369,18 @@
       input("数量", "quantity-" + i, "number", p.quantity, "min='1' max='99' step='1'") + input("単価（税抜・コア別）", "price-" + i, "number", p.price, "aria-label='成立単価（税抜・コア代別）' min='0' max='99999999' step='1'") +
       "<div id='recycle-cart-extra' class='recycle-line-extra recycle-entry-popup' aria-label='商品情報・コア対応' role='region'><div class='recycle-popup-head recycle-compact-only'><strong>商品情報</strong><button type='button' popovertarget='recycle-cart-extra' popovertargetaction='hide'>閉じる</button></div>" +
       "<p>" + e(p.manufacturer + " / " + p.manufacturer_part_number + " / " + kind(p.product_kind)) + "</p>" +
-      (p.core_return_required ? "<label><span>コア対応</span><select id='recycle-core-" + i + "'>" + coreHandlingOptions(p) + "</select></label>" : "<small>コア返却不要</small>") + "</div>" +
+      (p.core_return_required ? "<div class='recycle-core-controls'><label><span>コア対応</span><select id='recycle-core-" + i + "'>" + coreHandlingOptions(p) + "</select></label><div id='recycle-manual-core-field' hidden>" +
+        input("コア代（税抜/個）", "manual-core-" + i, "text", p.manualCoreCharge, "aria-label='コア代金（1個・税抜）' inputmode='numeric' maxlength='8' autocomplete='off'") + "</div></div>" : "<small>コア返却不要</small>") + "</div>" +
       "<button type='button' class='recycle-compact-only' popovertarget='recycle-cart-extra'>商品情報</button>" + button("削除", "remove", "data-index='" + i + "'") + "</div>" :
       "<p>カルテ番号や品番から商品を追加してください。</p>";
     syncEntryLayout();
+    updateCoreChargeField();
     updateReturnField();
     setButtons();
+  }
+  function updateCoreChargeField() {
+    var field = document.getElementById("recycle-manual-core-field");
+    if (field) field.hidden = !needsManualCoreCharge(state.cart[state.cartIndex]);
   }
   function hasCoreReturn() { return state.cart.some(function (p) { return p.core_return_required && p.handling !== "charge_no_return"; }); }
   function updateReturnField() { document.getElementById("recycle-return-field").hidden = !hasCoreReturn(); }
@@ -381,6 +390,7 @@
     p.quantity = field("quantity-" + i);
     p.price = field("price-" + i);
     p.handling = field("core-" + i) || "standard";
+    p.manualCoreCharge = field("manual-core-" + i);
   }
   function orderPayload() {
     if (!feeReady()) throw new Error("受注区分ごとの手数料条件を確認できません。最新の設定を確認してください。");
@@ -391,10 +401,22 @@
       throw new Error("届け先の会社名または宛名と、電話番号・郵便番号・都道府県・住所を入力してください。");
     }
     var items = state.cart.map(function (p, i) {
+      var focus = "quantity-";
       try {
-        return { dkd_shohin_id: p.dkd_shohin_id, product_kind: p.product_kind, quantity: money(p.quantity, "数量"), unit_price_jpy: money(p.price, "成立単価"), core_return_handling: p.handling || "standard", karte_number: p.karte_number || undefined };
+        var quantity = money(p.quantity, "数量");
+        focus = "price-";
+        var unitPrice = money(p.price, "成立単価");
+        var item = { dkd_shohin_id: p.dkd_shohin_id, product_kind: p.product_kind, quantity: quantity, unit_price_jpy: unitPrice, core_return_handling: p.handling || "standard", karte_number: p.karte_number || undefined };
+        if (needsManualCoreCharge(p)) {
+          focus = "manual-core-";
+          if (!/^\d{1,8}$/.test(String(p.manualCoreCharge)) || Number(p.manualCoreCharge) === 0) {
+            throw new Error("商品明細のコア代金（1個・税抜）は1～99,999,999円の整数で入力してください。");
+          }
+          item.manual_core_charge_jpy = Number(p.manualCoreCharge);
+        }
+        return item;
       } catch (error) {
-        state.cartIndex = i; renderCart(); focusEntry((/^\d{1,8}$/.test(p.quantity) ? "price-" : "quantity-") + i);
+        state.cartIndex = i; renderCart(); focusEntry(focus + i);
         throw error;
       }
     });
@@ -511,7 +533,8 @@
     if (!fees || !quote.recycle_policy || quote.recycle_policy.policy_version !== 2 || fees.is_marketplace !== payload.is_marketplace || fees.order_route !== route ||
       ![quote.total_jpy,fees.estimated_factoring_fee_jpy,fees.estimated_marketplace_fee_jpy,fees.estimated_fee_jpy].every(Number.isSafeInteger) ||
       fees.estimated_factoring_fee_jpy < 0 || fees.estimated_marketplace_fee_jpy < 0 || fees.estimated_fee_jpy !== fees.estimated_factoring_fee_jpy + fees.estimated_marketplace_fee_jpy) throw new Error("受注区分と手数料の確認結果が一致しません。最新の設定を確認してください。");
-    var confirmation = routeLabel(route) + " ／ 合計 " + yen(quote.total_jpy) + "\n手数料見込：" + feeBreakdownText(fees) + " ／ 合計 " + yen(fees.estimated_fee_jpy) + "\n差引受取見込 " + yen(quote.total_jpy - fees.estimated_fee_jpy);
+    var coreChargeSummary = quote.core_charge_total_jpy > 0 ? "\nコア代金（税抜） " + yen(quote.core_charge_total_jpy) : "";
+    var confirmation = routeLabel(route) + " ／ 合計 " + yen(quote.total_jpy) + coreChargeSummary + "\n手数料見込：" + feeBreakdownText(fees) + " ／ 合計 " + yen(fees.estimated_fee_jpy) + "\n差引受取見込 " + yen(quote.total_jpy - fees.estimated_fee_jpy);
     if (!window.confirm(confirmation + "\nこの区分・金額でブロードリーフのRecycle+受注を登録します。決済完了は登録後に別途確認します。")) { status("入力内容を確認できます。取引総額 " + yen(quote.total_jpy) + " ／ 手数料見込 " + yen(fees.estimated_fee_jpy)); return; }
     await mutate("place", { order: payload, preview_token: quote.preview_token }, async function (data) {
       state.dirty = false; state.cart = []; state.dialog.close(); state.epoch++;
