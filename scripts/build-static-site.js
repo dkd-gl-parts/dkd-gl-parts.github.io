@@ -6,6 +6,7 @@ const root = path.resolve(__dirname, "..");
 const output = path.join(root, "dist");
 const files = [
   "_headers",
+  "_routes.json",
   "app.js",
   "claim-cases.js",
   "sales-slips-readonly.js",

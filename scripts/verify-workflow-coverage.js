@@ -80,6 +80,8 @@ const forbiddenPullRequestKeys = [
 
 const securityHeaderPaths = [
   "_headers",
+  "_routes.json",
+  "functions/**",
   "app.js",
   "scanflow/**",
   "tests/scanflow-local-review.test.mjs",
