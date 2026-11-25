@@ -103,6 +103,13 @@ async function verifyBrowser(browser, viewport) {
       const type = url.pathname.endsWith(".svg") ? "image/svg+xml" : "image/png";
       await route.fulfill({ contentType: type, body: await readFile(process.cwd() + url.pathname) }); return;
     }
+    const partnerLogoType = {
+      "/assets/brand/daiko-mark.jpg": "image/jpeg",
+      "/assets/brand/gltek-mark.webp": "image/webp"
+    }[url.pathname];
+    if (partnerLogoType) {
+      await route.fulfill({ contentType: partnerLogoType, body: await readFile(process.cwd() + url.pathname) }); return;
+    }
     if (url.pathname === "/admin") { await route.fulfill({ contentType: "text/html; charset=utf-8", body: adminShell }); return; }
     if (url.pathname === "/admin-fixture.js") { await route.fulfill({ contentType: "text/javascript; charset=utf-8", body: fixtureScript }); return; }
     if (!url.pathname.startsWith(assets) || !/^[a-z.-]+$/.test(url.pathname.slice(assets.length))) { await route.fulfill({ status: 404 }); return; }
