@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { renderSupabaseOrigin, writeSupabaseOrigin } = require("./sync-supabase-origin.js");
 
 const root = path.resolve(__dirname, "..");
 const output = path.join(root, "dist");
@@ -66,6 +67,8 @@ const files = [
   "styles.css",
 ];
 
+const renderedOrigins = renderSupabaseOrigin(root);
+
 fs.rmSync(output, { recursive: true, force: true });
 fs.mkdirSync(output, { recursive: true });
 
@@ -81,4 +84,5 @@ const scanflow = path.join(root, "scanflow");
 if (fs.existsSync(scanflow)) {
   fs.cpSync(scanflow, path.join(output, "scanflow"), { recursive: true });
 }
+writeSupabaseOrigin(output, renderedOrigins);
 console.log(`Static site build complete (${files.length} files + vendor + assets${fs.existsSync(scanflow) ? " + scanflow" : ""})`);

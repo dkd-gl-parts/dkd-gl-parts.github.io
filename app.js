@@ -38,7 +38,9 @@ function ecPriceHistoryColorClass(type, provider) {
 
 var SUPABASE_URL = "https://jqoeqximtwfpqwzngutj.supabase.co";
 var SUPABASE_KEY = "sb_publishable_TXdCwBQOD_s3N0TqFCDOAw_8B44a0kv";
-var sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+var sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { storageKey: "sb-jqoeqximtwfpqwzngutj-auth-token" }
+});
 var EC_MALL_EDGE_FUNCTION_NAME = "ec-mall-search";
 var RAKUTEN_EDGE_FUNCTION_NAME = EC_MALL_EDGE_FUNCTION_NAME;
 var RAKUTEN_USE_EDGE_FUNCTION = true;

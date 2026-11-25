@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "_headers"
+      - "app.js"
       - "scanflow/**"
       - "tests/scanflow-local-review.test.mjs"
       - "tests/scanflow-owner-auth.test.mjs"
@@ -21,6 +22,9 @@ on:
       - "product-3d-input-worker.mjs"
       - "site.webmanifest"
       - "vendor/**"
+      - "config/supabase-origin.json"
+      - "scripts/sync-supabase-origin.js"
+      - "tests/supabase-origin.test.cjs"
       - "scripts/build-static-site.js"
       - "scripts/verify-install-app.js"
       - "scripts/verify-concierge-pet.js"
@@ -30,6 +34,7 @@ on:
   pull_request:
     paths:
       - "_headers"
+      - "app.js"
       - "scanflow/**"
       - "tests/scanflow-local-review.test.mjs"
       - "tests/scanflow-owner-auth.test.mjs"
@@ -47,6 +52,9 @@ on:
       - "product-3d-input-worker.mjs"
       - "site.webmanifest"
       - "vendor/**"
+      - "config/supabase-origin.json"
+      - "scripts/sync-supabase-origin.js"
+      - "tests/supabase-origin.test.cjs"
       - "scripts/build-static-site.js"
       - "scripts/verify-install-app.js"
       - "scripts/verify-concierge-pet.js"
@@ -74,6 +82,8 @@ jobs:
           node scripts/verify-concierge-pet-runtime.js
       - name: Verify local ScanFlow review save and restore
         run: node --test tests/scanflow-local-review.test.mjs tests/scanflow-owner-auth.test.mjs
+      - name: Verify Supabase origin projections
+        run: node --test tests/supabase-origin.test.cjs
       - name: Build static deployment
         run: node scripts/build-static-site.js
       - name: Verify security response headers

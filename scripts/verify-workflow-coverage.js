@@ -81,6 +81,7 @@ const forbiddenPullRequestKeys = [
 
 const securityHeaderPaths = [
   "_headers",
+  "app.js",
   "scanflow/**",
   "tests/scanflow-local-review.test.mjs",
   "tests/scanflow-owner-auth.test.mjs",
@@ -98,6 +99,9 @@ const securityHeaderPaths = [
   "product-3d-input-worker.mjs",
   "site.webmanifest",
   "vendor/**",
+  "config/supabase-origin.json",
+  "scripts/sync-supabase-origin.js",
+  "tests/supabase-origin.test.cjs",
   "scripts/build-static-site.js",
   "scripts/verify-install-app.js",
   "scripts/verify-concierge-pet.js",
@@ -321,6 +325,7 @@ const expectedAuxiliaryWorkflows = new Map([
             run: "node scripts/verify-concierge-pet.js\nnode scripts/verify-concierge-pet-runtime.js\n",
           },
           { name: "Verify local ScanFlow review save and restore", run: "node --test tests/scanflow-local-review.test.mjs tests/scanflow-owner-auth.test.mjs" },
+          { name: "Verify Supabase origin projections", run: "node --test tests/supabase-origin.test.cjs" },
           { name: "Build static deployment", run: deploymentBuildCommand },
           { name: "Verify security response headers", run: deploymentHeaderCommand },
         ],
