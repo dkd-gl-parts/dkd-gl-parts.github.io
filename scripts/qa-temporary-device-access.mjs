@@ -14,6 +14,7 @@ const primaryFeatures = ["part_label", "shipping", "core_return"];
 const expiry = "2027-11-19T03:00:00.000Z";
 const output = process.env.DEVICE_QA_OUTPUT;
 const loginShell = (await readFile("index.html", "utf8"))
+  .replace('<div id="screen-login" class="screen">', '<div id="screen-login" class="screen active">')
   .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
   .replace(/<link\b[^>]*>\s*/gi, "")
   .replace("</head>", '<link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/assets/temporary-device/temporary-device-admin.css"></head>');
