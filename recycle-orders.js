@@ -457,7 +457,7 @@
   function vehicleEntryPanel() {
     return "<section id='recycle-vehicle-box' class='recycle-entry-panel recycle-vehicle-panel recycle-entry-popup' aria-labelledby='recycle-vehicle-heading'>" +
       "<div class='recycle-vehicle-heading'><h3 id='recycle-vehicle-heading'>カルテ・車両情報</h3><button type='button' class='recycle-vehicle-close' popovertarget='recycle-vehicle-box' popovertargetaction='hide'>閉じる</button></div><div class='recycle-grid'>" +
-      input("カルテNo.", "karte-number", "text", "", "maxlength='40' autocomplete='off' placeholder='注文書に記載がある場合'") + vehicleFieldNames.map(function (item) {
+      input("カルテNo.", "staff-karte-number", "text", "", "maxlength='40' autocomplete='off' placeholder='注文書に記載がある場合'") + vehicleFieldNames.map(function (item) {
         return input(item[1], item[0], item[3] ? "text" : "month", "", item[3] ? "maxlength='" + item[3] + "'" : "");
       }).join("") + "</div></section>";
   }
@@ -659,7 +659,7 @@
       if (state.shippingReady) { setEntryPopup("entry-extra", true); focusEntry(carrier ? "return-carrier" : "carrier"); }
       throw new Error("得意先情報の運送便を確認し、配送サービスを選択してください。");
     }
-    var address = orderAddress(), karteNo = field("karte-number").normalize("NFKC"), packedTogether = checked("packed-together");
+    var address = orderAddress(), karteNo = field("staff-karte-number").normalize("NFKC"), packedTogether = checked("packed-together");
     if (karteNo.length>40 || /[\u0000-\u001f\u007f]/.test(karteNo)) throw new Error("カルテNo.は40文字以内で入力してください。");
     if (packedTogether && quantityInCart()<2) throw new Error("同梱セットには商品が2点以上必要です。");
     if (packedTogether && recycleChannel() && !field("buyer")) {
