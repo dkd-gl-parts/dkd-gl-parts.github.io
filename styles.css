@@ -6689,6 +6689,9 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .user-permission-overview-head p { margin: 0; color: #667085; font-size: 12px; line-height: 1.45; }
 .user-permission-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 8px; }
 .user-permission-toolbar .mgmt-search { width: min(440px, 100%); }
+.user-permission-toolbar-options { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; }
+.user-suspended-filter { display: inline-flex; align-items: center; gap: 6px; min-height: 22px; font-size: 12px; color: #344054; cursor: pointer; }
+.user-suspended-filter input { margin: 0; }
 .user-permission-toolbar .mgmt-count { margin: 0; white-space: nowrap; }
 .permission-table-wrap { overflow-x: auto; margin: 12px 0 16px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; }
 .user-permission-overview .permission-table-wrap { overflow: visible; margin: 0; background: transparent; border: 0; border-radius: 0; }
@@ -6852,7 +6855,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   .customer-activity-overview { grid-template-columns: 1fr; }
   .user-auth-history-list .log-table { min-width: 620px; }
   .user-permission-overview-head { align-items: flex-start; flex-direction: column; }
-  .user-permission-toolbar { align-items: stretch; flex-direction: column; }
+  .user-permission-toolbar { align-items: stretch; flex-direction: column; gap: 4px; }
   .user-permission-toolbar .mgmt-search { width: 100%; }
   .user-permission-toolbar .mgmt-count { text-align: left; }
   .user-permission-management-table-wrap { overflow: visible; border: 0; background: transparent; }

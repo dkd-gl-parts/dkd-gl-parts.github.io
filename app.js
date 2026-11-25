@@ -2406,6 +2406,10 @@ var TRANSLATIONS = {
     suspended_msg: "このアカウントは停止されています。管理者にお問い合わせください。",
     users_pending_badge: "承認待ち",
     users_suspended_badge: "停止中",
+    users_show_suspended: "停止中も表示",
+    users_suspend_confirm: "このユーザーの利用を停止しますか？",
+    users_status_update_failed: "アカウント状態を確認できませんでした。一覧を開き直して状態を確認してください。",
+    users_hidden_empty: "表示対象のユーザーがいません。「停止中も表示」で確認できます。",
     users_active_badge: "有効",
     lbl_company_col: "会社名",
     lbl_group: "グループ",
@@ -5403,6 +5407,10 @@ var TRANSLATIONS = {
     suspended_msg: "This account has been suspended. Please contact the administrator.",
     users_pending_badge: "Pending",
     users_suspended_badge: "Suspended",
+    users_show_suspended: "Include suspended users",
+    users_suspend_confirm: "Suspend this user’s access?",
+    users_status_update_failed: "The account status could not be confirmed. Reopen the list to check its current status.",
+    users_hidden_empty: "No users are currently shown. Select “Include suspended users” to see suspended accounts.",
     users_active_badge: "Active",
     lbl_company_col: "Company",
     lbl_group: "Group",
@@ -8400,6 +8408,10 @@ var TRANSLATIONS = {
     suspended_msg: "此账号已被停用，请联系管理员。",
     users_pending_badge: "待审核",
     users_suspended_badge: "已停用",
+    users_show_suspended: "同时显示已停用用户",
+    users_suspend_confirm: "确定停用此用户的访问权限吗？",
+    users_status_update_failed: "无法确认账号状态。请重新打开列表查看当前状态。",
+    users_hidden_empty: "当前没有显示的用户。选择“同时显示已停用用户”后可进行查看。",
     users_active_badge: "有效",
     lbl_company_col: "公司名称",
     lbl_group: "分组",
@@ -9119,7 +9131,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1395";
+var APP_VERSION       = "v1.1.1396";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -43182,6 +43194,8 @@ function enterChangePw() {
 async function enterUsers() {
   if (!userProfile || !canUseUserManagement()) { showPermissionDenied("open_users", "profiles"); return; }
   if (window.DcatsNineTabs && window.DcatsNineTabs.beforeEnter("users", false)) return;
+  document.getElementById("users-show-suspended").checked = false;
+  document.getElementById("users-list").innerHTML = "<div class='loading'>" + esc(t("loading")) + "</div>";
   userManagementRows = [];
   userManagementLoaded = false;
   userManagementLoadError = null;
@@ -60821,6 +60835,21 @@ function permissionOverridesForRole(user, roleCode, overrides) {
   return clean;
 }
 
+function showSuspendedInternalUsers() {
+  var control = document.getElementById("users-show-suspended");
+  return !!(control && control.checked);
+}
+
+function syncSuspendedInternalUserCards() {
+  var list = document.getElementById("users-list");
+  var showSuspended = showSuspendedInternalUsers();
+  list.querySelectorAll("[data-suspended-user]").forEach(function(card) {
+    card.hidden = !showSuspended;
+  });
+  var empty = list.querySelector("[data-suspended-users-empty]");
+  if (empty) empty.hidden = showSuspended;
+}
+
 function renderUserPermissionOverview() {
   var host = document.getElementById("user-permission-overview");
   if (!host || !userProfile || !canUseUserManagement()) return;
@@ -60839,7 +60868,11 @@ function renderUserPermissionOverview() {
 
   var search = document.getElementById("user-permission-search");
   var query = norm(search ? search.value.trim() : "");
-  var rows = userManagementRows.filter(function(user) {
+  var includeSuspended = showSuspendedInternalUsers();
+  var visibleUsers = userManagementRows.filter(function(user) {
+    return includeSuspended || user.status !== "suspended";
+  });
+  var rows = visibleUsers.filter(function(user) {
     if (!query) return true;
     var roleCode = normalizeAccessRoleForCompany(userAccessRoleCode(user), userCompanyCode(user));
     return norm([
@@ -60850,7 +60883,7 @@ function renderUserPermissionOverview() {
       accessRoleScopeText(roleCode)
     ].filter(Boolean).join(" ")).indexOf(query) >= 0;
   });
-  if (count) count.textContent = rows.length + " / " + userManagementRows.length + " 件";
+  if (count) count.textContent = rows.length + " / " + visibleUsers.length + " 件";
   if (note) note.textContent = "ユーザーごとの基準権限を選択し、機能ごとの許可・停止は状態欄から直接変更できます。";
   if (!rows.length) {
     host.innerHTML = "<div class='empty'>該当するユーザーがありません</div>";
@@ -61354,7 +61387,7 @@ function renderUsers(users) {
   if (!users.length) { list.innerHTML = "<div class='empty'>"+t("no_users")+"</div>"; return; }
 
   var order = {pending:0,active:1,suspended:2};
-  users.sort(function(a,b){
+  users = users.slice().sort(function(a,b){
     var aPending = a.status === "pending" || (a.status === "active" && internalUserAuthStatus(a).state === "invitation_pending");
     var bPending = b.status === "pending" || (b.status === "active" && internalUserAuthStatus(b).state === "invitation_pending");
     if (aPending !== bPending) return aPending ? -1 : 1;
@@ -61364,7 +61397,9 @@ function renderUsers(users) {
   var userById = {};
   users.forEach(function(u) { userById[u.id] = u; });
 
-  var html = "";
+  var html = users.every(function(user) { return user.status === "suspended"; })
+    ? "<div class='empty' data-suspended-users-empty>" + esc(t("users_hidden_empty")) + "</div>"
+    : "";
   if (pendingCount > 0) {
     html += "<div class='pending-banner'>&#x23F3; "+pendingCount+" 件の初回設定・承認待ち</div>";
   }
@@ -61385,7 +61420,8 @@ function renderUsers(users) {
     var disabledAttr = canManageThis ? "" : " disabled";
     var companyDisabledAttr = (canManageThis && isSystemAdmin()) ? "" : " disabled";
     var roleDisabledAttr = canEditUserPermission(u) ? "" : " disabled";
-    html += "<div class='user-card' data-uid='"+esc(u.id)+"' data-role-code='"+esc(roleCode)+"'>";
+    var suspendedMarker = status === "suspended" ? " data-suspended-user" : "";
+    html += "<div class='user-card' data-uid='"+esc(u.id)+"' data-role-code='"+esc(roleCode)+"'"+suspendedMarker+">";
     html += "<div class='user-card-top'>";
     html += "<div class='user-card-identity'><div class='user-avatar'>"+esc(initials)+"</div>";
     html += "<div data-dcats-inline-style='s-286372957b99'>";
@@ -61403,10 +61439,10 @@ function renderUsers(users) {
       html += "<div class='user-actions-label'>アカウント操作</div>";
       html += "<button class='btn-user-history' data-uid='"+esc(u.id)+"' type='button'>"+t("btn_auth_history")+"</button>";
       html += "<button class='btn-save-user' data-uid='"+esc(u.id)+"'>"+t("btn_save")+"</button>";
-      if (status==="pending"||status==="suspended") html += "<button class='btn-approve' data-uid='"+esc(u.id)+"'>"+t("btn_approve")+"</button>";
-      if (status==="active") html += "<button class='btn-suspend' data-uid='"+esc(u.id)+"'>"+t("btn_suspend")+"</button>";
+      if (status==="pending"||status==="suspended") html += "<button class='btn-approve' data-uid='"+esc(u.id)+"'>"+t(status==="suspended" ? "btn_activate" : "btn_approve")+"</button>";
+      if (status==="active"||status==="pending") html += "<button class='btn-suspend' data-uid='"+esc(u.id)+"'>"+t("btn_suspend")+"</button>";
       html += "<button class='btn-pw-reset' data-uid='"+esc(u.id)+"' data-account-action='"+esc(accountAction)+"'"+accountActionDisabled+">"+esc(accountActionLabel)+"</button>";
-      html += "<span class='save-msg' id='save-msg-"+esc(u.id)+"'></span>";
+      html += "<span class='save-msg' id='save-msg-"+esc(u.id)+"' role='status'></span>";
       html += "</div>";
     }
     html += "</div>";
@@ -61430,6 +61466,7 @@ function renderUsers(users) {
     html += "</div></div>";
   });
   list.innerHTML = html;
+  syncSuspendedInternalUserCards();
 
   list.querySelectorAll(".btn-user-history").forEach(function(btn) {
     btn.addEventListener("click", function() {
@@ -61516,27 +61553,45 @@ function renderUsers(users) {
     });
   });
 
-  async function updateStatus(uid,status) {
+  async function updateStatus(button, status) {
+    var uid = button.dataset.uid;
     var target = userById[uid];
     if (!canUseUserManagement() || !target || !canManageUser(target)) { showPermissionDenied("update_user_status", "profiles", uid); return; }
-    var r = await sb.from("profiles").update({status:status,updated_at:new Date().toISOString()}).eq("id",uid);
-    if (!r.error) {
-      await logUserActivity(status === "active" ? "approve" : "suspend", {
-        screen: "users",
-        action: status === "active" ? "approve_user" : "suspend_user",
-        target_type: "profiles",
-        target_id: uid,
-        target_desc: target.email || uid,
-        metadata: { status: status }
-      });
-      await loadUsers();
+    if (button.disabled) return;
+    var msg = document.getElementById("save-msg-" + uid);
+    button.disabled = true;
+    msg.textContent = "";
+    var update = sb.from("profiles").update({status: status, updated_at: new Date().toISOString()}).eq("id", uid);
+    update = target.status == null ? update.is("status", null) : update.eq("status", target.status);
+    var result;
+    try {
+      result = await update.select("id,status").maybeSingle();
+    } catch (error) {
+      result = {error: error};
+    }
+    if (result.error || !result.data || result.data.id !== uid || result.data.status !== status) {
+      msg.className = "save-msg save-err";
+      msg.textContent = t("users_status_update_failed");
+      return;
+    }
+    await logUserActivity(status === "active" ? "approve" : "suspend", {
+      screen: "users",
+      action: status === "active" ? "approve_user" : "suspend_user",
+      target_type: "profiles",
+      target_id: uid,
+      target_desc: target.email || uid,
+      metadata: { status: status }
+    });
+    await loadUsers();
+    if (status === "suspended" && !showSuspendedInternalUsers() && activeScreenId() === "users") {
+      document.getElementById("users-show-suspended").focus();
     }
   }
   list.querySelectorAll(".btn-approve").forEach(function(btn){
-    btn.addEventListener("click",function(){updateStatus(btn.dataset.uid,"active");});
+    btn.addEventListener("click",function(){updateStatus(btn,"active");});
   });
   list.querySelectorAll(".btn-suspend").forEach(function(btn){
-    btn.addEventListener("click",function(){if(confirm("このユーザーを停止しますか？"))updateStatus(btn.dataset.uid,"suspended");});
+    btn.addEventListener("click",function(){if(confirm(t("users_suspend_confirm")))updateStatus(btn,"suspended");});
   });
 
   // 初回設定メール再送 / パスワードリセットメール送信
@@ -62407,6 +62462,10 @@ document.getElementById("internal-user-invite-overlay").addEventListener("click"
   if (e.target === this) closeInternalUserInvite();
 });
 document.getElementById("user-permission-search").addEventListener("input", renderUserPermissionOverview);
+document.getElementById("users-show-suspended").addEventListener("change", function() {
+  syncSuspendedInternalUserCards();
+  renderUserPermissionOverview();
+});
 document.getElementById("user-permission-edit-preview").addEventListener("click", function(e) {
   var toggle = e.target.closest(".permission-state-toggle");
   if (toggle) {
