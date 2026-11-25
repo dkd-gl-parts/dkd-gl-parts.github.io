@@ -13,7 +13,10 @@ const invitation = "a".repeat(64);
 const primaryFeatures = ["part_label", "shipping", "core_return"];
 const expiry = "2027-11-19T03:00:00.000Z";
 const output = process.env.DEVICE_QA_OUTPUT;
-const loginShell = (await readFile("index.html", "utf8"))
+const mainHtml = await readFile("index.html", "utf8");
+assert.doesNotMatch(mainHtml, /temporary-device\.html|限定業務を開く/);
+const operatorUrl = new URL(assets + "temporary-device.html", origin).href;
+const loginShell = mainHtml
   .replace('id="screen-boot" class="screen active app-boot"', 'id="screen-boot" class="screen app-boot"')
   .replace('<div id="screen-login" class="screen">', '<div id="screen-login" class="screen active">')
   .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
@@ -25,7 +28,6 @@ const adminShell = `<!doctype html><html lang="ja"><meta charset="utf-8">
 <div id="user-permission-edit-overlay"><button id="btn-temporary-device-access" hidden>期限付き利用</button></div>
 <dialog id="temporary-device-access-dialog" class="temporary-device-dialog" aria-label="期限付き利用">
 <header><h2>期限付き利用</h2><button id="btn-temporary-device-access-close">閉じる</button></header>
-<p hidden><a href="${assets}temporary-device.html">利用者用ページを開く</a></p>
 <section id="temporary-device-admin-content"></section></dialog>
 <script src="/admin-fixture.js"></script><script type="module" src="${assets}integration.mjs"></script>`;
 
@@ -41,6 +43,7 @@ async function verifyBrowser(browser, viewport) {
   const errors = [];
   admin.on("pageerror", error => errors.push(error.message));
   const writes = [];
+  let adminReads = 0;
   let requested = false;
   let issued = false;
   let active = null;
@@ -59,6 +62,7 @@ async function verifyBrowser(browser, viewport) {
       let payload;
       switch (body.action) {
         case "admin_state":
+          adminReads++;
           if (body.subjectId === fixtureId) payload = { existingGrant: active, printers: [{ code: "FIXTURE", name: "検証用プリンター" }] };
           break;
         case "prepare_enrollment":
@@ -111,6 +115,14 @@ async function verifyBrowser(browser, viewport) {
       await route.fulfill({ contentType: partnerLogoType, body: await readFile(process.cwd() + url.pathname) }); return;
     }
     if (url.pathname === "/admin") { await route.fulfill({ contentType: "text/html; charset=utf-8", body: adminShell }); return; }
+    if (url.pathname === "/ordinary") {
+      const body = adminShell.replace("/admin-fixture.js", "/ordinary-fixture.js");
+      await route.fulfill({ contentType: "text/html; charset=utf-8", body }); return;
+    }
+    if (url.pathname === "/ordinary-fixture.js") {
+      const body = fixtureScript.replace("window.isSystemAdmin=()=>true", "window.isSystemAdmin=()=>false");
+      await route.fulfill({ contentType: "text/javascript; charset=utf-8", body }); return;
+    }
     if (url.pathname === "/admin-fixture.js") { await route.fulfill({ contentType: "text/javascript; charset=utf-8", body: fixtureScript }); return; }
     if (!url.pathname.startsWith(assets) || !/^[a-z.-]+$/.test(url.pathname.slice(assets.length))) { await route.fulfill({ status: 404 }); return; }
     const mediaType = url.pathname.endsWith(".html") ? "text/html" : url.pathname.endsWith(".css") ? "text/css" : "text/javascript";
@@ -130,23 +142,39 @@ async function verifyBrowser(browser, viewport) {
     const login = await context.newPage();
     login.on("pageerror", error => errors.push(error.message));
     await login.goto(origin + "/login");
-    const entry = login.getByRole("link", { name: "限定業務を開く" });
-    await visible(entry);
     await visible(button(login, "ログイン"));
-    await noOverflow(login, "html, #screen-login, .login-form-panel, .login-fields, .login-help-actions");
+    await visible(button(login, "パスワードをお忘れの方"));
+    assert.equal(await login.locator('a[href*="temporary-device.html"]').count(), 0);
+    assert.equal(await login.getByText("限定業務を開く", { exact: true }).count(), 0);
+    await noOverflow(login, ".login-fields");
     await login.screenshot({ path: path.join(output, `login-${viewport.width}x${viewport.height}.png`) });
-    const box = await entry.boundingBox();
-    assert.ok(box && box.y >= 0 && box.y + box.height <= viewport.height, JSON.stringify({ viewport, box }));
-    await entry.press("Enter");
-    await visible(button(login, "利用を開始"));
+
+    await login.goto(origin + "/ordinary");
+    await visible(login.locator("#user-permission-edit-overlay.show"));
+    assert.equal(await button(login, "期限付き利用").isVisible(), false);
+    assert.equal(await login.getByRole("link", { name: "利用者用ページを開く" }).count(), 0);
+
+    await login.goto(operatorUrl);
+    await button(login, "利用を開始").click();
+    await visible(login.getByText("管理者から新しい利用者用リンクを受け取ってください。", { exact: true }));
     assert.equal(await login.locator('input[type="email"],input[type="password"]').count(), 0);
-    for (const title of ["品番シール","ピッキング・出荷確定","コア返却"]) assert.equal(await button(login,title).count(),0);
+    for (const title of ["品番シール", "ピッキング・出荷確定", "コア返却管理"]) {
+      assert.equal(await button(login, title).count(), 0);
+    }
+    assert.equal(adminReads, 0);
+    assert.deepEqual(writes, []);
+    await noOverflow(login, "html, .workspace, #panel");
     await login.close();
 
     await admin.goto(origin + "/admin");
     await button(admin, "期限付き利用").click();
+    assert.equal(await admin.getByRole("link", { name: "利用者用ページを開く" }).count(), 0);
     await button(admin, "利用者用リンクを発行").click();
     const invite = await admin.getByRole("link", { name: "利用者用ページを開く", exact: true }).getAttribute("href");
+    const invitationUrl = new URL(invite);
+    assert.equal(invitationUrl.hash, "#enroll=" + invitation);
+    invitationUrl.hash = "";
+    assert.equal(invitationUrl.href, operatorUrl);
     const operator = await context.newPage();
     operator.on("pageerror", error => errors.push(error.message));
     await operator.goto(invite);
@@ -175,7 +203,10 @@ async function verifyBrowser(browser, viewport) {
     for (const title of ["受注受付", "B2 CSV"]) assert.equal(await button(operator, title).count(), 0);
     await noOverflow(operator, "html, .workspace, #panel");
     await operator.screenshot({ path: path.join(output, `operator-${viewport.width}x${viewport.height}.png`) });
-    await operator.reload();
+    await visible(operator.getByText("次回は、このブラウザのブックマークから開けます。", { exact: true }));
+    const returningUrl = await admin.getByRole("link", { name: "利用者用ページを開く" }).getAttribute("href");
+    assert.equal(returningUrl, operatorUrl);
+    await operator.goto(returningUrl);
     await button(operator, "利用を開始").click();
     await visible(button(operator, "品番シール"));
     await button(admin, "利用を取り消す").click();
@@ -185,9 +216,17 @@ async function verifyBrowser(browser, viewport) {
     await button(admin, "取り消す").click();
     await visible(admin.getByText("端末の利用許可を取り消しました。"));
     assert.equal(active, null);
+    assert.equal(await admin.getByRole("link", { name: "利用者用ページを開く" }).count(), 0);
+    await operator.goto(returningUrl);
+    await button(operator, "利用を開始").click();
+    await visible(operator.getByRole("heading", { name: "管理者の承認を待っています" }));
+    for (const title of ["品番シール", "ピッキング・出荷確定", "コア返却管理"]) {
+      assert.equal(await button(operator, title).count(), 0);
+    }
+    await noOverflow(operator, "html, .workspace, #panel");
     assert.deepEqual(writes, ["prepare_enrollment", "request_device", "approve_device", "set_label_printer", "revoke_device"]);
     assert.deepEqual(errors, []);
-    console.log(`${viewport.width}x${viewport.height}: invitation, approval, printer, 3 features, reuse and revocation passed`);
+    console.log(`${viewport.width}x${viewport.height}: hidden ordinary login, admin-only invitation, approved bookmark and revocation passed`);
   } finally {
     await context.close();
   }

@@ -64,6 +64,14 @@ export function renderTemporaryDeviceAdmin(container, { targetUser, endpoint, pu
   linkButton.className="btn-cancel";
   linkButton.hidden=!!existingGrant;
   const linkArea=node("p");
+  function operatorLink(url) {
+    const link = node("a", "利用者用ページを開く");
+    link.href = url.href;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    return link;
+  }
+  if (existingGrant) linkArea.append(operatorLink(operatorUrl));
   form.append(linkButton,linkArea);
   const addField = (title, name, value = "", required = false) => {
     const label = node("label", title);
@@ -164,11 +172,7 @@ export function renderTemporaryDeviceAdmin(container, { targetUser, endpoint, pu
       const reply = await send({action:"prepare_enrollment",subjectId:targetUser.id});
       const url = new URL(operatorUrl);
       url.hash="enroll="+encodeURIComponent(reply.enrollmentToken);
-      const link=node("a","利用者用ページを開く");
-      link.href=url.href;
-      link.target="_blank";
-      link.rel="noopener noreferrer";
-      linkArea.replaceChildren(link,document.createTextNode("（有効15分）"));
+      linkArea.replaceChildren(operatorLink(url),document.createTextNode("（有効15分）"));
     });
   });
   form.addEventListener("submit", event => {
@@ -183,7 +187,7 @@ export function renderTemporaryDeviceAdmin(container, { targetUser, endpoint, pu
         ? { action: "configure_device", grantId: grant, features }
         : { action: "approve_device", grantId: grant, subjectId: targetUser.id, pairingCode: pairing.value.trim(), features });
       active = true;
-      linkArea.replaceChildren();
+      linkArea.replaceChildren(operatorLink(operatorUrl));
       linkButton.hidden=true;
       if (pairing) { pairing.required = false; pairing.closest("label").hidden = true; }
       grantId.readOnly = true;

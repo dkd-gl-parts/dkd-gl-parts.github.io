@@ -36,8 +36,6 @@ if (overlay && trigger && dialog && container && close) {
     try {
       const state = await readTemporaryDeviceAdmin(options);
       if (!state || generation !== request || selectedAdministratorTarget()?.id !== user.id) return;
-      const returningLink = dialog.querySelector("header + p");
-      if (returningLink) returningLink.hidden = !state.existingGrant;
       renderTemporaryDeviceAdmin(container,{ ...options,...state });
       dialog.showModal();
     } catch {
