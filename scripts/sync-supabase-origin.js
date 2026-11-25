@@ -23,8 +23,9 @@ const targets = [
 function endpoint(value) {
   if (typeof value !== "string") throw new Error("Expected an HTTPS origin in " + configPath);
   const url = new URL(value);
-  if (url.protocol !== "https:" || url.port || value !== url.origin) {
-    throw new Error("Expected an HTTPS origin without a path, port or credentials in " + configPath);
+  const exactHost = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*$/i;
+  if (url.protocol !== "https:" || url.port || value !== url.origin || !exactHost.test(url.hostname)) {
+    throw new Error("Expected an HTTPS origin with an exact hostname and without a path, port or credentials in " + configPath);
   }
   return {
     origin: url.origin,

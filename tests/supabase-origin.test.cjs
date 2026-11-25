@@ -38,7 +38,7 @@ test("one origin updates the endpoints, CSP and strict URL checks", () => {
 
 test("invalid origins are rejected before generating deployment files", () => {
   for (const input of ["http://gateway.example.test", alternate + "/rest/v1",
-    alternate + ":8443", "https://user@gateway.example.test", alternate + "?other=1"]) {
+    alternate + ":8443", "https://user@gateway.example.test", alternate + "?other=1", "https://*.example.test", "https://[::1]"]) {
     assert.throws(() => renderSupabaseOrigin(root, input), /Expected an HTTPS origin/);
   }
 });
