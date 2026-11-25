@@ -60,4 +60,53 @@ for (const feature of ["microphone", "geolocation", "payment", "usb"]) {
   expect(new RegExp(`(?:^|,\\s*)${feature}=\\(\\)`, "i").test(permissions), `Permissions-Policy must disable ${feature}`);
 }
 
-console.log("Security response header contract: OK");
+async function verifyPagesApiRoutes() {
+  const families = ["rest","auth","storage","functions"];
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, "_routes.json"), "utf8"));
+  expect(manifest.version === 1, "Pages Functions require a version 1 routes manifest");
+  expect(JSON.stringify(manifest.include) === JSON.stringify(families.map((name) => `/${name}/v1/*`)),
+    "Pages Functions must run only on the four API route families");
+  expect(Array.isArray(manifest.exclude) && manifest.exclude.length === 0,
+    "The Pages Functions route manifest must leave the API paths enabled");
+
+  if (root !== sourceRoot) {
+    expect(!fs.existsSync(path.join(root, "functions")), "Pages Functions source must stay outside the static build");
+    for (const name of families) {
+      expect(!fs.existsSync(path.join(root, name, "v1")), `API route must not contain static files: ${name}/v1`);
+    }
+  }
+
+  let referenceSource;
+  for (const name of families) {
+    const file = path.join(sourceRoot, "functions", name, "v1", "[[path]].js");
+    const source = fs.readFileSync(file, "utf8");
+    referenceSource ??= source;
+    expect(source === referenceSource, "The four Pages Functions must use the same forwarding handler");
+    const { onRequest } = await import("data:text/javascript;base64," + Buffer.from(source).toString("base64"));
+    const request = new Request(`https://dcats.example/${name}/v1/example/nested?id=1`, {
+      method: "POST", headers: { "content-type": "application/json" }, body: "{}",
+    });
+    const response = new Response("worker response", { status: 202 });
+    let requests = 0;
+    const upstream = { fetch(forwarded) {
+      expect(forwarded === request, `Pages Function altered the request: ${name}`);
+      requests++;
+      return Promise.resolve(response);
+    } };
+    expect(await onRequest({ request, env: { API: upstream } }) === response && requests === 1,
+      `Pages Function did not return the bound Worker's response: ${name}`);
+
+    const fallback = await onRequest({ request, env: {} });
+    expect(fallback.status === 404 && fallback.headers.get("content-type") === "application/json"
+      && await fallback.text() === '{"message":"not found"}',
+      `Pages Function did not return the expected JSON 404 without a binding: ${name}`);
+  }
+}
+
+verifyPagesApiRoutes().then(() => {
+  console.log("Security response header contract: OK");
+  console.log("Pages API routes and static build separation: OK");
+}).catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
