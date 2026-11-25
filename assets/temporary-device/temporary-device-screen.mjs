@@ -156,7 +156,7 @@ function menu() {
   show("使う機能を選んでください",[
     shortcuts, add("p","利用期限 "+new Intl.DateTimeFormat("ja-JP",{dateStyle:"long",timeZone:"Asia/Tokyo"}).format(new Date(approved.expiresAt)),
       {className:"instruction"}),
-    add("p","次回は、このブラウザのブックマークから開けます。",{className:"instruction"})
+    add("p","このページをブックマークして、次回も同じブラウザで開いてください。",{className:"instruction"})
   ]);
 }
 homeButton.addEventListener("click",()=>{if (!busy && approved) menu();});

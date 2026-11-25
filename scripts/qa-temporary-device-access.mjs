@@ -146,7 +146,7 @@ async function verifyBrowser(browser, viewport) {
     await visible(button(login, "パスワードをお忘れの方"));
     assert.equal(await login.locator('a[href*="temporary-device.html"]').count(), 0);
     assert.equal(await login.getByText("限定業務を開く", { exact: true }).count(), 0);
-    await noOverflow(login, ".login-fields");
+    await noOverflow(login, "html, #screen-login, .login-form-panel, .login-fields");
     await login.screenshot({ path: path.join(output, `login-${viewport.width}x${viewport.height}.png`) });
 
     await login.goto(origin + "/ordinary");
@@ -203,7 +203,7 @@ async function verifyBrowser(browser, viewport) {
     for (const title of ["受注受付", "B2 CSV"]) assert.equal(await button(operator, title).count(), 0);
     await noOverflow(operator, "html, .workspace, #panel");
     await operator.screenshot({ path: path.join(output, `operator-${viewport.width}x${viewport.height}.png`) });
-    await visible(operator.getByText("次回は、このブラウザのブックマークから開けます。", { exact: true }));
+    await visible(operator.getByText("このページをブックマークして、次回も同じブラウザで開いてください。", { exact: true }));
     const returningUrl = await admin.getByRole("link", { name: "利用者用ページを開く" }).getAttribute("href");
     assert.equal(returningUrl, operatorUrl);
     await operator.goto(returningUrl);
