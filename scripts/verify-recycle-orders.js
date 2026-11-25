@@ -9,235 +9,256 @@ const app = fs.readFileSync(path.join(__dirname, '../app.js'), 'utf8');
 const build = fs.readFileSync(path.join(__dirname, 'build-static-site.js'), 'utf8');
 const { document, window: domWindow } = parseHTML('<html><body><button id="sales-order-new-internal-order" hidden></button><button id="sales-order-recycle-open" hidden></button><div id="detail"><div class="sales-order-detail-navigation"></div></div></body></html>');
 const create = document.createElement.bind(document);
-document.createElement = function(tag) { const node=create(tag);if(tag==='dialog'){node.showModal=()=>{node.open=true;};node.close=()=>{node.open=false;node.dispatchEvent(new domWindow.Event("close"));};}if(tag==='a')node.click=()=>{downloadName=node.download;};return node;};
-let permission=true, calls=0, listCalls=0, settingsCalls=0, configured=true, configurable=true, previewPayload=null, placeCalls=0, resultFound=false, failPlace=false, failSettings=false, failProducts=false, failList=false, failPostal=false, postalLocal=[], postalDeferred=null, detailId=null, allowConfirm=true;
-let configuredId=1, bindingPreviewCalls=0, bindingWarningCount=0, bindingGuard=1, lastSettings=null, failSave=false, failBinding=false;
-let productSearchPayload=null, regularPermission=true, regularEntries=0, failShipping=false;
-let feeGuard=2,wrongQuote=false,confirmation='',listData=null,listDeferred=null,lastListQuery=null,csvBlob=null,downloadName='';
-const feeConditions={policy_version:2,factoring_rate_percent:6,sales_fee_rate_percent:10,note:'決済は取引税抜額、MPは商品税込額から算定した見込。'};
-let candidateRows=[{id:1,code:'5855',name:'ブロードリーフ Recycle＋',billing_customer_code:'5855',closing_code:'31'},{id:2,code:'5856',name:'株式会社ブロードリーフ',billing_customer_code:'5856',closing_code:'20'}];
-const product={dkd_shohin_id:123,genuine_part_number:'QA-123',manufacturer_part_number:'QA-M123',manufacturer:'合成',product_kind:'rebuilt',available_qty:3,core_return_required:true,core_charge_jpy:5000};
-const standardServices=[{carrier_name:'ヤマト運輸',service_name:'宅急便'},{carrier_name:'ヤマト運輸',service_name:'宅急便タイムサービス'}];
-const returnServices=[...standardServices,{carrier_name:'佐川急便',service_name:'飛脚宅配便'}];
-const keyFor=(row)=>encodeURIComponent(row.carrier_name)+'|'+encodeURIComponent(row.service_name);
-const settingsDefaults=()=>({default_outbound_carrier_name:'ヤマト運輸',default_outbound_service_name:'宅急便',default_core_return_carrier_name:'佐川急便',default_core_return_service_name:'飛脚宅配便'});
-const selection=(key)=>{const [carrier_name,service_name]=key.split('|').map(decodeURIComponent);return carrier_name&&service_name?{carrier_name,service_name}:null;};
-const shippingRead=(table)=>{
- assert.equal(table,'customer_display_settings');
- return {select(fields){assert(fields.includes('default_core_return_carrier_name'));return this;},eq(field,id){assert.equal(field,'sales_customer_id');this.id=id;return this;},async maybeSingle(){return failShipping?{error:{message:'offline'}}:{data:{...settingsDefaults(),default_outbound_service_name:this.id==='1'?'宅急便タイムサービス':'宅急便',default_core_return_carrier_name:this.id==='1'?'佐川急便':'ヤマト運輸',default_core_return_service_name:this.id==='1'?'飛脚宅配便':'宅急便'}};}};
+document.createElement = tag => {
+  const element = create(tag);
+  if (tag === 'dialog') {
+    element.showModal = () => { element.open = true; };
+    element.close = () => { element.open = false; };
+  }
+  return element;
 };
-const ctx = { document, console, Date, Number, String, Object, Array, Blob, URL:{createObjectURL:blob=>{csvBlob=blob;return 'blob:synthetic';},revokeObjectURL:()=>{}}, crypto:require('node:crypto').webcrypto,setTimeout, currentUser:{id:'synthetic'},currentLang:'ja',salesOrderSelectedId:1,
- canManageSalesOrders:()=>permission,canStartInternalCustomerOrderEntry:()=>permission&&regularPermission,enterInternalCustomerOrderEntry:async()=>{regularEntries++;},
- defaultCustomerDisplaySettings:settingsDefaults,ensureCustomerAccessShippingServices:async()=>{},customerAccessShippingServices:standardServices,customerOrderCoreReturnDeliveryServices:()=>returnServices,customerOrderDeliveryServiceKey:keyFor,customerOrderDeliveryServiceFromKey:selection,
- SHIPPING_PREFECTURES:[[13,'東京都']],confirm:text=>{confirmation=text;return allowConfirm;},
- lookupCustomerOrderPostalLocal:async()=>postalDeferred ? await postalDeferred : postalLocal,
- lookupCustomerOrderPostalApi:async()=>{if(failPostal)throw new Error('offline');return [{postal_code:'100-0001',prefecture_code:'13',address_line_1:'千代田区千代田',display_address:'東京都千代田区千代田'}];},
- sb:{from:shippingRead,rpc:async(name,args)=>{assert.equal(name,'recycle_workspace');calls++;
-  if(args.target_action==='settings'){if(failSettings)throw new Error('設定読込失敗');const c=candidateRows.find(c=>c.id===configuredId);return {data:{sales_customer_id:configured?configuredId:null,fee_rate_percent:10,provisional:true,fee_basis:'product_net',rounding:'floor',revision:1,can_configure:configurable,note:'合成暫定条件',customer_name:configured?c?.name:null,customer_code:configured?c?.code:null,customer_candidates:candidateRows,customer_binding_guard_version:bindingGuard,fee_policy_version:feeGuard,fee_conditions:feeConditions}};}
-  if(args.target_action==='binding_preview'){bindingPreviewCalls++;if(failBinding)throw new Error('受注確認失敗');return {data:{token:'fixture-token-'+args.target_payload.sales_customer_id,changed:true,previous_customer:configured?candidateRows.find(c=>c.id===configuredId):null,next_customer:candidateRows.find(c=>String(c.id)===args.target_payload.sales_customer_id),affected_order_count:bindingWarningCount,warnings:bindingWarningCount?[{customer_code:'5855',customer_name:'ブロードリーフ <img src=x>',closing_date:'2026-10-31',order_count:bindingWarningCount,first_order_date:'2026-10-31',last_order_date:'2026-11-02'}]:[]}};}
-  if(args.target_action==='list'){listCalls++;lastListQuery=args.target_payload;if(failList)throw new Error('一覧読込失敗');if(listDeferred)return await listDeferred;return {data:typeof listData==='function'?listData(args.target_payload):listData||{count:0,rows:[],gross_jpy:0,estimated_fee_jpy:0,estimated_factoring_fee_jpy:0,estimated_marketplace_fee_jpy:0,estimated_legacy_fee_jpy:0,actual_fee_jpy:null,unconfirmed_fee_count:0}};}
-  if(args.target_action==='products'){productSearchPayload=args.target_payload;if(failProducts)throw new Error('商品読込失敗');return {data:{rows:args.target_payload.karte_number==='00000-000000000023'?[]:[product]}};}
-  if(args.target_action==='preview'){previewPayload=args.target_payload;const mp=args.target_payload.is_marketplace;return {data:{subtotal_jpy:20000,shipping_fee_jpy:1000,tax_jpy:2100,total_jpy:23100,core_charge_total_jpy:args.target_payload.items.reduce((total,line)=>total+(line.manual_core_charge_jpy||0)*line.quantity,0),preview_token:'synthetic-preview',recycle_policy:{policy_version:2},fee_breakdown:{order_route:mp?'marketplace':'normal',is_marketplace:wrongQuote?!mp:mp,estimated_factoring_fee_jpy:1260,estimated_marketplace_fee_jpy:mp?2200:0,estimated_fee_jpy:mp?3460:1260}}};}
-  if(args.target_action==='place'){placeCalls++;if(failPlace)throw new Error('応答不明');return {data:{id:7}};}
-  if(args.target_action==='result')return {data:{found:resultFound,response:{id:7}}};
-  if(args.target_action==='save_settings'){settingsCalls++;lastSettings=args.target_payload;configured=true;configuredId=Number(args.target_payload.sales_customer_id);if(failSave)throw new Error('保存結果不明');return {data:{}};}
-  throw new Error('Unexpected fixture RPC: '+args.target_action);}},
- loadSalesOrderDetail:async(id)=>{detailId=id;},enterSalesOrderMgmt:async()=>{} };
-ctx.window=ctx;vm.createContext(ctx);vm.runInContext(source,ctx);
+const west = {carrier_name:'ヤマト運輸',service_name:'宅急便'};
+const timed = {carrier_name:'ヤマト運輸',service_name:'宅急便タイムサービス'};
+const coreCarrier = {carrier_name:'佐川急便',service_name:'飛脚宅配便'};
+const key = service => encodeURIComponent(service.carrier_name) + '|' + encodeURIComponent(service.service_name);
+const defaults = {default_outbound_carrier_name:'ヤマト運輸',default_outbound_service_name:'宅急便',default_core_return_carrier_name:'佐川急便',default_core_return_service_name:'飛脚宅配便'};
+const products = [{dkd_shohin_id:123,genuine_part_number:'PART-12345',manufacturer_part_number:'M-12345',manufacturer:'合成',product_kind:'rebuilt',available_qty:3,core_return_required:true,core_charge_jpy:null}];
+const savedCust = {id:1,code:'5855',name:'ブロードリーフ Recycle＋',billing_customer_code:'5855',closing_code:'31'};
+const nextCust = {id:2,code:'5856',name:'ブロードリーフ新集約先',billing_customer_code:'5856',closing_code:'20'};
+const customerRows = [{id:1,source_customer_code:'5855',customer_name:savedCust.name},{id:9,source_customer_code:'9001',customer_name:'合成得意先'}];
+const yamatoOffice = {code:'068721',name:'合成営業所',postal_code:'562-0035',prefecture_code:'27',address_line_1:'合成営業所所在地'};
+let recycleAllowed=true, regularAllowed=true, confirmed=true, confirmText='', configuredId=1, configAdmin=true, externalVersion=1;
+let settingsError=false, shippingError=false, productError=false, nextQuoteError=false, networkError=false, negativePlaceResult=false;
+let pendingRead=null, found=false, orderOpened=null, settingsCalls=0, readOrderList=0, validBinding=true;
+let delayedProducts=null, delayedSettings=null, delayPostal=null;
+const calls=[], previews=[], writes=[];
+const ctx = {
+  document, console, crypto:require('node:crypto').webcrypto, Date, Number, Array, Object,
+  currentUser:{id:'fixture-actor'}, currentLang:'ja', CUSTOMER_CATALOG_SHORT_QUERY_MAX:5, CUSTOMER_ORDER_YAMATO_OFFICES:[yamatoOffice],
+  canManageSalesOrders:()=>recycleAllowed, canStartInternalCustomerOrderEntry:()=>regularAllowed,
+  loadDetailSalesCustomerOptions:async()=>customerRows, defaultCustomerDisplaySettings:()=>defaults,
+  ensureCustomerAccessShippingServices:async()=>{}, customerAccessShippingServices:[west,timed],
+  customerOrderCoreReturnDeliveryServices:()=>[west,timed,coreCarrier],
+  customerOrderDeliveryServiceKey:key,
+  customerOrderDeliveryServiceFromKey: str => [west,timed,coreCarrier].find(service=>key(service)===str) || null,
+  customerOrderBilledCoreChargePerUnit: line=>line.core_charge_jpy || 0,
+  customerOrderDestinationError:(addr,service)=>addr.destination_type==='yamato_office' && (!/^\d{6}$/.test(addr.yamato_office_code) || !addr.yamato_office_name || service.carrier_name!=='ヤマト運輸')?'営業所情報を確認してください。':'',
+  customerOrderYamatoOffice: code => code===yamatoOffice.code ? yamatoOffice : null,
+  normalizeCustomerOrderPostalCode: code=>code.replace(/[^0-9]/g,''),
+  normalizePartQuery:q=>q.replace(/[^0-9a-z]/gi,''),
+  fetchCoreProductMasterMatches:async()=>({data:products}), fetchCategoryProducts:async()=>({data:products}),
+  normalizeCoreProductFastRows:rows=>rows, hydrateSalesDaikoVisibility:async()=>{}, filterSalesVisibleProducts:rows=>rows,
+  productSearchCardDkdIds:rows=>rows.map(p=>p.dkd_shohin_id), productDkdId:p=>p.dkd_shohin_id,
+  fetchCustomerOrderStockAvailabilityMap:async()=>({map:{123:{rebuilt:{total_available_qty:3}}}}),
+  coreReturnPolicyForKind:kind=>({required:kind==='rebuilt',charge:products[0].core_charge_jpy}),
+  SHIPPING_PREFECTURES:[[13,'東京都'],[27,'大阪府']],
+  confirm:text=>{confirmText=text;return confirmed;},
+  lookupCustomerOrderPostalLocal:async()=>delayPostal || [{postal_code:'100-0001',prefecture_code:'13',address_line_1:'千代田区千代田',display_address:'東京都千代田区千代田'}],
+  enterSalesOrderMgmt:async()=>{readOrderList++;},loadSalesOrderDetail:async(id)=>{orderOpened=id;},
+  sb:{
+    from(table) {
+      return {select(){return this;},eq(column,id){if(column==='sales_customer_id')this.id=id;return this;},in(){return this;},
+        async order(){return {data:table==='assy_categories'?[{category_code:'starter',label_ja:'スターター'}]:products};},
+        async maybeSingle(){assert.equal(table,'customer_display_settings');return shippingError?{error:{message:'offline'}}:{data:{...defaults,default_outbound_service_name:this.id==='1'?timed.service_name:west.service_name}};}};
+    },
+    async rpc(name, wire) {
+      if (name==='get_customer_order_delivery_quote') return {data:{available:true,shipping_date:'2026-12-01',earliest_delivery_date:'2026-12-02',max_requested_delivery_date:'2026-12-06'}};
+      if (name==='search_customer_catalog_products_by_prefix_fast') return {data:products};
+      const channel = name==='recycle_workspace'?'recycle':'standard';
+      const action = channel==='recycle'?wire.target_action:name.startsWith('preview')?'preview':'place';
+      const args = channel==='recycle' ? wire.target_payload : wire;
+      calls.push({channel,action,args});
+      if (action==='settings') {
+        const hold=delayedSettings;delayedSettings=null;
+        if(hold)return hold;
+        if(settingsError)throw Error('設定読込失敗');
+        const row=[savedCust,nextCust].find(customer=>customer.id===configuredId);
+        return {data:{revision:1,sales_customer_id:row?.id,customer_name:row?.name,customer_code:row?.code,customer_candidates:[savedCust,nextCust],can_configure:configAdmin,customer_binding_guard_version:1,external_settlement_version:externalVersion}};
+      }
+      if (action==='products') {
+        if(delayedProducts) return delayedProducts;
+        if(productError) throw Error('商品読込失敗');
+        return {data:{rows:args.karte_number==='00000-000000000023'?[]:products}};
+      }
+      if (action==='preview') {
+        previews.push({channel,args});
+        if(nextQuoteError)return {error:{message:'在庫不足',code:'22023'}};
+        const items=(channel==='recycle'?args.items:args.target_items).map(item=>{
+          const charge=item.manual_core_charge_jpy||0;
+          return {...item,core_charge_jpy:charge,unit_price_jpy:(item.unit_price_jpy??item.product_unit_price_jpy??12500)+charge};
+        });
+        return {data:{valid:true,items,total_jpy:23100,preview_token:'synthetic-preview',core_charge_total_jpy:items.reduce((sum,i)=>sum+i.core_charge_jpy*i.quantity,0),recycle_policy:channel==='recycle'?{settlement_mode:'external'}:undefined}};
+      }
+      if (action==='place') {
+        writes.push({channel,args});
+        if(networkError)throw Error('応答不明');
+        if(negativePlaceResult)return {error:{code:'22023',message:'内容を確認してください。'}};
+        return {data:{id:channel==='recycle'?7:8}};
+      }
+      if(action==='result') {
+        pendingRead=args.request_id;
+        return {data:{found,response:{id:7}}};
+      }
+      if(action==='binding_preview') {
+        if(!validBinding)throw Error('受注確認失敗');
+        return {data:{token:'bound-fixture',previous_customer:savedCust,next_customer:nextCust,affected_order_count:2,warnings:[{customer_code:'5855',customer_name:'<img src=x>',closing_date:'2026-10-31',order_count:2}]}};
+      }
+      if(action==='save_settings'){
+        settingsCalls++;
+        configuredId=Number(args.sales_customer_id);
+        return {data:{saved:true}};
+      }
+      throw Error('Unexpected fixture RPC '+name+' '+action);
+    }
+  }
+};
+ctx.window=ctx;
+vm.createContext(ctx);
+vm.runInContext(source,ctx);
 (async()=>{
- let checks=0;const eq=(a,b)=>{assert.deepEqual(a,b);checks++;};
- const selects=(doc=document)=>doc.querySelectorAll('select').forEach(el=>{if(Object.hasOwn(el,'value'))return;let selected=el.querySelector('option[selected]')?.value||el.querySelector('option')?.value||'';Object.defineProperty(el,'value',{configurable:true,get:()=>selected,set:value=>{selected=value;}});Object.defineProperty(el,'selectedOptions',{configurable:true,get:()=>[...el.querySelectorAll('option')].filter(o=>o.value===selected).map(o=>({text:o.textContent}))});});
- const tick=async()=>{await new Promise(r=>setTimeout(r,5));selects();};
- const click=async(action)=>{const b=[...document.querySelectorAll('[data-recycle-action]')].find(b=>b.dataset.recycleAction===action);assert(b,'Missing action '+action);b.dispatchEvent(new domWindow.Event('click',{bubbles:true}));await tick();};
- const value=(id,text)=>{const el=document.getElementById('recycle-'+id);el.value=text;el.dispatchEvent(new domWindow.Event('input',{bubbles:true}));};
- eq(html.indexOf('src="recycle-orders.js')<html.indexOf('src="app.js'),true);
- for(const bad of ['=HYPERLINK("https://example.invalid")','+1','@SUM(1)','-1','\t=1'])eq(ctx.DcatsRecycleOrders.csvCell(bad).startsWith('"\''),true);
- eq(ctx.DcatsRecycleOrders.csvCell('正常"文字'),'"正常""文字"');
- ctx.DcatsRecycleOrders.configureEntryButton();
- const sharedButton=document.getElementById('sales-order-recycle-open');
- eq(sharedButton.hidden,false);eq(sharedButton.textContent,'社内受注入力');eq(document.getElementById('sales-order-new-internal-order').hidden,true);
- sharedButton.onclick();eq(document.querySelector('.recycle-intake-dialog').open,true);await click('intake-regular');eq(regularEntries,1);
- sharedButton.onclick();await click('intake-recycle');
- eq(document.getElementById('recycle-carrier').value,keyFor(standardServices[1]));
- eq(document.getElementById('recycle-return-carrier').value,keyFor(returnServices[2]));
- eq([...document.getElementById('recycle-return-carrier').options].map(o=>o.textContent),returnServices.map(row=>row.service_name));
- eq(document.getElementById('recycle-title').textContent,'Recycle+受注入力');
- eq(document.querySelectorAll('#recycle-entry').length,1);
- eq(document.getElementById('recycle-entry').tagName,'SECTION');
- eq(document.getElementById('recycle-entry').hidden,false);
- eq(document.querySelector('#recycle-entry [data-step]'),null);
- for(const id of ['product-query','cart','external','company','carrier']){
-  const field=document.getElementById('recycle-'+id);eq(!!field,true);eq(!!field.closest('[hidden]'),false);
- }
- eq(!!document.querySelector('#recycle-entry [data-recycle-action=place]').closest('[hidden]'),false);
- eq(document.getElementById('recycle-settings-view').hidden,true);
- eq(document.getElementById('recycle-settlements-view').hidden,true);
- eq(document.querySelector('#recycle-customer-summary strong').textContent,'ブロードリーフ Recycle＋');
- eq(document.querySelector('#recycle-customer-summary small').textContent,'得意先コード 5855');
- eq(document.querySelector('#recycle-entry #recycle-customer-id'),null);
- eq(listCalls,0);
- eq(document.getElementById('recycle-rate'),null);eq(document.querySelector('.recycle-fee-rates').textContent.includes('6％'),true);
- eq(!!document.getElementById('recycle-marketplace').checked,false);eq(document.getElementById('recycle-route-summary').textContent.includes('MP手数料なし'),true);
- eq(document.getElementById('recycle-external').hasAttribute('required'),false);
- value('external','QA-ORDER-1');
- value('company','合成直送先');
- await click('settings');eq(document.getElementById('recycle-entry').hidden,true);
- eq(document.getElementById('recycle-setup-note').hidden,true);
- eq(document.getElementById('recycle-title').textContent,'Recycle+設定');
- await click('save_settings');eq(settingsCalls,0);
- eq(document.getElementById('recycle-message').textContent.includes('受注の入力中'),true);
- await click('entry');eq(document.getElementById('recycle-external').value,'QA-ORDER-1');
- await click('settlements');eq(listCalls,1);
- eq(document.getElementById('recycle-title').textContent,'Recycle+精算一覧');
- eq(document.getElementById('recycle-totals').textContent.includes('0件'),true);
- await click('entry');eq(document.getElementById('recycle-company').value,'合成直送先');
- value('product-query','invalid');
- await click('products');eq(productSearchPayload,null);
- eq(document.getElementById('recycle-product-status').textContent.includes('形式'),true);
- value('product-query','23');await click('products');
- eq(productSearchPayload.karte_number,'00000-000000000023');eq(document.getElementById('recycle-product-status').textContent.includes('見つかりません'),true);
- value('query-type','part');value('product-query','QA-123');
- failProducts=true;await click('products');eq(document.getElementById('recycle-product-status').textContent,'商品読込失敗');failProducts=false;
- eq(productSearchPayload.query,'QA-123');
- value('query-type','karte');value('product-query','２２');
- ctx.DcatsFactoringPricing={prices:async()=>({'123|rebuilt':7100})};
- await click('products');eq(document.getElementById('recycle-products').textContent.includes('7,100'),true);eq(productSearchPayload.karte_number,'00000-000000000022');await click('add');eq(document.getElementById('recycle-price-0').value,'7100');eq(document.getElementById('recycle-cart').textContent.includes('00000-000000000022'),true);value('price-0','10000');value('quantity-0','2');
- ctx.DcatsFactoringPricing={prices:async()=>({'123|rebuilt':7200})};await click('products');eq(document.getElementById('recycle-price-0').value,'10000');
- await click('settings');await click('entry');eq(document.getElementById('recycle-price-0').value,'10000');eq(document.getElementById('recycle-quantity-0').value,'2');
- eq(document.getElementById('recycle-return-field').hidden,false);
- value('postal','123');await click('postal');eq(document.getElementById('recycle-postal-status').textContent.includes('7桁'),true);
- value('postal','1000001');await click('postal');eq(document.getElementById('recycle-address1').value,'千代田区千代田');
- eq(document.getElementById('recycle-prefecture').value,'13');
- let resolvePostal;postalDeferred=new Promise(r=>{resolvePostal=r;});await click('postal');value('address1','本人が編集中の住所');resolvePostal([{postal_code:'100-0001',prefecture_code:'13',address_line_1:'上書きしない'}]);await tick();eq(document.getElementById('recycle-address1').value,'本人が編集中の住所');postalDeferred=null;
- failPostal=true;await click('postal');eq(document.getElementById('recycle-postal-status').textContent.includes('取得できません'),true);failPostal=false;
- value('phone','0312345678');value('shipping','1000');value('delivery-date','2026-11-01');value('delivery-time','1416');value('return-carrier',keyFor(returnServices[2]));
- value('external','');allowConfirm=false;
- const coreSelect=document.getElementById('recycle-core-0');
- eq(coreSelect.options[2].textContent.includes('5,000円'),true);
- value('core-0','charge_no_return');coreSelect.dispatchEvent(new domWindow.Event('change',{bubbles:true}));
- eq(document.getElementById('recycle-return-field').hidden,true);await click('place');
- eq(previewPayload.core_return_shipping_method,null);eq(previewPayload.items[0].core_return_handling,'charge_no_return');
- value('core-0','standard');coreSelect.dispatchEvent(new domWindow.Event('change',{bubbles:true}));
- eq(document.getElementById('recycle-return-field').hidden,false);await click('place');eq(previewPayload.external_order_number,null);eq(previewPayload.items[0].karte_number,'00000-000000000022');eq(previewPayload.is_marketplace,false);eq(confirmation.includes('通常受注'),true);eq(confirmation.includes('MP 0円'),true);eq(placeCalls,0);
- document.getElementById('recycle-marketplace').checked=true;document.getElementById('recycle-marketplace').dispatchEvent(new domWindow.Event('change',{bubbles:true}));await click('place');eq(previewPayload.is_marketplace,true);eq(confirmation.includes('MP経由'),true);eq(confirmation.includes('2,200円'),true);eq(document.getElementById('recycle-price-0').value,'10000');
- wrongQuote=true;await click('place');eq(placeCalls,0);eq(document.getElementById('recycle-message').textContent.includes('一致しません'),true);wrongQuote=false;
- value('external','QA-ORDER-1');document.getElementById('recycle-marketplace').checked=false;allowConfirm=true;
- failPlace=true;await click('place');eq(placeCalls,1);
- eq(previewPayload.external_order_number,'QA-ORDER-1');eq(previewPayload.items[0].unit_price_jpy,10000);eq(previewPayload.items[0].quantity,2);
- eq(previewPayload.requested_delivery_date,'2026-11-01');eq(previewPayload.delivery_time,'1416');eq(previewPayload.core_return_shipping_method.carrier_name,'佐川急便');
- eq(previewPayload.sales_customer_id,undefined);
- eq(previewPayload.items[0].manual_core_charge_jpy,undefined);
- await click('place');eq(placeCalls,1);await click('settings');eq(document.getElementById('recycle-entry').hidden,false);
- await click('result');eq(placeCalls,1);eq(document.getElementById('recycle-message').textContent.includes('再送せず'),true);
- resultFound=true;await click('result');eq(detailId,7);eq(document.querySelector('.recycle-dialog').open,false);failPlace=false;
- await ctx.DcatsRecycleOrders.open();
- value('product-query','22');product.core_charge_jpy=null;
- await click('products');await click('add');
- eq(document.getElementById('recycle-manual-core-field').hidden,true);
- value('company','合成');value('phone','0312345678');value('postal','1000001');value('prefecture','13');value('address1','合成住所');value('price-0','10000');value('quantity-0','2');
- const changeCore=(id,mode)=>{value('core-'+id,mode);document.getElementById('recycle-core-'+id).dispatchEvent(new domWindow.Event('change',{bubbles:true}));};
- changeCore(0,'charge_no_return');
- eq(document.getElementById('recycle-manual-core-field').hidden,false);
- eq(document.getElementById('recycle-return-field').hidden,true);
- allowConfirm=false;const previousPreview=previewPayload;
- await click('place');eq(previewPayload,previousPreview);eq(document.getElementById('recycle-message').textContent.includes('コア代金'),true);
- value('manual-core-0','0');await click('place');eq(previewPayload,previousPreview);
- value('manual-core-0','4.5');await click('place');eq(previewPayload,previousPreview);
- value('manual-core-0','4500');await click('place');
- eq(previewPayload.items[0].manual_core_charge_jpy,4500);
- eq(previewPayload.core_return_shipping_method,null);
- eq(confirmation.includes('コア代金（税抜） 9,000円'),true);
- changeCore(0,'charge_with_return');
- eq(document.getElementById('recycle-return-field').hidden,false);
- value('return-carrier',keyFor(returnServices[2]));
- await click('place');eq(previewPayload.items[0].manual_core_charge_jpy,4500);
- eq(previewPayload.core_return_shipping_method.carrier_name,'佐川急便');
- changeCore(0,'standard');
- eq(document.getElementById('recycle-manual-core-field').hidden,true);
- await click('place');eq(previewPayload.items[0].manual_core_charge_jpy,undefined);
- await click('remove');product.core_charge_jpy=5000;allowConfirm=true;await click('close');
- const order={id:1,status:'accepted',total_jpy:11000,recycle:{external_order_number:'<img src=x onerror=alert(1)>',policy_snapshot:{fee_rate_percent:10,provisional:true,note:'合成'},estimated_fee_jpy:1000,estimated_receipt_jpy:10000,payment_status:'unconfirmed',accounting_note:'確認待ち'}};
- ctx.DcatsRecycleOrders.mountDetail(order,document.getElementById('detail'));
- eq(document.querySelector('#detail img'),null);
- eq(document.querySelector('#detail .recycle-detail').textContent.includes('<img'),true);
- order.recycle.policy_snapshot.confirmation_note='<img src=x>契約A';
- document.getElementById('detail').innerHTML='';
- ctx.DcatsRecycleOrders.mountDetail(order,document.getElementById('detail'));
- eq(document.querySelector('#detail .recycle-detail').textContent.includes('条件・確認根拠：<img src=x>契約A'),true);
- eq(document.querySelector('#detail img'),null);
- order.recycle.policy_snapshot.confirmation_note='暫定10%。商品税抜額を対象';
- document.getElementById('detail').innerHTML='';
- ctx.DcatsRecycleOrders.mountDetail(order,document.getElementById('detail'));
- eq(document.querySelector('#detail .recycle-detail').textContent.includes('条件・確認根拠：'),false);
- document.querySelector('#detail input').dispatchEvent(new domWindow.Event('input',{bubbles:true}));
- eq(ctx.DcatsRecycleOrders.isBusy(),true);
- ctx.DcatsRecycleOrders.mountDetail({id:2},document.getElementById('detail'));
- eq(ctx.DcatsRecycleOrders.isBusy(),false);
- configured=false;await ctx.DcatsRecycleOrders.open();eq(document.getElementById('recycle-entry').hidden,false);eq(document.getElementById('recycle-entry-fields').disabled,true);
- await click('settings');eq(document.getElementById('recycle-customer-id').tagName,'SELECT');eq(document.getElementById('recycle-customer-id').value,'');
- eq(document.querySelector('[data-recycle-action="create_customer"]'),null);eq(document.getElementById('recycle-settings-view').textContent.includes('集約先D-CATS ID'),false);
- await click('save_settings');eq(settingsCalls,0);eq(bindingPreviewCalls,0);
- value('customer-id','999');await click('save_settings');eq(settingsCalls,0);eq(bindingPreviewCalls,0);
- value('customer-id','1');eq(document.getElementById('recycle-customer-info').textContent.includes('末日締め'),true);
- await click('save_settings');eq(bindingPreviewCalls,1);eq(settingsCalls,0);eq(document.getElementById('recycle-binding-confirm').hidden,false);
- eq(document.querySelector('[data-recycle-action="binding_confirm"]').disabled,true);await click('binding_confirm');eq(settingsCalls,0);
- document.getElementById('recycle-binding-ack').checked=true;document.getElementById('recycle-binding-ack').dispatchEvent(new domWindow.Event('change',{bubbles:true}));await click('binding_confirm');
- eq(settingsCalls,1);eq(lastSettings.binding_confirmed,true);eq(lastSettings.binding_confirmation,'fixture-token-1');eq(document.getElementById('recycle-entry-fields').disabled,false);
- await click('entry');await click('settings');await click('save_settings');eq(settingsCalls,2);eq(bindingPreviewCalls,1);
- value('customer-id','2');bindingWarningCount=3;await click('save_settings');eq(document.getElementById('recycle-binding-confirm').textContent.includes('3 件'),true);eq(document.querySelector('#recycle-binding-confirm img'),null);
- eq(document.getElementById('recycle-binding-confirm').textContent.includes('2026-10-31'),true);eq(document.getElementById('recycle-binding-confirm').textContent.includes('過去の受注先は変更しません'),true);
- await click('binding_cancel');eq(document.getElementById('recycle-binding-confirm').hidden,true);eq(settingsCalls,2);
- failBinding=true;await click('save_settings');eq(document.getElementById('recycle-message').textContent,'受注確認失敗');eq(settingsCalls,2);failBinding=false;
- await click('save_settings');await click('entry');await click('settings');eq(document.getElementById('recycle-binding-confirm').hidden,true);eq(document.getElementById('recycle-customer-id').disabled,false);
- bindingGuard=0;await click('reload_settings');eq(document.querySelector('[data-recycle-action="save_settings"]').disabled,true);await click('save_settings');eq(settingsCalls,2);bindingGuard=1;await click('reload_settings');
- const storedCandidates=candidateRows;candidateRows=[];await click('reload_settings');eq(document.getElementById('recycle-settings-view').textContent.includes('紐付けできる得意先がありません'),true);eq(document.querySelector('[data-recycle-action="save_settings"]').disabled,true);candidateRows=storedCandidates;await click('reload_settings');
- value('customer-id','2');await click('save_settings');document.getElementById('recycle-binding-ack').checked=true;failSave=true;await click('binding_confirm');eq(settingsCalls,3);
- await click('save_settings');eq(settingsCalls,3);resultFound=false;await click('result');eq(settingsCalls,3);eq(document.getElementById('recycle-message').textContent.includes('再送せず'),true);
- resultFound=true;await click('result');eq(settingsCalls,3);eq(document.querySelector('#recycle-customer-summary strong').textContent,'株式会社ブロードリーフ');failSave=false;await click('close');
- configurable=false;await ctx.DcatsRecycleOrders.open();await click('settings');eq(document.querySelector('#recycle-settings-view [data-recycle-action="save_settings"]'),null);eq(document.getElementById('recycle-settings-view').textContent.includes('システム管理者'),true);await click('close');configurable=true;
- failSettings=true;await ctx.DcatsRecycleOrders.open();eq(document.getElementById('recycle-message').textContent,'設定読込失敗');await click('close');failSettings=false;
- await ctx.DcatsRecycleOrders.open();failList=true;await click('settlements');eq(document.getElementById('recycle-message').textContent,'一覧読込失敗');await click('entry');eq(document.getElementById('recycle-entry').hidden,false);failList=false;await click('close');
- feeGuard=1;await ctx.DcatsRecycleOrders.open();eq(document.getElementById('recycle-entry-fields').disabled,true);await click('place');eq(document.getElementById('recycle-message').textContent.includes('手数料条件を確認できません'),true);await click('close');feeGuard=2;
- const sampleRows=['normal','marketplace','unknown'].map((route,i)=>({id:i+20,order_number:'QA-'+i,status:'accepted',shipping_address:{company_name:i?'合成会社':'=HYPERLINK("bad")'},total_jpy:12100,recycle:{order_route:route,external_order_number:'外部'+i,estimated_factoring_fee_jpy:route==='unknown'?null:660,estimated_marketplace_fee_jpy:route==='unknown'?null:route==='marketplace'?1100:0,estimated_legacy_fee_jpy:route==='unknown'?1000:null,estimated_fee_jpy:route==='unknown'?1000:route==='marketplace'?1760:660,estimated_receipt_jpy:route==='unknown'?11100:route==='marketplace'?10340:11440,actual_fee_jpy:i?null:0,actual_receipt_jpy:i?null:12100,payment_status:'unconfirmed'}}));
- listData=q=>{const rows=sampleRows.filter(o=>q.route==='all'||o.recycle.order_route===q.route);return {rows,count:rows.length,normal_count:rows.filter(o=>o.recycle.order_route==='normal').length,marketplace_count:rows.filter(o=>o.recycle.order_route==='marketplace').length,unknown_count:rows.filter(o=>o.recycle.order_route==='unknown').length,gross_jpy:12100*rows.length,estimated_fee_jpy:3420,estimated_factoring_fee_jpy:1320,estimated_marketplace_fee_jpy:1100,estimated_legacy_fee_jpy:1000,actual_fee_jpy:0,unconfirmed_fee_count:2};};
- await ctx.DcatsRecycleOrders.open();await click('settlements');eq(document.querySelectorAll('.recycle-order-row').length,3);eq(document.getElementById('recycle-list').textContent.includes('未区分（従来方式）'),true);eq(document.getElementById('recycle-list').textContent.includes('0円（確定）'),true);eq(document.querySelector('#recycle-list img'),null);
- await click('csv');const csv=await csvBlob.text();eq(csv.includes('受注区分'),true);eq(csv.includes('MP手数料見込'),true);eq(csv.includes('"通常受注"'),true);eq(csv.includes('"\'=HYPERLINK'),true);eq(csv.includes('"未区分（従来方式）"'),true);eq(downloadName.includes('-all-page-1'),true);
- value('list-route','marketplace');document.getElementById('recycle-list-route').dispatchEvent(new domWindow.Event('change',{bubbles:true}));await tick();eq(lastListQuery.route,'marketplace');eq(lastListQuery.offset,0);eq(document.querySelectorAll('.recycle-order-row').length,1);await click('csv');eq((await csvBlob.text()).includes('"通常受注"'),false);eq(downloadName.includes('-marketplace-page-1'),true);
- value('from','2026-10-01');eq(document.querySelector('[data-recycle-action="csv"]').disabled,true);eq(document.querySelectorAll('.recycle-order-row').length,0);
- let resolveList;listDeferred=new Promise(r=>{resolveList=r;});await click('list');value('to','2026-10-31');resolveList({data:listData({route:'all'})});await tick();eq(document.querySelectorAll('.recycle-order-row').length,0);eq(document.querySelector('[data-recycle-action="csv"]').disabled,true);listDeferred=null;await click('list');eq(lastListQuery.to,'2026-10-31');await click('close');listData=null;
- regularPermission=false;ctx.DcatsRecycleOrders.configureEntryButton();eq(sharedButton.textContent,'Recycle+受注入力');
- failShipping=true;await ctx.DcatsRecycleOrders.open();await tick();eq(document.getElementById('recycle-shipping-retry').hidden,false);
- failShipping=false;await click('retry_shipping');eq(document.getElementById('recycle-shipping-retry').hidden,true);await click('close');
- const before=calls;permission=false;await ctx.DcatsRecycleOrders.open();eq(calls,before);ctx.DcatsRecycleOrders.configureEntryButton();eq(document.getElementById('sales-order-recycle-open').hidden,true);
- const earlyDocument=parseHTML('<html><body><button id="sales-order-recycle-open" hidden></button></body></html>').document;
- const early={document:earlyDocument,console};early.window=early;vm.createContext(early);vm.runInContext(source,early);
- eq(early.DcatsRecycleOrders.isBusy(),false);
- early.canManageSalesOrders=()=>true;early.currentUser={id:'synthetic-late-auth'};early.DcatsRecycleOrders.configureEntryButton();
- eq(earlyDocument.getElementById('sales-order-recycle-open').hidden,false);
- for (const switchActor of [false,true]) {
-   const parsed=parseHTML('<html><body></body></html>'),d=parsed.document,newElement=d.createElement.bind(d);
-   d.createElement=tag=>{const n=newElement(tag);if(tag==='dialog'){n.showModal=()=>{n.open=true;};n.close=()=>{n.open=false;};}return n;};
-   let resolveOld,reads=0,savedPayload=null,previews=0;
-   const base={fee_rate_percent:10,provisional:true,fee_basis:'product_net',rounding:'floor',can_configure:true,note:'synthetic',customer_binding_guard_version:1,fee_policy_version:2,fee_conditions:feeConditions};
-   const currentCfg={...base,revision:2,sales_customer_id:2,customer_name:candidateRows[1].name,customer_code:'5856',customer_candidates:candidateRows};
-   const isolated={...ctx,document:d,currentUser:{id:'first-actor'},canManageSalesOrders:()=>true,sb:{from:shippingRead,rpc:async(name,args)=>{
-     if(args.target_action==='settings'){if(++reads===1)return await new Promise(r=>{resolveOld=r;});return {data:currentCfg};}
-     if(args.target_action==='binding_preview'){previews++;throw Error('obsolete config reached preview');}
-     if(args.target_action==='save_settings'){savedPayload=args.target_payload;return {data:{saved:true}};}
-     throw Error('unexpected isolated action');
-   }}};
-   isolated.window=isolated;vm.createContext(isolated);vm.runInContext(source,isolated);
-   const oldOpening=isolated.DcatsRecycleOrders.open();
-   d.querySelector('[data-recycle-action="close"]').dispatchEvent(new parsed.window.Event('click',{bubbles:true}));
-   if(switchActor)isolated.currentUser={id:'second-actor'};
-   await isolated.DcatsRecycleOrders.open();selects(d);
-   resolveOld({data:{...base,revision:1,sales_customer_id:1,customer_name:candidateRows[0].name,customer_candidates:[candidateRows[0]]}});await oldOpening;
-   eq(d.querySelector('#recycle-customer-summary strong').textContent,currentCfg.customer_name);
-   d.querySelector('[data-recycle-action="settings"]').dispatchEvent(new parsed.window.Event('click',{bubbles:true}));
-   d.querySelector('[data-recycle-action="save_settings"]').dispatchEvent(new parsed.window.Event('click',{bubbles:true}));
-   await new Promise(r=>setTimeout(r,5));eq(previews,0);eq(savedPayload?.revision,2);eq(savedPayload?.sales_customer_id,'2');
- }
- for(const asset of ['recycle-orders.js','recycle-orders.css']) {assert(html.includes(asset));assert(build.includes('"'+asset+'"'));checks+=2;}
- assert(app.includes('DcatsRecycleOrders.mountDetail(order, host)'));assert(app.includes('DcatsRecycleOrders.isBusy()'));checks+=2;
- console.log(JSON.stringify({feature:'recycle-orders',checks,passed:true}));
+  let checks=0;
+  const eq=(actual,expected)=>{assert.deepEqual(actual,expected);checks++;};
+  const el=id=>document.getElementById('recycle-'+id);
+  const dialog=()=>document.querySelector('.recycle-dialog');
+  const nav=document.getElementById('sales-order-recycle-open');
+  const action=(name)=>document.querySelector('[data-recycle-action="'+name+'"]');
+  const selects=()=>document.querySelectorAll('select').forEach(node=>{
+    if(Object.hasOwn(node,'value'))return;
+    let selected=node.querySelector('option[selected]')?.value || node.querySelector('option')?.value || '';
+    Object.defineProperty(node,'value',{get:()=>selected,set:v=>{selected=v;}});
+    Object.defineProperty(node,'selectedOptions',{get:()=>[...node.options].filter(o=>o.value===selected).map(o=>({text:o.textContent}))});
+  });
+  const tick=async()=>{await new Promise(r=>setTimeout(r,8));selects();};
+  const emit=(node,type)=>node.dispatchEvent(new domWindow.Event(type,{bubbles:true}));
+  const click=async name=>{assert(action(name),'Missing action '+name);emit(action(name),'click');await tick();};
+  const input=(id,value)=>{el(id).value=value;emit(el(id),'input');};
+  const select=async(id,value)=>{el(id).value=value;emit(el(id),'change');await tick();};
+  const fillAddress=async()=>{
+    input('company','合成会社');input('phone','0312345678');input('postal','1000001');
+    await select('prefecture','13');input('address1','合成住所');
+  };
+  const add=async query=>{input('product-query',query);await click('products');await click('add');};
+  const open=async()=>{await ctx.DcatsRecycleOrders.open();await tick();};
+
+  eq(html.indexOf('src="recycle-orders.js')<html.indexOf('src="app.js'),true);
+  eq(app.includes('DcatsRecycleOrders.configureEntryButton()'),true);
+  eq(app.includes('DcatsRecycleOrders.mountDetail(order, host)'),true);
+  eq(build.includes('recycle-orders.js'),true);
+  ctx.DcatsRecycleOrders.configureEntryButton();
+  eq(nav.hidden,false);eq(nav.textContent,'社内受注入力');eq(document.getElementById('sales-order-new-internal-order').hidden,true);
+  await nav.onclick();await tick();const shared=dialog();
+  eq(el('title').textContent,'社内受注入力');eq(el('entry-channel').value,'standard');
+  eq(el('entry-fields').disabled,true);eq([...el('order-customer').options].map(o=>o.value),['','9']);
+  eq(el('settings-open').hidden,true);eq(el('external'),null);eq(el('marketplace'),null);
+  await select('order-customer','9');
+  eq(dialog(),shared);eq(el('entry-fields').disabled,false);eq(el('carrier').value,key(west));eq(el('return-carrier').value,key(coreCarrier));
+  input('product-query','12');await click('products');eq(el('product-status').textContent.includes('商品分類'),true);
+  await add('PART-12345');eq(el('price-0').value,'');eq(el('core-0').options[2].hasAttribute('disabled'),true);
+  eq(el('manual-core-field').hidden,true);
+  await fillAddress();
+  input('vehicle-model','ｑａ');input('vehicle-chassis','ｃａｒ-００１');
+  await select('destination','068721');eq(el('prefecture').value,'27');
+  eq(el('address1').value,yamatoOffice.address_line_1);
+  confirmed=false;await click('place');
+  let pp=previews.at(-1);
+  eq(pp.channel,'standard');eq(pp.args.target_sales_customer_id,'9');
+  eq(pp.args.target_items[0].product_unit_price_jpy,undefined);
+  eq(pp.args.target_shipping_address.yamato_office_code,'068721');
+  eq(pp.args.target_shipping_address.vehicle_information.vehicle_model_code,'QA');
+  eq(pp.args.target_shipping_address.vehicle_information.chassis_number,'CAR-001');
+  eq(pp.args.target_core_return_shipping_method.service_name,coreCarrier.service_name);
+  eq(writes.length,0);eq(confirmText.includes('23,100円'),true);eq(confirmText.includes('手数料'),false);
+  await select('entry-channel','recycle');
+  eq(el('entry-channel').value,'standard');eq(el('quantity-0').value,'1');
+  input('price-0','14000');confirmed=true;await click('place');
+  eq(writes.length,1);eq(writes[0].channel,'standard');eq(writes[0].args.target_items[0].product_unit_price_jpy,14000);
+  eq(writes[0].args.target_preview_token,'synthetic-preview');eq(typeof writes[0].args.target_idempotency_key,'string');
+  eq(orderOpened,8);eq(dialog().open,false);
+
+  await open();await select('entry-channel','recycle');
+  eq(dialog(),shared);eq(el('title').textContent,'社内受注入力');eq(el('order-customer'),null);
+  eq(el('carrier').value,key(timed));eq(el('return-carrier').value,key(coreCarrier));eq(el('marketplace'),null);
+  input('product-query','invalid');await click('products');eq(el('product-status').textContent.includes('形式'),true);
+  input('product-query','23');await click('products');eq(el('product-status').textContent.includes('見つかりません'),true);
+  productError=true;input('product-query','22');await click('products');eq(el('product-status').textContent,'商品読込失敗');productError=false;
+  ctx.DcatsFactoringPricing={prices:async()=>({'123|rebuilt':10000})};
+  await add('２２');
+  eq(el('price-0').value,'10000');eq(el('cart').textContent.includes('00000-000000000022'),true);
+  const search=calls.filter(c=>c.action==='products').at(-1);
+  eq(search.args.karte_number,'00000-000000000022');
+  await fillAddress();
+  let resolvePostal;delayPostal=new Promise(r=>{resolvePostal=r;});await click('postal');
+  input('address1','本人が入力した住所');resolvePostal([{postal_code:'100-0001',prefecture_code:'13',address_line_1:'上書き禁止'}]);await tick();delayPostal=null;
+  eq(el('address1').value,'本人が入力した住所');
+  await select('core-0','charge_no_return');eq(el('return-field').hidden,true);eq(el('manual-core-field').hidden,false);
+  const failedPreviewCount=previews.length;
+  await click('place');eq(previews.length,failedPreviewCount);eq(el('message').textContent.includes('コア代金'),true);
+  input('manual-core-0','0');await click('place');eq(previews.length,failedPreviewCount);
+  input('manual-core-0','4500');input('quantity-0','2');
+  confirmed=false;await click('place');pp=previews.at(-1);
+  eq(pp.args.settlement_mode,'external');eq(pp.args.is_marketplace,undefined);eq(pp.args.external_order_number,null);
+  eq(pp.args.items[0].manual_core_charge_jpy,4500);eq(pp.args.items[0].karte_number,'00000-000000000022');
+  eq(pp.args.core_return_shipping_method,null);eq(confirmText.includes('9,000円'),true);
+  eq(confirmText.includes('手数料'),false);eq(confirmText.includes('決済'),false);
+  await select('core-0','charge_with_return');eq(el('return-field').hidden,false);
+  await click('place');eq(previews.at(-1).args.core_return_shipping_method.service_name,coreCarrier.service_name);
+  await select('core-0','standard');await click('place');eq(previews.at(-1).args.items[0].manual_core_charge_jpy,undefined);
+  await select('core-0','charge_no_return');
+  nextQuoteError=true;await click('place');eq(el('message').textContent,'在庫不足');nextQuoteError=false;
+  confirmed=true;networkError=true;await click('place');eq(writes.length,2);
+  await click('place');eq(writes.length,2);
+  await click('result');eq(typeof pendingRead,'string');eq(el('message').textContent.includes('再送せず'),true);
+  found=true;await click('result');eq(dialog().open,false);eq(orderOpened,7);networkError=false;
+
+  await open();await select('entry-channel','recycle');await click('settings');
+  eq(el('title').textContent,'Recycle+集約先設定');eq(el('settings-view').textContent.includes('手数料'),false);
+  await select('customer-id','2');
+  validBinding=false;await click('save_settings');eq(el('message').textContent,'受注確認失敗');validBinding=true;
+  await click('save_settings');
+  eq(el('binding-confirm').hidden,false);eq(el('binding-confirm').textContent.includes('2 件'),true);
+  eq(el('binding-confirm').querySelector('img'),null);eq(settingsCalls,0);
+  el('binding-ack').checked=true;emit(el('binding-ack'),'change');await click('binding_confirm');eq(settingsCalls,1);
+  const saved=calls.filter(x=>x.action==='save_settings').at(-1).args;
+  eq(Object.keys(saved).sort(),['binding_confirmation','binding_confirmed','revision','sales_customer_id']);eq(saved.sales_customer_id,'2');
+  await click('entry');eq(el('customer-summary').textContent.includes(nextCust.name),true);await click('close');
+
+  const detail=document.getElementById('detail');
+  detail.innerHTML='<div class="sales-order-detail-navigation"></div><button id="sales-order-issue-dispatch">出荷指示</button><button data-sales-order-action="prepare_shipping">準備</button>';
+  ctx.DcatsRecycleOrders.mountDetail({id:7,recycle:{payment_status:'unconfirmed',external_order_number:'<img src=x>',karte_items:[{karte_number:'00000-000000000022'}]}},detail);
+  eq(detail.querySelector('img'),null);eq(detail.querySelector('.recycle-detail').textContent.includes('00000-000000000022'),true);
+  eq(detail.querySelector('#sales-order-issue-dispatch').disabled,false);eq(detail.querySelector('[data-sales-order-action]').disabled,false);
+  eq(detail.textContent.includes('手数料'),false);eq(detail.textContent.includes('決済'),false);
+
+  configAdmin=false;await open();await select('entry-channel','recycle');await click('settings');
+  eq(action('save_settings'),null);await click('close');configAdmin=true;
+  settingsError=true;await open();await select('order-customer','9');eq(el('entry-fields').disabled,false);await select('entry-channel','recycle');
+  eq(el('entry-fields').disabled,true);eq(el('setup-note').textContent.includes('開き直し'),true);await click('close');settingsError=false;
+  externalVersion=0;await open();await select('entry-channel','recycle');eq(el('entry-fields').disabled,true);await click('close');externalVersion=1;
+  regularAllowed=false;shippingError=true;await open();eq(el('entry-channel').value,'recycle');eq(el('shipping-retry').hidden,false);
+  shippingError=false;await click('retry_shipping');eq(el('shipping-retry').hidden,true);await click('close');
+  regularAllowed=true;
+  const staleSettings={data:{revision:5,sales_customer_id:1,customer_name:savedCust.name,external_settlement_version:1}};
+  let resolveSettings;
+  delayedSettings=new Promise(r=>{resolveSettings=r;});
+  const olderOpen=ctx.DcatsRecycleOrders.open();
+  await click('close');await open();
+  resolveSettings(staleSettings);await olderOpen;await tick();
+  await select('entry-channel','recycle');eq(el('customer-summary').textContent.includes(nextCust.name),true);await click('close');
+
+  let resolveProducts;
+  delayedProducts=new Promise(r=>{resolveProducts=r;});
+  await open();await select('entry-channel','recycle');input('product-query','22');await click('products');await select('entry-channel','standard');
+  resolveProducts({data:{rows:products}});await tick();delayedProducts=null;
+  eq(el('entry-channel').value,'standard');eq(el('products').textContent,'');await click('close');
+
+  regularAllowed=true;recycleAllowed=false;await open();eq(el('entry-channel').value,'standard');eq(el('entry-channel').options.length,1);
+  await select('order-customer','9');await add('PART-12345');await fillAddress();
+  negativePlaceResult=true;await click('place');eq(el('check-result').hidden,true);eq(el('message').textContent,'内容を確認してください。');negativePlaceResult=false;
+  networkError=true;
+  const beforeUncertain=writes.length;await click('place');eq(writes.length,beforeUncertain+1);
+  await click('place');eq(writes.length,beforeUncertain+1);eq(el('check-result').textContent,'受注一覧へ');
+  await click('result');eq(dialog().open,false);eq(readOrderList,3);networkError=false;
+  regularAllowed=false;ctx.DcatsRecycleOrders.configureEntryButton();eq(nav.hidden,true);await open();eq(dialog().open,false);
+
+  console.log(JSON.stringify({feature:'unified-internal-order',checks,passed:true}));
 })().catch(error=>{console.error(error);process.exitCode=1;});
