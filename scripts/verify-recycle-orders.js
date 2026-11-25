@@ -7,7 +7,7 @@ const source = fs.readFileSync(path.join(__dirname, '../recycle-orders.js'), 'ut
 const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
 const app = fs.readFileSync(path.join(__dirname, '../app.js'), 'utf8');
 const build = fs.readFileSync(path.join(__dirname, 'build-static-site.js'), 'utf8');
-const { document, window: domWindow } = parseHTML('<html><body><button id="sales-order-new-internal-order" hidden></button><button id="sales-order-recycle-open" hidden></button><div id="detail"><div class="sales-order-detail-navigation"></div></div></body></html>');
+const { document, window: domWindow } = parseHTML('<html><body><button id="sales-order-new-internal-order" hidden></button><button id="sales-order-recycle-open" hidden></button><input id="recycle-karte-number" value="OTHER-FORM"><div id="detail"><div class="sales-order-detail-navigation"></div></div></body></html>');
 const create = document.createElement.bind(document);
 document.createElement = tag => {
   const element = create(tag);
@@ -164,7 +164,8 @@ vm.runInContext(source,ctx);
   await add('PART-12345');eq(el('price-0').value,'');eq(el('core-0').options[2].hasAttribute('disabled'),true);
   eq(el('manual-core-field').hidden,true);
   await fillAddress();
-  input('vehicle-model','ｑａ');input('vehicle-chassis','ｃａｒ-００１');input('karte-number','ＲＢＳＮ-４２');
+  eq(el('karte-number').value,'OTHER-FORM');eq(dialog().querySelector('#recycle-karte-number'),null);
+  input('vehicle-model','ｑａ');input('vehicle-chassis','ｃａｒ-００１');input('staff-karte-number','ＲＢＳＮ-４２');
   eq(el('packing-field').hidden,true);input('quantity-0','2');eq(el('packing-field').hidden,false);bundle();
   await select('destination','068721');eq(el('prefecture').value,'27');
   eq(el('address1').value,yamatoOffice.address_line_1);
@@ -209,7 +210,7 @@ vm.runInContext(source,ctx);
   input('manual-core-0','0');await click('place');eq(previews.length,failedPreviewCount);
   input('manual-core-0','4500');input('quantity-0','2');
   bundle();await click('place');eq(el('message').textContent.includes('発注元'),true);
-  input('buyer','合成発注者');input('karte-number','RC-19');input('vehicle-model','ａｂｃ');
+  input('buyer','合成発注者');input('staff-karte-number','RC-19');input('vehicle-model','ａｂｃ');
   confirmed=false;await click('place');pp=previews.at(-1);
   eq(pp.args.shipping_address.staff_intake.karte_number,'RC-19');eq(pp.args.shipping_address.staff_intake.packed_together,true);
   eq(pp.args.shipping_address.vehicle_information.vehicle_model_code,'ABC');eq(confirmText.includes('同梱セット 2点'),true);
