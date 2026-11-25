@@ -26,3 +26,14 @@
 
 .login-help-actions { display: flex; flex-wrap: wrap; justify-content: center; column-gap: 16px; }
 .login-help-actions .login-forgot-link { margin-inline: 0; }
+
+@media (max-width: 600px) and (max-height: 670px) {
+  #screen-login .login-brand-panel { min-height: 110px; padding-block: 14px 8px; }
+  #screen-login .login-form-panel { padding-block: 0 8px; }
+  #screen-login .login-form-header { margin-bottom: 10px; }
+  #screen-login .login-input { height: 44px; margin-bottom: 9px; }
+  #screen-login .login-password-field { margin-bottom: 9px; }
+  #screen-login .btn-login { min-height: 44px; }
+  #screen-login .login-utility { gap: 8px; margin-top: 12px; }
+  #screen-login .login-partners { padding-block: 6px 8px; }
+}

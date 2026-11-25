@@ -14,6 +14,7 @@ const primaryFeatures = ["part_label", "shipping", "core_return"];
 const expiry = "2027-11-19T03:00:00.000Z";
 const output = process.env.DEVICE_QA_OUTPUT;
 const loginShell = (await readFile("index.html", "utf8"))
+  .replace('id="screen-boot" class="screen active app-boot"', 'id="screen-boot" class="screen app-boot"')
   .replace('<div id="screen-login" class="screen">', '<div id="screen-login" class="screen active">')
   .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
   .replace(/<link\b[^>]*>\s*/gi, "")
@@ -98,6 +99,10 @@ async function verifyBrowser(browser, viewport) {
     if (url.pathname === "/styles.css") {
       await route.fulfill({ contentType: "text/css; charset=utf-8", body: await readFile("styles.css") }); return;
     }
+    if (/^\/assets\/(?:login\/login-bg-(?:desktop|mobile)-v1\.png|icons\/(?:dcats-mark-256\.png|eye-outline\.svg))$/.test(url.pathname)) {
+      const type = url.pathname.endsWith(".svg") ? "image/svg+xml" : "image/png";
+      await route.fulfill({ contentType: type, body: await readFile(process.cwd() + url.pathname) }); return;
+    }
     if (url.pathname === "/admin") { await route.fulfill({ contentType: "text/html; charset=utf-8", body: adminShell }); return; }
     if (url.pathname === "/admin-fixture.js") { await route.fulfill({ contentType: "text/javascript; charset=utf-8", body: fixtureScript }); return; }
     if (!url.pathname.startsWith(assets) || !/^[a-z.-]+$/.test(url.pathname.slice(assets.length))) { await route.fulfill({ status: 404 }); return; }
@@ -121,10 +126,10 @@ async function verifyBrowser(browser, viewport) {
     const entry = login.getByRole("link", { name: "限定業務を開く" });
     await visible(entry);
     await visible(button(login, "ログイン"));
-    await noOverflow(login, ".login-fields, .login-help-actions");
+    await noOverflow(login, "html, #screen-login, .login-form-panel, .login-fields, .login-help-actions");
+    await login.screenshot({ path: path.join(output, `login-${viewport.width}x${viewport.height}.png`) });
     const box = await entry.boundingBox();
     assert.ok(box && box.y >= 0 && box.y + box.height <= viewport.height, JSON.stringify({ viewport, box }));
-    await login.screenshot({ path: path.join(output, `login-${viewport.width}x${viewport.height}.png`) });
     await entry.press("Enter");
     await visible(button(login, "利用を開始"));
     assert.equal(await login.locator('input[type="email"],input[type="password"]').count(), 0);
