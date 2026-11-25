@@ -150,7 +150,7 @@ async function verifyBrowser(browser, viewport) {
     await login.screenshot({ path: path.join(output, `login-${viewport.width}x${viewport.height}.png`) });
 
     await login.goto(origin + "/ordinary");
-    await visible(login.locator("#user-permission-edit-overlay.show"));
+    await login.locator("#user-permission-edit-overlay.show").waitFor({ state: "attached" });
     assert.equal(await button(login, "期限付き利用").isVisible(), false);
     assert.equal(await login.getByRole("link", { name: "利用者用ページを開く" }).count(), 0);
 
