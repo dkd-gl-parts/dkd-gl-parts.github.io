@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - "_headers"
+      - "_routes.json"
+      - "functions/**"
       - "app.js"
       - "scanflow/**"
       - "tests/scanflow-local-review.test.mjs"
@@ -34,6 +36,8 @@ on:
   pull_request:
     paths:
       - "_headers"
+      - "_routes.json"
+      - "functions/**"
       - "app.js"
       - "scanflow/**"
       - "tests/scanflow-local-review.test.mjs"

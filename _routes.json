@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "include": [
+    "/rest/v1/*",
+    "/auth/v1/*",
+    "/storage/v1/*",
+    "/functions/v1/*"
+  ],
+  "exclude": []
+}
