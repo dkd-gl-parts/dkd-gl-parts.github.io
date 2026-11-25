@@ -241,3 +241,62 @@
   .recycle-bound-customer small { grid-area: 1 / 2; }
   .recycle-bound-customer strong { grid-column: 1 / -1; }
 }
+
+.recycle-entry-dialog { width: min(1760px, calc(100vw - 22px)); }
+.recycle-customer-picker { display: flex; gap: 6px; align-items: center; min-width: 0; }
+.recycle-order-context .recycle-customer-picker>label { flex: none; color: #526159; font-size: 12px; }
+.recycle-customer-control { flex: 1; display: flex; align-items: stretch; min-width: 0; }
+.recycle-customer-control input { flex: 1; border-radius: 6px 0 0 6px; min-height: 32px; padding: 4px 8px; }
+.recycle-customer-control button { flex: 0 0 34px; min-height: 32px; border-left: 0; padding: 3px; border-radius: 0 6px 6px 0; }
+.recycle-customer-options { position: fixed; inset: 0; width: min(520px, calc(100vw - 26px)); border: 1px solid #9fafaa; border-radius: 8px; margin: auto; padding: 5px; background: #fff; color: #25362e; }
+.recycle-customer-options button { display: block; width: 100%; min-height: 34px; margin: 0; padding: 4px 8px; border: 0; text-align: left; overflow-wrap: anywhere; }
+.recycle-customer-options button[aria-selected=true] { background: #e4f1ea; color: #194a36; }
+.recycle-customer-options p { margin: 4px 6px; font-size: 13px; }
+.recycle-vehicle-panel { grid-area: vehicle; }
+.recycle-vehicle-heading { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.recycle-vehicle-heading button { min-height: 32px; padding: 3px 7px; }
+.recycle-vehicle-panel:not([popover]) .recycle-vehicle-close { display: none; }
+.recycle-entry-panel #recycle-packing-field { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.recycle-entry-panel #recycle-packed-together { width: 16px; height: 16px; min-height: 0; flex: 0 0 16px; padding: 0; margin: 0; }
+#recycle-cart-pages:empty { display: none; }
+@media (min-width: 1050px) {
+  .recycle-entry-panel .recycle-search { grid-template-columns: auto minmax(0,32rem) auto; justify-content: start; }
+}
+@media (min-width: 1050px) and (min-height: 720px) {
+  .recycle-entry-grid:has(.recycle-vehicle-panel:not([popover])) { grid-template-areas: "products address" "products delivery" "order delivery" "vehicle vehicle"; }
+  .recycle-entry-dialog .recycle-vehicle-toggle { display: none; }
+  .recycle-vehicle-panel:not([popover]) .recycle-grid { grid-template-columns: minmax(0,1.25fr) repeat(4,minmax(0,1fr)) repeat(3,minmax(0,.85fr)); }
+}
+@supports (top: anchor(bottom)) {
+  @media (min-width: 801px) {
+    .recycle-customer-control { anchor-name: --dcats-intake-customer; }
+    .recycle-customer-options { position-anchor: --dcats-intake-customer; top: anchor(bottom); left: anchor(left); right: auto; bottom: auto; margin: 4px 0 0; width: min(520px,anchor-size(width)); }
+  }
+}
+@media (max-width: 800px), (max-width: 1049px) and (max-height: 680px) {
+  .recycle-entry-dialog { width: calc(100vw - 12px); }
+  .recycle-customer-picker { display: grid; gap: 1px; }
+  .recycle-order-context .recycle-customer-picker>label { font-size: 11px; }
+  .recycle-customer-control input { min-height: 28px; padding: 3px 4px; font-size: 12px; }
+  .recycle-customer-control button { flex-basis: 26px; min-height: 28px; }
+  .recycle-entry-panel #recycle-packing-field { font-size: 11px; }
+  .recycle-entry-dialog .recycle-header nav .recycle-vehicle-toggle { font-size: 11px; white-space: nowrap; }
+}
+
+.recycle-cart-review { display: none; }
+@media (min-width: 1050px) and (min-height: 720px) {
+  .recycle-cart-review { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 4px; margin-top: 5px; }
+  .recycle-cart-review button { min-width: 0; min-height: 29px; padding: 3px 5px; text-align: left; font-size: 12px; line-height: 1.25; overflow-wrap: anywhere; }
+  .recycle-cart-review button[aria-current=true] { background: #e4f1ea; border-color: #527d68; }
+}
+@media (max-width: 480px) {
+  .recycle-entry-dialog .recycle-header { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 2px; padding-bottom: 4px; }
+  .recycle-entry-dialog .recycle-header h2 { white-space: nowrap; }
+  .recycle-entry-dialog .recycle-header nav { flex-wrap: nowrap; }
+  .recycle-entry-dialog .recycle-header nav button { font-size: 11px; white-space: nowrap; }
+  .recycle-cart-head h3,.recycle-cart-head .recycle-pages :is(button,span) { white-space: nowrap; }
+  .recycle-cart-head h3 { font-size: 13px; }
+  .recycle-entry-grid>.recycle-entry-panel { padding-block: 3px; }
+  .recycle-entry-footer { margin-top: 4px; }
+  .recycle-cart-head .recycle-pages button { padding-inline: 3px; }
+}
