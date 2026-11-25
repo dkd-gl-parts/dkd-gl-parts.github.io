@@ -9039,7 +9039,142 @@ Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"軽自動車":"轻型汽车","�
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"韓国コア":"Korean cores","除外（初期設定）":"Exclude (default)","含める":"Include","韓国コアのみ":"Korean cores only"});
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"韓国コア":"韩国旧件","除外（初期設定）":"排除（默认）","含める":"包含","韓国コアのみ":"仅韩国旧件"});
 
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {
+  "コア補充リスト": "Core replenishment list",
+  "リスト分類": "List classification",
+  "すべてのリスト分類": "All list classifications",
+  "2025出荷ランキング": "2025 shipment ranking",
+  "製造リスト": "Production list",
+  "GLTEK欲しいコア": "GLTEK core requests",
+  "手動登録": "Manually added",
+  "2025年ランキングから追加": "Add from 2025 ranking",
+  "状況一覧CSV": "Status CSV",
+  "補充リストCSV": "Replenishment CSV",
+  "2025年の順位を取得できませんでした。検索ボタンで再読み込みしてください。": "Could not load the 2025 ranking. Select Search to retry.",
+  "2025年の順位と補充リストには製造ランキングの閲覧権限が必要です。": "Manufacturing ranking access is required for the 2025 ranks and replenishment list.",
+  "「収集対象を追加」または「2025年ランキングから追加」で登録できます。": "Use Add collection target or Add from 2025 ranking to add a part.",
+  "2025年順位": "2025 rank",
+  "順位なし": "Unranked",
+  "現在の条件で出力する品番はありません。": "There are no part numbers to export for these filters.",
+  "2025年総合順位": "2025 overall rank",
+  "登録時の元順位": "Original rank at registration",
+  "D-CATS_コア": "D-CATS_Core_",
+  "補充リスト": "Replenishment list",
+  "収集状況": "Collection status",
+  "商品に紐づいた在庫と2025年の順位を使い、目標に届かない未登録品番を探します。1品番あたりの目標台数を入力してください。": "Enter a target stock quantity per part to find unregistered shortages using linked stock and the 2025 ranking.",
+  "目標数は1以上の整数で入力してください。": "Enter a whole-number target of at least 1.",
+  "現在庫と目標数を確認した結果、新たに追加する品番はありません。": "There are no new part numbers below the target quantity.",
+  "2025年の順位がある登録済み在庫から、目標": "From registered stock with a 2025 rank, target",
+  "台に満たない": "units, with shortages for",
+  "品番を収集対象に追加しますか？": "part numbers. Add them to the collection list?",
+  "2025年ランキングから": "From the 2025 ranking,",
+  "品番を追加しました。": "part numbers added."
+});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {
+  "コア補充リスト": "旧件补充清单",
+  "リスト分類": "清单分类",
+  "すべてのリスト分類": "全部清单分类",
+  "2025出荷ランキング": "2025年出货排名",
+  "製造リスト": "生产清单",
+  "GLTEK欲しいコア": "GLTEK所需旧件",
+  "手動登録": "手动添加",
+  "2025年ランキングから追加": "从2025年排名添加",
+  "状況一覧CSV": "进度CSV",
+  "補充リストCSV": "补充清单CSV",
+  "2025年の順位を取得できませんでした。検索ボタンで再読み込みしてください。": "无法加载2025年排名。请选择搜索重试。",
+  "2025年の順位と補充リストには製造ランキングの閲覧権限が必要です。": "查看2025年排名和补充清单需要制造排名的查看权限。",
+  "「収集対象を追加」または「2025年ランキングから追加」で登録できます。": "可选择“添加收集对象”或“从2025年排名添加”。",
+  "2025年順位": "2025年排名",
+  "順位なし": "无排名",
+  "現在の条件で出力する品番はありません。": "当前筛选条件下没有可导出的品号。",
+  "2025年総合順位": "2025年总排名",
+  "登録時の元順位": "登记时的原始排名",
+  "D-CATS_コア": "D-CATS_旧件",
+  "補充リスト": "补充清单",
+  "収集状況": "收集进度",
+  "商品に紐づいた在庫と2025年の順位を使い、目標に届かない未登録品番を探します。1品番あたりの目標台数を入力してください。": "请输入每个品号的目标库存数量。系统将根据已关联库存和2025年排名查找尚未登记的缺货品号。",
+  "目標数は1以上の整数で入力してください。": "请输入大于或等于1的整数。",
+  "現在庫と目標数を確認した結果、新たに追加する品番はありません。": "没有低于目标数量的新登记品号。",
+  "2025年の順位がある登録済み在庫から、目標": "从有2025年排名的已登记库存中，目标",
+  "台に満たない": "台以下的",
+  "品番を収集対象に追加しますか？": "个品号。是否加入收集清单？",
+  "2025年ランキングから": "已从2025年排名",
+  "品番を追加しました。": "添加品号。"
+});
+
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"帳票商品コード":"Report product code"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"帳票商品コード":"报表商品代码"});
+
+// Read-only sales slip entry labels.
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {
+  "売上伝票を確認": "View sales slips",
+  "← 受注・出荷管理": "← Orders and shipping",
+  "売上伝票（閲覧のみ）": "Sales slips (read only)"
+});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {
+  "売上伝票を確認": "查看销售单据",
+  "← 受注・出荷管理": "← 订单与发货管理",
+  "売上伝票（閲覧のみ）": "销售单据（只读）"
+});
+
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"2025年カテゴリ内順位":"2025 category rank"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"2025年カテゴリ内順位":"2025年分类排名"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {
+  "品番分類": "Part classification",
+  "品番分類を設定": "Set part classification",
+  "商品コード・純正品番・メーカー品番で検索": "Search by product code, OEM part number or manufacturer part number",
+  "必要数": "Required quantity",
+  "必要数・在庫": "Required quantity and stock",
+  "必要数を確保済み": "Required quantity in stock",
+  "分類未設定": "Classification unset",
+  "分類": "Classification",
+  "表示する品番がありません。": "There are no parts to display.",
+  "条件に該当する品番はありません。": "No parts match these filters.",
+  "必要数は0以上の整数で入力してください。": "Enter a non-negative whole number for the required quantity.",
+  "この品番は分類済みです。一覧を再読み込みしてください。": "This part already has a classification. Reload the list."
+});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {
+  "品番分類": "品号分类",
+  "品番分類を設定": "设置品号分类",
+  "商品コード・純正品番・メーカー品番で検索": "按商品代码、原厂品号或制造商品号搜索",
+  "必要数": "需求数量",
+  "必要数・在庫": "需求数量和库存",
+  "必要数を確保済み": "需求数量已备齐",
+  "分類未設定": "未设置分类",
+  "分類": "分类",
+  "表示する品番がありません。": "没有可显示的品号。",
+  "条件に該当する品番はありません。": "没有符合筛选条件的品号。",
+  "必要数は0以上の整数で入力してください。": "请输入大于或等于 0 的整数作为需求数量。",
+  "この品番は分類済みです。一覧を再読み込みしてください。": "此品号已有分类，请重新加载列表。"
+});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"品番マスタ検索":"Search the parts master"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"品番マスタ検索":"搜索品号主数据"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"需求量":"Required quantity","分类":"Classification"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"需求量":"需求量","分类":"分类"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {
+  "コア在庫": "Core stock",
+  "コアあり": "Core available",
+  "必要数・コア在庫": "Required quantity and core stock",
+  "必要数とコア在庫を比べて、集める必要のあるコアを確認します。": "Compare the required quantity with core stock to identify cores to collect.",
+  "有旧件": "Core available",
+  "旧件库存": "Core stock",
+  "无库存": "Out of stock"
+});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {
+  "コア在庫": "旧件库存",
+  "コアあり": "有旧件",
+  "必要数・コア在庫": "需求数量和旧件库存",
+  "必要数とコア在庫を比べて、集める必要のあるコアを確認します。": "对照需求数量和旧件库存，确认需要补充的旧件。",
+  "有旧件": "有旧件",
+  "旧件库存": "旧件库存",
+  "无库存": "无库存"
+});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"必要数を編集":"Edit required quantity","编辑需求数量":"Edit required quantity"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"必要数を編集":"编辑需求数量","编辑需求数量":"编辑需求数量"});
+
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"期限付き利用":"Temporary access","利用者用ページを開く":"Open the operator page"});
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"期限付き利用":"限期使用","利用者用ページを開く":"打开操作员页面"});
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"端末利用の承認":"Approve device access","端末利用の取り消し":"Revoke device access","この端末の利用を1年間承認しますか？":"Approve this device for one year?","対象端末の利用許可を取り消しますか？":"Revoke access for this device?","承認する":"Approve","取り消す":"Revoke","キャンセル":"Cancel"});
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"端末利用の承認":"批准设备访问","端末利用の取り消し":"撤销设备访问","この端末の利用を1年間承認しますか？":"批准此设备使用一年吗？","対象端末の利用許可を取り消しますか？":"撤销此设备的访问权限吗？","承認する":"批准","取り消す":"撤销","キャンセル":"取消"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"限定業務を開く":"Open limited work"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"限定業務を開く":"打开限定业务"});

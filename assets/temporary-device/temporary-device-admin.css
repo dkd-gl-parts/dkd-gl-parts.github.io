@@ -23,3 +23,6 @@
     padding-inline:.4rem;min-width:0;white-space:normal;overflow-wrap:anywhere;
   }
 }
+
+.login-help-actions { display: flex; flex-wrap: wrap; justify-content: center; column-gap: 16px; }
+.login-help-actions .login-forgot-link { margin-inline: 0; }

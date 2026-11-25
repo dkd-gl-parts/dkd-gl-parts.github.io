@@ -13,6 +13,10 @@ const invitation = "a".repeat(64);
 const primaryFeatures = ["part_label", "shipping", "core_return"];
 const expiry = "2027-11-19T03:00:00.000Z";
 const output = process.env.DEVICE_QA_OUTPUT;
+const loginShell = (await readFile("index.html", "utf8"))
+  .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+  .replace(/<link\b[^>]*>\s*/gi, "")
+  .replace("</head>", '<link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/assets/temporary-device/temporary-device-admin.css"></head>');
 const adminShell = `<!doctype html><html lang="ja"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="stylesheet" href="${assets}temporary-device-admin.css">
@@ -87,6 +91,12 @@ async function verifyBrowser(browser, viewport) {
       return;
     }
     if (url.origin !== origin) { await route.abort(); return; }
+    if (url.pathname === "/login") {
+      await route.fulfill({ contentType: "text/html; charset=utf-8", body: loginShell }); return;
+    }
+    if (url.pathname === "/styles.css") {
+      await route.fulfill({ contentType: "text/css; charset=utf-8", body: await readFile("styles.css") }); return;
+    }
     if (url.pathname === "/admin") { await route.fulfill({ contentType: "text/html; charset=utf-8", body: adminShell }); return; }
     if (url.pathname === "/admin-fixture.js") { await route.fulfill({ contentType: "text/javascript; charset=utf-8", body: fixtureScript }); return; }
     if (!url.pathname.startsWith(assets) || !/^[a-z.-]+$/.test(url.pathname.slice(assets.length))) { await route.fulfill({ status: 404 }); return; }
@@ -104,6 +114,22 @@ async function verifyBrowser(browser, viewport) {
     assert.ok(result.length && result.every(([x,y]) => x <= 1 && y <= 1), JSON.stringify({ viewport, selector, result }));
   };
   try {
+    const login = await context.newPage();
+    login.on("pageerror", error => errors.push(error.message));
+    await login.goto(origin + "/login");
+    const entry = login.getByRole("link", { name: "限定業務を開く" });
+    await visible(entry);
+    await visible(button(login, "ログイン"));
+    await noOverflow(login, ".login-fields, .login-help-actions");
+    const box = await entry.boundingBox();
+    assert.ok(box && box.y >= 0 && box.y + box.height <= viewport.height, JSON.stringify({ viewport, box }));
+    await login.screenshot({ path: path.join(output, `login-${viewport.width}x${viewport.height}.png`) });
+    await entry.press("Enter");
+    await visible(button(login, "利用を開始"));
+    assert.equal(await login.locator('input[type="email"],input[type="password"]').count(), 0);
+    for (const title of ["品番シール","ピッキング・出荷確定","コア返却"]) assert.equal(await button(login,title).count(),0);
+    await login.close();
+
     await admin.goto(origin + "/admin");
     await button(admin, "期限付き利用").click();
     await button(admin, "利用者用リンクを発行").click();
