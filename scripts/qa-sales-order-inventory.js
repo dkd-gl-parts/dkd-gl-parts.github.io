@@ -20,6 +20,10 @@ function faxHelpFixtures(fn) {
    'document.addEventListener("click", openFaxOrderHelp);',
    'document.querySelector(".sales-order-detail-nav button").addEventListener("click", function () { this.setAttribute("aria-selected", "true"); });'
   ].join("\n")},
+  "/assets/help/fax-practice-order.html":{type:"text/html",body:read("assets/help/fax-practice-order.html")},
+  "/assets/help/fax-practice-check.html":{type:"text/html",body:read("assets/help/fax-practice-check.html")},
+  "/assets/help/fax-practice.css":{type:"text/css",body:read("assets/help/fax-practice.css")},
+  "/assets/help/fax-practice.js":{type:"application/javascript",body:read("assets/help/fax-practice.js")},
   "/assets/help/fax-order.html":{type:"text/html",body:read("assets/help/fax-order.html")},
   "/assets/help/fax-order.css":{type:"text/css",body:read("assets/help/fax-order.css")}
  };
@@ -50,6 +54,57 @@ async function verifyFaxHelpWindow(browser, base) {
   assert.equal(new URL(work.url()).pathname,"/fax-help-test");
   console.log("FAX order context help QA passed: separate Chromium window, chapter reuse, original draft preserved");
  } finally { await context.close(); }
+}
+
+async function verifyFaxPractice(browser, base, output) {
+ const page = await browser.newPage();
+ try {
+  for (const [form, expectedPages] of [["order", 1], ["check", 2]]) {
+   await page.goto(base + "/assets/help/fax-order.html#intake");
+   const name = "fax-practice-" + form;
+   await page.locator('#intake a[href="' + name + '.html"]').click();
+   const panels = page.locator(".panel");
+   const ids = await panels.evaluateAll(nodes => nodes.map(el => el.id));
+   for (const viewport of [{width:1440,height:900}, {width:1280,height:600}, {width:390,height:640}, {width:320,height:568}]) {
+    await page.setViewportSize(viewport);
+    for (const id of ids) {
+     await page.evaluate(id => { location.hash = id; }, id);
+     assert.equal(await page.locator(".panel:visible").count(), 1);
+     const size = await page.evaluate(() => [document.documentElement.scrollWidth, document.documentElement.scrollHeight]);
+     assert(size[0] <= viewport.width && size[1] <= viewport.height + 1, name + "#" + id + ": " + size);
+    }
+   }
+   await page.getByRole("link",{name:"前へ",exact:true}).click();
+   assert.equal(new URL(page.url()).hash, "#" + ids[ids.length - 2]);
+   await page.evaluate(() => { window.print = () => document.body.setAttribute("data-print-called","yes"); });
+   await page.getByRole("button",{name:"印刷・PDF保存"}).click();
+   assert.equal(await page.locator("body").getAttribute("data-print-called"), "yes");
+
+   await page.emulateMedia({media:"print"});
+   await page.setViewportSize({width:680,height:1016});
+   assert.equal(await page.locator(".panel:visible").count(), ids.length);
+   assert.equal(await page.locator("button:visible, nav:visible").count(), 0);
+   const pdfCheck = async suffix => {
+    const pdf = await page.pdf({path:path.join(output,name + suffix + ".pdf"), preferCSSPageSize:true, printBackground:true});
+    const data = pdf.toString("latin1");
+    assert.equal((data.match(/\/Type\s*\/Page\b/g) || []).length, expectedPages, name + suffix + " pages");
+    const box = data.match(/\/MediaBox\s*\[0 0 ([\d.]+) ([\d.]+)\]/);
+    assert(box && Math.abs(Number(box[1])-595)<2 && Math.abs(Number(box[2])-842)<2, "A4 portrait");
+    const widthsFit = await page.locator(".panel, .editable, .item, dl > div, li").evaluateAll(nodes =>
+     nodes.every(el => el.scrollWidth <= el.clientWidth + 1 && el.getBoundingClientRect().right <= innerWidth + 1));
+    assert(widthsFit, name + suffix + " print content fits");
+   };
+   await pdfCheck("");
+   await page.screenshot({path:path.join(output,name+"-print.png"),fullPage:true});
+   if (form === "order") {
+    await page.getByRole("textbox",{name:"スターターの品番"}).fill("TR-LONG-PART-" + "0123456789".repeat(6));
+    await page.getByRole("textbox",{name:"郵便番号と住所"}).fill("演習用の長い住所・配送部門・建物名".repeat(3));
+    await pdfCheck("-long");
+   }
+   await page.emulateMedia({media:"screen"});
+  }
+  console.log("FAX practice verified: 9 panels, four viewports, edited long fields, A4 order 1 page and observer checklist 2 pages.");
+ } finally { await page.close(); }
 }
 
 async function verifyFeatureHelp(browser, base, output) {
@@ -147,6 +202,7 @@ async function run(){
  for(const mode of ["loading","error","denied","expired","missing","unauthorized","recount"]){await p.goto(base+"/?lang="+lang+"&mode="+mode);if(mode!=="loading")await p.waitForSelector('html[data-ready="true"]');const text=await p.locator("#root").innerText();assert.equal(text.includes("GLA-21"),mode==="recount");assert(!text.includes("undefined"));assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));}
  assert.deepEqual(errors,[]);results.push({width,lang,states:8,passed:true});await p.close();}
  await verifyFaxHelpWindow(browser,base);
+ await verifyFaxPractice(browser,base,output);
  await verifyFeatureHelp(browser,base,output);
  const p=await browser.newPage({viewport:{width:1000,height:1200}});await p.emulateMedia({media:"print"});await p.goto(base+"/?print=1");await p.waitForSelector('html[data-ready="true"]');assert.equal(await p.locator(".dispatch-items .sales-order-inventory-values").count(),4);assert((await p.locator(".dispatch-items").innerText()).includes("GLA-41 (1)"));const fit=await p.locator(".dispatch-sheet").evaluate(e=>({height:e.clientHeight,scroll:e.scrollHeight,bottom:e.getBoundingClientRect().bottom,last:e.lastElementChild.getBoundingClientRect().bottom}));assert(fit.scroll<=fit.height+1&&fit.last<=fit.bottom,"dispatch content fits A4");await p.screenshot({path:path.join(output,"sales-inventory-dispatch.png"),fullPage:true});await p.pdf({path:path.join(output,"sales-inventory-dispatch.pdf"),preferCSSPageSize:true});await p.close();
  fs.writeFileSync(path.join(output,"sales-inventory-results.json"),JSON.stringify({passed:true,synthetic:true,productionWrites:0,results,print:fit},null,2));console.log("Sales inventory browser QA passed: "+results.length+" desktop/mobile/language scenarios and A4 dispatch");
