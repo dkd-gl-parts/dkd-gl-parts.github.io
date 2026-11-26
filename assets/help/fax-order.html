@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FAX注文の処理手順 | D-CATS</title>
+<meta name="robots" content="noindex, nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'">
+<link rel="stylesheet" href="fax-order.css?v=1">
+</head>
+<body>
+<header class="hero" id="top">
+  <div class="hero-inner">
+    <p class="hero-meta">D-CATS 業務ヘルプ　·　照合日 <time datetime="2026-11-26">2026年11月26日</time></p>
+    <h1>FAX注文の処理手順</h1>
+    <p>通常受注を入力し、現場で出荷を確定し、販売王に売上を登録します。販売王で取込結果を確認してから、D-CATSの受注を「5 完了」にします。</p>
+  </div>
+</header>
+<nav class="contents" aria-label="目次">
+  <a href="#overview">全体の流れ</a>
+  <a href="#intake">1. FAXの確認</a>
+  <a href="#order">2. 受注入力</a>
+  <a href="#dispatch">3. 帳票と送り状</a>
+  <a href="#pick">4. ピッキング・出荷確定</a>
+  <a href="#export">5. 売上CSV</a>
+  <a href="#import">6. 販売王と完了確認</a>
+  <a href="#trouble">困ったとき</a>
+  <a href="#after">出荷後の業務</a>
+</nav>
+<main>
+  <section class="section" id="overview">
+    <h2>全体の流れ</h2>
+    <figure>
+      <ol class="flow">
+        <li><b>1. FAX確認</b><span>フロント</span></li>
+        <li><b>2. 受注登録</b><span>フロント</span></li>
+        <li><b>3. 帳票発行</b><span>フロント・出荷担当</span></li>
+        <li><b>4. 出荷確定</b><span>出荷担当</span></li>
+        <li><b>5. CSV出力</b><span>売上担当</span></li>
+        <li><b>6. 取込・確認</b><span>売上担当</span></li>
+      </ol>
+      <figcaption>各担当への引継ぎには、同じD-CATSの受注番号を使います。</figcaption>
+    </figure>
+    <dl class="matrix">
+      <div><dt>受付済み</dt><dd>通常受注を登録し、必要な数量を引き当てた段階。</dd></div>
+      <div><dt>出荷処理中</dt><dd>出荷指示を発行し、送り状やピッキングの準備・照合を進める段階。</dd></div>
+      <div><dt>出荷済み</dt><dd>出荷を確定した段階。売上CSVの出力対象になります。</dd></div>
+      <div><dt>売上未処理</dt><dd>売上CSVは出力済みで、販売管理登録の確認待ち。</dd></div>
+      <div><dt>売上登録済み</dt><dd>販売王での登録結果をD-CATSに記録した段階。工程は「5 完了」。</dd></div>
+    </dl>
+  </section>
+
+  <section class="section" id="intake">
+    <header class="section-head"><p class="tag">フロント</p><h2>1. 受信したFAXを確認する</h2></header>
+    <ol class="steps">
+      <li>発注元の得意先名・コード、FAXの注文番号または参照番号、注文内容を確認します。再送や訂正の表示があれば、先に受注一覧で登録済みの注文を確認します。</li>
+      <li>品番・数量・合意単価、納品先・連絡先、希望納期、配送指定を読み取ります。発注元と直送先が異なる場合は、それぞれを書き分けます。</li>
+      <li>品番から商品を特定できない場合は、発注元へ確認します。車検証の情報が必要な場合は、型式等から該当品を検索・照合します。</li>
+    </ol>
+    <p class="check"><strong>次へ進む目安</strong>　どの得意先に何を請求し、どこへ何点送るかを確認できている。</p>
+  </section>
+
+  <section class="section" id="order">
+    <header class="section-head"><p class="tag">フロント</p><h2>2. D-CATSで通常受注を登録する</h2></header>
+    <figure>
+      <ol class="route">
+        <li><b>受注・出荷管理</b><span>［社内受注入力］を開く</span></li>
+        <li><b>受注区分</b><span>［通常受注］を選ぶ</span></li>
+        <li class="outcome"><b>内容を確認して受注登録</b><span>明細・配送・合計を照合</span></li>
+      </ol>
+      <figcaption>操作する場所を示した図です。</figcaption>
+    </figure>
+    <dl class="matrix">
+      <div><dt>得意先</dt><dd>名称または得意先コードを入力し、候補から発注元を選びます。似た社名はコードも照合します。</dd></div>
+      <div><dt>商品追加・商品明細</dt><dd>純正品番やメーカー品番で検索し、該当する商品・区分を選び、数量を入力します。表示された単価を確認し、合意単価への修正が必要な場合は入力できる社内欄を使います。</dd></div>
+      <div><dt>お届け先</dt><dd>会社名・宛名、電話、郵便番号、都道府県・住所、建物名・部門をFAXと照合します。直送は実際の届け先を入力します。</dd></div>
+      <div><dt>配送・メモ</dt><dd>商品発送時の運送便・お届け希望日・時間帯を確認します。該当時はコア返却時の運送便も確認し、参照番号や指示は用途に合う欄に記録します。</dd></div>
+      <div><dt>カルテ・車両情報</dt><dd>カルテNo.、車両型式、初年度登録、車台番号などを必要な場合に入力します。狭い画面では［カルテ・車両］から開きます。</dd></div>
+      <div><dt>同梱セット</dt><dd>同じ発注者・直送先の計2点以上を1箱で発送するとき、同じ受注に明細を入れて指定します。確認画面の「同梱セット 2点 ／ 発送用送り状1枚」などで、点数と枚数を確認します。</dd></div>
+    </dl>
+    <h3>コア条件は商品明細ごとに確認</h3>
+    <dl class="matrix">
+      <div><dt>返却要</dt><dd>コアを返送してもらいます。コア代金の請求・返金はありません。</dd></div>
+      <div><dt>請求・返却後返金</dt><dd>コア代金を請求し、対象コアの返却を確認した後に返金します。</dd></div>
+      <div><dt>請求・返却不要</dt><dd>コア代金を請求します。該当する商品の返却用送り状や返金は不要です。</dd></div>
+    </dl>
+    <p>入力と表示金額を確認して［内容を確認して受注登録］を押し、確認ダイアログで得意先・合計・対象時のコア代金や同梱をもう一度照合します。登録後に受注番号・「受付済み」・明細を確認します。</p>
+    <p class="notice">登録応答が取得できないときは、受注一覧で同じ注文の有無を確認します。結果を確認してから次の操作を判断します。</p>
+  </section>
+
+  <section class="section" id="dispatch">
+    <header class="section-head"><p class="tag">フロント・出荷担当</p><h2>3. 出荷帳票と送り状を準備する</h2></header>
+    <ol class="steps">
+      <li>「受注・出荷管理」で受注番号を照合し、対象受注の［出荷帳票発行］を開きます。発行済みの帳票を確認し、必要なものを準備します。</li>
+      <li>出荷指示書を用意します。保証書・コア返却シート・返却用送り状は、商品の保証条件とコア対応に従って用意します。初回端末印刷で未印刷の出荷指示書が同時に処理される場合は、発行・印刷結果を確認します。</li>
+      <li>商品発送用の送り状を作成します。B2を使う場合は下図の流れで発行済みの送り状番号を受注へ反映します。別の運送便や手書き伝票は、設定・伝票に従い商品発送用番号を確認・登録します。</li>
+      <li>コア返却が必要な注文は、返送方法設定に有効な<strong>返却用</strong>送り状番号が保存されていることを確認します。手書きの場合も番号を保存します。</li>
+    </ol>
+    <figure>
+      <ol class="route">
+        <li><b>D-CATS</b><span>B2用CSVを出力</span></li>
+        <li><b>ヤマト B2クラウド</b><span>CSV取込・送り状発行<br>シート式はA5</span></li>
+        <li class="outcome"><b>D-CATS</b><span>発行済みデータを取り込み<br>商品発送用番号を確認</span></li>
+      </ol>
+      <figcaption>ヤマトB2を使用する場合の流れ。発送用番号は受注番号・宛先・実際の送り状で照合します。</figcaption>
+    </figure>
+    <div class="columns">
+      <div class="card"><h3>商品発送用</h3><p>商品に貼る送り状。届け先と番号を受注に対応させます。</p></div>
+      <div class="card"><h3>コア返却用</h3><p>返却対象があるときに使う送り状。返却先と番号を確認します。</p></div>
+    </div>
+  </section>
+
+  <section class="section" id="pick">
+    <header class="section-head"><p class="tag">出荷担当</p><h2>4. 商品を照合し、出荷を確定する</h2></header>
+    <ol class="steps">
+      <li>対象受注から［出荷照合を開く］、または出荷指示書のQR・出荷指示番号で該当の出荷指示を開きます。</li>
+      <li>指示書の品番・数量と現品を取り合わせます。製造シリアルの照合対象品は、実際に梱包する個体を読み取るか番号を入力して照合します。別品や数量不足がある場合は確認してから進みます。</li>
+      <li>ピッキング完了、商品発送用の送り状番号、返却対象がある場合の返却用番号を確認します。自動確定が働いた場合は画面で結果を確認し、未確定の場合は画面案内に従って手動で出荷を確定します。</li>
+      <li>「出荷済み」と出荷履歴を確認し、現物の梱包・送り状・必要な同梱帳票を確認して出荷します。結果を売上担当へ引き継ぎます。</li>
+    </ol>
+    <p class="check"><strong>次へ進む目安</strong>　D-CATSで対象受注が「出荷済み」。出荷確定時に完成品の実在庫が減算されます。</p>
+  </section>
+
+  <section class="section" id="export">
+    <header class="section-head"><p class="tag">売上担当</p><h2>5. 販売王用の売上CSVを出力する</h2></header>
+    <ol class="steps">
+      <li>「受注・出荷管理」→「データ連携」→［売上データ出力］を開きます。</li>
+      <li>出力先を「販売王」にし、<strong>出荷日</strong>の開始・終了を指定して［対象を検索］を押します。</li>
+      <li>対象の受注番号・件数・合計金額を照合し、対象行を選択します。「情報不足」が表示された場合は理由を確認し、得意先設定や商品台帳などの該当項目を担当者に確認します。</li>
+      <li>初回は［保存先を設定］で保存先を設定します。［売上データをCSV出力］を押し、「D-CATS業務連携／販売王／01_D-CATS発行」の保存結果と出力履歴のファイル名・バッチを確認します。</li>
+    </ol>
+    <div class="columns">
+      <div class="card"><h3>B2用CSV</h3><p>発送用送り状を発行するためのファイル。取込先はB2クラウド。</p></div>
+      <div class="card"><h3>売上CSV</h3><p>出荷済み受注を売上伝票にするファイル。取込先は販売王。</p></div>
+    </div>
+    <p class="check"><strong>次へ進む目安</strong>　保存されたファイルと対象受注を照合でき、D-CATSでは「売上未処理」。</p>
+  </section>
+
+  <section class="section" id="import">
+    <header class="section-head"><p class="tag">売上担当</p><h2>6. 販売王へ取り込み、D-CATSで完了を確認する</h2></header>
+    <figure>
+      <ol class="route">
+        <li><b>販売王25</b><span>［ツール］→［テキストデータ入力］</span></li>
+        <li><b>取込結果を照合</b><span>対象の売上伝票を確認</span></li>
+        <li class="outcome"><b>D-CATS</b><span>出力履歴 →［販売管理登録を確認］</span></li>
+      </ol>
+    </figure>
+    <ol class="steps">
+      <li>通常の業務手順に従い、販売王の対象会社を確認します。［ツール］→［テキストデータ入力］で、入力形式名称を<strong>「売上伝票（消費税特例対応形式）」</strong>にします。</li>
+      <li>D-CATSの出力履歴と照合したファイルを指定します。CSVは見出しなしなので、［1行目はタイトル行なので無視する］は選択を外し、1行目から取り込みます。</li>
+      <li>取込結果を確認し、販売王の売上伝票で対象伝票・件数・得意先・日付・明細・金額を出力対象と照合します。エラーや一部だけ取り込まれた可能性があれば、先に販売王で登録済み分を確認します。</li>
+      <li>正常に登録できたバッチについて、D-CATSの［売上データ出力］の出力履歴から［販売管理登録を確認］を押します。再表示後に受注の業務状況「売上登録済み」と工程「5 完了」を確認します。</li>
+    </ol>
+  </section>
+
+  <section class="section" id="trouble">
+    <h2>困ったとき</h2>
+    <dl class="matrix">
+      <div><dt>品番・数量・届け先が曖昧</dt><dd>FAXの該当箇所を発注元に確認してから受注を確定します。</dd></div>
+      <div><dt>送り状を作ったのに出荷できない</dt><dd>受注番号、ピッキング照合、商品発送用番号、該当時の返却用番号を順に確認します。B2の場合は発行済みデータが対象受注に反映されたことを確認します。</dd></div>
+      <div><dt>注文の訂正・取消が来た</dt><dd>ピッキング前は画面の通常取消手順へ。シリアル割当が始まった後は、現物・番号・保管状況を確認し、権限のある担当者が専用の取消手順へ進みます。出荷・販売王登録後は関係担当者と出荷・売上の状態を照合して処理を決めます。</dd></div>
+      <div><dt>売上CSVの一覧に出ない</dt><dd>出荷済みか、出荷日が範囲内か、出力済みでないか、情報不足がないかを確認します。出力済みのファイルは該当バッチの「同じCSVを再取得」を使います。</dd></div>
+      <div><dt>販売王で形式・文字化けのエラー</dt><dd>指定の入力形式と先頭行の設定を確認します。履歴から同じCSVを再取得し、D-CATSが保存したCSVをそのまま使います。原因は販売王のError.logとD-CATSの「売上CSV エラー対処」で確認します。</dd></div>
+      <div><dt>商品コード・請求のエラー</dt><dd>商品台帳、得意先コード、請求得意先・締め設定など、Error.logで指摘された箇所を担当者に確認します。</dd></div>
+      <div><dt>取込結果が不明・一部成功</dt><dd>販売王で既存伝票とエラー内容を先に照合します。出力バッチ・ファイル名・対象受注番号を控え、登録状況を確定してから残りの処理を判断します。</dd></div>
+    </dl>
+  </section>
+
+  <section class="section" id="after">
+    <h2>出荷・売上登録後の業務</h2>
+    <div class="columns">
+      <div class="card"><h3>納品書・請求書と入金</h3><p>販売王側で書類を発行し、基本は納品書・請求書をFAXまたはメールで送付します。送付時期と入金処理は得意先の条件と社内手順に従います。</p></div>
+      <div class="card"><h3>コア返却・返金</h3><p>返却対象は、現場で返却品を元の発送商品と照合し、コア返却管理に記録します。実際に徴収した返金対象のコア代金は、経理が返金した時点で完了を記録します。</p></div>
+    </div>
+  </section>
+</main>
+<footer><a href="#top">ページ先頭へ</a></footer>
+</body>
+</html>

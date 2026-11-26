@@ -60,6 +60,17 @@ for (const feature of ["microphone", "geolocation", "payment", "usb"]) {
   expect(new RegExp(`(?:^|,\\s*)${feature}=\\(\\)`, "i").test(permissions), `Permissions-Policy must disable ${feature}`);
 }
 
+// The order toolbar link must resolve in both a source checkout and the static deployment.
+const helpLink = html.match(/<a class="sales-order-help-link" href="(assets\/help\/fax-order\.html)\?v=\d+" target="_blank" rel="noopener noreferrer"[^>]*>/);
+expect(helpLink, "The FAX order help must open a versioned, same-origin document in a separate tab");
+const helpPath = path.join(root, helpLink[1]);
+const help = fs.readFileSync(helpPath, "utf8");
+const helpStyle = help.match(/<link rel="stylesheet" href="(fax-order\.css)\?v=\d+">/);
+expect(helpStyle && fs.statSync(path.join(path.dirname(helpPath), helpStyle[1])).isFile(), "The FAX order help stylesheet must be deployed");
+expect(/<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self';/.test(help), "The FAX order help must restrict active content");
+expect(!/<(?:script|style|iframe)\b|\s(?:on[a-z]+|style)\s*=/i.test(help), "The FAX order help must remain a static document with external CSS");
+expect(/^\/assets\/help\/\*\r?\n\s+Cache-Control: no-cache\s*$/m.test(headers), "The FAX order help needs revalidation on updates");
+
 async function verifyPagesApiRoutes() {
   const families = ["rest","auth","storage","functions"];
   const manifest = JSON.parse(fs.readFileSync(path.join(root, "_routes.json"), "utf8"));
