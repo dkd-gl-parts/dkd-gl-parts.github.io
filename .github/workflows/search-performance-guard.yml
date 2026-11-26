@@ -37,7 +37,10 @@ jobs:
           node --check sales-order-revision.js
           node --check install-app.js
           node --check assets/concierge-pet/concierge-pet.js
-          node --check assets/concierge-pet/business-flow.js
+      - name: Verify concierge business flow syntax
+        run: node --check assets/concierge-pet/business-flow.js
+      - name: Verify concierge business flow contracts
+        run: node scripts/verify-concierge-business-flow.mjs
       - name: Verify claim case workspace
         run: node scripts/verify-claim-cases.js
       - name: Verify Recycle+ order and settlement workspace
@@ -63,7 +66,6 @@ jobs:
           node scripts/verify-hanbaioh-backup-setup.js
           node scripts/verify-hanbaioh-test-sales-api.js
           node scripts/verify-concierge-ai.js
-          node scripts/verify-concierge-business-flow.mjs
           node scripts/verify-concierge-test-order.js
           node scripts/verify-concierge-navigation.js
           node scripts/verify-concierge-requests.js
