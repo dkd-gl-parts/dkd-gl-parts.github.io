@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'none'">
+<title>FAX注文書（演習用） | D-CATS</title>
+<link rel="stylesheet" href="fax-practice.css?v=1">
+<script src="fax-practice.js?v=1" defer></script></head>
+<body>
+<main>
+<header>
+<p class="kicker">D-CATS　社内演習用・出荷禁止</p>
+<h1>FAX注文書（演習用）</h1>
+<p class="screen-note">準備担当は下線の例を試験用の登録値に書き換え、全項目をA4縦1枚で印刷します。変更はこの表示中のみ有効です。</p>
+<div class="actions">
+<button type="button" data-print>印刷・PDF保存</button><a href="fax-order.html#intake">FAX手順書へ</a></div></header>
+<div class="sheet">
+<section class="panel" id="request" tabindex="-1">
+<p class="position"> 1 / 3</p>
+<h2>発注元と注文番号</h2>
+<p>下記の品を、次項のセンターへ直送してください。</p>
+<dl>
+<div>
+<dt>FAX注文番号</dt>
+<dd><span class="editable" role="textbox" aria-label="FAX注文番号" contenteditable="plaintext-only" spellcheck="false">TR-FAX-1126-01</span></dd></div>
+<div>
+<dt>発注日</dt>
+<dd><span class="editable" role="textbox" aria-label="発注日" contenteditable="plaintext-only" spellcheck="false">2026年11月26日</span></dd></div>
+<div>
+<dt>発注元・請求先</dt>
+<dd><span class="editable" role="textbox" aria-label="発注元・請求先" contenteditable="plaintext-only" spellcheck="false">演習自動車整備（架空）</span></dd></div>
+<div>
+<dt>得意先コード</dt>
+<dd><span class="editable" role="textbox" aria-label="得意先コード" contenteditable="plaintext-only" spellcheck="false">TR-C001</span></dd></div>
+<div>
+<dt>発注担当</dt>
+<dd><span class="editable" role="textbox" aria-label="発注担当" contenteditable="plaintext-only" spellcheck="false">演習担当 A</span></dd></div></dl>
+<nav aria-label="用紙の項目"><a href="fax-order.html#intake">手順書へ</a><a href="#ship">次へ</a></nav></section>
+<section class="panel" id="ship" tabindex="-1">
+<p class="position"> 2 / 3</p>
+<h2>直送先と配送指定</h2>
+<dl>
+<div>
+<dt>お届け先</dt>
+<dd><span class="editable" role="textbox" aria-label="お届け先" contenteditable="plaintext-only" spellcheck="false">演習部品センター　入荷係</span></dd></div>
+<div>
+<dt>〒・住所</dt>
+<dd><span class="editable" role="textbox" aria-label="郵便番号と住所" contenteditable="plaintext-only" spellcheck="false">〔承認済み試験宛先の郵便番号・住所を記入〕</span></dd></div>
+<div>
+<dt>電話</dt>
+<dd><span class="editable" role="textbox" aria-label="試験用電話番号" contenteditable="plaintext-only" spellcheck="false">〔試験用電話番号を記入〕</span></dd></div>
+<div>
+<dt>希望納期</dt>
+<dd><span class="editable" role="textbox" aria-label="希望納期" contenteditable="plaintext-only" spellcheck="false">2026年11月27日</span></dd></div>
+<div>
+<dt>配送条件</dt>
+<dd>元払い・時間帯指定なし。2品目を同梱し、発送用送り状は1枚。</dd></div></dl>
+<nav aria-label="用紙の項目"><a href="#request">前へ</a><a href="#items">次へ</a></nav></section>
+<section class="panel" id="items" tabindex="-1">
+<p class="position"> 3 / 3</p>
+<h2>注文明細（税抜）</h2>
+<div class="item"><strong>1　<span class="editable" role="textbox" aria-label="商品名1" contenteditable="plaintext-only" spellcheck="false">スターター（新品）</span></strong>
+<div>品番 <span class="editable" role="textbox" aria-label="スターターの品番" contenteditable="plaintext-only" spellcheck="false">TR-ST-001</span></div>
+<p>1台 × 12,000円 ＝ 12,000円</p></div>
+<div class="item"><strong>2　<span class="editable" role="textbox" aria-label="商品名2" contenteditable="plaintext-only" spellcheck="false">補修部品（新品）</span></strong>
+<div>品番 <span class="editable" role="textbox" aria-label="補修部品の品番" contenteditable="plaintext-only" spellcheck="false">TR-PT-002</span></div>
+<p>2個 × 3,500円 ＝ 7,000円</p></div>
+<p class="total">小計 19,000円　消費税 1,900円<br><strong>合計 20,900円</strong>（送料・コア代金 0円）</p>
+<p>備考　試験品のみ。実配送・請求・対外送信は行わないでください。</p>
+<nav aria-label="用紙の項目"><a href="#ship">前へ</a><a href="fax-practice-check.html">確認票へ</a></nav></section></div></main></body></html>
