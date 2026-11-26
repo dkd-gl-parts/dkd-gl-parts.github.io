@@ -6,16 +6,17 @@
 <meta name="robots" content="noindex,nofollow">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'none'">
 <title>FAX注文書（演習用） | D-CATS</title>
-<link rel="stylesheet" href="fax-practice.css?v=1">
-<script src="fax-practice.js?v=1" defer></script></head>
-<body>
+<link rel="stylesheet" href="fax-practice.css?v=2">
+<script src="fax-practice.js?v=2" defer></script></head>
+<body data-practice="order">
+<noscript>注文例の生成にはJavaScriptを有効にしてください。</noscript>
 <main>
 <header>
 <p class="kicker">D-CATS　社内演習用・出荷禁止</p>
 <h1>FAX注文書（演習用）</h1>
-<p class="screen-note">下線は試験値に変更できます。全項目をA4縦1枚で印刷します。編集は保存されません。</p>
+<p class="screen-note">下線は試験値に変更できます。新規印刷は毎回別の注文になります。</p>
 <div class="actions">
-<button type="button" data-print>印刷・PDF保存</button><a href="fax-order.html#intake">FAX手順書へ</a></div></header>
+<button type="button" data-print>表示中を印刷</button> <button type="button" data-preview>別の例を表示</button> <button type="button" data-repeat hidden>同じ注文を再印刷</button><a href="fax-order.html#intake">FAX手順書へ</a></div></header>
 <div class="sheet">
 <section class="panel" id="request" tabindex="-1">
 <h2><span class="position">1 / 3</span> 発注元と注文番号</h2>
@@ -23,13 +24,13 @@
 <dl>
 <div>
 <dt>FAX注文番号</dt>
-<dd><span class="editable" role="textbox" aria-label="FAX注文番号" contenteditable="plaintext-only" spellcheck="false">TR-FAX-1126-01</span></dd></div>
+<dd><span data-order-number></span></dd></div>
 <div>
 <dt>発注日</dt>
 <dd><span class="editable" role="textbox" aria-label="発注日" contenteditable="plaintext-only" spellcheck="false">2026年11月26日</span></dd></div>
 <div>
 <dt>発注元・請求先</dt>
-<dd><span class="editable" role="textbox" aria-label="発注元・請求先" contenteditable="plaintext-only" spellcheck="false">演習自動車整備（架空）</span></dd></div>
+<dd>演習自動車整備（架空）</dd></div>
 <div>
 <dt>得意先コード</dt>
 <dd><span class="editable" role="textbox" aria-label="得意先コード" contenteditable="plaintext-only" spellcheck="false">TR-C001</span></dd></div>
@@ -59,11 +60,11 @@
 <section class="panel" id="items" tabindex="-1">
 <h2><span class="position">3 / 3</span> 注文明細（税抜）</h2>
 <div class="item"><strong>1　<span class="editable" role="textbox" aria-label="商品名1" contenteditable="plaintext-only" spellcheck="false">スターター（新品）</span></strong>
-<div>品番 <span class="editable" role="textbox" aria-label="スターターの品番" contenteditable="plaintext-only" spellcheck="false">TR-ST-001</span></div>
-<p>1台 × 12,000円 ＝ 12,000円</p></div>
+<div>品番 <span class="editable" role="textbox" aria-label="品番1" contenteditable="plaintext-only" spellcheck="false">TR-ST-001</span></div>
+<p data-line-total></p></div>
 <div class="item"><strong>2　<span class="editable" role="textbox" aria-label="商品名2" contenteditable="plaintext-only" spellcheck="false">補修部品（新品）</span></strong>
-<div>品番 <span class="editable" role="textbox" aria-label="補修部品の品番" contenteditable="plaintext-only" spellcheck="false">TR-PT-002</span></div>
-<p>2個 × 3,500円 ＝ 7,000円</p></div>
-<p class="total">小計 19,000円　消費税 1,900円<br><strong>合計 20,900円</strong>（送料・コア代金 0円）</p>
+<div>品番 <span class="editable" role="textbox" aria-label="品番2" contenteditable="plaintext-only" spellcheck="false">TR-PT-002</span></div>
+<p data-line-total></p></div>
+<p class="total"></p>
 <p>備考　試験品のみ。実配送・請求・対外送信は行わないでください。</p>
-<nav aria-label="用紙の項目"><a href="#ship">前へ</a><a href="fax-practice-check.html">確認票へ</a></nav></section></div></main></body></html>
+<nav aria-label="用紙の項目"><a href="#ship">前へ</a><a data-check-link href="fax-practice-check.html" target="_blank" rel="noopener noreferrer">確認票を別に開く</a></nav></section></div></main></body></html>

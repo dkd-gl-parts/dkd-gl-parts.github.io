@@ -56,13 +56,61 @@ async function verifyFaxHelpWindow(browser, base) {
  } finally { await context.close(); }
 }
 
+async function verifyFaxVariations(page) {
+ const ref = page.locator("[data-order-number]");
+ await page.getByRole("textbox",{name:"得意先コード"}).fill("TR-QA");
+ const snapshot = async () => ({
+  id: await ref.textContent(),
+  ship: await page.locator('[aria-label="お届け先"]').textContent(),
+  items: await page.locator('.item [aria-label^="品番"]').allTextContents(),
+  lines: await page.locator("[data-line-total]").allTextContents(),
+  total: await page.locator(".total strong").textContent()
+ });
+ await page.evaluate(() => { window.print = () => {}; });
+ const before = await snapshot();
+ await page.locator("[data-print]").click();
+ assert.deepEqual(await snapshot(), before);
+ await page.locator("[data-repeat]").click();
+ assert.deepEqual(await snapshot(), before);
+ await page.locator("[data-print]").click();
+ const after = await snapshot();
+ assert.notEqual(after.id,before.id);
+ assert.notEqual(after.ship,before.ship);
+ assert.notDeepEqual(after.items,before.items);
+ assert.equal(await page.getByRole("textbox",{name:"得意先コード"}).textContent(), "TR-QA");
+ const subtotal = after.lines.reduce((sum,s) => sum + Number(s.split("＝")[1].replace(/[^0-9]/g,"")), 0);
+ assert.equal(Number(after.total.replace(/[^0-9]/g,"")), subtotal * 11 / 10);
+ assert.equal(await page.locator("dd").filter({hasText:"演習自動車整備（架空）"}).count(),1);
+ await page.evaluate(() => { location.hash = "items"; });
+ const [sheet] = await Promise.all([
+  page.context().waitForEvent("page"),
+  page.getByRole("link",{name:"確認票を別に開く"}).click()
+ ]);
+ try {
+  await sheet.locator("[data-reference]").filter({hasText:after.id}).waitFor();
+  assert.equal(await sheet.locator("[data-order-number]").textContent(), after.id);
+  assert((await sheet.locator("[data-money]").textContent()).includes(after.total.replace("合計 ","税込")));
+ } finally { await sheet.close(); }
+ assert.deepEqual(await snapshot(), after);
+ await page.locator("[data-preview]").click();
+ assert.notEqual(await ref.textContent(),after.id);
+}
+
 async function verifyFaxPractice(browser, base, output) {
  const page = await browser.newPage();
+ let matchingSheet;
  try {
   for (const [form, expectedPages] of [["order", 1], ["check", 2]]) {
    await page.goto(base + "/assets/help/fax-order.html#intake");
    const name = "fax-practice-" + form;
    await page.locator('#intake a[href="' + name + '.html"]').click();
+   if (form === "order") {
+    await verifyFaxVariations(page);
+    matchingSheet = await page.locator("[data-check-link]").getAttribute("href");
+   } else {
+    await page.goto("about:blank");
+    await page.goto(matchingSheet);
+   }
    const panels = page.locator(".panel");
    const ids = await panels.evaluateAll(nodes => nodes.map(el => el.id));
    for (const viewport of [{width:1440,height:900}, {width:1280,height:600}, {width:390,height:640}, {width:320,height:568}]) {
@@ -77,7 +125,7 @@ async function verifyFaxPractice(browser, base, output) {
    await page.getByRole("link",{name:"前へ",exact:true}).click();
    assert.equal(new URL(page.url()).hash, "#" + ids[ids.length - 2]);
    await page.evaluate(() => { window.print = () => document.body.setAttribute("data-print-called","yes"); });
-   await page.getByRole("button",{name:"印刷・PDF保存"}).click();
+   await page.locator("[data-print]").click();
    assert.equal(await page.locator("body").getAttribute("data-print-called"), "yes");
 
    await page.emulateMedia({media:"print"});
@@ -97,7 +145,7 @@ async function verifyFaxPractice(browser, base, output) {
    await pdfCheck("");
    await page.screenshot({path:path.join(output,name+"-print.png"),fullPage:true});
    if (form === "order") {
-    await page.getByRole("textbox",{name:"スターターの品番"}).fill("TR-LONG-PART-" + "0123456789".repeat(6));
+    await page.getByRole("textbox",{name:"品番1"}).fill("TR-LONG-PART-" + "0123456789".repeat(6));
     await page.getByRole("textbox",{name:"郵便番号と住所"}).fill("演習用の長い住所・配送部門・建物名".repeat(3));
     await pdfCheck("-long");
    }
