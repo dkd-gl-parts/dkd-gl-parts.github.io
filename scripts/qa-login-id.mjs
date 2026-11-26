@@ -18,7 +18,7 @@ const loginShell = index
   .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
   .replace(/<link\b[^>]*>\s*/gi, "")
   .replace("</head>", '<link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/assets/login/remember-login-id.css"></head>')
-  .replace("</body>", '<script src="/login-fixture.js"></script><script type="module" src="/assets/login/remember-login-id.mjs"></script></body>');
+  .replace("</body>", '<script src="/legacy-i18n.js"></script><script src="/login-fixture.js"></script><script type="module" src="/assets/login/remember-login-id.mjs"></script></body>');
 const oldPage = await readFile(retiredPath.slice(1), "utf8");
 const fixtureScript = `window.loginAttempts = 0;
 const doLogin=()=>{window.loginAttempts++; document.getElementById("login-error").textContent="ログインできませんでした";};
@@ -37,6 +37,7 @@ async function setup(context) {
     if (url.pathname === "/") return route.fulfill({ contentType:"text/html", body:loginShell });
     if (url.pathname === retiredPath) return route.fulfill({ contentType:"text/html", body:oldPage });
     if (url.pathname === "/login-fixture.js") return route.fulfill({ contentType:"text/javascript", body:fixtureScript });
+    if (url.pathname === "/legacy-i18n.js") return route.fulfill({ contentType:"text/javascript", body:await readFile("legacy-i18n.js") });
     if (!allowedAsset.test(url.pathname)) return route.fulfill({ status:404 });
     const ext = url.pathname.split(".").at(-1);
     return route.fulfill({ contentType:contentTypes[ext], body:await readFile(url.pathname.slice(1)) });
