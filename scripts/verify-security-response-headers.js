@@ -75,6 +75,14 @@ expect(/^\/assets\/help\/\*\r?\n\s+Cache-Control: no-cache\s*$/m.test(headers), 
 const featureHelp = fs.readFileSync(path.join(root, "assets/help/features.html"), "utf8");
 const chapterIds = new Set(Array.from(featureHelp.matchAll(/<(?:article|nav) id="([^"]+)"/g), match => match[1]));
 expect(chapterIds.has("menu"), "The feature help directory must be present");
+for (const chapter of chapterIds) {
+  if (chapter === "menu") continue;
+  for (let step = 1; step <= 3; step++) {
+    const image = "screens/" + chapter + "-" + step + ".jpg";
+    expect(featureHelp.includes('<img src="' + image + '"'), "Missing illustrated step: " + image);
+    expect(fs.statSync(path.join(root, "assets/help", image)).isFile(), "Missing deployed image: " + image);
+  }
+}
 for (const link of html.matchAll(/data-feature-help href="assets\/help\/features\.html\?v=\d+#([^"]+)"/g)) {
   expect(chapterIds.has(link[1]), "Missing feature help chapter: " + link[1]);
 }

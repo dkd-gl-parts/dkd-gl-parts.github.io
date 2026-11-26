@@ -10,6 +10,9 @@ function faxHelpFixtures(fn) {
   "/feature-screens":{type:"text/html",body:read("index.html").replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,"")},
   "/assets/help/features.html":{type:"text/html",body:read("assets/help/features.html")},
   "/assets/help/features.css":{type:"text/css",body:read("assets/help/features.css")},
+  ...Object.fromEntries(fs.readdirSync(path.join(root,"assets/help/screens")).filter(name=>name.endsWith(".jpg")).map(name=>[
+    "/assets/help/screens/"+name, {type:"image/jpeg",body:fs.readFileSync(path.join(root,"assets/help/screens",name))}
+  ])),
   "/fax-help-test":{type:"text/html",body:'<!doctype html><meta charset="utf-8">'+link[0]+read("index.html").match(/<a [^>]*data-feature-help[^>]*#search"[^>]*>[^<]*<\/a>/)[0]+'<input id="draft" aria-label="Draft"><div id="sales-order-detail"><nav class="sales-order-detail-nav"><button aria-selected="false" data-sales-order-detail-view="accounting">Accounting</button></nav></div><script src="/fax-help-test.js"></script>'},
   "/fax-help-test.js":{type:"application/javascript",body:[
    'var faxOrderHelpWindow = null;',
@@ -85,15 +88,25 @@ async function verifyFeatureHelp(browser, base, output) {
      }
     }
     for (const chapter of chapters) {
-     await guide.evaluate(hash => {location.hash = hash;}, chapter);
-     const article = guide.locator("article:target");
-     assert(await article.isVisible(), chapter + " should open directly");
-     assert.equal(await article.locator("li").count(), 3);
-     assert(await guide.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.documentElement.scrollHeight <= innerHeight + 1), chapter + " guide layout at " + viewport.width);
+     for (let step = 1; step <= 3; step++) {
+      const hash = step === 1 ? chapter : chapter + "--" + step;
+      await guide.evaluate(target => { location.hash = target; }, hash);
+      const current = guide.locator("#" + chapter + "--" + step);
+      assert(await current.isVisible(), hash + " opens its own step");
+      assert.equal(await guide.locator("article li:visible").count(), 1);
+      const shot = current.locator("img");
+      await shot.evaluate(image => image.decode());
+      assert.equal(await shot.evaluate(image => image.naturalWidth), 600);
+      assert(await guide.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.documentElement.scrollHeight <= innerHeight + 1), hash + " layout at " + viewport.width);
+     }
     }
     await guide.screenshot({path:path.join(output,"feature-guide-" + viewport.width + ".png")});
    }
-   await guide.locator("article:target a").click();
+   await guide.getByRole("link",{name:"前へ",exact:true}).click();
+   assert(await guide.locator("li:target .step-number").innerText() === "手順 2 / 3");
+   await guide.getByRole("link",{name:"次へ",exact:true}).click();
+   assert(await guide.locator("li:target .step-number").innerText() === "手順 3 / 3");
+   await guide.getByRole("link",{name:"機能別の目次へ",exact:true}).click();
    await guide.locator("summary").first().click();
    await guide.locator('nav a[href="#search"]').click();
    assert(await guide.locator("article#search").isVisible());
