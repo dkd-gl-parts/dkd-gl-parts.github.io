@@ -1,4 +1,4 @@
-import { readTemporaryDeviceAdmin, renderTemporaryDeviceAdmin } from "./temporary-device-admin.mjs";
+import { readTemporaryDeviceAdmin, renderTemporaryDeviceAdmin } from "./temporary-device-admin.mjs?v=2";
 
 const endpoint = window.SUPABASE_URL + "/functions/v1/temporary-device-access";
 const operatorUrl = new URL("./temporary-device.html",import.meta.url);

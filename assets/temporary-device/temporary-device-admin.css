@@ -7,9 +7,9 @@
 .temporary-device-dialog p{margin:.15rem 0;overflow-wrap:anywhere}
 .temporary-device-dialog form{display:grid;gap:.37rem}
 .temporary-device-dialog-fields,.temporary-device-dialog-features{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.32rem}
-.temporary-device-dialog-fields label,.temporary-device-dialog-print{display:grid;font-size:.87rem;gap:.15rem}
+.temporary-device-dialog-fields label,.temporary-device-dialog-print{display:grid;min-width:0;font-size:.87rem;gap:.15rem}
 .temporary-device-dialog-features label{display:flex;align-items:center;gap:.2rem;font-size:.85rem}
-.temporary-device-dialog input:not([type=checkbox]),.temporary-device-dialog select{width:100%;min-width:0;font:inherit;border:1px solid #8a9eaf;border-radius:5px;min-height:2rem;padding:.25rem;color:#17293b;background:#fff}
+.temporary-device-dialog input:not([type=checkbox]),.temporary-device-dialog select{box-sizing:border-box;width:100%;min-width:0;font:inherit;border:1px solid #8a9eaf;border-radius:5px;min-height:2rem;padding:.25rem;color:#17293b;background:#fff}
 .temporary-device-dialog-actions button[hidden],.temporary-device-dialog label[hidden]{display:none}
 .temporary-device-dialog [role=status]:empty{display:none}
 

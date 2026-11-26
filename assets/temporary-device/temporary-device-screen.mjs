@@ -1,3 +1,4 @@
+import { displayPairingCode, displayRequestNumber } from "./pairing-codes.mjs";
 import { createTemporaryDeviceClient } from "./browser-device-client.mjs";
 
 const endpoint = "https://jqoeqximtwfpqwzngutj.supabase.co/functions/v1/temporary-device-access";
@@ -176,8 +177,8 @@ async function begin() {
   const end = Date.now()+5*60000;
   show("管理者の承認を待っています",[
     add("p","この申請番号と確認コードを管理者に見せてください。"),
-    add("p",request.data.grantId,{className:"instruction"}),
-    add("p",request.data.pairingCode,{className:"pairing"}),
+    add("p","申請番号 " + displayRequestNumber(request.data.grantId),{className:"pairing"}),
+    add("p","確認コード " + displayPairingCode(request.data.pairingCode),{className:"pairing"}),
     action("承認状況を確認",updateApproval,true),
     action("新しく申請する",async()=>{
       if (!window.confirm("管理者から再申請を指示された場合に進んでください。")) return;
