@@ -48,6 +48,7 @@
   };
   var COPY = {
     ja: {
+      businessTitle: "販売王テスト実行",
       businessOffered: "私がこのテストを行います。「やってほしい」と返信すると開始します。「キャンセル」で取り消せます。",
       businessRunning: "販売王で処理しています。完了するまでお待ちください。",
       businessCompleted: "確認できました。販売王からテスト伝票1件を書き出し、取込元CSVとの一致を確認しました。",
@@ -275,6 +276,7 @@
       backupCopyFailed: "コピーできませんでした。登録券を選択してコピーしてください。"
     },
     en: {
+      businessTitle: "Sales King test run",
       businessOffered: "I can run this test. Reply 'yes' to start, or 'cancel'.",
       businessRunning: "Working in Sales King. Please wait.",
       businessCompleted: "Verified: one test slip was exported from Sales King and matched to the source CSV.",
@@ -501,6 +503,7 @@
       backupCopyFailed: "Copy failed. Select the ticket and copy it manually."
     },
     zh: {
+      businessTitle: "販売王测试执行",
       businessOffered: "可以执行此测试。回复“执行”开始，或回复“取消”。",
       businessRunning: "正在操作販売王，请稍候。",
       businessCompleted: "核对完成：已从販売王导出1张测试凭证，并与原CSV核对一致。",
@@ -830,7 +833,7 @@
   var panelView = "settings";
   var floatingWindow = null;
   var floatingRequestPending = false;
-  var businessFlow = null, businessPending = false, lastPilotLoginReceipt = null;
+  var businessFlow = null, businessPending = false, lastPilotLoginReceipt = null, businessStatus = null, businessStatusBody = null;
   var aiRequestPending = false;
   var aiRequestToken = 0;
   var aiStatusState = "aiIdle";
@@ -1136,6 +1139,13 @@
     aiAnswer = createElement("p", "dcats-concierge-ai-answer");
     aiAnswer.hidden = true;
     aiAnswer.setAttribute("tabindex", "-1");
+    businessStatus = createElement("section", "dcats-concierge-ai-business");
+    businessStatus.hidden = true;
+    businessStatus.setAttribute("role", "status");
+    businessStatus.setAttribute("aria-live", "polite");
+    businessStatus.appendChild(createCopyElement("h3", "", "businessTitle"));
+    businessStatusBody = createElement("p", "dcats-concierge-ai-answer");
+    businessStatus.appendChild(businessStatusBody);
     aiAnsweredQuestion = createElement("details", "dcats-concierge-ai-answered-question");
     aiAnsweredQuestion.hidden = true;
     aiAnsweredQuestion.appendChild(createCopyElement("summary", "", "answeredQuestion"));
@@ -1161,6 +1171,7 @@
     aiFeedback.appendChild(aiAnsweredQuestion);
     aiFeedback.appendChild(aiStatus);
     aiFeedback.appendChild(aiAnswer);
+    aiFeedback.appendChild(businessStatus);
     aiFeedback.appendChild(aiGuide);
     aiFeedback.appendChild(aiScreenButton);
     aiFeedback.appendChild(aiOrderAction);
@@ -1635,6 +1646,7 @@
   }
 
   function clearAiResult() {
+    if (businessStatus) { businessStatus.hidden = true; businessStatusBody.textContent = ""; }
     if (questionAnswerOnly) setQuestionAnswerOnly(false);
     aiScreenProposal = null;
     aiScreenPending = false;
@@ -1802,13 +1814,13 @@
     businessFlow = null;
   }
   function renderBusinessFlow(value) {
-    if (!aiAnswer || !value) return;
+    if (!businessStatusBody || !value) return;
     var labels = { offered: copy("businessOffered"), running: copy("businessRunning"), completed: copy("businessCompleted"),
       outcome_unknown: copy("businessUnknown"), stopped: copy("businessStopped"), cancelled: copy("businessCancelled") };
     var details = [value.companyLabel, value.userLabel, value.targetLabel].filter(Boolean).join(" ／ ");
     var stage = value.state === "running" ? copy(value.stage === "login" ? "businessLogin" : value.stage === "preflight" ? "businessPreflight" : "businessTransfer") : "";
-    aiAnswer.textContent = [labels[value.state] || labels.stopped, details, stage].filter(Boolean).join("\n\n");
-    aiAnswer.hidden = false;
+    businessStatusBody.textContent = [labels[value.state] || labels.stopped, details, stage].filter(Boolean).join("\n\n");
+    businessStatus.hidden = false;
     if (aiScreenButton) aiScreenButton.hidden = true;
     if (aiOrderAction) aiOrderAction.hidden = true;
     revealAiFeedback();
@@ -1828,8 +1840,8 @@
     if (!direction) return;
     var record = reviewPreviewRecord, fileName = String(salesFileInput && salesFileInput.value || "").trim();
     if (!record || record.actor_id !== owner || !/^hanbaioh-sales-test-9\d{5}-[a-f0-9]{12}-55\.csv$/.test(fileName)) {
-      aiAnswer.textContent = copy("businessSetup");
-      aiAnswer.hidden = false; return;
+      businessStatusBody.textContent = copy("businessSetup");
+      businessStatus.hidden = false; return;
     }
     var flow = runtime.create({ record: record, fileName: fileName,
       current: function () { return { admin: isSystemAdminSession() && panelOpen && businessFlow === flow, owner: currentSettingsOwner(), record: reviewPreviewRecord }; },
