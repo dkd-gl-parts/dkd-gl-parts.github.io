@@ -800,6 +800,7 @@
   var panelView = "settings";
   var floatingWindow = null;
   var floatingRequestPending = false;
+  var businessFlow = null, businessPending = false, lastPilotLoginReceipt = null;
   var aiRequestPending = false;
   var aiRequestToken = 0;
   var aiStatusState = "aiIdle";
@@ -1632,6 +1633,7 @@
   }
 
   function resetAiQuestion() {
+    cancelBusinessFlow();
     // Invalidate local completions; an already submitted provider request is not cancelled.
     aiRequestToken += 1;
     aiRequestPending = false;
@@ -1647,7 +1649,7 @@
   function updateAiStatus() {
     if (!aiAskButton || !aiQuestionInput || !aiStatus) return;
     var reviewing = !!(requestUi && requestUi.pending());
-    var conversationBusy = aiRequestPending || aiImagePending || reviewing || aiOrderPending || aiScreenPending;
+    var conversationBusy = businessPending || aiRequestPending || aiImagePending || reviewing || aiOrderPending || aiScreenPending;
     aiFollowupButton.disabled = aiNewQuestionButton.disabled = conversationBusy;
     aiFollowupButton.hidden = !aiConversation.length || aiAnswer.hidden;
     aiNewQuestionButton.hidden = !aiConversation.length;
@@ -1731,6 +1733,7 @@
       updateAiStatus();
       return;
     }
+    cancelBusinessFlow();
     aiRequestToken += 1;
     clearAiConversation();
     aiRequestPending = false;
@@ -1763,8 +1766,67 @@
     return allowed && allowed[screen] ? screen : "menu";
   }
 
+
+  function cancelBusinessFlow() {
+    if (businessFlow) businessFlow.cancel();
+    businessFlow = null;
+  }
+  function renderBusinessFlow(value) {
+    if (!aiAnswer || !value) return;
+    var en = activeLanguage() === "en", zh = activeLanguage() === "zh";
+    var labels = {
+      offered: en ? "I can run this test. Reply 'yes' to start, or 'cancel'." : zh ? "可以执行此测试。回复“执行”开始，或回复“取消”。" : "私がこのテストを行います。「やってほしい」と返信すると開始します。「キャンセル」で取り消せます。",
+      running: en ? "Working in Sales King. Please wait." : zh ? "正在操作販売王，请稍候。" : "販売王で処理しています。完了するまでお待ちください。",
+      completed: en ? "Verified: one test slip was exported from Sales King and matched to the source CSV." : zh ? "核对完成：已从販売王导出1张测试凭证，并与原CSV核对一致。" : "確認できました。販売王からテスト伝票1件を書き出し、取込元CSVとの一致を確認しました。",
+      outcome_unknown: en ? "The outcome needs checking. Do not import again. Request test result verification." : zh ? "需要确认结果。请勿再次导入，请请求核对测试结果。" : "結果の確認が必要です。再取込は行いません。「販売王のテスト結果確認」と依頼してください。",
+      stopped: en ? "Stopped before a verified completion. Check the test connection settings." : zh ? "已停止，尚未确认完成。请检查测试连接设置。" : "完了を確認できず停止しました。テスト用の連携設定を確認してください。",
+      cancelled: en ? "Cancelled. An import already dispatched still requires result verification." : zh ? "已取消。若已开始导入，仍需核对结果。" : "取り消しました。取込を開始していた場合は結果の確認が必要です。"
+    };
+    var details = [value.companyLabel, value.userLabel, value.targetLabel].filter(Boolean).join(" ／ ");
+    var stage = value.state === "running" ? (value.stage === "login" ? (en ? "Automatic login" : zh ? "自动登录" : "自動ログイン") :
+      value.stage === "preflight" ? (en ? "Checking target" : zh ? "确认对象" : "対象を確認") :
+      (en ? "Backup, import, export and content verification" : zh ? "备份、导入、导出及内容核对" : "バックアップ・取込・書出し・内容照合")) : "";
+    aiAnswer.textContent = [labels[value.state] || labels.stopped, details, stage].filter(Boolean).join("\n\n");
+    aiAnswer.hidden = false;
+    if (aiScreenButton) aiScreenButton.hidden = true;
+    if (aiOrderAction) aiOrderAction.hidden = true;
+    revealAiFeedback();
+  }
+  async function handleBusinessQuestion(question, offered, token, owner) {
+    var runtime = window.DcatsConciergeTestSalesWorkflow, parser = window.DcatsConciergeBusinessFlow;
+    if (!runtime || !parser || !isSystemAdminSession()) return;
+    if (offered && parser.intent(question) !== "question") {
+      businessPending = true; bridgeRequestPending = true; updateAiStatus(); updateBridgeStatus();
+      try { var reply = await offered.flow.reply(question, offered.id); if (reply.handled) renderBusinessFlow(reply.result); }
+      catch { renderBusinessFlow({ state: "stopped" }); }
+      finally { businessPending = false; bridgeRequestPending = false; updateBridgeStatus(); }
+      return;
+    }
+    cancelBusinessFlow();
+    var direction = runtime.requestKind(question);
+    if (!direction) return;
+    var record = reviewPreviewRecord, fileName = String(salesFileInput && salesFileInput.value || "").trim();
+    if (!record || record.actor_id !== owner || !/^hanbaioh-sales-test-9\d{5}-[a-f0-9]{12}-55\.csv$/.test(fileName)) {
+      aiAnswer.textContent = activeLanguage() === "en" ? "Register the test device and select the prepared test CSV in Concierge settings first." :
+        activeLanguage() === "zh" ? "请先在礼宾设置中登记测试设备，并指定已准备好的测试CSV。" :
+        "最初にコンシェルジュ設定で、テスト用の端末登録と準備済みテストCSVの指定を行ってください。実運用会社には取り込みません。";
+      aiAnswer.hidden = false; return;
+    }
+    var flow = runtime.create({ record: record, fileName: fileName,
+      current: function () { return { admin: isSystemAdminSession() && panelOpen && businessFlow === flow, owner: currentSettingsOwner(), record: reviewPreviewRecord }; },
+      login: async function () { var value = await runPilotLogin(); bridgeRequestPending = businessPending; return value; },
+      changed: function (value) { if (panelOpen && businessFlow === flow && owner === currentSettingsOwner() && isSystemAdminSession()) renderBusinessFlow(value); }
+    });
+    businessFlow = flow;
+    try { renderBusinessFlow(await flow.propose(direction)); }
+    catch (error) {
+      var check = String(error && error.message) === "business_outcome_requires_check";
+      renderBusinessFlow({state:check ? "outcome_unknown" : "stopped"});
+    }
+  }
+
   async function runAiRequest() {
-    if (aiOrderPending || aiScreenPending) return;
+    if (aiOrderPending || aiScreenPending || businessPending || bridgeRequestPending) return;
     if (aiRequestPending || aiImagePending || (requestUi && requestUi.pending()) || !isSystemAdminSession()) return;
     var question = String(aiQuestionInput && aiQuestionInput.value || "").trim();
     if (!question || question.length > 800) {
@@ -1788,6 +1850,7 @@
     clearAiResult();
     updateAiStatus();
     revealAiFeedback();
+    var offeredBusiness = businessFlow && businessFlow.snapshot().state === "offered" ? { flow: businessFlow, id: businessFlow.snapshot().id } : null;
     var requestToken = ++aiRequestToken, owner = currentSettingsOwner();
     var submitted = { question: question, language: activeLanguage(), screenId: currentAiScreenId(api), image: aiImageData || undefined, classify: true };
     if (aiConversation.length) submitted.history = aiConversation.map(function (turn) { return { question: turn.question, answer: turn.answer }; });
@@ -1826,6 +1889,8 @@
       while (aiConversation.length > 3 || aiConversation.reduce(function (sum, turn) { return sum + turn.question.length + turn.answer.length; }, 0) > 4000) aiConversation.shift();
       renderAiUsage(aiLastUsage);
       aiStatusState = "aiDone";
+      if (route.kind === "question") await handleBusinessQuestion(submitted.question, offeredBusiness, requestToken, owner);
+      else cancelBusinessFlow();
     } catch (error) {
       if (requestToken !== aiRequestToken) return;
       aiStatusState = aiFailureStatus(error);
@@ -2422,7 +2487,8 @@
   }
 
   async function runPilotLogin() {
-    if (!isSystemAdminSession() || loginAttempted || loginPending || bridgeRequestPending) return;
+    if (isSystemAdminSession() && lastPilotLoginReceipt && lastPilotLoginReceipt.owner === currentSettingsOwner() && lastPilotLoginReceipt.record === reviewPreviewRecord) return lastPilotLoginReceipt.data;
+    if (!isSystemAdminSession() || loginAttempted || loginPending || (bridgeRequestPending && !businessPending)) return;
     if (!reviewPreviewRecord) { loginStatusKey = "loginNeedDevice"; updatePilotLogin(); return; }
     var api = window.DcatsHanbaiohLoginApi;
     if (!api || typeof api.issue !== "function") { loginStatusKey = "loginUnavailable"; updatePilotLogin(); return; }
@@ -2461,6 +2527,7 @@
       var data = response.data;
       if (data && data.status === "ui_login_verified" && data.code === "HANBAIOH_CONTROLLED_UI_LOGIN_VERIFIED") {
         loginStatusKey = "loginVerified";
+        lastPilotLoginReceipt = { owner: currentSettingsOwner(), record: record, data: Object.freeze(Object.assign({}, data)) };
       } else {
         var stops = {
           HANBAIOH_LOGIN_PILOT_DISABLED: "loginUnavailable", HANBAIOH_DEVICE_UNVERIFIED: "loginUnavailable",
@@ -2474,6 +2541,7 @@
       }
       showBubble(copy(loginStatusKey), 4200);
       playExternalState(loginStatusKey === "loginVerified" ? "success" : "review", 2200);
+      if (loginStatusKey === "loginVerified") return lastPilotLoginReceipt.data;
     } catch (error) {
       if (token === loginToken && isSystemAdminSession()) loginStatusKey = "loginUnknown";
     } finally {
@@ -3775,7 +3843,7 @@
       toggleFloating: toggleFloatingWindow,
       getSettings: function () { return { character: settings.character, mode: settings.mode }; },
       isFloating: isFloatingWindowOpen,
-      isIntegrationBusy: function () { return bridgeRequestPending || enrollmentPending || reviewPending || backupPending; }
+      isIntegrationBusy: function () { return businessPending || bridgeRequestPending || enrollmentPending || reviewPending || backupPending; }
     });
   }
 

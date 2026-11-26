@@ -11,7 +11,7 @@
   var expected = {
     preflight: "ready", login: "login_verified", backup: "backup_verified",
     import: "import_observed", readback: "readback_verified", verify: "content_verified",
-    record: "completion_recorded", export: "export_verified"
+    record: "completion_recorded", export: "export_verified", transfer: "transfer_verified"
   };
   var exclusive = new Set();
   function fail(code) { var e = new Error(code); e.code = code; return e; }
@@ -79,8 +79,8 @@
           receipt.companyUserId !== j.context.companyUserId || receipt.deviceId !== j.context.deviceId ||
           stage !== "preflight" && receipt.actorId !== j.context.actorId ||
           j.direction === "import" && receipt.sourceSha256 !== j.sourceSha256) throw fail("business_result_unverified");
-      if (["readback", "verify", "export"].includes(stage) && (receipt.count !== j.count || !SHA.test(receipt.sha256))) throw fail("business_content_mismatch");
-      if (stage === "verify" && receipt.matched !== true) throw fail("business_content_mismatch");
+      if (["readback", "verify", "export", "transfer"].includes(stage) && (receipt.count !== j.count || !SHA.test(receipt.sha256))) throw fail("business_content_mismatch");
+      if (["verify", "transfer"].includes(stage) && receipt.matched !== true) throw fail("business_content_mismatch");
       return Object.freeze({ status: receipt.status, operationId: j.id, category: j.category,
         ...(receipt.sha256 ? { sha256: receipt.sha256 } : {}), ...(Number.isSafeInteger(receipt.count) ? { count: receipt.count } : {}) });
     }
@@ -95,10 +95,10 @@
       j.executionExpiresAt = clock() + 900000;
       j.consumed = true; active = true; exclusive.add(lock); publish("running", "preflight");
       try {
-        for (var stage of stages[j.direction]) {
+        for (var stage of (options.atomicTransfer === true ? ["preflight", "login", j.direction === "import" ? "transfer" : "export"] : stages[j.direction])) {
           requireCurrent(j, token, true);
           j.stage = stage;
-          if (["backup", "import", "export", "record"].includes(stage)) j.mayHaveWritten = true;
+          if (["backup", "import", "export", "record", "transfer"].includes(stage)) j.mayHaveWritten = true;
           publish("running", stage);
           var receipt = await options.runStage(stage, bound(j));
           requireCurrent(j, token, true);
