@@ -71,6 +71,17 @@ expect(/<meta http-equiv="Content-Security-Policy" content="default-src 'none'; 
 expect(!/<(?:script|style|iframe)\b|\s(?:on[a-z]+|style)\s*=/i.test(help), "The FAX order help must remain a static document with external CSS");
 expect(/^\/assets\/help\/\*\r?\n\s+Cache-Control: no-cache\s*$/m.test(headers), "The FAX order help needs revalidation on updates");
 
+// All versioned screen links must resolve after packaging, including the directory.
+const featureHelp = fs.readFileSync(path.join(root, "assets/help/features.html"), "utf8");
+const chapterIds = new Set(Array.from(featureHelp.matchAll(/<(?:article|nav) id="([^"]+)"/g), match => match[1]));
+expect(chapterIds.has("menu"), "The feature help directory must be present");
+for (const link of html.matchAll(/data-feature-help href="assets\/help\/features\.html\?v=\d+#([^"]+)"/g)) {
+  expect(chapterIds.has(link[1]), "Missing feature help chapter: " + link[1]);
+}
+expect(!/<(?:script|style|iframe)\b|\s(?:on[a-z]+|style)\s*=/i.test(featureHelp), "Feature help must use static markup");
+expect(featureHelp.includes("default-src 'none'; style-src 'self';"), "Feature help must restrict active content");
+expect(fs.statSync(path.join(root, "assets/help/features.css")).isFile(), "Feature help CSS must be deployed");
+
 async function verifyPagesApiRoutes() {
   const families = ["rest","auth","storage","functions"];
   const manifest = JSON.parse(fs.readFileSync(path.join(root, "_routes.json"), "utf8"));

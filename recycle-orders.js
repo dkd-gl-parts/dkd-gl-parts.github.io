@@ -57,6 +57,8 @@
     if (vehicleToggle) vehicleToggle.disabled = !entry || entry.disabled;
     var faxHelp = state.dialog?.querySelector("#recycle-fax-order-help");
     if (faxHelp) faxHelp.hidden = recycleChannel() || !regularEntryAllowed();
+    var recycleHelp = state.dialog?.querySelector("[data-feature-help]");
+    if (recycleHelp) recycleHelp.hidden = !recycleChannel();
     ["entry-channel", "order-customer", "customer-toggle"].forEach(function (id) { var el = document.getElementById("recycle-" + id); if (el) el.disabled = lockedEntry; });
     ["recycle-back", "recycle-settings-open"].forEach(function (id) { var b = document.getElementById(id); if (b) b.disabled = !entry || state.busy || !!state.pending; });
     var check = document.getElementById("recycle-check-result");
@@ -137,7 +139,7 @@
       });
     }
     if (!state.dialog.open) state.dialog.showModal();
-    state.dialog.innerHTML = "<header class='recycle-header'><div><h2 id='recycle-title' tabindex='-1'>" + e(orderEntryLabels()[0]) + "</h2></div><nav class='recycle-actions' aria-label='社内受注の操作'>" + button("受注入力に戻る", "entry", "id='recycle-back' hidden") + "<button type='button' class='recycle-vehicle-toggle' popovertarget='recycle-vehicle-box'>カルテ・車両</button>" + button("集約先設定", "settings", "id='recycle-settings-open' hidden") + button("結果を確認", "result", "id='recycle-check-result' hidden") + button("閉じる", "close") + "<a class='sales-order-help-link' id='recycle-fax-order-help' hidden data-fax-help-section='order' href='assets/help/fax-order.html#order' target='_blank' rel='noopener noreferrer' aria-label='ヘルプ（別ウィンドウ）'>ヘルプ</a></nav></header><div id='recycle-feedback' class='recycle-entry-popup'><p id='recycle-message' role='status' aria-live='polite'>読み込んでいます。</p><button type='button' class='recycle-feedback-close' popovertarget='recycle-feedback' popovertargetaction='hide'>閉じる</button></div><div id='recycle-body'></div>";
+    state.dialog.innerHTML = "<header class='recycle-header'><div><h2 id='recycle-title' tabindex='-1'>" + e(orderEntryLabels()[0]) + "</h2></div><nav class='recycle-actions' aria-label='社内受注の操作'>" + button("受注入力に戻る", "entry", "id='recycle-back' hidden") + "<button type='button' class='recycle-vehicle-toggle' popovertarget='recycle-vehicle-box'>カルテ・車両</button>" + button("集約先設定", "settings", "id='recycle-settings-open' hidden") + button("結果を確認", "result", "id='recycle-check-result' hidden") + button("閉じる", "close") + "<a class='sales-order-help-link' id='recycle-fax-order-help' hidden data-fax-help-section='order' href='assets/help/fax-order.html#order' target='_blank' rel='noopener noreferrer' aria-label='ヘルプ（別ウィンドウ）'>ヘルプ</a><a class='sales-order-help-link' hidden data-feature-help href='assets/help/features.html?v=1#recycle-entry' target='_blank' rel='noopener noreferrer' aria-label='ヘルプ（別ウィンドウ）'>ヘルプ</a></nav></header><div id='recycle-feedback' class='recycle-entry-popup'><p id='recycle-message' role='status' aria-live='polite'>読み込んでいます。</p><button type='button' class='recycle-feedback-close' popovertarget='recycle-feedback' popovertargetaction='hide'>閉じる</button></div><div id='recycle-body'></div>";
     setButtons();
     var epoch = state.epoch;
     var [cfg, customers, categories] = await Promise.allSettled([
