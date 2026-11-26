@@ -17802,7 +17802,7 @@ function openFaxOrderHelp(event) {
   if (!link || event.defaultPrevented || event.button !== 0 || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
   event.preventDefault();
   var url;
-  if (link.hasAttribute("data-feature-help")) {
+  if (link.dataset.featureHelp !== undefined) {
     url = new URL("assets/help/features.html?v=1", document.baseURI);
     url.hash = link.hash;
   } else {

@@ -12739,3 +12739,14 @@ html[data-product-3d-paused] :is(
 .feature-help-link:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 #sales-accounting-export-overlay:not(:has(#sales-accounting-export-target option[value="yayoi_sales"]:checked)) .yayoi-help-link { display: none; }
 @media print { .feature-help-link { display: none; } }
+
+.page-header-right:has(> .feature-help-link) {
+  margin-inline-start: auto;
+  justify-content: flex-end;
+  max-width: 100%;
+}
+@media (max-width: 600px) {
+  .page-header:has(.feature-help-link) { column-gap: 5px; padding-inline: 8px; }
+  .page-header-right:has(> .feature-help-link) { column-gap: 4px; }
+  .page-header-right:has(> .feature-help-link) > :is(.header-username, .role-badge):empty { display: none; }
+}
