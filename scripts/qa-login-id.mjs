@@ -188,12 +188,21 @@ async function testLogout(browser, viewport) {
       await signOut.waitFor({ timeout: 15000 });
       assert.equal(await id.inputValue(), "", "The real menu transition must reset the ID field");
       assert.equal(await remember.isChecked(), false);
-      await signOut.click();
+      const dismissInstall = page.locator("#btn-install-dialog-close");
+      if (await dismissInstall.isVisible()) await dismissInstall.click();
+      try {
+        await signOut.click({ timeout: 5000 });
+      } catch (error) {
+        if (!await dismissInstall.isVisible()) throw error;
+        await dismissInstall.click();
+        await signOut.click();
+      }
       await id.waitFor({ timeout: 15000 });
       await awaitInput(shouldSave ? user.email : "");
       assert.equal(await remember.isChecked(), shouldSave);
       assert.equal(await pw.inputValue(), "");
       assert.equal(await page.evaluate(key => localStorage.getItem(key), storageKey), shouldSave ? user.email : null);
+      if (shouldSave) await page.screenshot({ path: path.join(output, `after-logout-${viewport.width}x${viewport.height}.png`) });
     }
     await fits(page, "html, #screen-login, .login-form-panel, .login-fields, .login-preferences");
     assert.deepEqual(authActions, ["login", "logout", "login", "logout"]);
