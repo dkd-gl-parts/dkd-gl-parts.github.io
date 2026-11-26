@@ -70,6 +70,13 @@ async function verifyFaxVariations(page) {
  const before = await snapshot();
  await page.locator("[data-print]").click();
  assert.deepEqual(await snapshot(), before);
+ await page.setViewportSize({width:320,height:568});
+ for (const section of ["request", "ship", "items"]) {
+  await page.evaluate(id => { location.hash = id; }, section);
+  const size = await page.evaluate(() => [document.documentElement.scrollWidth,document.documentElement.scrollHeight]);
+  assert(size[0] <= 320 && size[1] <= 569, "reprint controls fit " + section + ": " + size);
+ }
+ await page.evaluate(() => { location.hash = "request"; });
  await page.locator("[data-repeat]").click();
  assert.deepEqual(await snapshot(), before);
  await page.locator("[data-print]").click();
@@ -89,6 +96,7 @@ async function verifyFaxVariations(page) {
  try {
   await sheet.locator("[data-reference]").filter({hasText:after.id}).waitFor();
   assert.equal(await sheet.locator("[data-order-number]").textContent(), after.id);
+  assert.equal(await sheet.locator("[data-continued-id]").textContent(), after.id);
   assert((await sheet.locator("[data-money]").textContent()).includes(after.total.replace("合計 ","税込")));
  } finally { await sheet.close(); }
  assert.deepEqual(await snapshot(), after);

@@ -67,6 +67,7 @@ function useOrder(order) {
   setText("[data-order-number]", order.id);
   if (!orderView) {
     setText("[data-reference]", "対象 " + order.id);
+    setText("[data-continued-id]", order.id);
     setText("[data-piece-count]", "計" + order.lines.reduce((sum,l) => sum+l.qty, 0) + "点・税込" + total + "円");
     setText("[data-money]", "数量 " + order.lines.map(l=>l.qty).join("・") + "、税抜" + yen.format(order.subtotal) + "円、税" + yen.format(order.tax) + "円、税込" + total + "円。");
     return;
