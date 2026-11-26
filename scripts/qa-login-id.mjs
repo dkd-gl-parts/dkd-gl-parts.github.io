@@ -26,7 +26,8 @@ document.getElementById("btn-login").addEventListener("click",doLogin);
 document.getElementById("login-password").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});`;
 const contentTypes = {
   css: "text/css", mjs: "text/javascript", js: "text/javascript",
-  png: "image/png", svg: "image/svg+xml", jpg: "image/jpeg", webp: "image/webp"
+  png: "image/png", svg: "image/svg+xml", jpg: "image/jpeg", webp: "image/webp",
+  html: "text/html", ico: "image/x-icon", json: "application/json", webmanifest: "application/manifest+json"
 };
 const allowedAsset = /^\/(?:styles\.css|assets\/(?:login\/(?:login-bg-(?:desktop|mobile)-v1\.png|remember-login-id\.(?:mjs|css))|icons\/(?:dcats-mark-256\.png|eye-outline\.svg)|brand\/(?:daiko-mark\.jpg|gltek-mark\.webp)|temporary-device\/temporary-device\.css))$/;
 
@@ -119,11 +120,96 @@ async function testViewport(browser, viewport) {
   }
 }
 
+async function testLogout(browser, viewport) {
+  const context = await browser.newContext({ viewport, locale: "ja-JP", serviceWorkers: "block" });
+  const backendHost = "jqoeqximtwfpqwzngutj.supabase.co";
+  const user = {
+    id: "279a117b-65c1-4f3c-90b6-cfa9a43a9515",
+    email: "logout-fixture@example.test",
+    aud: "authenticated",
+    role: "authenticated",
+    email_confirmed_at: "2026-01-01T00:00:00Z"
+  };
+  const encode = value => Buffer.from(JSON.stringify(value)).toString("base64url");
+  const session = {
+    access_token: `${encode({ alg: "HS256", typ: "JWT" })}.${encode({ sub: user.id, exp: Math.floor(Date.now() / 1000) + 3600 })}.fixture`,
+    refresh_token: "fixture-refresh-token",
+    expires_in: 3600,
+    token_type: "bearer",
+    user
+  };
+  const profile = { ...user, name: "QA fixture", role: "price_viewer", group_name: "public", status: "active", language: "ja" };
+  const authActions = [];
+  try {
+    await context.route("**/*", async route => {
+      const url = new URL(route.request().url());
+      if (url.hostname === backendHost) {
+        const headers = {
+          "access-control-allow-origin": "*",
+          "access-control-allow-headers": "*",
+          "access-control-allow-methods": "GET, POST, OPTIONS"
+        };
+        if (route.request().method() === "OPTIONS") return route.fulfill({ status: 204, headers });
+        const reply = data => route.fulfill({ headers, json: data });
+        switch (url.pathname) {
+          case "/auth/v1/token": authActions.push("login"); return reply(session);
+          case "/auth/v1/logout": authActions.push("logout"); return route.fulfill({ status: 204, headers });
+          case "/auth/v1/user": return reply(user);
+          case "/rest/v1/profiles": return reply(profile);
+          default: return reply([]);
+        }
+      }
+      if (url.origin !== origin || route.request().method() !== "GET") return route.abort();
+      const file = url.pathname === "/" ? "index.html" : url.pathname.slice(1);
+      const type = contentTypes[path.extname(file).slice(1)];
+      if (!type || !path.resolve(file).startsWith(process.cwd() + path.sep)) return route.fulfill({ status: 404 });
+      let body;
+      try { body = await readFile(file); }
+      catch (error) {
+        if (error.code === "ENOENT" || error.code === "EISDIR") return route.fulfill({ status: 404 });
+        throw error;
+      }
+      return route.fulfill({ contentType: type, body });
+    });
+    const page = await context.newPage();
+    const errors = [];
+    page.on("pageerror", error => errors.push(error.message));
+    await page.goto(origin);
+    const id = page.locator("#login-email");
+    const pw = page.locator("#login-password");
+    const remember = page.locator("#remember-login-id");
+    const awaitInput = value => page.waitForFunction(expected => document.getElementById("login-email").value === expected, value);
+    for (const shouldSave of [true, false]) {
+      await id.fill(user.email);
+      await remember.setChecked(shouldSave);
+      await pw.fill("fixture-only-password");
+      await page.locator("#btn-login").click();
+      const signOut = page.locator("#btn-logout-menu");
+      await signOut.waitFor({ timeout: 15000 });
+      assert.equal(await id.inputValue(), "", "The real menu transition must reset the ID field");
+      assert.equal(await remember.isChecked(), false);
+      await signOut.click();
+      await id.waitFor({ timeout: 15000 });
+      await awaitInput(shouldSave ? user.email : "");
+      assert.equal(await remember.isChecked(), shouldSave);
+      assert.equal(await pw.inputValue(), "");
+      assert.equal(await page.evaluate(key => localStorage.getItem(key), storageKey), shouldSave ? user.email : null);
+    }
+    await fits(page, "html, #screen-login, .login-form-panel, .login-fields, .login-preferences");
+    assert.deepEqual(authActions, ["login", "logout", "login", "logout"]);
+    assert.deepEqual(errors, []);
+    console.log(`${viewport.width}x${viewport.height}: real menu and sign-out restore the opted-in ID with fixture authentication`);
+  } finally {
+    await context.close();
+  }
+}
+
 await mkdir(output,{recursive:true});
 const browser=await chromium.launch({executablePath:process.env.LOGIN_BROWSER_PATH});
 try {
   for (const viewport of [{width:1366,height:768},{width:1024,height:600},{width:320,height:568}]) {
     await testViewport(browser,viewport);
+    await testLogout(browser,viewport);
   }
   const restricted=await browser.newContext();
   try {
