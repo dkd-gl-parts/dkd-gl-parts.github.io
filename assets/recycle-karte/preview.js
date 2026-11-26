@@ -29,6 +29,7 @@
     inventoryIdle: ["全件取得の結果はまだありません。", "No full inventory scan has completed yet.", "尚无全量库存获取结果。"],
     inventoryCount: ["照合済み {count} / {total} 件", "{count} / {total} rows verified", "已核验 {count} / {total} 条"],
     inventoryReady: ["全{count}件の取得が完了しました。", "All {count} rows have been retrieved.", "已完成全部 {count} 条的获取。"],
+    inventoryComparison: ["前回の一覧から増えた番号は{appeared}件、外れた番号は{absent}件です。", "Compared with the previous list, {appeared} numbers appeared and {absent} are absent.", "与上次列表相比，新增{appeared}个号码，{absent}个号码未出现在列表中。"],
     inventoryIncomplete: ["次の行を照合できませんでした。", "The next row could not be verified.", "无法核验下一行。"],
     inventoryChanged: ["取得中に一覧の条件や行が変わりました。", "The source list changed during retrieval.", "获取期间源列表发生变化。"],
     inventoryPolicy: ["TinyFishの安全チェックで停止しました。", "TinyFish stopped the run at a safety check.", "TinyFish 安全检查停止了运行。"],
@@ -1083,7 +1084,12 @@
     const total = work.total == null ? "—" : String(work.total);
     const progress = tr("inventoryCount").replace("{count}", count).replace("{total}", total);
     if (work.state === "idle") return tr("inventoryIdle");
-    if (work.state === "ready") return tr("inventoryReady").replace("{count}", count);
+    if (work.state === "ready") {
+      const ready = tr("inventoryReady").replace("{count}", count);
+      const {appeared, absent} = work.comparison || {};
+      if (!Number.isSafeInteger(appeared) || appeared < 0 || !Number.isSafeInteger(absent) || absent < 0) return ready;
+      return ready + " " + tr("inventoryComparison").replace("{appeared}", String(appeared)).replace("{absent}", String(absent));
+    }
     if (work.state === "not_configured") return tr("sourceConfig");
     if (work.state === "failed") {
       const reasonKeys = {
