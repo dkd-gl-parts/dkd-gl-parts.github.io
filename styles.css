@@ -12717,3 +12717,25 @@ html[data-product-3d-paused] :is(
 #screen-core-list-mgmt #core-list-list button.core-quantity-edit { border: 1px solid #9db9dd; border-radius: 5px; cursor: pointer; }
 #screen-core-list-mgmt #core-list-list button.core-quantity-edit:hover { background: #d9e7fb; }
 #screen-core-list-mgmt #core-list-list button.core-quantity-edit:focus-visible { outline: 2px solid var(--dcats-focus); outline-offset: 2px; }
+
+/* Keep the screen guide alongside the existing header controls. */
+.feature-help-link {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  margin-inline-start: auto;
+  padding: 2px 7px;
+  border: 1px solid currentColor;
+  border-radius: 5px;
+  color: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.feature-help-link:hover { text-decoration: underline; }
+.feature-help-link:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+#sales-accounting-export-overlay:not(:has(#sales-accounting-export-target option[value="yayoi_sales"]:checked)) .yayoi-help-link { display: none; }
+@media print { .feature-help-link { display: none; } }

@@ -7,7 +7,10 @@ function faxHelpFixtures(fn) {
  const link=read("index.html").match(/<a class="sales-order-help-link" id="sales-order-fax-help"[^>]*>[^<]*<\/a>/);
  assert(link,"The real order toolbar help link is required");
  return {
-  "/fax-help-test":{type:"text/html",body:'<!doctype html><meta charset="utf-8">'+link[0]+'<input id="draft" aria-label="Draft"><div id="sales-order-detail"><nav class="sales-order-detail-nav"><button aria-selected="false" data-sales-order-detail-view="accounting">Accounting</button></nav></div><script src="/fax-help-test.js"></script>'},
+  "/feature-screens":{type:"text/html",body:read("index.html").replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,"")},
+  "/assets/help/features.html":{type:"text/html",body:read("assets/help/features.html")},
+  "/assets/help/features.css":{type:"text/css",body:read("assets/help/features.css")},
+  "/fax-help-test":{type:"text/html",body:'<!doctype html><meta charset="utf-8">'+link[0]+read("index.html").match(/<a [^>]*data-feature-help[^>]*#search"[^>]*>[^<]*<\/a>/)[0]+'<input id="draft" aria-label="Draft"><div id="sales-order-detail"><nav class="sales-order-detail-nav"><button aria-selected="false" data-sales-order-detail-view="accounting">Accounting</button></nav></div><script src="/fax-help-test.js"></script>'},
   "/fax-help-test.js":{type:"application/javascript",body:[
    'var faxOrderHelpWindow = null;',
    fn("faxOrderHelpSection"),fn("openFaxOrderHelp"),
@@ -36,11 +39,57 @@ async function verifyFaxHelpWindow(browser, base) {
   await work.getByRole("button",{name:"Accounting"}).click();
   await work.locator("#sales-order-fax-help").press("Enter");
   await help.waitForURL("**/assets/help/fax-order.html?v=1#export");
+  await work.locator("[data-feature-help]").press("Enter");
+  await help.waitForURL("**/assets/help/features.html?v=1#search");
+  assert(await help.locator("#search").isVisible());
   assert.equal(context.pages().length,2,"Context changes must reuse the help window");
   assert.equal(await work.locator("#draft").inputValue(),"unsubmitted order text");
   assert.equal(new URL(work.url()).pathname,"/fax-help-test");
   console.log("FAX order context help QA passed: separate Chromium window, chapter reuse, original draft preserved");
  } finally { await context.close(); }
+}
+
+async function verifyFeatureHelp(browser, base, output) {
+ const page = await browser.newPage();
+ try {
+  await page.goto(base + "/feature-screens");
+  const screens = await page.locator('.screen[id^="screen-"]:has(.page-header)').evaluateAll(nodes => nodes.map(node => node.id));
+  const guide = await browser.newPage();
+  try {
+   await guide.goto(base + "/assets/help/features.html");
+   const chapters = await guide.locator("article").evaluateAll(nodes => nodes.map(node => node.id));
+   for (const viewport of [{width:1440,height:900}, {width:1280,height:600}, {width:390,height:640}, {width:320,height:568}]) {
+    await Promise.all([page.setViewportSize(viewport), guide.setViewportSize(viewport)]);
+    for (const id of screens) {
+     const check = await page.evaluate(screenId => {
+      document.querySelector(".screen.active")?.classList.remove("active");
+      const screen = document.getElementById(screenId);
+      screen.classList.add("active");
+      const header = screen.querySelector(".page-header");
+      const link = header.querySelector("[data-feature-help]") || screen.querySelector("[data-fax-help-section]");
+      if (!link) return {missing:true};
+      const rect = link.getBoundingClientRect();
+      return { hash:link.hash.slice(1), fax:link.hasAttribute("data-fax-help-section"), fits:rect.width > 0 && rect.left >= -1 && rect.right <= innerWidth + 1 };
+     }, id);
+     assert(!check.missing && check.fits, id + " help must be visible at " + viewport.width + ": " + JSON.stringify(check));
+     if (!check.fax) assert(check.hash === "menu" || chapters.includes(check.hash), id + " guide chapter");
+    }
+    for (const chapter of chapters) {
+     await guide.evaluate(hash => {location.hash = hash;}, chapter);
+     const article = guide.locator("article:target");
+     assert(await article.isVisible(), chapter + " should open directly");
+     assert.equal(await article.locator("li").count(), 3);
+     assert(await guide.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.documentElement.scrollHeight <= innerHeight + 1), chapter + " guide layout at " + viewport.width);
+    }
+    await guide.screenshot({path:path.join(output,"feature-guide-" + viewport.width + ".png")});
+   }
+   await guide.locator("article:target a").click();
+   await guide.locator("summary").first().click();
+   await guide.locator('nav a[href="#search"]').click();
+   assert(await guide.locator("article#search").isVisible());
+   console.log("Feature help verified across " + screens.length + " screens and " + chapters.length + " chapters at four viewport sizes");
+  } finally { await guide.close(); }
+ } finally { await page.close(); }
 }
 
 function fixtureFiles(){
@@ -68,6 +117,7 @@ async function run(){
  for(const mode of ["loading","error","denied","expired","missing","unauthorized","recount"]){await p.goto(base+"/?lang="+lang+"&mode="+mode);if(mode!=="loading")await p.waitForSelector('html[data-ready="true"]');const text=await p.locator("#root").innerText();assert.equal(text.includes("GLA-21"),mode==="recount");assert(!text.includes("undefined"));assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));}
  assert.deepEqual(errors,[]);results.push({width,lang,states:8,passed:true});await p.close();}
  await verifyFaxHelpWindow(browser,base);
+ await verifyFeatureHelp(browser,base,output);
  const p=await browser.newPage({viewport:{width:1000,height:1200}});await p.emulateMedia({media:"print"});await p.goto(base+"/?print=1");await p.waitForSelector('html[data-ready="true"]');assert.equal(await p.locator(".dispatch-items .sales-order-inventory-values").count(),4);assert((await p.locator(".dispatch-items").innerText()).includes("GLA-41 (1)"));const fit=await p.locator(".dispatch-sheet").evaluate(e=>({height:e.clientHeight,scroll:e.scrollHeight,bottom:e.getBoundingClientRect().bottom,last:e.lastElementChild.getBoundingClientRect().bottom}));assert(fit.scroll<=fit.height+1&&fit.last<=fit.bottom,"dispatch content fits A4");await p.screenshot({path:path.join(output,"sales-inventory-dispatch.png"),fullPage:true});await p.pdf({path:path.join(output,"sales-inventory-dispatch.pdf"),preferCSSPageSize:true});await p.close();
  fs.writeFileSync(path.join(output,"sales-inventory-results.json"),JSON.stringify({passed:true,synthetic:true,productionWrites:0,results,print:fit},null,2));console.log("Sales inventory browser QA passed: "+results.length+" desktop/mobile/language scenarios and A4 dispatch");
  }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}

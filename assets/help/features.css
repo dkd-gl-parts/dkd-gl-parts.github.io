@@ -1,0 +1,18 @@
+* { box-sizing: border-box; }
+body { margin: 0; color: #1e3348; background: #f3f6f9; font: 1rem/1.65 system-ui, sans-serif; overflow-wrap: anywhere; }
+header { display: flex; align-items: baseline; gap: 1rem; padding: .65rem max(1rem, calc((100% - 44rem) / 2)); background: #163653; color: white; }
+header strong { letter-spacing: .05em; }
+main { max-width: 46rem; margin: auto; padding: clamp(.7rem, 3vw, 1.5rem); }
+article, nav { padding: clamp(1rem, 4vw, 2rem); background: white; border: 1px solid #d1dde6; border-radius: .55rem; }
+article, article:target ~ nav { display: none; }
+article:target { display: block; }
+h1 { margin: 0 0 .7rem; font-size: clamp(1.25rem, 4vw, 1.65rem); line-height: 1.4; }
+a { color: #15598a; text-underline-offset: .18em; }
+ol { margin: 1rem 0 1.25rem; padding-inline-start: 1.65rem; }
+ol li { padding-inline-start: .35rem; margin-bottom: .8rem; }
+ol li::marker { color: #15598a; font-weight: 700; }
+details { border-top: 1px solid #d1dde6; padding: .45rem 0; }
+summary { cursor: pointer; font-weight: 650; }
+ul { padding-left: 1.4rem; margin: .4rem 0; }
+li a { display: inline-block; padding-block: .15rem; }
+a:focus-visible, summary:focus-visible { outline: 2px solid #195f9d; outline-offset: 2px; }
