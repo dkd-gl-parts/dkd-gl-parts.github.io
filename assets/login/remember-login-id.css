@@ -1,0 +1,33 @@
+.login-preferences {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px 12px;
+  margin-top: 4px;
+}
+.login-remember {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 36px;
+  font-size: 13px;
+  line-height: 1.35;
+  cursor: pointer;
+}
+.login-remember input {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--dcats-brand-red);
+}
+.login-remember span { overflow-wrap: anywhere; }
+.login-remember:has(input:disabled) { opacity: .6; cursor: default; }
+#screen-login .login-preferences .login-forgot-link {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}

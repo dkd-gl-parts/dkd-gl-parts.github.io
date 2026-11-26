@@ -38,7 +38,7 @@
 <link rel="stylesheet" href="customer-price-report.css?v=1.1.1399">
 <link rel="stylesheet" href="assets/internal-tabs/nine-screen-tabs.css?v=1.1.1399">
   <link rel="stylesheet" href="assets/recycle-karte/preview.css?v=1.1.1399&amp;layout=3">
-<link rel="stylesheet" href="assets/temporary-device/temporary-device-admin.css?v=2">
+<link rel="stylesheet" href="assets/login/remember-login-id.css?v=1">
 </head>
 <body>
 
@@ -151,7 +151,13 @@
           </div>
           <button class="btn-login" id="btn-login" data-i18n="btn_login">ログイン</button>
           <div class="login-error" id="login-error" role="alert" aria-live="polite"></div>
-          <button class="btn-back-login login-forgot-link" id="btn-to-forgot" data-i18n="btn_forgot">パスワードをお忘れの方</button>
+          <div class="login-preferences">
+            <label class="login-remember" for="remember-login-id">
+              <input id="remember-login-id" type="checkbox">
+              <span id="remember-login-id-label">ユーザーIDを保存</span>
+            </label>
+            <button class="btn-back-login login-forgot-link" id="btn-to-forgot" data-i18n="btn_forgot">パスワードをお忘れの方</button>
+          </div>
         </div>
 
         <div class="login-utility">
@@ -2308,7 +2314,6 @@
     <div class="form-footer user-permission-edit-footer">
       <span class="save-msg" id="user-permission-edit-message"></span>
       <button class="btn-cancel" id="btn-user-permission-edit-close" type="button">閉じる</button>
-      <button class="btn-cancel" id="btn-temporary-device-access" type="button" hidden>期限付き利用</button>
       <button class="btn-primary" id="btn-user-permission-edit-save" type="button">権限を保存</button>
     </div>
   </div>
@@ -6214,13 +6219,6 @@
 <script src="manufacturing-ranking-report.js?v=1.1.1399&amp;ranking=20"></script>
 <script src="customer-price-report.js?v=1.1.1399"></script>
 <script src="assets/recycle-karte/preview.js?v=1.1.1399&amp;provider=2&amp;part-search=1&amp;inventory=1&amp;layout=3&amp;master-link=1"></script>
-<dialog id="temporary-device-access-dialog" class="temporary-device-dialog" aria-labelledby="temporary-device-access-title">
-  <header>
-    <h2 id="temporary-device-access-title">期限付き利用</h2>
-    <button type="button" class="btn-cancel" id="btn-temporary-device-access-close">閉じる</button>
-  </header>
-  <div id="temporary-device-admin-content"></div>
-</dialog>
-<script type="module" src="assets/temporary-device/integration.mjs?v=2"></script>
+<script type="module" src="assets/login/remember-login-id.mjs?v=1"></script>
 </body>
 </html>
