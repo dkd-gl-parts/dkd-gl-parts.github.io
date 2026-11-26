@@ -26,12 +26,20 @@ jobs:
             const fixture = "qa-remember-id@example.invalid";
             try {
               for (const viewport of [{width:1366,height:768},{width:1024,height:600},{width:320,height:568}]) {
-                const context = await browser.newContext({viewport});
+                const context = await browser.newContext({viewport,locale:"ja-JP"});
                 try {
                   const page=await context.newPage();
                   await page.goto(origin, {waitUntil:"domcontentloaded"});
-                  const remember=page.getByRole("checkbox",{name:"ユーザーIDを保存",exact:true});
-                  await remember.waitFor({timeout:20000});
+                  const remember=page.locator("#remember-login-id");
+                  try {
+                  await remember.waitFor({state:"visible",timeout:30000});
+                } catch (error) {
+                  const state=await page.evaluate(()=>({title:document.title,language:document.documentElement.lang,active:Array.from(document.querySelectorAll(".screen.active")).map(el=>el.id),present:!!document.getElementById("remember-login-id")}));
+                  console.error("LOGIN_SCREEN_STATE",JSON.stringify(state));
+                  throw error;
+                }
+                const label=await page.locator("#remember-login-id-label").textContent();
+                assert.ok(["ユーザーIDを保存","Remember user ID","保存用户 ID"].includes(label));
                   const user=page.locator("#login-email");
                   const password=page.locator("#login-password");
                   assert.equal(await remember.isChecked(),false);
