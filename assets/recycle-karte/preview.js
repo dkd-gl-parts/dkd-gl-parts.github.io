@@ -28,7 +28,9 @@
     inventoryScope: ["本社（000001）の全件取得は、毎日午前1時からサーバーで行います。", "The server starts the head-office inventory scan at 1:00 a.m. JST each day.", "服务器每天日本时间凌晨1点开始获取总部库存。"],
     inventoryIdle: ["全件取得の結果はまだありません。", "No full inventory scan has completed yet.", "尚无全量库存获取结果。"],
     inventoryCount: ["照合済み {count} / {total} 件", "{count} / {total} rows verified", "已核验 {count} / {total} 条"],
-    inventoryReady: ["全{count}件の取得が完了しました。", "All {count} rows have been retrieved.", "已完成全部 {count} 条的获取。"],
+    inventoryReady: ["在庫一覧の全{count}件を照合しました。", "All {count} rows in the inventory list were verified.", "已核验库存列表的全部 {count} 条记录。"],
+    inventoryDetailCount: ["部品詳細 {verified}/{total}件を確認・反映（未確認{pending}件、取得できず{failed}件）", "Part details verified and applied: {verified}/{total} ({pending} pending, {failed} unsuccessful)", "部件详情已核验并同步 {verified}/{total} 条（待核验 {pending} 条，未能获取 {failed} 条）"],
+    inventoryDetailUntracked: ["この一覧の部品詳細は夜間更新の記録がありません。", "This inventory list has no recorded nightly detail results.", "此库存列表没有夜间部件详情更新记录。"],
     inventoryComparison: ["前回の一覧から増えた番号は{appeared}件、外れた番号は{absent}件です。", "Compared with the previous list, {appeared} numbers appeared and {absent} are absent.", "与上次列表相比，新增{appeared}个号码，{absent}个号码未出现在列表中。"],
     inventoryIncomplete: ["次の行を照合できませんでした。", "The next row could not be verified.", "无法核验下一行。"],
     inventoryChanged: ["取得中に一覧の条件や行が変わりました。", "The source list changed during retrieval.", "获取期间源列表发生变化。"],
@@ -1101,6 +1103,18 @@
     return progress;
   }
 
+  function inventoryDetailMessage(work) {
+    if (work.state !== "ready") return "";
+    const {verified,total,pending,failed,blocked} = work.details || {};
+    const values = {verified,total,pending,failed};
+    if (!Object.values(values).every(value => Number.isSafeInteger(value) && value >= 0) ||
+        verified + pending + failed !== total) return tr("inventoryDetailUntracked");
+    let message = tr("inventoryDetailCount").replace(/\{(verified|total|pending|failed)\}/g, (_, key) => String(values[key]));
+    const stop = {policy:"inventoryPolicy",authentication:"sourceAuth",submission_unknown:"inventoryUncertain"};
+    if (Object.hasOwn(stop,blocked)) message += " " + tr(stop[blocked]);
+    return message;
+  }
+
   async function listDownload(work) {
     const records = [];
     for (let offset = 0; offset < work.total; offset += 100) {
@@ -1132,6 +1146,7 @@
     if (!canShow()) return;
     const {body,modal} = dialog(tr("inventoryOpen"),origin);
     const message = element("p",{role:"status",className:"recycle-karte-help"});
+    const detailMessage = element("p",{role:"status",className:"recycle-karte-help",hidden:""});
     const reload = button("inventoryRefresh",() => void refresh());
     const download = button("inventoryDownload",async () => {
       download.disabled = true;
@@ -1140,7 +1155,7 @@
       finally { if (details === modal) download.disabled = false; }
     },{hidden:""});
     body.append(element("p",{className:"recycle-karte-help",text:tr("inventoryScope")}),
-      message,element("div",{className:"recycle-karte-controls"},reload,download));
+      message,detailMessage,element("div",{className:"recycle-karte-controls"},reload,download));
     let last = null;
     let timer = 0;
     modal.addEventListener("close", () => window.clearTimeout(timer));
@@ -1153,6 +1168,8 @@
         if (details !== modal) return;
         last = work;
         message.textContent = inventoryMessage(work);
+        detailMessage.textContent = inventoryDetailMessage(work);
+        detailMessage.hidden = !detailMessage.textContent;
         download.hidden = work.state !== "ready";
         if (work.state === "running") timer = window.setTimeout(() => void refresh(),18000);
       } catch (error) {
