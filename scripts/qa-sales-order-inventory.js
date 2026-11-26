@@ -107,7 +107,13 @@ async function verifyFeatureHelp(browser, base, output) {
    await guide.getByRole("link",{name:"次へ",exact:true}).click();
    assert(await guide.locator("li:target .step-number").innerText() === "手順 3 / 3");
    await guide.getByRole("link",{name:"機能別の目次へ",exact:true}).click();
-   await guide.locator("summary").first().click();
+   const categories = guide.locator("summary");
+   for (const category of await categories.all()) {
+    await category.click();
+    assert(await guide.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.documentElement.scrollHeight <= innerHeight + 1), "expanded directory must fit at 320px");
+    await category.click();
+   }
+   await categories.first().click();
    await guide.locator('nav a[href="#search"]').click();
    assert(await guide.locator("article#search").isVisible());
    console.log("Feature help verified across " + screens.length + " screens and " + chapters.length + " chapters at four viewport sizes");

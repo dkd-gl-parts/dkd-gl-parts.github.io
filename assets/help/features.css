@@ -34,3 +34,10 @@ a:focus-visible, summary:focus-visible { outline: 2px solid #195f9d; outline-off
   .route { margin-block: .2rem .4rem; padding-bottom: .35rem; }
   .pager { margin-block: .4rem; }
 }
+
+@media (max-width: 560px) {
+  nav:has(details[open]) > p, nav:has(details[open]) details:not([open]) { display: none; }
+  details[open] { margin-top: .45rem; }
+  details[open] summary::after { content: "（閉じて他の業務へ）"; font-size: .85rem; font-weight: 400; }
+  details ul { grid-template-columns: 1fr 1fr; gap: .45rem .75rem; line-height: 1.45; }
+}
