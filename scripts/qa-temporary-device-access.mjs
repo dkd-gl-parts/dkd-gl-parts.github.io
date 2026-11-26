@@ -63,7 +63,10 @@ async function verifyBrowser(browser, viewport) {
       switch (body.action) {
         case "admin_state":
           adminReads++;
-          if (body.subjectId === fixtureId) payload = { existingGrant: active, printers: [{ code: "FIXTURE", name: "検証用プリンター" }] };
+          if (body.subjectId === fixtureId) payload = {
+            existingGrant: active, pendingRequests: requested && !active ? [grantId] : [],
+            printers: [{ code: "FIXTURE", name: "検証用プリンター" }]
+          };
           break;
         case "prepare_enrollment":
           issued = body.subjectId === fixtureId;
@@ -169,6 +172,7 @@ async function verifyBrowser(browser, viewport) {
     await admin.goto(origin + "/admin");
     await button(admin, "期限付き利用").click();
     assert.equal(await admin.getByRole("link", { name: "利用者用ページを開く" }).count(), 0);
+    assert.equal(await button(admin, "1年間の利用を承認").isEnabled(), false);
     await button(admin, "利用者用リンクを発行").click();
     const invite = await admin.getByRole("link", { name: "利用者用ページを開く", exact: true }).getAttribute("href");
     const invitationUrl = new URL(invite);
@@ -181,8 +185,20 @@ async function verifyBrowser(browser, viewport) {
     await button(operator, "利用を開始").click();
     await visible(operator.getByRole("heading", { name: "管理者の承認を待っています" }));
     assert.equal(new URL(operator.url()).hash, "");
-    await admin.getByRole("textbox", { name: "申請番号" }).fill(grantId);
-    await admin.getByRole("textbox", { name: "確認コード" }).fill("DE1A42");
+    await visible(operator.getByText("申請番号 435456", { exact: true }));
+    await visible(operator.getByText("確認コード 1455-5714", { exact: true }));
+    assert.equal(await operator.getByText(grantId, { exact: true }).count(), 0);
+    const selectedRequest = admin.getByRole("combobox", { name: "申請番号" });
+    await selectedRequest.locator('option[value="' + grantId + '"]').waitFor({ state: "attached" });
+    assert.equal(await selectedRequest.locator("option:checked").textContent(), "435456");
+    const confirmation = admin.getByRole("textbox", { name: "確認コード" });
+    assert.equal(await confirmation.inputValue(), "");
+    await confirmation.fill("0000-0001");
+    await button(admin, "1年間の利用を承認").click();
+    await button(admin, "承認する").click();
+    await visible(admin.getByText("申請番号、確認コードまたは利用期限を確認してください。"));
+    assert.deepEqual(writes, ["prepare_enrollment", "request_device"]);
+    await confirmation.fill("1455-5714");
     await admin.getByRole("combobox", { name: "品番シールの印刷先" }).selectOption("FIXTURE");
     await button(admin, "1年間の利用を承認").click();
     await visible(admin.getByRole("dialog", { name: "端末利用の承認" }));

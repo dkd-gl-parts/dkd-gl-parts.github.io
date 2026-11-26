@@ -1,3 +1,5 @@
+import { displayRequestNumber, readPairingCode } from "./pairing-codes.mjs";
+
 const featureNames = Object.freeze({
   part_label: "品番シール",
   shipping: "ピッキング・出荷確定",
@@ -52,7 +54,7 @@ export async function readTemporaryDeviceAdmin(options) {
 }
 
 export function renderTemporaryDeviceAdmin(container, { targetUser, endpoint, publishableKey,
-  getAdminAccessToken, printers, existingGrant, operatorUrl }) {
+  getAdminAccessToken, printers, existingGrant, pendingRequests = [], operatorUrl }) {
   const form = node("form");
   form.append(node("p", targetUser.email));
   if (existingGrant?.expiresAt) {
@@ -73,24 +75,25 @@ export function renderTemporaryDeviceAdmin(container, { targetUser, endpoint, pu
   }
   if (existingGrant) linkArea.append(operatorLink(operatorUrl));
   form.append(linkButton,linkArea);
-  const addField = (title, name, value = "", required = false) => {
+  const fields = node("div");
+  fields.className = "temporary-device-dialog-fields";
+  function addField(title, input) {
     const label = node("label", title);
-    const input = node("input");
-    input.name = name;
-    input.value = value;
-    input.required = required;
-    input.autocomplete = "off";
     label.append(input);
     fields.append(label);
     return input;
-  };
-  const fields = node("div");
-  fields.className = "temporary-device-dialog-fields";
+  }
+  const requests = addField("申請番号", node("select"));
+  requests.required = true;
+  const pairing = addField("確認コード", node("input"));
+  pairing.type = "text";
+  pairing.autocomplete = "off";
+  pairing.inputMode = "numeric";
+  pairing.maxLength = 12;
+  pairing.placeholder = "0000-0000";
+  pairing.required = !existingGrant;
+  pairing.closest("label").hidden = !!existingGrant;
   form.append(fields);
-  const grantId = addField("申請番号", "grantId", existingGrant?.grantId || "", true);
-  grantId.readOnly = !!existingGrant;
-  const pairing = existingGrant ? null : addField("確認コード", "pairingCode", "", true);
-  if (pairing) { pairing.maxLength = 6; pairing.pattern = "[0-9A-Fa-f]{6}"; }
   const featureControls = node("div");
   featureControls.className = "temporary-device-dialog-features";
   form.append(featureControls);
@@ -141,30 +144,93 @@ export function renderTemporaryDeviceAdmin(container, { targetUser, endpoint, pu
       headers: { "Content-Type": "application/json", apikey: publishableKey, Authorization: "Bearer " + auth },
       body: JSON.stringify(body)
     });
-    if (!response.ok) throw new Error(response.status === 403
-      ? "承認や設定を反映できません。権限、申請番号と確認コードを確認してください。"
-      : "設定結果を読み戻してから操作してください。");
+    if (!response.ok) {
+      const error = new Error(response.status === 403
+        ? "申請番号、確認コードまたは利用期限を確認してください。"
+        : "設定結果を読み戻してから操作してください。");
+      error.status = response.status;
+      throw error;
+    }
     return response.json();
   }
 
-  let active = !!existingGrant;
+  let activeGrant = existingGrant?.grantId || "";
   let uncertain = false;
   let saving = false;
-  const grantValue = () => grantId.value.trim().toLowerCase();
+
+  function syncButtons() {
+    primary.disabled = saving || uncertain || !(activeGrant || requests.value);
+    revoke.disabled = saving || uncertain;
+  }
+
+  let displayedRequests = "";
+  function showRequests(ids) {
+    const snapshot = JSON.stringify(ids);
+    if (snapshot === displayedRequests) return;
+    displayedRequests = snapshot;
+    const previous = requests.value;
+    const counts = new Map();
+    for (const id of ids) {
+      const reference = displayRequestNumber(id);
+      counts.set(reference, (counts.get(reference) || 0) + 1);
+    }
+    const options = ids.flatMap(id => {
+      const reference = displayRequestNumber(id);
+      if (counts.get(reference) > 1) return [];
+      const item = node("option", reference);
+      item.value = id;
+      return [item];
+    });
+    const placeholder = node("option", options.length ? "申請番号を選択" : ids.length ? "番号が重複しています" : "申請を待っています");
+    placeholder.value = "";
+    requests.replaceChildren(placeholder, ...options);
+    if (options.some(item => item.value === previous)) requests.value = previous;
+    else if (ids.length === 1) requests.value = ids[0];
+    syncButtons();
+  }
+
+  function showActiveGrant() {
+    const option = node("option", displayRequestNumber(activeGrant));
+    option.value = activeGrant;
+    requests.replaceChildren(option);
+    requests.disabled = true;
+    pairing.required = false;
+    pairing.closest("label").hidden = true;
+  }
+
+  async function refreshRequests() {
+    if (!form.isConnected || activeGrant || uncertain) return;
+    try {
+      if (!saving) {
+        const state = await send({ action: "admin_state", subjectId: targetUser.id });
+        if (form.isConnected && !saving && !activeGrant) showRequests(state.pendingRequests || []);
+      }
+    } catch {
+      if (form.isConnected && !saving && !activeGrant) showRequests([]);
+    } finally {
+      if (form.isConnected && !activeGrant && !uncertain) setTimeout(refreshRequests, 3000);
+    }
+  }
+
+  requests.addEventListener("change", syncButtons);
+  if (activeGrant) showActiveGrant();
+  else {
+    showRequests(pendingRequests);
+    setTimeout(refreshRequests, 3000);
+  }
+  syncButtons();
   async function perform(work) {
     if (saving || uncertain) return;
     saving = true;
-    primary.disabled = true;
-    revoke.disabled = true;
+    syncButtons();
     try {
       await work();
     } catch (error) {
-      uncertain = true;
+      uncertain = !!activeGrant || error.status !== 403;
       message.textContent = error.message || "反映結果を確認してください。";
     } finally {
       saving = false;
-      primary.disabled = uncertain;
-      revoke.disabled = uncertain;
+      syncButtons();
     }
   }
   linkButton.addEventListener("click", () => {
@@ -180,17 +246,22 @@ export function renderTemporaryDeviceAdmin(container, { targetUser, endpoint, pu
     void perform(async () => {
       const features = new FormData(form).getAll("features");
       if (!features.length) { message.textContent = "利用する機能を選んでください。"; return; }
-      if (!active && !await confirmTemporaryDeviceAction(container,
-        "端末利用の承認", targetUser.email, "この端末の利用を1年間承認しますか？", "承認する")) return;
-      const grant = grantValue();
-      const response = await send(active
+      const grant = activeGrant || requests.value;
+      if (!grant) return;
+      const code = activeGrant ? null : readPairingCode(pairing.value);
+      if (!activeGrant && !code) {
+        message.textContent = "利用者の確認コードを確認してください。";
+        return;
+      }
+      if (!activeGrant && !await confirmTemporaryDeviceAction(container,
+        "端末利用の承認", targetUser.email, "申請番号 " + displayRequestNumber(grant) + " の端末を1年間承認しますか？", "承認する")) return;
+      const response = await send(activeGrant
         ? { action: "configure_device", grantId: grant, features }
-        : { action: "approve_device", grantId: grant, subjectId: targetUser.id, pairingCode: pairing.value.trim(), features });
-      active = true;
+        : { action: "approve_device", grantId: grant, subjectId: targetUser.id, pairingCode: code, features });
+      activeGrant = grant;
       linkArea.replaceChildren(operatorLink(operatorUrl));
-      linkButton.hidden=true;
-      if (pairing) { pairing.required = false; pairing.closest("label").hidden = true; }
-      grantId.readOnly = true;
+      linkButton.hidden = true;
+      showActiveGrant();
       primary.textContent = "利用機能を保存";
       revoke.hidden = false;
       message.textContent = response.expiresAt ? "承認しました。利用期限 " + new Intl.DateTimeFormat(
@@ -205,7 +276,7 @@ export function renderTemporaryDeviceAdmin(container, { targetUser, endpoint, pu
     void perform(async () => {
       if (!await confirmTemporaryDeviceAction(container,
         "端末利用の取り消し", targetUser.email, "対象端末の利用許可を取り消しますか？", "取り消す")) return;
-      await send({ action: "revoke_device", grantId: grantValue() });
+      await send({ action: "revoke_device", grantId: activeGrant });
       container.replaceChildren(node("p", "端末の利用許可を取り消しました。"));
     });
   });
