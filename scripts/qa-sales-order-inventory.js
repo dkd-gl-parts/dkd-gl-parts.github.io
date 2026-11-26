@@ -68,11 +68,21 @@ async function verifyFeatureHelp(browser, base, output) {
       const header = screen.querySelector(".page-header");
       const link = header.querySelector("[data-feature-help]") || screen.querySelector("[data-fax-help-section]");
       if (!link) return {missing:true};
+      const featureLink = link.hasAttribute("data-feature-help");
+      if (featureLink) {
+       const user = header.querySelector(".header-username"), role = header.querySelector(".role-badge");
+       if (user) user.textContent = "点検担当者";
+       if (role) role.textContent = "業務点検";
+      }
       const rect = link.getBoundingClientRect();
       return { hash:link.hash.slice(1), fax:link.hasAttribute("data-fax-help-section"), fits:rect.width > 0 && rect.left >= -1 && rect.right <= innerWidth + 1 };
      }, id);
      assert(!check.missing && check.fits, id + " help must be visible at " + viewport.width + ": " + JSON.stringify(check));
-     if (!check.fax) assert(check.hash === "menu" || chapters.includes(check.hash), id + " guide chapter");
+     if (!check.fax) {
+      const expected = id === "screen-rakuten-bulk" ? "rakuten-price" : id.slice("screen-".length);
+      assert.equal(check.hash,expected,id + " must open its own chapter");
+      assert(check.hash === "menu" || chapters.includes(check.hash),id + " guide chapter");
+     }
     }
     for (const chapter of chapters) {
      await guide.evaluate(hash => {location.hash = hash;}, chapter);
