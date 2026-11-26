@@ -181,7 +181,7 @@ export function renderTemporaryDeviceAdmin(container, { targetUser, endpoint, pu
       item.value = id;
       return [item];
     });
-    const placeholder = node("option", options.length ? "申請番号を選択" : ids.length ? "番号が重複しています" : "申請を待っています");
+    const placeholder = node("option", options.length ? "番号を選択" : ids.length ? "番号重複" : "申請待ち");
     placeholder.value = "";
     requests.replaceChildren(placeholder, ...options);
     if (options.some(item => item.value === previous)) requests.value = previous;
