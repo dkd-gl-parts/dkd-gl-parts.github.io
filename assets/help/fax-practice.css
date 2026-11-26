@@ -57,3 +57,13 @@ dt { font-weight: 650; }
 @media screen and (max-width: 540px) {
  main:has(.panel:target:not(#setup, #request)) .screen-note { display: none; }
 }
+
+@media print {
+ .observation-notes { border: 0; padding: 0; margin-top: 3mm; }
+ .observation-notes h3 { font-size: 11pt; margin: 0 0 1mm; }
+ .observation-notes table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+ .observation-notes th,.observation-notes td { border: 1px solid #84969c; padding: 1mm 2mm; }
+ .observation-notes th:first-child { width: 22%; }
+ .observation-notes th:last-child { width: 26%; }
+ .observation-notes td { height: 13mm; }
+}
