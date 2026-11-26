@@ -199,6 +199,11 @@ async function verifyBrowser(browser, viewport) {
     await visible(admin.getByText("申請番号、確認コードまたは利用期限を確認してください。"));
     assert.deepEqual(writes, ["prepare_enrollment", "request_device"]);
     await confirmation.fill("1455-5714");
+    assert.equal(await admin.getByText("申請番号、確認コードまたは利用期限を確認してください。").count(), 0);
+    await noOverflow(admin, "html, dialog[open], .temporary-device-dialog-fields");
+    await noOverflow(operator, "html, .workspace, #panel");
+    await admin.screenshot({ path: path.join(output, `admin-request-${viewport.width}x${viewport.height}.png`) });
+    await operator.screenshot({ path: path.join(output, `operator-request-${viewport.width}x${viewport.height}.png`) });
     await admin.getByRole("combobox", { name: "品番シールの印刷先" }).selectOption("FIXTURE");
     await button(admin, "1年間の利用を承認").click();
     await visible(admin.getByRole("dialog", { name: "端末利用の承認" }));

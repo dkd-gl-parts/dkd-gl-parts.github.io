@@ -212,7 +212,11 @@ export function renderTemporaryDeviceAdmin(container, { targetUser, endpoint, pu
     }
   }
 
-  requests.addEventListener("change", syncButtons);
+  requests.addEventListener("change", () => {
+    message.textContent = "";
+    syncButtons();
+  });
+  pairing.addEventListener("input", () => { message.textContent = ""; });
   if (activeGrant) showActiveGrant();
   else {
     showRequests(pendingRequests);
