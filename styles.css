@@ -7623,6 +7623,16 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .sales-order-help-link,
 .sales-order-data-actions > summary { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; border: 1px solid #98a6b3; border-radius: 6px; padding: 0 12px; background: #fff; color: #344054; font-size: 10px; font-weight: 800; list-style: none; white-space: nowrap; cursor: pointer; }
 .sales-order-help-link { text-decoration: none; }
+.sales-order-help-link[hidden] { display: none; }
+.sales-order-filter-row > .sales-order-secondary-actions > .sales-order-help-link { margin-inline-start: auto; }
+.fax-help-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.fax-help-heading .sales-order-help-link, .sales-accounting-export-heading-actions .sales-order-help-link, .recycle-actions .sales-order-help-link { min-height: 30px; padding: 0 8px; font-size: 12px; flex: 0 0 auto; }
+.shipping-document-help-heading { grid-area: title; }
+.finished-shipment-help-heading { margin-bottom: 4px; }
+.finished-shipment-help-heading .sales-order-help-link { min-height: 26px; }
+.finished-label-card .finished-shipment-help-heading > h3 { margin: 0; }
+.sales-accounting-export-heading-actions { display: flex; align-items: center; gap: 8px; }
+#sales-accounting-export-overlay:has(#sales-accounting-export-target option[value="yayoi_sales"]:checked) [data-fax-help-section="export"] { display: none; }
 .sales-order-help-link:hover { border-color: #426c97; background: #eff6fc; color: #163e68; }
 .sales-order-help-link:focus-visible { outline: 2px solid #1d5c9d; outline-offset: 2px; }
 .sales-order-data-actions > summary::-webkit-details-marker { display: none; }
@@ -11172,7 +11182,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   #screen-sales-order-mgmt .sales-order-toolbar { display: block; padding: 10px 16px; }
   #screen-sales-order-mgmt .sales-order-title-block { display: none; }
   #screen-sales-order-mgmt .sales-order-filter-row { grid-template-columns: auto minmax(360px, 1fr) auto auto; }
-  #screen-sales-order-mgmt .sales-order-secondary-actions { grid-column: 1 / -1; justify-self: start; }
+  #screen-sales-order-mgmt .sales-order-filter-row > .sales-order-secondary-actions { grid-column: 1 / -1; justify-self: stretch; }
   #screen-sales-order-mgmt .sales-order-data-actions > div { right: auto; left: 0; }
   #screen-sales-order-mgmt .sales-order-auto-print,
   #screen-sales-order-mgmt .sales-order-dashboard { min-height: 56px; }
