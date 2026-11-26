@@ -7632,6 +7632,11 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .finished-shipment-help-heading .sales-order-help-link { min-height: 26px; }
 .finished-label-card .finished-shipment-help-heading > h3 { margin: 0; }
 .sales-accounting-export-heading-actions { display: flex; align-items: center; gap: 8px; }
+@media (max-width: 480px) {
+  .recycle-entry-dialog .recycle-header:has(#recycle-fax-order-help:not([hidden])) h2 { margin-top: 0; line-height: 1; white-space: normal; overflow-wrap: anywhere; }
+  .recycle-entry-dialog .recycle-actions .sales-order-help-link { min-height: 32px; padding-inline: 4px; }
+  .recycle-entry-dialog .recycle-header:has(#recycle-check-result:not([hidden])) .recycle-vehicle-toggle:disabled { display: none; }
+}
 #sales-accounting-export-overlay:has(#sales-accounting-export-target option[value="yayoi_sales"]:checked) [data-fax-help-section="export"] { display: none; }
 .sales-order-help-link:hover { border-color: #426c97; background: #eff6fc; color: #163e68; }
 .sales-order-help-link:focus-visible { outline: 2px solid #1d5c9d; outline-offset: 2px; }
