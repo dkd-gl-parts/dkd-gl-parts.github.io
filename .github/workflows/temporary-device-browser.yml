@@ -1,0 +1,61 @@
+{
+  "name": "Temporary device browser QA",
+  "on": {
+    "pull_request": {
+      "paths": [
+        "assets/temporary-device/**",
+        "scripts/qa-temporary-device-access.mjs",
+        ".github/workflows/temporary-device-browser.yml"
+      ]
+    }
+  },
+  "permissions": {
+    "contents": "read"
+  },
+  "jobs": {
+    "browser": {
+      "runs-on": "ubuntu-24.04",
+      "timeout-minutes": 6,
+      "steps": [
+        {
+          "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "with": {
+            "persist-credentials": false
+          }
+        },
+        {
+          "uses": "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
+          "with": {
+            "node-version": "24.11.1",
+            "package-manager-cache": false
+          }
+        },
+        {
+          "name": "Install fixed browser test dependency",
+          "run": "npm install --prefix \"$RUNNER_TEMP/device-browser\" --no-save --ignore-scripts --no-audit --no-fund playwright-core@1.56.1\ncommand -v google-chrome"
+        },
+        {
+          "name": "Install the exact Japanese font for screenshots",
+          "run": "device_font_path=\"$HOME/.local/share/fonts/NotoSansJP-Regular.otf\"\nmkdir -p \"$(dirname \"$device_font_path\")\"\ncurl --fail --silent --show-error --max-time 30 --output \"$device_font_path\" 'https://raw.githubusercontent.com/notofonts/noto-cjk/523d033d6cb47f4a80c58a35753646f5c3608a78/Sans/SubsetOTF/JP/NotoSansJP-Regular.otf'\nprintf '%s  %s\\n' 'dff723ba59d57d136764a04b9b2d03205544f7cd785a711442d6d2d085ac5073' \"$device_font_path\" | sha256sum --check --strict\nfc-cache -f \"$HOME/.local/share/fonts\""
+        },
+        {
+          "name": "Check temporary access in Chrome",
+          "env": {
+            "DEVICE_PLAYWRIGHT_MODULE": "${{ runner.temp }}/device-browser/node_modules/playwright-core",
+            "DEVICE_QA_OUTPUT": "${{ runner.temp }}/device-browser-qa"
+          },
+          "run": "DEVICE_BROWSER_PATH=\"$(command -v google-chrome)\" node scripts/qa-temporary-device-access.mjs"
+        },
+        {
+          "uses": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "if": "always()",
+          "with": {
+            "name": "temporary-device-browser-qa",
+            "path": "${{ runner.temp }}/device-browser-qa",
+            "retention-days": 7
+          }
+        }
+      ]
+    }
+  }
+}

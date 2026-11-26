@@ -1,0 +1,25 @@
+#btn-temporary-device-access[hidden]{display:none}
+.temporary-device-dialog{border:1px solid #9bafc3;border-radius:10px;padding:clamp(.65rem,2vw,1rem);width:min(calc(100% - 1.25rem),32rem);max-height:calc(100% - 1.5rem);color:#17293b;background:#fff}
+.temporary-device-dialog::backdrop{background:#0d223770}
+.temporary-device-dialog header,.temporary-device-dialog-actions{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.35rem}
+.temporary-device-dialog h2{font-size:1.12rem;margin:0}
+.temporary-device-dialog h3{font-size:1rem;margin:.25rem 0}
+.temporary-device-dialog p{margin:.15rem 0;overflow-wrap:anywhere}
+.temporary-device-dialog form{display:grid;gap:.37rem}
+.temporary-device-dialog-fields,.temporary-device-dialog-features{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.32rem}
+.temporary-device-dialog-fields label,.temporary-device-dialog-print{display:grid;font-size:.87rem;gap:.15rem}
+.temporary-device-dialog-features label{display:flex;align-items:center;gap:.2rem;font-size:.85rem}
+.temporary-device-dialog input:not([type=checkbox]),.temporary-device-dialog select{width:100%;min-width:0;font:inherit;border:1px solid #8a9eaf;border-radius:5px;min-height:2rem;padding:.25rem;color:#17293b;background:#fff}
+.temporary-device-dialog-actions button[hidden],.temporary-device-dialog label[hidden]{display:none}
+.temporary-device-dialog [role=status]:empty{display:none}
+
+@media(max-width:480px){
+  .user-permission-edit-footer:has(#btn-temporary-device-access:not([hidden])){
+    display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.35rem;
+  }
+  .user-permission-edit-footer:has(#btn-temporary-device-access:not([hidden])) .save-msg{grid-column:1/-1;min-width:0}
+  .user-permission-edit-footer:has(#btn-temporary-device-access:not([hidden])) .save-msg:empty{display:none}
+  .user-permission-edit-footer:has(#btn-temporary-device-access:not([hidden])) button{
+    padding-inline:.4rem;min-width:0;white-space:normal;overflow-wrap:anywhere;
+  }
+}

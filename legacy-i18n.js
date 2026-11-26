@@ -9171,3 +9171,8 @@ Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {
 });
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"必要数を編集":"Edit required quantity","编辑需求数量":"Edit required quantity"});
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"必要数を編集":"编辑需求数量","编辑需求数量":"编辑需求数量"});
+
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"期限付き利用":"Temporary access","利用者用ページを開く":"Open the operator page"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"期限付き利用":"限期使用","利用者用ページを開く":"打开操作员页面"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"端末利用の承認":"Approve device access","端末利用の取り消し":"Revoke device access","この端末の利用を1年間承認しますか？":"Approve this device for one year?","対象端末の利用許可を取り消しますか？":"Revoke access for this device?","承認する":"Approve","取り消す":"Revoke","キャンセル":"Cancel"});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"端末利用の承認":"批准设备访问","端末利用の取り消し":"撤销设备访问","この端末の利用を1年間承認しますか？":"批准此设备使用一年吗？","対象端末の利用許可を取り消しますか？":"撤销此设备的访问权限吗？","承認する":"批准","取り消す":"撤销","キャンセル":"取消"});

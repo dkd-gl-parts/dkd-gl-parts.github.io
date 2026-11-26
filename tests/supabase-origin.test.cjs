@@ -12,7 +12,7 @@ const storageKey = 'storageKey: "sb-jqoeqximtwfpqwzngutj-auth-token"';
 
 test("GitHub Pages files match the configured origin", () => {
   const rendered = renderSupabaseOrigin(root);
-  assert.equal(rendered.size, 11);
+  assert.equal(rendered.size, 12);
   for (const [file, content] of rendered) assert.equal(content, read(file), file);
   assert.match(rendered.get("app.js"), /createClient\(SUPABASE_URL, SUPABASE_KEY, \{\s*auth:/);
   assert.ok(rendered.get("app.js").includes(storageKey));
@@ -31,6 +31,8 @@ test("one origin updates the endpoints, CSP and strict URL checks", () => {
   const scanflow = JSON.parse(rendered.get("scanflow/config.public.json"));
   assert.equal(scanflow.supabaseUrl, alternate);
   assert.equal(scanflow.apiUrl, alternate + "/functions/v1/scanflow-api");
+  assert.ok(rendered.get("assets/temporary-device/temporary-device-screen.mjs")
+    .includes(alternate + "/functions/v1/temporary-device-access"));
   assert.ok(rendered.get("scanflow/local-review/index.html").includes("connect-src 'self' " + alternate + "/auth/v1/"));
   assert.ok(rendered.get("_headers").includes(alternate + " https://zipcloud.ibsnet.co.jp"));
   assert.ok(rendered.get("index.html").includes('rel="preconnect" href="' + alternate + '"'));
