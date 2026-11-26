@@ -86,12 +86,12 @@ async function testViewport(browser, viewport) {
     assert.equal(await pw.inputValue(),"");
 
     await fits(page,"html, #screen-login, .login-form-panel, .login-fields, .login-preferences");
-    const footerVisible=await page.locator(".login-partners").evaluate(footer=>{
-      const bounds=footer.getBoundingClientRect();
-      return bounds.top>=0&&bounds.bottom<=document.documentElement.clientHeight+1;
-    });
-    assert.ok(footerVisible,"The login footer must fit on the viewport");
     await page.screenshot({path:path.join(output,`login-${viewport.width}x${viewport.height}.png`)});
+    const footer=await page.locator(".login-partners").evaluate(element=>{
+      const bounds=element.getBoundingClientRect();
+      return {top:bounds.top,bottom:bounds.bottom,height:document.documentElement.clientHeight};
+    });
+    assert.ok(footer.top>=0&&footer.bottom<=footer.height+1,`The login footer must fit on the viewport (${footer.top}-${footer.bottom} of ${footer.height})`);
     await page.evaluate(()=>{document.documentElement.lang="en";});
     await page.getByRole("checkbox",{name:"Remember user ID",exact:true}).waitFor();
     await fits(page,"html, #screen-login, .login-preferences");

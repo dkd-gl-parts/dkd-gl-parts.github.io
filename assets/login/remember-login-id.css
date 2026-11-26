@@ -33,6 +33,10 @@
   overflow-wrap: anywhere;
 }
 @media (max-width: 600px) and (max-height: 670px) {
+  #screen-login .login-brand-panel { min-height: 96px; padding-block: 10px 6px; }
+  #screen-login .login-form-header { margin-bottom: 8px; }
+  #screen-login .login-error:empty { min-height: 0; margin-top: 0; }
+  #screen-login .login-utility { gap: 6px; margin-top: 8px; }
   .login-preferences { margin-top: 2px; }
   .login-remember { min-height: 32px; }
   #screen-login .login-preferences .login-forgot-link {
