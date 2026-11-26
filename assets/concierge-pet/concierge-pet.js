@@ -48,6 +48,16 @@
   };
   var COPY = {
     ja: {
+      businessOffered: "私がこのテストを行います。「やってほしい」と返信すると開始します。「キャンセル」で取り消せます。",
+      businessRunning: "販売王で処理しています。完了するまでお待ちください。",
+      businessCompleted: "確認できました。販売王からテスト伝票1件を書き出し、取込元CSVとの一致を確認しました。",
+      businessUnknown: "結果の確認が必要です。再取込は行いません。「販売王のテスト結果確認」と依頼してください。",
+      businessStopped: "完了を確認できず停止しました。テスト用の連携設定を確認してください。",
+      businessCancelled: "取り消しました。取込を開始していた場合は結果の確認が必要です。",
+      businessLogin: "自動ログイン",
+      businessPreflight: "対象を確認",
+      businessTransfer: "バックアップ・取込・書出し・内容照合",
+      businessSetup: "最初にコンシェルジュ設定で、テスト用の端末登録と準備済みテストCSVの指定を行ってください。実運用会社には取り込みません。",
       rootLabel: "D-CATSコンシェルジュ",
       stateWorking: "処理しています。少しお待ちください。",
       stateWaiting: "確認をお待ちしています。",
@@ -265,6 +275,16 @@
       backupCopyFailed: "コピーできませんでした。登録券を選択してコピーしてください。"
     },
     en: {
+      businessOffered: "I can run this test. Reply 'yes' to start, or 'cancel'.",
+      businessRunning: "Working in Sales King. Please wait.",
+      businessCompleted: "Verified: one test slip was exported from Sales King and matched to the source CSV.",
+      businessUnknown: "The outcome needs checking. Do not import again. Request test result verification.",
+      businessStopped: "Stopped before a verified completion. Check the test connection settings.",
+      businessCancelled: "Cancelled. An import already dispatched still requires result verification.",
+      businessLogin: "Automatic login",
+      businessPreflight: "Checking target",
+      businessTransfer: "Backup, import, export and content verification",
+      businessSetup: "Register the test device and select the prepared test CSV in Concierge settings first.",
       rootLabel: "D-CATS Concierge",
       stateWorking: "Processing. Please wait.",
       stateWaiting: "Waiting for your confirmation.",
@@ -481,6 +501,16 @@
       backupCopyFailed: "Copy failed. Select the ticket and copy it manually."
     },
     zh: {
+      businessOffered: "可以执行此测试。回复“执行”开始，或回复“取消”。",
+      businessRunning: "正在操作販売王，请稍候。",
+      businessCompleted: "核对完成：已从販売王导出1张测试凭证，并与原CSV核对一致。",
+      businessUnknown: "需要确认结果。请勿再次导入，请请求核对测试结果。",
+      businessStopped: "已停止，尚未确认完成。请检查测试连接设置。",
+      businessCancelled: "已取消。若已开始导入，仍需核对结果。",
+      businessLogin: "自动登录",
+      businessPreflight: "确认对象",
+      businessTransfer: "备份、导入、导出及内容核对",
+      businessSetup: "请先在礼宾设置中登记测试设备，并指定已准备好的测试CSV。",
       rootLabel: "D-CATS礼宾助手",
       stateWorking: "正在处理，请稍候。",
       stateWaiting: "正在等待您的确认。",
@@ -1773,19 +1803,10 @@
   }
   function renderBusinessFlow(value) {
     if (!aiAnswer || !value) return;
-    var en = activeLanguage() === "en", zh = activeLanguage() === "zh";
-    var labels = {
-      offered: en ? "I can run this test. Reply 'yes' to start, or 'cancel'." : zh ? "可以执行此测试。回复“执行”开始，或回复“取消”。" : "私がこのテストを行います。「やってほしい」と返信すると開始します。「キャンセル」で取り消せます。",
-      running: en ? "Working in Sales King. Please wait." : zh ? "正在操作販売王，请稍候。" : "販売王で処理しています。完了するまでお待ちください。",
-      completed: en ? "Verified: one test slip was exported from Sales King and matched to the source CSV." : zh ? "核对完成：已从販売王导出1张测试凭证，并与原CSV核对一致。" : "確認できました。販売王からテスト伝票1件を書き出し、取込元CSVとの一致を確認しました。",
-      outcome_unknown: en ? "The outcome needs checking. Do not import again. Request test result verification." : zh ? "需要确认结果。请勿再次导入，请请求核对测试结果。" : "結果の確認が必要です。再取込は行いません。「販売王のテスト結果確認」と依頼してください。",
-      stopped: en ? "Stopped before a verified completion. Check the test connection settings." : zh ? "已停止，尚未确认完成。请检查测试连接设置。" : "完了を確認できず停止しました。テスト用の連携設定を確認してください。",
-      cancelled: en ? "Cancelled. An import already dispatched still requires result verification." : zh ? "已取消。若已开始导入，仍需核对结果。" : "取り消しました。取込を開始していた場合は結果の確認が必要です。"
-    };
+    var labels = { offered: copy("businessOffered"), running: copy("businessRunning"), completed: copy("businessCompleted"),
+      outcome_unknown: copy("businessUnknown"), stopped: copy("businessStopped"), cancelled: copy("businessCancelled") };
     var details = [value.companyLabel, value.userLabel, value.targetLabel].filter(Boolean).join(" ／ ");
-    var stage = value.state === "running" ? (value.stage === "login" ? (en ? "Automatic login" : zh ? "自动登录" : "自動ログイン") :
-      value.stage === "preflight" ? (en ? "Checking target" : zh ? "确认对象" : "対象を確認") :
-      (en ? "Backup, import, export and content verification" : zh ? "备份、导入、导出及内容核对" : "バックアップ・取込・書出し・内容照合")) : "";
+    var stage = value.state === "running" ? copy(value.stage === "login" ? "businessLogin" : value.stage === "preflight" ? "businessPreflight" : "businessTransfer") : "";
     aiAnswer.textContent = [labels[value.state] || labels.stopped, details, stage].filter(Boolean).join("\n\n");
     aiAnswer.hidden = false;
     if (aiScreenButton) aiScreenButton.hidden = true;
@@ -1807,9 +1828,7 @@
     if (!direction) return;
     var record = reviewPreviewRecord, fileName = String(salesFileInput && salesFileInput.value || "").trim();
     if (!record || record.actor_id !== owner || !/^hanbaioh-sales-test-9\d{5}-[a-f0-9]{12}-55\.csv$/.test(fileName)) {
-      aiAnswer.textContent = activeLanguage() === "en" ? "Register the test device and select the prepared test CSV in Concierge settings first." :
-        activeLanguage() === "zh" ? "请先在礼宾设置中登记测试设备，并指定已准备好的测试CSV。" :
-        "最初にコンシェルジュ設定で、テスト用の端末登録と準備済みテストCSVの指定を行ってください。実運用会社には取り込みません。";
+      aiAnswer.textContent = copy("businessSetup");
       aiAnswer.hidden = false; return;
     }
     var flow = runtime.create({ record: record, fileName: fileName,
