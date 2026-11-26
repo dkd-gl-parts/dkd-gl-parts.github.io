@@ -54,6 +54,9 @@
   Object.assign(words.ja,{copyResults:'絞り込み結果をコピー',copyTitle:'販売価格設定 絞り込み結果',copyManufacturerPart:'メーカー品番',copyManufacturer:'メーカー',copyDone:'{n} 品番をコピーしました。LINEに貼り付けできます。',copyManual:'自動コピーできませんでした。以下の全文を選択してコピーし、LINEに貼り付けてください。',copySelect:'全文を選択'});
   Object.assign(words.en,{copyResults:'Copy filtered results',copyTitle:'Selling price filtered results',copyManufacturerPart:'Manufacturer part number',copyManufacturer:'Manufacturer',copyDone:'Copied {n} products. Paste into LINE.',copyManual:'Automatic copy was unavailable. Select and copy all text below, then paste into LINE.',copySelect:'Select all text'});
   Object.assign(words.zh,{copyResults:'复制筛选结果',copyTitle:'销售价格筛选结果',copyManufacturerPart:'制造商零件编号',copyManufacturer:'制造商',copyDone:'已复制 {n} 个商品，可粘贴到LINE。',copyManual:'无法自动复制。请选择并复制以下全文，然后粘贴到LINE。',copySelect:'选择全文'});
+  Object.assign(words.ja,{manualPrice:'価格を入力',useCostFloor:'原価下限を使う',withoutDks:'DKS参考単価なし'});
+  Object.assign(words.en,{manualPrice:'Enter price',useCostFloor:'Use cost floor',withoutDks:'No DKS reference'});
+  Object.assign(words.zh,{manualPrice:'输入价格',useCostFloor:'使用成本下限',withoutDks:'无DKS参考价'});
   function el(id){return document.getElementById(id);}
   function permitted(){return !!root.currentUser && root.canEditBasePrice() && root.canViewManufacturingCostMgmt() && (!root.canViewBasePrice||root.canViewBasePrice());}
   function owner(){return root.currentUser&&root.currentUser.id;}
@@ -64,7 +67,10 @@
   function registered(r){return r.state==='configured'||r.current_rank1_jpy!=null||Number(r.identity_configured_count)>0;}
   function hasPriceableCost(r){var cost=Number(r.cost_jpy);return hasCostItems(r)&&r.cost_jpy!=null&&Number.isSafeInteger(cost)&&cost>=0;}
   function loss(r){var sale=Number(r.current_rank1_jpy);return r.is_loss===true&&r.current_rank1_jpy!=null&&Number.isSafeInteger(sale)&&sale>=0&&r.cost_jpy!=null&&sale<Number(r.cost_jpy);}
-  function canPrice(r){return r.state==='ready'&&hasPriceableCost(r)&&Number(r.dks_price_jpy)>0&&(!registered(r)||loss(r));}
+  function canSetWithoutDks(r){return r.state==='dks_missing'&&!r.dks_price_jpy&&!registered(r)&&hasPriceableCost(r)&&Number.isSafeInteger(r.minimum_jpy)&&r.minimum_jpy>=0;}
+  function canEditPrice(r){return canSetWithoutDks(r)||(r.state==='ready'&&hasPriceableCost(r)&&Number(r.dks_price_jpy)>0&&(!registered(r)||loss(r)));}
+  function canPrice(r){return canEditPrice(r)&&(!canSetWithoutDks(r)||r.edited_jpy!=null);}
+  function priceFloor(r){return Math.max(100,Number(r.minimum_jpy));}
   function canFetch(r){return hasCostItems(r)&&!registered(r)&&!r.dks_price_jpy&&!['missing_product','kind_review','oem_review','identity_review'].includes(r.state);}
   function valid(){return permitted() && state.owner===owner();}
   async function rpc(action,payload){if(!valid())throw Error('session');var r=await root.sb.rpc('manage_sales_pricing_list',{action:action,payload:payload||{}});if(!valid())throw Error('session');if(r.error)throw r.error;return r.data;}
@@ -97,7 +103,7 @@
     var oldRows=state.rows,epoch=++state.epoch;lock(true);status(w('loading'));
     try{var runId=crypto.randomUUID();var result=await rpc('preview',{operation_id:runId,list_id:Number(id)});if(epoch!==state.epoch)return;
       state.listId=id;state.run=result.run_id;state.rows=result.rows||[];if(!keep){state.selected.clear();state.focused=null;state.detailOpen=false;}
-      if(preserveEdits)state.rows.forEach(function(r){var old=oldRows.find(function(o){return String(o.item_id)===String(r.item_id);});if(old&&canPrice(r)&&old.fingerprint===r.fingerprint&&Number.isSafeInteger(old.edited_jpy)&&old.edited_jpy>=Number(r.minimum_jpy)&&old.edited_jpy%100===0)r.edited_jpy=old.edited_jpy;});
+      if(preserveEdits)state.rows.forEach(function(r){var old=oldRows.find(function(o){return String(o.item_id)===String(r.item_id);});if(old&&canEditPrice(r)&&old.fingerprint===r.fingerprint&&Number.isSafeInteger(old.edited_jpy)&&old.edited_jpy>=priceFloor(r)&&old.edited_jpy%100===0)r.edited_jpy=old.edited_jpy;});
       state.selected=new Set(Array.from(state.selected).filter(function(k){return state.rows.some(function(r){return String(r.item_id)===k;});}));
       renderContent();if(filterValue!=null){el('spl-filter').value=filterValue;el('spl-query').value=queryValue||'';renderRows();}status('');
     }catch(e){if(epoch===state.epoch){state.run=null;state.rows=[];state.focused=null;state.detailOpen=false;el('spl-content').replaceChildren();el('spl-selection').replaceChildren();renderInspector();status(errorText(e),true);}}finally{if(epoch===state.epoch)lock(false);}
@@ -152,45 +158,52 @@
     if(el('spl-ec'))el('spl-ec').addEventListener('click',ecPreview);if(el('spl-ec-open'))el('spl-ec-open').addEventListener('click',function(){if(ecAllowed())root.enterRakutenPrice();});el('spl-history-button').addEventListener('click',history);renderRows();ecRender();
   }
   function selectVisible(on){if(state.busy||state.pending||!valid())return;filtered().forEach(function(r){if(on)state.selected.add(String(r.item_id));else state.selected.delete(String(r.item_id));});renderRows();}
-  function rowStatus(r){return registered(r)&&!canPrice(r)?'configured':!hasCostItems(r)&&['ready','cost_review','dks_missing'].includes(r.state)?componentNote(r):canPrice(r)&&r.cost_incomplete?'readyProvisional':r.state;}
+  function rowStatus(r){return registered(r)&&!canPrice(r)?'configured':!hasCostItems(r)&&['ready','cost_review','dks_missing'].includes(r.state)?componentNote(r):r.state==='ready'&&canPrice(r)&&r.cost_incomplete?'readyProvisional':r.state;}
   function badge(r){return '<span class="spl-badge spl-'+esc(canPrice(r)?(r.cost_incomplete?'review':'ready'):registered(r)?'configured':'review')+'">'+esc(w(rowStatus(r)))+'</span>';}
   function focusPart(k){if(state.busy||state.pending||!valid()||!filtered().some(function(r){return String(r.item_id)===k;}))return;state.focused=k;state.detailOpen=true;renderInspector();var host=el('spl-rows');host.querySelectorAll('[data-spl-row]').forEach(function(n){n.classList.toggle('spl-active',n.dataset.splRow===k);});host.querySelectorAll('[data-spl-detail]').forEach(function(n){n.setAttribute('aria-pressed',String(n.dataset.splDetail===k));});if(root.matchMedia&&root.matchMedia('(max-width: 900px)').matches)el('spl-inspector').focus();}
   async function openIndividual(k){
     if(state.busy||state.pending||!valid())return;var r=state.rows.find(function(row){return String(row.item_id)===k;});if(!r||r.state==='missing_product'||!r.dkd_shohin_id)return;
     var epoch=state.epoch;lock(true);try{await root.openSalesPricingListProduct(r.dkd_shohin_id,r.product_kind||'rebuilt');}catch(e){if(valid()&&epoch===state.epoch)status(errorText(e),true);}finally{if(valid()&&epoch===state.epoch)lock(false);}
   }
-  function editPrice(r,value){if(state.busy||state.pending||!valid()||!canPrice(r))return;r.edited_jpy=Number(value);document.querySelectorAll('[data-spl-price="'+r.item_id+'"],[data-spl-inspect-price="'+r.item_id+'"]').forEach(function(n){if(n.value!==value)n.value=value;});document.querySelectorAll('[data-spl-margin="'+r.item_id+'"]').forEach(function(n){n.textContent=profit(r,r.edited_jpy);});document.querySelectorAll('[data-spl-planned="'+r.item_id+'"]').forEach(function(n){n.textContent=money(r.edited_jpy);});}
+  function editPrice(r,value){if(state.busy||state.pending||!valid()||!canEditPrice(r))return;r.edited_jpy=value===''&&canSetWithoutDks(r)?null:Number(value);document.querySelectorAll('[data-spl-price="'+r.item_id+'"],[data-spl-inspect-price="'+r.item_id+'"]').forEach(function(n){if(n.value!==value)n.value=value;});document.querySelectorAll('[data-spl-margin="'+r.item_id+'"]').forEach(function(n){n.textContent=profit(r,r.edited_jpy);});document.querySelectorAll('[data-spl-planned="'+r.item_id+'"]').forEach(function(n){n.textContent=money(r.edited_jpy);});if(canSetWithoutDks(r))renderSelection();}
   function renderInspector(){
     var host=el('spl-inspector');if(!host)return;var workspace=el('sales-pricing-lists').querySelector('.spl-workspace');workspace.classList.toggle('spl-detail-open',state.detailOpen);
     if(!valid()){host.replaceChildren();return;}var r=filtered().find(function(row){return String(row.item_id)===state.focused;});
     if(!r){host.innerHTML='<p class="spl-detail-placeholder">'+esc(w('detailHelp'))+'</p>';return;}
-    var k=String(r.item_id),p=r.edited_jpy==null?r.suggested_jpy:r.edited_jpy;
-    host.innerHTML='<button type="button" class="spl-detail-back btn-sm-edit" id="spl-detail-back">'+esc(w('backToList'))+'</button><div class="spl-detail-body"><div class="spl-detail-heading"><h2>'+esc(r.genuine_part_number||r.manufacturer_part_number||'—')+'</h2><p>'+esc([r.genuine_part_number&&r.manufacturer_part_number,r.manufacturer].filter(Boolean).join(' · '))+'</p>'+badge(r)+'</div><h3>'+esc(w('details'))+'</h3><dl class="spl-price-facts"><div><dt>'+esc(w('cost'))+'</dt><dd>'+esc(money(r.cost_jpy))+'<small>'+esc(w('floor'))+' '+esc(money(r.minimum_jpy))+'</small></dd></div><div><dt>'+esc(w('dks'))+'</dt><dd>'+esc(money(r.dks_price_jpy))+'<small>'+esc(r.dks_source?w(r.dks_source==='strain3'?'strain':'registered'):'')+' '+esc((r.dks_observed_at||'').slice(0,10))+'</small><small>'+esc(w('target'))+' <span data-spl-planned="'+esc(k)+'">'+esc(money(canPrice(r)?p:null))+'</span>'+'</small></dd></div><div><dt>'+esc(w('ownPrice'))+'<small>'+esc(w('net'))+'</small></dt><dd>'+esc(r.current_rank1_jpy==null?w('notSet'):existingPrice(r))+(loss(r)?'<small class="spl-loss">'+esc(w('lossUpdate'))+'</small>':'')+(Number(r.identity_configured_count)>0&&r.current_rank1_jpy==null?'<small>'+esc(w('relatedConfigured'))+'</small>':'')+'</dd></div></dl>'+
-      (canPrice(r)?'<div class="spl-detail-proposal"><label for="spl-detail-price">'+esc(w('priceEdit'))+'</label><input id="spl-detail-price" type="number" min="'+esc(r.minimum_jpy)+'" step="100" data-spl-inspect-price="'+esc(k)+'" value="'+esc(p)+'"><small data-spl-margin="'+esc(k)+'">'+esc(profit(r,p))+'</small></div>':'')+
+    var k=String(r.item_id),p=r.edited_jpy==null?r.suggested_jpy:r.edited_jpy,withoutDks=canSetWithoutDks(r);
+    var inputHtml=canEditPrice(r)?'<input id="spl-detail-price" type="number" min="'+esc(priceFloor(r))+'" step="100" data-spl-inspect-price="'+esc(k)+'" value="'+esc(p??'')+'"'+(withoutDks?' placeholder="'+esc(w('manualPrice'))+'"':'')+'>':'';
+    var marginHtml='<small data-spl-margin="'+esc(k)+'">'+esc(profit(r,p))+'</small>';
+    var ownPrice=withoutDks?'<div><dt><label for="spl-detail-price">'+esc(w('proposal'))+'</label><button type="button" class="spl-floor-choice" data-spl-use-cost-floor>'+esc(w('useCostFloor'))+'</button></dt><dd>'+inputHtml+'</dd></div>':'<div><dt>'+esc(w('ownPrice'))+'<small>'+esc(w('net'))+'</small></dt><dd>'+esc(r.current_rank1_jpy==null?w('notSet'):existingPrice(r))+(loss(r)?'<small class="spl-loss">'+esc(w('lossUpdate'))+'</small>':'')+(Number(r.identity_configured_count)>0&&r.current_rank1_jpy==null?'<small>'+esc(w('relatedConfigured'))+'</small>':'')+'</dd></div>';
+    host.innerHTML='<button type="button" class="spl-detail-back btn-sm-edit" id="spl-detail-back">'+esc(w('backToList'))+'</button><div class="spl-detail-body"><div class="spl-detail-heading"><h2>'+esc(r.genuine_part_number||r.manufacturer_part_number||'—')+'</h2><p>'+esc([r.genuine_part_number&&r.manufacturer_part_number,r.manufacturer].filter(Boolean).join(' · '))+'</p>'+badge(r)+'</div><h3>'+esc(w('details'))+'</h3><dl class="spl-price-facts"><div><dt>'+esc(w('cost'))+'</dt><dd>'+esc(money(r.cost_jpy))+'<small>'+esc(w('floor'))+' '+esc(money(r.minimum_jpy))+'</small></dd></div><div><dt>'+esc(w('dks'))+'</dt><dd>'+esc(money(r.dks_price_jpy))+'<small>'+esc(r.dks_source?w(r.dks_source==='strain3'?'strain':'registered'):'')+' '+esc((r.dks_observed_at||'').slice(0,10))+'</small>'+(withoutDks?marginHtml:'<small>'+esc(w('target'))+' <span data-spl-planned="'+esc(k)+'">'+esc(money(canPrice(r)?p:null))+'</span>'+'</small>')+'</dd></div>'+ownPrice+'</dl>'+
+      (!withoutDks&&inputHtml?'<div class="spl-detail-proposal"><label for="spl-detail-price">'+esc(w('priceEdit'))+'</label>'+inputHtml+marginHtml+'</div>':'')+
       '<details class="spl-detail-section" open><summary>'+esc(w('ec'))+'</summary><p>'+esc(r.ec_price_jpy?money(r.ec_price_jpy)+' · '+w(r.ec_tax_basis==='exclusive'?'taxExclusive':r.ec_tax_basis==='inclusive'?'taxInclusive':'taxUnknown'):w('noEc'))+'</p><p class="spl-muted">'+esc(r.ec_seller||'')+' '+esc((r.ec_observed_at||'').slice(0,10))+'</p><p class="spl-muted">'+esc(w('ecSeparate'))+'</p></details>'+
       '<details class="spl-detail-section" open><summary>'+esc(w('components'))+'</summary><p>'+esc(w('componentRegistered'))+' '+esc(registeredComponentCount(r)==null?'—':registeredComponentCount(r))+'</p>'+(componentNote(r)?'<p class="spl-muted">'+esc(w(componentNote(r)))+'</p>':'')+(Number(r.identity_count)>1?'<p class="spl-muted">'+esc(w('chosenProduct'))+' '+esc(r.dkd_shohin_id)+'</p>':'')+'</details></div>'+
       (r.state!=='missing_product'&&r.dkd_shohin_id?'<button type="button" class="btn-sm-edit spl-detail-one" data-spl-inspect-one="'+esc(k)+'">'+esc(w('one'))+'</button>':'');
     host.querySelectorAll('button,input').forEach(function(n){n.disabled=state.busy||!!state.pending;});
     el('spl-detail-back').addEventListener('click',function(){if(state.busy||state.pending||!valid())return;state.detailOpen=false;workspace.classList.remove('spl-detail-open');var n=el('spl-rows').querySelector('[data-spl-detail="'+k+'"]');if(n)n.focus();});
     var input=host.querySelector('[data-spl-inspect-price]');if(input)input.addEventListener('input',function(){editPrice(r,input.value);});var one=host.querySelector('[data-spl-inspect-one]');if(one)one.addEventListener('click',function(){openIndividual(k);});
+    var useFloor=host.querySelector('[data-spl-use-cost-floor]');if(useFloor)useFloor.addEventListener('click',function(){editPrice(r,String(priceFloor(r)));input.focus();});
   }
-  function renderRows(){
-    var host=el('spl-rows');if(!host||!valid())return;
+  function renderSelection(){
     el('spl-summary').textContent=state.rows.length+' '+w('count')+' · '+w('ready')+' '+state.rows.filter(canPrice).length+' · '+w('configured')+' '+state.rows.filter(registered).length+' · '+w('total')+' '+state.selected.size;
     var selected=state.rows.filter(function(r){return state.selected.has(String(r.item_id));}),eligible=selected.filter(canPrice),partial=eligible.filter(function(r){return r.cost_incomplete;}).length;
     el('spl-selected-count').textContent=w('selectCount')+' '+selected.length+' · '+w('priceCount')+' '+eligible.length+(selected.length>eligible.length?' · '+w('excluded')+' '+(selected.length-eligible.length):'')+(partial?' · '+w('partialCount')+' '+partial:'');
     el('spl-bulk').disabled=state.busy||!!state.pending||!eligible.length;
     el('spl-content').querySelectorAll('[data-spl-filter]').forEach(function(n){var f=n.dataset.splFilter,c=state.rows.filter(function(r){return matchesFilter(r,f);}).length;n.setAttribute('aria-pressed',String(el('spl-filter').value===f));n.querySelector('strong').textContent=c;});
+  }
+  function renderRows(){
+    var host=el('spl-rows');if(!host||!valid())return;
+    renderSelection();
     updateCopyButton();var copyStatus=el('spl-copy-status');if(copyStatus)copyStatus.textContent='';
     var rows=filtered();if(!rows.some(function(r){return String(r.item_id)===state.focused;})){state.focused=rows.length?String(rows[0].item_id):null;state.detailOpen=false;}renderInspector();
     if(!rows.length){host.innerHTML='<p class="spl-empty">'+esc(w(state.rows.length?'noMatch':'empty'))+'</p>';return;}
     var keys=['part','ownPrice','proposal','status'];
     host.innerHTML='<table class="spl-table"><thead><tr><th><label class="spl-check"><input type="checkbox" data-spl-visible-all aria-label="'+esc(w('all'))+'" '+(rows.every(function(r){return state.selected.has(String(r.item_id));})?'checked ':'')+(state.busy||state.pending?'disabled':'')+'><span class="spl-mobile-all">'+esc(w('all'))+'</span></label></th>'+keys.map(function(k){return '<th>'+esc(w(k))+(k==='ownPrice'?'<small>'+esc(w('net'))+'</small>':k==='proposal'?'<small>'+esc(w('taxExclusive'))+'</small>':'')+'</th>';}).join('')+'</tr></thead><tbody>'+rows.map(function(r){
-      var k=String(r.item_id),priceable=canPrice(r),p=r.edited_jpy==null?r.suggested_jpy:r.edited_jpy;
+      var k=String(r.item_id),priceable=canEditPrice(r),p=r.edited_jpy==null?r.suggested_jpy:r.edited_jpy;
       return '<tr data-spl-row="'+esc(k)+'" class="'+(state.focused===k?'spl-active ':'')+(state.selected.has(k)?'spl-checked':'')+'"><td><label class="spl-check"><input type="checkbox" data-spl-select="'+esc(k)+'" aria-label="'+esc(r.genuine_part_number||r.manufacturer_part_number||w('part'))+'" '+(state.selected.has(k)?'checked ':'')+(state.busy||state.pending?'disabled':'')+'></label></td>'+
       '<td data-label="'+esc(w('part'))+'"><button type="button" class="spl-part" data-spl-detail="'+esc(k)+'" aria-pressed="'+(state.focused===k)+'" aria-controls="spl-inspector" '+(state.busy||state.pending?'disabled':'')+'><strong>'+esc(r.genuine_part_number||r.manufacturer_part_number||'—')+'</strong>'+(r.genuine_part_number&&r.manufacturer_part_number?'<small>'+esc(r.manufacturer_part_number)+'</small>':'')+(r.manufacturer?'<small>'+esc(r.manufacturer)+'</small>':'')+'</button></td>'+
       '<td data-label="'+esc(w('ownPrice'))+'">'+esc(existingPrice(r))+'</td>'+
-      '<td data-label="'+esc(w('proposal'))+'">'+(priceable?'<input type="number" min="'+esc(r.minimum_jpy)+'" step="100" data-spl-price="'+esc(k)+'" value="'+esc(p)+'" aria-label="'+esc(w('proposal')+' '+(r.genuine_part_number||r.manufacturer_part_number||''))+'" '+(state.busy||state.pending?'disabled':'')+'>':'—')+'</td>'+
+      '<td data-label="'+esc(w('proposal'))+'">'+(priceable?'<input type="number" min="'+esc(priceFloor(r))+'" step="100" data-spl-price="'+esc(k)+'" value="'+esc(p??'')+'"'+(canSetWithoutDks(r)?' placeholder="'+esc(w('manualPrice'))+'"':'')+' aria-label="'+esc(w('proposal')+' '+(r.genuine_part_number||r.manufacturer_part_number||''))+'" '+(state.busy||state.pending?'disabled':'')+'>':'—')+'</td>'+
       '<td data-label="'+esc(w('status'))+'"><div class="spl-row-state">'+badge(r)+(r.state!=='missing_product'&&r.dkd_shohin_id?'<button class="btn-sm-edit spl-row-one" type="button" aria-label="'+esc(w('one')+' '+(r.genuine_part_number||r.manufacturer_part_number||''))+'" data-spl-one="'+esc(k)+'" '+(state.busy||state.pending?'disabled':'')+'>'+esc(w('shortOne'))+'</button>':'')+'</div></td></tr>';
     }).join('')+'</tbody></table>';
     var all=host.querySelector('[data-spl-visible-all]'),checked=rows.filter(function(r){return state.selected.has(String(r.item_id));}).length;
@@ -200,7 +213,6 @@
     host.querySelectorAll('[data-spl-row]').forEach(function(n){n.addEventListener('click',function(e){if(e.target.closest('button,input,select,textarea,a,label'))return;focusPart(n.dataset.splRow);});});
     host.querySelectorAll('[data-spl-detail]').forEach(function(n){n.addEventListener('click',function(){focusPart(n.dataset.splDetail);});});
     host.querySelectorAll('[data-spl-one]').forEach(function(n){n.addEventListener('click',function(){openIndividual(n.dataset.splOne);});});
-    if(el('spl-bulk'))el('spl-bulk').disabled=state.busy||!!state.pending||!state.rows.some(function(r){return canPrice(r)&&state.selected.has(String(r.item_id));});
   }
   function profit(r,p){return p>0?money(p-r.cost_jpy)+' / '+((p-r.cost_jpy)/p*100).toFixed(1)+'%'+(r.cost_incomplete===true?' · '+w('provisional'):''):'—';}
   function dialog(title,body,saveKey){
@@ -213,11 +225,15 @@
   function confirmPrices(rows,bulk){
     if(state.busy||state.pending||!valid())return;if(!rows.length){status(w('noSelection'),true);return;}
     if(rows.some(function(r){return !canPrice(r);})){status(w('stale'),true);return;}
-    var items=rows.map(function(r){return {item_id:r.item_id,price_jpy:r.edited_jpy==null?Number(r.suggested_jpy):r.edited_jpy};});
-    if(items.some(function(p,i){return !Number.isSafeInteger(p.price_jpy)||p.price_jpy>2147483647||p.price_jpy<Number(rows[i].minimum_jpy)||p.price_jpy%100!==0;})){status(w('invalid'),true);return;}
+    var items=rows.map(function(r){
+      var item={item_id:r.item_id,price_jpy:r.edited_jpy==null?Number(r.suggested_jpy):r.edited_jpy};
+      if(canSetWithoutDks(r))item.without_reference=true;
+      return item;
+    });
+    if(items.some(function(p,i){return !Number.isSafeInteger(p.price_jpy)||p.price_jpy>2147483647||p.price_jpy<priceFloor(rows[i])||p.price_jpy%100!==0;})){status(w('invalid'),true);return;}
     var run=state.run,selectedList=state.listId;
     if(bulk&&state.selected.size>rows.length){status(w('excluded')+' '+(state.selected.size-rows.length)+' '+w('count')+' / '+w('ready')+' '+rows.length+' '+w('count'));}
-    var d=dialog(w('confirm'),'<p>'+esc(w('confirmText'))+'</p><p>'+esc(w('gHelp'))+'</p><p><strong>'+esc((state.lists.find(function(l){return String(l.id)===selectedList;})||{}).list_name||'')+' · '+items.length+' '+esc(w('count'))+'</strong></p><ul class="spl-confirm-items">'+rows.map(function(r,i){return '<li><span>'+esc(r.genuine_part_number||r.manufacturer_part_number)+(r.genuine_part_number&&r.manufacturer_part_number?'<small>'+esc(r.manufacturer_part_number)+'</small>':'')+(r.cost_incomplete===true?'<small>'+esc(w(componentNote(r)||'costPartial'))+'</small>':'')+'</span><strong>'+esc(money(items[i].price_jpy))+'</strong></li>';}).join('')+'</ul>','save');
+    var d=dialog(w('confirm'),'<p>'+esc(w('confirmText'))+'</p><p>'+esc(w('gHelp'))+'</p><p><strong>'+esc((state.lists.find(function(l){return String(l.id)===selectedList;})||{}).list_name||'')+' · '+items.length+' '+esc(w('count'))+'</strong></p><ul class="spl-confirm-items">'+rows.map(function(r,i){return '<li><span>'+esc(r.genuine_part_number||r.manufacturer_part_number)+(r.genuine_part_number&&r.manufacturer_part_number?'<small>'+esc(r.manufacturer_part_number)+'</small>':'')+(items[i].without_reference?'<small>'+esc(w('withoutDks'))+'</small>':'')+(r.cost_incomplete===true?'<small>'+esc(w(componentNote(r)||'costPartial'))+'</small>':'')+'</span><strong>'+esc(money(items[i].price_jpy))+'</strong></li>';}).join('')+'</ul>','save');
     if(!d)return;
     d.querySelector('[data-spl-confirm]').addEventListener('click',function(){if(state.busy||!valid()||run!==state.run||selectedList!==el('spl-list').value){el('spl-dialog-error').textContent=w('stale');return;}state.pending={operation_id:run,items:items};d.close();commit();},{once:true});
   }
