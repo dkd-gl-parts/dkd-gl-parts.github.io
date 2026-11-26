@@ -1,0 +1,156 @@
+name: D-CATS repeated login production smoke
+on:
+  push:
+    branches:
+      - codex/relogin-id-production-verification-20261126
+    paths:
+      - .github/workflows/relogin-id-production-smoke.yml
+permissions: {}
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - name: Check the published app with fixture authentication
+        env:
+          LOGIN_EXPECTED_MODULE: "f9fd46923c5930b8f0b24e912e23db4e3d95ec302bd412d948b4f43d773d4e3a"
+        run: |
+          npm install --prefix "$RUNNER_TEMP/relogin-id-qa" --no-save --ignore-scripts --no-audit --no-fund playwright-core@1.56.1
+          export LOGIN_PLAYWRIGHT_MODULE="$RUNNER_TEMP/relogin-id-qa/node_modules/playwright-core"
+          export LOGIN_BROWSER_PATH="$(command -v google-chrome)"
+          node <<'NODE'
+          const assert = require("node:assert/strict");
+          const { createHash } = require("node:crypto");
+          const { chromium } = require(process.env.LOGIN_PLAYWRIGHT_MODULE);
+          const origin = "https://dcats.daiko-denki.co.jp";
+          const storageKey = "dcats.login.remembered-user-id";
+          
+          async function fits(page, selector) {
+            const result=await page.locator(selector).evaluateAll(nodes=>nodes.map(el=>[
+              el.scrollWidth-el.clientWidth, el.scrollHeight-el.clientHeight
+            ]));
+            assert.ok(result.length && result.every(([x,y])=>x<=1&&y<=1),JSON.stringify(result));
+          }
+          
+          async function testLogout(browser, viewport) {
+            const context = await browser.newContext({ viewport, locale: "ja-JP", serviceWorkers: "block" });
+            const backendHost = "jqoeqximtwfpqwzngutj.supabase.co";
+            const user = {
+              id: "279a117b-65c1-4f3c-90b6-cfa9a43a9515",
+              email: "logout-fixture@example.test",
+              aud: "authenticated",
+              role: "authenticated",
+              email_confirmed_at: "2026-01-01T00:00:00Z"
+            };
+            const encode = value => Buffer.from(JSON.stringify(value)).toString("base64url");
+            const session = {
+              access_token: `${encode({ alg: "HS256", typ: "JWT" })}.${encode({ sub: user.id, exp: Math.floor(Date.now() / 1000) + 3600 })}.fixture`,
+              refresh_token: "fixture-refresh-token",
+              expires_in: 3600,
+              token_type: "bearer",
+              user
+            };
+            const profile = { ...user, name: "QA fixture", role: "price_viewer", group_name: "public", status: "active", language: "ja" };
+            const authActions = [];
+            try {
+              await context.route("**/*", async route => {
+                const url = new URL(route.request().url());
+                if (url.hostname === backendHost) {
+                  const headers = {
+                    "access-control-allow-origin": "*",
+                    "access-control-allow-headers": "*",
+                    "access-control-allow-methods": "GET, POST, OPTIONS"
+                  };
+                  if (route.request().method() === "OPTIONS") return route.fulfill({ status: 204, headers });
+                  const reply = data => route.fulfill({ headers, json: data });
+                  switch (url.pathname) {
+                    case "/auth/v1/token": authActions.push("login"); return reply(session);
+                    case "/auth/v1/logout": authActions.push("logout"); return route.fulfill({ status: 204, headers });
+                    case "/auth/v1/user": return reply(user);
+                    case "/rest/v1/profiles": return reply(profile);
+                    default: return reply([]);
+                  }
+                }
+                if (url.origin !== origin || route.request().method() !== "GET") return route.abort();
+                if (url.pathname === "/" || /\.(js|mjs|css|json|png|svg|webp|jpg|ico|woff2|webmanifest)$/.test(url.pathname)) return route.continue();
+                return route.abort();
+              });
+              const page = await context.newPage();
+              const errors = [];
+              page.on("pageerror", error => errors.push(error.message));
+              await page.goto(origin);
+              const id = page.locator("#login-email");
+              const pw = page.locator("#login-password");
+              const remember = page.locator("#remember-login-id");
+              const awaitInput = value => page.waitForFunction(expected => document.getElementById("login-email").value === expected, value);
+              const scenarios = [
+                { setChoice: true, shouldSave: true, keyboard: false },
+                { shouldSave: true, keyboard: true },
+                { shouldSave: true, keyboard: false },
+                { setChoice: false, shouldSave: false, keyboard: false }
+              ];
+              for (const { setChoice, shouldSave, keyboard } of scenarios) {
+                const firstLogin = setChoice === true;
+                if (firstLogin) {
+                  await remember.check();
+                  await id.fill(user.email);
+                } else {
+                  assert.equal(await id.inputValue(),user.email,"The next login must already have the saved ID");
+                  assert.equal(await remember.isChecked(),true,"The preference must still be enabled");
+                }
+                if (setChoice === false) await remember.uncheck();
+                await pw.fill("fixture-only-password");
+                if (keyboard) await pw.press("Enter");
+                else await page.locator("#btn-login").click();
+                const signOut = page.locator("#btn-logout-menu");
+                await signOut.waitFor({ timeout: 15000 });
+                assert.equal(await id.inputValue(), "", "The real menu transition must reset the ID field");
+                assert.equal(await remember.isChecked(), shouldSave, "The menu reset must preserve the opted-in preference");
+                const dismissInstall = page.locator("#btn-install-dialog-close");
+                if (await dismissInstall.isVisible()) await dismissInstall.click();
+                try {
+                  await signOut.click({ timeout: 5000 });
+                } catch (error) {
+                  if (!await dismissInstall.isVisible()) throw error;
+                  await dismissInstall.click();
+                  await signOut.click();
+                }
+                await id.waitFor({ timeout: 15000 });
+                await awaitInput(shouldSave ? user.email : "");
+                assert.equal(await remember.isChecked(), shouldSave);
+                assert.equal(await pw.inputValue(), "");
+                assert.equal(await page.evaluate(key => localStorage.getItem(key), storageKey), shouldSave ? user.email : null);
+              }
+              await fits(page, "html, #screen-login, .login-form-panel, .login-fields, .login-preferences");
+              assert.deepEqual(authActions, scenarios.flatMap(() => ["login", "logout"]));
+              assert.deepEqual(errors, []);
+              console.log(`${viewport.width}x${viewport.height}: three consecutive sign-outs preserve the opted-in ID and manual opt-out clears it`);
+            } finally {
+              await context.close();
+            }
+          }
+          
+          
+          (async () => {
+            let ready = false;
+            for (let attempt = 0; attempt < 10; attempt++) {
+              const [html, script] = await Promise.all([
+                fetch(origin,{cache:"no-cache"}).then(r => r.text()),
+                fetch(origin + "/assets/login/remember-login-id.mjs?v=3",{cache:"no-cache"}).then(r => r.text())
+              ]);
+              ready = html.includes("assets/login/remember-login-id.mjs?v=3") &&
+                createHash("sha256").update(script).digest("hex") === process.env.LOGIN_EXPECTED_MODULE;
+              if (ready) break;
+              await new Promise(resolve => setTimeout(resolve, 10000));
+            }
+            assert.ok(ready, "The fixed production asset must be published before browser QA");
+            const browser = await chromium.launch({ executablePath: process.env.LOGIN_BROWSER_PATH });
+            try {
+              for (const viewport of [{ width: 1366, height: 768 }, { width: 1024, height: 600 }, { width: 320, height: 568 }]) {
+                await testLogout(browser, viewport);
+              }
+            } finally {
+              await browser.close();
+            }
+          })().catch(error => { console.error(error); process.exitCode = 1; });
+          NODE
