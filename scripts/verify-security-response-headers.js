@@ -61,8 +61,8 @@ for (const feature of ["microphone", "geolocation", "payment", "usb"]) {
 }
 
 // The order toolbar link must resolve in both a source checkout and the static deployment.
-const helpLink = html.match(/<a class="sales-order-help-link" href="(assets\/help\/fax-order\.html)\?v=\d+" target="_blank" rel="noopener noreferrer"[^>]*>/);
-expect(helpLink, "The FAX order help must open a versioned, same-origin document in a separate tab");
+const helpLink = html.match(/<a class="sales-order-help-link" id="sales-order-fax-help" data-fax-help-section="orders" href="(assets\/help\/fax-order\.html)\?v=\d+" target="_blank" rel="noopener noreferrer"[^>]*>/);
+expect(helpLink, "The FAX order help must open a versioned, same-origin document in a secondary window");
 const helpPath = path.join(root, helpLink[1]);
 const help = fs.readFileSync(helpPath, "utf8");
 const helpStyle = help.match(/<link rel="stylesheet" href="(fax-order\.css)\?v=\d+">/);

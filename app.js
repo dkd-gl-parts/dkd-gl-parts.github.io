@@ -478,6 +478,7 @@ var TRANSLATIONS = {
     claim_case_mgmt_title: "受付管理",
     claim_case_mgmt_desc: "連絡メモ・問い合わせ・クレームを受け付け、必要に応じて代替対応へ進みます。",
     sales_order_mgmt_title: "受注・出荷管理",
+    fax_order_help_popup_blocked: "ヘルプの別ウィンドウを開けませんでした。ブラウザでこのサイトのポップアップを許可して、もう一度［ヘルプ］を押してください。",
     sales_order_internal_print_timing: "受注書（出荷指示書）は、保証書などと一緒に印刷時に発行します。",
     sales_order_documents_queued: "受注書を含む{n}件の帳票を印刷待ちに登録しました。",
     sales_order_cancel_after_picking: "ピッキング後の受注取消",
@@ -3479,6 +3480,7 @@ var TRANSLATIONS = {
     claim_case_mgmt_title: "Reception management",
     claim_case_mgmt_desc: "Record customer contacts and inquiries, then continue to replacement handling when needed.",
     sales_order_mgmt_title: "Orders / Shipping",
+    fax_order_help_popup_blocked: "The help window could not be opened. Allow pop-ups for this site, then select Help again.",
     sales_order_internal_print_timing: "The order / shipment instruction is issued with the warranty and other documents when printing.",
     sales_order_documents_queued: "Queued {n} documents, including the order / shipment instruction, for printing.",
     sales_order_cancel_after_picking: "Cancel after picking",
@@ -6424,6 +6426,7 @@ var TRANSLATIONS = {
     claim_case_mgmt_title: "受理管理",
     claim_case_mgmt_desc: "记录客户联系、咨询与投诉，并在需要时转入替换处理。",
     sales_order_mgmt_title: "订单・出货管理",
+    fax_order_help_popup_blocked: "无法打开帮助窗口。请允许此网站弹出窗口，然后重新点击帮助。",
     sales_order_internal_print_timing: "订单（出货指示书）将在打印时与保修书等一起签发。",
     sales_order_documents_queued: "已将包含订单在内的{n}份单据加入打印队列。",
     sales_order_cancel_after_picking: "拣货后取消订单",
@@ -9133,7 +9136,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1398";
+var APP_VERSION       = "v1.1.1399";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -17779,6 +17782,45 @@ async function checkSalesOrderPrintReadiness() {
       salesOrderPrintReadinessTimer = setTimeout(checkSalesOrderPrintReadiness, 30000);
     }
   }
+}
+
+var faxOrderHelpWindow = null;
+
+function faxOrderHelpSection(link) {
+  var section = link.dataset.faxHelpSection;
+  if (section !== "orders") return section;
+  if (document.querySelector("#sales-order-b2-import:not([hidden])")) return "dispatch";
+  var activeTab = document.querySelector("#sales-order-detail .sales-order-detail-nav [aria-selected=true]");
+  var view = activeTab && activeTab.dataset.salesOrderDetailView;
+  if (view === "fulfillment") return "dispatch";
+  if (view === "accounting") return "export";
+  return "overview";
+}
+
+function openFaxOrderHelp(event) {
+  var link = event.target.closest("a[data-fax-help-section]");
+  if (!link || event.defaultPrevented || event.button !== 0 || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+  event.preventDefault();
+  var url = new URL(document.getElementById("sales-order-fax-help").href);
+  url.hash = faxOrderHelpSection(link);
+
+  if (!faxOrderHelpWindow || faxOrderHelpWindow.closed) {
+    faxOrderHelpWindow = window.open("", "_blank", "popup,width=740,height=810,resizable=yes,scrollbars=yes");
+    if (!faxOrderHelpWindow) {
+      window.alert(t("fax_order_help_popup_blocked"));
+      return;
+    }
+    faxOrderHelpWindow.opener = null;
+  }
+
+  // Preserve the reading position if the current chapter is already open.
+  var currentUrl;
+  try { currentUrl = new URL(faxOrderHelpWindow.location.href); } catch {}
+  if (!currentUrl || currentUrl.origin !== url.origin || currentUrl.search !== url.search || currentUrl.hash !== url.hash ||
+      currentUrl.pathname.replace(/\.html$/, "") !== url.pathname.replace(/\.html$/, "")) {
+    faxOrderHelpWindow.location.replace(url.href);
+  }
+  faxOrderHelpWindow.focus();
 }
 
 async function enterSalesOrderMgmt(options) {
@@ -62118,6 +62160,7 @@ document.getElementById("sales-order-b2-import-guide-overlay").addEventListener(
 document.getElementById("sales-order-accounting-export").addEventListener("click", openSalesAccountingExport);
 document.getElementById("sales-order-business-workspace-open").addEventListener("click", openDcatsBusinessWorkspace);
 document.getElementById("sales-order-postal-settings-open").addEventListener("click", openCustomerOrderPostalSettings);
+document.addEventListener("click", openFaxOrderHelp);
 document.querySelectorAll("#sales-order-data-actions button").forEach(function(button) {
   button.addEventListener("click", function() {
     var menu = document.getElementById("sales-order-data-actions");

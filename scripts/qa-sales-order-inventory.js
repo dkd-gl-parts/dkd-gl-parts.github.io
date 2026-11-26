@@ -1,12 +1,54 @@
 "use strict";
 const fs=require("node:fs"),path=require("node:path"),http=require("node:http"),assert=require("node:assert/strict"),acorn=require("acorn");
 const root=path.resolve(__dirname,"..");
+
+function faxHelpFixtures(fn) {
+ const read=file=>fs.readFileSync(path.join(root,file),"utf8");
+ const link=read("index.html").match(/<a class="sales-order-help-link" id="sales-order-fax-help"[^>]*>[^<]*<\/a>/);
+ assert(link,"The real order toolbar help link is required");
+ return {
+  "/fax-help-test":{type:"text/html",body:'<!doctype html><meta charset="utf-8">'+link[0]+'<input id="draft" aria-label="Draft"><div id="sales-order-detail"><nav class="sales-order-detail-nav"><button aria-selected="false" data-sales-order-detail-view="accounting">Accounting</button></nav></div><script src="/fax-help-test.js"></script>'},
+  "/fax-help-test.js":{type:"application/javascript",body:[
+   'var faxOrderHelpWindow = null;',
+   fn("faxOrderHelpSection"),fn("openFaxOrderHelp"),
+   'document.addEventListener("click", openFaxOrderHelp);',
+   'document.querySelector(".sales-order-detail-nav button").addEventListener("click", function () { this.setAttribute("aria-selected", "true"); });'
+  ].join("\n")},
+  "/assets/help/fax-order.html":{type:"text/html",body:read("assets/help/fax-order.html")},
+  "/assets/help/fax-order.css":{type:"text/css",body:read("assets/help/fax-order.css")}
+ };
+}
+async function verifyFaxHelpWindow(browser, base) {
+ const context=await browser.newContext({viewport:null});
+ try {
+  const work=await context.newPage();
+  await work.goto(base+"/fax-help-test");
+  await work.locator("#draft").fill("unsubmitted order text");
+  const [help]=await Promise.all([context.waitForEvent("page"),work.locator("#sales-order-fax-help").click()]);
+  await help.waitForURL("**/assets/help/fax-order.html?v=1#overview");
+  const windowId=async page=>{
+   const session=await context.newCDPSession(page);
+   try { return (await session.send("Browser.getWindowForTarget")).windowId; }
+   finally { await session.detach(); }
+  };
+  assert.notEqual(await windowId(work),await windowId(help),"Help must be a separate browser window");
+  assert.equal(await help.evaluate(()=>window.opener===null),true);
+  await work.getByRole("button",{name:"Accounting"}).click();
+  await work.locator("#sales-order-fax-help").press("Enter");
+  await help.waitForURL("**/assets/help/fax-order.html?v=1#export");
+  assert.equal(context.pages().length,2,"Context changes must reuse the help window");
+  assert.equal(await work.locator("#draft").inputValue(),"unsubmitted order text");
+  assert.equal(new URL(work.url()).pathname,"/fax-help-test");
+  console.log("FAX order context help QA passed: separate Chromium window, chapter reuse, original draft preserved");
+ } finally { await context.close(); }
+}
+
 function fixtureFiles(){
  const app=fs.readFileSync(path.join(root,"app.js"),"utf8"),ast=acorn.parse(app,{ecmaVersion:"latest"});
  const fn=name=>{const n=ast.body.find(n=>n.type==="FunctionDeclaration"&&n.id.name===name);assert(n,name);return app.slice(n.start,n.end);};
  const dict=ast.body.find(n=>n.type==="VariableDeclaration"&&n.declarations.some(d=>d.id.name==="TRANSLATIONS"));
  const script=app.slice(dict.start,dict.end)+"\n"+["salesOrderInventoryItems","hydrateSalesOrderInventory","salesOrderInventoryItemHtml","salesProductShelfMatchesCurrent","renderSalesProductShelf","loadSalesProductShelfForCurrent","renderProductKindStockHtml","buildSalesOrderDispatchPage"].map(fn).join("\n")+"\n"+fs.readFileSync(path.join(root,"tests/sales-order-inventory-fixture.js"),"utf8");
- return {"/":{type:"text/html",body:'<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/shipment-instruction-print.css"><link rel="stylesheet" href="/qa.css"></head><body><main id="root" class="sales-order-detail-section sales-order-billing"></main><script src="/fixture.js"></script></body></html>'},
+ return {...faxHelpFixtures(fn),"/":{type:"text/html",body:'<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/shipment-instruction-print.css"><link rel="stylesheet" href="/qa.css"></head><body><main id="root" class="sales-order-detail-section sales-order-billing"></main><script src="/fixture.js"></script></body></html>'},
  "/fixture.js":{type:"application/javascript",body:script},
  "/styles.css":{type:"text/css",body:fs.readFileSync(path.join(root,"styles.css"),"utf8")},
  "/shipment-instruction-print.css":{type:"text/css",body:fs.readFileSync(path.join(root,"shipment-instruction-print.css"),"utf8")},
@@ -25,6 +67,7 @@ async function run(){
  await p.locator("#qa-kind").selectOption("aftermarket_new");await p.evaluate(()=>qaPending);assert(!(await p.locator("#sales-product-shelf").innerText()).includes("GLA-21"));await p.locator("#qa-kind").selectOption("rebuilt");await p.evaluate(()=>qaPending);assert((await p.locator("#sales-product-shelf").innerText()).includes("GLA-21"));
  for(const mode of ["loading","error","denied","expired","missing","unauthorized","recount"]){await p.goto(base+"/?lang="+lang+"&mode="+mode);if(mode!=="loading")await p.waitForSelector('html[data-ready="true"]');const text=await p.locator("#root").innerText();assert.equal(text.includes("GLA-21"),mode==="recount");assert(!text.includes("undefined"));assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));}
  assert.deepEqual(errors,[]);results.push({width,lang,states:8,passed:true});await p.close();}
+ await verifyFaxHelpWindow(browser,base);
  const p=await browser.newPage({viewport:{width:1000,height:1200}});await p.emulateMedia({media:"print"});await p.goto(base+"/?print=1");await p.waitForSelector('html[data-ready="true"]');assert.equal(await p.locator(".dispatch-items .sales-order-inventory-values").count(),4);assert((await p.locator(".dispatch-items").innerText()).includes("GLA-41 (1)"));const fit=await p.locator(".dispatch-sheet").evaluate(e=>({height:e.clientHeight,scroll:e.scrollHeight,bottom:e.getBoundingClientRect().bottom,last:e.lastElementChild.getBoundingClientRect().bottom}));assert(fit.scroll<=fit.height+1&&fit.last<=fit.bottom,"dispatch content fits A4");await p.screenshot({path:path.join(output,"sales-inventory-dispatch.png"),fullPage:true});await p.pdf({path:path.join(output,"sales-inventory-dispatch.pdf"),preferCSSPageSize:true});await p.close();
  fs.writeFileSync(path.join(output,"sales-inventory-results.json"),JSON.stringify({passed:true,synthetic:true,productionWrites:0,results,print:fit},null,2));console.log("Sales inventory browser QA passed: "+results.length+" desktop/mobile/language scenarios and A4 dispatch");
  }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}

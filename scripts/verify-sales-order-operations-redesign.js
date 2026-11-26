@@ -266,3 +266,90 @@ for (const fragment of [
 requireFragment(css, "#screen-sales-order-mgmt .sales-order-selection-controls { display: grid; grid-template-columns: 1fr;", "Mobile order selection must not reserve a removed B2 action column");
 
 console.log("Sales order operations information architecture and responsive layout verification passed.");
+
+const faxHelpContext = {
+  URL,
+  document: {
+    getElementById: () => ({ href: "https://dcats.invalid/assets/help/fax-order.html?v=1" }),
+    querySelector: (selector) => selector.includes("b2-import") ? faxB2 : faxDetailTab
+  },
+  faxOrderHelpWindow: null,
+  t: (key) => key,
+  window: {}
+};
+let faxB2 = null;
+let faxDetailTab = null;
+let openCount = 0;
+let focusCount = 0;
+let popupAlert;
+let popupBlocked = false;
+let options;
+let currentPopup;
+faxHelpContext.window.open = (initial, target, features) => {
+  if (initial !== "" || target !== "_blank") throw new Error("Help must create a new, empty popup");
+  openCount += 1;
+  options = features.split(",");
+  if (popupBlocked) return null;
+  currentPopup = {
+    opener: {},
+    closed: false,
+    focus: () => { focusCount += 1; },
+    location: {
+      href: "about:blank",
+      replace(url) {
+        if (currentPopup.opener !== null) throw new Error("The help cannot have an opener");
+        this.href = url;
+        navigations.push(url);
+      }
+    }
+  };
+  return currentPopup;
+};
+faxHelpContext.window.alert = (message) => { popupAlert = message; };
+const navigations = [];
+vm.runInNewContext(functionSource("faxOrderHelpSection") + "\n" + functionSource("openFaxOrderHelp"), faxHelpContext);
+function requestFaxHelp(section, modifiers = {}) {
+  let intercepted = false;
+  faxHelpContext.openFaxOrderHelp({
+    button: 0,
+    target: { closest: () => ({ dataset: { faxHelpSection: section } }) },
+    preventDefault() { intercepted = true; },
+    ...modifiers
+  });
+  return intercepted;
+}
+function expectFaxChapter(section) {
+  if (new URL(currentPopup.location.href).hash !== "#" + section) throw new Error("Incorrect FAX help chapter " + section);
+}
+if (!requestFaxHelp("orders")) throw new Error("Normal help clicks must use a separate window");
+expectFaxChapter("overview");
+for (const feature of ["popup", "resizable=yes", "scrollbars=yes"]) {
+  if (!options.includes(feature)) throw new Error("Help popup feature missing: " + feature);
+}
+faxDetailTab = { dataset: { salesOrderDetailView: "fulfillment" } };
+requestFaxHelp("orders");
+expectFaxChapter("dispatch");
+faxDetailTab.dataset.salesOrderDetailView = "accounting";
+requestFaxHelp("orders");
+expectFaxChapter("export");
+faxB2 = {};
+requestFaxHelp("orders");
+expectFaxChapter("dispatch");
+for (const section of ["order", "dispatch", "pick", "export"]) {
+  requestFaxHelp(section);
+  expectFaxChapter(section);
+}
+requestFaxHelp("export");
+if (openCount !== 1 || focusCount !== 9 || navigations.length !== 8) {
+  throw new Error("The same help window and reading position must be retained");
+}
+if (requestFaxHelp("overview", { ctrlKey: true })) throw new Error("The actual link must support browser link shortcuts");
+currentPopup.closed = true;
+requestFaxHelp("pick");
+expectFaxChapter("pick");
+if (openCount !== 2) throw new Error("Help must reopen after its window is closed");
+currentPopup.closed = true;
+popupBlocked = true;
+if (!requestFaxHelp("pick") || popupAlert !== "fax_order_help_popup_blocked") {
+  throw new Error("Popup blocking must leave the order screen in place and show recovery guidance");
+}
