@@ -6,47 +6,47 @@
 <meta name="robots" content="noindex,nofollow">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'none'">
 <title>FAX注文フロー確認票 | D-CATS</title>
-<link rel="stylesheet" href="fax-practice.css?v=1">
-<script src="fax-practice.js?v=1" defer></script></head>
-<body>
+<link rel="stylesheet" href="fax-practice.css?v=2">
+<script src="fax-practice.js?v=2" defer></script></head>
+<body data-practice="check">
 <main>
 <header>
 <p class="kicker">D-CATS　社内演習用・出荷禁止</p>
 <h1>FAX注文フロー確認票</h1>
-<p class="screen-note">観察者用。結果は印刷した用紙に記入します（A4縦2枚）。</p>
+<p class="screen-note">観察者用・A4縦2枚。<span data-reference>照合値入りの票は注文書の［確認票を別に開く］から開きます。</span></p>
 <div class="actions">
 <button type="button" data-print>印刷・PDF保存</button><a href="fax-order.html#intake">FAX手順書へ</a></div></header>
 <div class="sheet">
 <section class="panel" id="setup" tabindex="-1">
 <h2><span class="position">1 / 6</span> 準備担当が注文書を整える</h2>
 <ol>
-<li>D-CATSと販売王の試験会社で、得意先・2品番の対応を確認。必要在庫は各1台・2個、税別10%、送料・コア代金0円です。</li>
-<li>注文書の下線を試験用の名称・コード・品番・宛先・電話・実施日・納期に変更します。注文番号は毎回変えます。</li>
-<li>2種類を印刷。記入済みの注文書を担当者に渡します。</li></ol>
+<li>両方の試験会社で「演習自動車整備（架空）」を照合し、注文書の2品番と在庫を確認します。税別10%、送料・コア代金0円です。</li>
+<li>下線を試験マスターのコード・品番・宛先・電話に合わせます。得意先名は共通です。</li>
+<li>注文書を印刷し、［確認票を別に開く］で照合用の票を印刷します。再印刷は元の注文書で行います。</li></ol>
 <nav aria-label="用紙の項目"><a href="fax-order.html#intake">手順書へ</a><a href="#scope">次へ</a></nav></section>
 <section class="panel" id="scope" tabindex="-1">
 <h2><span class="position">2 / 6</span> 試験先と印刷先を確認する</h2>
 <p>試験会社のバックアップ、試験用在庫・必要なシリアル、テストプリンター・用紙を準備します。送り状は承認済みの試験用発行・番号を使います。</p>
 <p>試験先を用意できない工程は「未実施」と記録します。実在庫の減算、集荷依頼、顧客への送付、営業用の会社への売上登録は行いません。</p>
-<p class="write"><b>FAX注文番号・実施日</b>　________________________________</p>
+<p class="write"><b>FAX注文番号・実施日</b>　<span data-order-number>________________</span>　________</p>
 <p class="write"><b>担当者・観察者・試験会社</b>　________________________________</p>
 <nav aria-label="用紙の項目"><a href="#setup">前へ</a><a href="#intake">次へ</a></nav></section>
 <section class="panel" id="intake" tabindex="-1">
 <h2><span class="position">3 / 6</span> 受付・入力・出荷指示書</h2>
 <ol>
 <li>FAX注文番号で重複を確認。［社内受注入力］で［通常受注］を選び、発注元と直送先を分け、メモにFAX注文番号と「演習・出荷禁止」を記入します。</li>
-<li>「受付済み」の受注が1件。明細2行・計3点・税込20,900円、同梱1箱を注文書と照合します。</li>
+<li>「受付済み」の受注が1件。明細2行・<span data-piece-count>数量と合計金額</span>・同梱1箱を注文書と照合します。</li>
 <li>［出荷帳票発行］から出荷指示書をテスト印刷。紙の受注番号、品番・数量、直送先、QRの欠け・ずれを確認します。</li></ol>
 <p class="write"><b>D-CATS受注番号・指示番号</b>　________________________________</p>
 <nav aria-label="用紙の項目"><a href="#scope">前へ</a><a href="#dispatch">次へ</a></nav></section></div>
 <div class="sheet">
-<p class="print-only">D-CATS　社内演習用・出荷禁止　｜　FAX注文フロー確認票（続き）</p>
+<p class="print-only">D-CATS　社内演習用・出荷禁止　｜　FAX注文フロー確認票（続き） <span data-continued-id></span></p>
 <section class="panel" id="dispatch" tabindex="-1">
 <h2><span class="position">4 / 6</span> 送り状印字・出荷照合</h2>
 <ol>
 <li>B2利用時はB2用CSVを試験先で取り込み、送り状を印字。発行済みデータをD-CATSへ戻します。</li>
 <li>印字した発送用送り状が1枚で、宛名・住所・番号と枠内の印字位置が合うか確認します。出荷指示書のQRを読み、同じ指示が開くことを確認します。</li>
-<li>試験品3点と必要なシリアルを照合し、試験上で出荷確定。「出荷済み」と在庫の減少（1・2）を確認します。</li></ol>
+<li>試験品と必要なシリアルを照合し、試験上で出荷確定。「出荷済み」と各品番の在庫減少が注文数量と一致するか確認します。</li></ol>
 <p class="write"><b>試験送り状番号・印字結果</b>　________________________________</p>
 <nav aria-label="用紙の項目"><a href="#intake">前へ</a><a href="#sales">次へ</a></nav></section>
 <section class="panel" id="sales" tabindex="-1">
@@ -54,7 +54,7 @@
 <ol>
 <li>［売上データ出力］で販売王・出荷日を選び、試験受注1件だけをCSV出力します。ファイル名とバッチを控えます。</li>
 <li>販売王の試験会社で［テキストデータ入力］から「売上伝票（消費税特例対応形式）」を選び、見出しなしで1行目から取り込みます。</li>
-<li>売上伝票1件の得意先・日付と試験2品番の数量1・2、税抜19,000円・税1,900円・税込20,900円を照合。D-CATSで［販売管理登録を確認］後、「売上登録済み」「5 完了」を確認します。</li></ol>
+<li>売上伝票1件の得意先・日付・品番・数量・金額を注文書と照合。<span data-money></span>D-CATSで［販売管理登録を確認］後、「売上登録済み」「5 完了」を確認します。</li></ol>
 <p class="write"><b>CSV・バッチ・販売王伝票番号</b>　________________________________</p>
 <nav aria-label="用紙の項目"><a href="#dispatch">前へ</a><a href="#observations">次へ</a></nav></section>
 <section class="panel" id="observations" tabindex="-1">
@@ -65,4 +65,4 @@
 <p class="write"><b>所要時間・支援回数</b>　________________________________</p>
 <p class="write"><b>画面名／期待と実際／迷い・改善案</b>　________________________________</p>
 <p>登録・印刷・取込の結果が不明なときは再実行の前に履歴と伝票を照合し、最後に確認できた工程を記録します。</p><div class="print-only observation-notes"><h3>観察メモ（実施中に記入）</h3><table><thead><tr><th>時刻・画面</th><th>期待した動作と実際の結果・迷った言葉</th><th>支援・改善案</th></tr></thead><tbody><tr><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td></tr></tbody></table></div>
-<nav aria-label="用紙の項目"><a href="#sales">前へ</a><a href="fax-practice-order.html">注文書へ</a></nav></section></div></main></body></html>
+<nav aria-label="用紙の項目"><a href="#sales">前へ</a><a href="fax-practice-order.html">新しい注文書へ</a></nav></section></div></main></body></html>
