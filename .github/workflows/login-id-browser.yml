@@ -1,11 +1,14 @@
 {
-  "name": "Temporary device browser QA",
+  "name": "Login ID browser QA",
   "on": {
     "pull_request": {
       "paths": [
+        "assets/login/**",
         "assets/temporary-device/**",
-        "scripts/qa-temporary-device-access.mjs",
-        ".github/workflows/temporary-device-browser.yml"
+        "index.html",
+        "styles.css",
+        "scripts/qa-login-id.mjs",
+        ".github/workflows/login-id-browser.yml"
       ]
     }
   },
@@ -32,26 +35,26 @@
         },
         {
           "name": "Install fixed browser test dependency",
-          "run": "npm install --prefix \"$RUNNER_TEMP/device-browser\" --no-save --ignore-scripts --no-audit --no-fund playwright-core@1.56.1\ncommand -v google-chrome"
+          "run": "npm install --prefix \"$RUNNER_TEMP/login-id-browser\" --no-save --ignore-scripts --no-audit --no-fund playwright-core@1.56.1\ncommand -v google-chrome"
         },
         {
           "name": "Install the exact Japanese font for screenshots",
           "run": "device_font_path=\"$HOME/.local/share/fonts/NotoSansJP-Regular.otf\"\nmkdir -p \"$(dirname \"$device_font_path\")\"\ncurl --fail --silent --show-error --max-time 30 --output \"$device_font_path\" 'https://raw.githubusercontent.com/notofonts/noto-cjk/523d033d6cb47f4a80c58a35753646f5c3608a78/Sans/SubsetOTF/JP/NotoSansJP-Regular.otf'\nprintf '%s  %s\\n' 'dff723ba59d57d136764a04b9b2d03205544f7cd785a711442d6d2d085ac5073' \"$device_font_path\" | sha256sum --check --strict\nfc-cache -f \"$HOME/.local/share/fonts\""
         },
         {
-          "name": "Check temporary access in Chrome",
+          "name": "Check saved login ID in Chrome",
           "env": {
-            "DEVICE_PLAYWRIGHT_MODULE": "${{ runner.temp }}/device-browser/node_modules/playwright-core",
-            "DEVICE_QA_OUTPUT": "${{ runner.temp }}/device-browser-qa"
+            "LOGIN_PLAYWRIGHT_MODULE": "${{ runner.temp }}/login-id-browser/node_modules/playwright-core",
+            "LOGIN_QA_OUTPUT": "${{ runner.temp }}/login-id-browser-qa"
           },
-          "run": "DEVICE_BROWSER_PATH=\"$(command -v google-chrome)\" node scripts/qa-temporary-device-access.mjs"
+          "run": "LOGIN_BROWSER_PATH=\"$(command -v google-chrome)\" node scripts/qa-login-id.mjs"
         },
         {
           "uses": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
           "if": "always()",
           "with": {
-            "name": "temporary-device-browser-qa",
-            "path": "${{ runner.temp }}/device-browser-qa",
+            "name": "login-id-browser-qa",
+            "path": "${{ runner.temp }}/login-id-browser-qa",
             "retention-days": 7
           }
         }

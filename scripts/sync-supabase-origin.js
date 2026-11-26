@@ -10,7 +10,6 @@ const targets = [
   ["app.js", "origin", 1],
   ["index.html", "origin", 2],
   ["_headers", "origin", 1],
-  ["assets/temporary-device/temporary-device-screen.mjs", "origin", 1],
   ["scanflow/app.js", "origin", 1],
   ["scanflow/config.public.json", "origin", 2],
   ["scanflow/local-review/index.html", "origin", 1],
