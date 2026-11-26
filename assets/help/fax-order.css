@@ -1,0 +1,121 @@
+  :root {
+    color-scheme: light;
+    --ink: #142a40;
+    --muted: #465b6d;
+    --paper: #ffffff;
+    --ground: #f1f5f6;
+    --line: #ccd9e1;
+    --blue: #164d83;
+    --blue-bg: #eaf3fc;
+    --green: #165a52;
+    --green-bg: #e5f4ef;
+    --amber: #704515;
+    --amber-bg: #fff4df;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    color: var(--ink);
+    background: var(--ground);
+    font: 1rem/1.75 "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+    overflow-wrap: anywhere;
+  }
+  a { color: var(--blue); text-underline-offset: .18em; }
+  a:focus-visible { outline: .16rem solid currentColor; outline-offset: .18rem; }
+  h1, h2, h3, p, figure { margin: 0; }
+  h1 { margin: .25rem 0 .5rem; font-size: clamp(1.9rem, 5vw, 3rem); line-height: 1.25; }
+  h2 { font-size: clamp(1.25rem, 3vw, 1.65rem); line-height: 1.45; }
+  h3 { font-size: 1.06rem; line-height: 1.45; }
+  p + p { margin-top: .6rem; }
+  .hero { padding: 2rem 0; color: #fff; background: #132f47; }
+  .hero-inner, main, .contents, footer { width: min(68rem, calc(100% - 2rem)); margin: auto; }
+  .hero p { max-width: 52rem; }
+  .hero-meta { color: #cde2ed; font-size: .92rem; }
+  .contents {
+    display: flex;
+    gap: .25rem 1.1rem;
+    flex-wrap: wrap;
+    padding: .85rem 0;
+    font-size: .95rem;
+  }
+  main { display: grid; gap: 1rem; }
+  .section {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: .65rem;
+    padding: clamp(1rem, 3vw, 1.65rem);
+    min-width: 0;
+  }
+  .section > * + * { margin-top: .8rem; }
+  .minor, figcaption { color: var(--muted); font-size: .92rem; }
+  .tag { color: var(--green); font-weight: 700; font-size: .9rem; }
+  .section-head { display: grid; gap: .1rem; }
+  .flow, .route {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(var(--steps, 3), minmax(0, 1fr));
+    gap: 1.35rem;
+    padding: 0;
+    margin: 0;
+  }
+  .flow { --steps: 6; }
+  .flow li, .route li {
+    position: relative;
+    min-width: 0;
+    padding: .6rem;
+    border: 1px solid var(--line);
+    border-radius: .4rem;
+    background: var(--blue-bg);
+  }
+  .flow li:last-child, .route .outcome { background: var(--green-bg); }
+  .flow b, .route b { display: block; }
+  .flow li + li::before, .route li + li::before {
+    content: "→";
+    position: absolute;
+    left: -1.22rem;
+    top: 50%;
+    translate: 0 -50%;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  .flow span, .route span { display: block; color: var(--muted); font-size: .88rem; }
+  figcaption { margin-top: .45rem; }
+  .columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+  .card { padding: .8rem .95rem; border: 1px solid var(--line); border-radius: .4rem; }
+  .card h3 { margin-bottom: .3rem; }
+  .check, .notice { border-radius: .3rem; padding: .6rem .8rem; }
+  .check { background: var(--green-bg); color: var(--green); }
+  .notice { background: var(--amber-bg); color: var(--amber); }
+  .steps { padding-left: 1.6rem; }
+  .steps > li + li { margin-top: .38rem; }
+  .matrix { display: grid; gap: 0; margin-bottom: 0; }
+  .matrix > div {
+    display: grid;
+    grid-template-columns: minmax(9rem, 1fr) minmax(0, 3fr);
+    gap: .25rem .8rem;
+    border-top: 1px solid var(--line);
+    padding: .52rem 0;
+  }
+  dt { font-weight: 700; }
+  dd { margin: 0; }
+  footer { margin-block: 1.2rem 1.65rem; color: var(--muted); font-size: .91rem; }
+  footer h2 { font-size: 1rem; }
+  footer ul { margin-top: .35rem; padding-left: 1.25rem; }
+  @media (max-width: 730px) {
+    .flow, .route { grid-template-columns: 1fr; gap: 1.15rem; }
+    .flow li + li::before, .route li + li::before { content: "↓"; left: .7rem; top: -1.35rem; translate: none; }
+  }
+  @media (max-width: 540px) {
+    .columns, .matrix > div { grid-template-columns: 1fr; }
+    .contents { gap: .4rem .85rem; }
+  }
+  @media print {
+    body { background: white; font-size: 10.5pt; }
+    .hero { color: var(--ink); background: white; padding: 0 0 .8rem; }
+    .hero-meta { color: var(--muted); }
+    .hero-inner, main, footer { width: 100%; }
+    .contents { display: none; }
+    .section { padding: .75rem; }
+    figure, .card, .matrix > div, .check, .notice { break-inside: avoid; }
+    .section-head, h2, h3 { break-after: avoid; }
+  }
