@@ -97,7 +97,8 @@ async function verifyFeatureHelp(browser, base, output) {
       const shot = current.locator("img");
       await shot.evaluate(image => image.decode());
       assert.equal(await shot.evaluate(image => image.naturalWidth), 600);
-      assert(await guide.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.documentElement.scrollHeight <= innerHeight + 1), hash + " layout at " + viewport.width);
+      const size = await guide.evaluate(() => ({ width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight }));
+      assert(size.width <= viewport.width && size.height <= viewport.height + 1, hash + " at " + JSON.stringify(viewport) + " rendered " + JSON.stringify(size));
      }
     }
     await guide.screenshot({path:path.join(output,"feature-guide-" + viewport.width + ".png")});

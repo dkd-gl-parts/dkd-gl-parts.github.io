@@ -43,3 +43,14 @@ a:focus-visible, summary:focus-visible { outline: 2px solid #195f9d; outline-off
   details[open] summary::after { content: "（閉じて他の業務へ）"; font-size: .85rem; font-weight: 400; }
   details ul { grid-template-columns: 1fr 1fr; gap: .45rem .75rem; line-height: 1.45; }
 }
+
+.pager { align-items: center; }
+.pager .directory { min-width: 0; margin-left: auto; padding: .25rem 0; border: 0; font-size: .9rem; font-weight: 400; text-decoration: underline; }
+@media (max-width: 420px) {
+  .pager { gap: .45rem; }
+  .pager a:not(.directory) { min-width: 3.35rem; padding: .3rem .55rem; }
+}
+@media (max-width: 420px) and (max-height: 620px) {
+  .step-number, figcaption { line-height: 1.35; }
+  .instruction, .result { line-height: 1.45; }
+}
