@@ -11,6 +11,7 @@ var qaRows=[
 {item_id:2,dkd_shohin_id:102,manufacturer:'HITACHI',manufacturer_part_number:'S114-927',genuine_part_number:'23300-JK20A',state:'cost_review',registered_component_count:0,cost_jpy:3010},
 {item_id:3,dkd_shohin_id:103,manufacturer:'MITSUBISHI',manufacturer_part_number:'M002T49881',genuine_part_number:'MD161437',state:'configured',current_rank1_jpy:9000,registered_component_count:4,cost_jpy:4000},
 {item_id:4,dkd_shohin_id:104,manufacturer:'DENSO',manufacturer_part_number:'OEM-104',genuine_part_number:'QA-UNKNOWN',state:'cost_review',registered_component_count:null,cost_jpy:4000}];
+if(qaMode==='no-reference')qaRows.push({item_id:5,dkd_shohin_id:105,manufacturer:'MITSUBISHI',manufacturer_part_number:'QA-OEM-EXTENDED-EXAMPLE-105',genuine_part_number:'QA-DKS-UNAVAILABLE-105',state:'dks_missing',registered_component_count:5,cost_jpy:3570,cost_incomplete:true,cost_snapshot_stale:true,minimum_jpy:5100});
 Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText(text){qaClipboard.push(text);return qaCopyMode==='reject'?Promise.reject(Error('denied')):qaCopyMode==='delay'?new Promise(r=>window.qaFinishCopy=r):Promise.resolve();}}});
 Object.assign(window,{currentLang:qaLang,currentUser:{id:'synthetic'},canEditBasePrice:()=>qaMode!=='denied',canViewBasePrice:()=>qaMode!=='denied',canViewManufacturingCostMgmt:()=>qaMode!=='denied',isSystemAdmin:()=>true,canUseRakutenResearch:()=>false,canViewPriceResearchHistory:()=>false,openSalesPricingListProduct:async()=>{},sb:{rpc:async(name,args)=>{qaCalls.push(args.action);if(args.action==='lists')return {data:{lists:[{id:1,list_name:'合成リスト',item_count:4}]}};if(args.action==='preview'){if(qaMode==='loading')await new Promise(r=>window.qaResolveLoad=r);if(qaMode==='stale')currentUser={id:'changed'};if(qaMode==='error')return {error:{message:'synthetic failure'}};return {data:{run_id:args.payload.operation_id,rows:qaMode==='empty'?[]:structuredClone(qaRows)}};}throw Error('unexpected action: '+args.action);}}});
 (async()=>{await DcatsSalesPricingLists.enter();var list=document.getElementById('spl-list');if(list){list.value='1';document.getElementById('spl-load').click();}})();`;
@@ -32,6 +33,39 @@ const server=http.createServer((req,res)=>{const f=files[new URL(req.url,'http:/
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:path.join(out,'pricing-copy-fallback-'+width+'-'+lang+'.png'),fullPage:true});await page.locator('[data-spl-copy-close]').click();
   await page.evaluate(()=>qaCopyMode='delay');let count=await page.evaluate(()=>qaClipboard.length);await copy.click();await page.evaluate(()=>document.getElementById('spl-copy').click());assert.equal(await page.evaluate(()=>qaClipboard.length),count+1);await page.evaluate(()=>{currentUser={id:'changed'};qaFinishCopy();});await page.waitForTimeout(20);assert.equal(await page.locator('#spl-copy-status').textContent(),'');
   assert.deepEqual(await page.evaluate(()=>qaCalls),['lists','preview']);assert.deepEqual(errors,[]);results.push({width,lang,checks:'copy, filters, selection-independent, drafts, empty, fallback, duplicate, stale, layout, zero writes'});await page.close();
+ }
+ for(const [width,height] of [[1280,900],[1280,600],[390,844],[320,568]]){
+  const page=await browser.newPage({viewport:{width,height}}),errors=[];
+  page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(base+'/?mode=no-reference');
+  await page.locator('[data-spl-filter="dks_missing"]').click();
+  const checkbox=page.locator('[data-spl-select="5"]'),rowInput=page.locator('[data-spl-price="5"]'),bulk=page.locator('#spl-bulk');
+  assert.equal(await rowInput.inputValue(),'');
+  await checkbox.check();
+  assert.ok(await bulk.isDisabled());
+  await page.locator('[data-spl-detail="5"]').click();
+  const edit=page.locator('[data-spl-inspect-price="5"]'),floor=page.locator('[data-spl-use-cost-floor]');
+  assert.ok(await edit.isVisible());assert.ok(await floor.isVisible());
+  assert.equal(await page.locator('.spl-price-facts>div').count(),3,'the fallback reuses an existing detail row');
+  await floor.click();assert.equal(await edit.inputValue(),'5100');assert.equal(await rowInput.inputValue(),'5100');
+  await edit.fill('6200');assert.equal(await rowInput.inputValue(),'6200');
+  const overflow=await page.evaluate(()=>({
+   x:document.documentElement.scrollWidth>innerWidth+1,
+   y:document.documentElement.scrollHeight>innerHeight+1,
+   detailX:document.querySelector('.spl-detail-body').scrollWidth>document.querySelector('.spl-detail-body').clientWidth+1,
+   listX:document.querySelector('.spl-master').scrollWidth>document.querySelector('.spl-master').clientWidth+1,
+  }));
+  assert.deepEqual(overflow,{x:false,y:false,detailX:false,listX:false});
+  await page.screenshot({path:path.join(out,'pricing-without-dks-'+width+'x'+height+'.png'),fullPage:true});
+  if(width<=900)await page.locator('#spl-detail-back').click();
+  await bulk.click();
+  assert.match(await page.locator('.spl-dialog[open]').textContent(),/DKS参考単価なし/);
+  assert.match(await page.locator('.spl-dialog[open]').textContent(),/6,200/);
+  await page.locator('[data-spl-cancel]').click();
+  assert.deepEqual(await page.evaluate(()=>qaCalls),['lists','preview']);
+  assert.deepEqual(errors,[]);
+  results.push({width,height,checks:'optional reference, manual edit, cost floor, confirmation, layout, zero writes'});
+  await page.close();
  }
  for(const mode of ['empty','error','denied','stale','loading']){
   const page=await browser.newPage({viewport:{width:390,height:844}});await page.goto(base+'/?mode='+mode);if(mode==='loading')await page.waitForFunction(()=>typeof qaResolveLoad==='function');else if(mode==='denied')await page.waitForFunction(()=>document.getElementById('sales-pricing-lists').hidden);else if(mode==='empty')await page.waitForSelector('#spl-copy:disabled');else await page.waitForFunction(()=>document.getElementById('spl-status')?.textContent);

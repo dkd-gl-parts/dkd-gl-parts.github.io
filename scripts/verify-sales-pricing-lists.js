@@ -97,7 +97,7 @@ async function fixture(lang='ja'){
  let f=await fixture();
  assert.equal(Number(f.doc.querySelector('[data-spl-planned]').textContent.replace(/[^0-9]/g,'')),11500,'planned price includes the margin floor rather than the lower reference target');
  var plannedInput=f.doc.querySelector('[data-spl-price]');plannedInput.value='12000';plannedInput.dispatchEvent(new f.window.Event('input'));assert.equal(Number(f.doc.querySelector('[data-spl-planned]').textContent.replace(/[^0-9]/g,'')),12000,'planned amount follows the edited candidate');plannedInput.value='11500';plannedInput.dispatchEvent(new f.window.Event('input'));
-assert.equal(f.doc.querySelectorAll('[data-spl-price]').length,1);assert.equal(f.doc.querySelector('[data-spl-select="3"]'),null,'registered products are excluded by default');assert.equal(f.doc.querySelectorAll('script').length,0,'untrusted part text is escaped');
+assert.equal(f.doc.querySelectorAll('[data-spl-price]').length,2);assert.equal(f.doc.querySelector('[data-spl-select="3"]'),null,'registered products are excluded by default');assert.equal(f.doc.querySelectorAll('script').length,0,'untrusted part text is escaped');
  selectVisible(f);assert.equal(f.doc.querySelector('[data-spl-select="1"]').hasAttribute('checked'),true);assert.equal(f.doc.querySelector('[data-spl-select="2"]').hasAttribute('checked'),true);
  const price=f.doc.querySelector('[data-spl-price]');price.value='10000';price.dispatchEvent(new f.window.Event('input'));bulkReview(f);assert.equal(f.doc.querySelector('dialog'),null,'30% floor blocks underpricing');
  price.value='11500';price.dispatchEvent(new f.window.Event('input'));bulkReview(f);assert.ok(f.doc.querySelector('dialog'));f.doc.querySelector('[data-spl-cancel]').click();assert.equal(f.calls.filter(c=>c.action==='commit').length,0);
@@ -106,7 +106,7 @@ assert.equal(f.doc.querySelectorAll('[data-spl-price]').length,1);assert.equal(f
  assert.ok(f.doc.querySelector('[data-spl-retry]'));assert.equal(f.doc.querySelector('[data-spl-retry]').disabled,false);assert.equal(f.doc.getElementById('spl-load').disabled,true,'unknown result blocks new operations');
  f.doc.querySelector('[data-spl-retry]').click();await tick();await tick();const commits=f.calls.filter(c=>c.action==='commit');assert.equal(commits.length,2);assert.deepEqual(commits[0].payload,commits[1].payload,'unknown response reuses identical operation and prices');
  f=await fixture();bulkReview(f);f.deny();f.doc.querySelector('[data-spl-confirm]').click();assert.equal(f.calls.filter(c=>c.action==='commit').length,0,'permission change during review blocks save');
- for(const lang of ['en','zh']){f=await fixture(lang);assert.equal(f.doc.querySelectorAll('[data-spl-price]').length,1);assert.ok(!f.doc.getElementById('sales-pricing-lists').textContent.includes('原価計算リストから価格を設定'));}
+ for(const lang of ['en','zh']){f=await fixture(lang);assert.equal(f.doc.querySelectorAll('[data-spl-price]').length,2);assert.ok(!f.doc.getElementById('sales-pricing-lists').textContent.includes('原価計算リストから価格を設定'));}
  f=await fixture();f.window.DcatsSalesPricingLists.reset();assert.equal(f.doc.getElementById('sales-pricing-lists').children.length,0);assert.equal(f.doc.querySelector('dialog'),null);
  f=await fixture();f.doc.getElementById('spl-credentials').click();await tick();await tick();assert.ok(f.doc.querySelector('dialog'));assert.equal(f.doc.querySelector('[name="password"]').value,'');f.doc.querySelector('[data-spl-confirm]').click();assert.equal(f.edgeCalls.filter(c=>c.action==='credentials_save').length,0,'empty passwords block registration');
  for(const k of ['basic_username','basic_password','password'])f.doc.querySelector('[name="'+k+'"]').value='synthetic-'+k;
@@ -277,7 +277,7 @@ assert.equal(f.doc.querySelectorAll('[data-spl-price]').length,1);assert.equal(f
     {item_id:5,dkd_shohin_id:105,manufacturer_part_number:'MISSING-PRODUCT',state:'missing_product',registered_component_count:0});
   f.doc.getElementById('spl-refresh').click();await tick();await tick();f.doc.getElementById('spl-filter').value='any';f.doc.getElementById('spl-filter').dispatchEvent(new f.window.Event('change'));
   let all=f.doc.querySelector('[data-spl-visible-all]');assert.equal(all.checked,false);assert.equal(!!all.indeterminate,false);assert.equal(f.doc.querySelectorAll('[data-spl-select]:disabled').length,0);
-  all.checked=true;all.dispatchEvent(new f.window.Event('change'));assert.equal(f.doc.querySelectorAll('[data-spl-select][checked]').length,5);assert.equal(f.doc.querySelector('[data-spl-visible-all]').checked,true);assert.equal(f.doc.querySelectorAll('[data-spl-price]').length,1);
+  all.checked=true;all.dispatchEvent(new f.window.Event('change'));assert.equal(f.doc.querySelectorAll('[data-spl-select][checked]').length,5);assert.equal(f.doc.querySelector('[data-spl-visible-all]').checked,true);assert.equal(f.doc.querySelectorAll('[data-spl-price]').length,2);
   f.doc.getElementById('spl-bulk').click();assert.equal(f.doc.querySelectorAll('.spl-confirm-items li').length,1);assert.match(f.doc.querySelector('dialog').textContent,/OEM-100/);assert.doesNotMatch(f.doc.querySelector('dialog').textContent,/OEM-102|ZERO-COMPONENTS|MISSING-PRODUCT/);f.doc.querySelector('[data-spl-cancel]').click();
   f.doc.getElementById('spl-scrape').click();assert.equal(f.doc.querySelectorAll('[data-spl-dks-id]').length,1);assert.equal(f.doc.querySelector('[data-spl-dks-id="101"]').checked,true);f.doc.querySelector('[data-spl-cancel]').click();
   const configured=f.doc.querySelector('[data-spl-select="3"]');configured.checked=false;configured.dispatchEvent(new f.window.Event('change'));assert.equal(f.doc.querySelector('[data-spl-visible-all]').indeterminate,true);
@@ -383,15 +383,47 @@ assert.equal(f.doc.querySelectorAll('[data-spl-price]').length,1);assert.equal(f
  f=await fixture();f.setUnknown();bulkReview(f);f.doc.querySelector('[data-spl-confirm]').click();await tick();await tick();
  f.doc.querySelector('[data-spl-row="2"]').click();assert.equal(f.doc.querySelector('[data-spl-detail="1"]').getAttribute('aria-pressed'),'true','unknown save outcomes block row actions too');f.window.DcatsSalesPricingLists.reset();
 
+ // A missing reference does not enter the batch until a price is entered.
+ for(const lang of ['ja','en','zh']){
+   f=await fixture(lang);
+   f.doc.querySelector('[data-spl-filter="dks_missing"]').click();
+   let input=f.doc.querySelector('[data-spl-price="2"]');
+   assert.equal(input.value,'');
+   assert.equal(input.getAttribute('min'),'5100');
+   selectVisible(f);
+   assert.equal(f.doc.getElementById('spl-bulk').disabled,true);
+   f.doc.querySelector('[data-spl-use-cost-floor]').click();
+   input=f.doc.querySelector('[data-spl-price="2"]');
+   assert.equal(input.value,'5100');
+   assert.equal(f.doc.getElementById('spl-bulk').disabled,false);
+   for(const value of ['5000','5150']){
+     input.value=value;
+     input.dispatchEvent(new f.window.Event('input'));
+     f.doc.getElementById('spl-bulk').click();
+     assert.equal(f.doc.querySelector('dialog'),null,'existing floor and rounding rules apply');
+   }
+   input.value='';
+   input.dispatchEvent(new f.window.Event('input'));
+   assert.equal(f.doc.getElementById('spl-bulk').disabled,true);
+   input.value='6200';
+   input.dispatchEvent(new f.window.Event('input'));
+   f.doc.getElementById('spl-bulk').click();
+   assert.match(f.doc.querySelector('dialog').textContent,lang==='ja'?/DKS参考単価なし/:lang==='en'?/No DKS reference/:/无DKS参考价/);
+   f.doc.querySelector('[data-spl-confirm]').click();
+   await tick();
+   await tick();
+   assert.deepEqual(f.calls.find(c=>c.action==='commit').payload.items,[{item_id:2,price_jpy:6200,without_reference:true}]);
+   f.window.DcatsSalesPricingLists.reset();
+ }
  // Split view keeps drafts, focus identity and financial eligibility independent.
  for(const lang of ['ja','en','zh']){
   f=await fixture(lang);assert.ok(f.doc.querySelector('[data-spl-inspect-price="1"]'));
   const input=f.doc.querySelector('[data-spl-price="1"]');input.value='12000';input.dispatchEvent(new f.window.Event('input'));
   assert.equal(f.doc.querySelector('[data-spl-inspect-price="1"]').value,'12000');assert.match(f.doc.getElementById('spl-inspector').textContent,/33.3%/);
-  f.doc.querySelector('[data-spl-detail="2"]').click();assert.ok(f.doc.getElementById('spl-inspector').textContent.includes('<script>bad</script>'));assert.equal(f.doc.querySelectorAll('#spl-inspector script').length,0);assert.equal(f.doc.querySelector('[data-spl-inspect-price]'),null);
+  f.doc.querySelector('[data-spl-detail="2"]').click();assert.ok(f.doc.getElementById('spl-inspector').textContent.includes('<script>bad</script>'));assert.equal(f.doc.querySelectorAll('#spl-inspector script').length,0);assert.equal(f.doc.querySelector('[data-spl-inspect-price="2"]').value,'');
   f.doc.querySelector('[data-spl-detail="1"]').click();const detail=f.doc.querySelector('[data-spl-inspect-price="1"]');detail.value='12500';detail.dispatchEvent(new f.window.Event('input'));assert.equal(f.doc.querySelector('[data-spl-price="1"]').value,'12500');
   f.doc.querySelector('[data-spl-select="2"]').checked=true;f.doc.querySelector('[data-spl-select="2"]').dispatchEvent(new f.window.Event('change'));assert.equal(f.doc.querySelector('[data-spl-inspect-price="1"]').value,'12500');
-  f.doc.querySelector('[data-spl-filter="dks_missing"]').click();assert.equal(f.doc.querySelectorAll('[data-spl-select]').length,1);assert.equal(f.doc.querySelector('[data-spl-detail="2"]').getAttribute('aria-pressed'),'true');assert.equal(f.doc.querySelector('[data-spl-inspect-price]'),null);
+  f.doc.querySelector('[data-spl-filter="dks_missing"]').click();assert.equal(f.doc.querySelectorAll('[data-spl-select]').length,1);assert.equal(f.doc.querySelector('[data-spl-detail="2"]').getAttribute('aria-pressed'),'true');assert.equal(f.doc.querySelector('[data-spl-inspect-price]').value,'');assert.ok(f.doc.querySelector('[data-spl-use-cost-floor]'));
   f.doc.querySelector('[data-spl-filter="configured"]').click();assert.match(f.doc.getElementById('spl-inspector').textContent,/9,000/);assert.equal(f.doc.querySelector('[data-spl-inspect-price]'),null);f.doc.querySelector('[data-spl-inspect-one="3"]').click();await tick();assert.deepEqual(f.individual,[{id:102,kind:'rebuilt'}]);
   f.doc.querySelector('[data-spl-filter="ready"]').click();assert.equal(f.doc.querySelector('[data-spl-price="1"]').value,'12500');selectVisible(f);f.doc.getElementById('spl-bulk').click();assert.match(f.doc.querySelector('dialog').textContent,/12,500/);f.doc.querySelector('[data-spl-cancel]').click();
   const query=f.doc.getElementById('spl-query');query.value='NO-MATCH';query.dispatchEvent(new f.window.Event('input'));assert.equal(f.doc.querySelector('[data-spl-inspect-one]'),null);assert.equal(f.doc.querySelector('[data-spl-inspect-price]'),null);
