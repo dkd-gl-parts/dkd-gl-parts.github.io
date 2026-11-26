@@ -1,8 +1,9 @@
-import fs from 'node:fs/promises';
-import vm from 'node:vm';
-import path from 'node:path';
-import assert from 'node:assert/strict';
-const root=path.resolve(import.meta.dirname,"..");
+const fs = require('node:fs/promises');
+const vm = require('node:vm');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+(async function () {
+const root=path.resolve(__dirname,"..");
 const source=await fs.readFile(root+'/assets/concierge-pet/business-flow.js','utf8');
 const sandbox={AbortController,Set};vm.createContext(sandbox);vm.runInContext(source,sandbox);
 const flow=sandbox.DcatsConciergeBusinessFlow;
@@ -32,3 +33,5 @@ await test('Concurrent affirmative messages execute once',async()=>{let release;
 await test('CSV tampering and unverified receipts cannot authorize the next stage',async()=>{for(const patch of [{verified:false},{sourceSha256:'c'.repeat(64)},{companyKey:'other-company'},{operationId:'other-operation'}]){let calls=[];const x=setup({runStage:async(stage,j)=>{calls.push(stage);return{status:statuses[stage],verified:true,operationId:j.operationId,category:j.category,actorId:base.actorId,deviceId:base.deviceId,companyKey:base.companyKey,companyUserId:base.companyUserId,sourceSha256:hash,...patch};}});const p=await x.api.propose({direction:'import',category:'sales'});await x.api.reply('はい',p.id);assert.equal(calls.join(','),'preflight');assert.equal(x.api.snapshot().state,'stopped');}});
 
 console.log(`Conversation business-flow verification: ${total} scenarios passed; no external processes, network, secrets, vendor UI or business writes.`);
+
+})().catch(error => { console.error(error); process.exitCode = 1; });
