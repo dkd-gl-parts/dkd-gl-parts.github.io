@@ -22,35 +22,45 @@ if (loginScreen && id && remember && label && login && passwordField) {
   function restoreChoice() {
     try {
       const savedId = localStorage.getItem(storageKey);
-      if (savedId) {
-        if (!id.value) id.value = savedId;
-        remember.checked = true;
+      remember.checked = savedId !== null;
+      if (savedId && !id.value && loginScreen.classList.contains("active")) {
+        id.value = savedId;
       }
+      remember.disabled = false;
     } catch {
       remember.disabled = true;
     }
   }
 
   restoreChoice();
-  // The authenticated menu resets the login controls before the user signs out.
-  new MutationObserver(() => {
-    if (loginScreen.classList.contains("active")) restoreChoice();
-  }).observe(loginScreen, { attributes: true, attributeFilter: ["class"] });
+  // A screen reset can clear the controls, but only an explicit checkbox change updates the preference.
+  new MutationObserver(restoreChoice).observe(loginScreen, { attributes: true, attributeFilter: ["class"] });
 
-  function saveChoice() {
-    if (remember.disabled) return;
+  remember.addEventListener("change", () => {
     try {
-      const value = id.value.trim();
-      if (remember.checked && value) localStorage.setItem(storageKey, value);
-      else localStorage.removeItem(storageKey);
+      if (remember.checked) {
+        const savedId = localStorage.getItem(storageKey);
+        localStorage.setItem(storageKey, id.value.trim() || savedId || "");
+      } else {
+        localStorage.removeItem(storageKey);
+      }
     } catch {
-      remember.checked = false;
+      restoreChoice();
+    }
+  });
+
+  function saveSubmittedId() {
+    const value = id.value.trim();
+    if (!value) return;
+    try {
+      if (localStorage.getItem(storageKey) !== null) localStorage.setItem(storageKey, value);
+    } catch {
+      restoreChoice();
     }
   }
 
-  remember.addEventListener("change", saveChoice);
-  login.addEventListener("click", saveChoice, true);
+  login.addEventListener("click", saveSubmittedId, true);
   passwordField.addEventListener("keydown", event => {
-    if (event.key === "Enter") saveChoice();
+    if (event.key === "Enter") saveSubmittedId();
   }, true);
 }
