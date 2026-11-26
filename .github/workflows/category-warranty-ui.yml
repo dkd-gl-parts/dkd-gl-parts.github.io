@@ -28,6 +28,7 @@
         "scripts/qa-part-number-alignment.js",
         "shipment-instruction-print.css",
         "scripts/qa-sales-order-inventory.js",
+        "assets/help/**",
         "scripts/qa-shipping-print-actions.js",
         "tests/sales-order-inventory-fixture.js",
         "scripts/qa-operation-logs.js",
