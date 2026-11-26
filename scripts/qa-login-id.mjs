@@ -78,10 +78,13 @@ async function testViewport(browser, viewport) {
     assert.equal(await id.inputValue(),"example@example.test");
     assert.equal(await pw.inputValue(),"");
     assert.equal(await remember.isChecked(),true);
+    await id.fill("");
+    await submit.click();
+    assert.deepEqual(await values(),{saved:"example@example.test",keys:[storageKey],attempts:1});
     await id.fill("replacement@example.test");
     await pw.fill("fixture-only-password");
     await pw.press("Enter");
-    assert.deepEqual(await values(),{saved:"replacement@example.test",keys:[storageKey],attempts:1});
+    assert.deepEqual(await values(),{saved:"replacement@example.test",keys:[storageKey],attempts:2});
     await page.reload();
     assert.equal(await id.inputValue(),"replacement@example.test");
     assert.equal(await pw.inputValue(),"");
@@ -106,6 +109,14 @@ async function testViewport(browser, viewport) {
     assert.equal(await remember.isChecked(),false);
     assert.equal(await id.inputValue(),"");
     assert.equal(await pw.inputValue(),"");
+
+    await remember.check();
+    assert.equal((await values()).saved,"");
+    await page.reload();
+    assert.equal(await remember.isChecked(),true);
+    assert.equal(await id.inputValue(),"");
+    await remember.uncheck();
+    assert.equal((await values()).saved,null);
 
     await page.goto(origin+retiredPath);
     await page.getByRole("heading",{name:"専用ページの提供は終了しました"}).waitFor();
@@ -179,15 +190,29 @@ async function testLogout(browser, viewport) {
     const pw = page.locator("#login-password");
     const remember = page.locator("#remember-login-id");
     const awaitInput = value => page.waitForFunction(expected => document.getElementById("login-email").value === expected, value);
-    for (const shouldSave of [true, false]) {
-      await id.fill(user.email);
-      await remember.setChecked(shouldSave);
+    const scenarios = [
+      { setChoice: true, shouldSave: true, keyboard: false },
+      { shouldSave: true, keyboard: true },
+      { shouldSave: true, keyboard: false },
+      { setChoice: false, shouldSave: false, keyboard: false }
+    ];
+    for (const { setChoice, shouldSave, keyboard } of scenarios) {
+      const firstLogin = setChoice === true;
+      if (firstLogin) {
+        await remember.check();
+        await id.fill(user.email);
+      } else {
+        assert.equal(await id.inputValue(),user.email,"The next login must already have the saved ID");
+        assert.equal(await remember.isChecked(),true,"The preference must still be enabled");
+      }
+      if (setChoice === false) await remember.uncheck();
       await pw.fill("fixture-only-password");
-      await page.locator("#btn-login").click();
+      if (keyboard) await pw.press("Enter");
+      else await page.locator("#btn-login").click();
       const signOut = page.locator("#btn-logout-menu");
       await signOut.waitFor({ timeout: 15000 });
       assert.equal(await id.inputValue(), "", "The real menu transition must reset the ID field");
-      assert.equal(await remember.isChecked(), false);
+      assert.equal(await remember.isChecked(), shouldSave, "The menu reset must preserve the opted-in preference");
       const dismissInstall = page.locator("#btn-install-dialog-close");
       if (await dismissInstall.isVisible()) await dismissInstall.click();
       try {
@@ -202,12 +227,12 @@ async function testLogout(browser, viewport) {
       assert.equal(await remember.isChecked(), shouldSave);
       assert.equal(await pw.inputValue(), "");
       assert.equal(await page.evaluate(key => localStorage.getItem(key), storageKey), shouldSave ? user.email : null);
-      if (shouldSave) await page.screenshot({ path: path.join(output, `after-logout-${viewport.width}x${viewport.height}.png`) });
+      if (firstLogin) await page.screenshot({ path: path.join(output, `after-logout-${viewport.width}x${viewport.height}.png`) });
     }
     await fits(page, "html, #screen-login, .login-form-panel, .login-fields, .login-preferences");
-    assert.deepEqual(authActions, ["login", "logout", "login", "logout"]);
+    assert.deepEqual(authActions, scenarios.flatMap(() => ["login", "logout"]));
     assert.deepEqual(errors, []);
-    console.log(`${viewport.width}x${viewport.height}: real menu and sign-out restore the opted-in ID with fixture authentication`);
+    console.log(`${viewport.width}x${viewport.height}: three consecutive sign-outs preserve the opted-in ID and manual opt-out clears it`);
   } finally {
     await context.close();
   }
