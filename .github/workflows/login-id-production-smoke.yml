@@ -1,0 +1,65 @@
+name: D-CATS login production smoke
+on:
+  push:
+    branches:
+      - codex/remember-login-id-live-qa-20261126
+    paths:
+      - .github/workflows/login-id-production-smoke.yml
+permissions: {}
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check the actual login in a fresh Chrome guest profile
+        run: |
+          npm install --prefix "$RUNNER_TEMP/login-production-qa" --no-save --ignore-scripts --no-audit --no-fund playwright-core@1.56.1
+          export LOGIN_PLAYWRIGHT_MODULE="$RUNNER_TEMP/login-production-qa/node_modules/playwright-core"
+          export LOGIN_BROWSER_PATH="$(command -v google-chrome)"
+          node <<'NODE'
+          const assert = require("node:assert/strict");
+          const { chromium } = require(process.env.LOGIN_PLAYWRIGHT_MODULE);
+          
+          (async () => {
+            const origin = "https://dcats.daiko-denki.co.jp";
+            const browser = await chromium.launch({ executablePath:process.env.LOGIN_BROWSER_PATH });
+            const fixture = "qa-remember-id@example.invalid";
+            try {
+              for (const viewport of [{width:1366,height:768},{width:1024,height:600},{width:320,height:568}]) {
+                const context = await browser.newContext({viewport});
+                try {
+                  const page=await context.newPage();
+                  await page.goto(origin, {waitUntil:"domcontentloaded"});
+                  const remember=page.getByRole("checkbox",{name:"ユーザーIDを保存",exact:true});
+                  await remember.waitFor({timeout:20000});
+                  const user=page.locator("#login-email");
+                  const password=page.locator("#login-password");
+                  assert.equal(await remember.isChecked(),false);
+                  await user.fill(fixture);
+                  await remember.check();
+                  await page.reload({waitUntil:"domcontentloaded"});
+                  await remember.waitFor({timeout:20000});
+                  assert.equal(await user.inputValue(),fixture);
+                  assert.equal(await password.inputValue(),"");
+                  assert.equal(await remember.isChecked(),true);
+                  const measurements=await page.locator("html,#screen-login,.login-form-panel,.login-fields,.login-preferences")
+                    .evaluateAll(nodes=>nodes.map(e=>[e.scrollWidth-e.clientWidth,e.scrollHeight-e.clientHeight]));
+                  assert.ok(measurements.length===5&&measurements.every(([x,y])=>x<=1&&y<=1),JSON.stringify({viewport,measurements}));
+                  await remember.uncheck();
+                  await page.reload({waitUntil:"domcontentloaded"});
+                  await remember.waitFor({timeout:20000});
+                  assert.equal(await user.inputValue(),"");
+                  assert.equal(await remember.isChecked(),false);
+                  await page.goto(origin+"/assets/temporary-device/temporary-device.html",{waitUntil:"domcontentloaded"});
+                  await page.getByRole("heading",{name:"専用ページの提供は終了しました"}).waitFor();
+                  assert.equal(await page.getByRole("link",{name:"D-CATSのログイン画面へ"}).getAttribute("href"),"/");
+                  console.log("PRODUCTION_LOGIN_ID_OK " + viewport.width + "x" + viewport.height);
+                } finally {
+                  await context.close();
+                }
+              }
+            } finally {
+              await browser.close();
+            }
+          })().catch(error=>{console.error(error);process.exitCode=1;});
+          NODE
