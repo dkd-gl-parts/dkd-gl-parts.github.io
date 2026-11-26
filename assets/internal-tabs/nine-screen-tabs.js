@@ -29,6 +29,12 @@
     var back = element("button", "back-btn", left); back.type = "button"; back.dataset.propertyText = "back";
     back.addEventListener("click", propertiesHome);
     var title = element("h1", "dcats-tab-properties-title", left); title.id = "dcats-tab-properties-title"; title.dataset.propertyText = "title";
+    var help = element("a", "feature-help-link", header, "ヘルプ");
+    help.setAttribute("data-feature-help", "");
+    help.href = "assets/help/features.html?v=1#screen-tab-properties";
+    help.target = "_blank";
+    help.rel = "noopener noreferrer";
+    help.setAttribute("aria-label", "ヘルプ（別ウィンドウ）");
     var body = element("div", "dcats-tab-properties-body", properties);
     var option = element("label", "dcats-tab-properties-option", body);
     toggle = element("input", "", option); toggle.type = "checkbox"; toggle.id = "dcats-nine-tabs-toggle";

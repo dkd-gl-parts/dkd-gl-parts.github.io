@@ -9136,7 +9136,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1399";
+var APP_VERSION       = "v1.1.1400";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -17798,11 +17798,17 @@ function faxOrderHelpSection(link) {
 }
 
 function openFaxOrderHelp(event) {
-  var link = event.target.closest("a[data-fax-help-section]");
+  var link = event.target.closest("a[data-fax-help-section], a[data-feature-help]");
   if (!link || event.defaultPrevented || event.button !== 0 || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
   event.preventDefault();
-  var url = new URL(document.getElementById("sales-order-fax-help").href);
-  url.hash = faxOrderHelpSection(link);
+  var url;
+  if (link.dataset.featureHelp !== undefined) {
+    url = new URL("assets/help/features.html?v=1", document.baseURI);
+    url.hash = link.hash;
+  } else {
+    url = new URL(document.getElementById("sales-order-fax-help").href);
+    url.hash = faxOrderHelpSection(link);
+  }
 
   if (!faxOrderHelpWindow || faxOrderHelpWindow.closed) {
     faxOrderHelpWindow = window.open("", "_blank", "popup,width=740,height=810,resizable=yes,scrollbars=yes");
