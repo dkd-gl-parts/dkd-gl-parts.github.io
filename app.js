@@ -337,6 +337,7 @@ var TRANSLATIONS = {
     shipping_sheet_existing: "この用紙は登録済みです。印刷ジョブの追加はありません。",
     shipping_sheet_review: "用紙と印刷端末の結果を確認してください。再発行する場合は、新しい用紙の番号を読み取ってください。",
     shipping_sheet_unknown: "受付結果を確認できませんでした。受注の印刷状態と用紙を確認してください。",
+    shipping_sheet_legacy: "旧方式で一括印刷済み",
     shipping_sheet_pending: "未印刷",
     shipping_return_prepare_hint: "運送会社・作成方法は番号が空欄でも保存できます。用紙の番号は［印刷（1枚）］で読み取ります。",
     shipping_return_number_pending: "ドットプリンタに設定しました。［印刷（1枚）］から用紙の番号を読み取ってください。",
@@ -3355,6 +3356,7 @@ var TRANSLATIONS = {
     shipping_sheet_existing: "This slip is already registered. No additional job was queued.",
     shipping_sheet_review: "Check the slip and printer result. To reissue, scan a new slip.",
     shipping_sheet_unknown: "Receipt could not be confirmed. Check the order status and the printed slip.",
+    shipping_sheet_legacy: "Printed in an earlier batch",
     shipping_sheet_pending: "Unprinted",
     shipping_return_prepare_hint: "Save the carrier and method with the number blank. Scan each slip from Print one slip.",
     shipping_return_number_pending: "Dot-matrix printing selected. Choose Print one slip to scan its number.",
@@ -6317,6 +6319,7 @@ var TRANSLATIONS = {
     shipping_sheet_existing: "该运单已登记，未添加新的打印任务。",
     shipping_sheet_review: "请核对运单和打印机结果。如需重打，请扫描新运单。",
     shipping_sheet_unknown: "无法确认受理结果。请核对订单的打印状态和纸质运单。",
+    shipping_sheet_legacy: "已通过原方式批量打印",
     shipping_sheet_pending: "未打印",
     shipping_return_prepare_hint: "运单号留空也可保存承运商和制单方式。请在［打印（1张）］中扫描运单号。",
     shipping_return_number_pending: "已选择针式打印。请在［打印（1张）］中扫描运单号。",
@@ -20884,7 +20887,10 @@ function shippingDocumentReturnSheets(order) {
   return (order.core_return_units || []).filter(function(unit) {
     return unit.id && unit.order_item && unit.order_item.core_return_required && unit.status !== "cancelled";
   }).map(function(unit) {
-    var job = jobs.find(function(entry) { return String(entry.return_unit_id) === String(unit.id); });
+    var job = jobs.find(function(entry) {
+      if (entry.return_unit_id) return String(entry.return_unit_id) === String(unit.id);
+      return entry.status === "printed" && unit.created_at && new Date(unit.created_at) <= new Date(entry.printed_at);
+    });
     return { unit: unit, job: job || null };
   });
 }
@@ -21648,7 +21654,7 @@ function bindShippingDocumentReturnSheet(form, order) {
     var number = shippingDocumentReturnSheetNumber(tracking.value);
     var item = sheet && sheet.unit.order_item;
     form.querySelector("[data-sheet-item]").textContent = item ? [item.gltek_part_number || item.genuine_part_number || item.manufacturer_part_number,
-      sheet.job ? salesOrderPrintJobStatusLabel(sheet.job.status) : t("shipping_sheet_pending")].filter(Boolean).join(" · ") : "";
+      sheet.job ? (sheet.job.return_unit_id ? salesOrderPrintJobStatusLabel(sheet.job.status) : t("shipping_sheet_legacy")) : t("shipping_sheet_pending")].filter(Boolean).join(" · ") : "";
     form.querySelector("[data-sheet-review]").hidden = !(sheet && sheet.job);
     submit.disabled = !sheet || !number || shippingDocumentSaving || !!(sheet.job && sheet.job.return_sheet_tracking === number);
   }
@@ -21675,7 +21681,7 @@ async function queueShippingDocumentReturnWaybillPrint(order, sheet, number, for
   try {
     var result = await sb.rpc("queue_sales_order_return_sheet", {
       target_order_id: order.id, target_expected_version: order.version, target_unit_id: sheet.unit.id,
-      target_tracking_number: number, target_previous_job_id: sheet.job ? sheet.job.id : null, target_carrier_code: waybill.carrier_code
+      target_tracking_number: number, target_previous_job_id: sheet.job && sheet.job.return_unit_id ? sheet.job.id : null, target_carrier_code: waybill.carrier_code
     });
     if (result.error) {
       failed = true;
