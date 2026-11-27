@@ -297,7 +297,7 @@ function salesOrderCanRevise(order) {
   return canManageSalesOrders() && !!order && !order.completed_at && !order.cancelled_at && ["submitted", "accepted", "shipping_ready"].includes(order.status);
 }
 
-function salesOrderRevisionHistoryHtml(history) {
+function salesOrderRevisionHistoryHtml(history, order) {
   var rows = Array.isArray(history) ? history : [];
   return "<section class='sales-order-history-group sales-order-revision-history'><h4>受注修正履歴</h4>" + (rows.length
     ? "<div class='sales-order-history-list'>" + rows.map(function(entry) {
@@ -305,7 +305,7 @@ function salesOrderRevisionHistoryHtml(history) {
         "<time datetime='" + esc(entry.created_at || "") + "'>" + esc(customerOrderDateTimeText(entry.created_at)) + "</time>" +
         "<span class='sales-order-history-kind revision'>受注修正</span>" +
         "<div class='sales-order-history-content'><strong>" + esc(entry.reason || "変更理由なし") + "</strong></div>" +
-        "<div class='sales-order-history-result'><strong>" + esc(entry.waybills_need_reissue ? "帳票・送り状 再発行要" : "反映済み") + "</strong></div>" +
+        "<div class='sales-order-history-result'><strong>" + esc(entry.waybills_need_reissue && (!order || order.cancellation_flow !== "before_picking") ? "帳票・送り状 再発行要" : "反映済み") + "</strong></div>" +
       "</article>";
     }).join("") + "</div>"
     : "<span>履歴はありません。</span>") + "</section>";
@@ -712,11 +712,12 @@ async function saveSalesOrderRevision(event) {
     ]);
     if (result.error) throw result.error;
     salesOrderDetail = Array.isArray(result.data) ? result.data[0] : result.data;
+    var beforePicking = salesOrderDetail && salesOrderDetail.cancellation_flow === "before_picking";
     salesOrderRevisionSaving = false;
     closeSalesOrderRevisionEditor();
     renderSalesOrderDetail();
     await refreshSalesOrderManagement();
-    setSalesOrderDetailMessage("受注を修正しました。変更前の帳票は破棄し、必要な帳票・送り状を再発行してください。", false);
+    setSalesOrderDetailMessage(beforePicking ? "受注を修正しました。出荷帳票は修正後の内容で印刷できます。" : "受注を修正しました。変更前の帳票は破棄し、必要な帳票・送り状を再発行してください。", false);
   } catch(error) {
     if (state === salesOrderRevision) salesOrderRevisionMessage(error.message || "保存結果を確認できません。最新の受注内容を確認してください。", true);
   } finally {
