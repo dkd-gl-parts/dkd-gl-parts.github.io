@@ -598,7 +598,7 @@
   function cartLineHtml(p, i) {
     var extraId = "recycle-cart-extra-" + i;
     var title = e(p.genuine_part_number || p.manufacturer_part_number);
-    return "<div class='recycle-cart-item' data-cart-index='" + i + "'><div class='recycle-line-title'><strong>" + (i + 1) + ". " + title + "</strong>" +
+    return "<div class='recycle-cart-item' data-cart-index='" + i + "' role='group' aria-labelledby='recycle-line-title-" + i + "'><div class='recycle-line-title'><strong id='recycle-line-title-" + i + "'>" + (i + 1) + ". " + title + "</strong>" +
       (p.karte_number ? "<small>カルテ番号 " + e(p.karte_number) + "</small>" : "") + "</div>" +
       input("数量", "quantity-" + i, "number", p.quantity, "min='1' max='99' step='1'") +
       input("単価（税抜・コア別）", "price-" + i, "number", p.price, "aria-label='成立単価（税抜・コア代別）' min='0' step='1'" + (recycleChannel() ? " max='99999999'" : " max='2147483647' placeholder='得意先単価'")) +
