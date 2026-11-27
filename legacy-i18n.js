@@ -2,6 +2,11 @@
 // Runtime translation is local; this file makes no external requests.
 var DCATS_LEGACY_UI_TRANSLATIONS = {
   "en": {
+    "受注修正のため再発行が必要です。": "Reissue required after the order revision.",
+    "受取方法の変更により再発行が必要です。": "Reissue required after the delivery method change.",
+    "最新の出荷指示を確認できません。": "Could not load the current shipping instruction.",
+    "受注が更新されました。出荷指示書を開き直して最新の内容を確認してください。": "The order has changed. Reopen the shipping instruction to review the latest details.",
+    "受注を修正しました。出荷帳票は修正後の内容で印刷できます。": "Order updated. Shipping documents will print with the revised details.",
     "受注入力": "Order Entry",
     "登録内容を確認": "Review order",
     "返却不要・請求なし": "No return or charge",
@@ -4413,6 +4418,11 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "回收率": "Recovery rate"
   },
   "zh": {
+    "受注修正のため再発行が必要です。": "订单已修改，需要重新签发。",
+    "受取方法の変更により再発行が必要です。": "收货方式已变更，需要重新签发。",
+    "最新の出荷指示を確認できません。": "无法确认最新出货指示。",
+    "受注が更新されました。出荷指示書を開き直して最新の内容を確認してください。": "订单已更新。请重新打开出货指示单，确认最新内容。",
+    "受注を修正しました。出荷帳票は修正後の内容で印刷できます。": "订单已修改。出货单据将按修改后的内容打印。",
     "受注入力": "订单录入",
     "登録内容を確認": "核对订单",
     "返却不要・請求なし": "无需退件且不收费",
