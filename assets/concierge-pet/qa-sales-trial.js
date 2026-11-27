@@ -3,6 +3,7 @@
   var channel = "dcats-hanbaioh25-bridge-v1";
   var fingerprint = "6d6c0d4d97bdd5835e6d879c5dcc8bbe85d912911b546ba109231aa3af99f0ac";
   var trialFileName = "hanbaioh-sales-test-900100-f59332f7cbd2-55.csv";
+  var trialActor = "1da048d8-1908-4eae-bbc8-5d9c362b2df2";
   function trialPage() {
     return window.location.origin === "https://dcats.daiko-denki.co.jp" &&
       window.location.pathname === "/" && window.location.search === "?dcats_qa=900100";
@@ -10,10 +11,50 @@
   function applies(record) {
     return trialPage() && window.DcatsAccess?.isSystemAdmin?.() === true &&
       !!record && record.public_key_sha256 === fingerprint &&
-      record.actor_id === "1da048d8-1908-4eae-bbc8-5d9c362b2df2" &&
+      record.actor_id === trialActor &&
       record.device_id === "336bd0fb-0f26-47f4-a1a9-4731b28d4beb" &&
       window.currentUser?.id === record.actor_id;
   }
+  function attachEnrollmentShortcut() {
+    if (!trialPage() || window.top !== window || !window.document?.body) return;
+    var doc = window.document;
+    function isTrialAdmin() {
+      return trialPage() && window.currentUser?.id === trialActor &&
+        window.DcatsAccess?.isSystemAdmin?.() === true;
+    }
+    function addButton() {
+      var status = doc.getElementById("dcats-qa900100-status");
+      if (!status || !isTrialAdmin() || status.querySelector("[data-qa-enrollment-shortcut]")) return;
+      var button = doc.createElement("button");
+      button.type = "button";
+      button.textContent = "端末申請欄を開く";
+      button.setAttribute("data-qa-enrollment-shortcut", "");
+      button.setAttribute("aria-controls", "dcats-concierge-panel");
+      button.addEventListener("click", function () {
+        if (!isTrialAdmin()) return;
+        var launcher = doc.querySelector('.dcats-concierge-launcher[aria-controls="dcats-concierge-panel"]');
+        if (launcher && launcher.getAttribute("aria-expanded") !== "true") launcher.click();
+        var field = doc.getElementById("dcats-concierge-enrollment-file");
+        if (field && field.getClientRects().length) {
+          field.scrollIntoView({block: "center", inline: "nearest"});
+          field.focus({preventScroll: true});
+        } else {
+          var message = status.querySelector("[data-qa-enrollment-help]");
+          if (!message) {
+            message = doc.createElement("p");
+            message.setAttribute("data-qa-enrollment-help", "");
+            message.setAttribute("role", "status");
+            status.appendChild(message);
+          }
+          message.textContent = "D-CATS本体の画面でコンシェルジュ設定を開いてください。";
+        }
+      });
+      status.insertBefore(button, status.querySelector("button"));
+    }
+    addButton();
+    new window.MutationObserver(addButton).observe(doc.body, {childList: true});
+  }
+  attachEnrollmentShortcut();
   function proof(request) {
     return new Promise(function (resolve, reject) {
       function finish(error, result) {
