@@ -11,18 +11,18 @@ async function rows(query) {
   if (result.error) throw new Error("D-CATSの登録データを取得できません。接続と閲覧権限を確認してください。");
   return result.data;
 }
-function practiceDestinations(buyer) {
+function practiceDestinations() {
   // The prefecture is a real freight zone. All delivery details are training fixtures.
   return [
     { prefecture_code:13, prefecture_name:"東京都", postal:"100-0005", town:"千代田区丸の内", office:"演習倉庫A" },
     { prefecture_code:27, prefecture_name:"大阪府", postal:"530-0001", town:"大阪市北区梅田", office:"演習倉庫B" },
     { prefecture_code:23, prefecture_name:"愛知県", postal:"460-0008", town:"名古屋市中区栄", office:"演習倉庫C" }
   ].map(site => ({
-    destination_type:"address", company_name:buyer.customer_name,
-    recipient_name:site.office + "（架空・出荷禁止）",
+    destination_type:"address", company_name:site.office,
+    recipient_name:"架空・出荷禁止",
     postal_code:site.postal, phone_number:"000-0000-0000",
     prefecture_code:site.prefecture_code, prefecture_name:site.prefecture_name,
-    address_line_1:site.town+" 演習用架空番地・出荷禁止", address_line_2:site.office
+    address_line_1:site.town+"架空０番", address_line_2:"演習棟"
   }));
 }
 async function loadPracticeMaster() {
@@ -45,7 +45,7 @@ async function loadPracticeMaster() {
       (buyer.billing_customer_code?.trim() && buyer.billing_customer_code.trim() !== practiceCustomer.code)) {
     throw new Error("指定の開発テスト得意先（DEV-ORDER-001）と請求先を確認できません。");
   }
-  const destinations = practiceDestinations(buyer);
+  const destinations = practiceDestinations();
   const seen = new Set();
   const candidates = variants.filter(v => {
     const product = v.core_products;

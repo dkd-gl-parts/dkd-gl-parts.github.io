@@ -64,8 +64,9 @@ function orderPage() {
     current=o;
     const d=o.destination;
     const fields={"得意先コード":o.buyer.source_customer_code,"発注担当":o.buyer.contact_name || "登録なし","発注日":tokyoDate.format(o.date),
-      "お届け先":[d.company_name,d.recipient_name!==d.company_name?d.recipient_name:""].filter(Boolean).join("　"),
-      "郵便番号と住所":"〒"+d.postal_code+" "+d.prefecture_name+d.address_line_1+" "+d.address_line_2,"電話番号":d.phone_number,
+      "郵便番号":d.postal_code,"電話番号":d.phone_number,"都道府県":d.prefecture_name,
+      "市区町村・町名・番地":d.address_line_1,"建物名・部門":d.address_line_2,
+      "直送先名":d.company_name,"宛名・担当者":d.recipient_name,
       "希望納期":o.due};
     setText("[data-order-number]",o.id);
     setText("[data-buyer]",o.buyer.customer_name);
