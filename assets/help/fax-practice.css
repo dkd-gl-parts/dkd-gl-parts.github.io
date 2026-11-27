@@ -75,6 +75,7 @@ dt { font-weight: 650; }
  body { line-height: 1.4; }
  main { margin: .2rem; padding: .45rem .55rem; }
  dl > div { padding: .18rem 0; }
+ #ship dl > div { grid-template-columns: 7.5rem minmax(0, 1fr); padding-block: .04rem; }
  .panel li + li,.panel > p + p { margin-top: .2rem; }
  nav { margin-top: .35rem; }
 }
@@ -94,6 +95,7 @@ button:disabled { opacity: .55; cursor: default; }
 @media print {
  body[data-practice=order] { font-size: 10.5pt; line-height: 1.32; }
  body[data-practice=order] dl > div { padding: 1mm 0; grid-template-columns: 41mm 1fr; }
+ body[data-practice=order] #ship dl > div { padding-block: .45mm; }
  body[data-practice=order] .panel { padding-top: 2.5mm; }
  body[data-practice=order] .item { padding: 1.4mm 0; }
 }
