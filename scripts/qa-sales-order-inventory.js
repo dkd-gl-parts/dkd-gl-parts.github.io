@@ -150,7 +150,6 @@ async function verifyFaxVariations(page) {
 
 async function verifyFaxPractice(browser, base, output) {
  const page = await browser.newPage();
- let matchingSheet;
  const api=await mockPracticeApi(page);
  try {
   for (const [form, expectedPages] of [["order", 1], ["check", 2]]) {
@@ -159,10 +158,9 @@ async function verifyFaxPractice(browser, base, output) {
    await page.locator('#intake a[href="' + name + '.html"]').click();
    if (form === "order") {
     await verifyFaxVariations(page);
-    matchingSheet = await page.locator("[data-check-link]").getAttribute("href");
    } else {
     await page.goto(base+"/assets/help/fax-practice-check.html#case-TR-20261126-0012345678");
-    await page.locator("[data-money]").filter({hasText:"税込"}).waitFor();
+    assert((await page.locator("[data-money]").textContent()).includes("税込"));
    }
    const panels = page.locator(".panel");
    const ids = await panels.evaluateAll(nodes => nodes.map(el => el.id));
