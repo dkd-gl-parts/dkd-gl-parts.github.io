@@ -671,6 +671,13 @@ for (const forbidden of [
   }
 }
 
+const returnSave = sourceBetween("async function saveShippingDocumentReturnWaybill", "async function queueShippingDocumentReturnWaybillPrint");
+requireFragment(returnSave, "target_tracking_number: tracking || null");
+requireFragment(returnSave, "if (input &&");
+if (returnSave.includes('method === "dot_matrix" && !shippingDocumentWaybillNumberIsValid')) {
+  throw new Error("A return method must be saveable before its number is registered");
+}
+
 const returnWaybillPrint = sourceBetween("async function queueShippingDocumentReturnWaybillPrint", "function renderSalesOrderList");
 requireFragment(returnWaybillPrint, 'waybill.handling_method !== "dot_matrix"');
 requireFragment(returnWaybillPrint, "shippingDocumentWaybillNumberIsValid(waybill.tracking_number)");
@@ -1118,11 +1125,11 @@ for (const fragment of [
 ]) requireFragment(i18n, fragment, `B2 reissue translation is missing: ${fragment}`);
 
 for (const fragment of [
-  'content="v1.1.1400"',
-  'styles.css?v=1.1.1400',
-  'app.js?v=1.1.1400'
+  'content="v1.1.1401"',
+  'styles.css?v=1.1.1401',
+  'app.js?v=1.1.1401'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.1400"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.1401"');
 requireFragment(source, 'sales_management_registered: "売上登録済"');
 requireFragment(source, 'sales_management_unknown: "売上確認不可"');
 

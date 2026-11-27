@@ -12770,3 +12770,20 @@ html[data-product-3d-paused] :is(
   :is(#screen-search, #screen-finished-label-mgmt) .feature-help-title-row .logo-text { padding-left: 0; background-image: none; letter-spacing: normal; font-size: 15px; }
   #screen-menu .page-header:has(.feature-help-link) .logo-sub { display: none; }
 }
+
+/* Keep return-slip preparation and its print guidance visible together. */
+@media (max-width: 700px), (max-height: 640px) {
+  .shipping-document-settings-card:has(#shipping-document-return-waybill-section) :is(.shipping-document-settings-heading, #shipping-document-settings-content, .form-footer) { padding: 8px 12px; }
+  #shipping-document-return-waybill-section .shipping-document-section-head { display: flex; flex-direction: row; align-items: flex-start; gap: 6px; }
+  #shipping-document-return-waybill-section .shipping-document-section-head h3 { display: none; } /* The dialog heading names this form. */
+  #shipping-document-return-waybill-section .shipping-document-section-head p { margin: 0; }
+  #shipping-document-return-waybill-section .shipping-document-ready-state { width: auto; flex: none; }
+  #shipping-document-return-waybill-section .shipping-document-carrier-context { padding: 3px 6px; margin: 4px 0; }
+  #shipping-document-return-waybill-section .shipping-document-waybill-form { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  #shipping-document-return-waybill-section .shipping-document-waybill-form > label:last-of-type { grid-column: 1 / -1; }
+  #shipping-document-return-waybill-section .shipping-document-waybill-form > button { grid-column: 1 / -1; width: 100%; }
+  #shipping-document-return-waybill-section .shipping-document-waybill-print-row { flex-direction: row; align-items: center; padding-top: 5px; margin-top: 5px; }
+  #shipping-document-return-waybill-section .shipping-document-waybill-print-row > div { min-width: 0; }
+  #shipping-document-return-waybill-section .shipping-document-waybill-print-row > a { width: auto; }
+  .shipping-document-settings-card:has(#shipping-document-return-waybill-section) .sales-order-detail-message:empty { min-height: 0; }
+}
