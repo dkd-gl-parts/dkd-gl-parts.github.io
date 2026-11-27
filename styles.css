@@ -12804,3 +12804,20 @@ html[data-product-3d-paused] :is(
   .shipping-return-sheet-form label { gap: 2px; }
   .shipping-return-sheet-form p { line-height: 1.35; }
 }
+
+#shipping-document-tools {
+  width: min(22rem, calc(100vw - 32px));
+  box-sizing: border-box;
+  margin: auto;
+  padding: 16px;
+  border: 1px solid #adbbc3;
+  border-radius: 8px;
+  color: #18314f;
+  background: #fff;
+}
+#shipping-document-tools::backdrop { background: rgb(16 35 55 / 40%); }
+#shipping-document-tools header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+#shipping-document-tools h2 { margin: 0; font-size: 18px; }
+.shipping-document-tools-list { display: grid; gap: 8px; }
+#shipping-document-tools .shipping-document-tools-list :is(a, button) { width: 100%; min-height: 40px; box-sizing: border-box; }
+.sales-order-waybill-progress-card[data-waybill-purpose="core_return"] dl:has(> div:nth-child(2):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
