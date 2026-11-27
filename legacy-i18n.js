@@ -9185,3 +9185,16 @@ Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"端末利用の承認":"批准�
 
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {"ユーザーIDを保存":"Remember user ID"});
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"ユーザーIDを保存":"保存用户 ID"});
+
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {
+  "パスワードの必須条件": "Password requirements",
+  "8文字以上、UTF-8で72バイト以内": "At least 8 characters and no more than 72 UTF-8 bytes.",
+  "よく使われる・漏えい済みのパスワードは使用不可": "Common passwords and passwords found in data breaches are not accepted.",
+  "確認欄に同じパスワードを入力": "Enter the same password in the confirmation field."
+});
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {
+  "パスワードの必須条件": "密码要求",
+  "8文字以上、UTF-8で72バイト以内": "至少8个字符，UTF-8编码不超过72字节。",
+  "よく使われる・漏えい済みのパスワードは使用不可": "不能使用常见密码或已泄露的密码。",
+  "確認欄に同じパスワードを入力": "请在确认栏再次输入相同的密码。"
+});
