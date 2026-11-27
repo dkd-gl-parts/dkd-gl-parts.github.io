@@ -14,15 +14,15 @@ async function rows(query) {
 function practiceDestinations(buyer) {
   // The prefecture is a real freight zone. All delivery details are training fixtures.
   return [
-    { prefecture_code:13, prefecture_name:"東京都", office:"演習倉庫A" },
-    { prefecture_code:27, prefecture_name:"大阪府", office:"演習倉庫B" },
-    { prefecture_code:23, prefecture_name:"愛知県", office:"演習倉庫C" }
+    { prefecture_code:13, prefecture_name:"東京都", postal:"100-0005", town:"千代田区丸の内", office:"演習倉庫A" },
+    { prefecture_code:27, prefecture_name:"大阪府", postal:"530-0001", town:"大阪市北区梅田", office:"演習倉庫B" },
+    { prefecture_code:23, prefecture_name:"愛知県", postal:"460-0008", town:"名古屋市中区栄", office:"演習倉庫C" }
   ].map(site => ({
     destination_type:"address", company_name:buyer.customer_name,
     recipient_name:site.office + "（架空・出荷禁止）",
-    postal_code:"000-0000", phone_number:"000-0000-0000",
+    postal_code:site.postal, phone_number:"000-0000-0000",
     prefecture_code:site.prefecture_code, prefecture_name:site.prefecture_name,
-    address_line_1:"演習用架空住所・出荷禁止", address_line_2:site.office
+    address_line_1:site.town+" 演習用架空番地・出荷禁止", address_line_2:site.office
   }));
 }
 async function loadPracticeMaster() {
@@ -49,7 +49,7 @@ async function loadPracticeMaster() {
   const seen = new Set();
   const candidates = variants.filter(v => {
     const product = v.core_products;
-    const code = product.manufacturer_part_number || product.genuine_part_number;
+    const code = product.genuine_part_number || product.manufacturer_part_number;
     if (!code || seen.has(code) || !product.product_base_prices.some(p => p.product_kind === v.product_kind)) return false;
     seen.add(code);
     return true;
@@ -86,14 +86,20 @@ async function quotePracticeOrder(master, previous) {
       throw new Error(error.code === "P0001" ? error.message : "通常受注の見積を取得できません。接続と受注権限を確認してください。");
     }
     if (!q?.valid || q.items?.length !== 2) throw new Error("通常受注の見積明細を確認できません。");
+    const service=q.outbound_shipping_method;
+    const delivery=await rows(practiceClient.rpc("get_customer_order_delivery_quote", {
+      target_postal_code:destination.postal_code, target_address:destination.prefecture_name+destination.address_line_1,
+      target_carrier_name:service.carrier_name, target_service_name:service.service_name, target_shipping_date:null
+    }));
+    if (!delivery?.available || !delivery.earliest_delivery_date) throw new Error(delivery?.message || "演習先の最短着日を確認できません。");
     const date = new Date();
     return { id:"FX-"+tokyoDate.format(date).replaceAll("/","")+"-"+crypto.randomUUID().slice(0,8).toUpperCase(),
-      date, keys:selected.map(v=>v.dkd_shohin_id), buyer:master.buyer, destination,
+      date, due:delivery.requested_date_supported===false ? "指定不可" : delivery.earliest_delivery_date.replaceAll("-","/"), keys:selected.map(v=>v.dkd_shohin_id), buyer:master.buyer, destination,
       shipping:q.shipping_fee_jpy, tax:q.tax_jpy, subtotal:q.subtotal_jpy, total:q.total_jpy,
       carrier:[q.outbound_shipping_method.carrier_name,q.outbound_shipping_method.service_name].join(" "),
       returns:q.core_return_required ? [q.core_return_shipping_method.carrier_name,q.core_return_shipping_method.service_name].join(" ") : "",
       lines:q.items.map(l=>({name:(master.categories.get(l.category_code)||l.category_code)+"（"+(l.product_kind==="rebuilt"?"リビルト品":"社外新品")+"）",
-        code:l.manufacturer_part_number||l.genuine_part_number,qty:l.quantity,price:l.unit_price_jpy,amount:l.line_total_jpy,core:l.core_return_required})) };
+        code:l.genuine_part_number||l.manufacturer_part_number,qty:l.quantity,price:l.unit_price_jpy,amount:l.line_total_jpy,core:l.core_return_required})) };
   }
   throw new Error("在庫と得意先別価格がそろう2品番の見積を作成できません。");
 }

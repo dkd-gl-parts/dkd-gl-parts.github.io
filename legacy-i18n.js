@@ -2,6 +2,14 @@
 // Runtime translation is local; this file makes no external requests.
 var DCATS_LEGACY_UI_TRANSLATIONS = {
   "en": {
+    "受注入力": "Order Entry",
+    "登録内容を確認": "Review order",
+    "返却不要・請求なし": "No return or charge",
+    "請求・返却後返金": "Charge and refund after return",
+    "請求・返却不要": "Charge without return",
+    "商品・明細": "Products and order lines",
+    "直送先名": "Ship-to company",
+    "車両情報": "Vehicle details",
     "この変更は、この画面でこの受注を開いている間だけ有効です。自動印刷や保存済みの標準プリンターは変更しません。設定を開く・適用するだけでは印刷依頼や印刷状態は変わりません。": "This change applies only while this order is open on this screen. Automatic printing and the saved default printer are unchanged. Opening or applying settings does not submit print requests or change print status.",
     "印刷先を確認できません。帳票・プリンター設定で接続設定を確認してください。": "Cannot verify the print destination. Check the connection in document and printer settings.",
     "印刷端末が": "The print station is ",
@@ -4405,6 +4413,14 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "回收率": "Recovery rate"
   },
   "zh": {
+    "受注入力": "订单录入",
+    "登録内容を確認": "核对订单",
+    "返却不要・請求なし": "无需退件且不收费",
+    "請求・返却後返金": "收费，退件后退款",
+    "請求・返却不要": "收费，无需退件",
+    "商品・明細": "商品与明细",
+    "直送先名": "直送单位名称",
+    "車両情報": "车辆信息",
     "この変更は、この画面でこの受注を開いている間だけ有効です。自動印刷や保存済みの標準プリンターは変更しません。設定を開く・適用するだけでは印刷依頼や印刷状態は変わりません。": "此变更仅在本画面打开本订单期间有效，不会更改自动打印或已保存的默认打印机。仅打开或应用设置不会发送打印任务或更改打印状态。",
     "印刷先を確認できません。帳票・プリンター設定で接続設定を確認してください。": "无法确认打印目标。请在单据与打印机设置中检查连接。",
     "印刷端末が": "打印终端当前为",
