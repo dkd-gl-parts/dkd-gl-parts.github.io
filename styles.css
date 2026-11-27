@@ -12825,3 +12825,23 @@ html[data-product-3d-paused] :is(
 .shipping-plq-setup:not([hidden]) { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .25rem .65rem; font-size: .875rem; }
 .shipping-plq-setup > span { flex: 1 1 15rem; overflow-wrap: anywhere; }
 .shipping-plq-setup a, .shipping-plq-setup button { white-space: nowrap; }
+
+@media (max-width: 520px), (max-height: 650px) {
+  .shipping-document-settings-card:has(#shipping-document-return-method) .shipping-document-settings-heading span { display: none; }
+  .shipping-document-settings-card:has(#shipping-document-return-method) .shipping-document-settings-heading h3 { font-size: 17px; line-height: 1.25; }
+  .shipping-document-settings-card:has(#shipping-document-return-method) :is(.shipping-document-settings-heading, #shipping-document-settings-content, .form-footer) { padding: 6px 12px; }
+  #shipping-document-return-waybill-section .shipping-document-carrier-context { margin: 3px 0; padding-block: 1px; }
+  #shipping-document-return-waybill-section .shipping-document-waybill-form { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 4px 6px; }
+  #shipping-document-return-waybill-section .shipping-document-waybill-form > * { grid-column: auto; }
+  #shipping-document-return-save { align-self: end; }
+  #shipping-document-return-waybill-section .shipping-document-waybill-print-row { margin-top: 4px; padding-top: 3px; }
+  .shipping-document-settings-card:has(#shipping-document-return-method) .form-footer button { padding: 6px 12px; }
+}
+#shipping-document-return-waybill-section:has(.shipping-plq-setup:not([hidden])) .shipping-document-waybill-print-row a { display: none; }
+
+#shipping-document-return-waybill-section:has(.shipping-plq-setup:not([hidden])) #shipping-document-return-guidance { display: none; }
+@media (max-width: 520px) {
+  #shipping-document-return-waybill-section .shipping-document-waybill-form > label:nth-child(3) { grid-column: 1; }
+  #shipping-document-return-waybill-section .shipping-document-waybill-form > #shipping-document-return-save { grid-column: 2; grid-row: 2; }
+  #shipping-document-return-waybill-section .shipping-document-waybill-print-row > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 5px; }
+}

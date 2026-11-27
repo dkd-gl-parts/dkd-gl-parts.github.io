@@ -21326,8 +21326,8 @@ function renderShippingDocumentSettingsOverlay() {
     description.textContent = (order.order_number || order.id) + " / " + t("shipping_sheet_hint");
     content.innerHTML = returnPrinterSetupHtml() + shippingDocumentReturnSheetForm(order);
   } else if (mode === "return") {
-    title.textContent = "コア返却用複写伝票の設定";
-    description.textContent = "" + (order.order_number || ("注文 " + order.id)) + " / 運送会社・作成方法・返送用伝票番号を変更します。";
+    title.textContent = "返送方法設定";
+    description.textContent = order.order_number || ("注文 " + order.id);
     content.innerHTML = shippingDocumentReturnWaybillHtml(order);
   } else if (shippingDocumentLocalOutputType(mode)) {
     title.textContent = salesOrderDocumentTypeLabel(mode) + "の発行設定";
