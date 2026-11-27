@@ -144,4 +144,34 @@ assert.equal(hitTest({fields: overlap}, point).key, "recipient_name");
 assert.equal(hitTest({fields: overlap.slice(-1)}, point), undefined);
 assert.equal(hitTest({fields: overlap}, {x: 0, y: 0}), undefined);
 
+
+const handlers = {};
+const canvas = {
+  addEventListener(name, handler) { handlers[name] = handler; },
+  focus() {},
+  setPointerCapture(id) { this.captured = id; }
+};
+const pointerField = {...overlap[0]};
+const gestureContext = {
+  shippingWaybillLayoutDraft: {fields: [pointerField], paper_width_mm: 190, paper_height_mm: 101},
+  shippingWaybillLayoutSelectedField: "recipient_phone",
+  shippingWaybillLayoutDrag: null,
+  shippingWaybillSelectableFields: layout => layout.fields,
+  shippingWaybillCanvasPoint: event => event.point,
+  shippingWaybillSelectedField: () => pointerField,
+  selectShippingWaybillLayoutField: field => { gestureContext.shippingWaybillLayoutSelectedField = field.key; },
+  syncShippingWaybillLayoutInspector() {},
+  drawShippingWaybillLayoutCanvas() {}
+};
+const bindSource = app.slice(app.indexOf("function bindShippingWaybillLayoutCanvas("), app.indexOf("function resizeShippingWaybillPaper("));
+vm.runInNewContext(hitSource + bindSource + "\nbindShippingWaybillLayoutCanvas", gestureContext)(canvas);
+handlers.pointerdown({isPrimary: true, button: 0, pointerId: 1, point, preventDefault() {}});
+assert.equal(canvas.captured, 1);
+handlers.pointermove({pointerId: 2, point: {x: 99, y: 99}});
+assert.equal(pointerField.x_mm, 20);
+handlers.pointermove({pointerId: 1, point: {x: 51, y: 36}});
+assert.deepEqual([pointerField.x_mm, pointerField.y_mm], [23, 32]);
+handlers.lostpointercapture({pointerId: 1});
+assert.equal(gestureContext.shippingWaybillLayoutDrag, null);
+
 console.log("Waybill layout designer verification passed.");
