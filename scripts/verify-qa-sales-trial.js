@@ -40,6 +40,32 @@ const source = fs.readFileSync(path.join(__dirname, "../assets/concierge-pet/qa-
   win.DcatsAccess.isSystemAdmin=()=>false;
   assert.equal(trial.matches(record),false);
   win.DcatsAccess.isSystemAdmin=()=>true;
+  // Exercise the shortcut as the extension panel arrives after page load.
+  let mounted=false, shortcut, observe, expanded=false, opens=0, scrolls=0, focuses=0;
+  const close={};
+  const status={
+    querySelector:sel=>sel==="button"?close:shortcut,
+    insertBefore(button,before){assert.equal(before,close);assert.equal(mounted,true);shortcut=button;}
+  };
+  const field={getClientRects:()=>expanded?[{}]:[],scrollIntoView:()=>scrolls++,focus:()=>focuses++};
+  const launcher={getAttribute:()=>String(expanded),click:()=>{opens++;expanded=true;}};
+  win.top=win;
+  win.document={
+    body:{},
+    getElementById:id=>id==="dcats-qa900100-status"?(mounted?status:null):id==="dcats-concierge-enrollment-file"?field:null,
+    querySelector:()=>launcher,
+    createElement:()=>({setAttribute(){},addEventListener(type,handler){assert.equal(type,"click");this.press=handler;}})
+  };
+  win.MutationObserver=class { constructor(cb){observe=cb;} observe(){} };
+  vm.runInNewContext(source,{window:win,crypto,setTimeout,clearTimeout});
+  mounted=true;
+  win.currentUser.id=device;observe();assert.equal(shortcut,undefined);
+  win.currentUser.id=actor;observe();
+  assert.equal(shortcut.textContent,"端末申請欄を開く");
+  const original=shortcut;observe();assert.equal(shortcut,original);
+  shortcut.press();shortcut.press();assert.deepEqual([opens,scrolls,focuses],[1,2,2]);
+  win.currentUser.id=device;shortcut.press();assert.equal(focuses,2);
+  win.currentUser.id=actor;assert.equal(requests.length,0);
   const api=win.DcatsQaSalesTrial.select(record,fallback);
   const loginId=crypto.randomUUID();await api.issue(record,loginId);
   assert.equal(requests.length,2);assert.equal(requests[0].id,loginId);assert.equal(requests[1].id,loginId);assert.equal(requests[1].action,"login");
