@@ -10073,6 +10073,7 @@ body.finished-label-setup-guide-open { overflow: hidden; }
   background: #fff;
   box-shadow: 0 4px 14px rgba(30, 45, 60, .15);
   cursor: move;
+  touch-action: none;
 }
 #shipping-waybill-layout-canvas:focus { outline: 3px solid rgba(35, 111, 181, .35); outline-offset: 2px; }
 .shipping-waybill-preview > p { margin: 8px 0 0; color: #657387; font-size: 10px; }

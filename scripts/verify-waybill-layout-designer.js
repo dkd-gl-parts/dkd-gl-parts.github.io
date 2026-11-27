@@ -129,4 +129,19 @@ for (const [width, height] of [[190, 101], [350, 250], [100, 70]]) {
   }
 }
 
+
+// A suppressed return-sender field can cover the recipient's name on a saved form.
+const hitSource = app.slice(app.indexOf("function shippingWaybillFieldAtPoint("), app.indexOf("function bindShippingWaybillLayoutCanvas("));
+const hitContext = {shippingWaybillLayoutSelectedField: "recipient_phone", shippingWaybillSelectableFields: layout => layout.fields.filter(field => !field.suppressed)};
+const hitTest = vm.runInNewContext(hitSource + "\nshippingWaybillFieldAtPoint", hitContext);
+const overlap = ["recipient_name", "contents", "tracking_number", "sender_address"].map(key => ({
+  key, x_mm: 20, y_mm: 30, width_mm: 60, height_mm: 8, visible: key !== "tracking_number", suppressed: key === "sender_address"
+}));
+const point = {x: 48, y: 34};
+assert.equal(hitTest({fields: overlap}, point).key, "contents");
+hitContext.shippingWaybillLayoutSelectedField = "recipient_name";
+assert.equal(hitTest({fields: overlap}, point).key, "recipient_name");
+assert.equal(hitTest({fields: overlap.slice(-1)}, point), undefined);
+assert.equal(hitTest({fields: overlap}, {x: 0, y: 0}), undefined);
+
 console.log("Waybill layout designer verification passed.");
