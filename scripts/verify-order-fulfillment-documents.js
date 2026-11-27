@@ -83,7 +83,7 @@ for (const fragment of [
   'sb.rpc("create_sales_order_b2_export"',
   'sb.rpc("get_sales_order_b2_export_batch"',
   'sb.rpc("save_sales_order_return_waybill"',
-  'sb.rpc("queue_sales_order_return_waybill_print"',
+  'sb.rpc("queue_sales_order_return_sheet"',
   'sb.rpc("list_sales_order_fulfillment_documents"',
   'sb.rpc("save_sales_order_outbound_waybill"',
   'sb.rpc("queue_sales_order_outbound_waybill_print"',
@@ -483,9 +483,8 @@ for (const fragment of [
   'sb.rpc("get_sales_order_detail"',
   'renderShippingDocumentList()',
   'renderShippingDocumentDetail()',
-  "コア返却用複写伝票の印刷が完了しました。",
-  "必要な場合は「再印刷」",
-  "印刷端末を確認して「再送」"
+  'tf("shipping_sheet_done"',
+  't("shipping_sheet_review")'
 ]) requireFragment(printState, fragment);
 
 const stageSource = sourceBetween("function shippingDocumentStageHtml", "function shippingDocumentOrderB2HistoryHtml");
@@ -574,9 +573,8 @@ for (const fragment of [
   'returnWaybillCopyCount + "枚", detail: returnCarrierLabel + " / 1商品1枚"',
   'var returnCanPrint = !!(dispatch && order.core_return_required && returnWaybillCopyCount > 0 && returnMethod === "dot_matrix"',
   'var returnCanHandwrite = !!(dispatch && order.core_return_required && returnWaybillCopyCount > 0 && returnMethod === "handwritten"',
-  'returnJob.status === "printed" ? "再印刷"',
-  'returnJob.status === "error" ? "再送" : "印刷"',
-  'esc(returnPrintActionLabel) + "（" + returnWaybillCopyCount + "枚）',
+  'esc(t("shipping_sheet_open"))',
+  'shippingDocumentReturnSheetCount(returnSheets)',
   '手書き内容を表示（" + returnWaybillCopyCount + "枚）',
   "shippingCarrierBrandHtml(row.carrierCode, true)"
 ]) requireFragment(requiredDocuments, fragment);
@@ -658,7 +656,7 @@ const returnWaybill = sourceBetween("function shippingDocumentReturnWaybillHtml"
 for (const fragment of [
   "var dispatchReady = !!dispatch",
   "出荷指示書を発行してから印刷できます。",
-  "3-4-4（11桁）または4-4-4（12桁）",
+  't("shipping_sheet_batch")',
   "shippingDocumentWaybillNumberFormat(waybill.tracking_number"
 ]) requireFragment(returnWaybill, fragment);
 for (const forbidden of [
@@ -680,8 +678,10 @@ if (returnSave.includes('method === "dot_matrix" && !shippingDocumentWaybillNumb
 
 const returnWaybillPrint = sourceBetween("async function queueShippingDocumentReturnWaybillPrint", "function renderSalesOrderList");
 requireFragment(returnWaybillPrint, 'waybill.handling_method !== "dot_matrix"');
-requireFragment(returnWaybillPrint, "shippingDocumentWaybillNumberIsValid(waybill.tracking_number)");
-requireFragment(returnWaybillPrint, "queued.copy_count");
+requireFragment(returnWaybillPrint, "shippingDocumentReturnSheetNumber(number)");
+requireFragment(returnWaybillPrint, "target_unit_id: sheet.unit.id");
+requireFragment(returnWaybillPrint, "target_tracking_number: number");
+if (/var returnCanPrint = [^\n]*tracking_number/.test(requiredDocuments)) throw new Error("Opening a slip must be possible before registration");
 
 const returnWaybillCountSource = sourceBetween(
   "function shippingDocumentReturnWaybillCopyCount",
@@ -691,6 +691,9 @@ const returnWaybillCountContext = {};
 vm.createContext(returnWaybillCountContext);
 vm.runInContext(returnWaybillCountSource, returnWaybillCountContext);
 const returnWaybillCopyCount = returnWaybillCountContext.shippingDocumentReturnWaybillCopyCount;
+for (const [input, expected] of [["", ""], ["12345", ""], ["X12345678901", ""], ["123-4567-8901","12345678901"], ["１２３４５６７８９０１２","123456789012"]]) {
+  if (returnWaybillCountContext.shippingDocumentReturnSheetNumber(input) !== expected) throw new Error("Single-slip scan validation failed");
+}
 for (const [order, expected] of [
   [{ core_return_required: true, core_return_units: [
     { order_item: { core_return_required: true } },
@@ -1125,11 +1128,11 @@ for (const fragment of [
 ]) requireFragment(i18n, fragment, `B2 reissue translation is missing: ${fragment}`);
 
 for (const fragment of [
-  'content="v1.1.1402"',
-  'styles.css?v=1.1.1402',
-  'app.js?v=1.1.1402'
+  'content="v1.1.1403"',
+  'styles.css?v=1.1.1403',
+  'app.js?v=1.1.1403'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.1402"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.1403"');
 requireFragment(source, 'sales_management_registered: "売上登録済"');
 requireFragment(source, 'sales_management_unknown: "売上確認不可"');
 
