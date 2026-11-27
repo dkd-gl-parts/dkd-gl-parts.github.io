@@ -1,6 +1,6 @@
 (function () {
   "use strict";
-  var state = { dialog: null, settings: null, customers: [], categories: [], customerMatches: [], customerIndex: 0, channel: "standard", regularCustomer: "", cart: [], dirty: false, busy: false, pending: null, bindingReview: null, settingsSeq: 0, shippingSeq: 0, shippingCustomerId: "", shippingReady: false, epoch: 0, search: 0, postal: 0, productIndex: 0, cartIndex: 0, postalIndex: 0, view: "entry", actor: "" };
+  var state = { dialog: null, settings: null, customers: [], categories: [], customerMatches: [], customerIndex: 0, channel: "standard", regularCustomer: "", cart: [], dirty: false, busy: false, pending: null, bindingReview: null, settingsSeq: 0, shippingSeq: 0, shippingCustomerId: "", shippingReady: false, epoch: 0, search: 0, postal: 0, productIndex: 0, postalIndex: 0, view: "entry", actor: "" };
   function actor() { return typeof currentUser !== "undefined" && currentUser ? String(currentUser.id || currentUser.email || "") : ""; }
   function allowed() { return typeof canManageSalesOrders === "function" && canManageSalesOrders(); }
   function regularEntryAllowed() { return typeof canStartInternalCustomerOrderEntry === "function" && canStartInternalCustomerOrderEntry(); }
@@ -110,17 +110,21 @@
         if (id === "recycle-order-customer") searchCustomerNames(event.target.value);
         if (event.target.closest("#recycle-entry")) state.dirty = true;
         if (["recycle-product-query","recycle-query-type"].includes(id)) resetProductSearch();
-        if (id === "recycle-quantity-" + state.cartIndex) updatePackingField();
-        if (id === "recycle-quantity-" + state.cartIndex || id === "recycle-price-" + state.cartIndex) {
-          rememberCart();
-          var summary = document.getElementById("recycle-cart-summary");
-          if (summary) summary.innerHTML = cartLineChoices();
+        var line = event.target.closest("[data-cart-index]");
+        if (line) {
+          rememberLine(Number(line.dataset.cartIndex));
+          if (id.startsWith("recycle-quantity-")) updatePackingField();
         }
         if (event.target.closest("#recycle-settings-view")) settingsEdited(event);
       });
       state.dialog.addEventListener("change", function (event) {
         var id = event.target.id;
-        if (id === "recycle-core-" + state.cartIndex) { rememberCart(); updateCoreChargeField(); updateReturnField(); }
+        if (id.startsWith("recycle-core-")) {
+          var lineIndex = Number(event.target.closest("[data-cart-index]").dataset.cartIndex);
+          rememberLine(lineIndex);
+          document.getElementById("recycle-manual-core-field-" + lineIndex).hidden = !needsManualCoreCharge(state.cart[lineIndex]);
+          updateReturnField();
+        }
         if (id === "recycle-entry-channel") changeOrderContext(event.target);
         if (id === "recycle-search-category") resetProductSearch();
         if (id === "recycle-destination") applyOfficeDestination();
@@ -174,7 +178,7 @@
     body.innerHTML = "<div id='recycle-customer-summary'></div><div id='recycle-setup-note'></div>" +
       "<section id='recycle-entry' aria-label='受注入力'>" + entryHtml() + "</section>" +
       "<section id='recycle-settings-view' aria-label='Recycle+の集約先設定' hidden></section>";
-    state.cart = []; state.products = []; state.productIndex = 0; state.cartIndex = 0; state.dirty = false; state.office = null; state.deliveryRead = 0;
+    state.cart = []; state.products = []; state.productIndex = 0; state.dirty = false; state.office = null; state.deliveryRead = 0;
     syncEntryLayout(); renderCart(); showView("entry", false); refreshSettings();
     focusEntry(orderCustomerId() ? "product-query" : recycleChannel() ? "entry-channel" : "order-customer");
   }
@@ -329,10 +333,13 @@
   }
   function showView(view, focus) {
     clearBindingReview();
-    if (view !== "entry") closeCustomerNames();
+    if (view !== "entry") {
+      closeCustomerNames();
+      state.dialog.querySelectorAll(".recycle-cart-details[popover]").forEach(function (panel) { panel.hidePopover(); });
+    }
     var vehicleToggle = state.dialog.querySelector(".recycle-vehicle-toggle");
     if (vehicleToggle) vehicleToggle.hidden = view !== "entry";
-    if (view !== "entry") ["entry-extra", "product-box", "postal-box", "cart-extra", "vehicle-box", "office-box"].forEach(function (id) { setEntryPopup(id, false); });
+    if (view !== "entry") ["entry-extra", "product-box", "postal-box", "vehicle-box", "office-box"].forEach(function (id) { setEntryPopup(id, false); });
     state.view = view;
     state.dialog.classList.toggle("recycle-entry-dialog",view === "entry");
     var feedback = document.getElementById("recycle-feedback");
@@ -430,7 +437,7 @@
         }).join("") + "</select>") +
       "<input id='recycle-product-query' type='search' maxlength='80'" + (recycleChannel() ? " aria-label='カルテ番号' placeholder='例 22 または 00000-000000000022'" : " aria-label='純正品番・メーカー品番' placeholder='品番を入力して検索'") + ">" + button("検索", "products") + "</div>" +
       "<div id='recycle-product-box' class='recycle-entry-popup' aria-label='商品候補' role='region'><div class='recycle-popup-head recycle-compact-only'><strong>商品候補</strong><button type='button' popovertarget='recycle-product-box' popovertargetaction='hide'>閉じる</button></div><p id='recycle-product-status' role='status'></p><div id='recycle-products'></div></div>" +
-      "<div class='recycle-cart-head'><h3 id='recycle-items-heading'>商品明細</h3><div id='recycle-cart-pages'></div><label id='recycle-packing-field' hidden><input type='checkbox' id='recycle-packed-together'>同梱セット</label></div><div id='recycle-cart' aria-labelledby='recycle-items-heading' role='region'></div></section>" +
+      "<div class='recycle-cart-head'><h3 id='recycle-items-heading'>商品明細</h3><label id='recycle-packing-field' hidden><input type='checkbox' id='recycle-packed-together'>同梱セット</label></div><div id='recycle-cart' tabindex='0' aria-labelledby='recycle-items-heading' role='region'></div></section>" +
       "<section class='recycle-entry-panel recycle-entry-address' aria-labelledby='recycle-address-heading'><div class='recycle-address-head'><h3 id='recycle-address-heading'>お届け先</h3><small id='recycle-postal-status' role='status'></small></div><div class='recycle-grid'>" +
       "<div class='recycle-postal-field'><label for='recycle-postal'>郵便番号（必須）</label><div class='recycle-postal-row'><input id='recycle-postal' maxlength='8' inputmode='numeric' autocomplete='postal-code' required>" + button("住所検索", "postal") + "</div></div>" +
       input("電話番号（必須）", "phone", "tel", "", "maxlength='20' required autocomplete='tel'") +
@@ -547,6 +554,14 @@
     if (!el) return;
     if (el.closest(".recycle-entry-address")) selectEntrySection("address");
     if (el.closest(".recycle-entry-products")) selectEntrySection("products");
+    var row = el.closest("[data-cart-index]"), cart = document.getElementById("recycle-cart");
+    if (row && cart && typeof row.getBoundingClientRect === "function") {
+      var item = row.getBoundingClientRect(), box = cart.getBoundingClientRect();
+      if (item.top < box.top) cart.scrollTop += item.top - box.top;
+      else if (item.bottom > box.bottom) cart.scrollTop += item.bottom - box.bottom;
+    }
+    var popup = el.closest("[popover]");
+    if (popup && !popup.matches(":popover-open")) popup.showPopover();
     el.focus({preventScroll:true});
   }
   function pages(type, index, count) {
@@ -560,8 +575,6 @@
     var step = Number(b.dataset.direction), type = b.dataset.type, host;
     if (type === "product") {
       state.productIndex += step; renderProducts(); host = document.getElementById("recycle-products");
-    } else if (type === "cart") {
-      rememberCart(); state.cartIndex += step; renderCart(); host = document.getElementById("recycle-cart-pages");
     } else if (type === "postal") {
       state.postalIndex += step; renderPostal(); host = document.getElementById("recycle-postal-results");
     }
@@ -582,53 +595,46 @@
       option("charge_with_return", configured ? (typeof tf === "function" ? tf("customer_order_core_charge_with_return_option", { amount: amount }) : "コア代金を請求（返却後返金・" + amount + "）") : "請求・返却後返金", handling) +
       option("charge_no_return", configured ? (typeof tf === "function" ? tf("customer_order_core_charge_no_return_option", { amount: amount }) : "コア代金を請求（返却不要・" + amount + "）") : "請求・返却不要", handling);
   }
-  function cartLineChoices() {
-    if (state.cart.length < 2) return "";
-    var start = Math.floor(state.cartIndex / 3) * 3;
-    return "<div class='recycle-cart-review' aria-label='追加済み商品'>" + state.cart.slice(start,start+3).map(function (item,offset) {
-      var index = start+offset;
-      var label = (index + 1) + ". " + (item.genuine_part_number || item.manufacturer_part_number) + "　" + item.quantity + "点 ／ " + (item.price === "" || item.price == null ? "得意先単価" : yen(item.price));
-      return button(label, "cart_line",
-        "data-index='"+index+"'"+(index===state.cartIndex?" aria-current='true'":""));
-    }).join("") + "</div>";
+  function cartLineHtml(p, i) {
+    var extraId = "recycle-cart-extra-" + i;
+    var title = e(p.genuine_part_number || p.manufacturer_part_number);
+    return "<div class='recycle-cart-item' data-cart-index='" + i + "'><div class='recycle-line-title'><strong>" + (i + 1) + ". " + title + "</strong>" +
+      (p.karte_number ? "<small>カルテ番号 " + e(p.karte_number) + "</small>" : "") + "</div>" +
+      input("数量", "quantity-" + i, "number", p.quantity, "min='1' max='99' step='1'") +
+      input("単価（税抜・コア別）", "price-" + i, "number", p.price, "aria-label='成立単価（税抜・コア代別）' min='0' step='1'" + (recycleChannel() ? " max='99999999'" : " max='2147483647' placeholder='得意先単価'")) +
+      "<div id='" + extraId + "' class='recycle-cart-details recycle-entry-popup' aria-label='商品情報・コア対応' role='region'><div class='recycle-popup-head recycle-compact-only'><strong>" + title + "</strong><button type='button' popovertarget='" + extraId + "' popovertargetaction='hide'>閉じる</button></div>" +
+      "<p>" + e(p.manufacturer + " / " + p.manufacturer_part_number + " / " + kind(p.product_kind)) + "</p>" +
+      (p.core_return_required ? "<div class='recycle-core-controls'><label><span>コア対応</span><select id='recycle-core-" + i + "'>" + coreHandlingOptions(p) + "</select></label><div id='recycle-manual-core-field-" + i + "'" + (needsManualCoreCharge(p) ? "" : " hidden") + ">" +
+        input("コア代（税抜/個）", "manual-core-" + i, "text", p.manualCoreCharge, "aria-label='コア代金（1個・税抜）' inputmode='numeric' maxlength='8' autocomplete='off'") + "</div></div>" : "<small>コア返却不要</small>") + "</div>" +
+      "<button type='button' class='recycle-compact-only' popovertarget='" + extraId + "'>商品情報</button>" +
+      button("削除", "remove", "data-index='" + i + "' aria-label='" + (i+1) + "行目を削除'") + "</div>";
   }
   function renderCart() {
     var host = document.getElementById("recycle-cart"); if (!host) return;
-    var i = state.cartIndex, p = state.cart[i];
     document.getElementById("recycle-items-heading").textContent = "商品明細" + (state.cart.length ? " (" + state.cart.length + ")" : "");
-    document.getElementById("recycle-cart-pages").innerHTML = pages("cart", i, state.cart.length);
-    host.innerHTML = p ?
-      "<div id='recycle-cart-summary'>" + cartLineChoices() + "</div><div class='recycle-line'><div class='recycle-line-title'><strong>" + e(p.genuine_part_number || p.manufacturer_part_number) + "</strong>" + (p.karte_number ? "<small>カルテ番号 " + e(p.karte_number) + "</small>" : "") + "</div>" +
-      input("数量", "quantity-" + i, "number", p.quantity, "min='1' max='99' step='1'") + input("単価（税抜・コア別）", "price-" + i, "number", p.price, "aria-label='成立単価（税抜・コア代別）' min='0' step='1'" + (recycleChannel() ? " max='99999999'" : " max='2147483647' placeholder='得意先単価'")) +
-      "<div id='recycle-cart-extra' class='recycle-line-extra recycle-entry-popup' aria-label='商品情報・コア対応' role='region'><div class='recycle-popup-head recycle-compact-only'><strong>商品情報</strong><button type='button' popovertarget='recycle-cart-extra' popovertargetaction='hide'>閉じる</button></div>" +
-      "<p>" + e(p.manufacturer + " / " + p.manufacturer_part_number + " / " + kind(p.product_kind)) + "</p>" +
-      (p.core_return_required ? "<div class='recycle-core-controls'><label><span>コア対応</span><select id='recycle-core-" + i + "'>" + coreHandlingOptions(p) + "</select></label><div id='recycle-manual-core-field' hidden>" +
-        input("コア代（税抜/個）", "manual-core-" + i, "text", p.manualCoreCharge, "aria-label='コア代金（1個・税抜）' inputmode='numeric' maxlength='8' autocomplete='off'") + "</div></div>" : "<small>コア返却不要</small>") + "</div>" +
-      "<button type='button' class='recycle-compact-only' popovertarget='recycle-cart-extra'>商品情報</button>" + button("削除", "remove", "data-index='" + i + "'") + "</div>" :
+    host.innerHTML = state.cart.length ? state.cart.map(cartLineHtml).join("") :
       "<p>" + (recycleChannel() ? "カルテ番号や品番" : "品番や商品分類") + "から商品を追加してください。</p>";
     syncEntryLayout();
-    updateCoreChargeField();
     updateReturnField();
     updatePackingField();
     setButtons();
   }
-  function updateCoreChargeField() {
-    var field = document.getElementById("recycle-manual-core-field");
-    if (field) field.hidden = !needsManualCoreCharge(state.cart[state.cartIndex]);
-  }
   function hasCoreReturn() { return state.cart.some(function (p) { return p.core_return_required && p.handling !== "charge_no_return" && p.handling !== "waive_no_return"; }); }
   function updateReturnField() { document.getElementById("recycle-return-field").hidden = !hasCoreReturn(); }
-  function rememberCart() {
-    var i = state.cartIndex, p = state.cart[i];
+  function rememberLine(i) {
+    var p = state.cart[i];
     if (!p || !document.getElementById("recycle-quantity-" + i)) return;
     p.quantity = field("quantity-" + i);
     p.price = field("price-" + i);
     p.handling = field("core-" + i) || "standard";
     p.manualCoreCharge = field("manual-core-" + i);
   }
+  function rememberCart() {
+    state.cart.forEach(function (_, i) { rememberLine(i); });
+  }
   function quantityInCart() {
-    return state.cart.reduce(function (total, product, index) {
-      var quantity=Number(index===state.cartIndex ? field("quantity-"+index) : product.quantity);
+    return state.cart.reduce(function (total, product) {
+      var quantity=Number(product.quantity);
       return total+(Number.isInteger(quantity)&&quantity>=1&&quantity<=99 ? quantity : 0);
     },0);
   }
@@ -672,7 +678,7 @@
         }
         return item;
       } catch (error) {
-        state.cartIndex = i; renderCart(); focusEntry(focus + i);
+        focusEntry(focus + i);
         throw error;
       }
     });
@@ -974,10 +980,6 @@
       else if (action === "retry_shipping") { status(""); await loadShippingOptions(); }
       else if (action === "products") await searchProducts();
       else if (action === "page") changePage(b);
-      else if (action === "cart_line") {
-        var index = Number(b.dataset.index);
-        if (state.cart[index]) { rememberCart(); state.cartIndex=index; renderCart(); focusEntry("quantity-"+index); }
-      }
       else if (action === "section_products" || action === "section_address") selectEntrySection(action.slice(8));
       else if (action === "postal") await lookupPostal();
       else if (action === "postal_select") { var row = state.postalRows[Number(b.dataset.index)]; if (row && row.postal_code.replace(/[^0-9]/g, "") === field("postal").replace(/[^0-9]/g, "")) applyPostal(row); }
@@ -987,15 +989,22 @@
         if (!recycleChannel()) {
           var existing = state.cart.findIndex(function (line) { return line.dkd_shohin_id === product.dkd_shohin_id && line.product_kind === product.product_kind; });
           if (existing >= 0) {
-            state.cartIndex = existing; setEntryPopup("product-box", false); renderCart(); focusEntry("quantity-" + existing); return;
+            setEntryPopup("product-box", false); focusEntry("quantity-" + existing); return;
           }
         }
         state.cart.push(Object.assign({}, product, { quantity: 1, price: product.factoring_price == null ? "" : String(product.factoring_price) }));
-        state.cartIndex = state.cart.length - 1; state.dirty = true;
+        state.dirty = true;
         setEntryPopup("product-box", false);
-        renderCart(); focusEntry("quantity-" + state.cartIndex);
+        renderCart(); focusEntry("quantity-" + (state.cart.length - 1));
       }
-      else if (action === "remove") { rememberCart(); state.cart.splice(state.cartIndex, 1); state.cartIndex = Math.max(0, Math.min(state.cartIndex, state.cart.length - 1)); state.dirty = true; renderCart(); focusEntry(state.cart.length ? "quantity-" + state.cartIndex : "product-query"); }
+      else if (action === "remove") {
+        var index = Number(b.dataset.index);
+        rememberCart();
+        state.cart.splice(index, 1);
+        state.dirty = true;
+        renderCart();
+        focusEntry(state.cart.length ? "quantity-" + Math.min(index, state.cart.length - 1) : "product-query");
+      }
       else if (action === "place") await place();
     } catch (error) { status(error.message, true); }
   }
