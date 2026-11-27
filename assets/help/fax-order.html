@@ -6,7 +6,7 @@
 <title>FAX注文の処理手順 | D-CATS</title>
 <meta name="robots" content="noindex, nofollow">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'">
-<link rel="stylesheet" href="fax-order.css?v=1">
+<link rel="stylesheet" href="fax-order.css?v=2">
 </head>
 <body>
 <header class="hero" id="top">
@@ -67,27 +67,29 @@
     <header class="section-head"><p class="tag">フロント</p><h2>2. D-CATSで通常受注を登録する</h2></header>
     <figure>
       <ol class="route">
-        <li><b>受注・出荷管理</b><span>［社内受注入力］を開く</span></li>
+        <li><b>受注・出荷管理</b><span>［受注入力］を開く</span></li>
         <li><b>受注区分</b><span>［通常受注］を選ぶ</span></li>
-        <li class="outcome"><b>内容を確認して受注登録</b><span>明細・配送・合計を照合</span></li>
+        <li class="outcome"><b>登録内容を確認</b><span>明細・配送・合計を照合</span></li>
       </ol>
       <figcaption>操作する場所を示した図です。</figcaption>
     </figure>
     <dl class="matrix">
       <div><dt>得意先</dt><dd>名称または得意先コードを入力し、候補から発注元を選びます。似た社名はコードも照合します。</dd></div>
       <div><dt>商品追加・商品明細</dt><dd>純正品番やメーカー品番で検索し、該当する商品・区分を選び、数量を入力します。表示された単価を確認し、合意単価への修正が必要な場合は入力できる社内欄を使います。</dd></div>
-      <div><dt>お届け先</dt><dd>会社名・宛名、電話、郵便番号、都道府県・住所、建物名・部門をFAXと照合します。直送は実際の届け先を入力します。</dd></div>
-      <div><dt>配送・メモ</dt><dd>商品発送時の運送便・お届け希望日・時間帯を確認します。該当時はコア返却時の運送便も確認し、参照番号や指示は用途に合う欄に記録します。</dd></div>
-      <div><dt>カルテ・車両情報</dt><dd>カルテNo.、車両型式、初年度登録、車台番号などを必要な場合に入力します。狭い画面では［カルテ・車両］から開きます。</dd></div>
+      <div><dt>お届け先</dt><dd>郵便番号で住所検索し、電話番号、住所・番地・建物、直送先名・宛名の順に入力します。直送は実際の届け先を入力します。</dd></div>
+      <div><dt>配送・メモ</dt><dd>運送便と宛先から最短着日が入ります。別の日を希望する場合は選択可能な範囲で変更します。該当時はコア返却時の運送便も確認し、参照番号や指示は用途に合う欄に記録します。</dd></div>
+      <div><dt>カルテ番号・車両情報</dt><dd>カルテNo.は配送・メモ欄、車名・型式・初年度登録・車台番号は［車両情報］に入力します。演習票の3項目目に転記用の値があります。</dd></div>
       <div><dt>同梱セット</dt><dd>同じ発注者・直送先の計2点以上を1箱で発送するとき、同じ受注に明細を入れて指定します。確認画面の「同梱セット 2点 ／ 発送用送り状1枚」などで、点数と枚数を確認します。</dd></div>
     </dl>
+    <figure><img class="fax-entry-screen" src="screens/fax-delivery-postal.jpg" alt="受注入力のお届け先欄。左の郵便番号と住所検索、右に電話番号と都道府県が並ぶ。" width="600" height="156"><figcaption>① 郵便番号を入力して［住所検索］を押します。町名を確認し、電話番号、番地・建物、直送先名を転記します。</figcaption></figure>
     <h3>コア条件は商品明細ごとに確認</h3>
     <dl class="matrix">
       <div><dt>返却要</dt><dd>コアを返送してもらいます。コア代金の請求・返金はありません。</dd></div>
+      <div><dt>返却不要・請求なし</dt><dd>この明細では返却も請求も行いません。請求する場合は下の2種類を選び、マスター金額がないときは1個当たりの税抜コア代金を入力します。</dd></div>
       <div><dt>請求・返却後返金</dt><dd>コア代金を請求し、対象コアの返却を確認した後に返金します。</dd></div>
       <div><dt>請求・返却不要</dt><dd>コア代金を請求します。該当する商品の返却用送り状や返金は不要です。</dd></div>
     </dl>
-    <p>入力と表示金額を確認して［内容を確認して受注登録］を押し、確認ダイアログで得意先・合計・対象時のコア代金や同梱をもう一度照合します。登録後に受注番号・「受付済み」・明細を確認します。</p>
+    <p>入力と表示金額を確認して［登録内容を確認］を押し、確認ダイアログで得意先・合計・対象時のコア代金や同梱をもう一度照合します。登録後に受注番号・「受付済み」・明細を確認します。</p>
     <p class="notice">登録応答が取得できないときは、受注一覧で同じ注文の有無を確認します。結果を確認してから次の操作を判断します。</p>
   </section>
 

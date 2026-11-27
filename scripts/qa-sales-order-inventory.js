@@ -90,13 +90,14 @@ async function mockPracticeApi(page) {
    }
    case "assy_categories": body=[{category_code:"A",label_ja:"試験商品"}];break;
    case "core_product_variants": body=complete?goods:[];break;
+   case "get_customer_order_delivery_quote": body={available:true,earliest_delivery_date:"2026-12-03",requested_date_supported:true};break;
    case "preview_internal_customer_order": {
     const input=req.postDataJSON();
     assert.equal(input.target_sales_customer_id,buyer.id);
     assert.equal(input.target_shipping_address.company_name,buyer.customer_name);
     assert.match(input.target_shipping_address.recipient_name,/架空・出荷禁止/);
     assert.equal(input.target_shipping_address.phone_number,"000-0000-0000");
-    assert.equal(input.target_shipping_address.postal_code,"000-0000");
+    assert(["100-0005","530-0001","460-0008"].includes(input.target_shipping_address.postal_code));
     quotes++;
     assert.equal(input.target_items.length,2);
     const items=input.target_items.map(v=>({...v,manufacturer_part_number:"QA-"+v.dkd_shohin_id,category_code:"A",unit_price_jpy:1000*v.dkd_shohin_id,line_total_jpy:1000*v.dkd_shohin_id*v.quantity,core_return_required:true}));
@@ -123,11 +124,14 @@ async function verifyFaxVariations(page) {
   total: await page.locator(".total strong").textContent()
  });
  await page.evaluate(() => { window.print = () => {}; });
+ assert.equal(await page.locator('[aria-label="希望納期"]').textContent(),"2026/12/03");
+ assert.match(await page.locator("[data-practice-karte]").textContent(),/^TR-K-/);
+ assert.match(await page.locator("[data-practice-chassis]").textContent(),/^TR-DEMO-/);
  const before = await snapshot();
  await page.locator("[data-print]").click();
  assert.deepEqual(await snapshot(), before);
  await page.setViewportSize({width:320,height:568});
- for (const section of ["request", "ship", "items"]) {
+ for (const section of ["request", "ship", "vehicle", "items"]) {
   await page.evaluate(id => { location.hash = id; }, section);
   const size = await page.evaluate(() => [document.documentElement.scrollWidth,document.documentElement.scrollHeight]);
   assert(size[0] <= 320 && size[1] <= 569, "reprint controls fit " + section + ": " + size);
@@ -234,7 +238,7 @@ async function verifyFaxPractice(browser, base, output) {
   api.customerRows([api.buyer]); api.empty(); await page.goto(base+"/assets/help/fax-practice-order.html#items"); await page.reload();
   await page.getByRole("status").filter({hasText:"2品番が必要"}).waitFor();
   assert(await page.locator(".sheet").isHidden());
-  console.log("FAX practice verified: 9 panels, four viewports, edited long fields, A4 order 1 page and observer checklist 2 pages.");
+  console.log("FAX practice verified: 10 panels, four viewports, edited long fields, A4 order 1 page and observer checklist 2 pages.");
  } finally { await page.close(); }
 }
 

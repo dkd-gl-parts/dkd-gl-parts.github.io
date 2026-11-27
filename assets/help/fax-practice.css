@@ -89,3 +89,11 @@ dt { font-weight: 650; }
 [hidden] { display: none !important; }
 .value { min-width: 0; overflow-wrap: anywhere; }
 button:disabled { opacity: .55; cursor: default; }
+
+#vehicle h3 { font-size: 1em; margin: .35em 0 0; }
+@media print {
+ body[data-practice=order] { font-size: 10.5pt; line-height: 1.32; }
+ body[data-practice=order] dl > div { padding: 1mm 0; grid-template-columns: 41mm 1fr; }
+ body[data-practice=order] .panel { padding-top: 2.5mm; }
+ body[data-practice=order] .item { padding: 1.4mm 0; }
+}

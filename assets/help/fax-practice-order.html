@@ -6,10 +6,10 @@
 <meta name="robots" content="noindex,nofollow">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; connect-src https://jqoeqximtwfpqwzngutj.supabase.co; base-uri 'none'; form-action 'none'">
 <title>FAX注文書（演習用） | D-CATS</title>
-<link rel="stylesheet" href="fax-practice.css?v=3">
+<link rel="stylesheet" href="fax-practice.css?v=4">
 <script defer src="../../vendor/supabase-js-2.115.0.js" integrity="sha384-CLZeq1dk8+Uzrs7TVvBUdlFoV5F0DMqgRoeHa8g5wJcuPe5SkVfEvdxB0ZuzlnBQ" crossorigin="anonymous"></script>
-<script defer src="fax-practice-master.js?v=2"></script>
-<script src="fax-practice.js?v=4" defer></script></head>
+<script defer src="fax-practice-master.js?v=3"></script>
+<script src="fax-practice.js?v=5" defer></script></head>
 <body data-practice="order">
 <noscript>注文例の生成にはJavaScriptを有効にしてください。</noscript>
 <main>
@@ -21,7 +21,7 @@
 <button type="button" data-print disabled>表示中を印刷</button> <button type="button" data-preview disabled>別の例を表示</button> <button type="button" data-repeat hidden>同じ注文を再印刷</button><a href="fax-order.html#intake">FAX手順書へ</a></div></header>
 <div class="sheet" hidden>
 <section class="panel" id="request" tabindex="-1">
-<h2><span class="position">1 / 3</span> 発注元と注文番号</h2>
+<h2><span class="position">1 / 4</span> 発注元と注文番号</h2>
 <p>下記の品を、次項のお届け先へ直送してください。</p>
 <dl>
 <div>
@@ -41,7 +41,7 @@
 <dd><span class="value" aria-label="発注担当"></span></dd></div></dl>
 <nav aria-label="用紙の項目"><a href="fax-order.html#intake">手順書へ</a><a href="#ship">次へ</a></nav></section>
 <section class="panel" id="ship" tabindex="-1">
-<h2><span class="position">2 / 3</span> 直送先と配送指定</h2>
+<h2><span class="position">2 / 4</span> 直送先と配送指定</h2>
 <dl>
 <div>
 <dt>お届け先</dt>
@@ -58,9 +58,18 @@
 <div>
 <dt>配送条件</dt>
 <dd><span data-delivery></span></dd></div></dl>
-<nav aria-label="用紙の項目"><a href="#request">前へ</a><a href="#items">次へ</a></nav></section>
+<nav aria-label="用紙の項目"><a href="#request">前へ</a><a href="#vehicle">次へ</a></nav></section>
+<section class="panel" id="vehicle" tabindex="-1">
+<h2><span class="position">3 / 4</span> カルテ番号と車両情報（演習用）</h2>
+<dl><div><dt>カルテ番号</dt><dd data-practice-karte></dd></div></dl>
+<h3>車両情報</h3>
+<dl><div><dt>車名・型式</dt><dd>演習トラック ／ TR-DEMO</dd></div>
+<div><dt>初年度登録・車台番号</dt><dd>2021年4月 ／ <span data-practice-chassis></span></dd></div>
+<div><dt>エンジン型式</dt><dd>TR-E01</dd></div>
+<div><dt>型式指定・類別区分</dt><dd>00001 ／ 0001</dd></div></dl>
+<nav aria-label="用紙の項目"><a href="#ship">前へ</a><a href="#items">次へ</a></nav></section>
 <section class="panel" id="items" tabindex="-1">
-<h2><span class="position">3 / 3</span> 注文明細（税抜）</h2>
+<h2><span class="position">4 / 4</span> 注文明細（税抜）</h2>
 <div class="item"><strong>1　<span class="value" aria-label="商品名1"></span></strong>
 <div>品番 <span class="value" aria-label="品番1"></span></div>
 <p data-line-total></p></div>
@@ -69,4 +78,4 @@
 <p data-line-total></p></div>
 <p class="total"></p>
 <p>備考　試験品のみ。実配送・請求・対外送信は行わないでください。</p>
-<nav aria-label="用紙の項目"><a href="#ship">前へ</a><a data-check-link href="fax-practice-check.html" target="_blank" rel="noopener noreferrer">確認票を別に開く</a></nav></section></div></main></body></html>
+<nav aria-label="用紙の項目"><a href="#vehicle">前へ</a><a data-check-link href="fax-practice-check.html" target="_blank" rel="noopener noreferrer">確認票を別に開く</a></nav></section></div></main></body></html>

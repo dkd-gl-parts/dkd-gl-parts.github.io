@@ -111,6 +111,11 @@
         if (event.target.closest("#recycle-entry")) state.dirty = true;
         if (["recycle-product-query","recycle-query-type"].includes(id)) resetProductSearch();
         if (id === "recycle-quantity-" + state.cartIndex) updatePackingField();
+        if (id === "recycle-quantity-" + state.cartIndex || id === "recycle-price-" + state.cartIndex) {
+          rememberCart();
+          var summary = document.getElementById("recycle-cart-summary");
+          if (summary) summary.innerHTML = cartLineChoices();
+        }
         if (event.target.closest("#recycle-settings-view")) settingsEdited(event);
       });
       state.dialog.addEventListener("change", function (event) {
@@ -139,7 +144,7 @@
       });
     }
     if (!state.dialog.open) state.dialog.showModal();
-    state.dialog.innerHTML = "<header class='recycle-header'><div><h2 id='recycle-title' tabindex='-1'>" + e(orderEntryLabels()[0]) + "</h2></div><nav class='recycle-actions' aria-label='社内受注の操作'>" + button("受注入力に戻る", "entry", "id='recycle-back' hidden") + "<button type='button' class='recycle-vehicle-toggle' popovertarget='recycle-vehicle-box'>カルテ・車両</button>" + button("集約先設定", "settings", "id='recycle-settings-open' hidden") + button("結果を確認", "result", "id='recycle-check-result' hidden") + button("閉じる", "close") + "<a class='sales-order-help-link' id='recycle-fax-order-help' hidden data-fax-help-section='order' href='assets/help/fax-order.html#order' target='_blank' rel='noopener noreferrer' aria-label='ヘルプ（別ウィンドウ）'>ヘルプ</a><a class='sales-order-help-link' hidden data-feature-help href='assets/help/features.html?v=1#recycle-entry' target='_blank' rel='noopener noreferrer' aria-label='ヘルプ（別ウィンドウ）'>ヘルプ</a></nav></header><div id='recycle-feedback' class='recycle-entry-popup'><p id='recycle-message' role='status' aria-live='polite'>読み込んでいます。</p><button type='button' class='recycle-feedback-close' popovertarget='recycle-feedback' popovertargetaction='hide'>閉じる</button></div><div id='recycle-body'></div>";
+    state.dialog.innerHTML = "<header class='recycle-header'><div><h2 id='recycle-title' tabindex='-1'>" + e(orderEntryLabels()[0]) + "</h2></div><nav class='recycle-actions' aria-label='社内受注の操作'>" + button("受注入力に戻る", "entry", "id='recycle-back' hidden") + "<button type='button' class='recycle-vehicle-toggle' popovertarget='recycle-vehicle-box'>車両情報</button>" + button("集約先設定", "settings", "id='recycle-settings-open' hidden") + button("結果を確認", "result", "id='recycle-check-result' hidden") + button("閉じる", "close") + "<a class='sales-order-help-link' id='recycle-fax-order-help' hidden data-fax-help-section='order' href='assets/help/fax-order.html#order' target='_blank' rel='noopener noreferrer' aria-label='ヘルプ（別ウィンドウ）'>ヘルプ</a><a class='sales-order-help-link' hidden data-feature-help href='assets/help/features.html?v=1#recycle-entry' target='_blank' rel='noopener noreferrer' aria-label='ヘルプ（別ウィンドウ）'>ヘルプ</a></nav></header><div id='recycle-feedback' class='recycle-entry-popup'><p id='recycle-message' role='status' aria-live='polite'>読み込んでいます。</p><button type='button' class='recycle-feedback-close' popovertarget='recycle-feedback' popovertargetaction='hide'>閉じる</button></div><div id='recycle-body'></div>";
     setButtons();
     var epoch = state.epoch;
     var [cfg, customers, categories] = await Promise.allSettled([
@@ -417,7 +422,7 @@
   }
   function entryHtml() {
     var prefs = typeof SHIPPING_PREFECTURES !== "undefined" ? SHIPPING_PREFECTURES : [];
-    return "<fieldset id='recycle-entry-fields'><legend class='recycle-sr-only'>受注内容</legend><div class='recycle-entry-grid'>" +
+    return "<fieldset id='recycle-entry-fields'><legend class='recycle-sr-only'>受注内容</legend><div class='recycle-section-switch' aria-label='入力項目'><button type='button' data-recycle-action='section_products' aria-pressed='true'>商品・明細</button><button type='button' data-recycle-action='section_address' aria-pressed='false'>お届け先</button></div><div class='recycle-entry-grid'>" +
       "<section class='recycle-entry-panel recycle-entry-products' aria-labelledby='recycle-products-heading'><div class='recycle-search-head'><h3 id='recycle-products-heading'>商品追加</h3><button type='button' id='recycle-show-products' popovertarget='recycle-product-box' hidden>検索結果</button></div><div class='recycle-search'>" +
       (recycleChannel() ? "<select id='recycle-query-type' aria-label='検索方法'><option value='karte'>カルテ番号</option><option value='part'>品番</option></select>" :
         "<select id='recycle-search-category' aria-label='商品分類'><option value=''>全分類</option>" + state.categories.map(function (c) {
@@ -427,11 +432,13 @@
       "<div id='recycle-product-box' class='recycle-entry-popup' aria-label='商品候補' role='region'><div class='recycle-popup-head recycle-compact-only'><strong>商品候補</strong><button type='button' popovertarget='recycle-product-box' popovertargetaction='hide'>閉じる</button></div><p id='recycle-product-status' role='status'></p><div id='recycle-products'></div></div>" +
       "<div class='recycle-cart-head'><h3 id='recycle-items-heading'>商品明細</h3><div id='recycle-cart-pages'></div><label id='recycle-packing-field' hidden><input type='checkbox' id='recycle-packed-together'>同梱セット</label></div><div id='recycle-cart' aria-labelledby='recycle-items-heading' role='region'></div></section>" +
       "<section class='recycle-entry-panel recycle-entry-address' aria-labelledby='recycle-address-heading'><div class='recycle-address-head'><h3 id='recycle-address-heading'>お届け先</h3><small id='recycle-postal-status' role='status'></small></div><div class='recycle-grid'>" +
-      input("直送先会社名", "company", "text", "", "maxlength='120' autocomplete='organization'") + input("宛名・担当者", "recipient", "text", "", "maxlength='80' autocomplete='name'") +
-      input("電話番号（必須）", "phone", "tel", "", "maxlength='20' required autocomplete='tel'") +
       "<div class='recycle-postal-field'><label for='recycle-postal'>郵便番号（必須）</label><div class='recycle-postal-row'><input id='recycle-postal' maxlength='8' inputmode='numeric' autocomplete='postal-code' required>" + button("住所検索", "postal") + "</div></div>" +
+      input("電話番号（必須）", "phone", "tel", "", "maxlength='20' required autocomplete='tel'") +
       "<label><span>都道府県</span><select id='recycle-prefecture'><option value=''>選択してください</option>" + prefs.map(function (p) { return option(String(Array.isArray(p) ? p[0] : p.code), Array.isArray(p) ? p[1] : p.name, ""); }).join("") + "</select></label>" +
-      input("住所（必須）", "address1", "text", "", "maxlength='160' required autocomplete='address-line1'") +
+      input("市区町村・町名・番地", "address1", "text", "", "maxlength='160' required autocomplete='address-line1'") +
+      input("建物名・部門", "address2", "text", "", "maxlength='120' autocomplete='address-line2'") +
+      input("直送先名", "company", "text", "", "maxlength='120' autocomplete='organization'") +
+      input("宛名・担当者", "recipient", "text", "", "maxlength='80' autocomplete='name'") +
       "</div>" +
       "<div id='recycle-postal-box' class='recycle-entry-popup' aria-label='住所候補' role='region'><div class='recycle-popup-head recycle-compact-only'><strong>住所候補</strong><button type='button' popovertarget='recycle-postal-box' popovertargetaction='hide'>閉じる</button></div><div id='recycle-postal-results'></div></div></section>" +
       "<div id='recycle-entry-extra' class='recycle-entry-popup recycle-entry-extra' aria-label='受注・配送の補足' role='region'><div class='recycle-popup-head recycle-compact-only'><strong>受注・配送の補足</strong><button type='button' popovertarget='recycle-entry-extra' popovertargetaction='hide'>閉じる</button></div>" +
@@ -441,12 +448,12 @@
         "<label><span>送料の税</span><select id='recycle-shipping-tax'><option value='excluded'>税別</option><option value='included'>税込</option></select></label></div></section>" :
         "<section class='recycle-entry-panel recycle-extra-actions' aria-label='受注情報'><h3>受注情報</h3><button type='button' popovertarget='recycle-office-box'>営業所受取</button></section>") +
       "<section class='recycle-entry-panel recycle-entry-delivery' aria-labelledby='recycle-delivery-heading'><div class='recycle-delivery-head'><h3 id='recycle-delivery-heading'>配送・メモ</h3>" + button("配送設定を再読込", "retry_shipping", "id='recycle-shipping-retry' hidden") + "</div><div class='recycle-grid'>" +
-      input("建物名・部門", "address2", "text", "", "maxlength='120' autocomplete='address-line2'") +
       "<label><span>商品発送時の運送便</span><select id='recycle-carrier' disabled></select></label>" +
       input("お届け希望日", "delivery-date", "date", "") + "<label><span>時間帯</span><select id='recycle-delivery-time'><option value=''>指定なし</option><option value='0812'>午前中</option><option value='1416'>14～16時</option><option value='1618'>16～18時</option><option value='1820'>18～20時</option><option value='1921'>19～21時</option></select></label>" +
       "<label id='recycle-return-field' hidden><span>コア返却時の運送便</span><select id='recycle-return-carrier' disabled></select></label>" +
+      input("カルテNo.", "staff-karte-number", "text", "", "maxlength='40' autocomplete='off' placeholder='注文書に記載がある場合'") +
       "<label><span>注文メモ</span><textarea id='recycle-note' maxlength='500' rows='1'></textarea></label>" + (recycleChannel() ? "" : "<small id='recycle-delivery-quote' role='status'></small>") + "</div></section></div>" + vehicleEntryPanel() + "</div>" +
-      "<div class='recycle-entry-footer'><button type='button' class='recycle-compact-only' popovertarget='recycle-entry-extra'>受注・配送の補足</button>" + button("内容を確認して受注登録", "place", "class='customer-order-submit-button' data-recycle-write") + "</div>" + (recycleChannel() ? "" : standardOfficePopover()) + "</fieldset>";
+      "<div class='recycle-entry-footer'><button type='button' class='recycle-compact-only' popovertarget='recycle-entry-extra'>受注・配送の補足</button>" + button("登録内容を確認", "place", "class='customer-order-submit-button' data-recycle-write") + "</div>" + (recycleChannel() ? "" : standardOfficePopover()) + "</fieldset>";
   }
   var vehicleFieldNames = [
     ["vehicle-name", "車名", "vehicle_name", 80], ["vehicle-model", "車両型式", "vehicle_model_code", 40],
@@ -460,8 +467,8 @@
   }
   function vehicleEntryPanel() {
     return "<section id='recycle-vehicle-box' class='recycle-entry-panel recycle-vehicle-panel recycle-entry-popup' aria-labelledby='recycle-vehicle-heading'>" +
-      "<div class='recycle-vehicle-heading'><h3 id='recycle-vehicle-heading'>カルテ・車両情報</h3><button type='button' class='recycle-vehicle-close' popovertarget='recycle-vehicle-box' popovertargetaction='hide'>閉じる</button></div><div class='recycle-grid'>" +
-      input("カルテNo.", "staff-karte-number", "text", "", "maxlength='40' autocomplete='off' placeholder='注文書に記載がある場合'") + vehicleFieldNames.map(function (item) {
+      "<div class='recycle-vehicle-heading'><h3 id='recycle-vehicle-heading'>車両情報</h3><button type='button' class='recycle-vehicle-close' popovertarget='recycle-vehicle-box' popovertargetaction='hide'>閉じる</button></div><div class='recycle-grid'>" +
+      vehicleFieldNames.map(function (item) {
         return input(item[1], item[0], item[3] ? "text" : "month", "", item[3] ? "maxlength='" + item[3] + "'" : "");
       }).join("") + "</div></section>";
   }
@@ -527,9 +534,20 @@
     if (open) popup.showPopover();
     else popup.hidePopover();
   }
+  function selectEntrySection(section) {
+    var entry = document.getElementById("recycle-entry-fields");
+    if (!entry) return;
+    entry.dataset.section = section;
+    entry.querySelectorAll(".recycle-section-switch button").forEach(function (tab) {
+      tab.setAttribute("aria-pressed", String(tab.dataset.recycleAction === "section_" + section));
+    });
+  }
   function focusEntry(id) {
     var el = document.getElementById("recycle-" + id);
-    if (el) el.focus({preventScroll:true});
+    if (!el) return;
+    if (el.closest(".recycle-entry-address")) selectEntrySection("address");
+    if (el.closest(".recycle-entry-products")) selectEntrySection("products");
+    el.focus({preventScroll:true});
   }
   function pages(type, index, count) {
     if (count < 2) return "";
@@ -551,7 +569,7 @@
     if (focus) focus.focus({preventScroll:true});
   }
   function needsManualCoreCharge(product) {
-    return recycleChannel() && product.core_return_required && !(Number(product.core_charge_jpy) > 0) &&
+    return product.core_return_required && !(Number(product.core_charge_jpy) > 0) &&
       (product.handling === "charge_with_return" || product.handling === "charge_no_return");
   }
   function coreHandlingOptions(product) {
@@ -559,17 +577,18 @@
     var handling = product.handling || "standard";
     var configured = charge > 0;
     var amount = configured ? yen(charge) : "";
-    var disabled = !configured && !recycleChannel();
     return option("standard", typeof t === "function" ? t("customer_order_core_return_standard") : "返却要", handling) +
-      option("charge_with_return", configured ? (typeof tf === "function" ? tf("customer_order_core_charge_with_return_option", { amount: amount }) : "コア代金を請求（返却後返金・" + amount + "）") : "請求・返却後返金", handling, disabled) +
-      option("charge_no_return", configured ? (typeof tf === "function" ? tf("customer_order_core_charge_no_return_option", { amount: amount }) : "コア代金を請求（返却不要・" + amount + "）") : "請求・返却不要", handling, disabled);
+      (recycleChannel() ? "" : option("waive_no_return", "返却不要・請求なし", handling)) +
+      option("charge_with_return", configured ? (typeof tf === "function" ? tf("customer_order_core_charge_with_return_option", { amount: amount }) : "コア代金を請求（返却後返金・" + amount + "）") : "請求・返却後返金", handling) +
+      option("charge_no_return", configured ? (typeof tf === "function" ? tf("customer_order_core_charge_no_return_option", { amount: amount }) : "コア代金を請求（返却不要・" + amount + "）") : "請求・返却不要", handling);
   }
   function cartLineChoices() {
     if (state.cart.length < 2) return "";
     var start = Math.floor(state.cartIndex / 3) * 3;
     return "<div class='recycle-cart-review' aria-label='追加済み商品'>" + state.cart.slice(start,start+3).map(function (item,offset) {
       var index = start+offset;
-      return button(item.genuine_part_number || item.manufacturer_part_number, "cart_line",
+      var label = (index + 1) + ". " + (item.genuine_part_number || item.manufacturer_part_number) + "　" + item.quantity + "点 ／ " + (item.price === "" || item.price == null ? "得意先単価" : yen(item.price));
+      return button(label, "cart_line",
         "data-index='"+index+"'"+(index===state.cartIndex?" aria-current='true'":""));
     }).join("") + "</div>";
   }
@@ -579,7 +598,7 @@
     document.getElementById("recycle-items-heading").textContent = "商品明細" + (state.cart.length ? " (" + state.cart.length + ")" : "");
     document.getElementById("recycle-cart-pages").innerHTML = pages("cart", i, state.cart.length);
     host.innerHTML = p ?
-      cartLineChoices() + "<div class='recycle-line'><div class='recycle-line-title'><strong>" + e(p.genuine_part_number || p.manufacturer_part_number) + "</strong>" + (p.karte_number ? "<small>カルテ番号 " + e(p.karte_number) + "</small>" : "") + "</div>" +
+      "<div id='recycle-cart-summary'>" + cartLineChoices() + "</div><div class='recycle-line'><div class='recycle-line-title'><strong>" + e(p.genuine_part_number || p.manufacturer_part_number) + "</strong>" + (p.karte_number ? "<small>カルテ番号 " + e(p.karte_number) + "</small>" : "") + "</div>" +
       input("数量", "quantity-" + i, "number", p.quantity, "min='1' max='99' step='1'") + input("単価（税抜・コア別）", "price-" + i, "number", p.price, "aria-label='成立単価（税抜・コア代別）' min='0' step='1'" + (recycleChannel() ? " max='99999999'" : " max='2147483647' placeholder='得意先単価'")) +
       "<div id='recycle-cart-extra' class='recycle-line-extra recycle-entry-popup' aria-label='商品情報・コア対応' role='region'><div class='recycle-popup-head recycle-compact-only'><strong>商品情報</strong><button type='button' popovertarget='recycle-cart-extra' popovertargetaction='hide'>閉じる</button></div>" +
       "<p>" + e(p.manufacturer + " / " + p.manufacturer_part_number + " / " + kind(p.product_kind)) + "</p>" +
@@ -597,7 +616,7 @@
     var field = document.getElementById("recycle-manual-core-field");
     if (field) field.hidden = !needsManualCoreCharge(state.cart[state.cartIndex]);
   }
-  function hasCoreReturn() { return state.cart.some(function (p) { return p.core_return_required && p.handling !== "charge_no_return"; }); }
+  function hasCoreReturn() { return state.cart.some(function (p) { return p.core_return_required && p.handling !== "charge_no_return" && p.handling !== "waive_no_return"; }); }
   function updateReturnField() { document.getElementById("recycle-return-field").hidden = !hasCoreReturn(); }
   function rememberCart() {
     var i = state.cartIndex, p = state.cart[i];
@@ -858,7 +877,7 @@
     if (epoch === state.epoch && ownerCurrent()) await finishOrder(registered);
   }
   async function updateStandardDelivery() {
-    if (recycleChannel() || !state.shippingReady) return;
+    if (recycleChannel() || !state.shippingReady) return false;
     var output = document.getElementById("recycle-delivery-quote");
     var service = customerOrderDeliveryServiceFromKey(field("carrier"));
     var postal = normalizeCustomerOrderPostalCode(field("postal"));
@@ -875,7 +894,11 @@
         target_carrier_name: service.carrier_name, target_service_name: service.service_name, target_shipping_date: null
       });
       if (epoch !== state.epoch || owner !== actor() || request !== state.deliveryRead || !output.isConnected) return;
-      if (!result?.available) return;
+      if (!result?.available) {
+        output.textContent = result?.message || "配送条件を確認できません。郵便番号と運送便を確認してください。";
+        if (date.value === date.dataset.automatic) date.value = "";
+        return false;
+      }
       var timeCodes = Array.isArray(result.allowed_time_codes) ? result.allowed_time_codes.map(String) : [];
       Array.from(time.options).forEach(function (choice) {
         choice.disabled = !!choice.value && !timeCodes.includes(choice.value); choice.hidden = choice.disabled;
@@ -887,11 +910,15 @@
       date.max = result.max_requested_delivery_date || "";
       if (date.disabled) { date.value = ""; time.value = ""; }
       else if (!date.value || date.value === date.dataset.automatic || (date.min && date.value < date.min) || (date.max && date.value > date.max)) {
-        date.value = result.automatic_requested_delivery_date || "";
+        date.value = result.earliest_delivery_date || result.automatic_requested_delivery_date || "";
         date.dataset.automatic = date.value;
       }
       output.textContent = [result.shipping_date ? "発送予定 " + result.shipping_date : "", date.min ? "最短お届け " + date.min : ""].filter(Boolean).join(" ／ ");
-    } catch (_) { /* Dates can still be entered and checked at registration. */ }
+      return true;
+    } catch (error) {
+      if (epoch === state.epoch && owner === actor() && request === state.deliveryRead && output.isConnected) output.textContent = "配送条件を取得できません。通信と運送便を確認してください。";
+      return false;
+    }
   }
   async function place() {
     if (state.busy || state.pending) return;
@@ -899,6 +926,10 @@
     status("価格・在庫・配送条件を確認しています。"); state.busy = true; setButtons();
     var quote;
     try {
+      if (!recycle) {
+        if (!await updateStandardDelivery()) throw new Error(document.getElementById("recycle-delivery-quote")?.textContent || "お届け先と運送便を確認してください。");
+        order.requested_delivery_date = field("delivery-date") || null; order.delivery_time = field("delivery-time");
+      }
       quote = recycle ? await rpc("preview", order) : await internalOrderRpc("preview_internal_customer_order", params);
       if (epoch !== state.epoch || !ownerCurrent()) return;
     } finally { state.busy = false; setButtons(); }
@@ -947,6 +978,7 @@
         var index = Number(b.dataset.index);
         if (state.cart[index]) { rememberCart(); state.cartIndex=index; renderCart(); focusEntry("quantity-"+index); }
       }
+      else if (action === "section_products" || action === "section_address") selectEntrySection(action.slice(8));
       else if (action === "postal") await lookupPostal();
       else if (action === "postal_select") { var row = state.postalRows[Number(b.dataset.index)]; if (row && row.postal_code.replace(/[^0-9]/g, "") === field("postal").replace(/[^0-9]/g, "")) applyPostal(row); }
       else if (action === "add") {
@@ -989,8 +1021,8 @@
   }
   function orderEntryLabels() {
     var language = typeof currentLang === "undefined" ? "ja" : currentLang;
-    return (language === "en" ? ["Internal Order Entry", "Standard order", "Close"] :
-      language === "zh" ? ["内部订单录入", "普通订单", "关闭"] : ["社内受注入力", "通常受注", "閉じる"]);
+    return (language === "en" ? ["Order Entry", "Standard order", "Close"] :
+      language === "zh" ? ["订单录入", "普通订单", "关闭"] : ["受注入力", "通常受注", "閉じる"]);
   }
   function configureEntryButton() {
     var b = document.getElementById("sales-order-recycle-open"), regular = document.getElementById("sales-order-new-internal-order");

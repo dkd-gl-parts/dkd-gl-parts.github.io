@@ -66,9 +66,11 @@ function orderPage() {
     const fields={"得意先コード":o.buyer.source_customer_code,"発注担当":o.buyer.contact_name || "登録なし","発注日":tokyoDate.format(o.date),
       "お届け先":[d.company_name,d.recipient_name!==d.company_name?d.recipient_name:""].filter(Boolean).join("　"),
       "郵便番号と住所":"〒"+d.postal_code+" "+d.prefecture_name+d.address_line_1+" "+d.address_line_2,"電話番号":d.phone_number,
-      "希望納期":tokyoDate.format(new Date(+o.date+86400000))};
+      "希望納期":o.due};
     setText("[data-order-number]",o.id);
     setText("[data-buyer]",o.buyer.customer_name);
+    setText("[data-practice-karte]","TR-K-"+o.id.slice(-8));
+    setText("[data-practice-chassis]","TR-DEMO-"+o.id.slice(-8));
     setText("[data-delivery]",o.carrier+"・同梱1箱。"+(o.returns?"コア返却便 "+o.returns:"コア返却なし"));
     const totals=document.querySelectorAll("[data-line-total]");
     o.lines.forEach((l,i)=>{
