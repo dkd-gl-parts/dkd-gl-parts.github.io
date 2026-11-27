@@ -39,6 +39,8 @@ jobs:
           node --check assets/concierge-pet/concierge-pet.js
       - name: Verify concierge business flow contracts
         run: node scripts/verify-concierge-business-flow.js
+      - name: Verify QA sales receipt routing
+        run: node scripts/verify-qa-sales-trial.js
       - name: Verify claim case workspace
         run: node scripts/verify-claim-cases.js
       - name: Verify Recycle+ order and settlement workspace
