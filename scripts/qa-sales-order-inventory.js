@@ -329,12 +329,81 @@ async function verifyFeatureHelp(browser, base, output) {
  } finally { await page.close(); }
 }
 
+async function verifyB2PermissionGuide(browser, base, output) {
+ const page = await browser.newPage();
+ try {
+  for (const viewport of [{width:1366,height:768},{width:1024,height:600},{width:390,height:844},{width:320,height:568}]) {
+   await page.setViewportSize(viewport);
+   await page.goto(base + "/b2-permission-test");
+   const dialog = page.locator("#dcats-b2-permission-dialog");
+   const next = dialog.locator("#dcats-b2-permission-next");
+   const message = dialog.locator("[role=status]");
+   const start = state => page.evaluate(state => {
+    window.fixtureState = state;
+    window.outcome = "pending";
+    prepareDcatsB2ExportDirectory().then(() => { window.outcome = "ready"; }, e => { window.outcome = e.name; });
+   }, state);
+   await start("unset");
+   await dialog.waitFor();
+   assert((await message.innerText()).includes("初回"));
+   assert(await dialog.evaluate(el => {
+    const box = el.getBoundingClientRect();
+    return box.left >= 0 && box.right <= innerWidth && box.top >= 0 && box.bottom <= innerHeight && el.scrollWidth <= el.clientWidth && el.scrollHeight <= el.clientHeight;
+   }));
+   await page.screenshot({path:path.join(output,"b2-folder-" + viewport.width + ".png")});
+   await next.click();
+   assert((await message.innerText()).includes("中止"));
+   await page.evaluate(() => { window.fixtureState = "wrong"; });
+   await next.click();
+   assert((await message.innerText()).includes("フォルダを選択"));
+   await page.evaluate(() => { window.fixtureState = "pick"; });
+   await next.click();
+   await page.waitForFunction(() => window.outcome === "ready");
+   await start("prompt");
+   await dialog.waitFor();
+   assert.equal(await next.innerText(),"保存を許可");
+   await next.click();
+   assert((await message.innerText()).includes("許可されていません"));
+   await page.keyboard.press("Escape");
+   await page.waitForFunction(() => window.outcome === "AbortError");
+   await start("renew");
+   await next.click();
+   await page.waitForFunction(() => window.outcome === "ready");
+   await start("granted");
+   await page.waitForFunction(() => window.outcome === "ready");
+   assert(!await dialog.isVisible());
+   await start("unsupported");
+   await dialog.waitFor();
+   assert(!await next.isVisible());
+   await dialog.locator("#dcats-b2-permission-cancel").click();
+   await page.waitForFunction(() => window.outcome === "AbortError");
+  }
+ } finally { await page.close(); }
+}
+
 function fixtureFiles(){
  const app=fs.readFileSync(path.join(root,"app.js"),"utf8"),ast=acorn.parse(app,{ecmaVersion:"latest"});
  const fn=name=>{const n=ast.body.find(n=>n.type==="FunctionDeclaration"&&n.id.name===name);assert(n,name);return app.slice(n.start,n.end);};
  const dict=ast.body.find(n=>n.type==="VariableDeclaration"&&n.declarations.some(d=>d.id.name==="TRANSLATIONS"));
  const script=app.slice(dict.start,dict.end)+"\n"+["salesOrderInventoryItems","hydrateSalesOrderInventory","salesOrderInventoryItemHtml","salesProductShelfMatchesCurrent","renderSalesProductShelf","loadSalesProductShelfForCurrent","renderProductKindStockHtml","buildSalesOrderDispatchPage"].map(fn).join("\n")+"\n"+fs.readFileSync(path.join(root,"tests/sales-order-inventory-fixture.js"),"utf8");
- return {...faxHelpFixtures(fn),"/":{type:"text/html",body:'<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/shipment-instruction-print.css"><link rel="stylesheet" href="/qa.css"></head><body><main id="root" class="sales-order-detail-section sales-order-billing"></main><script src="/fixture.js"></script></body></html>'},
+ const permissionDialog = fs.readFileSync(path.join(root,"index.html"),"utf8").match(/<dialog id="dcats-b2-permission-dialog"[\s\S]*?<\/dialog>/)[0];
+ const permissionScript = app.slice(dict.start,dict.end) + "\n" + ["guideDcatsB2ExportDirectory","prepareDcatsB2ExportDirectory"].map(fn).join("\n") + `
+ var dcatsB2DirectoryCheckPending = false;
+ function t(key) { return TRANSLATIONS.ja[key]; }
+ function supportsDcatsB2SharedFolder() { return window.fixtureState !== "unsupported"; }
+ async function loadDcatsB2ExportDirectory() {
+  if (window.fixtureState === "unset") return null;
+  return {
+   queryPermission: async () => window.fixtureState === "renew" ? "prompt" : window.fixtureState,
+   requestPermission: async () => window.fixtureState === "renew" ? "granted" : "denied"
+  };
+ }
+ async function pickDcatsB2ExportDirectory() {
+  if (window.fixtureState === "unset") throw new DOMException("", "AbortError");
+  if (window.fixtureState === "wrong") throw new Error(t("business_workspace_b2_wrong_folder"));
+  return {name:"01_D-CATS発行"};
+ }`;
+ return {"/b2-permission-test":{type:"text/html",body:'<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/styles.css">'+permissionDialog+'<script src="/b2-permission-test.js"></script></html>'},"/b2-permission-test.js":{type:"application/javascript",body:permissionScript},...faxHelpFixtures(fn),"/":{type:"text/html",body:'<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/shipment-instruction-print.css"><link rel="stylesheet" href="/qa.css"></head><body><main id="root" class="sales-order-detail-section sales-order-billing"></main><script src="/fixture.js"></script></body></html>'},
  "/fixture.js":{type:"application/javascript",body:script},
  "/styles.css":{type:"text/css",body:fs.readFileSync(path.join(root,"styles.css"),"utf8")},
  "/shipment-instruction-print.css":{type:"text/css",body:fs.readFileSync(path.join(root,"shipment-instruction-print.css"),"utf8")},
@@ -353,6 +422,7 @@ async function run(){
  await p.locator("#qa-kind").selectOption("aftermarket_new");await p.evaluate(()=>qaPending);assert(!(await p.locator("#sales-product-shelf").innerText()).includes("GLA-21"));await p.locator("#qa-kind").selectOption("rebuilt");await p.evaluate(()=>qaPending);assert((await p.locator("#sales-product-shelf").innerText()).includes("GLA-21"));
  for(const mode of ["loading","error","denied","expired","missing","unauthorized","recount"]){await p.goto(base+"/?lang="+lang+"&mode="+mode);if(mode!=="loading")await p.waitForSelector('html[data-ready="true"]');const text=await p.locator("#root").innerText();assert.equal(text.includes("GLA-21"),mode==="recount");assert(!text.includes("undefined"));assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));}
  assert.deepEqual(errors,[]);results.push({width,lang,states:8,passed:true});await p.close();}
+ await verifyB2PermissionGuide(browser,base,output);
  await verifyFaxHelpWindow(browser,base);
  await verifyFaxPractice(browser,base,output);
  await verifyFeatureHelp(browser,base,output);
