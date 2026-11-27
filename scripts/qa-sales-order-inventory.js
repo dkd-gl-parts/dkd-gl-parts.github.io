@@ -206,7 +206,7 @@ async function verifyFaxPractice(browser, base, output) {
   await page.goto(base+"/assets/help/fax-practice-order.html");
   await page.getByRole("status").filter({hasText:"社内アカウント"}).waitFor();
   assert(await page.locator("[data-print]").isDisabled());
-  api.allow(); api.empty(); await page.reload();
+  api.allow(); api.empty(); await page.goto(base+"/assets/help/fax-practice-order.html#items"); await page.reload();
   await page.getByRole("status").filter({hasText:"2品番が必要"}).waitFor();
   assert(await page.locator(".sheet").isHidden());
   console.log("FAX practice verified: 9 panels, four viewports, edited long fields, A4 order 1 page and observer checklist 2 pages.");

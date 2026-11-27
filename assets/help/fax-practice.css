@@ -55,7 +55,7 @@ dt { font-weight: 650; }
 }
 
 @media screen and (max-width: 540px) {
- main:has(.panel:target:not(#setup, #request)) .screen-note { display: none; }
+ main:has(.sheet:not([hidden]) .panel:target:not(#setup, #request)) .screen-note { display: none; }
 }
 
 @media print {
