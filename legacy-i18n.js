@@ -9226,3 +9226,27 @@ Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {
   "よく使われる・漏えい済みのパスワードは使用不可": "不能使用常见密码或已泄露的密码。",
   "確認欄に同じパスワードを入力": "请在确认栏再次输入相同的密码。"
 });
+
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {
+  "印刷端末を確認中です。": "Checking the print station.",
+  "印刷端末の接続を確認してください。": "Check the print station connection.",
+  "印刷端末のPLQ-50S対応版への更新が必要です。": "Update the print station software to a version that supports the PLQ-50S.",
+  "USB接続後、印刷端末の［PLQ-50S USB設定］でドライバーをインストールしてください。": "Connect the USB cable, then install the driver in PLQ-50S USB setup on the print station.",
+  "ドライバーは登録済みです。USB接続と電源を確認してください。": "The driver is installed. Check the USB connection and printer power.",
+  "印刷端末でPLQ-50Sを返却用に選択し、保存してください。": "On the print station, select the PLQ-50S for return waybills and save.",
+  "PLQ-50Sの用紙・エラー・オンライン状態を確認してください。": "Check the PLQ-50S paper, errors, and online status.",
+  "印刷端末でプリンターの状態を確認してください。": "Check the printer status on the print station.",
+  "印刷端末で設定": "Set up on print station"
+});
+
+Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {
+  "印刷端末を確認中です。": "正在检查打印终端。",
+  "印刷端末の接続を確認してください。": "请检查打印终端连接。",
+  "印刷端末のPLQ-50S対応版への更新が必要です。": "请将打印终端更新到支持 PLQ-50S 的版本。",
+  "USB接続後、印刷端末の［PLQ-50S USB設定］でドライバーをインストールしてください。": "连接 USB 线后，在打印终端的 PLQ-50S USB 设置中安装驱动程序。",
+  "ドライバーは登録済みです。USB接続と電源を確認してください。": "驱动程序已安装。请检查 USB 连接和打印机电源。",
+  "印刷端末でPLQ-50Sを返却用に選択し、保存してください。": "请在打印终端选择 PLQ-50S 用于退件运单并保存。",
+  "PLQ-50Sの用紙・エラー・オンライン状態を確認してください。": "请检查 PLQ-50S 的纸张、错误和联机状态。",
+  "印刷端末でプリンターの状態を確認してください。": "请在打印终端检查打印机状态。",
+  "印刷端末で設定": "在打印终端上设置"
+});

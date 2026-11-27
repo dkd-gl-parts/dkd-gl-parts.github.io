@@ -9208,7 +9208,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1410";
+var APP_VERSION       = "v1.1.1411";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -17862,6 +17862,7 @@ function salesOrderPrintReadinessActive() {
 }
 
 function renderSalesOrderPrintReadiness() {
+  refreshReturnPrinterSetup();
   var active = salesOrderPrintReadinessActive();
   var problem = salesOrderPrintReadinessState === "error" ? t("order_print_check_failed") : shippingDocumentManualPrintProblem();
   var checking = salesOrderPrintReadinessState === "checking";
@@ -21155,7 +21156,42 @@ function shippingDocumentReturnWaybillHtml(order) {
     "<button type='button' id='shipping-document-return-save'" + (shippingDocumentSaving ? " disabled" : "") + ">設定を保存</button></div>" +
     "<div class='shipping-document-waybill-print-row'><div><span>複写伝票の印刷状態</span><strong class='" + esc(printJob ? printJob.status : "") + "'>" + esc(printState) + "</strong></div>" +
     "<a href='dcats-print-settings://open'>このPCの印刷設定</a></div>" +
-    "<p id='shipping-document-return-guidance' class='shipping-document-form-note'>" + esc(printGuidance) + "</p></div>";
+    "<p id='shipping-document-return-guidance' class='shipping-document-form-note'>" + esc(printGuidance) + "</p>" + returnPrinterSetupHtml() + "</div>";
+}
+
+function returnPrinterSetupState() {
+  if (salesOrderPrintReadinessState === "checking") return "checking";
+  if (salesOrderPrintReadinessState === "error" || shippingDocumentManualPrintProblem()) return "station";
+  return ((salesOrderPrintSettings || {}).config || {}).plq_state || "legacy";
+}
+
+function refreshReturnPrinterSetup() {
+  var panel = document.getElementById("shipping-return-printer-setup");
+  if (!panel) return;
+  var method = document.getElementById("shipping-document-return-method");
+  var state = returnPrinterSetupState();
+  var form = document.getElementById("shipping-return-sheet-form");
+  panel.hidden = (method && method.value !== "dot_matrix") || state === "ready";
+  if (!panel.hidden) {
+    var notes = {
+      checking: "印刷端末を確認中です。",
+      station: "印刷端末の接続を確認してください。",
+      legacy: "印刷端末のPLQ-50S対応版への更新が必要です。",
+      install: "USB接続後、印刷端末の［PLQ-50S USB設定］でドライバーをインストールしてください。",
+      connect_usb: "ドライバーは登録済みです。USB接続と電源を確認してください。",
+      select_queue: "印刷端末でPLQ-50Sを返却用に選択し、保存してください。",
+      unavailable: "PLQ-50Sの用紙・エラー・オンライン状態を確認してください。",
+      unknown: "印刷端末でプリンターの状態を確認してください。"
+    };
+    var config = (salesOrderPrintSettings || {}).config || {};
+    panel.querySelector("[data-plq-note]").textContent = [config.station_name || config.station_code, notes[state] || notes.unknown].filter(Boolean).join(" / ");
+    panel.querySelector("button").disabled = state === "checking";
+  }
+  if (form) form.dispatchEvent(new Event("plq-readiness"));
+}
+
+function returnPrinterSetupHtml() {
+  return "<div id='shipping-return-printer-setup' class='shipping-plq-setup' hidden><span data-plq-note role='status'></span><div><a href='dcats-print-settings://open'>印刷端末で設定</a> <button type='button' data-plq-recheck>再確認</button></div></div>";
 }
 
 function shippingDocumentReturnPrintGuidance(method, tracking, carrier, dispatchReady, printBusy) {
@@ -21288,10 +21324,10 @@ function renderShippingDocumentSettingsOverlay() {
   } else if (mode === "return_print") {
     title.textContent = t("shipping_sheet_title");
     description.textContent = (order.order_number || order.id) + " / " + t("shipping_sheet_hint");
-    content.innerHTML = shippingDocumentReturnSheetForm(order);
+    content.innerHTML = returnPrinterSetupHtml() + shippingDocumentReturnSheetForm(order);
   } else if (mode === "return") {
-    title.textContent = "コア返却用複写伝票の設定";
-    description.textContent = "" + (order.order_number || ("注文 " + order.id)) + " / 運送会社・作成方法・返送用伝票番号を変更します。";
+    title.textContent = "返送方法設定";
+    description.textContent = order.order_number || ("注文 " + order.id);
     content.innerHTML = shippingDocumentReturnWaybillHtml(order);
   } else if (shippingDocumentLocalOutputType(mode)) {
     title.textContent = salesOrderDocumentTypeLabel(mode) + "の発行設定";
@@ -21302,6 +21338,9 @@ function renderShippingDocumentSettingsOverlay() {
 }
 
 function bindShippingDocumentSettingsActions() {
+  var recheck = document.querySelector("[data-plq-recheck]");
+  if (recheck) recheck.addEventListener("click", checkSalesOrderPrintReadiness);
+  refreshReturnPrinterSetup();
   var form = document.getElementById("shipping-return-sheet-form");
   if (form) bindShippingDocumentReturnSheet(form, shippingDocumentDetail);
   var saveWaybill = document.getElementById("shipping-document-return-save");
@@ -21323,7 +21362,7 @@ function bindShippingDocumentSettingsActions() {
         !!salesOrderDispatch(shippingDocumentDetail), !!job && ["queued", "claimed"].includes(job.status));
     };
     returnCarrier.addEventListener("change", function() { syncShippingDocumentCarrierBrand("return"); refreshGuidance(); });
-    method.addEventListener("change", refreshGuidance);
+    method.addEventListener("change", function() { refreshGuidance(); refreshReturnPrinterSetup(); });
     tracking.addEventListener("input", refreshGuidance);
   }
   var applyTemporary = document.getElementById("shipping-document-temporary-apply");
@@ -21788,9 +21827,10 @@ function bindShippingDocumentReturnSheet(form, order) {
     form.querySelector("[data-sheet-item]").textContent = item ? [item.gltek_part_number || item.genuine_part_number || item.manufacturer_part_number,
       sheet.job ? (sheet.job.return_unit_id ? salesOrderPrintJobStatusLabel(sheet.job.status) : t("shipping_sheet_legacy")) : t("shipping_sheet_pending")].filter(Boolean).join(" · ") : "";
     form.querySelector("[data-sheet-review]").hidden = !(sheet && sheet.job);
-    submit.disabled = !sheet || !number || shippingDocumentSaving || !!(sheet.job && sheet.job.return_sheet_tracking === number);
+    submit.disabled = returnPrinterSetupState() !== "ready" || !sheet || !number || shippingDocumentSaving || !!(sheet.job && sheet.job.return_sheet_tracking === number);
   }
   unit.addEventListener("change", function() { tracking.value = ""; update(); tracking.focus(); });
+  form.addEventListener("plq-readiness", update);
   tracking.addEventListener("input", update);
   tracking.addEventListener("keydown", function(event) { if (event.key === "Enter") event.preventDefault(); });
   form.addEventListener("submit", function(event) {
@@ -21806,7 +21846,7 @@ async function queueShippingDocumentReturnWaybillPrint(order, sheet, input, form
   var number = shippingDocumentReturnSheetNumber(input);
   var waybill = order.return_waybill || {};
   if (shippingDocumentSaving || !shippingDocumentDetail || String(shippingDocumentDetail.id) !== String(order.id) || !sheet || !number
-      || waybill.handling_method !== "dot_matrix" || !canManageSalesOrders()) return;
+      || waybill.handling_method !== "dot_matrix" || returnPrinterSetupState() !== "ready" || !canManageSalesOrders()) return;
   shippingDocumentSaving = true;
   Array.from(form.elements).forEach(function(control) { control.disabled = true; });
   var message;
