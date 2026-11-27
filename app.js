@@ -9208,7 +9208,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1406";
+var APP_VERSION       = "v1.1.1407";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -21032,7 +21032,8 @@ function shippingDocumentReturnSheetCount(sheets) {
 }
 
 function shippingDocumentReturnSheetNumber(value) {
-  var digits = String(value || "").normalize("NFKC").trim().replace(/-/g, "");
+  var input = String(value || "").normalize("NFKC").trim();
+  var digits = input.replace(/^A([0-9-]+)A$/, "$1").replace(/-/g, "");
   return /^[0-9]{11,12}$/.test(digits) ? digits : "";
 }
 
@@ -21151,7 +21152,7 @@ function shippingDocumentReturnWaybillHtml(order) {
     "<div class='shipping-document-carrier-context' id='shipping-document-return-carrier-brand'>" + shippingCarrierBrandHtml(carrier, false) + "</div>" +
     "<div class='shipping-document-waybill-form'><label><span>運送会社・サービス</span><select id='shipping-document-return-carrier'><option value='yamato_collect'" + (carrier === "yamato_collect" ? " selected" : "") + ">ヤマト宅急便　着払い</option><option value='sagawa_collect'" + (carrier === "sagawa_collect" ? " selected" : "") + ">佐川急便着払い</option></select></label>" +
     "<label><span>作成方法</span><select id='shipping-document-return-method'><option value='handwritten'" + (method === "handwritten" ? " selected" : "") + ">手書き運用</option><option value='dot_matrix'" + (method === "dot_matrix" ? " selected" : "") + ">ドットプリンタ</option></select></label>" +
-    "<label><span>返送用伝票番号</span><input id='shipping-document-return-tracking' type='text' inputmode='numeric' maxlength='14' autocomplete='off' value='" + esc(shippingDocumentWaybillNumberFormat(waybill.tracking_number || "")) + "' placeholder='000-0000-0000 / 0000-0000-0000'></label>" +
+    "<label><span>返送用伝票番号</span><input id='shipping-document-return-tracking' type='text' inputmode='numeric' autocomplete='off' value='" + esc(shippingDocumentWaybillNumberFormat(waybill.tracking_number || "")) + "' placeholder='000-0000-0000 / 0000-0000-0000'></label>" +
     "<button type='button' id='shipping-document-return-save'" + (shippingDocumentSaving ? " disabled" : "") + ">設定を保存</button></div>" +
     "<div class='shipping-document-waybill-print-row'><div><span>複写伝票の印刷状態</span><strong class='" + esc(printJob ? printJob.status : "") + "'>" + esc(printState) + "</strong></div>" +
     "<a href='dcats-print-settings://open'>このPCの印刷設定</a></div>" +
@@ -21734,8 +21735,8 @@ async function saveShippingDocumentReturnWaybill() {
   var carrier = (document.getElementById("shipping-document-return-carrier") || {}).value || "yamato_collect";
   var method = (document.getElementById("shipping-document-return-method") || {}).value || "handwritten";
   var input = ((document.getElementById("shipping-document-return-tracking") || {}).value || "").trim();
-  var tracking = shippingDocumentWaybillDigits(input);
-  if (input && (!/^[0-9-]+$/.test(input) || !shippingDocumentWaybillNumberIsValid(tracking))) {
+  var tracking = shippingDocumentReturnSheetNumber(input);
+  if (input && !tracking) {
     setShippingDocumentMessage("返送用送り状番号は3-4-4（11桁）または4-4-4（12桁）で入力してください。", true);
     return;
   }
@@ -21796,15 +21797,16 @@ function bindShippingDocumentReturnSheet(form, order) {
   form.addEventListener("submit", function(event) {
     event.preventDefault();
     update();
-    if (!submit.disabled) queueShippingDocumentReturnWaybillPrint(order, selected(), shippingDocumentReturnSheetNumber(tracking.value), form);
+    if (!submit.disabled) queueShippingDocumentReturnWaybillPrint(order, selected(), tracking.value, form);
   });
   update();
   tracking.focus();
 }
 
-async function queueShippingDocumentReturnWaybillPrint(order, sheet, number, form) {
+async function queueShippingDocumentReturnWaybillPrint(order, sheet, input, form) {
+  var number = shippingDocumentReturnSheetNumber(input);
   var waybill = order.return_waybill || {};
-  if (shippingDocumentSaving || !shippingDocumentDetail || String(shippingDocumentDetail.id) !== String(order.id) || !sheet || !shippingDocumentReturnSheetNumber(number)
+  if (shippingDocumentSaving || !shippingDocumentDetail || String(shippingDocumentDetail.id) !== String(order.id) || !sheet || !number
       || waybill.handling_method !== "dot_matrix" || !canManageSalesOrders()) return;
   shippingDocumentSaving = true;
   Array.from(form.elements).forEach(function(control) { control.disabled = true; });
