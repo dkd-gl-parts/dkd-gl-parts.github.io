@@ -104,7 +104,7 @@ function orderPage() {
       const result=await quotePracticeOrder(master,current);
       if (seq!==epoch) return;
       render(result);
-      setText(".screen-note","発注元は共通です。新規印刷で直送先・商品を切り替えます。");
+      setText(".screen-note","得意先は開発テスト専用です。新規印刷で架空の直送先・商品が変わります。");
       prepared=false; repeat.hidden=true; printButton.textContent="表示中を印刷";
       printButton.disabled=false; preview.disabled=false; repeat.disabled=false;
       if (print) { markPrepared(); window.print(); }
