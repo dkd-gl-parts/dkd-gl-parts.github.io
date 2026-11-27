@@ -9208,7 +9208,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1407";
+var APP_VERSION       = "v1.1.1408";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -14470,8 +14470,7 @@ function salesOrderWaybillDetailLabel(order, purpose) {
   var method = waybill.handling_method || (purpose === "core_return" ? order.return_waybill_method : order.outbound_waybill_method) || (b2Issued ? "b2_cloud" : "");
   var methodLabel = ({ b2_cloud: "B2クラウド", dot_matrix: "ドットプリンタ", handwritten: "手書き運用" })[method] || "発行方法未設定";
   var trackingNumber = waybill.tracking_number || (purpose === "outbound" ? order.outbound_tracking_number : order.return_tracking_number) || "";
-  var parts = [methodLabel];
-  if (method === "b2_cloud" && b2Issued) parts.push("B2 CSV発行済み");
+  var parts = purpose === "core_return" && method === "dot_matrix" ? [] : [methodLabel];
   if (purpose === "core_return") parts.push(shippingDocumentReturnWaybillCopyCount(order) + "枚");
   parts.push(trackingNumber ? "伝票番号 " + trackingNumber : "伝票番号未登録");
   return parts.join(" / ");
@@ -22499,6 +22498,8 @@ function salesOrderWaybillProgressHtml(order) {
         ? "B2発行済データの取込後に、送り状番号を確認・修正できます。"
         : "";
       var trackingNumberText = row.status === "不要" ? "不要" : row.trackingNumber ? shippingDocumentWaybillNumberFormat(row.trackingNumber) : "未登録";
+      var methodDetail = !outbound && row.method === "ドットプリンタ" ? ""
+        : "<div><dt>発行方法</dt><dd>" + esc(row.method) + "</dd></div>";
       var trackingDetail = outbound ? "" : "<div><dt>送り状番号</dt><dd>" + esc(trackingNumberText) + "</dd></div>";
       var trackingLink = salesOrderCarrierTrackingLinkHtml(order, row.purpose, row.trackingNumber);
       var hasTrackingNumber = outbound && !!row.trackingNumber;
@@ -22512,7 +22513,7 @@ function salesOrderWaybillProgressHtml(order) {
         : row.status === "不要" ? "" : "<p class='sales-order-waybill-progress-note'>番号の登録・変更は「出荷帳票発行」で行います。</p>";
       return "<article class='sales-order-waybill-progress-card" + (outbound ? " has-editor" : "") + "' data-waybill-purpose='" + esc(row.purpose) + "'>" +
         "<div class='sales-order-waybill-progress-card-head'><strong>" + esc(row.label) + "</strong><span class='sales-order-waybill-progress-status " + esc(row.tone) + "'>" + esc(row.status) + "</span></div>" +
-        "<dl><div><dt>運送会社</dt><dd>" + esc(row.carrier) + "</dd></div><div><dt>発行方法</dt><dd>" + esc(row.method) + "</dd></div>" + trackingDetail + "</dl>" + editor +
+        "<dl><div><dt>運送会社</dt><dd>" + esc(row.carrier) + "</dd></div>" + methodDetail + trackingDetail + "</dl>" + editor +
         (trackingLink ? "<div class='sales-order-carrier-tracking-row'>" + trackingLink + "</div>" : "") +
       "</article>";
     }).join("") + "</div></section>";
@@ -62430,6 +62431,13 @@ document.getElementById("sales-order-print-settings-open").addEventListener("cli
 document.getElementById("sales-order-print-settings-close").addEventListener("click", closeSalesOrderPrinterSetup);
 document.getElementById("sales-order-print-settings-cancel").addEventListener("click", closeSalesOrderPrinterSetup);
 document.getElementById("sales-order-print-settings-refresh").addEventListener("click", function() { refreshSalesOrderPrinterSetup(true); });
+var shippingDocumentTools = document.getElementById("shipping-document-tools");
+document.getElementById("shipping-document-tools-open").addEventListener("click", function() {
+  shippingDocumentTools.showModal();
+});
+shippingDocumentTools.addEventListener("click", function(event) {
+  if (event.target.closest(".shipping-document-tools-list :is(a, button)")) shippingDocumentTools.close();
+}, true);
 document.getElementById("shipping-document-printer-settings-open").addEventListener("click", function() {
   setShippingDocumentLookupMessage("Windowsの帳票・プリンター設定を開きます。変更後は帳票を再表示すると最新設定が反映されます。", false);
 });
@@ -63971,7 +63979,7 @@ function startDcatsExtensionUpdate(){
 window.addEventListener('load',startDcatsExtensionUpdate);
 getConciergeNavigation(); // Track edits before the first AI answer, without reading Auth or navigating.
 
-document.getElementById("shipping-packing-boxes-open").addEventListener("click", function(event) { openPackingBoxes(event.currentTarget); });
+document.getElementById("shipping-packing-boxes-open").addEventListener("click", function() { openPackingBoxes(document.getElementById("shipping-document-tools-open")); });
 
 document.getElementById("btn-back-claim-case-mgmt").addEventListener("click",returnToMenuFresh);
 document.getElementById("btn-logout-claim-case-mgmt").addEventListener("click",doLogout);
