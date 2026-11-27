@@ -119,3 +119,5 @@
     figure, .card, .matrix > div, .check, .notice { break-inside: avoid; }
     .section-head, h2, h3 { break-after: avoid; }
   }
+
+.fax-entry-screen { display: block; max-width: 100%; height: auto; }
