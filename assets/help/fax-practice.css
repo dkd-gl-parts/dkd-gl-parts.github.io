@@ -85,3 +85,7 @@ dt { font-weight: 650; }
  .actions button { padding: .25rem .38rem; font-size: .9rem; }
  .actions a { font-size: .9rem; }
 }
+
+[hidden] { display: none !important; }
+.value { min-width: 0; overflow-wrap: anywhere; }
+button:disabled { opacity: .55; cursor: default; }

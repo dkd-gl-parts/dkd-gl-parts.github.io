@@ -23,6 +23,8 @@ function faxHelpFixtures(fn) {
   "/assets/help/fax-practice-order.html":{type:"text/html",body:read("assets/help/fax-practice-order.html")},
   "/assets/help/fax-practice-check.html":{type:"text/html",body:read("assets/help/fax-practice-check.html")},
   "/assets/help/fax-practice.css":{type:"text/css",body:read("assets/help/fax-practice.css")},
+  "/vendor/supabase-js-2.115.0.js":{type:"application/javascript",body:read("vendor/supabase-js-2.115.0.js")},
+  "/assets/help/fax-practice-master.js":{type:"application/javascript",body:read("assets/help/fax-practice-master.js")},
   "/assets/help/fax-practice.js":{type:"application/javascript",body:read("assets/help/fax-practice.js")},
   "/assets/help/fax-order.html":{type:"text/html",body:read("assets/help/fax-order.html")},
   "/assets/help/fax-order.css":{type:"text/css",body:read("assets/help/fax-order.css")}
@@ -56,9 +58,49 @@ async function verifyFaxHelpWindow(browser, base) {
  } finally { await context.close(); }
 }
 
+async function mockPracticeApi(page) {
+ const host="https://jqoeqximtwfpqwzngutj.supabase.co";
+ const id="00000000-0000-4000-8000-000000000001";
+ const user={id,role:"authenticated",aud:"authenticated",email:"qa@example.invalid"};
+ const expires=Math.floor(Date.now()/1000)+3600;
+ const b64=value=>Buffer.from(JSON.stringify(value)).toString("base64url");
+ const token=b64({alg:"HS256",typ:"JWT"})+"."+b64({sub:id,exp:expires,role:"authenticated"})+".fixture";
+ await page.addInitScript(({user,token,expires})=>{
+  localStorage.setItem("sb-jqoeqximtwfpqwzngutj-auth-token",JSON.stringify({access_token:token,refresh_token:"fixture",expires_at:expires,expires_in:3600,token_type:"bearer",user}));
+ },{user,token,expires});
+ const goods=[1,2,3,4].map(n=>({dkd_shohin_id:n,product_kind:"rebuilt",stock_qty:2,core_products:{category_code:"A",manufacturer_part_number:"QA-"+n,product_base_prices:[{product_kind:"rebuilt"}]}}));
+ const customers=[1,2,3].map(n=>({id:n,source_customer_code:"QA-"+n,customer_name:"試験得意先"+n,contact_name:"担当"+n,postal_code:"0000000",address1:"東京都試験区"+n,address2:"",phone1:"0000000000"}));
+ let allowed=true,complete=true;
+ await page.context().route(host+"/**",async route=>{
+  const req=route.request(),path=new URL(req.url()).pathname;
+  const headers={"access-control-allow-origin":"*","access-control-allow-headers":"*","access-control-allow-methods":"GET,POST,OPTIONS"};
+  if (req.method()==="OPTIONS") return route.fulfill({status:204,headers});
+  let body;
+  switch(path.split("/").pop()) {
+   case "user": body=user;break;
+   case "get_customer_order_feature_status": body={internal_management:allowed};break;
+   case "sales_customers": body=customers;break;
+   case "assy_categories": body=[{category_code:"A",label_ja:"試験商品"}];break;
+   case "core_product_variants": body=complete?goods:[];break;
+   case "preview_internal_customer_order": {
+    const input=req.postDataJSON();
+    assert.equal(input.target_sales_customer_id,1);
+    assert.equal(input.target_items.length,2);
+    const items=input.target_items.map(v=>({...v,manufacturer_part_number:"QA-"+v.dkd_shohin_id,category_code:"A",unit_price_jpy:1000*v.dkd_shohin_id,line_total_jpy:1000*v.dkd_shohin_id*v.quantity,core_return_required:true}));
+    const subtotal=items.reduce((s,v)=>s+v.line_total_jpy,0),tax=(subtotal+500)/10;
+    const method={carrier_name:"試験便",service_name:"標準"};
+    body={valid:true,items,subtotal_jpy:subtotal,tax_jpy:tax,shipping_fee_jpy:500,total_jpy:subtotal+tax+500,outbound_shipping_method:method,core_return_required:true,core_return_shipping_method:method};break;
+   }
+   default: throw Error("Unexpected training request "+path);
+  }
+  await route.fulfill({status:200,headers,json:body});
+ });
+ return {deny:()=>{allowed=false;},allow:()=>{allowed=true;},empty:()=>{complete=false;}};
+}
+
 async function verifyFaxVariations(page) {
  const ref = page.locator("[data-order-number]");
- await page.getByRole("textbox",{name:"得意先コード"}).fill("TR-QA");
+ await page.locator(".sheet:visible").waitFor();
  const snapshot = async () => ({
   id: await ref.textContent(),
   ship: await page.locator('[aria-label="お届け先"]').textContent(),
@@ -80,14 +122,15 @@ async function verifyFaxVariations(page) {
  await page.locator("[data-repeat]").click();
  assert.deepEqual(await snapshot(), before);
  await page.locator("[data-print]").click();
+ await page.waitForFunction(id=>document.querySelector("[data-order-number]").textContent!==id,before.id);
  const after = await snapshot();
  assert.notEqual(after.id,before.id);
  assert.notEqual(after.ship,before.ship);
  assert.notDeepEqual(after.items,before.items);
- assert.equal(await page.getByRole("textbox",{name:"得意先コード"}).textContent(), "TR-QA");
+ assert.equal(await page.locator('[aria-label="得意先コード"]').textContent(), "QA-1");
  const subtotal = after.lines.reduce((sum,s) => sum + Number(s.split("＝")[1].replace(/[^0-9]/g,"")), 0);
- assert.equal(Number(after.total.replace(/[^0-9]/g,"")), subtotal * 11 / 10);
- assert.equal(await page.locator("dd").filter({hasText:"演習自動車整備（架空）"}).count(),1);
+ assert.equal(Number(after.total.replace(/[^0-9]/g,"")), (subtotal + 500) * 11 / 10);
+ assert.equal(await page.locator("dd").filter({hasText:"試験得意先1"}).count(),1);
  await page.evaluate(() => { location.hash = "items"; });
  const [sheet] = await Promise.all([
   page.context().waitForEvent("page"),
@@ -101,12 +144,14 @@ async function verifyFaxVariations(page) {
  } finally { await sheet.close(); }
  assert.deepEqual(await snapshot(), after);
  await page.locator("[data-preview]").click();
+ await page.waitForFunction(id=>document.querySelector("[data-order-number]").textContent!==id,after.id);
  assert.notEqual(await ref.textContent(),after.id);
 }
 
 async function verifyFaxPractice(browser, base, output) {
  const page = await browser.newPage();
  let matchingSheet;
+ const api=await mockPracticeApi(page);
  try {
   for (const [form, expectedPages] of [["order", 1], ["check", 2]]) {
    await page.goto(base + "/assets/help/fax-order.html#intake");
@@ -116,8 +161,8 @@ async function verifyFaxPractice(browser, base, output) {
     await verifyFaxVariations(page);
     matchingSheet = await page.locator("[data-check-link]").getAttribute("href");
    } else {
-    await page.goto("about:blank");
-    await page.goto(matchingSheet);
+    await page.goto(base+"/assets/help/fax-practice-check.html#case-TR-20261126-0012345678");
+    await page.locator("[data-money]").filter({hasText:"税込"}).waitFor();
    }
    const panels = page.locator(".panel");
    const ids = await panels.evaluateAll(nodes => nodes.map(el => el.id));
@@ -153,12 +198,19 @@ async function verifyFaxPractice(browser, base, output) {
    await pdfCheck("");
    await page.screenshot({path:path.join(output,name+"-print.png"),fullPage:true});
    if (form === "order") {
-    await page.getByRole("textbox",{name:"品番1"}).fill("TR-LONG-PART-" + "0123456789".repeat(6));
-    await page.getByRole("textbox",{name:"郵便番号と住所"}).fill("演習用の長い住所・配送部門・建物名".repeat(3));
+    await page.locator('[aria-label="品番1"]').evaluate(el=>el.textContent="QA-LONG-PART-" + "0123456789".repeat(6));
+    await page.locator('[aria-label="郵便番号と住所"]').evaluate(el=>el.textContent="演習用の長い住所・配送部門・建物名".repeat(3));
     await pdfCheck("-long");
    }
    await page.emulateMedia({media:"screen"});
   }
+  api.deny();
+  await page.goto(base+"/assets/help/fax-practice-order.html");
+  await page.getByRole("status").filter({hasText:"社内アカウント"}).waitFor();
+  assert(await page.locator("[data-print]").isDisabled());
+  api.allow(); api.empty(); await page.reload();
+  await page.getByRole("status").filter({hasText:"2品番が必要"}).waitFor();
+  assert(await page.locator(".sheet").isHidden());
   console.log("FAX practice verified: 9 panels, four viewports, edited long fields, A4 order 1 page and observer checklist 2 pages.");
  } finally { await page.close(); }
 }
@@ -247,7 +299,7 @@ function fixtureFiles(){
 async function run(){
  const {chromium}=require(process.env.WARRANTY_PLAYWRIGHT_MODULE||"playwright"),files=fixtureFiles(),results=[];
  const output=process.env.WARRANTY_QA_OUTPUT||path.join(root,".qa-sales-inventory");fs.mkdirSync(output,{recursive:true});
- const server=http.createServer((req,res)=>{const f=files[new URL(req.url,"http://qa").pathname];res.writeHead(f?200:404,{"Content-Type":f?f.type+"; charset=utf-8":"text/plain","Content-Security-Policy":"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'self' data:"});res.end(f?f.body:"");});
+ const server=http.createServer((req,res)=>{const f=files[new URL(req.url,"http://qa").pathname];res.writeHead(f?200:404,{"Content-Type":f?f.type+"; charset=utf-8":"text/plain","Content-Security-Policy":"default-src 'self'; script-src 'self'; style-src 'self'; connect-src https://jqoeqximtwfpqwzngutj.supabase.co; img-src 'self' data:"});res.end(f?f.body:"");});
  let browser;
  try{
  await new Promise(r=>server.listen(0,"127.0.0.1",r));browser=await chromium.launch({headless:true});const base="http://127.0.0.1:"+server.address().port;
