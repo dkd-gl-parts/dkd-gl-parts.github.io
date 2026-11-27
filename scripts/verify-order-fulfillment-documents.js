@@ -1128,11 +1128,11 @@ for (const fragment of [
 ]) requireFragment(i18n, fragment, `B2 reissue translation is missing: ${fragment}`);
 
 for (const fragment of [
-  'content="v1.1.1404"',
-  'styles.css?v=1.1.1404',
-  'app.js?v=1.1.1404'
+  'content="v1.1.1405"',
+  'styles.css?v=1.1.1405',
+  'app.js?v=1.1.1405'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.1404"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.1405"');
 requireFragment(source, 'sales_management_registered: "売上登録済"');
 requireFragment(source, 'sales_management_unknown: "売上確認不可"');
 
@@ -1225,3 +1225,37 @@ async function verifyIntegratedB2History() {
   await context.confirmShippingDocumentB2Reissue();
 }
 verifyIntegratedB2History().then(()=>require("../tests/shipping-print-actions.cjs").verify(source)).then(()=>require("../tests/shipping-print-actions.cjs").verifyReadiness(source)).then(()=>console.log("Order fulfillment document UI verification passed.")).catch(error=>{console.error(error);process.exitCode=1;});
+
+async function verifyRevisedDispatchPreview() {
+  const assert = require('node:assert/strict');
+  const before = {id: 23, version: 4, dispatch: {id: 7, items: ['removed', 'kept']}};
+  let latest = {...before, version: 5, dispatch: {id: 7, items: ['kept']}};
+  let click, rendered, prints = 0, closed = false;
+  const button = {addEventListener(event, handler) { click = handler; }};
+  const popup = {close() { closed = true; }, print() { prints++; },
+    document: {open(){}, close(){}, write(){}, querySelectorAll: () => [], getElementById: () => button}};
+  const ctx = vm.createContext({salesOrderSaving: false, shippingDocumentSaving: false,
+    currentUser: {id: 'qa'}, canManageSalesOrders: () => true, salesOrderDispatch: o => o.dispatch,
+    window: {open: () => popup}, alert(){}, hydrateSalesOrderInventory: async () => {},
+    buildSalesOrderDocumentHtml(order) { rendered = order.dispatch.items; return ''; },
+    sb: {rpc: async (name, args) => {
+      assert.equal(name, 'get_sales_order_detail'); assert.equal(args.target_order_id, before.id);
+      return {data: latest};
+    }}});
+  vm.runInContext(sourceBetween('async function readCurrentDispatchPrintOrder', 'async function loadSalesOrderDetail'), ctx);
+  await ctx.printSalesOrderDocument('dispatch', before);
+  assert.deepEqual(rendered, ['kept']);
+  await click();
+  assert.equal(prints, 1);
+  latest = {...latest, version: 6};
+  await click();
+  assert.equal(prints, 1);
+  assert.equal(closed, true);
+  vm.runInContext(sourceBetween('function shippingDocumentPrintJob(', 'function shippingDocumentPrintStateLabel('), ctx);
+  const job = {document_type:'dispatch', status:'cancelled', last_error:'受注修正のため再発行が必要です。'};
+  const order = {cancellation_flow:'before_picking', print_jobs:[job]};
+  assert.equal(ctx.shippingDocumentPrintJob(order, 'dispatch'), null);
+  assert.equal(ctx.shippingDocumentPrintJob({...order,cancellation_flow:'after_picking'}, 'dispatch'), job);
+  assert.equal(ctx.shippingDocumentPrintJob({...order,print_jobs:[{...job,last_error:'other'}]}, 'dispatch').status, 'cancelled');
+}
+verifyRevisedDispatchPreview().catch(error => { console.error(error); process.exitCode = 1; });
