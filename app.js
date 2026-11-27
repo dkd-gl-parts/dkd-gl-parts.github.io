@@ -9187,7 +9187,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1403";
+var APP_VERSION       = "v1.1.1404";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -19215,21 +19215,37 @@ function shippingWaybillCanvasPoint(event, canvas, draft) {
   };
 }
 
+function selectShippingWaybillLayoutField(field) {
+  shippingWaybillLayoutSelectedField = field.key;
+  document.querySelectorAll("[data-waybill-field-select]").forEach(function(button) {
+    button.closest(".shipping-waybill-field-row").classList.toggle("selected", button.dataset.waybillFieldSelect === field.key);
+  });
+  var title = document.querySelector(".shipping-waybill-inspector-head strong");
+  if (title) title.textContent = (SHIPPING_WAYBILL_FIELD_META[field.key] || {}).label || field.key;
+  syncShippingWaybillLayoutInspector();
+  drawShippingWaybillLayoutCanvas();
+}
+
+function shippingWaybillFieldAtPoint(draft, point) {
+  var hits = shippingWaybillSelectableFields(draft).filter(function(field) {
+    return point.x >= Number(field.x_mm) && point.x <= Number(field.x_mm) + Number(field.width_mm)
+      && point.y >= Number(field.y_mm) && point.y <= Number(field.y_mm) + Number(field.height_mm);
+  }).reverse();
+  return hits.find(function(field) { return field.key === shippingWaybillLayoutSelectedField; })
+    || hits.find(function(field) { return field.visible !== false; })
+    || hits[0];
+}
+
 function bindShippingWaybillLayoutCanvas(canvas) {
   canvas.addEventListener("pointerdown", function(event) {
     var draft = shippingWaybillLayoutDraft;
     if (!draft) return;
     var point = shippingWaybillCanvasPoint(event, canvas, draft);
-    var fields = (draft.fields || []).slice().reverse();
-    var hit = fields.find(function(field) {
-      return point.x >= Number(field.x_mm) && point.x <= Number(field.x_mm) + Number(field.width_mm) && point.y >= Number(field.y_mm) && point.y <= Number(field.y_mm) + Number(field.height_mm);
-    });
-    if (!hit) return;
-    if (hit.key !== shippingWaybillLayoutSelectedField) {
-      shippingWaybillLayoutSelectedField = hit.key;
-      renderShippingWaybillLayoutDesigner();
-      return;
-    }
+    var hit = shippingWaybillFieldAtPoint(draft, point);
+    if (!hit || !event.isPrimary || event.button !== 0) return;
+    event.preventDefault();
+    canvas.focus({ preventScroll: true });
+    if (hit.key !== shippingWaybillLayoutSelectedField) selectShippingWaybillLayoutField(hit);
     shippingWaybillLayoutDrag = { key: hit.key, offsetX: point.x - Number(hit.x_mm), offsetY: point.y - Number(hit.y_mm), pointerId: event.pointerId };
     canvas.setPointerCapture(event.pointerId);
   });
@@ -19237,7 +19253,7 @@ function bindShippingWaybillLayoutCanvas(canvas) {
     var draft = shippingWaybillLayoutDraft;
     var drag = shippingWaybillLayoutDrag;
     var field = shippingWaybillSelectedField();
-    if (!draft || !drag || !field || drag.pointerId !== event.pointerId) return;
+    if (!draft || !drag || !field || field.key !== drag.key || drag.pointerId !== event.pointerId) return;
     var point = shippingWaybillCanvasPoint(event, canvas, draft);
     field.x_mm = Math.round(Math.max(0, Math.min(Number(draft.paper_width_mm) - Number(field.width_mm), point.x - drag.offsetX)) * 10) / 10;
     field.y_mm = Math.round(Math.max(0, Math.min(Number(draft.paper_height_mm) - Number(field.height_mm), point.y - drag.offsetY)) * 10) / 10;
@@ -19249,6 +19265,7 @@ function bindShippingWaybillLayoutCanvas(canvas) {
   }
   canvas.addEventListener("pointerup", finishDrag);
   canvas.addEventListener("pointercancel", finishDrag);
+  canvas.addEventListener("lostpointercapture", finishDrag);
   canvas.addEventListener("keydown", function(event) {
     var field = shippingWaybillSelectedField();
     var draft = shippingWaybillLayoutDraft;
@@ -19307,8 +19324,8 @@ function bindShippingWaybillLayoutDesignerActions() {
   });
   document.querySelectorAll("[data-waybill-field-select]").forEach(function(button) {
     button.addEventListener("click", function() {
-      shippingWaybillLayoutSelectedField = button.dataset.waybillFieldSelect;
-      renderShippingWaybillLayoutDesigner();
+      var field = shippingWaybillSelectableFields(shippingWaybillLayoutDraft).find(function(item) { return item.key === button.dataset.waybillFieldSelect; });
+      if (field) selectShippingWaybillLayoutField(field);
     });
   });
   document.querySelectorAll("[data-waybill-field-visible]").forEach(function(input) {
