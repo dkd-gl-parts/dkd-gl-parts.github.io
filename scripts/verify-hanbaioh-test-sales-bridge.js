@@ -27,7 +27,7 @@ function setup(overrides = {}) {
     },
   };
   vm.runInNewContext(source, { window, Set });
-  const options = { record: { actor_id: "actor", device_id: "device" }, fileName, isCurrent: () => current };
+  const options = { record: { actor_id: id, device_id: challengeId }, fileName, isCurrent: () => current };
   const emit = (value, origin = window.location.origin) => {
     for (const handler of listeners) handler({ source: window, origin, data: { channel, ...value } });
   };
@@ -44,7 +44,7 @@ test("browser requests initial/fresh bindings and only one matching claim, then 
   f.emit(challenge("binding")); await flush();
   f.emit(challenge("claim", { slipNumber: "900009", csvSha256: "a".repeat(64) })); await flush();
   f.emit({ type: "response", response: { id, ok: true, command: "import_dev_order_test_sale",
-    data: { status: "import_verified", slipNumber: "900009", backupSha256: "b".repeat(64) } } });
+    data: { receiptVersion: 1, requestId: id, actorId: id, deviceId: challengeId, companyName: "D-CATS連携テスト（実データ禁止）", loginName: "administrator", status: "import_verified", slipNumber: "900009", backupSha256: "b".repeat(64), sourceSha256: "a".repeat(64), vendorExportSha256: "c".repeat(64), rowCount: 1, processId: 4321 } } });
   assert.equal((await waiting).status, "import_verified");
   assert.equal(f.calls.filter(x => Array.isArray(x)).length, 1);
   assert.equal(f.calls.filter(x => x === "binding").length, 2);
@@ -106,3 +106,23 @@ assert(runtime.includes('bridgeCard.appendChild(salesCard)'));
 assert(runtime.includes('if (bridgeCard.parentElement) bridgeCard.parentElement.removeChild(bridgeCard)'));
 assert(runtime.includes('window.DcatsHanbaiohTestSalesBridge.cancelCurrent()'));
 assert(!/access_token|service_role|localStorage|sessionStorage|clipboard|innerHTML/.test(source));
+
+test("legacy success or mismatched receipt never becomes verified", async () => {
+  for (const patch of [{receiptVersion: undefined}, {actorId: challengeId}, {sourceSha256: "d".repeat(64)}, {vendorExportSha256: ""}, {rowCount: 2}]) {
+    const f = setup(), waiting = f.bridge.importOnce(f.options); await flush();
+    f.emit({type:"response",response:{id,ok:true,command:"import_dev_order_test_sale",data:{
+      receiptVersion:1,requestId:id,actorId:id,deviceId:challengeId,companyName:"D-CATS連携テスト（実データ禁止）",loginName:"administrator",
+      status:"import_verified",slipNumber:"900009",sourceSha256:"a".repeat(64),vendorExportSha256:"c".repeat(64),
+      backupSha256:"b".repeat(64),rowCount:1,processId:4321,...patch}}});
+    await assert.rejects(waiting,/receipt_unverified/);
+  }
+});
+test("inspect is read-only and binds the exact staged source to the actor/device", async()=>{
+ const f=setup(),waiting=f.bridge.inspect(f.options);await flush();
+ assert.equal(f.posts[0].request.command,"inspect_dev_order_test_sale");
+ f.emit({type:"response",response:{id,ok:true,command:"inspect_dev_order_test_sale",data:{
+  status:"test_sales_prepared",requestId:id,actorId:id,deviceId:challengeId,companyName:"D-CATS連携テスト（実データ禁止）",
+  loginName:"administrator",fileName,slipNumber:"900009",sourceSha256:"a".repeat(64),rowCount:1}}});
+ assert.equal((await waiting).rowCount,1);
+ assert.deepEqual(f.calls,["binding"]);assert.equal(f.timers.size,0);
+});
