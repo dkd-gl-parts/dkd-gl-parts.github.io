@@ -37,7 +37,7 @@ async function verifyFaxHelpWindow(browser, base) {
   await work.goto(base+"/fax-help-test");
   await work.locator("#draft").fill("unsubmitted order text");
   const [help]=await Promise.all([context.waitForEvent("page"),work.locator("#sales-order-fax-help").click()]);
-  await help.waitForURL("**/assets/help/fax-order.html?v=11#overview");
+  await help.waitForURL("**/assets/help/fax-order.html?v=12#overview");
   const windowId=async page=>{
    const session=await context.newCDPSession(page);
    try { return (await session.send("Browser.getWindowForTarget")).windowId; }
@@ -47,7 +47,7 @@ async function verifyFaxHelpWindow(browser, base) {
   assert.equal(await help.evaluate(()=>window.opener===null),true);
   await work.getByRole("button",{name:"Accounting"}).click();
   await work.locator("#sales-order-fax-help").press("Enter");
-  await help.waitForURL("**/assets/help/fax-order.html?v=11#export");
+  await help.waitForURL("**/assets/help/fax-order.html?v=12#export");
   await work.locator("[data-feature-help]").press("Enter");
   await help.waitForURL("**/assets/help/features.html?v=1#search");
   assert(await help.locator("#search").isVisible());

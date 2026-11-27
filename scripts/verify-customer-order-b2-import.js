@@ -330,3 +330,61 @@ if (!detailRender.includes("salesOrderShipmentHistoryHtml(order.shipment_history
 });
 
 console.log("Customer order B2 issued-data import verification passed.");
+
+async function verifyImportCompletion() {
+  const assert = require("node:assert/strict");
+  let response, notice, refreshes = 0;
+  const calls = [];
+  const context = vm.createContext({
+    salesOrderB2ImportSaving: false, salesOrderB2ImportState: null, salesOrderSelectedId: null,
+    canManageSalesOrders: () => true, salesOrderB2ImportFileValidationMessage: () => "",
+    decodeSalesOrderB2Csv: () => "", parseSalesOrderB2Csv: () => [],
+    salesOrderB2RowsFromCsv: () => [{ source_row_number: 2 }, { source_row_number: 3 }],
+    salesOrderB2FileSha256: async () => "hash", salesOrderB2ImportFriendlyError: e => e.message,
+    document: { getElementById: () => null }, renderSalesOrderB2Import() {},
+    setSalesOrderBatchMessage(text) { notice = text; },
+    refreshSalesOrderManagement: async () => { refreshes++; },
+    sb: { rpc(name) { calls.push(name); return response; } }
+  });
+  vm.runInContext(between("function closeSalesOrderB2Import()", "function resetProductSearchForMenu()"), context);
+  const file = { name: "issued.csv", arrayBuffer: async () => new ArrayBuffer(0) };
+  const preview = async statuses => {
+    response = { data: { rows: statuses.map(status => ({ status })) } };
+    await context.previewSalesOrderB2ImportFile(file);
+  };
+  await preview(["duplicate", "duplicate"]);
+  assert.equal(context.salesOrderB2ImportState, null);
+  assert.match(notice, /登録済み/);
+  assert.deepEqual(calls, ["preview_sales_order_b2_shipments"]);
+  for (const [counts, shouldClose] of [
+    [{ imported_count: 1, duplicate_count: 1, error_count: 0 }, true],
+    [{ imported_count: 2, duplicate_count: 0, error_count: 0, print_warning_count: 1 }, false],
+    [{ imported_count: 1, duplicate_count: 0, error_count: 1 }, false],
+    [{ duplicate_file: true, imported_count: 2, duplicate_count: 0, error_count: 0 }, true],
+    [{}, false]
+  ]) {
+    await preview(["ready", "duplicate"]);
+    assert.ok(context.salesOrderB2ImportState);
+    response = { data: counts };
+    await context.importSalesOrderB2Shipments();
+    assert.equal(context.salesOrderB2ImportState === null, shouldClose);
+    if (shouldClose) assert.ok(notice);
+  }
+  assert.equal(refreshes, 5);
+  await preview(["duplicate", "invalid"]);
+  assert.ok(context.salesOrderB2ImportState);
+  await preview(["ready", "ready"]);
+  response = { error: { message: "test RPC error" } };
+  await context.importSalesOrderB2Shipments();
+  assert.equal(context.salesOrderB2ImportState.resultError, true);
+  assert.equal(context.salesOrderB2ImportSaving, false);
+  let resolve;
+  response = new Promise(r => { resolve = r; });
+  const old = context.previewSalesOrderB2ImportFile(file);
+  await new Promise(r => setImmediate(r));
+  await preview(["ready", "ready"]);
+  resolve({ data: { rows: [{status:"duplicate"}, {status:"duplicate"}] } });
+  await old;
+  assert.equal(context.salesOrderB2ImportState.preview.rows[0].status, "ready");
+}
+verifyImportCompletion().catch(error => { console.error(error); process.exitCode = 1; });
