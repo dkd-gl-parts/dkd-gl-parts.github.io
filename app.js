@@ -20943,13 +20943,8 @@ function shippingDocumentReturnWaybillHtml(order) {
   var copyCount = shippingDocumentReturnWaybillCopyCount(order);
   var printBusy = !!(printJob && ["queued", "claimed"].indexOf(printJob.status) >= 0);
   var dispatchReady = !!dispatch;
-  var carrierLabel = carrier === "sagawa_collect" ? "佐川急便着払い" : "ヤマト宅急便　着払い";
   var printState = printJob ? salesOrderPrintJobStatusLabel(printJob.status) : "未発行";
-  var printGuidance = method !== "dot_matrix" ? "手書き運用では、伝票デザインと記入内容を画面に表示し、完了後に伝票番号を登録できます。"
-    : !shippingDocumentWaybillNumberIsValid(waybill.tracking_number) ? "複写伝票の送り状番号を3-4-4（11桁）または4-4-4（12桁）で登録してから印刷してください。"
-      : !dispatchReady ? "出荷指示書を発行してから印刷できます。"
-        : printBusy ? "複写伝票を印刷端末へ送信済みです。"
-          : "ドットプリンターに " + carrierLabel + " の複写伝票をセットして印刷します。";
+  var printGuidance = shippingDocumentReturnPrintGuidance(method, waybill.tracking_number, carrier, dispatchReady, printBusy);
   return "<div id='shipping-document-return-waybill-section'><div class='shipping-document-section-head'><div><h3>コア返却用複写伝票</h3><p>" + esc(t("shipping_return_prepare_hint")) + "</p></div><span class='shipping-document-ready-state " + (waybill.id ? "ready" : "pending") + "'>" + esc(copyCount + "枚 / " + (waybill.id ? "設定済み" : "未設定")) + "</span></div>" +
     "<div class='shipping-document-carrier-context' id='shipping-document-return-carrier-brand'>" + shippingCarrierBrandHtml(carrier, false) + "</div>" +
     "<div class='shipping-document-waybill-form'><label><span>運送会社・サービス</span><select id='shipping-document-return-carrier'><option value='yamato_collect'" + (carrier === "yamato_collect" ? " selected" : "") + ">ヤマト宅急便　着払い</option><option value='sagawa_collect'" + (carrier === "sagawa_collect" ? " selected" : "") + ">佐川急便着払い</option></select></label>" +
@@ -20958,7 +20953,16 @@ function shippingDocumentReturnWaybillHtml(order) {
     "<button type='button' id='shipping-document-return-save'" + (shippingDocumentSaving ? " disabled" : "") + ">設定を保存</button></div>" +
     "<div class='shipping-document-waybill-print-row'><div><span>複写伝票の印刷状態</span><strong class='" + esc(printJob ? printJob.status : "") + "'>" + esc(printState) + "</strong></div>" +
     "<a href='dcats-print-settings://open'>このPCの印刷設定</a></div>" +
-    "<p class='shipping-document-form-note'>" + esc(printGuidance) + "</p></div>";
+    "<p id='shipping-document-return-guidance' class='shipping-document-form-note'>" + esc(printGuidance) + "</p></div>";
+}
+
+function shippingDocumentReturnPrintGuidance(method, tracking, carrier, dispatchReady, printBusy) {
+  var carrierLabel = carrier === "sagawa_collect" ? "佐川急便着払い" : "ヤマト宅急便　着払い";
+  return method !== "dot_matrix" ? "手書き運用では、伝票デザインと記入内容を画面に表示し、完了後に伝票番号を登録できます。"
+    : !shippingDocumentWaybillNumberIsValid(tracking) ? "複写伝票の送り状番号を3-4-4（11桁）または4-4-4（12桁）で登録してから印刷してください。"
+      : !dispatchReady ? "出荷指示書を発行してから印刷できます。"
+        : printBusy ? "複写伝票を印刷端末へ送信済みです。"
+          : "ドットプリンターに " + carrierLabel + " の複写伝票をセットして印刷します。";
 }
 
 function shippingDocumentOrderContentsHtml(order) {
@@ -21101,7 +21105,19 @@ function bindShippingDocumentSettingsActions() {
   var outboundCarrier = document.getElementById("shipping-document-outbound-carrier");
   if (outboundCarrier) outboundCarrier.addEventListener("change", function() { syncShippingDocumentCarrierBrand("outbound"); });
   var returnCarrier = document.getElementById("shipping-document-return-carrier");
-  if (returnCarrier) returnCarrier.addEventListener("change", function() { syncShippingDocumentCarrierBrand("return"); });
+  if (returnCarrier) {
+    var method = document.getElementById("shipping-document-return-method");
+    var tracking = document.getElementById("shipping-document-return-tracking");
+    var guidance = document.getElementById("shipping-document-return-guidance");
+    var refreshGuidance = function() {
+      var job = shippingDocumentPrintJob(shippingDocumentDetail, "return_waybill");
+      guidance.textContent = shippingDocumentReturnPrintGuidance(method.value, tracking.value, returnCarrier.value,
+        !!salesOrderDispatch(shippingDocumentDetail), !!job && ["queued", "claimed"].includes(job.status));
+    };
+    returnCarrier.addEventListener("change", function() { syncShippingDocumentCarrierBrand("return"); refreshGuidance(); });
+    method.addEventListener("change", refreshGuidance);
+    tracking.addEventListener("input", refreshGuidance);
+  }
   var applyTemporary = document.getElementById("shipping-document-temporary-apply");
   if (applyTemporary) applyTemporary.addEventListener("click", applyShippingDocumentTemporaryOutput);
   var resetTemporary = document.getElementById("shipping-document-temporary-reset");
