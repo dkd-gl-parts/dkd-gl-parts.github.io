@@ -9187,7 +9187,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1402";
+var APP_VERSION       = "v1.1.1403";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -19080,7 +19080,7 @@ function drawShippingWaybillLayoutCanvas() {
   var paperWidth = Number(draft.paper_width_mm) || 203;
   var paperHeight = Number(draft.paper_height_mm) || 115;
   canvas.width = 1000;
-  canvas.height = Math.max(360, Math.round(canvas.width * paperHeight / paperWidth));
+  canvas.height = Math.round(canvas.width * paperHeight / paperWidth);
   var context = canvas.getContext("2d");
   var scale = canvas.width / paperWidth;
   var data = shippingWaybillPreviewData(draft);
@@ -19174,7 +19174,7 @@ function renderShippingWaybillLayoutDesigner() {
     "<div class='shipping-waybill-purpose-note " + (purposeIsReturn ? "return" : "outbound") + "'><strong>" + (purposeIsReturn ? "コア返却用" : "商品発送用") + "</strong><span>" + (purposeIsReturn ? "送り先は大光電機です。送り主は印字しません。" : "送り先は得意先、送り主は大光電機を印字します。") + "</span></div>" +
     "<div class='shipping-waybill-layout-workspace'>" +
       "<aside class='shipping-waybill-field-list'><div><strong>印字項目</strong><span>" + esc((draft.fields || []).filter(function(item) { return item.visible !== false && !shippingWaybillIsReturnSenderField(draft, item); }).length) + " / " + esc((draft.fields || []).filter(function(item) { return !shippingWaybillIsReturnSenderField(draft, item); }).length) + "</span></div>" + (draft.fields || []).map(function(item) { return shippingWaybillLayoutFieldHtml(item, draft, previewData); }).join("") + "</aside>" +
-      "<section class='shipping-waybill-preview'><div class='shipping-waybill-preview-head'><div><strong>印刷プレビュー</strong><span>" + esc(draft.paper_width_mm) + " × " + esc(draft.paper_height_mm) + " mm</span></div><em>" + (backgroundAsset ? "実物伝票背景" : "位置合わせガイド") + " / " + (previewData.uses_actual_order ? "選択中の受注" : "サンプルデータ") + "</em></div><div class='shipping-waybill-canvas-wrap'><canvas id='shipping-waybill-layout-canvas' tabindex='0' aria-label='送り状の印刷位置プレビュー'></canvas></div><p>伝票背景とガイド線は位置合わせ用で印刷されません。このPC固有の用紙寸法・全体ずれ・テスト印刷は、画面下の端末補正から調整します。</p></section>" +
+      "<section class='shipping-waybill-preview'><div class='shipping-waybill-preview-head'><div><strong>印刷プレビュー</strong><span id='shipping-waybill-paper-dimensions'>" + esc(draft.paper_width_mm) + " × " + esc(draft.paper_height_mm) + " mm</span></div><em>" + (backgroundAsset ? "実物伝票背景" : "位置合わせガイド") + " / " + (previewData.uses_actual_order ? "選択中の受注" : "サンプルデータ") + "</em></div><div class='shipping-waybill-canvas-wrap'><canvas id='shipping-waybill-layout-canvas' tabindex='0' aria-label='送り状の印刷位置プレビュー'></canvas></div><p>伝票背景とガイド線は位置合わせ用で印刷されません。用紙寸法を変えると印字枠の位置と大きさも比例して変わります。このPC固有の用紙寸法・全体ずれ・テスト印刷は、画面下の端末補正から調整します。</p></section>" +
       "<aside class='shipping-waybill-inspector'>" +
         (field ? "<div class='shipping-waybill-inspector-head'><span>選択中</span><strong>" + esc((SHIPPING_WAYBILL_FIELD_META[field.key] || {}).label || field.key) + "</strong></div>" +
         "<div class='shipping-waybill-inspector-grid'>" +
@@ -19188,7 +19188,7 @@ function renderShippingWaybillLayoutDesigner() {
           "<label class='check'><input type='checkbox' data-waybill-field-property='bold'" + (field.bold ? " checked" : "") + "><span>太字</span></label>" +
           "<label class='check'><input type='checkbox' data-waybill-field-property='visible'" + (field.visible === false ? "" : " checked") + "><span>印字する</span></label>" +
         "</div>" : "<div class='shipping-waybill-layout-empty'>印字項目を選択してください。</div>") +
-        "<div class='shipping-waybill-paper-settings'><strong>用紙</strong><div><label><span>幅 (mm)</span><input type='number' step='0.1' min='100' max='350' data-waybill-paper-property='paper_width_mm' value='" + esc(draft.paper_width_mm) + "'></label><label><span>高さ (mm)</span><input type='number' step='0.1' min='70' max='250' data-waybill-paper-property='paper_height_mm' value='" + esc(draft.paper_height_mm) + "'></label></div></div>" +
+        "<div class='shipping-waybill-paper-settings'><strong>用紙</strong><div><label><span>幅 (mm)</span><input type='number' step='0.1' min='100' max='350' required data-waybill-paper-property='paper_width_mm' value='" + esc(draft.paper_width_mm) + "'></label><label><span>高さ (mm)</span><input type='number' step='0.1' min='70' max='250' required data-waybill-paper-property='paper_height_mm' value='" + esc(draft.paper_height_mm) + "'></label></div></div>" +
         "<label class='shipping-waybill-change-note'><span>変更メモ</span><input id='shipping-waybill-layout-change-note' maxlength='200' placeholder='例: 宛名を右へ2mm移動'></label>" +
       "</aside>" +
     "</div>";
@@ -19266,6 +19266,24 @@ function bindShippingWaybillLayoutCanvas(canvas) {
   });
 }
 
+function resizeShippingWaybillPaper(draft, property, value) {
+  var horizontal = property === "paper_width_mm";
+  var previous = Number(draft[property]);
+  if (value === previous) return;
+  var position = horizontal ? "x_mm" : "y_mm";
+  var size = horizontal ? "width_mm" : "height_mm";
+  var limit = Math.round(value * 10);
+  var ratio = value / previous;
+  // Work in tenths of a millimetre so a rounded box can touch the paper edge.
+  draft.fields.forEach(function(field) {
+    var extent = Math.min(limit, Math.max(20, Math.round(field[size] * ratio * 10)));
+    var offset = Math.min(limit - extent, Math.max(0, Math.round(field[position] * ratio * 10)));
+    field[size] = extent / 10;
+    field[position] = offset / 10;
+  });
+  draft[property] = value;
+}
+
 function bindShippingWaybillLayoutDesignerActions() {
   var purposeSelect = document.getElementById("shipping-waybill-layout-purpose");
   if (purposeSelect) purposeSelect.addEventListener("change", function() {
@@ -19315,9 +19333,12 @@ function bindShippingWaybillLayoutDesignerActions() {
   });
   document.querySelectorAll("[data-waybill-paper-property]").forEach(function(input) {
     input.addEventListener("change", function() {
-      var value = parseFloat(input.value);
-      if (Number.isFinite(value)) shippingWaybillLayoutDraft[input.dataset.waybillPaperProperty] = Math.round(value * 10) / 10;
-      renderShippingWaybillLayoutDesigner();
+      if (!input.reportValidity()) return;
+      var draft = shippingWaybillLayoutDraft;
+      resizeShippingWaybillPaper(draft, input.dataset.waybillPaperProperty, input.valueAsNumber);
+      document.getElementById("shipping-waybill-paper-dimensions").textContent = draft.paper_width_mm + " × " + draft.paper_height_mm + " mm";
+      syncShippingWaybillLayoutInspector();
+      drawShippingWaybillLayoutCanvas();
     });
   });
   var revisionSelect = document.getElementById("shipping-waybill-layout-revision");
@@ -19377,6 +19398,11 @@ function closeShippingWaybillLayoutDesigner() {
 async function saveShippingWaybillLayout() {
   var draft = shippingWaybillLayoutDraft;
   if (!draft || shippingWaybillLayoutSaving) return;
+  var invalidPaper = document.querySelector("[data-waybill-paper-property]:invalid");
+  if (invalidPaper) {
+    invalidPaper.reportValidity();
+    return;
+  }
   enforceShippingWaybillPurposeRules(draft);
   var note = (document.getElementById("shipping-waybill-layout-change-note") || {}).value || "";
   shippingWaybillLayoutSaving = true;
