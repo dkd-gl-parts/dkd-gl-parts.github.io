@@ -8788,7 +8788,8 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .shipping-return-sheet-form label { display: grid; gap: 4px; min-width: 0; font-weight: 600; }
 .shipping-return-sheet-form :is(select, input) { box-sizing: border-box; width: 100%; min-width: 0; padding: 7px; font: inherit; }
 .shipping-return-sheet-form button { justify-self: end; }
-.shipping-return-sheet-form p { margin: 0; }
+.shipping-return-sheet-form p { margin: 0; overflow-wrap: anywhere; }
+.shipping-return-sheet-item { color: #425467; }
 .shipping-document-settings-card:has(.shipping-return-sheet-form) .sales-order-detail-message:empty { min-height: 0; }
 .shipping-document-settings-card .shipping-document-waybill-form { grid-template-columns: 1fr 1fr; }
 .shipping-document-settings-card .shipping-document-waybill-form > label:last-of-type { grid-column: 1 / -1; }

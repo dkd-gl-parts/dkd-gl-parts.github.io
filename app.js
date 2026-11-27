@@ -21629,12 +21629,10 @@ function shippingDocumentReturnSheetForm(order) {
   var next = sheets.find(function(sheet) { return !sheet.job; }) || sheets[0];
   var options = sheets.map(function(sheet, index) {
     var unit = sheet.unit;
-    var item = unit.order_item;
-    var label = [index + 1 + "/" + sheets.length, unit.return_code, item.gltek_part_number || item.genuine_part_number || item.manufacturer_part_number,
-      sheet.job ? salesOrderPrintJobStatusLabel(sheet.job.status) : t("shipping_sheet_pending")].filter(Boolean).join(" · ");
+    var label = [index + 1 + "/" + sheets.length, unit.return_code].filter(Boolean).join(" · ");
     return "<option value='" + esc(unit.id) + "'" + (sheet === next ? " selected" : "") + ">" + esc(label) + "</option>";
   }).join("");
-  return "<form class='shipping-return-sheet-form' id='shipping-return-sheet-form'><label>" + esc(t("shipping_sheet_unit")) + "<select name='unit'>" + options + "</select></label>" +
+  return "<form class='shipping-return-sheet-form' id='shipping-return-sheet-form'><label>" + esc(t("shipping_sheet_unit")) + "<select name='unit'>" + options + "</select></label><p class='shipping-return-sheet-item' data-sheet-item></p>" +
     "<label>" + esc(t("shipping_sheet_number")) + "<input name='tracking' type='text' inputmode='numeric' autocomplete='off' placeholder='000-0000-0000'></label>" +
     "<p data-sheet-review hidden>" + esc(t("shipping_sheet_review")) + "</p><button type='submit' class='btn-primary' disabled>" + esc(t("shipping_sheet_submit")) + "</button></form>";
 }
@@ -21648,6 +21646,9 @@ function bindShippingDocumentReturnSheet(form, order) {
   function update() {
     var sheet = selected();
     var number = shippingDocumentReturnSheetNumber(tracking.value);
+    var item = sheet && sheet.unit.order_item;
+    form.querySelector("[data-sheet-item]").textContent = item ? [item.gltek_part_number || item.genuine_part_number || item.manufacturer_part_number,
+      sheet.job ? salesOrderPrintJobStatusLabel(sheet.job.status) : t("shipping_sheet_pending")].filter(Boolean).join(" · ") : "";
     form.querySelector("[data-sheet-review]").hidden = !(sheet && sheet.job);
     submit.disabled = !sheet || !number || shippingDocumentSaving || !!(sheet.job && sheet.job.return_sheet_tracking === number);
   }
@@ -21665,7 +21666,7 @@ function bindShippingDocumentReturnSheet(form, order) {
 
 async function queueShippingDocumentReturnWaybillPrint(order, sheet, number, form) {
   var waybill = order.return_waybill || {};
-  if (shippingDocumentSaving || shippingDocumentDetail !== order || !sheet || !shippingDocumentReturnSheetNumber(number)
+  if (shippingDocumentSaving || !shippingDocumentDetail || String(shippingDocumentDetail.id) !== String(order.id) || !sheet || !shippingDocumentReturnSheetNumber(number)
       || waybill.handling_method !== "dot_matrix" || !canManageSalesOrders()) return;
   shippingDocumentSaving = true;
   Array.from(form.elements).forEach(function(control) { control.disabled = true; });
