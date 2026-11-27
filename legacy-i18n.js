@@ -9188,13 +9188,13 @@ Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {"ユーザーIDを保存":"保�
 
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.en, {
   "パスワードの必須条件": "Password requirements",
-  "8文字以上、UTF-8で72バイト以内（半角英数字なら72文字まで）": "At least 8 characters and at most 72 UTF-8 bytes (up to 72 ASCII letters or digits).",
-  "よく使われるものや、漏えいが確認されたパスワードは使用不可": "Common passwords and passwords found in data breaches are not accepted.",
-  "確認欄には同じパスワードを入力": "Enter the same password in the confirmation field."
+  "8文字以上、UTF-8で72バイト以内（半角英数字は72文字まで）": "At least 8 characters and at most 72 UTF-8 bytes (up to 72 ASCII letters or digits).",
+  "よく使われる・漏えい済みのパスワードは使用不可": "Common passwords and passwords found in data breaches are not accepted.",
+  "確認欄に同じパスワードを入力": "Enter the same password in the confirmation field."
 });
 Object.assign(DCATS_LEGACY_UI_TRANSLATIONS.zh, {
   "パスワードの必須条件": "密码要求",
-  "8文字以上、UTF-8で72バイト以内（半角英数字なら72文字まで）": "至少8个字符，UTF-8编码不超过72字节（半角英文字母或数字最多72个）。",
-  "よく使われるものや、漏えいが確認されたパスワードは使用不可": "不能使用常见密码或已泄露的密码。",
-  "確認欄には同じパスワードを入力": "请在确认栏再次输入相同的密码。"
+  "8文字以上、UTF-8で72バイト以内（半角英数字は72文字まで）": "至少8个字符，UTF-8编码不超过72字节（半角英文字母或数字最多72个）。",
+  "よく使われる・漏えい済みのパスワードは使用不可": "不能使用常见密码或已泄露的密码。",
+  "確認欄に同じパスワードを入力": "请在确认栏再次输入相同的密码。"
 });

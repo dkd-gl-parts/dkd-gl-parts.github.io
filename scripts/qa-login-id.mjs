@@ -258,7 +258,7 @@ async function testPasswordRequirements(browser, viewport) {
       const rules = page.locator("#" + requirementsId);
       await rules.waitFor({ state: "visible" });
       assert.equal((await rules.locator("strong").textContent()).trim(), "パスワードの必須条件");
-      assert.deepEqual(await rules.locator("li").allTextContents(), ["8文字以上、UTF-8で72バイト以内（半角英数字なら72文字まで）","よく使われるものや、漏えいが確認されたパスワードは使用不可","確認欄には同じパスワードを入力"]);
+      assert.deepEqual(await rules.locator("li").allTextContents(), ["8文字以上、UTF-8で72バイト以内（半角英数字は72文字まで）","よく使われる・漏えい済みのパスワードは使用不可","確認欄に同じパスワードを入力"]);
       const input = page.locator("#" + inputId);
       assert.equal(await input.getAttribute("aria-describedby"), requirementsId);
       assert.equal(await input.inputValue(), "");
@@ -269,8 +269,22 @@ async function testPasswordRequirements(browser, viewport) {
       assert.ok(ruleBox && inputBox && ruleBox.y >= 0 && ruleBox.y + ruleBox.height <= inputBox.y, "Requirements appear before input");
       assert.ok(finalAction && finalAction.y + finalAction.height <= viewport.height + 1, JSON.stringify({ screen, viewport, finalAction }));
       await fits(page,"html, #screen-" + screen + ", #" + requirementsId);
+
+      const reset = screen === "reset";
+      const error = page.locator(reset ? "#reset-error" : "#change-pw-error");
+      const strength = page.locator(reset ? "#reset-strength-label" : "#changepw-strength-label");
+      await error.evaluate(element => {
+        element.textContent = "パスワードの更新に失敗しました。もう一度お試しください。: Password is known to be weak and easy to guess, please choose a different one.";
+      });
+      await strength.evaluate(element => {
+        element.textContent = "普通 / Moderate (大文字 / uppercase, 記号 / symbol)";
+      });
+      const bottom = await page.locator(reset ? "#btn-back-from-reset" : "#change-pw-error").boundingBox();
+      await page.screenshot({ path: path.join(output, `password-${screen}-${viewport.width}x${viewport.height}-error.png`) });
+      assert.ok(bottom && bottom.y + bottom.height <= viewport.height + 1, JSON.stringify({ screen, viewport, errorBottom: bottom }));
+      await fits(page,"html, #screen-" + screen + ", #" + requirementsId);
     }
-    console.log(`${viewport.width}x${viewport.height}: password requirements fit before both password inputs`);
+    console.log(`${viewport.width}x${viewport.height}: password requirements and error states fit on both forms`);
   } finally {
     await context.close();
   }
