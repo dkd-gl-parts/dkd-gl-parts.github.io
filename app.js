@@ -767,6 +767,13 @@ var TRANSLATIONS = {
     business_workspace_b2_ready: "保存の許可済み",
     business_workspace_b2_permission: "保存の許可を再確認",
     business_workspace_b2_unsupported: "このブラウザでは設定できません",
+    b2_permission_first: "このPCでの初回設定です。「フォルダを選ぶ」で下記の保存先を選び、ブラウザーの確認で保存を許可してください。",
+    b2_permission_renew: "登録済みの保存先へのアクセスを再確認します。「保存を許可」を押し、ブラウザーの確認で許可してください。",
+    b2_permission_denied: "保存が許可されていません。「フォルダを選ぶ」で下記の保存先を選び直し、保存を許可してください。",
+    b2_permission_picker_cancelled: "フォルダの選択を中止しました。続けるには保存先を選んでください。",
+    b2_permission_choose: "フォルダを選ぶ",
+    b2_permission_allow: "保存を許可",
+    b2_permission_continue: "許可すると、元のCSV操作を続けます。",
     business_workspace_b2_selecting: "B2 CSVの保存先を確認しています。",
     business_workspace_b2_selected: "B2 CSVの保存先を設定しました。",
     business_workspace_b2_selected_notice: "B2 CSVの共有保存先を設定しました。",
@@ -3786,6 +3793,13 @@ var TRANSLATIONS = {
     business_workspace_b2_ready: "Saving allowed",
     business_workspace_b2_permission: "Renew save permission",
     business_workspace_b2_unsupported: "Not supported by this browser",
+    b2_permission_first: "Select the folder below, then allow saving in the browser prompt.",
+    b2_permission_renew: "Choose Allow saving and approve access to the registered folder in your browser.",
+    b2_permission_denied: "Saving is blocked. Choose the folder below again and grant write access.",
+    b2_permission_picker_cancelled: "Folder selection was cancelled. Choose the folder to continue.",
+    b2_permission_choose: "Choose folder",
+    b2_permission_allow: "Allow saving",
+    b2_permission_continue: "After access is granted, the CSV operation continues.",
     business_workspace_b2_selecting: "Checking the B2 CSV save folder.",
     business_workspace_b2_selected: "The B2 CSV save folder was configured.",
     business_workspace_b2_selected_notice: "The shared B2 CSV save folder was configured.",
@@ -6749,6 +6763,13 @@ var TRANSLATIONS = {
     business_workspace_b2_ready: "已允许保存",
     business_workspace_b2_permission: "重新确认保存许可",
     business_workspace_b2_unsupported: "此浏览器不支持设置",
+    b2_permission_first: "请选择下方文件夹，并在浏览器提示中允许保存。",
+    b2_permission_renew: "请选择「允许保存」，并在浏览器中确认访问已登记的文件夹。",
+    b2_permission_denied: "尚未获得保存权限。请重新选择下方文件夹并允许写入。",
+    b2_permission_picker_cancelled: "已取消选择文件夹。请选择文件夹以继续。",
+    b2_permission_choose: "选择文件夹",
+    b2_permission_allow: "允许保存",
+    b2_permission_continue: "允许后将继续原来的 CSV 操作。",
     business_workspace_b2_selecting: "正在确认B2 CSV保存位置。",
     business_workspace_b2_selected: "已设置B2 CSV保存位置。",
     business_workspace_b2_selected_notice: "已设置B2 CSV共享保存位置。",
@@ -9187,7 +9208,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1406";
+var APP_VERSION       = "v1.1.1407";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -16827,7 +16848,7 @@ async function pickDcatsB2ExportDirectory() {
   try {
     selectedHandle = await window.showDirectoryPicker(pickerOptions);
   } catch (pickerError) {
-    if (pickerError && pickerError.name === "AbortError") throw pickerError;
+    if (!pickerError || pickerError.name !== "TypeError") throw pickerError;
     delete pickerOptions.startIn;
     selectedHandle = await window.showDirectoryPicker(pickerOptions);
   }
@@ -16835,7 +16856,7 @@ async function pickDcatsB2ExportDirectory() {
   var permission = typeof targetHandle.requestPermission === "function"
     ? await targetHandle.requestPermission({ mode: "readwrite" })
     : "granted";
-  if (permission !== "granted") throw new Error(t("business_workspace_b2_required"));
+  if (permission !== "granted") throw new DOMException(t("business_workspace_b2_required"), "NotAllowedError");
   await storeDcatsB2ExportDirectory(targetHandle);
   dcatsB2ExportDirectoryHandle = targetHandle;
   dcatsB2ExportDirectoryLoaded = true;
@@ -16865,15 +16886,80 @@ async function configureDcatsB2ExportDirectory() {
   }
 }
 
+var dcatsB2DirectoryCheckPending = false;
+
+function guideDcatsB2ExportDirectory(handle, message, supported) {
+  var dialog = document.getElementById("dcats-b2-permission-dialog");
+  var status = document.getElementById("dcats-b2-permission-message");
+  var proceed = document.getElementById("dcats-b2-permission-next");
+  var cancel = document.getElementById("dcats-b2-permission-cancel");
+  status.textContent = message;
+  document.getElementById("dcats-b2-permission-continue").hidden = !supported;
+  proceed.hidden = !supported;
+  proceed.disabled = false;
+  proceed.textContent = t(handle ? "b2_permission_allow" : "b2_permission_choose");
+  dialog.showModal();
+  return new Promise(function(resolve, reject) {
+    var directory = null;
+    function finish() {
+      proceed.onclick = null;
+      cancel.onclick = null;
+      dialog.oncancel = null;
+      if (directory) resolve(directory);
+      else reject(new DOMException(t("business_workspace_b2_cancelled"), "AbortError"));
+    }
+    dialog.addEventListener("close", finish, { once: true });
+    cancel.onclick = function() { dialog.close(); };
+    dialog.oncancel = function(event) { if (proceed.disabled) event.preventDefault(); };
+    proceed.onclick = async function() {
+      proceed.disabled = true;
+      cancel.disabled = true;
+      try {
+        if (handle) {
+          var permission = await handle.requestPermission({ mode: "readwrite" });
+          if (permission !== "granted") throw new DOMException("", "NotAllowedError");
+          directory = handle;
+        } else {
+          directory = await pickDcatsB2ExportDirectory();
+        }
+        dialog.close();
+      } catch (error) {
+        handle = null;
+        proceed.textContent = t("b2_permission_choose");
+        if (error.name === "AbortError") status.textContent = t("b2_permission_picker_cancelled");
+        else if (error.name === "NotAllowedError" || error.name === "SecurityError") status.textContent = t("b2_permission_denied");
+        else status.textContent = error.message || t("business_workspace_b2_failed");
+      } finally {
+        proceed.disabled = false;
+        cancel.disabled = false;
+      }
+    };
+  });
+}
+
 async function prepareDcatsB2ExportDirectory() {
-  if (!supportsDcatsB2SharedFolder()) throw new Error(t("business_workspace_b2_unsupported"));
-  var handle = dcatsB2ExportDirectoryHandle;
-  if (!handle) return pickDcatsB2ExportDirectory();
-  var permission = typeof handle.requestPermission === "function"
-    ? await handle.requestPermission({ mode: "readwrite" })
-    : "granted";
-  if (permission !== "granted") throw new Error(t("business_workspace_b2_required"));
-  return handle;
+  if (dcatsB2DirectoryCheckPending) throw new Error(t("business_workspace_b2_selecting"));
+  dcatsB2DirectoryCheckPending = true;
+  try {
+    if (!supportsDcatsB2SharedFolder()) {
+      return await guideDcatsB2ExportDirectory(null, t("business_workspace_drive_no_picker_text"), false);
+    }
+    var handle;
+    var permission;
+    try {
+      handle = await loadDcatsB2ExportDirectory();
+      if (handle) {
+        permission = typeof handle.queryPermission === "function" ? await handle.queryPermission({ mode: "readwrite" }) : "prompt";
+      }
+    } catch (error) {
+      return await guideDcatsB2ExportDirectory(null, t("business_workspace_b2_read_failed") + " " + t("b2_permission_first"), true);
+    }
+    if (permission === "granted") return handle;
+    if (permission === "prompt") return await guideDcatsB2ExportDirectory(handle, t("b2_permission_renew"), true);
+    return await guideDcatsB2ExportDirectory(null, t(handle ? "b2_permission_denied" : "b2_permission_first"), true);
+  } finally {
+    dcatsB2DirectoryCheckPending = false;
+  }
 }
 
 async function loadDcatsHanbaiouExportDirectory() {
