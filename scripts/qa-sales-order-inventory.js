@@ -94,7 +94,7 @@ async function mockPracticeApi(page) {
    case "preview_internal_customer_order": {
     const input=req.postDataJSON();
     assert.equal(input.target_sales_customer_id,buyer.id);
-    assert.equal(input.target_shipping_address.company_name,buyer.customer_name);
+    assert.match(input.target_shipping_address.company_name,/^演習倉庫[ABC]$/);
     assert.match(input.target_shipping_address.recipient_name,/架空・出荷禁止/);
     assert.equal(input.target_shipping_address.phone_number,"000-0000-0000");
     assert(["100-0005","530-0001","460-0008"].includes(input.target_shipping_address.postal_code));
@@ -118,7 +118,7 @@ async function verifyFaxVariations(page) {
  await page.locator(".sheet:visible").waitFor();
  const snapshot = async () => ({
   id: await ref.textContent(),
-  ship: await page.locator('[aria-label="お届け先"]').textContent(),
+  ship: await page.locator('[aria-label="直送先名"]').textContent(),
   items: await page.locator('.item [aria-label^="品番"]').allTextContents(),
   lines: await page.locator("[data-line-total]").allTextContents(),
   total: await page.locator(".total strong").textContent()
@@ -127,6 +127,22 @@ async function verifyFaxVariations(page) {
  assert.equal(await page.locator('[aria-label="希望納期"]').textContent(),"2026/12/03");
  assert.match(await page.locator("[data-practice-karte]").textContent(),/^TR-K-/);
  assert.match(await page.locator("[data-practice-chassis]").textContent(),/^TR-DEMO-/);
+ const sites = await page.evaluate(() => practiceDestinations());
+ const cities = {"100-0005":"千代田区","530-0001":"大阪市北区","460-0008":"名古屋市中区"};
+ assert.deepEqual(Array.from(sites,s=>s.postal_code).sort(), Object.keys(cities).sort());
+ for (const site of sites) {
+  const city=cities[site.postal_code];
+  assert(site.address_line_1.startsWith(city));
+  const street=site.address_line_1.slice(city.length);
+  for (const [value,limit] of [[city,12],[street,16],[site.address_line_2,16],[site.company_name,25],[site.recipient_name,16]]) {
+   assert(value && Array.from(value).length<=limit, "B2 field limit: "+site.postal_code);
+  }
+  assert(street.includes("架空"));assert.equal(site.recipient_name,"架空・出荷禁止");
+ }
+ const labels=["郵便番号","電話番号","都道府県","市区町村・町名・番地","建物名・部門","直送先名","宛名・担当者"];
+ const fields=await Promise.all(labels.map(label=>page.getByLabel(label,{exact:true}).textContent()));
+ const site=sites.find(s=>s.postal_code===fields[0]);
+ assert.deepEqual(fields,[site.postal_code,site.phone_number,site.prefecture_name,site.address_line_1,site.address_line_2,site.company_name,site.recipient_name]);
  const before = await snapshot();
  assert(before.items.every(code=>/^OE-/.test(code)));
  await page.locator("[data-print]").click();
@@ -216,7 +232,7 @@ async function verifyFaxPractice(browser, base, output) {
    await page.screenshot({path:path.join(output,name+"-print.png"),fullPage:true});
    if (form === "order") {
     await page.locator('[aria-label="品番1"]').evaluate(el=>el.textContent="QA-LONG-PART-" + "0123456789".repeat(6));
-    await page.locator('[aria-label="郵便番号と住所"]').evaluate(el=>el.textContent="演習用の長い住所・配送部門・建物名".repeat(3));
+    await page.locator('[aria-label="市区町村・町名・番地"]').evaluate(el=>el.textContent="演習用の長い住所・配送部門・建物名".repeat(3));
     await pdfCheck("-long");
    }
    await page.emulateMedia({media:"screen"});

@@ -6,10 +6,10 @@
 <meta name="robots" content="noindex,nofollow">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; connect-src https://jqoeqximtwfpqwzngutj.supabase.co; base-uri 'none'; form-action 'none'">
 <title>FAX注文書（演習用） | D-CATS</title>
-<link rel="stylesheet" href="fax-practice.css?v=4">
+<link rel="stylesheet" href="fax-practice.css?v=5">
 <script defer src="../../vendor/supabase-js-2.115.0.js" integrity="sha384-CLZeq1dk8+Uzrs7TVvBUdlFoV5F0DMqgRoeHa8g5wJcuPe5SkVfEvdxB0ZuzlnBQ" crossorigin="anonymous"></script>
-<script defer src="fax-practice-master.js?v=3"></script>
-<script src="fax-practice.js?v=5" defer></script></head>
+<script defer src="fax-practice-master.js?v=4"></script>
+<script src="fax-practice.js?v=6" defer></script></head>
 <body data-practice="order">
 <noscript>注文例の生成にはJavaScriptを有効にしてください。</noscript>
 <main>
@@ -43,15 +43,13 @@
 <section class="panel" id="ship" tabindex="-1">
 <h2><span class="position">2 / 4</span> 直送先と配送指定</h2>
 <dl>
-<div>
-<dt>お届け先</dt>
-<dd><span class="value" aria-label="お届け先"></span></dd></div>
-<div>
-<dt>〒・住所</dt>
-<dd><span class="value" aria-label="郵便番号と住所"></span></dd></div>
-<div>
-<dt>電話</dt>
-<dd><span class="value" aria-label="電話番号"></span></dd></div>
+<div><dt>郵便番号</dt><dd><span class="value" aria-label="郵便番号"></span></dd></div>
+<div><dt>電話番号</dt><dd><span class="value" aria-label="電話番号"></span></dd></div>
+<div><dt>都道府県</dt><dd><span class="value" aria-label="都道府県"></span></dd></div>
+<div><dt>市区町村・町名・番地</dt><dd><span class="value" aria-label="市区町村・町名・番地"></span></dd></div>
+<div><dt>建物名・部門</dt><dd><span class="value" aria-label="建物名・部門"></span></dd></div>
+<div><dt>直送先名</dt><dd><span class="value" aria-label="直送先名"></span></dd></div>
+<div><dt>宛名・担当者</dt><dd><span class="value" aria-label="宛名・担当者"></span></dd></div>
 <div>
 <dt>希望納期</dt>
 <dd><span class="value" aria-label="希望納期"></span></dd></div>
