@@ -2,6 +2,7 @@
 // Runtime translation is local; this file makes no external requests.
 var DCATS_LEGACY_UI_TRANSLATIONS = {
   "en": {
+    "送り状番号はすべて登録済みです。": "All tracking numbers are already registered.",
     "受注修正のため再発行が必要です。": "Reissue required after the order revision.",
     "受取方法の変更により再発行が必要です。": "Reissue required after the delivery method change.",
     "最新の出荷指示を確認できません。": "Could not load the current shipping instruction.",
@@ -4418,6 +4419,7 @@ var DCATS_LEGACY_UI_TRANSLATIONS = {
     "回收率": "Recovery rate"
   },
   "zh": {
+    "送り状番号はすべて登録済みです。": "所有运单号均已登记。",
     "受注修正のため再発行が必要です。": "订单已修改，需要重新签发。",
     "受取方法の変更により再発行が必要です。": "收货方式已变更，需要重新签发。",
     "最新の出荷指示を確認できません。": "无法确认最新出货指示。",

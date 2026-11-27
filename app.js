@@ -9208,7 +9208,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1407";
+var APP_VERSION       = "v1.1.1408";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -24241,6 +24241,7 @@ function closeSalesOrderB2Import() {
 
 async function previewSalesOrderB2ImportFile(file) {
   if (!canManageSalesOrders() || salesOrderB2ImportSaving || !file) return;
+  setSalesOrderBatchMessage("", false);
   var validationMessage = salesOrderB2ImportFileValidationMessage(file);
   if (validationMessage) {
     salesOrderB2ImportState = {
@@ -24252,7 +24253,8 @@ async function previewSalesOrderB2ImportFile(file) {
     renderSalesOrderB2Import();
     return;
   }
-  salesOrderB2ImportState = { fileName: file.name || "B2発行済データ.csv", preview: { rows: [] }, resultMessage: "CSVを確認しています。" };
+  var pending = { fileName: file.name || "B2発行済データ.csv", preview: { rows: [] }, resultMessage: "CSVを確認しています。" };
+  salesOrderB2ImportState = pending;
   renderSalesOrderB2Import();
   try {
     var buffer = await file.arrayBuffer();
@@ -24260,8 +24262,16 @@ async function previewSalesOrderB2ImportFile(file) {
     if (!parsedRows.length) throw new Error("発送データがありません。");
     var hash = await salesOrderB2FileSha256(buffer);
     var result = await sb.rpc("preview_sales_order_b2_shipments", { target_rows: parsedRows });
+    if (salesOrderB2ImportState !== pending) return;
     if (result.error) throw result.error;
     var preview = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
+    if (Array.isArray(preview.rows) && preview.rows.length === parsedRows.length
+        && preview.rows.every(function(row) { return row.status === "duplicate"; })
+        && preview.rows.some(function(row) { return !row.superseded_by_later_row; })) {
+      closeSalesOrderB2Import();
+      setSalesOrderBatchMessage("送り状番号はすべて登録済みです。", false);
+      return;
+    }
     salesOrderB2ImportState = {
       fileName: file.name || "B2発行済データ.csv",
       fileSha256: hash,
@@ -24270,6 +24280,7 @@ async function previewSalesOrderB2ImportFile(file) {
       resultMessage: "内容を確認し、発送データを反映してください。"
     };
   } catch (error) {
+    if (salesOrderB2ImportState !== pending) return;
     salesOrderB2ImportState = {
       fileName: file.name || "B2発行済データ.csv",
       preview: { rows: [] },
@@ -24286,12 +24297,20 @@ async function importSalesOrderB2Shipments() {
   salesOrderB2ImportState.resultMessage = "発送データを反映しています。";
   salesOrderB2ImportState.resultError = false;
   renderSalesOrderB2Import();
-  var result = await sb.rpc("import_sales_order_b2_shipments", {
-    target_file_name: salesOrderB2ImportState.fileName,
-    target_file_sha256: salesOrderB2ImportState.fileSha256,
-    target_rows: salesOrderB2ImportState.rows
-  });
-  salesOrderB2ImportSaving = false;
+  var state = salesOrderB2ImportState;
+  var result;
+  try {
+    result = await sb.rpc("import_sales_order_b2_shipments", {
+      target_file_name: state.fileName,
+      target_file_sha256: state.fileSha256,
+      target_rows: state.rows
+    });
+  } catch (error) {
+    result = { error: error };
+  } finally {
+    salesOrderB2ImportSaving = false;
+  }
+  if (salesOrderB2ImportState !== state) return;
   if (result.error) {
     salesOrderB2ImportState.resultMessage = salesOrderB2ImportFriendlyError(result.error);
     salesOrderB2ImportState.resultError = true;
@@ -24316,7 +24335,14 @@ async function importSalesOrderB2Shipments() {
       (printJobCount ? " コア返却シート・保証書など " + printJobCount + " 件を印刷待ちに登録しました。" : "") +
       (printWarningCount ? " 同梱帳票を印刷待ちにできなかった発送が " + printWarningCount + " 件あります。注文詳細から再送してください。" : "");
   salesOrderB2ImportState.resultError = Number(data.error_count || 0) > 0 || printWarningCount > 0;
-  renderSalesOrderB2Import();
+  if (data.error_count === 0 && printWarningCount === 0
+      && Number(data.imported_count) + Number(data.duplicate_count) === state.rows.length) {
+    var completedMessage = state.resultMessage;
+    closeSalesOrderB2Import();
+    setSalesOrderBatchMessage(completedMessage, false);
+  } else {
+    renderSalesOrderB2Import();
+  }
   await refreshSalesOrderManagement();
   if (salesOrderSelectedId) await loadSalesOrderDetail(salesOrderSelectedId);
 }
