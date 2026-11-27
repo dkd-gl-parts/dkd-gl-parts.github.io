@@ -9187,7 +9187,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1404";
+var APP_VERSION       = "v1.1.1405";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -20701,9 +20701,12 @@ async function loadShippingDocumentDetail(orderId) {
 }
 
 function shippingDocumentPrintJob(order, type) {
-  return (Array.isArray(order && order.print_jobs) ? order.print_jobs : []).find(function(job) {
+  var latest = (Array.isArray(order && order.print_jobs) ? order.print_jobs : []).find(function(job) {
     return job.document_type === type;
-  }) || null;
+  });
+  if (latest && latest.status === "cancelled" && order.cancellation_flow === "before_picking"
+      && ["受注修正のため再発行が必要です。", "受取方法の変更により再発行が必要です。"].includes(latest.last_error)) return null;
+  return latest || null;
 }
 
 function shippingDocumentPrintStateLabel(job, fallback) {
@@ -22775,7 +22778,7 @@ function renderSalesOrderDetail() {
       "</div></section>" +
       "<div class='sales-order-detail-panel' id='sales-order-detail-panel-fulfillment' role='tabpanel' aria-labelledby='sales-order-detail-tab-fulfillment' data-sales-order-detail-panel='fulfillment' hidden>" + salesOrderDispatchHtml(order) + "</div>" +
       "<div class='sales-order-detail-panel' id='sales-order-detail-panel-accounting' role='tabpanel' aria-labelledby='sales-order-detail-tab-accounting' data-sales-order-detail-panel='accounting' hidden>" + salesOrderAccountingPanelHtml(order) + "</div>" +
-"<section class='sales-order-detail-panel sales-order-detail-section sales-order-history' id='sales-order-detail-history' role='tabpanel' aria-labelledby='sales-order-detail-tab-history' data-sales-order-detail-panel='history' hidden><div class='sales-order-section-heading'><div><h3>処理履歴</h3></div></div><div class='sales-order-history-groups'><section class='sales-order-history-group'><h4>発送履歴</h4>" + salesOrderShipmentHistoryHtml(order.shipment_history) + "</section>" + (salesOrderPricingHistoryHtml(order.pricing_adjustments) || "<section class='sales-order-history-group sales-order-history-empty'><h4>金額修正履歴</h4><span>履歴はありません。</span></section>") + salesOrderRevisionHistoryHtml(order.revision_history) + "</div></section>" +
+"<section class='sales-order-detail-panel sales-order-detail-section sales-order-history' id='sales-order-detail-history' role='tabpanel' aria-labelledby='sales-order-detail-tab-history' data-sales-order-detail-panel='history' hidden><div class='sales-order-section-heading'><div><h3>処理履歴</h3></div></div><div class='sales-order-history-groups'><section class='sales-order-history-group'><h4>発送履歴</h4>" + salesOrderShipmentHistoryHtml(order.shipment_history) + "</section>" + (salesOrderPricingHistoryHtml(order.pricing_adjustments) || "<section class='sales-order-history-group sales-order-history-empty'><h4>金額修正履歴</h4><span>履歴はありません。</span></section>") + salesOrderRevisionHistoryHtml(order.revision_history, order) + "</div></section>" +
     "</div>" +
     "<div id='sales-order-detail-message' class='sales-order-detail-message' aria-live='polite'></div>";
   host.querySelectorAll("[data-sales-order-detail-view]").forEach(function(button) {
@@ -23252,6 +23255,16 @@ function buildSalesOrderDocumentHtml(order, type) {
   throw new Error("未対応の帳票です。");
 }
 
+async function readCurrentDispatchPrintOrder(orderId, actorId) {
+  var result = await sb.rpc("get_sales_order_detail", { target_order_id: orderId });
+  if (!currentUser || currentUser.id !== actorId || !canManageSalesOrders()) throw new Error(t("permission_denied"));
+  if (result.error) throw result.error;
+  var order = Array.isArray(result.data) ? result.data[0] : result.data;
+  if (!order || String(order.id) !== String(orderId) || !salesOrderDispatch(order)
+      || order.cancelled_at || order.status === "cancelled") throw new Error("最新の出荷指示を確認できません。");
+  return order;
+}
+
 async function printSalesOrderDocument(type, targetOrder) {
   var order = targetOrder || salesOrderDetail;
   var dispatch = salesOrderDispatch(order);
@@ -23293,6 +23306,8 @@ async function printSalesOrderDocument(type, targetOrder) {
         salesOrderDetail = order;
         renderSalesOrderDetail();
       }
+    } else if (type === "dispatch") {
+      order = await readCurrentDispatchPrintOrder(order.id, printActorId);
     }
     if (type === "warranty") {
       popup.document.open();
@@ -23306,7 +23321,25 @@ async function printSalesOrderDocument(type, targetOrder) {
     popup.document.write(buildSalesOrderDocumentHtml(order, type));
     popup.document.close();
     var button = popup.document.getElementById("dcats-print-shipment-document");
-    if (button) button.addEventListener("click", function() {
+    if (button) button.addEventListener("click", async function() {
+      if (type === "dispatch") {
+        if (button.disabled) return;
+        button.disabled = true;
+        try {
+          var latest = await readCurrentDispatchPrintOrder(order.id, printActorId);
+          if (latest.version !== order.version) {
+            popup.close();
+            alert("受注が更新されました。出荷指示書を開き直して最新の内容を確認してください。");
+            return;
+          }
+        } catch (error) {
+          popup.close();
+          alert(error.message || "最新の出荷指示を確認できません。");
+          return;
+        } finally {
+          button.disabled = false;
+        }
+      }
       var sheets = popup.document.querySelectorAll(".warranty-print-sheet, .core-return-sheet");
       if (sheets.length > 1 && !popup.confirm(tf("shipping_simplex_confirm", { n: sheets.length }))) return;
       popup.print();
