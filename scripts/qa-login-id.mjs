@@ -258,7 +258,7 @@ async function testPasswordRequirements(browser, viewport) {
       const rules = page.locator("#" + requirementsId);
       await rules.waitFor({ state: "visible" });
       assert.equal((await rules.locator("strong").textContent()).trim(), "パスワードの必須条件");
-      assert.deepEqual(await rules.locator("li").allTextContents(), ["8文字以上、UTF-8で72バイト以内（半角英数字は72文字まで）","よく使われる・漏えい済みのパスワードは使用不可","確認欄に同じパスワードを入力"]);
+      assert.deepEqual(await rules.locator("li").allTextContents(), ["8文字以上、UTF-8で72バイト以内","よく使われる・漏えい済みのパスワードは使用不可","確認欄に同じパスワードを入力"]);
       const input = page.locator("#" + inputId);
       assert.equal(await input.getAttribute("aria-describedby"), requirementsId);
       assert.equal(await input.inputValue(), "");
