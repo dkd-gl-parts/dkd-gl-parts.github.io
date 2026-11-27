@@ -12845,3 +12845,13 @@ html[data-product-3d-paused] :is(
   #shipping-document-return-waybill-section .shipping-document-waybill-form > #shipping-document-return-save { grid-column: 2; grid-row: 2; }
   #shipping-document-return-waybill-section .shipping-document-waybill-print-row > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 5px; }
 }
+
+@media (max-width: 360px) {
+  #shipping-document-return-waybill-section .shipping-document-waybill-form > label:nth-child(-n+2) {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 7em minmax(0, 1fr);
+    align-items: center;
+  }
+  #shipping-document-return-waybill-section .shipping-document-waybill-form > #shipping-document-return-save { grid-row: 3; }
+}
