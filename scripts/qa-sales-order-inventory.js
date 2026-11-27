@@ -100,7 +100,7 @@ async function mockPracticeApi(page) {
     assert(["100-0005","530-0001","460-0008"].includes(input.target_shipping_address.postal_code));
     quotes++;
     assert.equal(input.target_items.length,2);
-    const items=input.target_items.map(v=>({...v,manufacturer_part_number:"QA-"+v.dkd_shohin_id,category_code:"A",unit_price_jpy:1000*v.dkd_shohin_id,line_total_jpy:1000*v.dkd_shohin_id*v.quantity,core_return_required:true}));
+    const items=input.target_items.map(v=>({...v,genuine_part_number:"OE-"+v.dkd_shohin_id,manufacturer_part_number:"QA-"+v.dkd_shohin_id,category_code:"A",unit_price_jpy:1000*v.dkd_shohin_id,line_total_jpy:1000*v.dkd_shohin_id*v.quantity,core_return_required:true}));
     const subtotal=items.reduce((s,v)=>s+v.line_total_jpy,0),tax=(subtotal+500)/10;
     const method={carrier_name:"試験便",service_name:"標準"};
     body={valid:true,items,subtotal_jpy:subtotal,tax_jpy:tax,shipping_fee_jpy:500,total_jpy:subtotal+tax+500,outbound_shipping_method:method,core_return_required:true,core_return_shipping_method:method};break;
@@ -128,6 +128,7 @@ async function verifyFaxVariations(page) {
  assert.match(await page.locator("[data-practice-karte]").textContent(),/^TR-K-/);
  assert.match(await page.locator("[data-practice-chassis]").textContent(),/^TR-DEMO-/);
  const before = await snapshot();
+ assert(before.items.every(code=>/^OE-/.test(code)));
  await page.locator("[data-print]").click();
  assert.deepEqual(await snapshot(), before);
  await page.setViewportSize({width:320,height:568});

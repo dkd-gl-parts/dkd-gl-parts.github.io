@@ -49,7 +49,7 @@ async function loadPracticeMaster() {
   const seen = new Set();
   const candidates = variants.filter(v => {
     const product = v.core_products;
-    const code = product.manufacturer_part_number || product.genuine_part_number;
+    const code = product.genuine_part_number || product.manufacturer_part_number;
     if (!code || seen.has(code) || !product.product_base_prices.some(p => p.product_kind === v.product_kind)) return false;
     seen.add(code);
     return true;
@@ -99,7 +99,7 @@ async function quotePracticeOrder(master, previous) {
       carrier:[q.outbound_shipping_method.carrier_name,q.outbound_shipping_method.service_name].join(" "),
       returns:q.core_return_required ? [q.core_return_shipping_method.carrier_name,q.core_return_shipping_method.service_name].join(" ") : "",
       lines:q.items.map(l=>({name:(master.categories.get(l.category_code)||l.category_code)+"（"+(l.product_kind==="rebuilt"?"リビルト品":"社外新品")+"）",
-        code:l.manufacturer_part_number||l.genuine_part_number,qty:l.quantity,price:l.unit_price_jpy,amount:l.line_total_jpy,core:l.core_return_required})) };
+        code:l.genuine_part_number||l.manufacturer_part_number,qty:l.quantity,price:l.unit_price_jpy,amount:l.line_total_jpy,core:l.core_return_required})) };
   }
   throw new Error("在庫と得意先別価格がそろう2品番の見積を作成できません。");
 }
