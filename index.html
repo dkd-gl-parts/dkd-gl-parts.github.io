@@ -39,6 +39,7 @@
 <link rel="stylesheet" href="assets/internal-tabs/nine-screen-tabs.css?v=1.1.1400">
   <link rel="stylesheet" href="assets/recycle-karte/preview.css?v=1.1.1400&amp;layout=3">
 <link rel="stylesheet" href="assets/login/remember-login-id.css?v=1">
+<link rel="stylesheet" href="assets/login/password-requirements.css?v=1">
 </head>
 <body>
 
@@ -96,20 +97,27 @@
     </div>
     <hr class="reg-divider">
     <h2 data-i18n="reset_title" data-dcats-inline-style="s-a0e05151e008">新しいパスワードを設定</h2>
-    <p class="reg-desc" data-i18n="reset_desc">新しいパスワードを入力してください（8文字以上）</p>
     <div id="reset-success-box" data-dcats-inline-style="s-6aa34d7432e7" class="reg-success-box">
       <div data-dcats-inline-style="s-7850688acbb3">&#x2713;</div>
       <div data-i18n="reset_success">パスワードを更新しました。ログインしてください。</div>
     </div>
     <div id="reset-form">
-      <label class="login-label" data-i18n="lbl_new_password">新しいパスワード</label>
-      <input class="login-input" id="reset-password" type="password" placeholder="8文字以上">
+      <div class="password-requirements" id="reset-password-requirements">
+        <strong>パスワードの必須条件</strong>
+        <ul>
+          <li>8文字以上、UTF-8で72バイト以内（半角英数字なら72文字まで）</li>
+          <li>よく使われるものや、漏えいが確認されたパスワードは使用不可</li>
+          <li>確認欄には同じパスワードを入力</li>
+        </ul>
+      </div>
+      <label class="login-label" for="reset-password" data-i18n="lbl_new_password">新しいパスワード</label>
+      <input class="login-input" id="reset-password" type="password" autocomplete="new-password" aria-describedby="reset-password-requirements">
       <div class="pass-strength-wrap">
         <div class="pass-strength-bar"><div class="pass-strength-fill" id="reset-strength-fill"></div></div>
         <span class="pass-strength-label" id="reset-strength-label"></span>
       </div>
-      <label class="login-label" data-i18n="lbl_confirm_password">パスワード確認</label>
-      <input class="login-input" id="reset-confirm" type="password" placeholder="もう一度入力">
+      <label class="login-label" for="reset-confirm" data-i18n="lbl_confirm_password">パスワード確認</label>
+      <input class="login-input" id="reset-confirm" type="password" autocomplete="new-password" placeholder="もう一度入力">
       <button class="btn-login" id="btn-reset-submit" data-i18n="btn_reset">パスワードを設定する</button>
       <div class="reg-error" id="reset-error"></div>
     </div>
@@ -5756,27 +5764,35 @@
     <div class="page-header-right">
       <span class="header-username" id="change-pw-username"></span>
       <button class="btn-logout" id="btn-logout-change-pw" data-i18n="btn_logout">ログアウト</button>
-      <a class="feature-help-link" data-feature-help href="assets/help/features.html?v=1#change-pw" target="_blank" rel="noopener noreferrer" aria-label="ヘルプ（別ウィンドウ）">ヘルプ</a>
+      <a class="feature-help-link" data-feature-help href="assets/help/features.html?v=2#change-pw" target="_blank" rel="noopener noreferrer" aria-label="ヘルプ（別ウィンドウ）">ヘルプ</a>
     </div>
   </div>
-  <div data-dcats-inline-style="s-78bcb771b87d">
-    <div data-dcats-inline-style="s-43bfddd44fa6">
+  <div class="password-change-body" data-dcats-inline-style="s-78bcb771b87d">
+    <div class="password-change-card" data-dcats-inline-style="s-43bfddd44fa6">
       <h2 data-i18n="change_pw_title" data-dcats-inline-style="s-6630b0afce79">パスワード変更</h2>
       <div id="change-pw-success" data-dcats-inline-style="s-6aa34d7432e7" class="reg-success-box">
         <div data-dcats-inline-style="s-7850688acbb3">&#x2713;</div>
         <div data-i18n="change_pw_success">パスワードを変更しました。</div>
       </div>
       <div id="change-pw-form">
-        <label class="login-label" data-i18n="lbl_current_password">現在のパスワード</label>
+        <div class="password-requirements" id="change-password-requirements">
+          <strong>パスワードの必須条件</strong>
+          <ul>
+            <li>8文字以上、UTF-8で72バイト以内（半角英数字なら72文字まで）</li>
+            <li>よく使われるものや、漏えいが確認されたパスワードは使用不可</li>
+            <li>確認欄には同じパスワードを入力</li>
+          </ul>
+        </div>
+        <label class="login-label" for="current-password" data-i18n="lbl_current_password">現在のパスワード</label>
         <input class="login-input" id="current-password" type="password" autocomplete="current-password">
-        <label class="login-label" data-i18n="lbl_new_password">新しいパスワード</label>
-        <input class="login-input" id="new-password" type="password" autocomplete="new-password" placeholder="8文字以上">
+        <label class="login-label" for="new-password" data-i18n="lbl_new_password">新しいパスワード</label>
+        <input class="login-input" id="new-password" type="password" autocomplete="new-password" aria-describedby="change-password-requirements">
         <div class="pass-strength-wrap">
           <div class="pass-strength-bar"><div class="pass-strength-fill" id="changepw-strength-fill"></div></div>
           <span class="pass-strength-label" id="changepw-strength-label"></span>
         </div>
-        <label class="login-label" data-i18n="lbl_confirm_password">パスワード確認</label>
-        <input class="login-input" id="new-password-confirm" type="password" placeholder="もう一度入力">
+        <label class="login-label" for="new-password-confirm" data-i18n="lbl_confirm_password">パスワード確認</label>
+        <input class="login-input" id="new-password-confirm" type="password" autocomplete="new-password" placeholder="もう一度入力">
         <button class="btn-login" id="btn-change-pw" data-i18n="btn_change_password" data-dcats-inline-style="s-43a97fe4943c">パスワード変更</button>
         <div class="reg-error" id="change-pw-error"></div>
       </div>

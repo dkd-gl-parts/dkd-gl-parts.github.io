@@ -17,7 +17,7 @@ const loginShell = index
   .replace('<div id="screen-login" class="screen">', '<div id="screen-login" class="screen active">')
   .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
   .replace(/<link\b[^>]*>\s*/gi, "")
-  .replace("</head>", '<link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/assets/login/remember-login-id.css"></head>')
+  .replace("</head>", '<link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/assets/login/remember-login-id.css"><link rel="stylesheet" href="/assets/login/password-requirements.css"></head>')
   .replace("</body>", '<script src="/legacy-i18n.js"></script><script src="/login-fixture.js"></script><script type="module" src="/assets/login/remember-login-id.mjs"></script></body>');
 const oldPage = await readFile(retiredPath.slice(1), "utf8");
 const fixtureScript = `window.loginAttempts = 0;
@@ -29,13 +29,21 @@ const contentTypes = {
   png: "image/png", svg: "image/svg+xml", jpg: "image/jpeg", webp: "image/webp",
   html: "text/html", ico: "image/x-icon", json: "application/json", webmanifest: "application/manifest+json"
 };
-const allowedAsset = /^\/(?:styles\.css|assets\/(?:login\/(?:login-bg-(?:desktop|mobile)-v1\.png|remember-login-id\.(?:mjs|css))|icons\/(?:dcats-mark-256\.png|eye-outline\.svg)|brand\/(?:daiko-mark\.jpg|gltek-mark\.webp)|temporary-device\/temporary-device\.css))$/;
+const allowedAsset = /^\/(?:styles\.css|assets\/(?:login\/(?:login-bg-(?:desktop|mobile)-v1\.png|remember-login-id\.(?:mjs|css)|password-requirements\.css)|icons\/(?:dcats-mark-256\.png|eye-outline\.svg)|brand\/(?:daiko-mark\.jpg|gltek-mark\.webp)|temporary-device\/temporary-device\.css))$/;
 
 async function setup(context) {
   await context.route("**/*", async route => {
     const url = new URL(route.request().url());
     if (url.origin !== origin) return route.abort();
-    if (url.pathname === "/") return route.fulfill({ contentType:"text/html", body:loginShell });
+    if (url.pathname === "/") {
+      const screen = url.searchParams.get("password-screen");
+      const body = (screen === "reset" || screen === "change-pw")
+        ? loginShell
+          .replace('<div id="screen-login" class="screen active">', '<div id="screen-login" class="screen">')
+          .replace(`<div id="screen-${screen}" class="screen">`, `<div id="screen-${screen}" class="screen active">`)
+        : loginShell;
+      return route.fulfill({ contentType:"text/html", body });
+    }
     if (url.pathname === retiredPath) return route.fulfill({ contentType:"text/html", body:oldPage });
     if (url.pathname === "/login-fixture.js") return route.fulfill({ contentType:"text/javascript", body:fixtureScript });
     if (url.pathname === "/legacy-i18n.js") return route.fulfill({ contentType:"text/javascript", body:await readFile("legacy-i18n.js") });
@@ -238,12 +246,43 @@ async function testLogout(browser, viewport) {
   }
 }
 
+async function testPasswordRequirements(browser, viewport) {
+  const context = await browser.newContext({ viewport });
+  try {
+    const page = await setup(context);
+    for (const [screen, requirementsId, inputId, backOrSubmit] of [
+      ["reset", "reset-password-requirements", "reset-password", "#btn-back-from-reset"],
+      ["change-pw", "change-password-requirements", "new-password", "#btn-change-pw"]
+    ]) {
+      await page.goto(origin + "?password-screen=" + screen);
+      const rules = page.locator("#" + requirementsId);
+      await rules.waitFor({ state: "visible" });
+      assert.equal((await rules.locator("strong").textContent()).trim(), "パスワードの必須条件");
+      assert.deepEqual(await rules.locator("li").allTextContents(), ["8文字以上、UTF-8で72バイト以内（半角英数字なら72文字まで）","よく使われるものや、漏えいが確認されたパスワードは使用不可","確認欄には同じパスワードを入力"]);
+      const input = page.locator("#" + inputId);
+      assert.equal(await input.getAttribute("aria-describedby"), requirementsId);
+      assert.equal(await input.inputValue(), "");
+      const [ruleBox, inputBox, finalAction] = await Promise.all([
+        rules.boundingBox(), input.boundingBox(), page.locator(backOrSubmit).boundingBox()
+      ]);
+      await page.screenshot({ path: path.join(output, `password-${screen}-${viewport.width}x${viewport.height}.png`) });
+      assert.ok(ruleBox && inputBox && ruleBox.y >= 0 && ruleBox.y + ruleBox.height <= inputBox.y, "Requirements appear before input");
+      assert.ok(finalAction && finalAction.y + finalAction.height <= viewport.height + 1, JSON.stringify({ screen, viewport, finalAction }));
+      await fits(page,"html, #screen-" + screen + ", #" + requirementsId);
+    }
+    console.log(`${viewport.width}x${viewport.height}: password requirements fit before both password inputs`);
+  } finally {
+    await context.close();
+  }
+}
+
 await mkdir(output,{recursive:true});
 const browser=await chromium.launch({executablePath:process.env.LOGIN_BROWSER_PATH});
 try {
   for (const viewport of [{width:1366,height:768},{width:1024,height:600},{width:320,height:568}]) {
     await testViewport(browser,viewport);
     await testLogout(browser,viewport);
+    await testPasswordRequirements(browser,viewport);
   }
   const restricted=await browser.newContext();
   try {
