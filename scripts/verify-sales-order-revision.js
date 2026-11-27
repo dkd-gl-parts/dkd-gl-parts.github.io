@@ -15,7 +15,7 @@ assert(!source.includes('sales-order-revision-confirm'));
 assert(!source.includes('sales-order-revision-review'));
 assert(!source.includes('salesOrderRevisionValue("reason")'));
 assert(source.includes('target_reason:"受注修正画面から変更"'));
-assert(app.includes('salesOrderRevisionHistoryHtml(order.revision_history)'));
+assert(app.includes('salesOrderRevisionHistoryHtml(order.revision_history, order)'));
 assert(app.includes('revisionButton.addEventListener("click", openSalesOrderRevisionEditor)'));
 assert(app.includes("id='sales-order-revision-open'>受注修正</button>"));
 assert(!app.includes("id='sales-order-pricing-open'"));
