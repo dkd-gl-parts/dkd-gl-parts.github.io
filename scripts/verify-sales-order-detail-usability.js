@@ -354,7 +354,6 @@ for (const fragment of [
   "B2クラウド",
   "ドットプリンタ",
   "手書き運用",
-  "B2 CSV発行済み",
   "shippingDocumentReturnWaybillCopyCount(order)",
   "伝票番号未登録"
 ]) requireFragment(waybillDetail, fragment);
@@ -389,8 +388,11 @@ const returnOrder = {
 if (waybillContext.salesOrderWaybillCarrierLabel(returnOrder, "core_return") !== "ヤマト運輸 / 宅急便 着払い") {
   throw new Error("The accepted-order view must prefer the finalized Yamato return waybill");
 }
-if (waybillContext.salesOrderWaybillDetailLabel(returnOrder, "core_return") !== "ドットプリンタ / 2枚 / 伝票番号 123456789012") {
-  throw new Error("The accepted-order view must show return-waybill output method, copy count, and tracking number together");
+if (waybillContext.salesOrderWaybillDetailLabel(returnOrder, "core_return") !== "2枚 / 伝票番号 123456789012") {
+  throw new Error("The accepted-order view must show the return copy count and tracking number without the dot-matrix label");
+}
+if (waybillContext.salesOrderWaybillDetailLabel({ b2_exports: [{}] }, "outbound") !== "B2クラウド / 伝票番号未登録") {
+  throw new Error("The outbound summary must omit the CSV issued label");
 }
 const yamatoTrackingUrl = waybillContext.salesOrderCarrierTrackingUrl({
   outbound_waybill: { carrier_code: "yamato_prepaid" }
