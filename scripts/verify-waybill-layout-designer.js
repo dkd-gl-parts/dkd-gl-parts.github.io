@@ -103,4 +103,30 @@ for (const fragment of [
   "@media (max-width: 760px)"
 ]) requireFragment(styles, fragment);
 
+
+// Size changes must include disabled return-sender boxes and unchecked fields.
+const assert = require("node:assert/strict");
+const vm = require("node:vm");
+const resizeSource = app.slice(app.indexOf("function resizeShippingWaybillPaper("), app.indexOf("function bindShippingWaybillLayoutDesignerActions("));
+const resize = vm.runInNewContext(resizeSource + "\nresizeShippingWaybillPaper");
+const draft = {paper_width_mm: 228.6, paper_height_mm: 127, fields: [
+  {key: "recipient_phone", x_mm: 30, y_mm: 90.1, width_mm: 75, height_mm: 6, font_size_pt: 12, visible: true},
+  {key: "sender_phone", x_mm: 25, y_mm: 114, width_mm: 75, height_mm: 6, visible: false},
+  {key: "package_count", x_mm: 226.6, y_mm: 125, width_mm: 2, height_mm: 2, visible: false}
+]};
+resize(draft, "paper_width_mm", 190);
+assert.equal(draft.fields[0].y_mm, 90.1);
+resize(draft, "paper_height_mm", 101);
+assert.deepEqual(draft.fields[0], {key: "recipient_phone", x_mm: 24.9, y_mm: 71.7, width_mm: 62.3, height_mm: 4.8, font_size_pt: 12, visible: true});
+assert.deepEqual(draft.fields[2], {key: "package_count", x_mm: 188, y_mm: 99, width_mm: 2, height_mm: 2, visible: false});
+for (const [width, height] of [[190, 101], [350, 250], [100, 70]]) {
+  resize(draft, "paper_width_mm", width);
+  resize(draft, "paper_height_mm", height);
+  for (const field of draft.fields) {
+    assert.ok(field.width_mm >= 2 && field.height_mm >= 2);
+    assert.ok(Math.round((field.x_mm + field.width_mm) * 10) <= width * 10);
+    assert.ok(Math.round((field.y_mm + field.height_mm) * 10) <= height * 10);
+  }
+}
+
 console.log("Waybill layout designer verification passed.");
