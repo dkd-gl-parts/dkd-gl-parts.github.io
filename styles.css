@@ -8784,6 +8784,12 @@ body.finished-label-setup-guide-open { overflow: hidden; }
 .shipping-document-settings-heading p { margin-top: 5px; color: #68766f; font-size: 9px; line-height: 1.5; }
 .shipping-document-settings-heading button { flex: 0 0 auto; width: 30px; height: 30px; border: 1px solid #c8d1cc; border-radius: 5px; background: #fff; color: #617068; cursor: pointer; }
 #shipping-document-settings-content { padding: 18px 20px; }
+.shipping-return-sheet-form { display: grid; gap: 12px; }
+.shipping-return-sheet-form label { display: grid; gap: 4px; min-width: 0; font-weight: 600; }
+.shipping-return-sheet-form :is(select, input) { box-sizing: border-box; width: 100%; min-width: 0; padding: 7px; font: inherit; }
+.shipping-return-sheet-form button { justify-self: end; }
+.shipping-return-sheet-form p { margin: 0; }
+.shipping-document-settings-card:has(.shipping-return-sheet-form) .sales-order-detail-message:empty { min-height: 0; }
 .shipping-document-settings-card .shipping-document-waybill-form { grid-template-columns: 1fr 1fr; }
 .shipping-document-settings-card .shipping-document-waybill-form > label:last-of-type { grid-column: 1 / -1; }
 .shipping-document-settings-card .shipping-document-waybill-form > button { grid-column: 1 / -1; justify-self: end; min-width: 132px; }

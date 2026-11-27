@@ -325,8 +325,21 @@ var TRANSLATIONS = {
     shipping_document_b2_redownloading: "再ダウンロードしています...",
     shipping_document_temporary_settings: "今回の設定",
     shipping_document_return_settings: "返送方法設定",
-    shipping_return_prepare_hint: "運送会社と作成方法は番号が空欄でも保存できます。ドット印刷の前に用紙の番号を登録してください。",
-    shipping_return_number_pending: "ドットプリンタに設定しました。印刷前に［返送方法設定］で返送用伝票番号を登録してください。",
+    shipping_sheet_open: "印刷（1枚）",
+    shipping_sheet_title: "コア返却用複写伝票の印刷",
+    shipping_sheet_unit: "印刷する商品",
+    shipping_sheet_number: "用紙の送り状番号（11桁または12桁）",
+    shipping_sheet_submit: "登録して1枚印刷",
+    shipping_sheet_hint: "用紙を1枚セットし、その用紙の送り状番号を読み取ってください。",
+    shipping_sheet_batch: "返却用の複写伝票は受注を開き、［印刷（1枚）］から発行してください。",
+    shipping_sheet_done: "{done}/{total}枚 印刷済み",
+    shipping_sheet_queued: "送り状番号を登録し、複写伝票1枚を印刷待ちにしました。",
+    shipping_sheet_existing: "この用紙は登録済みです。印刷ジョブの追加はありません。",
+    shipping_sheet_review: "用紙と印刷端末の結果を確認してください。再発行する場合は、新しい用紙の番号を読み取ってください。",
+    shipping_sheet_unknown: "受付結果を確認できませんでした。受注の印刷状態と用紙を確認してください。",
+    shipping_sheet_pending: "未印刷",
+    shipping_return_prepare_hint: "運送会社・作成方法は番号が空欄でも保存できます。用紙の番号は［印刷（1枚）］で読み取ります。",
+    shipping_return_number_pending: "ドットプリンタに設定しました。［印刷（1枚）］から用紙の番号を読み取ってください。",
     shipping_simplex_confirm: "対象は{n}枚です。次の印刷設定で［両面印刷］をオフにし、1台につき片面1枚で印刷してください。印刷設定を開きますか？",
     shipping_document_issuance_guidance: "用紙・発行方法と状態を確認し、必要な帳票を発行します。",
     shipping_document_no_shipment_items: "出荷商品がありません。",
@@ -3330,8 +3343,21 @@ var TRANSLATIONS = {
     shipping_document_b2_redownloading: "Downloading again...",
     shipping_document_temporary_settings: "This Issuance",
     shipping_document_return_settings: "Return Method Settings",
-    shipping_return_prepare_hint: "You can save the carrier and preparation method with the number blank. Register the number on the form before dot-matrix printing.",
-    shipping_return_number_pending: "Dot-matrix printing selected. Enter the return waybill number in Return Method Settings before printing.",
+    shipping_sheet_open: "Print one slip",
+    shipping_sheet_title: "Print a core return slip",
+    shipping_sheet_unit: "Item to print",
+    shipping_sheet_number: "Number on the slip (11 or 12 digits)",
+    shipping_sheet_submit: "Register and print one slip",
+    shipping_sheet_hint: "Load one slip and scan its waybill number.",
+    shipping_sheet_batch: "Open the order and use Print one slip for each return waybill.",
+    shipping_sheet_done: "{done}/{total} printed",
+    shipping_sheet_queued: "Waybill number registered. One slip is queued.",
+    shipping_sheet_existing: "This slip is already registered. No additional job was queued.",
+    shipping_sheet_review: "Check the slip and printer result. To reissue, scan a new slip.",
+    shipping_sheet_unknown: "Receipt could not be confirmed. Check the order status and the printed slip.",
+    shipping_sheet_pending: "Unprinted",
+    shipping_return_prepare_hint: "Save the carrier and method with the number blank. Scan each slip from Print one slip.",
+    shipping_return_number_pending: "Dot-matrix printing selected. Choose Print one slip to scan its number.",
     shipping_simplex_confirm: "This document has {n} pages. Turn off two-sided printing in the next dialog to print one sheet per unit. Open print settings?",
     shipping_document_issuance_guidance: "Check the format, issuance method and status, then issue the required documents.",
     shipping_document_no_shipment_items: "No shipment items are registered.",
@@ -6279,8 +6305,21 @@ var TRANSLATIONS = {
     shipping_document_b2_redownloading: "正在重新下载...",
     shipping_document_temporary_settings: "本次设置",
     shipping_document_return_settings: "返送方式设置",
-    shipping_return_prepare_hint: "运单号可留空，先保存承运商和制单方式。针式打印前请登记纸质运单上的号码。",
-    shipping_return_number_pending: "已选择针式打印。请在打印前打开［返送方式设置］，登记返送运单号。",
+    shipping_sheet_open: "打印（1张）",
+    shipping_sheet_title: "打印旧件返送运单",
+    shipping_sheet_unit: "要打印的商品",
+    shipping_sheet_number: "纸质运单号（11或12位）",
+    shipping_sheet_submit: "登记并打印1张",
+    shipping_sheet_hint: "装入一张运单，并扫描该运单的号码。",
+    shipping_sheet_batch: "请打开订单，通过［打印（1张）］逐张打印返送运单。",
+    shipping_sheet_done: "已打印 {done}/{total} 张",
+    shipping_sheet_queued: "已登记运单号，1张运单已进入打印队列。",
+    shipping_sheet_existing: "该运单已登记，未添加新的打印任务。",
+    shipping_sheet_review: "请核对运单和打印机结果。如需重打，请扫描新运单。",
+    shipping_sheet_unknown: "无法确认受理结果。请核对订单的打印状态和纸质运单。",
+    shipping_sheet_pending: "未打印",
+    shipping_return_prepare_hint: "运单号留空也可保存承运商和制单方式。请在［打印（1张）］中扫描运单号。",
+    shipping_return_number_pending: "已选择针式打印。请在［打印（1张）］中扫描运单号。",
     shipping_simplex_confirm: "共 {n} 页。请在下一步的打印设置中关闭双面打印，每台产品单面打印一张。打开打印设置吗？",
     shipping_document_issuance_guidance: "确认纸张、发行方式和状态后，发行所需单据。",
     shipping_document_no_shipment_items: "没有已登记的发货商品。",
@@ -9145,7 +9184,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1401";
+var APP_VERSION       = "v1.1.1402";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -20233,6 +20272,11 @@ function shippingDocumentPendingCount(order) {
   if (["dot_matrix", "handwritten"].indexOf(outboundMethod) >= 0) requiredTypes.push("outbound_waybill");
   if (order && order.core_return_required && ["dot_matrix", "handwritten"].indexOf(returnMethod) >= 0) requiredTypes.push("return_waybill");
   return requiredTypes.filter(function(type) {
+    if (type === "return_waybill" && returnMethod === "dot_matrix" && Array.isArray(order.core_return_units)
+        && (order.print_jobs || []).some(function(job) { return job.return_unit_id; })) {
+      var sheets = shippingDocumentReturnSheets(order);
+      return shippingDocumentReturnSheetCount(sheets) < sheets.length;
+    }
     if (statuses[type] === "printed") return false;
     var job = shippingDocumentPrintJob(order, type);
     if (job && job.status === "printed") return false;
@@ -20424,12 +20468,10 @@ async function queueSelectedShippingDocuments() {
     var outboundOrderIds = shippingDocumentDotMatrixOrderIds(orderIds, "outbound_waybill");
     if (outboundOrderIds.length) groups.push({ orderIds: outboundOrderIds, documentTypes: ["outbound_waybill"] });
   }
-  if (documentTypes.indexOf("return_waybill") >= 0) {
-    var returnOrderIds = shippingDocumentDotMatrixOrderIds(orderIds, "return_waybill");
-    if (returnOrderIds.length) groups.push({ orderIds: returnOrderIds, documentTypes: ["return_waybill"] });
-  }
+  var individualReturn = documentTypes.includes("return_waybill") && shippingDocumentDotMatrixOrderIds(orderIds, "return_waybill").length > 0;
+
   if (!groups.length && !handwrittenTasks.length) {
-    setShippingDocumentBatchMessage(deferredHandwrittenCount
+    setShippingDocumentBatchMessage(individualReturn ? t("shipping_sheet_batch") : deferredHandwrittenCount
       ? "手書き伝票は、出荷処理と発送用伝票番号の登録完了後に作成できます。"
       : "選択した受注に未発行の対象帳票はありません。", true);
     return;
@@ -20465,7 +20507,7 @@ async function queueSelectedShippingDocuments() {
       (handwrittenTasks.length ? " 手書き " + handwrittenTasks.length + " 件を続けて表示します。" : "") +
       (deferredHandwrittenCount ? " 手書き待機 " + deferredHandwrittenCount + " 件。" : "") +
       (skippedSummary ? " " + t("shipping_document_batch_skipped") + " " + skippedSummary + "。" : "") +
-      (stationWarning ? " " + stationWarning : ""),
+      (stationWarning ? " " + stationWarning : "") + (individualReturn ? " " + t("shipping_sheet_batch") : ""),
     !!stationWarning || (queuedCount === 0 && skipped.length > 0)
   );
   if (handwrittenTasks.length) {
@@ -20682,9 +20724,10 @@ async function refreshShippingDocumentPrintStatus() {
   var refreshedReturnJob = shippingDocumentPrintJob(refreshedOrder, "return_waybill");
   if (previousReturnJob && ["queued", "claimed"].indexOf(previousReturnJob.status) >= 0 && refreshedReturnJob) {
     if (refreshedReturnJob.status === "printed") {
-      setShippingDocumentMessage("コア返却用複写伝票の印刷が完了しました。必要な場合は「再印刷」からもう一度発行できます。", false);
+      var sheets = shippingDocumentReturnSheets(refreshedOrder);
+      setShippingDocumentMessage(tf("shipping_sheet_done", { done: shippingDocumentReturnSheetCount(sheets), total: sheets.length }), false);
     } else if (refreshedReturnJob.status === "error") {
-      setShippingDocumentMessage("コア返却用複写伝票を印刷できませんでした。印刷端末を確認して「再送」してください。", true);
+      setShippingDocumentMessage(t("shipping_sheet_review"), true);
     }
   }
 }
@@ -20836,6 +20879,25 @@ function shippingDocumentReturnWaybillCopyCount(order) {
   }, 0);
 }
 
+function shippingDocumentReturnSheets(order) {
+  var jobs = (order.print_jobs || []).filter(function(job) { return job.document_type === "return_waybill"; });
+  return (order.core_return_units || []).filter(function(unit) {
+    return unit.id && unit.order_item && unit.order_item.core_return_required && unit.status !== "cancelled";
+  }).map(function(unit) {
+    var job = jobs.find(function(entry) { return String(entry.return_unit_id) === String(unit.id); });
+    return { unit: unit, job: job || null };
+  });
+}
+
+function shippingDocumentReturnSheetCount(sheets) {
+  return sheets.filter(function(sheet) { return sheet.job && sheet.job.status === "printed"; }).length;
+}
+
+function shippingDocumentReturnSheetNumber(value) {
+  var digits = String(value || "").normalize("NFKC").trim().replace(/-/g, "");
+  return /^[0-9]{11,12}$/.test(digits) ? digits : "";
+}
+
 function shippingDocumentShipmentDocumentsHtml(order) {
   var dispatch = salesOrderDispatch(order);
   var warrantyRequired = salesOrderWarrantyDocumentRequired(order);
@@ -20859,9 +20921,10 @@ function shippingDocumentShipmentDocumentsHtml(order) {
   var returnCarrierLabel = shippingCarrierBrandKey(waybill.carrier_code || "sagawa_collect") === "sagawa" ? "佐川急便 着払い" : "ヤマト宅急便 着払い";
   var returnWaybillCopyCount = shippingDocumentReturnWaybillCopyCount(order);
   var returnPrintBusy = !!(returnJob && ["queued", "claimed"].indexOf(returnJob.status) >= 0);
-  var returnCanPrint = !!(dispatch && order.core_return_required && returnWaybillCopyCount > 0 && returnMethod === "dot_matrix" && waybill.id && shippingDocumentWaybillNumberIsValid(waybill.tracking_number) && !returnPrintBusy && !shippingDocumentSaving);
-  var returnPrintActionLabel = returnJob && returnJob.status === "printed" ? "再印刷"
-    : returnJob && returnJob.status === "error" ? "再送" : "印刷";
+  var returnCanPrint = !!(dispatch && order.core_return_required && returnWaybillCopyCount > 0 && returnMethod === "dot_matrix" && waybill.id && shippingDocumentReturnSheets(order).length > 0 && !returnPrintBusy && !shippingDocumentSaving);
+  var returnSheets = shippingDocumentReturnSheets(order);
+  var returnDone = shippingDocumentReturnSheetCount(returnSheets);
+
   var returnHandwrittenComplete = returnMethod === "handwritten" && (waybill.status === "printed" || !!waybill.handwritten_completed_at);
   var returnCanHandwrite = !!(dispatch && order.core_return_required && returnWaybillCopyCount > 0 && returnMethod === "handwritten" && !returnHandwrittenComplete && !shippingDocumentSaving);
   var b2Issued = Array.isArray(order.b2_exports) && order.b2_exports.length > 0;
@@ -20881,8 +20944,9 @@ function shippingDocumentShipmentDocumentsHtml(order) {
   var returnState = !order.core_return_required ? { label: "不要", tone: "neutral", note: "" }
     : returnMethod === "handwritten"
       ? { label: returnHandwrittenComplete ? "手書き完了" : "手書き待ち", tone: returnHandwrittenComplete ? "success" : "warning", note: "" }
-      : !shippingDocumentWaybillNumberIsValid(waybill.tracking_number) ? { label: "番号未登録", tone: "warning", note: "" }
-        : shippingDocumentPrintStateView(returnJob, "未印刷");
+      : returnSheets.length && (returnDone || (returnJob && returnJob.return_unit_id))
+        ? { label: tf("shipping_sheet_done", { done: returnDone, total: returnSheets.length }), tone: returnDone === returnSheets.length ? "success" : "warning", note: returnPrintBusy || (returnJob && returnJob.status === "error") ? salesOrderPrintJobStatusLabel(returnJob.status) : "" }
+        : shippingDocumentPrintStateView(returnJob, shippingDocumentWaybillNumberIsValid(waybill.tracking_number) ? "未印刷" : "番号未登録");
   var reason = !dispatch && canIssueDispatch ? t("sales_order_internal_print_timing")
     : !dispatch ? "出荷指示書が未発行です。"
     : dispatch.status !== "shipped" ? (documentsPrinted
@@ -20920,7 +20984,7 @@ function shippingDocumentShipmentDocumentsHtml(order) {
       key: "return_waybill", name: "コア返却用複写伝票", standard: (returnMethod === "dot_matrix" ? "ドットプリンタ" : "手書き運用") + " / " + returnWaybillCopyCount + "枚", detail: returnCarrierLabel + " / 1商品1枚",
       carrierCode: waybill.carrier_code || "sagawa_collect",
       state: returnState, ready: !!order.core_return_required,
-      actions: order.core_return_required ? (returnMethod === "dot_matrix" ? "<button type='button' class='primary' data-shipping-document-return-print" + (returnCanPrint ? "" : " disabled") + ">" + esc(returnPrintActionLabel) + "（" + returnWaybillCopyCount + "枚）</button>" : "<button type='button' class='primary' data-shipping-document-handwritten='return_waybill'" + (returnCanHandwrite ? "" : " disabled") + ">手書き内容を表示（" + returnWaybillCopyCount + "枚）</button>") + "<button type='button' data-shipping-document-open-settings='return'>" + esc(t("shipping_document_return_settings")) + "</button>" : "<span class='shipping-document-no-action'>発行不要</span>"
+      actions: order.core_return_required ? (returnMethod === "dot_matrix" ? "<button type='button' class='primary' data-shipping-document-return-print" + (returnCanPrint ? "" : " disabled") + ">" + esc(t("shipping_sheet_open")) + "</button>" : "<button type='button' class='primary' data-shipping-document-handwritten='return_waybill'" + (returnCanHandwrite ? "" : " disabled") + ">手書き内容を表示（" + returnWaybillCopyCount + "枚）</button>") + "<button type='button' data-shipping-document-open-settings='return'>" + esc(t("shipping_document_return_settings")) + "</button>" : "<span class='shipping-document-no-action'>発行不要</span>"
     }
   ];
   return "<section class='shipping-document-section shipping-document-required-documents'><div class='shipping-document-section-head'><div><h3>帳票の状態と発行</h3><p>" + esc(t("shipping_document_issuance_guidance")) + "</p></div><span class='shipping-document-ready-state " + (documentsPrinted ? "ready" : "pending") + "'>" + esc(documentsPrinted ? "印刷済み" : "未印刷 " + pendingDocumentCount + "件") + "</span></div>" +
@@ -20959,10 +21023,9 @@ function shippingDocumentReturnWaybillHtml(order) {
 function shippingDocumentReturnPrintGuidance(method, tracking, carrier, dispatchReady, printBusy) {
   var carrierLabel = carrier === "sagawa_collect" ? "佐川急便着払い" : "ヤマト宅急便　着払い";
   return method !== "dot_matrix" ? "手書き運用では、伝票デザインと記入内容を画面に表示し、完了後に伝票番号を登録できます。"
-    : !shippingDocumentWaybillNumberIsValid(tracking) ? "複写伝票の送り状番号を3-4-4（11桁）または4-4-4（12桁）で登録してから印刷してください。"
-      : !dispatchReady ? "出荷指示書を発行してから印刷できます。"
-        : printBusy ? "複写伝票を印刷端末へ送信済みです。"
-          : "ドットプリンターに " + carrierLabel + " の複写伝票をセットして印刷します。";
+    : !dispatchReady ? "出荷指示書を発行してから印刷できます。"
+    : printBusy ? "複写伝票を印刷端末へ送信済みです。"
+    : t("shipping_sheet_batch");
 }
 
 function shippingDocumentOrderContentsHtml(order) {
@@ -21047,7 +21110,7 @@ function bindShippingDocumentDetailActions() {
     button.addEventListener("click", queueShippingDocumentOutboundWaybillPrint);
   });
   host.querySelectorAll("[data-shipping-document-return-print]").forEach(function(button) {
-    button.addEventListener("click", queueShippingDocumentReturnWaybillPrint);
+    button.addEventListener("click", function() { openShippingDocumentSettings("return_print"); });
   });
   host.querySelectorAll("[data-shipping-document-handwritten]").forEach(function(button) {
     button.addEventListener("click", function() {
@@ -21057,7 +21120,7 @@ function bindShippingDocumentDetailActions() {
 }
 
 function openShippingDocumentSettings(mode) {
-  if (!shippingDocumentDetail || ["outbound", "return", "dispatch", "warranty", "core_return"].indexOf(mode) < 0) return;
+  if (!shippingDocumentDetail || ["outbound", "return", "return_print", "dispatch", "warranty", "core_return"].indexOf(mode) < 0) return;
   shippingDocumentOverlayMode = mode;
   var overlay = document.getElementById("shipping-document-settings-overlay");
   if (overlay) overlay.classList.add("show");
@@ -21065,6 +21128,7 @@ function openShippingDocumentSettings(mode) {
 }
 
 function closeShippingDocumentSettings() {
+  if (shippingDocumentOverlayMode === "return_print" && shippingDocumentSaving) return;
   shippingDocumentOverlayMode = "";
   var overlay = document.getElementById("shipping-document-settings-overlay");
   if (overlay) overlay.classList.remove("show");
@@ -21083,6 +21147,10 @@ function renderShippingDocumentSettingsOverlay() {
     title.textContent = "商品発送送り状の設定";
     description.textContent = "" + (order.order_number || ("注文 " + order.id)) + " / 発行方法と伝票番号を変更します。";
     content.innerHTML = shippingDocumentOutboundWaybillHtml(order);
+  } else if (mode === "return_print") {
+    title.textContent = t("shipping_sheet_title");
+    description.textContent = (order.order_number || order.id) + " / " + t("shipping_sheet_hint");
+    content.innerHTML = shippingDocumentReturnSheetForm(order);
   } else if (mode === "return") {
     title.textContent = "コア返却用複写伝票の設定";
     description.textContent = "" + (order.order_number || ("注文 " + order.id)) + " / 運送会社・作成方法・返送用伝票番号を変更します。";
@@ -21096,6 +21164,8 @@ function renderShippingDocumentSettingsOverlay() {
 }
 
 function bindShippingDocumentSettingsActions() {
+  var form = document.getElementById("shipping-return-sheet-form");
+  if (form) bindShippingDocumentReturnSheet(form, shippingDocumentDetail);
   var saveWaybill = document.getElementById("shipping-document-return-save");
   if (saveWaybill) saveWaybill.addEventListener("click", saveShippingDocumentReturnWaybill);
   var saveOutbound = document.getElementById("shipping-document-outbound-save");
@@ -21554,31 +21624,77 @@ async function saveShippingDocumentReturnWaybill() {
     : "コア返却用伝票の設定を保存しました。", false);
 }
 
-async function queueShippingDocumentReturnWaybillPrint() {
-  var order = shippingDocumentDetail;
-  if (!order || !order.core_return_required || shippingDocumentSaving) return;
-  var waybill = order.return_waybill && typeof order.return_waybill === "object" ? order.return_waybill : {};
-  if (waybill.handling_method !== "dot_matrix" || !shippingDocumentWaybillNumberIsValid(waybill.tracking_number)) {
-    setShippingDocumentMessage("作成方法をドットプリンタにし、送り状番号を3-4-4（11桁）または4-4-4（12桁）で登録してください。", true);
-    return;
+function shippingDocumentReturnSheetForm(order) {
+  var sheets = shippingDocumentReturnSheets(order);
+  var next = sheets.find(function(sheet) { return !sheet.job; }) || sheets[0];
+  var options = sheets.map(function(sheet, index) {
+    var unit = sheet.unit;
+    var item = unit.order_item;
+    var label = [index + 1 + "/" + sheets.length, unit.return_code, item.gltek_part_number || item.genuine_part_number || item.manufacturer_part_number,
+      sheet.job ? salesOrderPrintJobStatusLabel(sheet.job.status) : t("shipping_sheet_pending")].filter(Boolean).join(" · ");
+    return "<option value='" + esc(unit.id) + "'" + (sheet === next ? " selected" : "") + ">" + esc(label) + "</option>";
+  }).join("");
+  return "<form class='shipping-return-sheet-form' id='shipping-return-sheet-form'><label>" + esc(t("shipping_sheet_unit")) + "<select name='unit'>" + options + "</select></label>" +
+    "<label>" + esc(t("shipping_sheet_number")) + "<input name='tracking' type='text' inputmode='numeric' autocomplete='off' placeholder='000-0000-0000'></label>" +
+    "<p data-sheet-review hidden>" + esc(t("shipping_sheet_review")) + "</p><button type='submit' class='btn-primary' disabled>" + esc(t("shipping_sheet_submit")) + "</button></form>";
+}
+
+function bindShippingDocumentReturnSheet(form, order) {
+  var unit = form.elements.unit;
+  var tracking = form.elements.tracking;
+  var submit = form.querySelector("button[type=submit]");
+  var sheets = shippingDocumentReturnSheets(order);
+  function selected() { return sheets.find(function(sheet) { return String(sheet.unit.id) === unit.value; }); }
+  function update() {
+    var sheet = selected();
+    var number = shippingDocumentReturnSheetNumber(tracking.value);
+    form.querySelector("[data-sheet-review]").hidden = !(sheet && sheet.job);
+    submit.disabled = !sheet || !number || shippingDocumentSaving || !!(sheet.job && sheet.job.return_sheet_tracking === number);
   }
-  shippingDocumentSaving = true;
-  renderShippingDocumentDetail();
-  var result = await sb.rpc("queue_sales_order_return_waybill_print", {
-    target_order_id: order.id,
-    target_expected_version: order.version == null ? null : order.version
+  unit.addEventListener("change", function() { tracking.value = ""; update(); tracking.focus(); });
+  tracking.addEventListener("input", update);
+  tracking.addEventListener("keydown", function(event) { if (event.key === "Enter") event.preventDefault(); });
+  form.addEventListener("submit", function(event) {
+    event.preventDefault();
+    update();
+    if (!submit.disabled) queueShippingDocumentReturnWaybillPrint(order, selected(), shippingDocumentReturnSheetNumber(tracking.value), form);
   });
-  shippingDocumentSaving = false;
-  if (result.error) {
-    renderShippingDocumentDetail();
-    setShippingDocumentMessage(result.error.message || "コア返却用複写伝票を印刷端末へ送信できませんでした。", true);
-    return;
+  update();
+  tracking.focus();
+}
+
+async function queueShippingDocumentReturnWaybillPrint(order, sheet, number, form) {
+  var waybill = order.return_waybill || {};
+  if (shippingDocumentSaving || shippingDocumentDetail !== order || !sheet || !shippingDocumentReturnSheetNumber(number)
+      || waybill.handling_method !== "dot_matrix" || !canManageSalesOrders()) return;
+  shippingDocumentSaving = true;
+  Array.from(form.elements).forEach(function(control) { control.disabled = true; });
+  var message;
+  var failed = false;
+  try {
+    var result = await sb.rpc("queue_sales_order_return_sheet", {
+      target_order_id: order.id, target_expected_version: order.version, target_unit_id: sheet.unit.id,
+      target_tracking_number: number, target_previous_job_id: sheet.job ? sheet.job.id : null, target_carrier_code: waybill.carrier_code
+    });
+    if (result.error) {
+      failed = true;
+      message = result.error.code ? result.error.message : t("shipping_sheet_unknown");
+    } else {
+      var data = Array.isArray(result.data) ? result.data[0] : result.data;
+      message = data ? t(data.queued_count === 1 ? "shipping_sheet_queued" : "shipping_sheet_existing") : t("shipping_sheet_unknown");
+      failed = !data;
+    }
+  } catch (error) {
+    failed = true;
+    message = t("shipping_sheet_unknown");
+  } finally {
+    shippingDocumentSaving = false;
+    closeShippingDocumentSettings();
   }
-  var queued = Array.isArray(result.data) ? (result.data[0] || {}) : (result.data || {});
-  await loadShippingDocumentDetail(order.id);
-  setShippingDocumentMessage((parseInt(queued.queued_count, 10) || 0) > 0
-    ? "コア返却用複写伝票 " + (parseInt(queued.copy_count, 10) || shippingDocumentReturnWaybillCopyCount(order)) + "枚を印刷待ちに登録しました。"
-    : "同じ複写伝票はすでに印刷待ちまたは印刷中です。", false);
+  if (String(shippingDocumentSelectedId) === String(order.id)) {
+    await loadShippingDocumentDetail(order.id);
+    setShippingDocumentMessage(message, failed);
+  }
 }
 
 function clearSalesOrderDetailSelection() {
