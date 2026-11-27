@@ -9208,7 +9208,7 @@ var currentImageDeleteActivityProduct = null;
 var fsIndex           = 0;
 var activeFullscreenImages = null;
 var dataLoaded        = false;
-var APP_VERSION       = "v1.1.1407";
+var APP_VERSION       = "v1.1.1408";
 var PRODUCT_3D_DEVELOPMENT_PAUSED = true;
 var userManagementRows = [];
 var internalUserAuthStatusMap = {};
@@ -21033,7 +21033,7 @@ function shippingDocumentReturnSheetCount(sheets) {
 
 function shippingDocumentReturnSheetNumber(value) {
   var input = String(value || "").normalize("NFKC").trim();
-  var digits = input.replace(/^A([0-9-]+)A$/, "$1").replace(/-/g, "");
+  var digits = input.replace(/^A([0-9-]+)A$/i, "$1").replace(/-/g, "");
   return /^[0-9]{11,12}$/.test(digits) ? digits : "";
 }
 
