@@ -20872,7 +20872,8 @@ function shippingDocumentShipmentDocumentsHtml(order) {
   var returnState = !order.core_return_required ? { label: "不要", tone: "neutral", note: "" }
     : returnMethod === "handwritten"
       ? { label: returnHandwrittenComplete ? "手書き完了" : "手書き待ち", tone: returnHandwrittenComplete ? "success" : "warning", note: "" }
-      : shippingDocumentPrintStateView(returnJob, shippingDocumentWaybillNumberIsValid(waybill.tracking_number) ? "未印刷" : "番号未登録");
+      : !shippingDocumentWaybillNumberIsValid(waybill.tracking_number) ? { label: "番号未登録", tone: "warning", note: "" }
+        : shippingDocumentPrintStateView(returnJob, "未印刷");
   var reason = !dispatch && canIssueDispatch ? t("sales_order_internal_print_timing")
     : !dispatch ? "出荷指示書が未発行です。"
     : dispatch.status !== "shipped" ? (documentsPrinted
@@ -20940,7 +20941,7 @@ function shippingDocumentReturnWaybillHtml(order) {
       : !dispatchReady ? "出荷指示書を発行してから印刷できます。"
         : printBusy ? "複写伝票を印刷端末へ送信済みです。"
           : "ドットプリンターに " + carrierLabel + " の複写伝票をセットして印刷します。";
-  return "<div id='shipping-document-return-waybill-section'><div class='shipping-document-section-head'><div><h3>コア返却用複写伝票</h3><p>着払い伝票の種類と伝票番号を登録し、コア返却対象の商品1個につき1枚を発行します。</p></div><span class='shipping-document-ready-state " + (waybill.id ? "ready" : "pending") + "'>" + esc(copyCount + "枚 / " + (waybill.id ? "設定済み" : "未設定")) + "</span></div>" +
+  return "<div id='shipping-document-return-waybill-section'><div class='shipping-document-section-head'><div><h3>コア返却用複写伝票</h3><p>運送会社と作成方法は番号が空欄でも保存できます。ドット印刷の前に用紙の番号を登録してください。</p></div><span class='shipping-document-ready-state " + (waybill.id ? "ready" : "pending") + "'>" + esc(copyCount + "枚 / " + (waybill.id ? "設定済み" : "未設定")) + "</span></div>" +
     "<div class='shipping-document-carrier-context' id='shipping-document-return-carrier-brand'>" + shippingCarrierBrandHtml(carrier, false) + "</div>" +
     "<div class='shipping-document-waybill-form'><label><span>運送会社・サービス</span><select id='shipping-document-return-carrier'><option value='yamato_collect'" + (carrier === "yamato_collect" ? " selected" : "") + ">ヤマト宅急便　着払い</option><option value='sagawa_collect'" + (carrier === "sagawa_collect" ? " selected" : "") + ">佐川急便着払い</option></select></label>" +
     "<label><span>作成方法</span><select id='shipping-document-return-method'><option value='handwritten'" + (method === "handwritten" ? " selected" : "") + ">手書き運用</option><option value='dot_matrix'" + (method === "dot_matrix" ? " selected" : "") + ">ドットプリンタ</option></select></label>" +
@@ -21499,12 +21500,9 @@ async function saveShippingDocumentReturnWaybill() {
   if (!order || !order.core_return_required || shippingDocumentSaving) return;
   var carrier = (document.getElementById("shipping-document-return-carrier") || {}).value || "yamato_collect";
   var method = (document.getElementById("shipping-document-return-method") || {}).value || "handwritten";
-  var tracking = shippingDocumentWaybillDigits((document.getElementById("shipping-document-return-tracking") || {}).value || "");
-  if (method === "dot_matrix" && !shippingDocumentWaybillNumberIsValid(tracking)) {
-    setShippingDocumentMessage("返送用送り状番号は3-4-4（11桁）または4-4-4（12桁）で入力してください。", true);
-    return;
-  }
-  if (tracking && !shippingDocumentWaybillNumberIsValid(tracking)) {
+  var input = ((document.getElementById("shipping-document-return-tracking") || {}).value || "").trim();
+  var tracking = shippingDocumentWaybillDigits(input);
+  if (input && (!/^[0-9-]+$/.test(input) || !shippingDocumentWaybillNumberIsValid(tracking))) {
     setShippingDocumentMessage("返送用送り状番号は3-4-4（11桁）または4-4-4（12桁）で入力してください。", true);
     return;
   }
@@ -21526,7 +21524,9 @@ async function saveShippingDocumentReturnWaybill() {
   shippingDocumentDetail = Array.isArray(result.data) ? (result.data[0] || null) : result.data;
   closeShippingDocumentSettings();
   renderShippingDocumentDetail();
-  setShippingDocumentMessage("コア返却用伝票の設定を保存しました。", false);
+  setShippingDocumentMessage(method === "dot_matrix" && !tracking
+    ? "ドットプリンタに設定しました。印刷前に［返送方法設定］で返送用伝票番号を登録してください。"
+    : "コア返却用伝票の設定を保存しました。", false);
 }
 
 async function queueShippingDocumentReturnWaybillPrint() {
@@ -23115,7 +23115,11 @@ async function printSalesOrderDocument(type, targetOrder) {
     popup.document.write(buildSalesOrderDocumentHtml(order, type));
     popup.document.close();
     var button = popup.document.getElementById("dcats-print-shipment-document");
-    if (button) button.addEventListener("click", function() { popup.print(); });
+    if (button) button.addEventListener("click", function() {
+      var sheets = popup.document.querySelectorAll(".warranty-print-sheet, .core-return-sheet");
+      if (sheets.length > 1 && !popup.confirm("対象は" + sheets.length + "枚です。次の印刷設定で［両面印刷］をオフにし、1台につき片面1枚で印刷してください。印刷設定を開きますか？")) return;
+      popup.print();
+    });
   } catch (error) {
     popup.close();
     alert(error && error.message ? error.message : "帳票を作成できませんでした。");

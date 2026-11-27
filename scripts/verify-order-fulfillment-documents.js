@@ -671,6 +671,13 @@ for (const forbidden of [
   }
 }
 
+const returnSave = sourceBetween("async function saveShippingDocumentReturnWaybill", "async function queueShippingDocumentReturnWaybillPrint");
+requireFragment(returnSave, "target_tracking_number: tracking || null");
+requireFragment(returnSave, "if (input &&");
+if (returnSave.includes('method === "dot_matrix" && !shippingDocumentWaybillNumberIsValid')) {
+  throw new Error("A return method must be saveable before its number is registered");
+}
+
 const returnWaybillPrint = sourceBetween("async function queueShippingDocumentReturnWaybillPrint", "function renderSalesOrderList");
 requireFragment(returnWaybillPrint, 'waybill.handling_method !== "dot_matrix"');
 requireFragment(returnWaybillPrint, "shippingDocumentWaybillNumberIsValid(waybill.tracking_number)");
