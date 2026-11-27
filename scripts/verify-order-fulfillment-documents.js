@@ -678,7 +678,8 @@ if (returnSave.includes('method === "dot_matrix" && !shippingDocumentWaybillNumb
 
 const returnWaybillPrint = sourceBetween("async function queueShippingDocumentReturnWaybillPrint", "function renderSalesOrderList");
 requireFragment(returnWaybillPrint, 'waybill.handling_method !== "dot_matrix"');
-requireFragment(returnWaybillPrint, "shippingDocumentReturnSheetNumber(number)");
+requireFragment(returnWaybillPrint, "var number = shippingDocumentReturnSheetNumber(input)");
+requireFragment(returnSave, "var tracking = shippingDocumentReturnSheetNumber(input)");
 requireFragment(returnWaybillPrint, "target_unit_id: sheet.unit.id");
 requireFragment(returnWaybillPrint, "target_tracking_number: number");
 if (/var returnCanPrint = [^\n]*tracking_number/.test(requiredDocuments)) throw new Error("Opening a slip must be possible before registration");
@@ -691,7 +692,14 @@ const returnWaybillCountContext = {};
 vm.createContext(returnWaybillCountContext);
 vm.runInContext(returnWaybillCountSource, returnWaybillCountContext);
 const returnWaybillCopyCount = returnWaybillCountContext.shippingDocumentReturnWaybillCopyCount;
-for (const [input, expected] of [["", ""], ["12345", ""], ["X12345678901", ""], ["123-4567-8901","12345678901"], ["１２３４５６７８９０１２","123456789012"]]) {
+for (const [input, expected] of [
+  ["", ""], ["12345", ""], ["X12345678901", ""],
+  ["123-4567-8901", "12345678901"], ["１２３４５６７８９０１２", "123456789012"],
+  ["A012345678901A", "012345678901"], ["A123-4567-8901A", "12345678901"],
+  ["Ａ０１２３４５６７８９０１Ａ", "012345678901"],
+  ["A12345678901", ""], ["12345678901A", ""], ["AA12345678901AA", ""],
+  ["A12345A678901A", ""], ["A1234567890123A", ""], ["A1234567890A", ""]
+]) {
   if (returnWaybillCountContext.shippingDocumentReturnSheetNumber(input) !== expected) throw new Error("Single-slip scan validation failed");
 }
 for (const [order, expected] of [
@@ -1128,11 +1136,11 @@ for (const fragment of [
 ]) requireFragment(i18n, fragment, `B2 reissue translation is missing: ${fragment}`);
 
 for (const fragment of [
-  'content="v1.1.1405"',
-  'styles.css?v=1.1.1405',
-  'app.js?v=1.1.1405'
+  'content="v1.1.1406"',
+  'styles.css?v=1.1.1406',
+  'app.js?v=1.1.1406'
 ]) requireFragment(html, fragment);
-requireFragment(source, 'var APP_VERSION       = "v1.1.1405"');
+requireFragment(source, 'var APP_VERSION       = "v1.1.1406"');
 requireFragment(source, 'sales_management_registered: "売上登録済"');
 requireFragment(source, 'sales_management_unknown: "売上確認不可"');
 
