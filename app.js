@@ -325,6 +325,9 @@ var TRANSLATIONS = {
     shipping_document_b2_redownloading: "再ダウンロードしています...",
     shipping_document_temporary_settings: "今回の設定",
     shipping_document_return_settings: "返送方法設定",
+    shipping_return_prepare_hint: "運送会社と作成方法は番号が空欄でも保存できます。ドット印刷の前に用紙の番号を登録してください。",
+    shipping_return_number_pending: "ドットプリンタに設定しました。印刷前に［返送方法設定］で返送用伝票番号を登録してください。",
+    shipping_simplex_confirm: "対象は{n}枚です。次の印刷設定で［両面印刷］をオフにし、1台につき片面1枚で印刷してください。印刷設定を開きますか？",
     shipping_document_issuance_guidance: "用紙・発行方法と状態を確認し、必要な帳票を発行します。",
     shipping_document_no_shipment_items: "出荷商品がありません。",
     shipping_document_maker_part_unregistered: "メーカー品番未登録",
@@ -3327,6 +3330,9 @@ var TRANSLATIONS = {
     shipping_document_b2_redownloading: "Downloading again...",
     shipping_document_temporary_settings: "This Issuance",
     shipping_document_return_settings: "Return Method Settings",
+    shipping_return_prepare_hint: "You can save the carrier and preparation method with the number blank. Register the number on the form before dot-matrix printing.",
+    shipping_return_number_pending: "Dot-matrix printing selected. Enter the return waybill number in Return Method Settings before printing.",
+    shipping_simplex_confirm: "This document has {n} pages. Turn off two-sided printing in the next dialog to print one sheet per unit. Open print settings?",
     shipping_document_issuance_guidance: "Check the format, issuance method and status, then issue the required documents.",
     shipping_document_no_shipment_items: "No shipment items are registered.",
     shipping_document_maker_part_unregistered: "Manufacturer part number not registered",
@@ -6273,6 +6279,9 @@ var TRANSLATIONS = {
     shipping_document_b2_redownloading: "正在重新下载...",
     shipping_document_temporary_settings: "本次设置",
     shipping_document_return_settings: "返送方式设置",
+    shipping_return_prepare_hint: "运单号可留空，先保存承运商和制单方式。针式打印前请登记纸质运单上的号码。",
+    shipping_return_number_pending: "已选择针式打印。请在打印前打开［返送方式设置］，登记返送运单号。",
+    shipping_simplex_confirm: "共 {n} 页。请在下一步的打印设置中关闭双面打印，每台产品单面打印一张。打开打印设置吗？",
     shipping_document_issuance_guidance: "确认纸张、发行方式和状态后，发行所需单据。",
     shipping_document_no_shipment_items: "没有已登记的发货商品。",
     shipping_document_maker_part_unregistered: "未登记制造商品号",
@@ -20941,7 +20950,7 @@ function shippingDocumentReturnWaybillHtml(order) {
       : !dispatchReady ? "出荷指示書を発行してから印刷できます。"
         : printBusy ? "複写伝票を印刷端末へ送信済みです。"
           : "ドットプリンターに " + carrierLabel + " の複写伝票をセットして印刷します。";
-  return "<div id='shipping-document-return-waybill-section'><div class='shipping-document-section-head'><div><h3>コア返却用複写伝票</h3><p>運送会社と作成方法は番号が空欄でも保存できます。ドット印刷の前に用紙の番号を登録してください。</p></div><span class='shipping-document-ready-state " + (waybill.id ? "ready" : "pending") + "'>" + esc(copyCount + "枚 / " + (waybill.id ? "設定済み" : "未設定")) + "</span></div>" +
+  return "<div id='shipping-document-return-waybill-section'><div class='shipping-document-section-head'><div><h3>コア返却用複写伝票</h3><p>" + esc(t("shipping_return_prepare_hint")) + "</p></div><span class='shipping-document-ready-state " + (waybill.id ? "ready" : "pending") + "'>" + esc(copyCount + "枚 / " + (waybill.id ? "設定済み" : "未設定")) + "</span></div>" +
     "<div class='shipping-document-carrier-context' id='shipping-document-return-carrier-brand'>" + shippingCarrierBrandHtml(carrier, false) + "</div>" +
     "<div class='shipping-document-waybill-form'><label><span>運送会社・サービス</span><select id='shipping-document-return-carrier'><option value='yamato_collect'" + (carrier === "yamato_collect" ? " selected" : "") + ">ヤマト宅急便　着払い</option><option value='sagawa_collect'" + (carrier === "sagawa_collect" ? " selected" : "") + ">佐川急便着払い</option></select></label>" +
     "<label><span>作成方法</span><select id='shipping-document-return-method'><option value='handwritten'" + (method === "handwritten" ? " selected" : "") + ">手書き運用</option><option value='dot_matrix'" + (method === "dot_matrix" ? " selected" : "") + ">ドットプリンタ</option></select></label>" +
@@ -21525,7 +21534,7 @@ async function saveShippingDocumentReturnWaybill() {
   closeShippingDocumentSettings();
   renderShippingDocumentDetail();
   setShippingDocumentMessage(method === "dot_matrix" && !tracking
-    ? "ドットプリンタに設定しました。印刷前に［返送方法設定］で返送用伝票番号を登録してください。"
+    ? t("shipping_return_number_pending")
     : "コア返却用伝票の設定を保存しました。", false);
 }
 
@@ -23117,7 +23126,7 @@ async function printSalesOrderDocument(type, targetOrder) {
     var button = popup.document.getElementById("dcats-print-shipment-document");
     if (button) button.addEventListener("click", function() {
       var sheets = popup.document.querySelectorAll(".warranty-print-sheet, .core-return-sheet");
-      if (sheets.length > 1 && !popup.confirm("対象は" + sheets.length + "枚です。次の印刷設定で［両面印刷］をオフにし、1台につき片面1枚で印刷してください。印刷設定を開きますか？")) return;
+      if (sheets.length > 1 && !popup.confirm(tf("shipping_simplex_confirm", { n: sheets.length }))) return;
       popup.print();
     });
   } catch (error) {
