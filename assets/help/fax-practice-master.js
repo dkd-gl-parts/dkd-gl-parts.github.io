@@ -4,22 +4,26 @@
 const practiceClient = supabase.createClient("https://jqoeqximtwfpqwzngutj.supabase.co", "sb_publishable_TXdCwBQOD_s3N0TqFCDOAw_8B44a0kv", {
   auth: { storageKey: "sb-jqoeqximtwfpqwzngutj-auth-token", detectSessionInUrl: false }
 });
-const prefectures = "北海道 青森県 岩手県 宮城県 秋田県 山形県 福島県 茨城県 栃木県 群馬県 埼玉県 千葉県 東京都 神奈川県 新潟県 富山県 石川県 福井県 山梨県 長野県 岐阜県 静岡県 愛知県 三重県 滋賀県 京都府 大阪府 兵庫県 奈良県 和歌山県 鳥取県 島根県 岡山県 広島県 山口県 徳島県 香川県 愛媛県 高知県 福岡県 佐賀県 長崎県 熊本県 大分県 宮崎県 鹿児島県 沖縄県".split(" ");
+const practiceCustomer = { source: "dcats_test", code: "DEV-ORDER-001" };
 
 async function rows(query) {
   const result = await query;
   if (result.error) throw new Error("D-CATSの登録データを取得できません。接続と閲覧権限を確認してください。");
   return result.data;
 }
-function delivery(customer) {
-  const address = (customer.address1 || "").trim();
-  const prefecture = prefectures.find(name => address.startsWith(name));
-  const phone = customer.phone1 || customer.phone2 || "";
-  if (!prefecture || !/^\d{7}$/.test((customer.postal_code || "").replace(/\D/g,"")) ||
-      !/^\d{10,11}$/.test(phone.replace(/\D/g,""))) return null;
-  return { destination_type:"address", company_name:customer.customer_name, recipient_name:customer.contact_name || customer.customer_name,
-    postal_code:customer.postal_code, phone_number:phone, prefecture_name:prefecture, prefecture_code:prefectures.indexOf(prefecture)+1,
-    address_line_1:address.slice(prefecture.length).trim(), address_line_2:customer.address2 || "" };
+function practiceDestinations(buyer) {
+  // The prefecture is a real freight zone. All delivery details are training fixtures.
+  return [
+    { prefecture_code:13, prefecture_name:"東京都", office:"演習倉庫A" },
+    { prefecture_code:27, prefecture_name:"大阪府", office:"演習倉庫B" },
+    { prefecture_code:23, prefecture_name:"愛知県", office:"演習倉庫C" }
+  ].map(site => ({
+    destination_type:"address", company_name:buyer.customer_name,
+    recipient_name:site.office + "（架空・出荷禁止）",
+    postal_code:"000-0000", phone_number:"000-0000-0000",
+    prefecture_code:site.prefecture_code, prefecture_name:site.prefecture_name,
+    address_line_1:"演習用架空住所・出荷禁止", address_line_2:site.office
+  }));
 }
 async function loadPracticeMaster() {
   const identity = await practiceClient.auth.getUser();
@@ -27,20 +31,21 @@ async function loadPracticeMaster() {
   const access = await rows(practiceClient.rpc("get_customer_order_feature_status"));
   if (!access?.internal_management) throw new Error("通常受注を利用できる社内アカウントで開いてください。");
   const [customers, variants, categories] = await Promise.all([
-    rows(practiceClient.from("sales_customers").select("id,source_customer_code,billing_customer_code,customer_name,contact_name,postal_code,address1,address2,phone1,phone2")
-      .eq("is_active",true).eq("source_code","hanbaiou").order("source_customer_code").order("id").limit(100)),
+    rows(practiceClient.from("sales_customers").select("id,source_code,source_customer_code,billing_customer_code,customer_name,contact_name,is_active")
+      .eq("is_active",true).eq("source_code",practiceCustomer.source).eq("source_customer_code",practiceCustomer.code).limit(2)),
     rows(practiceClient.from("core_product_variants").select("dkd_shohin_id,product_kind,stock_qty,core_products!inner(category_code,manufacturer_part_number,genuine_part_number,product_base_prices!inner(product_kind))")
       .eq("is_active",true).in("product_kind",["rebuilt","aftermarket_new"]).gt("stock_qty",0)
       .gt("core_products.shipping_size_cm",0).eq("core_products.product_base_prices.is_current",true)
       .gt("core_products.product_base_prices.base_price_jpy",0).order("stock_qty",{ascending:false}).order("product_variant_id").limit(100)),
     rows(practiceClient.from("assy_categories").select("category_code,label_ja").eq("is_active",true))
   ]);
-  const buyers = customers.filter(c => c.customer_name && c.source_customer_code &&
-    (!c.billing_customer_code?.trim() || c.billing_customer_code.trim() === c.source_customer_code));
-  const buyer = buyers.find(c => c.contact_name?.trim()) || buyers[0];
-  if (!buyer) throw new Error("発注元と請求先が一致する販売王の登録得意先がありません。");
-  const destinations = customers.filter(c => c.id !== buyer.id).map(delivery).filter(d => d?.address_line_1);
-  if (!destinations.length) throw new Error("直送に使える郵便番号・住所・電話付きの登録先がありません。");
+  const buyer = customers.length === 1 ? customers[0] : null;
+  if (!buyer?.id || !buyer.is_active || buyer.source_code !== practiceCustomer.source ||
+      buyer.source_customer_code !== practiceCustomer.code || !buyer.customer_name?.trim() ||
+      (buyer.billing_customer_code?.trim() && buyer.billing_customer_code.trim() !== practiceCustomer.code)) {
+    throw new Error("指定の開発テスト得意先（DEV-ORDER-001）と請求先を確認できません。");
+  }
+  const destinations = practiceDestinations(buyer);
   const seen = new Set();
   const candidates = variants.filter(v => {
     const product = v.core_products;

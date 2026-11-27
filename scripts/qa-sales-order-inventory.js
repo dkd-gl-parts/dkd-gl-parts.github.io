@@ -69,7 +69,8 @@ async function mockPracticeApi(page) {
   localStorage.setItem("sb-jqoeqximtwfpqwzngutj-auth-token",JSON.stringify({access_token:token,refresh_token:"fixture",expires_at:expires,expires_in:3600,token_type:"bearer",user}));
  },{user,token,expires});
  const goods=[1,2,3,4].map(n=>({dkd_shohin_id:n,product_kind:"rebuilt",stock_qty:2,core_products:{category_code:"A",manufacturer_part_number:"QA-"+n,product_base_prices:[{product_kind:"rebuilt"}]}}));
- const customers=[1,2,3].map(n=>({id:n,source_customer_code:"QA-"+n,customer_name:"試験得意先"+n,contact_name:"担当"+n,postal_code:"0000000",address1:"東京都試験区"+n,address2:"",phone1:"0000000000"}));
+ const buyer={id:47,source_code:"dcats_test",source_customer_code:"DEV-ORDER-001",customer_name:"試験用の名称",contact_name:null,is_active:true};
+ let customerRows=[buyer],quotes=0;
  let allowed=true,complete=true;
  await page.context().route(host+"/**",async route=>{
   const req=route.request(),path=new URL(req.url()).pathname;
@@ -79,12 +80,24 @@ async function mockPracticeApi(page) {
   switch(path.split("/").pop()) {
    case "user": body=user;break;
    case "get_customer_order_feature_status": body={internal_management:allowed};break;
-   case "sales_customers": body=customers;break;
+   case "sales_customers": {
+    const filters=new URL(req.url()).searchParams;
+    assert.equal(filters.get("source_customer_code"),"eq.DEV-ORDER-001");
+    assert.equal(filters.get("source_code"),"eq.dcats_test");
+    assert.equal(filters.get("is_active"),"eq.true");
+    assert(!/address|postal|phone/.test(filters.get("select")));
+    body=customerRows;break;
+   }
    case "assy_categories": body=[{category_code:"A",label_ja:"試験商品"}];break;
    case "core_product_variants": body=complete?goods:[];break;
    case "preview_internal_customer_order": {
     const input=req.postDataJSON();
-    assert.equal(input.target_sales_customer_id,1);
+    assert.equal(input.target_sales_customer_id,buyer.id);
+    assert.equal(input.target_shipping_address.company_name,buyer.customer_name);
+    assert.match(input.target_shipping_address.recipient_name,/架空・出荷禁止/);
+    assert.equal(input.target_shipping_address.phone_number,"000-0000-0000");
+    assert.equal(input.target_shipping_address.postal_code,"000-0000");
+    quotes++;
     assert.equal(input.target_items.length,2);
     const items=input.target_items.map(v=>({...v,manufacturer_part_number:"QA-"+v.dkd_shohin_id,category_code:"A",unit_price_jpy:1000*v.dkd_shohin_id,line_total_jpy:1000*v.dkd_shohin_id*v.quantity,core_return_required:true}));
     const subtotal=items.reduce((s,v)=>s+v.line_total_jpy,0),tax=(subtotal+500)/10;
@@ -95,7 +108,8 @@ async function mockPracticeApi(page) {
   }
   await route.fulfill({status:200,headers,json:body});
  });
- return {deny:()=>{allowed=false;},allow:()=>{allowed=true;},empty:()=>{complete=false;}};
+ return {deny:()=>{allowed=false;},allow:()=>{allowed=true;},empty:()=>{complete=false;},
+  customerRows:value=>{customerRows=value;},buyer,quoteCount:()=>quotes};
 }
 
 async function verifyFaxVariations(page) {
@@ -127,10 +141,10 @@ async function verifyFaxVariations(page) {
  assert.notEqual(after.id,before.id);
  assert.notEqual(after.ship,before.ship);
  assert.notDeepEqual(after.items,before.items);
- assert.equal(await page.locator('[aria-label="得意先コード"]').textContent(), "QA-1");
+ assert.equal(await page.locator('[aria-label="得意先コード"]').textContent(), "DEV-ORDER-001");
  const subtotal = after.lines.reduce((sum,s) => sum + Number(s.split("＝")[1].replace(/[^0-9]/g,"")), 0);
  assert.equal(Number(after.total.replace(/[^0-9]/g,"")), (subtotal + 500) * 11 / 10);
- assert.equal(await page.locator("dd").filter({hasText:"試験得意先1"}).count(),1);
+ assert.equal(await page.locator("[data-buyer]").textContent(),"試験用の名称");
  await page.evaluate(() => { location.hash = "items"; });
  const [sheet] = await Promise.all([
   page.context().waitForEvent("page"),
@@ -206,7 +220,18 @@ async function verifyFaxPractice(browser, base, output) {
   await page.goto(base+"/assets/help/fax-practice-order.html");
   await page.getByRole("status").filter({hasText:"社内アカウント"}).waitFor();
   assert(await page.locator("[data-print]").isDisabled());
-  api.allow(); api.empty(); await page.goto(base+"/assets/help/fax-practice-order.html#items"); await page.reload();
+  api.allow();
+  const count=api.quoteCount();
+  for (const unexpected of [[], [api.buyer,api.buyer], [{...api.buyer,source_code:"ordinary"}],
+    [{...api.buyer,source_customer_code:"OTHER"}], [{...api.buyer,is_active:false}],
+    [{...api.buyer,billing_customer_code:"OTHER"}]]) {
+   api.customerRows(unexpected); await page.reload();
+   await page.getByRole("status").filter({hasText:"DEV-ORDER-001"}).waitFor();
+   assert(await page.locator("[data-print]").isDisabled());
+   assert(await page.locator(".sheet").isHidden());
+   assert.equal(api.quoteCount(),count);
+  }
+  api.customerRows([api.buyer]); api.empty(); await page.goto(base+"/assets/help/fax-practice-order.html#items"); await page.reload();
   await page.getByRole("status").filter({hasText:"2品番が必要"}).waitFor();
   assert(await page.locator(".sheet").isHidden());
   console.log("FAX practice verified: 9 panels, four viewports, edited long fields, A4 order 1 page and observer checklist 2 pages.");
