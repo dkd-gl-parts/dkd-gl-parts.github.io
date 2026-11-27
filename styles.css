@@ -12794,3 +12794,12 @@ html[data-product-3d-paused] :is(
   #shipping-document-return-waybill-section .shipping-document-waybill-print-row > a { width: auto; }
   .shipping-document-settings-card:has(#shipping-document-return-waybill-section) .sales-order-detail-message:empty { min-height: 0; }
 }
+
+@media (max-width: 480px), (max-height: 620px) {
+  .shipping-document-settings-card:has(.shipping-return-sheet-form) :is(.shipping-document-settings-heading, #shipping-document-settings-content, .form-footer) { padding: 8px 12px; }
+  .shipping-document-settings-card:has(.shipping-return-sheet-form) .shipping-document-settings-heading span { display: none; }
+  .shipping-document-settings-card:has(.shipping-return-sheet-form) .shipping-document-settings-heading h3 { font-size: 17px; line-height: 1.3; }
+  .shipping-return-sheet-form { gap: 6px; }
+  .shipping-return-sheet-form label { gap: 2px; }
+  .shipping-return-sheet-form p { line-height: 1.35; }
+}
