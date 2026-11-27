@@ -2,7 +2,18 @@
   "use strict";
   var channel = "dcats-hanbaioh25-bridge-v1";
   var fingerprint = "6d6c0d4d97bdd5835e6d879c5dcc8bbe85d912911b546ba109231aa3af99f0ac";
-  function applies(record) { return !!record && record.public_key_sha256 === fingerprint; }
+  var trialFileName = "hanbaioh-sales-test-900100-f59332f7cbd2-55.csv";
+  function trialPage() {
+    return window.location.origin === "https://dcats.daiko-denki.co.jp" &&
+      window.location.pathname === "/" && window.location.search === "?dcats_qa=900100";
+  }
+  function applies(record) {
+    return trialPage() && window.DcatsAccess?.isSystemAdmin?.() === true &&
+      !!record && record.public_key_sha256 === fingerprint &&
+      record.actor_id === "1da048d8-1908-4eae-bbc8-5d9c362b2df2" &&
+      record.device_id === "336bd0fb-0f26-47f4-a1a9-4731b28d4beb" &&
+      window.currentUser?.id === record.actor_id;
+  }
   function proof(request) {
     return new Promise(function (resolve, reject) {
       function finish(error, result) {
@@ -37,9 +48,10 @@
     var ticket=await client.functions.invoke("hanbaioh-qa-sales-trial",{body:{prepare:action,id:requestId}});
     if(ticket.error || ticket.data?.session!==claims.session_id || !Number.isSafeInteger(ticket.data?.issuedAt) ||
        !/^qa1\.[A-Za-z0-9_-]{86}$/.test(ticket.data?.capability||""))throw new Error("qa_authorization_unavailable");
+    if (!applies(record)) throw new Error("qa_identity_changed");
     var body = await proof({command:"sign_qa_sales_trial",action:action,session:claims.session_id,
       id:requestId,issuedAt:ticket.data.issuedAt,capability:ticket.data.capability,actorId:record.actor_id,deviceId:record.device_id});
-    if (window.currentUser?.id !== record.actor_id) throw new Error("qa_identity_changed");
+    if (!applies(record)) throw new Error("qa_identity_changed");
     return client.functions.invoke("hanbaioh-qa-sales-trial",{body:body});
   }
   var api = Object.freeze({
@@ -52,5 +64,11 @@
       return invoke("claim", record);
     }
   });
-  window.DcatsQaSalesTrial = Object.freeze({select:function(record,other){return applies(record)?api:other;}});
+  window.DcatsQaSalesTrial = Object.freeze({
+    matches: applies, fileName: trialFileName,
+    select: function (record, other) {
+      if (applies(record)) return api;
+      return trialPage() || record?.public_key_sha256 === fingerprint ? null : other;
+    }
+  });
 })();

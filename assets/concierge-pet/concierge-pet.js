@@ -1827,7 +1827,11 @@
   }
   async function handleBusinessQuestion(question, offered, token, owner) {
     var runtime = window.DcatsConciergeTestSalesWorkflow, parser = window.DcatsConciergeBusinessFlow;
-    if (!runtime || !parser || !isSystemAdminSession()) return;
+    var trial = window.DcatsQaSalesTrial;
+    if (!runtime || !parser || !isSystemAdminSession() || !trial?.matches(reviewPreviewRecord)) {
+      cancelBusinessFlow();
+      return;
+    }
     if (offered && parser.intent(question) !== "question") {
       businessPending = true; bridgeRequestPending = true; updateAiStatus(); updateBridgeStatus();
       try { var reply = await offered.flow.reply(question, offered.id); if (reply.handled) renderBusinessFlow(reply.result); }
@@ -1838,13 +1842,13 @@
     cancelBusinessFlow();
     var direction = runtime.requestKind(question);
     if (!direction) return;
-    var record = reviewPreviewRecord, fileName = String(salesFileInput && salesFileInput.value || "").trim();
+    var record = reviewPreviewRecord, fileName = trial.fileName;
     if (!record || record.actor_id !== owner || !/^hanbaioh-sales-test-9\d{5}-[a-f0-9]{12}-55\.csv$/.test(fileName)) {
       businessStatusBody.textContent = copy("businessSetup");
       businessStatus.hidden = false; return;
     }
     var flow = runtime.create({ record: record, fileName: fileName,
-      current: function () { return { admin: isSystemAdminSession() && panelOpen && businessFlow === flow, owner: currentSettingsOwner(), record: reviewPreviewRecord }; },
+      current: function () { return { admin: isSystemAdminSession() && trial.matches(record) && panelOpen && businessFlow === flow, owner: currentSettingsOwner(), record: reviewPreviewRecord }; },
       login: async function () { var value = await runPilotLogin(); bridgeRequestPending = businessPending; return value; },
       changed: function (value) { if (panelOpen && businessFlow === flow && owner === currentSettingsOwner() && isSystemAdminSession()) renderBusinessFlow(value); }
     });
