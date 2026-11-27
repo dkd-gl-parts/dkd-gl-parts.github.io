@@ -645,7 +645,7 @@
     rememberCart();
     if (!state.cart.length) { focusEntry("product-query"); throw new Error("商品を追加してください。"); }
     if ((!field("company") && !field("recipient")) || !field("phone") || !field("postal") || !field("prefecture") || !field("address1")) {
-      focusEntry(["phone","postal","prefecture","address1"].find(function (id) { return !field(id); }) || "company");
+      focusEntry(["postal","phone","prefecture","address1"].find(function (id) { return !field(id); }) || "company");
       throw new Error("届け先の会社名または宛名と、電話番号・郵便番号・都道府県・住所を入力してください。");
     }
     var items = state.cart.map(function (p, i) {
