@@ -101,7 +101,7 @@
     state.epoch++; state.settingsSeq++; state.shippingCustomerId = ""; state.shippingReady = false; state.view = "entry";
     if (!state.dialog) {
       state.dialog = document.createElement("dialog"); state.dialog.className = "recycle-dialog"; state.dialog.setAttribute("aria-labelledby", "recycle-title"); document.body.appendChild(state.dialog);
-      state.compactEntry = typeof window.matchMedia === "function" ? window.matchMedia("(max-width: 800px), (max-width: 1049px) and (max-height: 680px)") : null;
+      state.compactEntry = typeof window.matchMedia === "function" ? window.matchMedia("(max-width: 800px), (max-width: 1049px) and (max-height: 820px)") : null;
       state.wideEntry = typeof window.matchMedia === "function" ? window.matchMedia("(min-width: 1050px) and (min-height: 720px)") : null;
       [state.compactEntry,state.wideEntry].filter(Boolean).forEach(function (layout) { layout.addEventListener("change", syncEntryLayout); });
       state.dialog.addEventListener("cancel", function (event) { event.preventDefault(); if (state.view !== "entry" && !state.busy && !state.pending) showView("entry"); else close(); });
