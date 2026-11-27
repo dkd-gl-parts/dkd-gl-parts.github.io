@@ -38,7 +38,9 @@
     active = true;
     var request;
     try {
-      var capability = ticket(await window.DcatsHanbaiohTestSalesApi.issueBinding(record));
+      var api = window.DcatsHanbaiohTestSalesApi;
+      if (window.DcatsQaSalesTrial) api = window.DcatsQaSalesTrial.select(record, api);
+      var capability = ticket(await api.issueBinding(record));
       if (!options.isCurrent()) throw new Error("sales_session_changed");
       request = { id: window.crypto.randomUUID(), command: command, deviceId: record.device_id, fileName: fileName, capability: capability };
       return await new Promise(function (resolve, reject) {
@@ -76,6 +78,7 @@
     var match = /^hanbaioh-sales-test-(9\d{5})-([0-9a-f]{12})-55\.csv$/.exec(fileName || "");
     var record = options.record;
     var api = window.DcatsHanbaiohTestSalesApi;
+    if (window.DcatsQaSalesTrial) api = window.DcatsQaSalesTrial.select(record, api);
     if (active || !match || !record || !uuidPattern.test(record.actor_id) || !uuidPattern.test(record.device_id) || typeof options.isCurrent !== "function" ||
         !options.isCurrent() || !api || typeof api.issueBinding !== "function" || typeof api.claimOnce !== "function") {
       throw new Error("sales_unavailable");

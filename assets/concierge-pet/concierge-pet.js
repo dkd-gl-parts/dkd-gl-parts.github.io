@@ -2202,6 +2202,7 @@
       return;
     }
     var api = window.DcatsHanbaiohEnrollmentApi;
+    if (window.DcatsQaSalesTrial) api = window.DcatsQaSalesTrial.select(record, api);
     if (!api || typeof api.submitPending !== "function") {
       enrollmentPending = false;
       setEnrollmentStatus("enrollUnavailable");
@@ -2241,6 +2242,7 @@
         !reviewPreviewRecord || !reviewConfirmInput || !reviewConfirmInput.checked) return;
     var record = reviewPreviewRecord;
     var api = window.DcatsHanbaiohReviewApi;
+    if (window.DcatsQaSalesTrial) api = window.DcatsQaSalesTrial.select(record, api);
     if (!api || typeof api.approvePending !== "function") {
       setReviewStatus("reviewUnavailable");
       return;
@@ -2522,6 +2524,7 @@
     if (!isSystemAdminSession() || loginAttempted || loginPending || (bridgeRequestPending && !businessPending)) return;
     if (!reviewPreviewRecord) { loginStatusKey = "loginNeedDevice"; updatePilotLogin(); return; }
     var api = window.DcatsHanbaiohLoginApi;
+    if (window.DcatsQaSalesTrial) api = window.DcatsQaSalesTrial.select(reviewPreviewRecord, api);
     if (!api || typeof api.issue !== "function") { loginStatusKey = "loginUnavailable"; updatePilotLogin(); return; }
     var record = reviewPreviewRecord;
     var token = ++loginToken;
