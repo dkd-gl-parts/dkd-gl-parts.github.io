@@ -409,6 +409,62 @@ function fixtureFiles(){
  "/shipment-instruction-print.css":{type:"text/css",body:fs.readFileSync(path.join(root,"shipment-instruction-print.css"),"utf8")},
  "/qa.css":{type:"text/css",body:'body:not(.document-dispatch){background:#f5f7fb;padding:24px;}body:not(.document-dispatch) #root{max-width:960px;margin:auto;padding:20px;background:white;border:1px solid #dce4ec;border-radius:12px;}.sales-order-inventory{margin-top:0;border-top:0;padding-top:0;}@media(max-width:600px){body:not(.document-dispatch){padding:12px;}body:not(.document-dispatch) #root{padding:12px;}}'}};
 }
+async function verifyReturnPrinterSetup(browser, output) {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  const overlay = html.match(/<div class="form-overlay" id="shipping-document-settings-overlay"[\s\S]*?\n<\/div>/)[0];
+  const functions = new Set(["returnPrinterSetupState", "refreshReturnPrinterSetup", "returnPrinterSetupHtml",
+    "shippingDocumentReturnSheetNumber", "shippingDocumentReturnSheetForm", "bindShippingDocumentReturnSheet"]);
+  const statements = acorn.parse(app, {ecmaVersion:"latest"}).body.filter(n => n.type === "FunctionDeclaration" && functions.has(n.id.name));
+  assert.equal(statements.length, functions.size);
+  const fixture = `
+    var salesOrderPrintReadinessState = "loaded", salesOrderPrintSettings = {config:{station_name:"QA端末", plq_state:"install"}};
+    var shippingDocumentSaving = false, writes = 0;
+    function shippingDocumentManualPrintProblem(){return "";}
+    function esc(v){return String(v);}
+    function t(k){return ({shipping_sheet_submit:"登録して1枚印刷",shipping_sheet_unit:"対象商品",shipping_sheet_number:"送り状番号"})[k] || k;}
+    function shippingDocumentReturnSheets(){return [{unit:{id:1,return_code:"TEST-001",order_item:{gltek_part_number:"QA-PLQ50S"}}}];}
+    function queueShippingDocumentReturnWaybillPrint(){writes++;}
+  `;
+  for (const [width, height] of [[1366,768],[1024,600],[390,640],[320,568]]) {
+    const page = await browser.newPage({viewport:{width,height}});
+    try {
+      await page.setContent('<!doctype html><html lang="ja"><meta name="viewport" content="width=device-width,initial-scale=1"><body>'+overlay+'</body></html>');
+      await page.addStyleTag({path:path.join(root,"styles.css")});
+      await page.addScriptTag({content:fixture + statements.map(n=>app.slice(n.start,n.end)).join("\n")});
+      await page.evaluate(()=>{
+        document.querySelector(".form-overlay").classList.add("show");
+        document.querySelector("#shipping-document-settings-title").textContent="コア返却用伝票";
+        document.querySelector("#shipping-document-settings-content").innerHTML=returnPrinterSetupHtml()+shippingDocumentReturnSheetForm({});
+        bindShippingDocumentReturnSheet(document.querySelector("form"),{});
+        refreshReturnPrinterSetup();
+      });
+      const input=page.locator("input[name=tracking]"), submit=page.locator("button[type=submit]");
+      await input.fill("a12345678901a");
+      for (const state of ["install","connect_usb","select_queue","unavailable","unknown",null]) {
+        await page.evaluate(s=>{salesOrderPrintSettings.config.plq_state=s;refreshReturnPrinterSetup();},state);
+        assert(await submit.isDisabled());
+        assert(await page.locator("[data-plq-note]").isVisible());
+      }
+      await page.evaluate(()=>{salesOrderPrintSettings.config.plq_state="install";refreshReturnPrinterSetup();});
+      const fit=await page.locator(".form-card").evaluate(card=>{
+        const r=card.getBoundingClientRect(), button=card.querySelector("button[type=submit]").getBoundingClientRect();
+        return r.left>=-1 && r.right<=innerWidth+1 && r.top>=-1 && r.bottom<=innerHeight+1 &&
+          card.scrollHeight<=card.clientHeight+1 && card.scrollWidth<=card.clientWidth+1 && button.bottom<=r.bottom;
+      });
+      assert(fit,"PLQ setup must fit "+width+"x"+height);
+      await page.screenshot({path:path.join(output,"plq-setup-"+width+".png")});
+      await page.evaluate(()=>{salesOrderPrintSettings.config.plq_state="ready";refreshReturnPrinterSetup();});
+      assert.equal(await input.inputValue(),"a12345678901a");
+      assert(await submit.isEnabled());
+      await input.press("Enter");
+      assert.equal(await page.evaluate(()=>writes),0);
+      await submit.click();
+      assert.equal(await page.evaluate(()=>writes),1);
+    } finally { await page.close(); }
+  }
+}
+
 async function run(){
  const {chromium}=require(process.env.WARRANTY_PLAYWRIGHT_MODULE||"playwright"),files=fixtureFiles(),results=[];
  const output=process.env.WARRANTY_QA_OUTPUT||path.join(root,".qa-sales-inventory");fs.mkdirSync(output,{recursive:true});
@@ -422,6 +478,7 @@ async function run(){
  await p.locator("#qa-kind").selectOption("aftermarket_new");await p.evaluate(()=>qaPending);assert(!(await p.locator("#sales-product-shelf").innerText()).includes("GLA-21"));await p.locator("#qa-kind").selectOption("rebuilt");await p.evaluate(()=>qaPending);assert((await p.locator("#sales-product-shelf").innerText()).includes("GLA-21"));
  for(const mode of ["loading","error","denied","expired","missing","unauthorized","recount"]){await p.goto(base+"/?lang="+lang+"&mode="+mode);if(mode!=="loading")await p.waitForSelector('html[data-ready="true"]');const text=await p.locator("#root").innerText();assert.equal(text.includes("GLA-21"),mode==="recount");assert(!text.includes("undefined"));assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));}
  assert.deepEqual(errors,[]);results.push({width,lang,states:8,passed:true});await p.close();}
+ await verifyReturnPrinterSetup(browser,output);
  await verifyB2PermissionGuide(browser,base,output);
  await verifyFaxHelpWindow(browser,base);
  await verifyFaxPractice(browser,base,output);
